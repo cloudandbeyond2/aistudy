@@ -357,7 +357,7 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
             </>
         );
     };
-
+// bala
 
     return (
         <div className="space-y-6 py-8 animate-fade-in">
