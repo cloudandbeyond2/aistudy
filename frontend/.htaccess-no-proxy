@@ -1,0 +1,31 @@
+RewriteEngine On
+
+# This .htaccess is for hosting environments that DON'T support mod_proxy
+# Use this if the main .htaccess gives 500 errors
+
+# Handle React Router - serve index.html for all non-file, non-API requests
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteRule ^(.*)$ /index.html [L,QSA]
+
+# Set MIME types
+AddType application/javascript .js
+AddType text/css .css
+AddType application/json .json
+
+# Enable CORS
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
+
+# Error handling
+ErrorDocument 404 /index.html
+
+# Note: API requests will need to be handled differently
+# You'll need to configure your hosting control panel to:
+# 1. Run Node.js app on a subdomain (e.g., api.aicourse.agli.in)
+# 2. OR use hosting's built-in proxy settings
+# 3. OR update frontend to point to Node.js URL directly

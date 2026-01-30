@@ -1,0 +1,21 @@
+RewriteEngine On
+
+# Handle React Router - serve index.html for all non-file requests
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /index.html [L,QSA]
+
+# Set MIME types
+AddType application/javascript .js
+AddType text/css .css
+AddType application/json .json
+
+# Enable CORS headers
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
+
+# Error handling - serve index.html for 404s
+ErrorDocument 404 /index.html
