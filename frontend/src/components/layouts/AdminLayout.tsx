@@ -252,8 +252,8 @@ const AdminLayout = () => {
               </SidebarMenuItem>
               {/* Star bala */}
               <SidebarMenuItem>
-                              <SidebarMenuButton asChild tooltip="Logout">
-                                <button onClick={Logout} className="text-muted-foreground hover:text-destructive transition-colors flex items-center space-x-2 w-full">
+                              <SidebarMenuButton asChild tooltip="Logout"  style={{paddingLeft:"20px"}}>
+                                <button onClick={Logout} className="text-muted-foreground hover:text-destructive transition-colors flex items-center space-x-2 w-full" style={{gap: "22px"}}>
                                 
                                   <LogOut />
                                   <span>Logout</span>

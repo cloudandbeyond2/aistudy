@@ -199,7 +199,7 @@ const DashboardLayout = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Logout" style={{paddingLeft:"13px"}}>
+                <SidebarMenuButton asChild tooltip="Logout" style={{paddingLeft:"20px"}}>
                   <Link onClick={Logout} className="text-muted-foreground hover:text-destructive transition-colors" style={{gap: "30px"}}>
                     <LogOut />
                     <span>Logout</span>
