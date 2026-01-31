@@ -428,7 +428,7 @@ const Profile = () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="billing" className="p-6">
+              {/* <TabsContent value="billing" className="p-6">
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Subscription Plan</h3>
                   {sessionStorage.getItem('type') !== 'free' ?
@@ -493,8 +493,73 @@ const Profile = () => {
                     </Card>
                   }
                 </div>
-              </TabsContent>
+              </TabsContent> */}
+  <TabsContent value="billing" className="p-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Subscription Plan</h3>
+                  {sessionStorage.getItem('type') !== 'free' ?
+                    <>
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base font-medium">{plan}</CardTitle>
+                          <CardDescription>${cost}/{plan === MonthType ? 'month' : 'year'}</CardDescription>
+                        </CardHeader>
+                        <CardFooter className="flex justify-between">
+                          <Dialog>
+                            <DialogTrigger><Button variant="outline" size="sm">Cancel Plan</Button></DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Are you sure you want to cancel your plan?</DialogTitle>
+                                <DialogDescription>
+                                  This action is irreversible. Your premium plan will be canceled immediately,
+                                  and no refunds will be issued for any remaining days.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <DialogFooter>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className="w-40"
+                                  >
+                                    No
+                                  </Button>
+                                </DialogTrigger>
+                                <Button onClick={cancelSubscription} className='bg-red-500 hover:bg-red-600 w-40'>{processingCancel ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <></>}{processingCancel ? 'Canceling...' : 'Cancel Plan'}</Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </CardFooter>
+                      </Card>
 
+                      <div className="pt-4">
+                        <h3 className="text-lg font-medium mb-2">Payment Methods</h3>
+
+                        <div className="bg-muted rounded-lg p-4 flex items-center justify-between">
+                          <div className="flex items-center">
+                            <CreditCard className="h-8 w-8 mr-4 text-muted-foreground" />
+                            <div>
+                              <p className="font-medium">  {method?.toUpperCase()}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                    :
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-medium">Free Plan</CardTitle>
+                        <CardDescription>$0</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm">This plan is completely free, <strong>for lifetime.</strong></p>
+                      </CardContent>
+                      <CardFooter className="flex justify-between">
+                        <Button onClick={redirectPricing} size="sm">Change Plan</Button>
+                      </CardFooter>
+                    </Card>
+                  }
+                </div>
+              </TabsContent>
               <TabsContent value="testimonial" className="p-6">
                 <TestimonialSubmission />
               </TabsContent>
