@@ -4,7 +4,7 @@ import {
   HarmBlockThreshold
 } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
 
 export const safetySettings = [
   {

@@ -18,7 +18,7 @@ import axios from 'axios';
 const courseFormSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters" }),
   subtopics: z.array(z.string()),
-  topicsLimit: z.enum(["4", "8"]),
+  topicsLimit: z.enum(["1", "4", "8"]),
   courseType: z.enum(["Text & Image Course", "Video & Text Course"]),
   language: z.string().min(1, { message: "Please select a language" })
 });
@@ -32,7 +32,7 @@ const GenerateCourse = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedTopics, setGeneratedTopics] = useState({});
   const maxSubtopics = 5;
-  const [selectedValue, setSelectedValue] = useState('4');
+  const [selectedValue, setSelectedValue] = useState('1');
   const [selectedType, setSelectedType] = useState('Text & Image Course');
   const [paidMember, setPaidMember] = useState(false);
   const [lang, setLang] = useState('English');
@@ -93,7 +93,7 @@ const GenerateCourse = () => {
     defaultValues: {
       topic: '',
       subtopics: [],
-      topicsLimit: "4",
+      topicsLimit: "1",
       courseType: "Text & Image Course",
       language: "English"
     }
@@ -136,48 +136,24 @@ const GenerateCourse = () => {
     const lang = data.language;
     const number = data.topicsLimit;
 
-    const prompt = `Strictly in ${lang}, Generate a list of Strict ${number} topics and any number sub topic for each topic for main title ${mainTopic.toLowerCase()}, everything in single line. Those ${number} topics should Strictly include these topics :- ${subtopics.join(', ').toLowerCase()}. Strictly Keep theory, youtube, image field empty. Generate in the form of JSON in this format {
-            "course_topics": [
-       {
-       "title": "Topic Title",
-       "subtopics": [
+    const prompt = `Strictly in ${lang}, Generate a list of EXACTLY ${number} topics (chapters) for the course "${mainTopic}". 
+    For each topic, include relevant subtopics.
+    The output must take the form of a JSON object with a "course_topics" array containing EXACTLY ${number} items.
+    
+    Structure:
+    {
+      "course_topics": [
         {
-        "title": "Sub Topic Title",
-        "theory": "",
-        "youtube": "",
-        "image": "",
-        "done": false
-        },
-        {
-        "title": "Sub Topic Title",
-        "theory": "",
-        "youtube": "",
-        "image": "",
-        "done": false
+          "title": "Topic 1",
+          "subtopics": [ ... ]
         }
-       ]
-       },
-       {
-       "title": "Topic Title",
-       "subtopics": [
-        {
-        "title": "Sub Topic Title",
-        "theory": "",
-        "youtube": "",
-        "image": "",
-        "done": false
-        },
-        {
-        "title": "Sub Topic Title",
-        "theory": "",
-        "youtube": "",
-        "image": "",
-        "done": false
-        }
-       ]
-       }
       ]
-      }`;
+    }
+
+    Strictly include these requested subtopics if provided: ${subtopics.join(', ')}.
+    Keep "theory", "youtube", "image" fields empty.
+    "done" should be false.
+    `;
 
     sendPrompt(prompt);
   };
@@ -349,7 +325,11 @@ const GenerateCourse = () => {
                               className="space-y-2"
                             >
                               <div className="flex items-center space-x-2 border p-3 rounded-md">
-                                <RadioGroupItem defaultChecked value="4" id="r1" />
+                                <RadioGroupItem defaultChecked value="1" id="r0" />
+                                <FormLabel htmlFor="r0" className="mb-0">1</FormLabel>
+                              </div>
+                              <div className="flex items-center space-x-2 border p-3 rounded-md">
+                                <RadioGroupItem value="4" id="r1" />
                                 <FormLabel htmlFor="r1" className="mb-0">5</FormLabel>
                               </div>
                               <div onClick={paidToad} className="flex items-center space-x-2 border p-3 rounded-md">
