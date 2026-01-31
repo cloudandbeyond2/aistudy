@@ -147,24 +147,21 @@ const QuizPage = () => {
                 const rawAnswer = item.answer ? String(item.answer).trim() : '';
 
                 // 1. Check if rawAnswer is 'a', 'b', 'c', 'd' (or A, B...)
-                if (/^[a-d]$/i.test(rawAnswer)) {
-                    finalCorrectAnswer = rawAnswer.toLowerCase();
+                // 1. Check matching text directly
+                // This logic is safer and uses the 'answer' text (e.g. "Option A") to find the shuffled option ID (e.g. 'c')
+                const matchedOption = sanitizedOptions.find((opt: any) =>
+                    opt.text.toLowerCase().trim() === rawAnswer.toLowerCase().trim() ||
+                    rawAnswer.toLowerCase().includes(opt.text.toLowerCase().trim())
+                );
+                if (matchedOption) {
+                    finalCorrectAnswer = matchedOption.id;
                 } else {
-                    // 2. Try to find rawAnswer in options text
-                    const matchedOption = sanitizedOptions.find((opt: any) =>
-                        opt.text.toLowerCase().trim() === rawAnswer.toLowerCase().trim() ||
-                        rawAnswer.toLowerCase().includes(opt.text.toLowerCase().trim())
+                    // 2. Last resort: check if options contain the answer or vice versa
+                    const looselyMatched = sanitizedOptions.find((opt: any) =>
+                        opt.text.toLowerCase().includes(rawAnswer.toLowerCase())
                     );
-                    if (matchedOption) {
-                        finalCorrectAnswer = matchedOption.id;
-                    } else {
-                        // 3. Last resort: check if options contain the answer or vice versa
-                        const looselyMatched = sanitizedOptions.find((opt: any) =>
-                            opt.text.toLowerCase().includes(rawAnswer.toLowerCase())
-                        );
-                        if (looselyMatched) {
-                            finalCorrectAnswer = looselyMatched.id;
-                        }
+                    if (looselyMatched) {
+                        finalCorrectAnswer = looselyMatched.id;
                     }
                 }
 
@@ -316,15 +313,24 @@ const QuizPage = () => {
 
                 const dataUrl = await toPng(node, {
                     useCORS: true,
-                    cacheBust: true, // Forces fresh image load to bypass partial cache
+                    cacheBust: true,
                     skipAutoScale: true,
-                    pixelRatio: 2, // Better quality
+                    pixelRatio: 2,
                     backgroundColor: '#ffffff',
-                    // Filter out external stylesheets/scripts to prevents CORS errors
+                    width: 800, // Force width
+                    height: 600, // Force height
+                    style: {
+                        // Reset positioning for the capture
+                        position: 'static',
+                        left: 'auto',
+                        top: 'auto',
+                        visibility: 'visible',
+                        transform: 'none'
+                    },
                     filter: (node) => {
                         return (node.tagName !== 'LINK' && node.tagName !== 'STYLE' && node.tagName !== 'SCRIPT');
                     },
-                    fontEmbedCSS: '' // Disable font embedding
+                    fontEmbedCSS: ''
                 } as any);
 
                 saveAs(dataUrl, `${topic}-certificate.png`);
@@ -590,12 +596,12 @@ const QuizPage = () => {
                                             <Button onClick={handleStartQuiz}>
                                                 Retake Quiz
                                             </Button>
-                                            {passedQuiz && (
+                                            {/* {passedQuiz && (
                                                 <Button onClick={downloadCertificate} className="gap-2">
                                                     <Download className="h-4 w-4" />
                                                     Download Certificate
                                                 </Button>
-                                            )}
+                                            )} */}
                                         </CardFooter>
                                     </Card>
 
