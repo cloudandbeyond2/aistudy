@@ -292,7 +292,7 @@ const Signup = () => {
               }}
             />
 
-            <FacebookLogin
+            {/* <FacebookLogin
               appId={facebookClientId}
               style={{
                 backgroundColor: '#4267b2',
@@ -338,7 +338,7 @@ const Signup = () => {
                   setError('Internal Server Error');
                 }
               }}
-            />
+            /> */}
 
           </CardContent>
 

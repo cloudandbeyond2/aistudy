@@ -212,7 +212,7 @@ const Login = () => {
               }}
             />
 
-            <FacebookLogin
+            {/* <FacebookLogin
               appId={facebookClientId}
               style={{
                 backgroundColor: '#4267b2',
@@ -258,7 +258,7 @@ const Login = () => {
                   setError('Internal Server Error');
                 }
               }}
-            />
+            /> */}
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4 border-t p-6">
