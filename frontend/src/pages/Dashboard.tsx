@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import ShareOnSocial from 'react-share-on-social';
 import StatsCard from '@/components/dashboard/StatsCard';
 
+
 const Dashboard = () => {
 
   const navigate = useNavigate();
@@ -27,11 +28,40 @@ const Dashboard = () => {
   const [modules, setTotalModules] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  
+
+  const plan = sessionStorage.getItem('type');
+
 
   function redirectCreate() {
     navigate("/dashboard/generate-course");
   }
-
+  function redirectPricing() {
+    navigate("/dashboard/pricing");
+  }
+   async function getDetails() {
+      if (sessionStorage.getItem('type') !== 'free') {
+        const dataToSend = {
+          uid: sessionStorage.getItem('uid'),
+          email: sessionStorage.getItem('email'),
+        };
+        try {
+          const postURL = serverURL + '/api/subscriptiondetail';
+          await axios.post(postURL, dataToSend).then(res => {
+            setMethod(res.data.method);
+            setJsonData(res.data.session);
+            setPlan(sessionStorage.getItem('type'));
+            setCost(sessionStorage.getItem('plan') === 'Monthly Plan' ? '' + MonthCost : '' + YearCost);
+          });
+        } catch (error) {
+          console.error(error);
+          toast({
+            title: "Error",
+            description: "Internal Server Error",
+          });
+        }
+      }
+    }
   async function redirectCourse(content: string, mainTopic: string, type: string, courseId: string, completed: string, end: string) {
     const postURL = serverURL + '/api/getmyresult';
     const response = await axios.post(postURL, { courseId });
@@ -146,6 +176,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchUserCourses();
+     
+ 
   }, [fetchUserCourses]);
 
   const handleScroll = useCallback(() => {
@@ -241,15 +273,18 @@ const Dashboard = () => {
 
 
     <Button
-      onClick={() => redirectCreate()}
+      onClick={() =>courses.length === 1 && plan === 'free' ? redirectPricing():redirectCreate()}
       className="shadow-md bg-gradient-to-r from-primary to-indigo-500 hover:from-indigo-500 hover:to-primary"
     >
       <Sparkles className="mr-2 h-4 w-4" />
       Generate New Course
     </Button>
+    
+
+    
+
   </div>
         </div>
-
         {/* Stats Cards Section */}
         {!isLoading && courses.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
