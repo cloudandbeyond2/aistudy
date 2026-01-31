@@ -81,7 +81,7 @@ const DashboardLayout = () => {
       title: "Logged Out",
       description: "You have logged out successfully",
     });
-    window.location.href = websiteURL + '/login';
+    window.location.href = websiteURL + 'login';
   }
 
   return (

@@ -31,20 +31,54 @@ const AdminCourses = () => {
     const query = searchQuery.toLowerCase().trim();
     return data.filter((course) => {
       const nameMatch = course.mainTopic?.toLowerCase().includes(query);
-      const userMatch = course.user?.toLowerCase().includes(query);
+      // const userMatch = course.user?.toLowerCase().includes(query);
+         const userMatch = course.userDetails?.mName?.toLowerCase().includes(query);
       return nameMatch || userMatch;
     });
   }, [data, searchQuery]);
-
-  useEffect(() => {
-    async function dashboardData() {
+useEffect(() => {
+  async function dashboardData() {
+    try {
       const postURL = serverURL + `/api/getcourses`;
-      const response = await axios.get(postURL);
-      setData(response.data);
+      const userURL = serverURL + `/api/getusers`;
+
+      const [coursesRes, usersRes] = await Promise.all([
+        axios.get(postURL),
+        axios.get(userURL)
+      ]);
+
+      const courses = coursesRes.data;
+      const users = usersRes.data;
+
+      // 🔥 Create userId → user map
+      const userMap = {};
+      users.forEach(user => {
+        userMap[user._id] = user;
+      });
+
+      // 🔥 Attach mName & email to each course
+      const mergedCourses = courses.map(course => ({
+        ...course,
+        userDetails: userMap[course.user] || null
+      }));
+
+      // ✅ console logs
+      // mergedCourses.forEach(course => {
+      //   console.log('Course:', course.mainTopic);
+      //   console.log('mName:', course.userDetails?.mName);
+      //   console.log('email:', course.userDetails?.email);
+      // });
+
+      setData(mergedCourses);
       setIsLoading(false);
+    } catch (err) {
+      console.error(err);
     }
-    dashboardData();
-  }, []);
+  }
+
+  dashboardData();
+}, []);
+
 
   const handleEditClick = (course) => {
     setSelectedCourse(course);
@@ -207,7 +241,11 @@ const AdminCourses = () => {
                         {course.restricted === true ? 'Restricted' : 'Active'}
                       </Badge>
                     </TableCell>
-                    <TableCell>{course.user}</TableCell>
+                    {/* <TableCell>{course.user}</TableCell> */}
+                    <TableCell>
+  {course.userDetails?.mName || 'Unknown'}
+</TableCell>
+
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" onClick={() => handleEditClick(course)}>
                         <Edit className="h-4 w-4" />

@@ -39,7 +39,7 @@ const CoursePage = () => {
   const { state } = useLocation();
   const { courseId: paramCourseId } = useParams();
   const activeCourseId = state?.courseId || paramCourseId;
-
+  const plan = sessionStorage.getItem('type');
   const [courseData, setCourseData] = useState(state || null);
   const [jsonData, setJsonData] = useState(() => {
     try {
@@ -1199,9 +1199,14 @@ async function redirectExam() {
                 <Home className="h-4 w-4 mr-1" /> Home
               </Link>
             </Button>
+            {plan !== "free" && (
             <Button onClick={certificateCheck} variant="ghost" size="sm" asChild>
-              <span className='cursor-pointer'><Award className="h-4 w-4 mr-1" /> Certificate</span>
+            <span className="cursor-pointer">
+            <Award className="h-4 w-4 mr-1" /> Certificate
+            </span>
             </Button>
+            )}
+ 
             <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm" asChild>
               <span className='cursor-pointer'><Download className="h-4 w-4 mr-1" />{exporting ? 'Exporting...' : 'Export'}</span>
             </Button>

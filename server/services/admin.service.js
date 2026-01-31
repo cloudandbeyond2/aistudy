@@ -3,6 +3,7 @@ import Course from '../models/Course.js';
 import Admin from '../models/Admin.js';
 import Subscription from '../models/Subscription.js';
 
+import { addOneMonthSafe } from '../utils/date.utils.js';
 /* ---------------- DASHBOARD ---------------- */
 export const getDashboardStats = async () => {
   const users = await User.estimatedDocumentCount();
@@ -58,15 +59,54 @@ export const getPaidUsers = async () => {
   );
 };
 
+
+export const updateUser = async ({ userId, mName, email, type }) => {
+  const now = new Date();
+
+  let subscriptionStart = null;
+  let subscriptionEnd = null;
+
+  if (type === 'monthly') {
+    subscriptionStart = new Date(now);
+    subscriptionEnd = addOneMonthSafe(now);
+  }
+
+  if (type === 'yearly') {
+    subscriptionStart = new Date(now);
+    subscriptionEnd = new Date(now);
+    subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1);
+  }
+
+  if (type === 'forever') {
+    subscriptionStart = new Date(now);
+    subscriptionEnd = null;
+  }
+
+  if (type === 'free') {
+    subscriptionStart = null;
+    subscriptionEnd = null;
+  }
+
+  await User.findByIdAndUpdate(userId, {
+    mName,
+    email,
+    type,
+    subscriptionStart,
+    subscriptionEnd,
+  });
+};
+
+
+
 export const deleteUser = async (userId) => {
   await User.findByIdAndDelete(userId);
   await Subscription.findOneAndDelete({ user: userId });
   await Course.deleteMany({ user: userId });
 };
 
-export const updateUser = async ({ userId, mName, email, type }) => {
-  await User.findByIdAndUpdate(userId, { mName, email, type });
-};
+// export const updateUser = async ({ userId, mName, email, type }) => {
+//   await User.findByIdAndUpdate(userId, { mName, email, type });
+// };
 
 /* ---------------- COURSES ---------------- */
 export const getAllCourses = async () => {

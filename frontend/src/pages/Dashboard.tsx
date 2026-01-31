@@ -16,7 +16,7 @@ import ShareOnSocial from 'react-share-on-social';
 import StatsCard from '@/components/dashboard/StatsCard';
 
 const Dashboard = () => {
-
+const plan = sessionStorage.getItem('type');
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [page, setPage] = useState(1);
@@ -32,6 +32,9 @@ const Dashboard = () => {
     navigate("/dashboard/generate-course");
   }
 
+function redirectPricing() {
+    navigate("/dashboard/pricing");
+  }
   async function redirectCourse(content: string, mainTopic: string, type: string, courseId: string, completed: string, end: string) {
     const postURL = serverURL + '/api/getmyresult';
     const response = await axios.post(postURL, { courseId });
@@ -205,6 +208,31 @@ const Dashboard = () => {
     }
   }
 
+  
+async function getDetails() {
+      if (sessionStorage.getItem('type') !== 'free') {
+        const dataToSend = {
+          uid: sessionStorage.getItem('uid'),
+          email: sessionStorage.getItem('email'),
+        };
+        try {
+          const postURL = serverURL + '/api/subscriptiondetail';
+          await axios.post(postURL, dataToSend).then(res => {
+            setMethod(res.data.method);
+            setJsonData(res.data.session);
+            setPlan(sessionStorage.getItem('type'));
+            setCost(sessionStorage.getItem('plan') === 'Monthly Plan' ? '' + MonthCost : '' + YearCost);
+          });
+        } catch (error) {
+          console.error(error);
+          toast({
+            title: "Error",
+            description: "Internal Server Error",
+          });
+        }
+      }
+    }
+ 
   async function getQuiz(courseId: string) {
     const postURL = serverURL + '/api/getmyresult';
     const response = await axios.post(postURL, { courseId });
@@ -240,10 +268,11 @@ const Dashboard = () => {
 </Button>
 
 
-    <Button
-      onClick={() => redirectCreate()}
+
+<Button
+      onClick={() =>courses.length === 1 && plan === 'free' ? redirectPricing():redirectCreate()}
       className="shadow-md bg-gradient-to-r from-primary to-indigo-500 hover:from-indigo-500 hover:to-primary"
-    >
+>
       <Sparkles className="mr-2 h-4 w-4" />
       Generate New Course
     </Button>
