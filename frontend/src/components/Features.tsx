@@ -1,103 +1,116 @@
-
-import React, { useEffect, useRef } from 'react';
-import { cn } from '@/lib/utils';
+import React from 'react';
 import { Zap, Book, Layers, BarChart, PenLine, RotateCw } from 'lucide-react';
+import { motion, easeOut } from "framer-motion";
+
 
 const features = [
   {
-    icon: <Zap className="h-6 w-6" />,
-    title: "AI-Powered Generation",
+    icon: <Zap className="h-8 w-8" />,
+    title: "AI Generation",
     description: "Our advanced AI algorithms analyze your inputs to generate comprehensive courses."
   },
   {
-    icon: <Book className="h-6 w-6" />,
-    title: "Course Type Preferences",
+    icon: <Book className="h-8 w-8" />,
+    title: "Course Formats",
     description: "Choose between Image + Theory or Video + Theory formats for a personalized learning journey."
   },
   {
-    icon: <PenLine className="h-6 w-6" />,
-    title: "Quiz Creation",
+    icon: <PenLine className="h-8 w-8" />,
+    title: "Smart Quizzes",
     description: "Generate relevant quizzes, assessments, and interactive elements to reinforce learning outcomes."
   },
   {
-    icon: <Layers className="h-6 w-6" />,
-    title: "Multilanguage Coursesn",
-    description: "Generate Ai images, videos, or textual courses in 23+ multiple languages."
+    icon: <Layers className="h-8 w-8" />,
+    title: "Multilanguage",
+    description: "Generate AI images, videos, or textual courses in 23+ multiple languages."
   },
   {
-    icon: <RotateCw className="h-6 w-6" />,
-    title: "Ai Teacher Chat",
-    description: "Chat with Ai teacher to get answers to your questions while learning."
+    icon: <RotateCw className="h-8 w-8" />,
+    title: "AI Teacher Chat",
+    description: "Chat with AI teacher to get answers to your questions while learning."
   },
   {
-    icon: <BarChart className="h-6 w-6" />,
-    title: "Export Course",
+    icon: <BarChart className="h-8 w-8" />,
+    title: "Export Tools",
     description: "Download your generated course in various formats for offline access."
   }
 ];
 
 const Features = () => {
-  const featuresRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    const observerOptions = {
-      root: null,
-      rootMargin: '0px',
-      threshold: 0.1,
-    };
-    
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('animate-fade-up');
-          entry.target.classList.remove('opacity-0');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, observerOptions);
-    
-    const elements = featuresRef.current?.querySelectorAll('.feature-item');
-    elements?.forEach((el, index) => {
-      // Add staggered delay
-      el.classList.add(`delay-[${index * 100}ms]`);
-      observer.observe(el);
-    });
-    
-    return () => {
-      elements?.forEach(el => {
-        observer.unobserve(el);
-      });
-    };
-  }, []);
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  // const itemVariants = {
+  //   hidden: { opacity: 0, y: 20 },
+  //   visible: {
+  //     opacity: 1,
+  //     y: 0,
+  //     transition: {
+  //       duration: 0.5,
+  //       ease: "easeOut"
+  //     }
+  //   }
+  // };
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: easeOut,
+    },
+  },
+};
 
   return (
-    <section id="features" className="py-20 md:py-32 px-6 md:px-10 bg-secondary/50 relative">
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16 md:mb-24">
-          <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary mb-4">
-            Features
-          </span>
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold">
-            Everything You Need to Create <br className="hidden md:block" />
-            <span className="text-primary">Exceptional Courses</span>
+    <section id="features" className="py-24 md:py-32 bg-white relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6 md:px-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-20"
+        >
+          <span className="text-primary font-bold tracking-widest uppercase text-sm mb-4 block">Our Excellence</span>
+          <h2 className="text-3xl md:text-5xl font-bold mb-6 text-slate-900 leading-tight">
+            Powerful Features for Modern <br className="hidden md:block" /> Learning Experience
           </h2>
-        </div>
-        
-        <div ref={featuresRef} className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="h-1.5 w-24 bg-primary mx-auto rounded-full" />
+        </motion.div>
+
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-10"
+        >
           {features.map((feature, index) => (
-            <div 
-              key={index} 
-              className="feature-item opacity-0 bg-card shadow-sm hover:shadow-md transition-all duration-300 rounded-xl p-8 border border-border/50"
+            <motion.div
+              key={index}
+              variants={itemVariants}
+              whileHover={{ y: -8 }}
+              className="group bg-slate-50 hover:bg-white p-10 rounded-3xl border border-slate-100 hover:border-primary/20 transition-all duration-300 shadow-sm hover:shadow-2xl"
             >
-              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-5 text-primary">
+              <div className="h-16 w-16 rounded-2xl bg-white flex items-center justify-center mb-8 text-primary shadow-sm group-hover:bg-primary group-hover:text-white transition-all duration-300">
                 {feature.icon}
               </div>
-              <h3 className="font-display text-xl font-semibold mb-3">{feature.title}</h3>
-              <p className="text-muted-foreground">{feature.description}</p>
-            </div>
+              <h3 className="text-2xl font-bold mb-4 text-slate-900 group-hover:text-primary transition-colors">{feature.title}</h3>
+              <p className="text-slate-600 leading-relaxed text-lg">
+                {feature.description}
+              </p>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

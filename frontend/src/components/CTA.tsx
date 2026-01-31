@@ -1,63 +1,62 @@
-
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
-import { appName } from '@/constants';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 const CTA = () => {
   const navigate = useNavigate();
-  useEffect(() => {
-    const observerOptions = {
-      root: null,
-      rootMargin: '0px',
-      threshold: 0.1,
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('animate-fade-up');
-          entry.target.classList.remove('opacity-0');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, observerOptions);
-
-    const ctaEl = document.querySelector('.cta-container');
-    if (ctaEl) observer.observe(ctaEl);
-
-    return () => {
-      if (ctaEl) observer.unobserve(ctaEl);
-    };
-  }, []);
 
   return (
-    <section className="py-20 md:py-32 px-6 md:px-10 bg-primary/5 relative">
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-      <div className="max-w-5xl mx-auto">
-        <div className="cta-container opacity-0 bg-card rounded-2xl p-8 md:p-12 border border-border/50 shadow-xl overflow-hidden relative">
-          {/* Abstract shapes */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/5 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+    <section className="py-24 md:py-32 bg-slate-900 relative overflow-hidden">
+      {/* Abstract Background Design */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary rounded-full filter blur-[120px] translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-500 rounded-full filter blur-[120px] -translate-x-1/2 translate-y-1/2" />
+      </div>
 
-          <div className="text-center max-w-3xl mx-auto relative z-10">
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-              Transform your content into engaging courses today
+      <div className="max-w-5xl mx-auto px-6 md:px-10 relative z-10 text-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="bg-white/5 backdrop-blur-xl border border-white/10 p-12 md:p-20 rounded-[40px] shadow-2xl"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-bold mb-8 border border-primary/20">
+              <Sparkles className="h-4 w-4" />
+              <span>Join 50,000+ Learners Today</span>
+            </div>
+
+            <h2 className="text-4xl md:text-6xl font-black text-white mb-8 leading-tight">
+              Ready to Master Any Subject <br className="hidden md:block" /> with the Power of AI?
             </h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join thousands of educators, trainers, and content creators who are saving time and creating better learning experiences with {appName}.
+
+            <p className="text-xl text-slate-300 mb-12 max-w-2xl mx-auto leading-relaxed">
+              Start generating high-quality courses instantly. No credit card required to get started.
+              Transform your learning journey today.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Button onClick={() => navigate("/dashboard")} size="lg" className="font-medium">
-                Start Creating Now
-                <ArrowRight className="ml-2 h-4 w-4" />
+
+            <div className="flex flex-col sm:flex-row justify-center gap-6">
+              <Button
+                onClick={() => navigate("/signup")}
+                size="lg"
+                className="bg-primary hover:bg-white hover:text-primary text-white font-black text-xl h-16 px-12 rounded-full shadow-2xl shadow-primary/40 transition-all active:scale-95"
+              >
+                Get Started for Free
+                <ArrowRight className="ml-2 h-6 w-6" />
               </Button>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
-    </section >
+    </section>
   );
 };
 
