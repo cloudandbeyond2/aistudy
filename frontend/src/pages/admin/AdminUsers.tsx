@@ -1,205 +1,342 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 
+import React, { useEffect, useMemo, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { Check, Crown } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { serverURL } from '@/constants';
+import { UserPlus, Search, MoreVertical, Edit, Trash } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { serverURL, MonthType, YearType } from '@/constants';
+import axios from 'axios';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const PLAN_FEATURES = {
-  free: [
-    'Generate 5 Sub-Topics',
-    'Lifetime access',
-    'Theory & Image Course',
-    'AI Teacher Chat'
-  ],
-  monthly: [
-    'Generate 10 Sub-Topics',
-    '1 Month Access',
-    'AI Teacher Chat',
-    'Unlimited Courses',
-    '23+ Languages',
-    'Video & Theory Course'
-  ],
-  yearly: [
-    'Generate 10 Sub-Topics',
-    '1 Year Access',
-    'AI Teacher Chat',
-    'Unlimited Courses',
-    '23+ Languages',
-    'Video & Theory Course'
-  ],
-  forever: [
-    'Unlimited Everything',
-    'Lifetime Access',
-    'AI Teacher Chat',
-    'Unlimited Courses',
-    'All Languages',
-    'Video & Theory Course'
-  ]
-};
+const AdminUsers = () => {
+  const [data, setData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editType, setEditType] = useState('');
+  const { toast } = useToast();
 
-const ProfilePricing = () => {
-  const navigate = useNavigate();
-
-  const [plans, setPlans] = useState<any[]>([]);
-  const [activeType, setActiveType] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  /* ---------------- GET USER ACTIVE PLAN ---------------- */
-  const fetchUserPlan = async () => {
-    try {
-      const res = await axios.get(`${serverURL}/api/getusers`, {
-        withCredentials: true
-      });
-
-      if (res.data?.success) {
-        const userType = res.data.user.type;
-        setActiveType(userType);
-        sessionStorage.setItem('type', userType);
-      }
-    } catch (err) {
-      console.error('User fetch failed', err);
-    }
-  };
-
-  /* ---------------- GET PRICING ---------------- */
-  const fetchPricing = async () => {
-    try {
-      const res = await axios.get(`${serverURL}/api/pricing`);
-      if (res.data?.success) {
-        const formatted = res.data.pricing.map((plan: any) => ({
-          id: plan.planType,
-          name: plan.planName,
-          price: plan.price,
-          currency: plan.currency || 'USD',
-          planType: plan.planType,
-          features: PLAN_FEATURES[plan.planType]
-        }));
-        setPlans(formatted);
-      }
-    } catch (err) {
-      console.error('Pricing error', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Filtered data using memoization for better performance
+  const filteredData = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+    return data.filter((user) => {
+      const nameMatch = user.mName?.toLowerCase().includes(query);
+      const emailMatch = user.email?.toLowerCase().includes(query);
+      const typeDisplay = user.type !== 'free' ? 'paid' : 'free';
+      const typeMatch = typeDisplay.includes(query);
+      return nameMatch || emailMatch || typeMatch;
+    });
+  }, [data, searchQuery]);
 
   useEffect(() => {
-    fetchUserPlan();
-    fetchPricing();
+    fetchData();
   }, []);
 
-  /* ---------------- SELECT PLAN ---------------- */
-  const handleSelectPlan = (plan: any) => {
-    if (activeType === plan.id) return;
+  async function fetchData() {
+    const postURL = serverURL + `/api/getusers`;
+    const response = await axios.get(postURL);
+    setData(response.data);
+    setIsLoading(false);
+  }
 
-    navigate(`/dashboard/payment/${plan.id}`, {
-      state: {
-        price: plan.price,
-        currency: plan.currency,
-        planType: plan.planType,
-        planName: plan.name
-      }
-    });
+  const handleEditClick = (user) => {
+    setSelectedUser(user);
+    setEditName(user.mName);
+    setEditEmail(user.email);
+    setEditType(user.type);
+    setIsEditDialogOpen(true);
   };
 
-  const currencySymbol = (c: string) =>
-    ({ USD: '$', INR: '₹', EUR: '€' }[c] || '$');
+  const handleDeleteClick = async (userId) => {
+    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      try {
+        const postURL = serverURL + '/api/admin/deleteuser';
+        const response = await axios.post(postURL, { userId });
+        if (response.data.success) {
+          toast({
+            title: "User deleted",
+            description: "User has been successfully deleted.",
+          });
+          fetchData();
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to delete user",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error(error);
+        toast({
+          title: "Error",
+          description: "Internal Server Error",
+          variant: "destructive"
+        });
+      }
+    }
+  };
 
-  /* ---------------- UI ---------------- */
+  const handleUpdateUser = async () => {
+  if (!selectedUser) return;
+
+  const { startDate, endDate } = getSubscriptionDates(editType);
+
+  try {
+    const postURL = serverURL + '/api/admin/updateuser';
+    const response = await axios.post(postURL, {
+      userId: selectedUser._id,
+      mName: editName,
+      email: editEmail,
+      type: editType,
+      subscriptionStart: startDate,
+      subscriptionEnd: endDate,
+    });
+
+    if (response.data.success) {
+      toast({
+        title: "Success",
+        description: "User updated successfully",
+      });
+      setIsEditDialogOpen(false);
+      fetchData();
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to update user",
+        variant: "destructive",
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    toast({
+      title: "Error",
+      description: "Internal Server Error",
+      variant: "destructive",
+    });
+  }
+};
+
+
+  const getSubscriptionDates = (type: string) => {
+  const startDate = new Date();
+  let endDate: Date | null = null;
+
+  switch (type) {
+    case MonthType:
+      endDate = new Date(startDate);
+      endDate.setMonth(endDate.getMonth() + 1);
+      break;
+
+    case YearType:
+      endDate = new Date(startDate);
+      endDate.setFullYear(endDate.getFullYear() + 1);
+      break;
+
+    case 'forever':
+      endDate = null;
+      break;
+
+    case 'free':
+    default:
+      return { startDate: null, endDate: null };
+  }
+
+  return { startDate, endDate };
+};
+
+
   return (
-    <div className="container max-w-6xl mx-auto py-10">
-      <div className="text-center mb-12">
-        <h1 className="text-3xl font-bold">Choose Your Plan</h1>
-        <p className="mt-2 text-muted-foreground">
-          Your current plan is highlighted below
-        </p>
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Users</h1>
+          <p className="text-muted-foreground mt-1">Manage your user accounts</p>
+        </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {plans.map((plan) => {
-          const isActive = activeType === plan.id;
-          const isPopular = plan.planType === 'monthly';
+      <Card className="border-border/50">
+        <CardHeader className="pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <CardTitle>All Users</CardTitle>
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search users..."
+                className="w-full pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Joined</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            {isLoading ?
+              <TableBody>
+                <TableRow>
+                  <TableCell>
+                    <Skeleton className="h-5 w-24" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-24" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-24" />
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <Skeleton className="h-5 w-24" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-24" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-24" />
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <Skeleton className="h-5 w-24" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-24" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-24" />
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <Skeleton className="h-5 w-24" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-24" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-24" />
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+              :
+              <TableBody>
+                {filteredData.map((user) => (
+                  <TableRow key={user._id}>
+                    <TableCell className="font-medium">{user.mName}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={user.type !== 'free' ? 'default' : 'secondary'}>
+                        {user.type !== 'free' ? 'Paid' : 'Free'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {user.date ? format(new Date(user.date), 'PPP') : 'N/A'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(user)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteClick(user._id)}>
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
 
-          return (
-            <Card
-              key={plan.id}
-              className={cn(
-                'relative transition-all duration-300',
-                isActive
-                  ? 'border-2 border-primary shadow-lg'
-                  : 'border border-border/60',
-                isPopular && 'scale-[1.04]'
-              )}
-            >
-              {/* BADGES */}
-              {isActive && (
-                <span className="absolute top-4 right-4 bg-primary text-white text-xs px-3 py-1 rounded-full">
-                  Current Plan
-                </span>
-              )}
+                {filteredData.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <div className="flex flex-col items-center justify-center text-muted-foreground">
+                        <Search className="h-8 w-8 mb-2" />
+                        <p>No users match your search criteria</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            }
+          </Table>
+        </CardContent>
+      </Card>
 
-              {isPopular && !isActive && (
-                <span className="absolute top-4 right-4 bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-xs px-3 py-1 rounded-full">
-                  Most Popular
-                </span>
-              )}
-
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  {isPopular && <Crown className="h-5 w-5 text-primary" />}
-                  <CardTitle>{plan.name}</CardTitle>
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold">
-                    {currencySymbol(plan.currency)}
-                    {plan.price}
-                  </span>
-                  {plan.planType !== 'free' && (
-                    <span className="text-muted-foreground ml-1">
-                      /{plan.planType === 'monthly' ? 'mo' : 'yr'}
-                    </span>
-                  )}
-                </div>
-
-                <ul className="space-y-3">
-                  {plan.features.map((f: string, i: number) => (
-                    <li key={i} className="flex gap-3">
-                      <Check className="h-5 w-5 text-primary" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-
-              <CardFooter>
-                <Button
-                  disabled={isActive}
-                  onClick={() => handleSelectPlan(plan)}
-                  className="w-full"
-                  variant={isActive ? 'secondary' : 'default'}
-                >
-                  {isActive ? 'Active Plan' : 'Upgrade'}
-                </Button>
-              </CardFooter>
-            </Card>
-          );
-        })}
-      </div>
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update user details and subscription plan.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="email" className="text-right">
+                Email
+              </Label>
+              <Input
+                id="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="type" className="text-right">
+                Plan
+              </Label>
+              <Select value={editType} onValueChange={setEditType}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                  <SelectItem value="forever">Lifetime</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleUpdateUser}>Save changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-export default ProfilePricing;
+export default AdminUsers;
