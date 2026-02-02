@@ -88,40 +88,73 @@ const AdminUsers = () => {
   };
 
   const handleUpdateUser = async () => {
-    if (!selectedUser) return;
+  if (!selectedUser) return;
 
-    try {
-      const postURL = serverURL + '/api/admin/updateuser';
-      const response = await axios.post(postURL, {
-        userId: selectedUser._id,
-        mName: editName,
-        email: editEmail,
-        type: editType
+  const { startDate, endDate } = getSubscriptionDates(editType);
+
+  try {
+    const postURL = serverURL + '/api/admin/updateuser';
+    const response = await axios.post(postURL, {
+      userId: selectedUser._id,
+      mName: editName,
+      email: editEmail,
+      type: editType,
+      subscriptionStart: startDate,
+      subscriptionEnd: endDate,
+    });
+
+    if (response.data.success) {
+      toast({
+        title: "Success",
+        description: "User updated successfully",
       });
-
-      if (response.data.success) {
-        toast({
-          title: "Success",
-          description: "User updated successfully",
-        });
-        setIsEditDialogOpen(false);
-        fetchData();
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to update user",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error(error);
+      setIsEditDialogOpen(false);
+      fetchData();
+    } else {
       toast({
         title: "Error",
-        description: "Internal Server Error",
-        variant: "destructive"
+        description: "Failed to update user",
+        variant: "destructive",
       });
     }
-  };
+  } catch (error) {
+    console.error(error);
+    toast({
+      title: "Error",
+      description: "Internal Server Error",
+      variant: "destructive",
+    });
+  }
+};
+
+
+  const getSubscriptionDates = (type: string) => {
+  const startDate = new Date();
+  let endDate: Date | null = null;
+
+  switch (type) {
+    case MonthType:
+      endDate = new Date(startDate);
+      endDate.setMonth(endDate.getMonth() + 1);
+      break;
+
+    case YearType:
+      endDate = new Date(startDate);
+      endDate.setFullYear(endDate.getFullYear() + 1);
+      break;
+
+    case 'forever':
+      endDate = null;
+      break;
+
+    case 'free':
+    default:
+      return { startDate: null, endDate: null };
+  }
+
+  return { startDate, endDate };
+};
+
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -290,8 +323,8 @@ const AdminUsers = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value={MonthType}>Monthly</SelectItem>
-                  <SelectItem value={YearType}>Yearly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
                   <SelectItem value="forever">Lifetime</SelectItem>
                 </SelectContent>
               </Select>

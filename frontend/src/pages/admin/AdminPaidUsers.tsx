@@ -344,6 +344,8 @@
 // };
 
 // export default AdminPaidUsers;
+
+
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Search, Settings, Trash2 } from 'lucide-react';
@@ -557,6 +559,7 @@ const AdminPaidUsers = () => {
                         ? format(new Date(user.subscriptionEnd), 'PPP')
                         : 'Lifetime'}
                     </TableCell>
+                    
 
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
@@ -628,6 +631,7 @@ const AdminPaidUsers = () => {
                   <SelectValue placeholder="Select plan" />
                 </SelectTrigger>
                 <SelectContent>
+                   <SelectItem value="free">Free (7 days)</SelectItem>
                   <SelectItem value="monthly">Monthly</SelectItem>
                   <SelectItem value="yearly">Yearly</SelectItem>
                   <SelectItem value="forever">Lifetime</SelectItem>

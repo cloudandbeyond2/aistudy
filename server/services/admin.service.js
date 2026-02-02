@@ -61,39 +61,40 @@ export const getPaidUsers = async () => {
 
 
 export const updateUser = async ({ userId, mName, email, type }) => {
-  const now = new Date();
 
-  let subscriptionStart = null;
-  let subscriptionEnd = null;
+const now = new Date();
+let subscriptionStart = now;
+let subscriptionEnd = null;
 
-  if (type === 'monthly') {
-    subscriptionStart = new Date(now);
-    subscriptionEnd = addOneMonthSafe(now);
-  }
+if (type === 'free') {
+  subscriptionEnd = new Date(now);
+  subscriptionEnd.setDate(subscriptionEnd.getDate() + 7);
+}
 
-  if (type === 'yearly') {
-    subscriptionStart = new Date(now);
-    subscriptionEnd = new Date(now);
-    subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1);
-  }
+if (type === 'monthly') {
+  subscriptionEnd = new Date(now);
+  subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
+}
 
-  if (type === 'forever') {
-    subscriptionStart = new Date(now);
-    subscriptionEnd = null;
-  }
+if (type === 'yearly') {
+  subscriptionEnd = new Date(now);
+  subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1);
+}
 
-  if (type === 'free') {
-    subscriptionStart = null;
-    subscriptionEnd = null;
-  }
+if (type === 'forever') {
+  subscriptionStart = now;
+  subscriptionEnd = null; // permanent
+}
 
-  await User.findByIdAndUpdate(userId, {
-    mName,
-    email,
-    type,
-    subscriptionStart,
-    subscriptionEnd,
-  });
+
+await User.findByIdAndUpdate(userId, {
+  mName,
+  email,
+  type,
+  subscriptionStart,
+  subscriptionEnd,
+});
+
 };
 
 

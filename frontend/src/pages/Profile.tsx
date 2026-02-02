@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog"
 import { useNavigate } from 'react-router-dom';
 import TestimonialSubmission from '@/components/TestimonialSubmission';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -30,6 +31,10 @@ const Profile = () => {
     name: sessionStorage.getItem('mName'),
     email: sessionStorage.getItem('email'),
     password: "",
+    userType: sessionStorage.getItem('userType') || '', // individual | organization
+    profession: sessionStorage.getItem('profession') || '',
+    experienceLevel: sessionStorage.getItem('experienceLevel') || 'beginner',
+    organizationName: sessionStorage.getItem('organizationName') || '',
   });
   const navigate = useNavigate();
   const [processing, setProcessing] = useState(false);
@@ -126,7 +131,24 @@ const Profile = () => {
     const uid = sessionStorage.getItem('uid');
     const postURL = serverURL + '/api/profile';
     try {
-      const response = await axios.post(postURL, { email: formData.email, mName: formData.name, password: formData.password, uid });
+      const response = await axios.post(postURL, {
+  uid,
+  email: formData.email,
+  mName: formData.name,
+  password: formData.password,
+
+  userType: formData.userType,
+  profession: formData.userType === 'individual' ? formData.profession : '',
+  experienceLevel:
+    formData.userType === 'individual'
+      ? formData.experienceLevel
+      : '',
+  organizationName:
+    formData.userType === 'organization'
+      ? formData.organizationName
+      : '',
+});
+
       if (response.data.success) {
         toast({
           title: "Profile updated",
@@ -134,6 +156,11 @@ const Profile = () => {
         });
         sessionStorage.setItem('email', formData.email);
         sessionStorage.setItem('mName', formData.name);
+        sessionStorage.setItem('userType', formData.userType);
+        sessionStorage.setItem('organizationName',formData.organizationName);
+        sessionStorage.setItem('profession',formData.profession);
+        sessionStorage.setItem('experienceLevel',formData.experienceLevel);
+
         setProcessing(false);
         setIsEditing(false);
       } else {
@@ -371,7 +398,85 @@ const Profile = () => {
                         disabled={!isEditing}
                       />
                     </div>
-                  </div>
+                    <div className="space-y-2">
+  <Label>User Type</Label>
+
+  <Select
+    value={formData.userType}
+    onValueChange={(value) =>
+      setFormData((prev) => ({
+        ...prev,
+        userType: value,
+      }))
+    }
+    disabled={!isEditing}
+  >
+    <SelectTrigger>
+      <SelectValue placeholder="Select user type" />
+    </SelectTrigger>
+
+    <SelectContent>
+      <SelectItem value="individual">Individual</SelectItem>
+      <SelectItem value="organization">Organization</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
+
+
+               
+                  {formData.userType === 'individual' && (
+  <>
+    <div className="space-y-2">
+      <Label>Profession</Label>
+      <Input
+        name="profession"
+        value={formData.profession}
+        onChange={handleChange}
+        disabled={!isEditing}
+        placeholder="e.g. Software Developer"
+      />
+    </div>
+
+    <div className="space-y-2">
+  <Label>Experience Level</Label>
+
+  <Select
+    value={formData.experienceLevel}
+    onValueChange={(value) =>
+      setFormData((prev) => ({
+        ...prev,
+        experienceLevel: value,
+      }))
+    }
+    disabled={!isEditing}
+  >
+    <SelectTrigger>
+      <SelectValue placeholder="Select experience level" />
+    </SelectTrigger>
+
+    <SelectContent>
+      <SelectItem value="beginner">Beginner</SelectItem>
+      <SelectItem value="intermediate">Intermediate</SelectItem>
+      <SelectItem value="advanced">Advanced</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
+
+  </>
+)}
+{formData.userType === 'organization' && (
+  <div className="space-y-2">
+    <Label>Organization Name</Label>
+    <Input
+      name="organizationName"
+      value={formData.organizationName}
+      onChange={handleChange}
+      disabled={!isEditing}
+      placeholder="Company / Institute name"
+    />
+  </div>
+)}
+   </div>
                 </form>
               </TabsContent>
 
