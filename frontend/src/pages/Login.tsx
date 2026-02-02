@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRight, Mail, Lock, AlertTriangle, Sparkles, BookOpen, GraduationCap } from 'lucide-react';
+import { ArrowRight, Mail, Lock, AlertTriangle, Sparkles, BookOpen, GraduationCap, Home } from 'lucide-react';
 import { appName, serverURL } from '@/constants';
 import Logo from '../res/logo.svg';
 import axios from 'axios';
@@ -178,6 +178,14 @@ const Login = () => {
         </div>
       </div>
 
+      {/* Back to Website Button */}
+      <div className="absolute top-4 right-4 z-50">
+        <Link to="/" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors bg-background/50 backdrop-blur-sm px-4 py-2 rounded-full border border-border/50 hover:bg-background hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5">
+          <Home className="w-4 h-4" />
+          Back to Website
+        </Link>
+      </div>
+
       {/* Right Panel - Login Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12">
         <motion.div
@@ -337,7 +345,7 @@ const Login = () => {
           </p>
         </motion.div>
       </div>
-    </div>
+    </div >
   );
 };
 
