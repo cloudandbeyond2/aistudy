@@ -14,8 +14,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from '@/hooks/use-toast';
 import ShareOnSocial from 'react-share-on-social';
 import StatsCard from '@/components/dashboard/StatsCard';
+import { response } from 'express';
 
 const Dashboard = () => {
+  const daysleftRaw = sessionStorage.getItem("daysLeft");
+const daysleft = daysleftRaw === "UNLIMITED" ? null : Number(daysleftRaw);
+
+  const [isUnlimited, setIsUnlimited] = useState(false);
+  const [data, setData] = useState([]);
 const plan = sessionStorage.getItem('type');
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
@@ -27,8 +33,8 @@ const plan = sessionStorage.getItem('type');
   const [modules, setTotalModules] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-
-  function redirectCreate() {
+  const uid = sessionStorage.getItem('uid');
+  function redirectCreate() { 
     navigate("/dashboard/generate-course");
   }
 
@@ -77,6 +83,42 @@ function redirectPricing() {
       });
     }
   }
+   useEffect(() => {
+    fetchData();
+  }, []);
+
+    async function fetchData() {
+  const postURL = serverURL + `/api/getusers`;
+  const response = await axios.get(postURL);
+
+  const filteredData = response.data.filter(
+    (user: any) => user._id === uid
+  );
+
+  setData(filteredData);
+
+  if (filteredData.length > 0) {
+    const endDate = filteredData[0].subscriptionEnd;
+
+    // ✅ UNLIMITED ACCESS CASE
+    if (endDate === null) {
+      sessionStorage.setItem("daysLeft", "UNLIMITED");
+      setIsUnlimited(true);
+    } else {
+      const today = new Date();
+      const end = new Date(endDate);
+
+      const diffTime = end.getTime() - today.getTime();
+      const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      sessionStorage.setItem("daysLeft", daysLeft.toString());
+      setIsUnlimited(false);
+    }
+  }
+
+  setIsLoading(false);
+}
+
 
   const handleDeleteCourse = async (courseId: number) => {
     setIsLoading(true);
@@ -259,6 +301,33 @@ async function getDetails() {
             {/* RIGHT */}
             {/* Star bala */}
   <div className="flex gap-3">
+    <h6
+  style={{
+    display: "inline-block",
+    padding: "6px 14px",
+    borderRadius: "20px",
+    backgroundColor: isUnlimited
+      ? "#bcffad" 
+      : daysleft && daysleft > 7
+      ? "#E6F4EA"
+      : "#FDECEA",
+    color: isUnlimited
+      ? "#3730A3"
+      : daysleft && daysleft > 7
+      ? "#137333"
+      : "#B3261E",
+    fontWeight: 600,
+    fontSize: "14px",
+    paddingTop: "10px",
+  }}
+>
+  {isUnlimited
+    ? "👑 Unlimited Access"
+    : daysleft && daysleft > 0
+    ? `${daysleft} days left`
+    : "Expired"}
+</h6>
+
   <Button
   onClick={() => (window.location.href = websiteURL)}
   variant="outline"
@@ -266,8 +335,6 @@ async function getDetails() {
 >
   View Website
 </Button>
-
-
 
 <Button
       onClick={() =>courses.length === 1 && plan === 'free' ? redirectPricing():redirectCreate()}
