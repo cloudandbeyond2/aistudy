@@ -62,7 +62,7 @@ export const flutterwavePublicKey = "FLWPUBK_TEST-6ee1faf6460ea587f510a024ac4c2b
 //SOCIAL SIGNIN
 export const googleClientId = "723153373855-5e2f879afn1e5knuhacpfc729t60vvho.apps.googleusercontent.com";
 export const facebookClientId = "8065327730213158";
-
+export const recaptchaSiteKey = "6LfdFl4sAAAAAKvCQBt8Fiu4CXc-D52ly_tpX_fB";
 //SOCIAL MEDIA
 export const facebookSocialLink = "https://www.youtube.com/";
 export const twitterSocialLink = "https://www.youtube.com/";
