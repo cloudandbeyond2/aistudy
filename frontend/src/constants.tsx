@@ -1,6 +1,6 @@
 //BRAND
-export const appName = 'AiCourse';
-export const companyName = 'Aicourse by traininglabs';
+export const appName = 'AIstudy';
+export const companyName = 'AIstudy by traininglabs';
 export const websiteURL = 'https://aistudy-infilabs.vercel.app';
 export const serverURL = import.meta.env.PROD
   ? 'https://aistudy-backend1.vercel.app'

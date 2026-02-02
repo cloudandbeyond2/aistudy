@@ -154,6 +154,14 @@ import { Quote, Star } from "lucide-react";
 import axios from "axios";
 import { serverURL } from "@/constants";
 import { Skeleton } from "@/components/ui/skeleton";
+import Autoplay from "embla-carousel-autoplay";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface Testimonial {
   _id: string;
@@ -219,9 +227,9 @@ const Testimonials = () => {
 
   if (isLoading) {
     return (
-      <section className="py-24 bg-slate-50">
+      <section className="py-24 bg-muted/30">
         <div className="max-w-7xl mx-auto px-6 md:px-10">
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[1, 2, 3, 4].map((i) => (
               <Skeleton key={i} className="h-64 rounded-3xl" />
             ))}
@@ -234,7 +242,7 @@ const Testimonials = () => {
   return (
     <section
       id="testimonials"
-      className="py-24 md:py-32 bg-slate-50 relative overflow-hidden"
+      className="py-24 md:py-32 bg-muted/30 relative overflow-hidden"
     >
       <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10">
         {/* Heading */}
@@ -248,61 +256,75 @@ const Testimonials = () => {
           <span className="text-primary font-bold tracking-widest uppercase text-sm mb-4 block">
             Testimonials
           </span>
-          <h2 className="text-3xl md:text-5xl font-bold mb-6 text-slate-900">
+          <h2 className="text-3xl md:text-5xl font-bold mb-6 text-foreground">
             Trusted by Learners <br className="hidden md:block" /> Around the Globe
           </h2>
           <div className="h-1.5 w-24 bg-primary mx-auto rounded-full" />
         </motion.div>
 
-        {/* Cards */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="grid md:grid-cols-2 gap-10"
+        {/* Carousel Slider */}
+        <Carousel
+          opts={{
+            align: "start",
+            loop: true,
+          }}
+          plugins={[
+            Autoplay({
+              delay: 3000,
+            }),
+          ]}
+          className="w-full"
         >
-          {testimonials.map((testimonial) => (
-            <motion.div
-              key={testimonial._id}
-              variants={itemVariants}
-              whileHover={{ y: -5 }}
-              className="bg-white p-10 rounded-[40px] shadow-sm hover:shadow-2xl transition-all duration-300 relative border border-slate-100"
-            >
-              <Quote className="absolute top-10 right-10 h-12 w-12 text-primary/10" />
+          <CarouselContent className="-ml-4">
+            {testimonials.map((testimonial) => (
+              <CarouselItem key={testimonial._id} className="pl-4 md:basis-1/2 lg:basis-1/4">
+                <motion.div
+                  variants={itemVariants}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  className="bg-card p-8 h-full rounded-3xl transition-all duration-300 relative border border-border"
+                >
+                  <Quote className="absolute top-8 right-8 h-8 w-8 text-primary/10" />
 
-              {/* Rating */}
-              <div className="flex gap-1 mb-6">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="h-4 w-4 fill-primary text-primary"
-                  />
-                ))}
-              </div>
+                  {/* Rating */}
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className="h-3.5 w-3.5 fill-primary text-primary"
+                      />
+                    ))}
+                  </div>
 
-              {/* Message */}
-              <p className="text-slate-600 italic text-xl leading-relaxed mb-8">
-                "{testimonial.message}"
-              </p>
-
-              {/* User */}
-              <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xl">
-                  {testimonial.userName.charAt(0)}
-                </div>
-                <div>
-                  <h4 className="font-bold text-lg text-slate-900">
-                    {testimonial.userName}
-                  </h4>
-                  <p className="text-primary text-sm font-semibold">
-                    {testimonial.profession}
+                  {/* Message */}
+                  <p className="text-muted-foreground italic text-lg leading-relaxed mb-6">
+                    "{testimonial.message}"
                   </p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+
+                  {/* User */}
+                  <div className="flex items-center gap-3 mt-auto">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-base flex-shrink-0">
+                      {testimonial.userName.charAt(0)}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-base text-foreground truncate max-w-[120px]">
+                        {testimonial.userName}
+                      </h4>
+                      <p className="text-primary text-xs font-semibold truncate max-w-[120px]">
+                        {testimonial.profession}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <div className="hidden xl:block">
+            <CarouselPrevious className="-left-12 hover:bg-primary hover:text-white border-primary/20" />
+            <CarouselNext className="-right-12 hover:bg-primary hover:text-white border-primary/20" />
+          </div>
+        </Carousel>
       </div>
     </section>
   );
