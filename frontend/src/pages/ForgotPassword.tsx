@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Mail, AlertTriangle, ArrowRight, ShieldCheck, KeyRound } from 'lucide-react';
+import { ArrowLeft, Mail, AlertTriangle, ArrowRight, ShieldCheck, KeyRound, Home } from 'lucide-react';
 import { appLogo, appName, companyName, serverURL } from '@/constants';
 import Logo from '../res/logo.svg';
 import axios from 'axios';
@@ -127,6 +127,14 @@ const ForgotPassword = () => {
           </motion.div>
 
         </div>
+      </div>
+
+      {/* Back to Website Button */}
+      <div className="absolute top-4 right-4 z-50">
+        <Link to="/" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors bg-background/50 backdrop-blur-sm px-4 py-2 rounded-full border border-border/50 hover:bg-background hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5">
+          <Home className="w-4 h-4" />
+          Back to Website
+        </Link>
       </div>
 
       {/* Right Panel - Forgot Password Form */}
