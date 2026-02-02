@@ -26,8 +26,10 @@ import Logo from '../../res/logo.svg';
 import { DownloadIcon } from '@radix-ui/react-icons';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
+import { useTheme } from "@/contexts/ThemeContext";
 
 const DashboardLayout = () => {
+  const { toggleTheme } = useTheme();
   const isMobile = useIsMobile();
   const location = useLocation();
   const [installPrompt, setInstallPrompt] = useState(null);
@@ -191,13 +193,14 @@ const DashboardLayout = () => {
               )
               }
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Theme">
-                  <div className="flex items-center space-x-2">
-                    <ThemeToggle />
-                    <span>Toggle Theme</span>
-                  </div>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+  {/* Add the onClick here so the whole row is interactive */}
+  <SidebarMenuButton asChild tooltip="Theme" onClick={toggleTheme}>
+    <div className="flex items-center space-x-2 cursor-pointer w-full">
+      <ThemeToggle />
+      <span className="pl-3">Toggle Theme</span>
+    </div>
+  </SidebarMenuButton>
+</SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Logout" style={{paddingLeft:"20px"}}>
                   <Link onClick={Logout} className="text-muted-foreground hover:text-destructive transition-colors" style={{gap: "30px"}}>

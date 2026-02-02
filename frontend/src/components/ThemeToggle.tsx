@@ -5,22 +5,16 @@ import { Moon, Sun } from "lucide-react";
 import { Toggle } from "./ui/toggle";
 
 export function ThemeToggle({ className }: { className?: string }) {
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme(); // We only need the current theme state here
   
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={toggleTheme}
-      className={className}
-      title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-    >
+    <div className={`pl-2 cursor-pointer ${className}`}>
       {theme === 'light' ? (
         <Moon className="h-5 w-5" />
       ) : (
         <Sun className="h-5 w-5" />
       )}
       <span className="sr-only">Toggle theme</span>
-    </Button>
+    </div>
   );
 }
