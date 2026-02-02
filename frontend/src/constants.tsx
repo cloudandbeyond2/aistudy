@@ -60,7 +60,7 @@ export const flutterwavePlanIdTwo = "67961";
 export const flutterwavePublicKey = "FLWPUBK_TEST-6ee1faf6460ea587f510a024ac4c2b23-Xrr";
 
 //SOCIAL SIGNIN
-export const googleClientId = "666513577216-o87ff4tl1cm3bpr064km9vo1iqrfcae9.apps.googleusercontent.com";
+export const googleClientId = "723153373855-5e2f879afn1e5knuhacpfc729t60vvho.apps.googleusercontent.com";
 export const facebookClientId = "8065327730213158";
 
 //SOCIAL MEDIA
