@@ -12,14 +12,25 @@ export const signup = async (req, res) => {
   try {
     // 1. Verify reCAPTCHA
     if (captchaToken) {
-      const response = await axios.post(
-        `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`
-      );
+      try {
+        const response = await axios.post(
+          `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`
+        );
 
-      if (!response.data.success) {
+        console.log('reCAPTCHA Verification Response:', response.data);
+
+        if (!response.data.success) {
+          return res.json({
+            success: false,
+            message: 'reCAPTCHA verification failed. Please try again.',
+            error: response.data['error-codes'] ? response.data['error-codes'].join(', ') : 'Unknown reCAPTCHA error'
+          });
+        }
+      } catch (captchaErr) {
+        console.error('reCAPTCHA Service Error:', captchaErr.message);
         return res.json({
           success: false,
-          message: 'reCAPTCHA verification failed. Please try again.'
+          message: 'Error communicating with reCAPTCHA service.'
         });
       }
     } else {
@@ -82,7 +93,8 @@ export const signup = async (req, res) => {
     }
 
     // Send Verification Email
-    const verificationLink = `${process.env.WEBSITE_URL}/verify-email/${verificationToken}`;
+    const websiteURL = process.env.WEBSITE_URL || 'http://localhost:5173';
+    const verificationLink = `${websiteURL}/verify-email/${verificationToken}`;
 
     const mailOptions = {
       from: process.env.EMAIL,
@@ -104,7 +116,19 @@ export const signup = async (req, res) => {
       `
     };
 
-    await transporter.sendMail(mailOptions);
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (mailErr) {
+      console.error('Mail Sending Error:', mailErr);
+      // Even if mail fails, user is created. We can warn them.
+      return res.json({
+        success: true,
+        message: 'Account created, but we could not send a verification email. Please contact support.',
+        userId: newUser._id,
+        verificationRequired: true,
+        mailError: true
+      });
+    }
 
     return res.json({
       success: true,

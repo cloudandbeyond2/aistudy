@@ -94,10 +94,18 @@ const Signup = () => {
           sendEmail(email);
         } else {
           setSuccess(response.data.message);
-          toast({
-            title: "Account Created",
-            description: "Please check your email to verify your account.",
-          });
+          if (response.data.mailError) {
+            toast({
+              variant: "destructive",
+              title: "Account Created with Warning",
+              description: "Your account was created, but we couldn't send the verification email. Please contact support.",
+            });
+          } else {
+            toast({
+              title: "Account Created",
+              description: "Please check your email to verify your account.",
+            });
+          }
         }
       } else {
         setError(response.data.message);
