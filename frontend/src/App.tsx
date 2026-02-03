@@ -39,6 +39,8 @@ import AdminAdmins from "./pages/admin/AdminAdmins";
 import AdminContacts from "./pages/admin/AdminContacts";
 import AdminTerms from "./pages/admin/AdminTerms";
 import AdminPrivacy from "./pages/admin/AdminPrivacy";
+import AdminCookies from "./pages/admin/AdminCookies";
+
 import AdminCancellation from "./pages/admin/AdminCancellation";
 import AdminRefund from "./pages/admin/AdminRefund";
 import AdminSubscriptionBilling from "./pages/admin/AdminSubscriptionBilling";
@@ -46,6 +48,7 @@ import AdminCreateBlog from "./pages/admin/AdminCreateBlog";
 import AdminPricing from "./pages/admin/AdminPricing";
 import AdminTestimonials from "./pages/admin/AdminTestimonials";
 import SubscriptionBillingPolicy from "./pages/SubscriptionBillingPolicy";
+import Cookies from "./pages/admin/Cookies";{/*suganya */}
 import RefundPolicy from "./pages/RefundPolicy";
 import CancellationPolicy from "./pages/CancellationPolicy";
 import QuizPage from "./pages/QuizPage";
@@ -55,6 +58,7 @@ import AdminCertificate from "./pages/admin/AdminCertificate";
 import CertificateVerification from "./pages/CertificateVerification";
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { googleClientId } from "./constants";
+
 
 const queryClient = new QueryClient();
 
@@ -117,6 +121,7 @@ const App = () => (
                 <Route path="/cancellation-policy" element={<CancellationPolicy />} />
                 <Route path="/refund-policy" element={<RefundPolicy />} />
                 <Route path="/subscription-billing-policy" element={<SubscriptionBillingPolicy />} />
+                <Route path="/cookies" element={<Cookies/>}/> {/*suganya */}
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:id" element={<BlogPost />} />
 
@@ -131,6 +136,8 @@ const App = () => (
                   <Route path="contacts" element={<AdminContacts />} />
                   <Route path="terms" element={<AdminTerms />} />
                   <Route path="privacy" element={<AdminPrivacy />} />
+                   <Route path="cookies" element={<AdminCookies />} /> {/*suganya */}
+
                   <Route path="cancellation" element={<AdminCancellation />} />
                   <Route path="refund" element={<AdminRefund />} />
                   <Route path="subscription-billing" element={<AdminSubscriptionBilling />} />
