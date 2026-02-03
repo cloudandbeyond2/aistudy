@@ -123,7 +123,7 @@ export const signup = async (req, res) => {
       // Even if mail fails, user is created. We can warn them.
       return res.json({
         success: true,
-        message: 'Account created, but we could not send a verification email. Please contact support.',
+        message: `Account created, but we could not send a verification email. Error: ${mailErr.message}`,
         userId: newUser._id,
         verificationRequired: true,
         mailError: true
