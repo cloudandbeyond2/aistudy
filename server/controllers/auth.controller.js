@@ -142,7 +142,9 @@ export const signin = async (req, res) => {
 
     if (password === user.password) {
       // Check if email is verified
-      if (user.isEmailVerified === false) {
+      // We only enforce this for users who HAVE a verification token (newly created users)
+      // Legacy users who don't have a token yet will be allowed to log in
+      if (user.isEmailVerified === false && user.emailVerificationToken) {
         return res.json({
           success: false,
           message: 'Please verify your email before logging in. Check your inbox for the verification link.'
