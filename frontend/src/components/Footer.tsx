@@ -137,14 +137,29 @@ const Footer = () => {
           </div>
 
           {/* PLATFORM */}
-          <div>
-            <h4 className="text-white font-black text-xl mb-8 uppercase tracking-widest">
-              Platform
-            </h4>
-            <ul className="space-y-4 text-lg">
-              <li><Link to="/pricing" className="hover:text-primary">Pricing</Link></li>
-            </ul>
-          </div>
+          {/* PLATFORM */}
+<div>
+  <h4 className="text-white font-black text-xl mb-8 uppercase tracking-widest">
+    Platform
+  </h4>
+  <ul className="space-y-4 text-lg">
+    <li>
+      <a href="/#features" className="hover:text-primary">
+        Features
+      </a>
+    </li>
+    <li>
+      <a href="/#how-it-works" className="hover:text-primary">
+        How It Works
+      </a>
+    </li>
+    <li>
+      <a href="/#pricing" className="hover:text-primary">
+        Pricing
+      </a>
+    </li>
+  </ul>
+</div>
 
           {/* COMPANY */}
           <div>
@@ -183,7 +198,7 @@ const Footer = () => {
           <div className="flex items-center space-x-8 text-sm font-medium">
             <Link to="/privacy-policy" className="hover:text-white">Privacy</Link>
             <Link to="/terms" className="hover:text-white">Terms</Link>
-            <Link to="/subscription-billing-policy" className="hover:text-white">
+            <Link to="/cookies" className="hover:text-white">
               Cookies
             </Link>
           </div>
