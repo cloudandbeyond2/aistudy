@@ -159,17 +159,18 @@ const Header = () => {
           ) : (
             <div className="flex items-center space-x-3">
               <Link to="/login">
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "font-bold rounded-full px-6",
-                    isScrolled
-                      ? "text-slate-600 hover:text-primary dark:text-slate-300"
-                      : "text-white/80 hover:text-white"
-                  )}
-                >
-                  Login
-                </Button>
+            <Button
+  variant="ghost"
+  className={cn(
+    "font-bold rounded-full px-6 transition-colors",
+    isScrolled
+      ? "text-slate-600 hover:bg-primary/10 hover:text-primary dark:text-slate-300 dark:hover:bg-primary/20"
+      : "text-white/80 hover:bg-white/20 hover:text-white"
+  )}
+>
+  Login
+</Button>
+
               </Link>
 
               <Link to="/signup">
