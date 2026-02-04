@@ -12,6 +12,14 @@ export const signup = async (req, res) => {
   try {
     // 1. Verify reCAPTCHA
     if (captchaToken) {
+      const response = await axios.post(
+        `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`
+      );
+
+      if (!response.data.success) {
+        return res.json({
+          success: false,
+          message: 'reCAPTCHA verification failed. Please try again.'
       try {
         const response = await axios.post(
           `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`
@@ -93,8 +101,7 @@ export const signup = async (req, res) => {
     }
 
     // Send Verification Email
-    const websiteURL = process.env.WEBSITE_URL || 'http://localhost:5173';
-    const verificationLink = `${websiteURL}/verify-email/${verificationToken}`;
+    const verificationLink = `${process.env.WEBSITE_URL}/verify-email/${verificationToken}`;
 
     const mailOptions = {
       from: process.env.EMAIL,
@@ -116,19 +123,7 @@ export const signup = async (req, res) => {
       `
     };
 
-    try {
-      await transporter.sendMail(mailOptions);
-    } catch (mailErr) {
-      console.error('Mail Sending Error:', mailErr);
-      // Even if mail fails, user is created. We can warn them.
-      return res.json({
-        success: true,
-        message: 'Account created, but we could not send a verification email. Please contact support.',
-        userId: newUser._id,
-        verificationRequired: true,
-        mailError: true
-      });
-    }
+    await transporter.sendMail(mailOptions);
 
     return res.json({
       success: true,
