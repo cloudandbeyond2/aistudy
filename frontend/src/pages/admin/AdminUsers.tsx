@@ -1,10 +1,8 @@
-
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UserPlus, Search, MoreVertical, Edit, Trash } from 'lucide-react';
+import { Search, Edit, Trash } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { serverURL, MonthType, YearType } from '@/constants';
@@ -20,36 +18,61 @@ const AdminUsers = () => {
   const [data, setData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+
+  // pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // edit dialog
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editType, setEditType] = useState('');
+
   const { toast } = useToast();
 
-  // Filtered data using memoization for better performance
-  const filteredData = useMemo(() => {
-    const query = searchQuery.toLowerCase().trim();
-    return data.filter((user) => {
-      const nameMatch = user.mName?.toLowerCase().includes(query);
-      const emailMatch = user.email?.toLowerCase().includes(query);
-      const typeDisplay = user.type !== 'free' ? 'paid' : 'free';
-      const typeMatch = typeDisplay.includes(query);
-      return nameMatch || emailMatch || typeMatch;
-    });
-  }, [data, searchQuery]);
-
+  // ---------------- FETCH USERS ----------------
   useEffect(() => {
     fetchData();
   }, []);
 
   async function fetchData() {
-    const postURL = serverURL + `/api/getusers`;
-    const response = await axios.get(postURL);
-    setData(response.data);
-    setIsLoading(false);
+    try {
+      const response = await axios.get(`${serverURL}/api/getusers`);
+      setData(response.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
+  // ---------------- FILTER ----------------
+  const filteredData = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+    return data.filter((user) => {
+      const nameMatch = user.mName?.toLowerCase().includes(query);
+      const emailMatch = user.email?.toLowerCase().includes(query);
+      const typeMatch = (user.type !== 'free' ? 'paid' : 'free').includes(query);
+      return nameMatch || emailMatch || typeMatch;
+    });
+  }, [data, searchQuery]);
+
+  // reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  // ---------------- PAGINATION ----------------
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredData.slice(start, start + itemsPerPage);
+  }, [filteredData, currentPage]);
+
+  // ---------------- EDIT / DELETE ----------------
   const handleEditClick = (user) => {
     setSelectedUser(user);
     setEditName(user.mName);
@@ -59,128 +82,84 @@ const AdminUsers = () => {
   };
 
   const handleDeleteClick = async (userId) => {
-    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      try {
-        const postURL = serverURL + '/api/admin/deleteuser';
-        const response = await axios.post(postURL, { userId });
-        if (response.data.success) {
-          toast({
-            title: "User deleted",
-            description: "User has been successfully deleted.",
-          });
-          fetchData();
-        } else {
-          toast({
-            title: "Error",
-            description: "Failed to delete user",
-            variant: "destructive"
-          });
-        }
-      } catch (error) {
-        console.error(error);
-        toast({
-          title: "Error",
-          description: "Internal Server Error",
-          variant: "destructive"
-        });
+    if (!confirm('Are you sure you want to delete this user?')) return;
+
+    try {
+      const response = await axios.post(`${serverURL}/api/admin/deleteuser`, { userId });
+      if (response.data.success) {
+        toast({ title: 'User deleted successfully' });
+        fetchData();
+      } else {
+        toast({ title: 'Delete failed', variant: 'destructive' });
       }
+    } catch (err) {
+      toast({ title: 'Server error', variant: 'destructive' });
     }
   };
 
-  const handleUpdateUser = async () => {
-  if (!selectedUser) return;
+  const getSubscriptionDates = (type) => {
+    const startDate = new Date();
+    let endDate = null;
 
-  const { startDate, endDate } = getSubscriptionDates(editType);
-
-  try {
-    const postURL = serverURL + '/api/admin/updateuser';
-    const response = await axios.post(postURL, {
-      userId: selectedUser._id,
-      mName: editName,
-      email: editEmail,
-      type: editType,
-      subscriptionStart: startDate,
-      subscriptionEnd: endDate,
-    });
-
-    if (response.data.success) {
-      toast({
-        title: "Success",
-        description: "User updated successfully",
-      });
-      setIsEditDialogOpen(false);
-      fetchData();
-    } else {
-      toast({
-        title: "Error",
-        description: "Failed to update user",
-        variant: "destructive",
-      });
-    }
-  } catch (error) {
-    console.error(error);
-    toast({
-      title: "Error",
-      description: "Internal Server Error",
-      variant: "destructive",
-    });
-  }
-};
-
-
-  const getSubscriptionDates = (type: string) => {
-  const startDate = new Date();
-  let endDate: Date | null = null;
-
-  switch (type) {
-    case MonthType:
-      endDate = new Date(startDate);
-      endDate.setMonth(endDate.getMonth() + 1);
-      break;
-
-    case YearType:
-      endDate = new Date(startDate);
-      endDate.setFullYear(endDate.getFullYear() + 1);
-      break;
-
-    case 'forever':
-      endDate = null;
-      break;
-
-    case 'free':
-    default:
+    if (type === MonthType) {
+      endDate = new Date(startDate.setMonth(startDate.getMonth() + 1));
+    } else if (type === YearType) {
+      endDate = new Date(startDate.setFullYear(startDate.getFullYear() + 1));
+    } else if (type === 'free') {
       return { startDate: null, endDate: null };
-  }
+    }
 
-  return { startDate, endDate };
-};
+    return { startDate, endDate };
+  };
 
+  const handleUpdateUser = async () => {
+    if (!selectedUser) return;
 
+    const { startDate, endDate } = getSubscriptionDates(editType);
+
+    try {
+      const response = await axios.post(`${serverURL}/api/admin/updateuser`, {
+        userId: selectedUser._id,
+        mName: editName,
+        email: editEmail,
+        type: editType,
+        subscriptionStart: startDate,
+        subscriptionEnd: endDate,
+      });
+
+      if (response.data.success) {
+        toast({ title: 'User updated successfully' });
+        setIsEditDialogOpen(false);
+        fetchData();
+      } else {
+        toast({ title: 'Update failed', variant: 'destructive' });
+      }
+    } catch (err) {
+      toast({ title: 'Server error', variant: 'destructive' });
+    }
+  };
+
+  // ---------------- UI ----------------
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-          <p className="text-muted-foreground mt-1">Manage your user accounts</p>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">Users</h1>
 
-      <Card className="border-border/50">
-        <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center gap-4">
             <CardTitle>All Users</CardTitle>
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                type="search"
                 placeholder="Search users..."
-                className="w-full pl-8"
+                className="pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
         </CardHeader>
+
         <CardContent>
           <Table>
             <TableHeader>
@@ -192,58 +171,20 @@ const AdminUsers = () => {
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            {isLoading ?
-              <TableBody>
-                <TableRow>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-              :
-              <TableBody>
-                {filteredData.map((user) => (
+
+            <TableBody>
+              {isLoading ? (
+                [...Array(4)].map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                  </TableRow>
+                ))
+              ) : paginatedData.length > 0 ? (
+                paginatedData.map((user) => (
                   <TableRow key={user._id}>
-                    <TableCell className="font-medium">{user.mName}</TableCell>
+                    <TableCell>{user.mName}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
                       <Badge variant={user.type !== 'free' ? 'default' : 'secondary'}>
@@ -254,84 +195,78 @@ const AdminUsers = () => {
                       {user.date ? format(new Date(user.date), 'PPP') : 'N/A'}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(user)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteClick(user._id)}>
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <Button size="icon" variant="ghost" onClick={() => handleEditClick(user)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => handleDeleteClick(user._id)}>
+                        <Trash className="h-4 w-4 text-destructive" />
+                      </Button>
                     </TableCell>
                   </TableRow>
-                ))}
-
-                {filteredData.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      <div className="flex flex-col items-center justify-center text-muted-foreground">
-                        <Search className="h-8 w-8 mb-2" />
-                        <p>No users match your search criteria</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            }
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    No users found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
           </Table>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-end gap-2 mt-6">
+              <Button size="sm" variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+                Previous
+              </Button>
+
+              {[...Array(totalPages)].map((_, i) => (
+                <Button
+                  key={i}
+                  size="sm"
+                  variant={currentPage === i + 1 ? 'default' : 'outline'}
+                  onClick={() => setCurrentPage(i + 1)}
+                >
+                  {i + 1}
+                </Button>
+              ))}
+
+              <Button size="sm" variant="outline" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+                Next
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
+      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription>
-              Update user details and subscription plan.
-            </DialogDescription>
+            <DialogDescription>Update user details</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input
-                id="name"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right">
-                Email
-              </Label>
-              <Input
-                id="email"
-                value={editEmail}
-                onChange={(e) => setEditEmail(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="type" className="text-right">
-                Plan
-              </Label>
-              <Select value={editType} onValueChange={setEditType}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select plan" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
-                  <SelectItem value="forever">Lifetime</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+
+          <div className="space-y-4">
+            <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Name" />
+            <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} placeholder="Email" />
+
+            <Select value={editType} onValueChange={setEditType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select plan" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="free">Free</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="yearly">Yearly</SelectItem>
+                <SelectItem value="forever">Lifetime</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
           <DialogFooter>
-            <Button onClick={handleUpdateUser}>Save changes</Button>
+            <Button onClick={handleUpdateUser}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
