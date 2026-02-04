@@ -79,11 +79,11 @@ const Signup = () => {
       const postURL = serverURL + '/api/signup';
       const type = 'free';
 
-      const response = await axios.post(postURL, { email, mName: name, password, type, captchaToken });
+      const response = await axios.post(postURL, { email, name: name, password, type, captchaToken });
       if (response.data.success) {
         if (response.data.autoLogin) {
           sessionStorage.setItem('email', email);
-          sessionStorage.setItem('mName', name);
+          sessionStorage.setItem('name', name);
           sessionStorage.setItem('auth', 'true');
           sessionStorage.setItem('uid', response.data.userId);
           sessionStorage.setItem('type', 'forever');
@@ -119,8 +119,8 @@ const Signup = () => {
     }
   };
 
-  async function sendEmail(mEmail: string, mName?: string) {
-    const userName = mName || name;
+  async function sendEmail(mEmail: string, name?: string) {
+    const userName = name || name;
     try {
       const dataToSend = {
         subject: `Welcome to ${appName}`,
@@ -460,7 +460,7 @@ const Signup = () => {
                     });
                     setIsLoading(false);
                     sessionStorage.setItem('email', decoded.email);
-                    sessionStorage.setItem('mName', decoded.name);
+                    sessionStorage.setItem('name', decoded.name);
                     sessionStorage.setItem('auth', 'true');
                     sessionStorage.setItem('uid', response.data.userData._id);
                     sessionStorage.setItem('type', response.data.userData.type);
