@@ -20,6 +20,25 @@ export const signup = async (req, res) => {
         return res.json({
           success: false,
           message: 'reCAPTCHA verification failed. Please try again.'
+      try {
+        const response = await axios.post(
+          `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`
+        );
+
+        console.log('reCAPTCHA Verification Response:', response.data);
+
+        if (!response.data.success) {
+          return res.json({
+            success: false,
+            message: 'reCAPTCHA verification failed. Please try again.',
+            error: response.data['error-codes'] ? response.data['error-codes'].join(', ') : 'Unknown reCAPTCHA error'
+          });
+        }
+      } catch (captchaErr) {
+        console.error('reCAPTCHA Service Error:', captchaErr.message);
+        return res.json({
+          success: false,
+          message: 'Error communicating with reCAPTCHA service.'
         });
       }
     } else {

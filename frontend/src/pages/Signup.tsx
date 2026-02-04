@@ -15,14 +15,19 @@ import axios from 'axios';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from "jwt-decode";
 import { motion, AnimatePresence } from 'framer-motion';
+import ReCAPTCHA from "react-google-recaptcha";
+import { recaptchaSiteKey } from '@/constants';
 
 const Signup = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -42,8 +47,13 @@ const Signup = () => {
     setError('');
 
     // Simple validation
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !confirmPassword) {
       setError('Please fill out all fields');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
 
@@ -57,6 +67,11 @@ const Signup = () => {
       return;
     }
 
+    if (!captchaToken) {
+      setError('Please complete the reCAPTCHA');
+      return;
+    }
+
     setIsLoading(true);
 
     // This is where you would integrate signup logic
@@ -64,18 +79,34 @@ const Signup = () => {
       const postURL = serverURL + '/api/signup';
       const type = 'free';
 
-      const response = await axios.post(postURL, { email, mName: name, password, type });
+      const response = await axios.post(postURL, { email, mName: name, password, type, captchaToken });
       if (response.data.success) {
-        sessionStorage.setItem('email', email);
-        sessionStorage.setItem('mName', name);
-        sessionStorage.setItem('auth', 'true');
-        sessionStorage.setItem('uid', response.data.userId);
-        sessionStorage.setItem('type', 'free');
-        toast({
-          title: "Account created!",
-          description: "Welcome to " + appName + ".",
-        });
-        sendEmail(email);
+        if (response.data.autoLogin) {
+          sessionStorage.setItem('email', email);
+          sessionStorage.setItem('mName', name);
+          sessionStorage.setItem('auth', 'true');
+          sessionStorage.setItem('uid', response.data.userId);
+          sessionStorage.setItem('type', 'forever');
+          toast({
+            title: "Account created!",
+            description: "Welcome to " + appName + ".",
+          });
+          sendEmail(email);
+        } else {
+          setSuccess(response.data.message);
+          if (response.data.mailError) {
+            toast({
+              variant: "destructive",
+              title: "Account Created with Warning",
+              description: "Your account was created, but we couldn't send the verification email. Please contact support.",
+            });
+          } else {
+            toast({
+              title: "Account Created",
+              description: "Please check your email to verify your account.",
+            });
+          }
+        }
       } else {
         setError(response.data.message);
         setIsLoading(false);
@@ -270,6 +301,19 @@ const Signup = () => {
                 </Alert>
               </motion.div>
             )}
+            {success && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-6 overflow-hidden"
+              >
+                <Alert className="bg-green-500/10 border-green-500/20 text-green-600">
+                  <ShieldCheck className="h-4 w-4" />
+                  <AlertDescription className="font-medium text-sm">{success}</AlertDescription>
+                </Alert>
+              </motion.div>
+            )}
           </AnimatePresence>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -309,7 +353,7 @@ const Signup = () => {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-xs font-bold tracking-wider uppercase text-muted-foreground/80">
+              <Label htmlFor="password" { /* @ts-ignore */ ...{}} className="text-xs font-bold tracking-wider uppercase text-muted-foreground/80">
                 Password
               </Label>
               <div className="relative group">
@@ -324,6 +368,31 @@ const Signup = () => {
                   disabled={isLoading}
                 />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPassword" { /* @ts-ignore */ ...{}} className="text-xs font-bold tracking-wider uppercase text-muted-foreground/80">
+                Confirm Password
+              </Label>
+              <div className="relative group">
+                <Lock className="absolute left-3.5 top-3 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Repeat your password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pl-11 h-12 bg-muted/30 border-transparent focus:border-primary focus:bg-background transition-all rounded-xl"
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-center py-2">
+              <ReCAPTCHA
+                sitekey={recaptchaSiteKey}
+                onChange={(token) => setCaptchaToken(token)}
+              />
             </div>
 
             <div className="flex items-start space-x-2 pt-2">
