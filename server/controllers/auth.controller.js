@@ -12,14 +12,6 @@ export const signup = async (req, res) => {
   try {
     // 1. Verify reCAPTCHA
     if (captchaToken) {
-      const response = await axios.post(
-        `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`
-      );
-
-      if (!response.data.success) {
-        return res.json({
-          success: false,
-          message: 'reCAPTCHA verification failed. Please try again.'
       try {
         const response = await axios.post(
           `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`
@@ -101,7 +93,8 @@ export const signup = async (req, res) => {
     }
 
     // Send Verification Email
-    const verificationLink = `${process.env.WEBSITE_URL}/verify-email/${verificationToken}`;
+    const websiteURL = process.env.WEBSITE_URL || 'http://localhost:5173';
+    const verificationLink = `${websiteURL}/verify-email/${verificationToken}`;
 
     const mailOptions = {
       from: process.env.EMAIL,
@@ -123,7 +116,19 @@ export const signup = async (req, res) => {
       `
     };
 
-    await transporter.sendMail(mailOptions);
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (mailErr) {
+      console.error('Mail Sending Error:', mailErr);
+      // Even if mail fails, user is created. We can warn them.
+      return res.json({
+        success: true,
+        message: 'Account created, but we could not send a verification email. Please contact support.',
+        userId: newUser._id,
+        verificationRequired: true,
+        mailError: true
+      });
+    }
 
     return res.json({
       success: true,
@@ -382,82 +387,50 @@ export const resetPassword = async (req, res) => {
 /**
  * UPDATE USER PROFILE
  */
-// export const updateProfile = async (req, res) => {
-//   const { email, mName, password, uid } = req.body;
-
-//   if (!uid || !email || !mName) {
-//     return res.status(400).json({
-//       success: false,
-//       message: 'Missing required fields'
-//     });
-//   }
-
-//   try {
-//     const updateData = {
-//       email,
-//       mName
-//     };
-
-//     // Only update password if provided
-//     if (password && password.trim() !== '') {
-//       updateData.password = password;
-//     }
-
-//     const updatedUser = await User.findByIdAndUpdate(
-//       uid,
-//       { $set: updateData },
-//       { new: true }
-//     );
-
-//     if (!updatedUser) {
-//       return res.status(404).json({
-//         success: false,
-//         message: 'User not found'
-//       });
-//     }
-
-//     res.json({
-//       success: true,
-//       message: 'Profile updated successfully',
-//       user: updatedUser
-//     });
-//   } catch (error) {
-//     console.log('Profile update error:', error);
-//     res.status(500).json({
-//       success: false,
-//       message: 'Internal server error'
-//     });
-//   }
-// };
-// GET profile
-
-
 export const updateProfile = async (req, res) => {
-  try {
-    const { uid, ...updateData } = req.body;
+  const { email, mName, password, uid } = req.body;
 
-    const user = await User.findByIdAndUpdate(
+  if (!uid || !email || !mName) {
+    return res.status(400).json({
+      success: false,
+      message: 'Missing required fields'
+    });
+  }
+
+  try {
+    const updateData = {
+      email,
+      mName
+    };
+
+    // Only update password if provided
+    if (password && password.trim() !== '') {
+      updateData.password = password;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
       uid,
       { $set: updateData },
       { new: true }
     );
 
-    if (!user) {
+    if (!updatedUser) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: 'User not found'
       });
     }
 
     res.json({
       success: true,
-      user
+      message: 'Profile updated successfully',
+      user: updatedUser
     });
   } catch (error) {
-    console.error("Update profile error:", error);
+    console.log('Profile update error:', error);
     res.status(500).json({
       success: false,
-      message: "Internal server error"
+      message: 'Internal server error'
     });
   }
 };
