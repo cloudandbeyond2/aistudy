@@ -19,7 +19,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { recaptchaSiteKey } from '@/constants';
 
 const Signup = () => {
-  const [name, setName] = useState('');
+  const [mName, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -47,7 +47,7 @@ const Signup = () => {
     setError('');
 
     // Simple validation
-    if (!name || !email || !password || !confirmPassword) {
+    if (!mName || !email || !password || !confirmPassword) {
       setError('Please fill out all fields');
       return;
     }
@@ -79,11 +79,12 @@ const Signup = () => {
       const postURL = serverURL + '/api/signup';
       const type = 'free';
 
-      const response = await axios.post(postURL, { email, name: name, password, type, captchaToken });
+      const response = await axios.post(postURL, { email, mName: mName, password, type, captchaToken });
+
       if (response.data.success) {
         if (response.data.autoLogin) {
           sessionStorage.setItem('email', email);
-          sessionStorage.setItem('name', name);
+          sessionStorage.setItem('mName', mName);
           sessionStorage.setItem('auth', 'true');
           sessionStorage.setItem('uid', response.data.userId);
           sessionStorage.setItem('type', 'forever');
@@ -326,7 +327,7 @@ const Signup = () => {
                 <Input
                   id="name"
                   placeholder="John Doe"
-                  value={name}
+                  value={mName}
                   onChange={(e) => setName(e.target.value)}
                   className="pl-11 h-12 bg-muted/30 border-transparent focus:border-primary focus:bg-background transition-all rounded-xl"
                   disabled={isLoading}
@@ -452,7 +453,7 @@ const Signup = () => {
                 const postURL = serverURL + '/api/social';
                 try {
                   setIsLoading(true);
-                  const response = await axios.post(postURL, { email, name });
+                  const response = await axios.post(postURL, { email, mName: name  });
                   if (response.data.success) {
                     toast({
                       title: "Login successful",

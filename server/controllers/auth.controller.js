@@ -7,7 +7,7 @@ import axios from 'axios';
  * SIGNUP
  */
 export const signup = async (req, res) => {
-  const { email, name, password, type, captchaToken } = req.body;
+  const { email, mName, password, type, captchaToken } = req.body;
 
   try {
     // 1. Verify reCAPTCHA
@@ -67,7 +67,7 @@ export const signup = async (req, res) => {
     if (estimate > 0) {
       newUser = new User({
         email,
-        name,
+        mName,
         password,
         type,
         emailVerificationToken: verificationToken,
@@ -80,7 +80,7 @@ export const signup = async (req, res) => {
       // First user → admin
       newUser = new User({
         email,
-        name,
+        mName,
         password,
         type: 'forever',
         isEmailVerified: true
@@ -90,7 +90,7 @@ export const signup = async (req, res) => {
 
       await new Admin({
         email,
-        name,
+        mName,
         type: 'main'
       }).save();
 
@@ -109,7 +109,7 @@ export const signup = async (req, res) => {
       from: process.env.EMAIL,
       to: email,
       subject: `Verify your email for ${process.env.COMPANY || 'AIstudy'}`,
-      html: `<p>Hello ${name}, click <a href="${verificationLink}">here</a> to verify your email.</p>`
+      html: `<p>Hello ${mName}, click <a href="${verificationLink}">here</a> to verify your email.</p>`
     });
 
     return res.json({
@@ -221,9 +221,9 @@ export const verifyEmail = async (req, res) => {
  * SOCIAL LOGIN (Google / Facebook)
  */
 export const socialLogin = async (req, res) => {
-  const { email, name } = req.body;
+  const { email, mName } = req.body;
 
-  // const name = name;
+  // const mName = mName;
   const password = ''; // Social login → no password
   const type = 'free';
 
@@ -244,7 +244,7 @@ export const socialLogin = async (req, res) => {
 
     user = new User({
       email,
-      name,
+      mName,
       password,
       type: estimate === 0 ? 'forever' : 'free'
     });
@@ -255,7 +255,7 @@ export const socialLogin = async (req, res) => {
     if (estimate === 0) {
       const admin = new Admin({
         email,
-        name,
+        mName,
         type: 'main'
       });
       await admin.save();
@@ -281,7 +281,7 @@ export const socialLogin = async (req, res) => {
  * FORGOT PASSWORD
  */
 export const forgotPassword = async (req, res) => {
-  const { email, name, company, logo } = req.body;
+  const { email, mName, company, logo } = req.body;
 
   try {
     const user = await User.findOne({ email });
@@ -301,7 +301,7 @@ export const forgotPassword = async (req, res) => {
     const mailOptions = {
       from: process.env.EMAIL,
       to: user.email,
-      subject: `${name} Password Reset`,
+      subject: `${mName} Password Reset`,
       html: `
         <h2>Password Reset</h2>
         <p>Click the button below to reset the password for ${email}</p>
@@ -371,9 +371,9 @@ export const resetPassword = async (req, res) => {
  * UPDATE USER PROFILE
  */
 // export const updateProfile = async (req, res) => {
-//   const { email, name, password, uid } = req.body;
+//   const { email, mName, password, uid } = req.body;
 
-//   if (!uid || !email || !name) {
+//   if (!uid || !email || !mName) {
 //     return res.status(400).json({
 //       success: false,
 //       message: 'Missing required fields'
@@ -383,7 +383,7 @@ export const resetPassword = async (req, res) => {
 //   try {
 //     const updateData = {
 //       email,
-//       name
+//       mName
 //     };
 
 //     // Only update password if provided

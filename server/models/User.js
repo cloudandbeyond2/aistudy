@@ -2,7 +2,7 @@
 
 // // const userSchema = new mongoose.Schema({
 // //   email: { type: String, unique: true, required: true },
-// //   mName: String,
+// //   mmName: String,
 // //   password: String,
 // //   type: String,
 // //   resetPasswordToken: { type: String, default: null },
@@ -18,7 +18,7 @@
 
 // const userSchema = new mongoose.Schema({
 //   email: { type: String, unique: true, required: true },
-//   mName: String,
+//   mmName: String,
 //   password: String,
 //   type: String, // free | monthly | yearly | forever
 //   subscriptionStart: { type: Date, default: null },
@@ -47,7 +47,7 @@
 //   },
  
 //   // Organization fields
-//   organizationName: {
+//   organizationmName: {
 //     type: String,
 //     default: ""
 //   },
@@ -65,7 +65,7 @@ const userSchema = new mongoose.Schema(
     isEmailVerified: { type: Boolean, default: false },
 
     // PROFILE BASIC
-    name: { type: String, default: "" },          // Full Name
+    mName: { type: String, default: "" },          // Full mName
     phone: { type: String, default: "" },
     dob: { type: Date, default: null },
     gender: {
@@ -96,7 +96,7 @@ const userSchema = new mongoose.Schema(
     },
 
     // ORGANIZATION FIELDS
-    organizationName: { type: String, default: "" },
+    organizationmName: { type: String, default: "" },
 
     // SUBSCRIPTION
     type: {
