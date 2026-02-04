@@ -421,31 +421,79 @@ export const resetPassword = async (req, res) => {
 
 
 export const updateProfile = async (req, res) => {
-  try {
-    const { uid, ...updateData } = req.body;
+  const {
+    uid,
+    email,
+    name,
+    password,
 
-    const user = await User.findByIdAndUpdate(
+    phone,
+    dob,
+    gender,
+
+    country,
+    city,
+    pin,
+    address,
+
+    userType,
+    profession,
+    experienceLevel,
+    organizationName
+  } = req.body;
+
+  if (!uid || !email || !name) {
+    return res.status(400).json({
+      success: false,
+      message: 'Missing required fields'
+    });
+  }
+
+  try {
+    const updateData = {
+      email,
+      name,
+      phone,
+      dob,
+      gender,
+      country,
+      city,
+      pin,
+      address,
+      userType,
+      profession,
+      experienceLevel,
+      organizationName
+    };
+
+    // Only update password if user entered one
+    if (password && password.trim() !== "") {
+      updateData.password = password;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
       uid,
       { $set: updateData },
-      { new: true }
+      { new: true, runValidators: true }
     );
 
-    if (!user) {
+    if (!updatedUser) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: 'User not found'
       });
     }
 
     res.json({
       success: true,
-      user
+      message: 'Profile updated successfully',
+      user: updatedUser
     });
   } catch (error) {
-    console.error("Update profile error:", error);
+    console.error('Profile update error:', error);
     res.status(500).json({
       success: false,
-      message: "Internal server error"
+      message: 'Internal server error'
     });
   }
 };
