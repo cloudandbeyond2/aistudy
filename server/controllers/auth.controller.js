@@ -2,39 +2,67 @@ import User from '../models/User.js';
 import Admin from '../models/Admin.js';
 import crypto from 'crypto';
 import transporter from '../config/mail.js';
+import axios from 'axios';
 /**
  * SIGNUP
  */
 export const signup = async (req, res) => {
-  const { email, mName, password, type } = req.body;
+  const { email, mName, password, type, captchaToken } = req.body;
 
   try {
-    const estimate = await User.estimatedDocumentCount();
+    // 1. Verify reCAPTCHA
+    if (captchaToken) {
+      const response = await axios.post(
+        `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`
+      );
 
-    if (estimate > 0) {
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
+      if (!response.data.success) {
         return res.json({
           success: false,
-          message: 'User with this email already exists'
+          message: 'reCAPTCHA verification failed. Please try again.'
         });
       }
-
-      const newUser = new User({ email, mName, password, type });
-      await newUser.save();
-
-      return res.json({
-        success: true,
-        message: 'Account created successfully',
-        userId: newUser._id
-      });
     } else {
-      // First user becomes admin
-      const newUser = new User({
+      return res.json({
+        success: false,
+        message: 'Please complete the reCAPTCHA verification.'
+      });
+    }
+
+    const estimate = await User.estimatedDocumentCount();
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.json({
+        success: false,
+        message: 'User with this email already exists'
+      });
+    }
+
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
+    let newUser;
+    if (estimate > 0) {
+      newUser = new User({
         email,
         mName,
         password,
-        type: 'forever'
+        type,
+        emailVerificationToken: verificationToken,
+        emailVerificationExpires: verificationExpires,
+        isEmailVerified: false
+      });
+      await newUser.save();
+    } else {
+      // First user becomes admin and is pre-verified (or you can verify them too)
+      newUser = new User({
+        email,
+        mName,
+        password,
+        type: 'forever',
+        isEmailVerified: true // Let's auto-verify the first admin
       });
       await newUser.save();
 
@@ -47,16 +75,46 @@ export const signup = async (req, res) => {
 
       return res.json({
         success: true,
-        message: 'Account created successfully',
-        userId: newUser._id
+        message: 'Account created successfully as Admin',
+        userId: newUser._id,
+        autoLogin: true
       });
     }
-  } catch (error) {
-    console.error('Signup Error Details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
+
+    // Send Verification Email
+    const verificationLink = `${process.env.WEBSITE_URL}/verify-email/${verificationToken}`;
+
+    const mailOptions = {
+      from: process.env.EMAIL,
+      to: email,
+      subject: `Verify your email for ${process.env.COMPANY || 'AIstudy'}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+          <h2 style="color: #333; text-align: center;">Email Verification</h2>
+          <p>Hello <strong>${mName}</strong>,</p>
+          <p>Thank you for signing up for <strong>${process.env.COMPANY || 'AIstudy'}</strong>. Please click the button below to verify your email address and activate your account:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${verificationLink}" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Verify Email Address</a>
+          </div>
+          <p>This link will expire in 24 hours.</p>
+          <p>If you did not create an account, no further action is required.</p>
+          <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+          <p style="font-size: 12px; color: #888; text-align: center;">&copy; ${new Date().getFullYear()} ${process.env.COMPANY || 'AIstudy'}. All rights reserved.</p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    return res.json({
+      success: true,
+      message: 'Account created! Please check your email to verify your account.',
+      userId: newUser._id,
+      verificationRequired: true
     });
+
+  } catch (error) {
+    console.error('Signup Error Details:', error);
 
     res.status(500).json({
       success: false,
@@ -83,6 +141,16 @@ export const signin = async (req, res) => {
     }
 
     if (password === user.password) {
+      // Check if email is verified
+      // We only enforce this for users who HAVE a verification token (newly created users)
+      // Legacy users who don't have a token yet will be allowed to log in
+      if (user.isEmailVerified === false && user.emailVerificationToken) {
+        return res.json({
+          success: false,
+          message: 'Please verify your email before logging in. Check your inbox for the verification link.'
+        });
+      }
+
       return res.json({
         success: true,
         message: 'SignIn Successful',
@@ -96,16 +164,49 @@ export const signin = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Signin Error Details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    });
+    console.error('Signin Error Details:', error);
 
     res.status(500).json({
       success: false,
-      message: 'Invalid email or password',
+      message: 'Internal server error',
       error: error.message
+    });
+  }
+};
+
+/**
+ * VERIFY EMAIL
+ */
+export const verifyEmail = async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    const user = await User.findOne({
+      emailVerificationToken: token,
+      emailVerificationExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token.'
+      });
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationToken = null;
+    user.emailVerificationExpires = null;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully! You can now log in.'
+    });
+  } catch (error) {
+    console.error('Email Verification Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal Server Error'
     });
   }
 };
@@ -262,50 +363,82 @@ export const resetPassword = async (req, res) => {
 /**
  * UPDATE USER PROFILE
  */
+// export const updateProfile = async (req, res) => {
+//   const { email, mName, password, uid } = req.body;
+
+//   if (!uid || !email || !mName) {
+//     return res.status(400).json({
+//       success: false,
+//       message: 'Missing required fields'
+//     });
+//   }
+
+//   try {
+//     const updateData = {
+//       email,
+//       mName
+//     };
+
+//     // Only update password if provided
+//     if (password && password.trim() !== '') {
+//       updateData.password = password;
+//     }
+
+//     const updatedUser = await User.findByIdAndUpdate(
+//       uid,
+//       { $set: updateData },
+//       { new: true }
+//     );
+
+//     if (!updatedUser) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'User not found'
+//       });
+//     }
+
+//     res.json({
+//       success: true,
+//       message: 'Profile updated successfully',
+//       user: updatedUser
+//     });
+//   } catch (error) {
+//     console.log('Profile update error:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Internal server error'
+//     });
+//   }
+// };
+// GET profile
+
+
 export const updateProfile = async (req, res) => {
-  const { email, mName, password, uid } = req.body;
-
-  if (!uid || !email || !mName) {
-    return res.status(400).json({
-      success: false,
-      message: 'Missing required fields'
-    });
-  }
-
   try {
-    const updateData = {
-      email,
-      mName
-    };
+    const { uid, ...updateData } = req.body;
 
-    // Only update password if provided
-    if (password && password.trim() !== '') {
-      updateData.password = password;
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
       uid,
       { $set: updateData },
       { new: true }
     );
 
-    if (!updatedUser) {
+    if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found"
       });
     }
 
     res.json({
       success: true,
-      message: 'Profile updated successfully',
-      user: updatedUser
+      user
     });
   } catch (error) {
-    console.log('Profile update error:', error);
+    console.error("Update profile error:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Internal server error"
     });
   }
 };
