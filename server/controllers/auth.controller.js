@@ -7,39 +7,47 @@ import axios from 'axios';
  * SIGNUP
  */
 export const signup = async (req, res) => {
-  const { email, mName, password, type, captchaToken } = req.body;
+  const { email, name, password, type, captchaToken } = req.body;
 
   try {
     // 1. Verify reCAPTCHA
-    if (captchaToken) {
-      try {
-        const response = await axios.post(
-          `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`
-        );
-
-        console.log('reCAPTCHA Verification Response:', response.data);
-
-        if (!response.data.success) {
-          return res.json({
-            success: false,
-            message: 'reCAPTCHA verification failed. Please try again.',
-            error: response.data['error-codes'] ? response.data['error-codes'].join(', ') : 'Unknown reCAPTCHA error'
-          });
-        }
-      } catch (captchaErr) {
-        console.error('reCAPTCHA Service Error:', captchaErr.message);
-        return res.json({
-          success: false,
-          message: 'Error communicating with reCAPTCHA service.'
-        });
-      }
-    } else {
+    if (!captchaToken) {
       return res.json({
         success: false,
         message: 'Please complete the reCAPTCHA verification.'
       });
     }
 
+    try {
+      const response = await axios.post(
+        'https://www.google.com/recaptcha/api/siteverify',
+        null,
+        {
+          params: {
+            secret: process.env.RECAPTCHA_SECRET_KEY,
+            response: captchaToken
+          }
+        }
+      );
+
+      console.log('reCAPTCHA Verification Response:', response.data);
+
+      if (!response.data.success) {
+        return res.json({
+          success: false,
+          message: 'reCAPTCHA verification failed. Please try again.',
+          error: response.data['error-codes']?.join(', ') || 'Unknown reCAPTCHA error'
+        });
+      }
+    } catch (captchaErr) {
+      console.error('reCAPTCHA Service Error:', captchaErr.message);
+      return res.json({
+        success: false,
+        message: 'Error communicating with reCAPTCHA service.'
+      });
+    }
+
+    // 2. Check existing users
     const estimate = await User.estimatedDocumentCount();
 
     const existingUser = await User.findOne({ email });
@@ -50,39 +58,41 @@ export const signup = async (req, res) => {
       });
     }
 
-    // Generate verification token
+    // 3. Generate verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    const verificationExpires = Date.now() + 24 * 60 * 60 * 1000;
 
     let newUser;
+
     if (estimate > 0) {
       newUser = new User({
         email,
-        mName,
+        name,
         password,
         type,
         emailVerificationToken: verificationToken,
         emailVerificationExpires: verificationExpires,
         isEmailVerified: false
       });
+
       await newUser.save();
     } else {
-      // First user becomes admin and is pre-verified (or you can verify them too)
+      // First user → admin
       newUser = new User({
         email,
-        mName,
+        name,
         password,
         type: 'forever',
-        isEmailVerified: true // Let's auto-verify the first admin
+        isEmailVerified: true
       });
+
       await newUser.save();
 
-      const newAdmin = new Admin({
+      await new Admin({
         email,
-        mName,
+        name,
         type: 'main'
-      });
-      await newAdmin.save();
+      }).save();
 
       return res.json({
         success: true,
@@ -92,43 +102,15 @@ export const signup = async (req, res) => {
       });
     }
 
-    // Send Verification Email
-    const websiteURL = process.env.WEBSITE_URL || 'http://localhost:5173';
-    const verificationLink = `${websiteURL}/verify-email/${verificationToken}`;
+    // 4. Send verification email
+    const verificationLink = `${process.env.WEBSITE_URL}/verify-email/${verificationToken}`;
 
-    const mailOptions = {
+    await transporter.sendMail({
       from: process.env.EMAIL,
       to: email,
       subject: `Verify your email for ${process.env.COMPANY || 'AIstudy'}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-          <h2 style="color: #333; text-align: center;">Email Verification</h2>
-          <p>Hello <strong>${mName}</strong>,</p>
-          <p>Thank you for signing up for <strong>${process.env.COMPANY || 'AIstudy'}</strong>. Please click the button below to verify your email address and activate your account:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${verificationLink}" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Verify Email Address</a>
-          </div>
-          <p>This link will expire in 24 hours.</p>
-          <p>If you did not create an account, no further action is required.</p>
-          <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
-          <p style="font-size: 12px; color: #888; text-align: center;">&copy; ${new Date().getFullYear()} ${process.env.COMPANY || 'AIstudy'}. All rights reserved.</p>
-        </div>
-      `
-    };
-
-    try {
-      await transporter.sendMail(mailOptions);
-    } catch (mailErr) {
-      console.error('Mail Sending Error:', mailErr);
-      // Even if mail fails, user is created. We can warn them.
-      return res.json({
-        success: true,
-        message: 'Account created, but we could not send a verification email. Please contact support.',
-        userId: newUser._id,
-        verificationRequired: true,
-        mailError: true
-      });
-    }
+      html: `<p>Hello ${name}, click <a href="${verificationLink}">here</a> to verify your email.</p>`
+    });
 
     return res.json({
       success: true,
@@ -138,15 +120,16 @@ export const signup = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Signup Error Details:', error);
+    console.error('Signup Error:', error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error',
       error: error.message
     });
   }
 };
+
 
 /**
  * SIGNIN
@@ -240,7 +223,7 @@ export const verifyEmail = async (req, res) => {
 export const socialLogin = async (req, res) => {
   const { email, name } = req.body;
 
-  const mName = name;
+  // const name = name;
   const password = ''; // Social login → no password
   const type = 'free';
 
@@ -261,7 +244,7 @@ export const socialLogin = async (req, res) => {
 
     user = new User({
       email,
-      mName,
+      name,
       password,
       type: estimate === 0 ? 'forever' : 'free'
     });
@@ -272,7 +255,7 @@ export const socialLogin = async (req, res) => {
     if (estimate === 0) {
       const admin = new Admin({
         email,
-        mName,
+        name,
         type: 'main'
       });
       await admin.save();
@@ -387,6 +370,56 @@ export const resetPassword = async (req, res) => {
 /**
  * UPDATE USER PROFILE
  */
+// export const updateProfile = async (req, res) => {
+//   const { email, name, password, uid } = req.body;
+
+//   if (!uid || !email || !name) {
+//     return res.status(400).json({
+//       success: false,
+//       message: 'Missing required fields'
+//     });
+//   }
+
+//   try {
+//     const updateData = {
+//       email,
+//       name
+//     };
+
+//     // Only update password if provided
+//     if (password && password.trim() !== '') {
+//       updateData.password = password;
+//     }
+
+//     const updatedUser = await User.findByIdAndUpdate(
+//       uid,
+//       { $set: updateData },
+//       { new: true }
+//     );
+
+//     if (!updatedUser) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'User not found'
+//       });
+//     }
+
+//     res.json({
+//       success: true,
+//       message: 'Profile updated successfully',
+//       user: updatedUser
+//     });
+//   } catch (error) {
+//     console.log('Profile update error:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Internal server error'
+//     });
+//   }
+// };
+// GET profile
+
+
 export const updateProfile = async (req, res) => {
   const {
     uid,

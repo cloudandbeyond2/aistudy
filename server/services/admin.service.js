@@ -60,7 +60,7 @@ export const getPaidUsers = async () => {
 };
 
 
-export const updateUser = async ({ userId, mName, email, type }) => {
+export const updateUser = async ({ userId, name, email, type }) => {
 
 const now = new Date();
 let subscriptionStart = now;
@@ -88,7 +88,7 @@ if (type === 'forever') {
 
 
 await User.findByIdAndUpdate(userId, {
-  mName,
+  name,
   email,
   type,
   subscriptionStart,
@@ -105,8 +105,8 @@ export const deleteUser = async (userId) => {
   await Course.deleteMany({ user: userId });
 };
 
-// export const updateUser = async ({ userId, mName, email, type }) => {
-//   await User.findByIdAndUpdate(userId, { mName, email, type });
+// export const updateUser = async ({ userId, name, email, type }) => {
+//   await User.findByIdAndUpdate(userId, { name, email, type });
 // };
 
 /* ---------------- COURSES ---------------- */
@@ -145,7 +145,7 @@ export const addAdmin = async (email) => {
 
   await new Admin({
     email: user.email,
-    mName: user.mName,
+    name: user.name,
     type: 'no'
   }).save();
 };

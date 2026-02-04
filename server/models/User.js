@@ -79,7 +79,7 @@ const userSchema = new mongoose.Schema(
     city: { type: String, default: "" },
     pin: { type: String, default: "" },
     address: { type: String, default: "" },
-
+    date: { type: Date, default: Date.now },
     // USER TYPE
     userType: {
       type: String,
