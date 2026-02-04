@@ -28,7 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
  const [formData, setFormData] = useState({
-  name: sessionStorage.getItem('mName') || "",
+  mName: sessionStorage.getItem('mName') || "",
   email: sessionStorage.getItem('email') || "",
   phone: sessionStorage.getItem('phone') || "",
   dob: sessionStorage.getItem('dob') ? new Date(sessionStorage.getItem('dob')).toISOString().split('T')[0] : "",
@@ -129,6 +129,7 @@ const Profile = () => {
       setInstallPrompt(null)
     })
   }
+
 useEffect(() => {
   async function fetchProfile() {
     const uid = sessionStorage.getItem('uid');
@@ -141,7 +142,7 @@ useEffect(() => {
 
         // Update form data with fetched user info
         setFormData({
-          name: user.name || "",
+          mName: user.mName || "",
           email: user.email || "",
           phone: user.phone || "",
           dob: user.dob ? new Date(user.dob).toISOString().split('T')[0] : "",
@@ -160,7 +161,7 @@ useEffect(() => {
         });
 
         // Update sessionStorage if needed
-        sessionStorage.setItem('name', user.name || "");
+        sessionStorage.setItem('mName', user.mName || "");
         sessionStorage.setItem('email', user.email || "");
         sessionStorage.setItem('userType', user.userType || "");
         sessionStorage.setItem('dob', user.dob || "");
@@ -205,7 +206,7 @@ const handleSubmit = async () => {
       uid,
 
       // BASIC
-      name: formData.name,
+      mName: formData.mName,
       email: formData.email,
       password: formData.password,
 
@@ -242,7 +243,7 @@ const handleSubmit = async () => {
         description: "Your profile information has been updated successfully."
       });
 
-      sessionStorage.setItem("name", formData.name);
+      sessionStorage.setItem("mName", formData.mName);
       sessionStorage.setItem("email", formData.email);
       sessionStorage.setItem("userType", formData.userType);
       sessionStorage.setItem("dob", formData.dob);
@@ -423,9 +424,9 @@ const handleSubmit = async () => {
         <Card className="border border-emerald-400 rounded-xl h-[300px]">
              <CardContent className="flex flex-col items-center text-center p-6 space-y-4">
             <div className="w-16 h-16 rounded-full bg-purple-600 flex items-center justify-center text-white text-xl font-bold">
-              {formData.name.charAt(0).toUpperCase()}
+              {formData.mName.charAt(0).toUpperCase()}
             </div>
-             <h2 className="text-lg font-semibold">{formData.name}</h2>
+             <h2 className="text-lg font-semibold">{formData.mName}</h2>
             <p className="text-sm text-muted-foreground">{formData.email}</p>
 
             {/* <span className="text-xs bg-gray-100 px-3 py-1 rounded-full">
@@ -478,9 +479,9 @@ const handleSubmit = async () => {
         <div className="space-y-2">
           <Label htmlFor="name">Full Name</Label>
           <Input
-            id="name"
-            name="name"
-            value={formData.name}
+            id="mName"
+            name="mName"
+            value={formData.mName}
             onChange={handleChange}
             disabled={!isEditing}
           />
