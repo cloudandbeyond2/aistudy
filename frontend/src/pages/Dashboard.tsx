@@ -18,11 +18,14 @@ import { response } from 'express';
 
 const Dashboard = () => {
   const daysleftRaw = sessionStorage.getItem("daysLeft");
-const daysleft = daysleftRaw === "UNLIMITED" ? null : Number(daysleftRaw);
+
+
+
+  const daysleft = daysleftRaw === "UNLIMITED" ? null : Number(daysleftRaw);
 
   const [isUnlimited, setIsUnlimited] = useState(false);
   const [data, setData] = useState([]);
-const plan = sessionStorage.getItem('type');
+  const plan = sessionStorage.getItem('type');
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [page, setPage] = useState(1);
@@ -38,7 +41,7 @@ const plan = sessionStorage.getItem('type');
     navigate("/dashboard/generate-course");
   }
 
-function redirectPricing() {
+  function redirectPricing() {
     navigate("/dashboard/pricing");
   }
   async function redirectCourse(content: string, mainTopic: string, type: string, courseId: string, completed: string, end: string) {
@@ -301,32 +304,47 @@ async function getDetails() {
             {/* RIGHT */}
             {/* Star bala */}
   <div className="flex gap-3">
-    <h6
+    <h6 onClick={()=>redirectPricing()}
   style={{
     display: "inline-block",
     padding: "6px 14px",
+    cursor: "pointer",
     borderRadius: "20px",
-    backgroundColor: isUnlimited
-      ? "#bcffad" 
-      : daysleft && daysleft > 7
-      ? "#E6F4EA"
-      : "#FDECEA",
-    color: isUnlimited
-      ? "#3730A3"
-      : daysleft && daysleft > 7
-      ? "#137333"
-      : "#B3261E",
+    backgroundColor:
+      plan === "free"
+        ? "#E0E7FF" // Free
+        : isUnlimited
+        ? "#FEF3C7" // Unlimited (gold)
+        : plan === "monthly" && daysleft && daysleft > 7
+        ? "#ECFDF5" // Monthly active
+        : "#FEF2F2", // Expiring / expired
+    color:
+      plan === "free"
+        ? "#3730A3"
+        : isUnlimited
+        ? "#92400E"
+        : plan === "monthly" && daysleft && daysleft > 7
+        ? "#065F46"
+        : "#991B1B",
     fontWeight: 600,
     fontSize: "14px",
     paddingTop: "10px",
   }}
 >
-  {isUnlimited
+  {plan === "free"
+    ? "🧪 Free Plan"
+    : isUnlimited
     ? "👑 Unlimited Access"
+    : plan === "monthly"
+    ? daysleft && daysleft > 0
+      ? `📅 ${daysleft} days left`
+      : "⛔ Expired"
     : daysleft && daysleft > 0
-    ? `${daysleft} days left`
-    : "Expired"}
+    ? `⏳ ${daysleft} days left`
+    : "⛔ Expired"}
 </h6>
+
+
 
   <Button
   onClick={() => (window.location.href = websiteURL)}
