@@ -55,6 +55,7 @@ import QuizPage from "./pages/QuizPage";
 import BlogPost from "./pages/BlogPost";
 import AdminBlogs from "./pages/admin/AdminBlogs";
 import AdminCertificate from "./pages/admin/AdminCertificate";
+import AdminOrganizations from "./pages/admin/AdminOrganizations";
 import CertificateVerification from "./pages/CertificateVerification";
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { googleClientId } from "./constants";
@@ -144,6 +145,7 @@ const App = () => (
                   <Route path="create-blog" element={<AdminCreateBlog />} />
                   <Route path="blogs" element={<AdminBlogs />} />
                   <Route path="certificate" element={<AdminCertificate />} />
+                  <Route path="orgs" element={<AdminOrganizations />} />
                   <Route path="testimonials" element={<AdminTestimonials />} />
                 </Route>
                 <Route path="/verify-certificate" element={<CertificateVerification />} />

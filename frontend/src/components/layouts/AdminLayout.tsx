@@ -31,6 +31,7 @@ import {
   FileSliders,
   Award,
   Tag,
+  Building2
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -203,6 +204,7 @@ const AdminLayout = () => {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              
 
               <SidebarMenuItem>
   <SidebarMenuButton
@@ -253,6 +255,14 @@ const AdminLayout = () => {
                   <Link to="/admin/certificate" className={cn(isActive('/admin/certificate') && "text-primary")}>
                     <Award />
                     <span>Certificate</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+                 <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Organizations" isActive={isActive('/admin/orgs')}>
+                  <Link to="/admin/orgs" className={cn(isActive('/admin/orgs') && "text-primary")}>
+                    <Building2 />
+                    <span>Organizations</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
