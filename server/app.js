@@ -38,6 +38,7 @@ import paystackRoutes from './routes/paystack.routes.js';
 import flutterwaveRoutes from './routes/flutterwave.routes.js';
 import chatRoutes from './routes/chat.routes.js';
 import userRoutes from './routes/user.routes.js';
+import orgRoutes from './routes/org.routes.js';
 
 // -------------------- INIT --------------------
 connectDB();
@@ -66,6 +67,7 @@ app.use((req, res, next) => {
 app.use('/api', authRoutes);
 app.use('/api', courseRoutes);
 app.use('/api', certificateRoutes);
+app.use('/api', orgRoutes);
 app.use('/api', examRoutes);
 app.use('/api', contactRoutes);
 app.use('/api', notesRoutes);
