@@ -343,6 +343,7 @@ async function getDetails() {
     ? `⏳ ${daysleft} days left`
     : "⛔ Expired"}
 </h6>
+ 
 
 
 

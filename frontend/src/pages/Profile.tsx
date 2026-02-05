@@ -25,6 +25,18 @@ import { useNavigate } from 'react-router-dom';
 import TestimonialSubmission from '@/components/TestimonialSubmission';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+const PLAN_ORDER: Record<string, number> = {
+  free: 0,
+  monthly: 1,
+  yearly: 2,
+};
+
+const PLAN_FEATURES: Record<string, string[]> = {
+  free: ["Basic access"],
+  monthly: ["All features", "Priority support"],
+  yearly: ["All features", "Priority support", "Discounted price"],
+};
+
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
  const [formData, setFormData] = useState({
@@ -47,6 +59,25 @@ const Profile = () => {
   address: sessionStorage.getItem('address') || "",
 });
 
+
+
+
+
+
+const [plans, setPlans] = useState<any[]>([]);
+const [activeType, setActiveType] = useState<"free" | "monthly" | "yearly">("free");
+const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
+
+const [loadingUser, setLoadingUser] = useState(true);
+const [loadingPlans, setLoadingPlans] = useState(true);
+
+const loading = loadingUser || loadingPlans;
+
+const activePlan = plans.find(
+  (plan) => plan.planType === activeType
+);
+
+
   const navigate = useNavigate();
   const [processing, setProcessing] = useState(false);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -67,6 +98,75 @@ const Profile = () => {
       setInstallPrompt(e)
     })
   }, []);
+
+
+
+  // star bala
+
+useEffect(() => {
+  const email = sessionStorage.getItem("email");
+  if (!email) {
+    setLoadingUser(false);
+    return;
+  }
+
+  axios.get(`${serverURL}/api/getusers`)
+    .then((res) => {
+      const currentUser = res.data.find((u: any) => u.email === email);
+
+      if (
+        currentUser?.subscriptionEnd &&
+        new Date(currentUser.subscriptionEnd) > new Date()
+      ) {
+        setActiveType(currentUser.type); // monthly | yearly
+        setSubscriptionEnd(currentUser.subscriptionEnd);
+      } else {
+        setActiveType("free");
+        setSubscriptionEnd(null);
+      }
+    })
+    .catch(() => {
+      setActiveType("free");
+    })
+    .finally(() => {
+      setLoadingUser(false);
+    });
+}, []);
+
+
+  /* ---------------- GET PRICING ---------------- */
+  useEffect(() => {
+  axios.get(`${serverURL}/api/pricing`)
+    .then((res) => {
+      const formatted = res.data.pricing.map((p: any) => ({
+        planType: p.planType,
+        name:
+          p.planType === "free"
+            ? "Free"
+            : p.planType === "monthly"
+            ? "Monthly"
+            : "Yearly",
+        price: p.price,
+        currency: p.currency,
+        features: PLAN_FEATURES[p.planType],
+      }));
+
+      formatted.sort(
+        (a: any, b: any) => PLAN_ORDER[a.planType] - PLAN_ORDER[b.planType]
+      );
+
+      setPlans(formatted);
+    })
+    .catch(console.error)
+    .finally(() => {
+      setLoadingPlans(false);
+    });
+}, []);
+
+
+
+
+
 
 
   function redirectPricing() {
@@ -739,7 +839,7 @@ const handleSubmit = async () => {
                 </div>
               </TabsContent>
 
-  <TabsContent value="billing" className="p-6">
+  {/* <TabsContent value="billing" className="p-6">
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Subscription Plan</h3>
                   {sessionStorage.getItem('type') !== 'free' ?
@@ -804,13 +904,64 @@ const handleSubmit = async () => {
                     </Card>
                   }
                 </div>
-              </TabsContent>
+              </TabsContent> */}
+
+            <TabsContent value="billing" className="p-6">
+  <div className="space-y-4">
+    <h3 className="text-lg font-medium">Subscription Plan</h3>
+
+    {loading ? (
+      <p>Loading...</p>
+    ) : activeType === "free" ? (
+      /* FREE PLAN */
+      <Card>
+        <CardHeader>
+          <CardTitle>Free Plan</CardTitle>
+          <CardDescription>
+             {activePlan.currency}  {activePlan.price} /{" "} 7 days
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            This plan is completely free and does not expire.
+          </p>
+        </CardContent>
+        <CardFooter>
+          <Button size="sm" onClick={redirectPricing}>
+            Upgrade Plan
+          </Button>
+        </CardFooter>
+      </Card>
+    ) : activePlan ? (
+      /* PAID PLAN */
+      <Card>
+        <CardHeader>
+          <CardTitle>{activePlan.name} Plan</CardTitle>
+          <CardDescription>
+            {activePlan.currency} {activePlan.price} /{" "}
+            {activePlan.planType === "monthly" ? "month" : "year"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Your subscription is active.
+          </p>
+        </CardContent>
+      </Card>
+    ) : null}
+  </div>
+</TabsContent>
+
+
+              
               <TabsContent value="testimonial" className="p-6">
                 <TestimonialSubmission />
               </TabsContent>
+
             </Tabs>
           </CardContent>
         </Card>
+
       </div>
       </div>
       
