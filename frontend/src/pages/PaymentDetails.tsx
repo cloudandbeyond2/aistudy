@@ -807,27 +807,7 @@ const plan = {
 
               <div className="bg-muted/50 p-4 rounded-lg mt-6">
                 <h4 className="font-medium mb-2">What's included:</h4>
-                {/* <ul className="space-y-2 text-sm">
-
-                  {plansFeartures.map((item, index) =>
-                  (
-                    <>
-                      {item.name === plan.name ?
-                        <>
-                          {plansFeartures[index].features.map((item, index) =>
-                          (
-                            <li className="flex items-center">
-                              <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                              {item}
-                            </li>
-                          ))}
-                        </>
-                        :
-                        <></>
-                      }
-                    </>
-                  ))}
-                </ul> */}
+              
 {/* Star bala */}
                    <ul className="space-y-2 text-sm">
   {plansFeartures

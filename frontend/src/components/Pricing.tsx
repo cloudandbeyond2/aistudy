@@ -1353,25 +1353,59 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
 };
 
 /* ================= PLAN FEATURES ================= */
+
+
+
+const ALL_FEATURES = [
+  'Sub-Topic Limit',
+  'Access Duration',
+  'Theory & Image Course',
+  'Create Courses',
+  'AI Teacher Chat',
+  'Course in 23+ Languages',
+  'Video & Theory Course',
+  'Priority Support',
+  'Advanced Analytics',
+];
+
+/* -------------------- PLAN FEATURES -------------------- */
+
 const PLAN_FEATURES = {
-  free: [
-    'Generate 5 Sub-Topics',
-    'Access valid for 7 days',
-    'Theory & Image Course',
-    'Ai Teacher Chat',
-  ],
-  monthly: [
-    'Generate 10 Sub-Topics',
-    '1 Month Access',
-    'Theory & Image Course',
-    'Ai Teacher Chat',
-  ],
-  yearly: [
-    'Generate Unlimited Sub-Topics',
-    '1 Year Access',
-    'Theory & Image Course',
-    'Ai Teacher Chat',
-  ],
+  free: {
+    'Sub-Topic Limit': '5 only',
+    'Access Duration': '7 days',
+    'Theory & Image Course': true,
+    'Create Courses': '1 course only',
+    'AI Teacher Chat': true,
+    'Course in 23+ Languages': false,
+    'Video & Theory Course': false,
+    'Priority Support': false,
+    'Advanced Analytics': false,
+  },
+
+  monthly: {
+    'Sub-Topic Limit': '10 per course',
+    'Access Duration': '1 month',
+    'Theory & Image Course': true,
+    'Create Courses': '20 courses only',
+    'AI Teacher Chat': true,
+    'Course in 23+ Languages': true,
+    'Video & Theory Course': true,
+    'Priority Support': false,
+    'Advanced Analytics': false,
+  },
+
+  yearly: {
+    'Sub-Topic Limit': 'Unlimited',
+    'Access Duration': '1 year',
+    'Theory & Image Course': true,
+    'Create Courses': 'Unlimited',
+    'AI Teacher Chat': true,
+    'Course in 23+ Languages': true,
+    'Video & Theory Course': true,
+    'Priority Support': true,
+    'Advanced Analytics': true,
+  },
 };
 
 const Pricing = () => {
@@ -1412,7 +1446,7 @@ const Pricing = () => {
       planName: 'Free',
       price: FreeCost,
       currency: 'INR',
-      billingPeriod: 'lifetime',
+      billingPeriod: '7 days access',
     },
     {
       planType: 'monthly',
@@ -1538,32 +1572,53 @@ const Pricing = () => {
                   <span className="text-slate-400">/{plan.billingPeriod}</span>
                 </div>
 
-                <div className="space-y-4 flex-grow mb-10">
-                  {features.map((feature, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <div
-                        className={cn(
-                          'h-6 w-6 rounded-full flex items-center justify-center',
-                          isFeatured
-                            ? 'bg-primary/20 text-primary'
-                            : 'bg-primary/10 text-primary'
-                        )}
-                      >
-                        <Check className="h-4 w-4" />
-                      </div>
-                      <span
-                        className={cn(
-                          'text-lg',
-                          isFeatured
-                            ? 'text-slate-300'
-                            : 'text-slate-600 dark:text-slate-300'
-                        )}
-                      >
-                        {feature}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+           <div className="space-y-4 flex-grow mb-10">
+  {ALL_FEATURES.map((feature, i) => {
+    const value =
+      PLAN_FEATURES[planType as keyof typeof PLAN_FEATURES][feature];
+
+    const isAvailable = Boolean(value);
+
+    return (
+      <div key={i} className="flex items-start gap-3">
+        <div
+          className={cn(
+            'h-6 w-6 rounded-full flex items-center justify-center mt-1',
+            isAvailable
+              ? isFeatured
+                ? 'bg-primary/20 text-primary'
+                : 'bg-primary/10 text-primary'
+              : 'bg-slate-200 text-slate-400 dark:bg-slate-700'
+          )}
+        >
+          {isAvailable ? (
+            <Check className="h-4 w-4" />
+          ) : (
+            <span className="text-xs">✕</span>
+          )}
+        </div>
+
+        <div>
+          <p
+            className={cn(
+              'text-lg font-medium',
+              isFeatured
+                ? 'text-slate-200'
+                : 'text-slate-700 dark:text-slate-300'
+            )}
+          >
+            {feature}
+          </p>
+
+          {typeof value === 'string' && (
+            <p className="text-sm text-slate-400">{value}</p>
+          )}
+        </div>
+      </div>
+    );
+  })}
+</div>
+
 
                 <Button
                   onClick={() => navigate('/signup')}

@@ -1,418 +1,537 @@
-// // import React, { useEffect, useState } from "react";
-// // import { useNavigate } from "react-router-dom";
-// // import axios from "axios";
-// // import { Check, Crown } from "lucide-react";
+// // import React, { useEffect, useRef, useState } from 'react';
+// // import { useNavigate } from 'react-router-dom';
+// // import axios from 'axios';
+// // import { Button } from '@/components/ui/button';
+// // import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+// // import { Check, Crown, Zap } from 'lucide-react';
+// // import { FreeCost, FreeType, MonthCost, MonthType, YearCost, YearType, serverURL } from '@/constants';
 
-// // import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-// // import { Button } from "@/components/ui/button";
-// // import { Skeleton } from "@/components/ui/skeleton";
-// // import { serverURL } from "@/constants";
+// // // ===== Feature List (same order for all plans) =====
+// // const ALL_FEATURES = [
+// //   'Sub-Topic Limit',
+// //   'Access Duration',
+// //   'Theory & Image Course',
+// //   'AI Teacher Chat',
+// //   'Create Courses',
+// //   'Course in 23+ Languages',
+// //   'Video & Theory Course',
+// //   'Priority Support',
+// //   'Advanced Analytics',
+// // ];
 
-// // /* ---------------- Plan Order ---------------- */
-// // const PLAN_ORDER: Record<string, number> = {
-// //   free: 0,
-// //   monthly: 1,
-// //   yearly: 2,
-// // };
+// // // ===== Feature Matrix (YES / NO / VALUE) =====
+// // const PLAN_FEATURES: Record<string, Record<string, boolean | string>> = {
+// //   free: {
+// //     'Sub-Topic Limit': '5 only',
+// //     'Access Duration': '7 days',
+// //     'Theory & Image Course': true,
+// //     'AI Teacher Chat': true,
+// //     'Create Courses': '1 course only',
+// //     'Course in 23+ Languages': false,
+// //     'Video & Theory Course': false,
+// //     'Priority Support': false,
+// //     'Advanced Analytics': false,
+// //   },
 
-// // /* ---------------- Features ---------------- */
-// // const PLAN_FEATURES: Record<string, string[]> = {
-// //   free: [
-// //     "Generate 5 Sub-Topics",
-// //     "Lifetime access",
-// //     "Theory & Image Course",
-// //     "AI Teacher Chat",
-// //   ],
-// //   monthly: [
-// //     "Generate 10 Sub-Topics",
-// //     "1 Month Access",
-// //     "Theory & Image Course",
-// //     "AI Teacher Chat",
-// //     "23+ Languages",
-// //     "Unlimited Courses",
-// //     "Video & Theory Course",
-// //   ],
-// //   yearly: [
-// //     "Generate 10 Sub-Topics",
-// //     "1 Year Access",
-// //     "Theory & Image Course",
-// //     "AI Teacher Chat",
-// //     "23+ Languages",
-// //     "Unlimited Courses",
-// //     "Video & Theory Course",
-// //   ],
+// //   monthly: {
+// //     'Sub-Topic Limit': '10 per course',
+// //     'Access Duration': '1 month',
+// //     'Theory & Image Course': true,
+// //     'AI Teacher Chat': true,
+// //     'Create Courses': '20 courses',
+// //     'Course in 23+ Languages': true,
+// //     'Video & Theory Course': true,
+// //     'Priority Support': false,
+// //     'Advanced Analytics': false,
+// //   },
+
+// //   yearly: {
+// //     'Sub-Topic Limit': 'Unlimited',
+// //     'Access Duration': '1 year',
+// //     'Theory & Image Course': true,
+// //     'AI Teacher Chat': true,
+// //     'Create Courses': 'Unlimited',
+// //     'Course in 23+ Languages': true,
+// //     'Video & Theory Course': true,
+// //     'Priority Support': true,
+// //     'Advanced Analytics': true,
+// //   },
 // // };
 
 // // const ProfilePricing = () => {
 // //   const navigate = useNavigate();
+// //   const pricingRef = useRef<HTMLDivElement>(null);
 
 // //   const [plans, setPlans] = useState<any[]>([]);
-// //   const [activeType, setActiveType] = useState<string>("free");
-// //   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
-// //   const [loading, setLoading] = useState(true);
+// //   const [isLoading, setIsLoading] = useState(true);
 
-// //   /* ---------------- GET ACTIVE USER ---------------- */
+// //   // ✅ Normalize active plan value
+// //   const activePlan = sessionStorage.getItem('type')?.toLowerCase() || 'free';
+
 // //   useEffect(() => {
-// //     const email = sessionStorage.getItem("email");
-
-// //     axios.get(`${serverURL}/api/getusers`).then((res) => {
-// //       const users = res.data;
-
-// //       const currentUser = users.find((u: any) => u.email === email);
-
-// //       if (!currentUser) {
-// //         setActiveType("free");
-// //         return;
-// //       }
-
-// //       if (currentUser.subscriptionEnd && new Date(currentUser.subscriptionEnd) > new Date()) {
-// //         setActiveType(currentUser.type);
-// //         setSubscriptionEnd(currentUser.subscriptionEnd);
-// //       } else {
-// //         setActiveType("free");
-// //         setSubscriptionEnd(null);
-// //       }
-// //     });
+// //     fetchPricing();
 // //   }, []);
 
-// //   /* ---------------- GET PRICING ---------------- */
-// //   useEffect(() => {
-// //     axios.get(`${serverURL}/api/pricing`).then((res) => {
-// //       const formatted = res.data.pricing.map((p: any) => ({
-// //         id: p.planType,
-// //         planType: p.planType,
-// //         name:
-// //           p.planType === "free"
-// //             ? "Free Plan"
-// //             : p.planType === "monthly"
-// //             ? "Monthly Plan"
-// //             : "Yearly Plan",
-// //         price: p.price,
-// //         currency: p.currency,
-// //         features: PLAN_FEATURES[p.planType],
-// //         popular: p.planType === "yearly", // Yearly is Most Popular
-// //       }));
+// //   const handleSelectPlan = (plan: any) => {
+// //     if (activePlan === plan.id) return;
 
-// //       // Sort normally by PLAN_ORDER
-// //       formatted.sort((a: any, b: any) => PLAN_ORDER[a.planType] - PLAN_ORDER[b.planType]);
-
-// //       // Move popular plan to the end (rightmost)
-// //       const popularIndex = formatted.findIndex((p) => p.popular);
-// //       if (popularIndex !== -1) {
-// //         const [popularPlan] = formatted.splice(popularIndex, 1);
-// //         formatted.push(popularPlan);
-// //       }
-
-// //       setPlans(formatted);
-// //       setLoading(false);
-// //     });
-// //   }, []);
-
-// //   /* ---------------- UPGRADE ---------------- */
-// //   const handleUpgrade = (plan: any) => {
-// //     navigate(`/dashboard/payment/${plan.planType}`, {
+// //     navigate(`/dashboard/payment/${plan.id}`, {
 // //       state: {
 // //         price: plan.price,
+// //         currency: plan.currency,
 // //         planType: plan.planType,
 // //         planName: plan.name,
 // //       },
 // //     });
 // //   };
 
-// //   if (loading) {
-// //     return (
-// //       <div className="grid md:grid-cols-3 gap-6">
-// //         {[1, 2, 3].map((i) => (
-// //           <Skeleton key={i} className="h-[420px] rounded-xl" />
-// //         ))}
-// //       </div>
-// //     );
-// //   }
+// //   const fetchPricing = async () => {
+// //     try {
+// //       setIsLoading(true);
+// //       const response = await axios.get(`${serverURL}/api/pricing`);
+
+// //       if (response.data?.success && response.data?.pricing) {
+// //         const pricingData = Array.isArray(response.data.pricing)
+// //           ? response.data.pricing
+// //           : Object.values(response.data.pricing);
+
+// //         const formattedPlans = pricingData.map((plan: any) => {
+// //           const planType = plan.planType || 'free';
+
+// //           return {
+// //             id: planType, // free | monthly | yearly
+// //             name: plan.planName || plan.name,
+// //             description: '',
+// //             price: plan.price || 0,
+// //             currency: plan.currency || 'INR',
+// //             features: PLAN_FEATURES[planType] || {},
+// //             featured: planType === 'yearly',
+// //             billing: planType === 'free' ? 'lifetime' : planType,
+// //             planType,
+// //           };
+// //         });
+
+// //         const order = { free: 0, monthly: 1, yearly: 2 } as any;
+// //         formattedPlans.sort((a: any, b: any) => order[a.planType] - order[b.planType]);
+
+// //         setPlans(formattedPlans);
+// //       }
+// //     } catch (error) {
+// //       console.error('Pricing fetch failed', error);
+
+// //       // 🔁 Fallback
+// //       setPlans([
+// //         {
+// //           id: 'free',
+// //           name: FreeType,
+// //           description: '',
+// //           price: FreeCost,
+// //           currency: 'INR',
+// //           features: PLAN_FEATURES.free,
+// //           featured: false,
+// //           billing: 'lifetime',
+// //           planType: 'free',
+// //         },
+// //         {
+// //           id: 'monthly',
+// //           name: MonthType,
+// //           description: '',
+// //           price: MonthCost,
+// //           currency: 'INR',
+// //           features: PLAN_FEATURES.monthly,
+// //           featured: false,
+// //           billing: 'monthly',
+// //           planType: 'monthly',
+// //         },
+// //         {
+// //           id: 'yearly',
+// //           name: YearType,
+// //           description: '',
+// //           price: YearCost,
+// //           currency: 'INR',
+// //           features: PLAN_FEATURES.yearly,
+// //           featured: true,
+// //           billing: 'yearly',
+// //           planType: 'yearly',
+// //         },
+// //       ]);
+// //     } finally {
+// //       setIsLoading(false);
+// //     }
+// //   };
+
+// //   const getCurrencySymbol = (currency: string) => {
+// //     const symbols: any = {
+// //       USD: '$',
+// //       EUR: '€',
+// //       GBP: '£',
+// //       INR: '₹',
+// //       JPY: '¥',
+// //     };
+// //     return symbols[currency] || '₹';
+// //   };
 
 // //   return (
-// //     <div className="max-w-6xl mx-auto py-12">
-// //       <h1 className="text-3xl font-bold text-center mb-2">Choose Your Plan</h1>
-// //       <p className="text-center text-muted-foreground mb-10">
-// //         Upgrade anytime. Cancel anytime.
-// //       </p>
+// //     <div ref={pricingRef} className="container max-w-6xl mx-auto py-8">
+// //       <div className="text-center mb-10">
+// //         <h1 className="text-3xl font-bold">Choose Your Plan</h1>
+// //         <p className="mt-3 text-muted-foreground">
+// //           Select the perfect plan to boost your course creation productivity
+// //         </p>
+// //       </div>
 
-// //       <div className="grid md:grid-cols-3 gap-8">
-// //         {plans.map((plan) => {
-// //           const isActive = plan.planType === activeType;
-// //           const canUpgrade = PLAN_ORDER[plan.planType] > PLAN_ORDER[activeType];
+// //       <div className="grid md:grid-cols-3 gap-6">
+// //         {plans.map((plan) => (
+// //           <Card
+// //             key={plan.id}
+// //             className={`relative transition-all duration-300 hover:shadow-lg ${
+// //               plan.featured ? 'border-primary shadow-primary/20' : 'border-border/50'
+// //             }`}
+// //           >
+// //             {plan.featured && (
+// //               <span className="absolute top-3 right-3 text-xs font-semibold bg-primary text-white px-3 py-1 rounded-full">
+// //                 MOST POPULAR
+// //               </span>
+// //             )}
 
-// //           return (
-// //             <Card
-// //               key={plan.id}
-// //               className={`relative rounded-2xl border transition-transform duration-200 ${
-// //                 plan.popular ? "border-primary shadow-lg scale-105" : ""
-// //               }`}
-// //             >
-// //               {isActive && (
-// //                 <span className="absolute top-4 right-4 bg-green-600 text-white text-xs px-3 py-1 rounded-full">
-// //                   Active
+// //             <CardHeader>
+// //               <div className="flex items-center gap-2">
+// //                 {plan.planType === 'yearly' && <Crown className="h-5 w-5 text-primary" />}
+// //                 {plan.planType === 'monthly' && <Zap className="h-5 w-5 text-primary" />}
+// //                 <CardTitle>{plan.name}</CardTitle>
+// //               </div>
+// //               <CardDescription>{plan.description}</CardDescription>
+// //             </CardHeader>
+
+// //             <CardContent>
+// //               <div className="mb-6">
+// //                 <span className="text-4xl font-bold">
+// //                   {getCurrencySymbol(plan.currency)}{plan.price}
 // //                 </span>
-// //               )}
-
-// //           {plan.popular && (
-// //   <span className="absolute top-4 right-4 bg-purple-600 text-white text-xs px-3 py-1 rounded-full flex items-center gap-1">
-// //     <Crown className="w-4 h-4 text-white" /> Most Popular
-// //   </span>
-// // )}
-
-// //               <CardHeader>
-// //                 <div className="flex items-center gap-2">
-// //                   <h3 className="text-xl font-semibold">{plan.name}</h3>
-// //                 </div>
-
-// //                 <div className="mt-4 text-3xl font-bold">
-// //                   ₹{plan.price}
-// //                   <span className="text-sm text-muted-foreground">
-// //                     {plan.planType === "monthly"
-// //                       ? "/month"
-// //                       : plan.planType === "yearly"
-// //                       ? "/year"
-// //                       : ""}
+// //                 {plan.planType !== 'free' && (
+// //                   <span className="text-muted-foreground ml-2">
+// //                     /{plan.planType === 'monthly' ? 'month' : 'year'}
 // //                   </span>
-// //                 </div>
-
-// //                 {isActive && subscriptionEnd && (
-// //                   <p className="text-xs text-muted-foreground mt-1">
-// //                     Valid till {new Date(subscriptionEnd).toDateString()}
-// //                   </p>
 // //                 )}
-// //               </CardHeader>
+// //               </div>
 
-// //               <CardContent>
-// //                 <ul className="space-y-3">
-// //                   {plan.features.map((f: string, i: number) => (
-// //                     <li key={i} className="flex gap-3">
-// //                       <Check className="w-5 h-5 text-primary" />
-// //                       {f}
+// //               <ul className="space-y-3">
+// //                 {ALL_FEATURES.map((feature, index) => {
+// //                   const value = plan.features[feature];
+// //                   const enabled = value === true || typeof value === 'string';
+
+// //                   return (
+// //                     <li key={index} className="flex gap-3 items-center">
+// //                       {enabled ? (
+// //                         <Check className="h-5 w-5 text-primary shrink-0" />
+// //                       ) : (
+// //                         <span className="h-5 w-5 rounded-full border border-muted-foreground/40 shrink-0" />
+// //                       )}
+// //                       <span className={enabled ? '' : 'text-muted-foreground line-through'}>
+// //                         {typeof value === 'string' ? `${feature}: ${value}` : feature}
+// //                       </span>
 // //                     </li>
-// //                   ))}
-// //                 </ul>
-// //               </CardContent>
+// //                   );
+// //                 })}
+// //               </ul>
+// //             </CardContent>
 
-// //               <CardFooter>
-// //                 {isActive ? (
-// //                   <Button className="w-full" disabled variant="secondary">
-// //                     Active Plan
-// //                   </Button>
-// //                 ) : canUpgrade ? (
-// //                   <Button className="w-full" onClick={() => handleUpgrade(plan)}>
-// //                     Upgrade
-// //                   </Button>
-// //                 ) : (
-// //                   <Button className="w-full" disabled variant="outline">
-// //                     Not Available
-// //                   </Button>
-// //                 )}
-// //               </CardFooter>
-// //             </Card>
-// //           );
-// //         })}
+// //             <CardFooter className="pt-4">
+// //               {activePlan === plan.id ? (
+// //                 <Button disabled className="w-full bg-muted text-muted-foreground cursor-not-allowed">
+// //                   Active Plan
+// //                 </Button>
+// //               ) : (
+// //                 <Button
+// //                   onClick={() => handleSelectPlan(plan)}
+// //                   className={`w-full ${plan.featured ? 'bg-primary hover:bg-primary/90' : ''}`}
+// //                   variant={plan.featured ? 'default' : 'outline'}
+// //                 >
+// //                   Choose {plan.planType}
+// //                 </Button>
+// //               )}
+// //             </CardFooter>
+// //           </Card>
+// //         ))}
 // //       </div>
 // //     </div>
 // //   );
 // // };
 
 // // export default ProfilePricing;
+// import React, { useEffect, useRef, useState } from 'react';
+// import { useNavigate } from 'react-router-dom';
+// import axios from 'axios';
+// import { Button } from '@/components/ui/button';
+// import {
+//   Card,
+//   CardContent,
+//   CardDescription,
+//   CardFooter,
+//   CardHeader,
+//   CardTitle,
+// } from '@/components/ui/card';
+// import { Check, Crown, Zap } from 'lucide-react';
+// import {
+//   FreeCost,
+//   FreeType,
+//   MonthCost,
+//   MonthType,
+//   YearCost,
+//   YearType,
+//   serverURL,
+// } from '@/constants';
 
-// import React, { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
-// import axios from "axios";
-// import { Check } from "lucide-react";
+// /* -------------------------------- FEATURES -------------------------------- */
 
-// import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-// import { Button } from "@/components/ui/button";
-// import { Skeleton } from "@/components/ui/skeleton";
-// import { serverURL } from "@/constants";
+// const ALL_FEATURES = [
+//   'Sub-Topic Limit',
+//   'Access Duration',
+//   'Theory & Image Course',
+//   'Create Courses',
+//   'AI Teacher Chat',
+//   'Course in 23+ Languages',
+//   'Video & Theory Course',
+//   'Priority Support',
+//   'Advanced Analytics',
+// ];
 
-// /* ---------------- Plan Order ---------------- */
-// const PLAN_ORDER: Record<string, number> = {
-//   free: 0,
-//   monthly: 1,
-//   yearly: 2,
+// const PLAN_FEATURES: Record<string, Record<string, boolean | string>> = {
+//   free: {
+//     'Sub-Topic Limit': '5 only',
+//     'Access Duration': '7 days',
+//     'Theory & Image Course': true,
+//     'Create Courses': '1 course only',
+//     'AI Teacher Chat': true,
+//     'Course in 23+ Languages': false,
+//     'Video & Theory Course': false,
+//     'Priority Support': false,
+//     'Advanced Analytics': false,
+//   },
+
+//   monthly: {
+//     'Sub-Topic Limit': '10 per course',
+//     'Access Duration': '1 month',
+//     'Theory & Image Course': true,
+//     'AI Teacher Chat': true,
+//     'Create Courses': '20 courses only',
+//     'Course in 23+ Languages': true,
+//     'Video & Theory Course': true,
+//     'Priority Support': false,
+//     'Advanced Analytics': false,
+//   },
+
+//   yearly: {
+//     'Sub-Topic Limit': 'Unlimited',
+//     'Access Duration': '1 year',
+//     'Theory & Image Course': true,
+//     'AI Teacher Chat': true,
+//     'Create Courses': 'Unlimited',
+//     'Course in 23+ Languages': true,
+//     'Video & Theory Course': true,
+//     'Priority Support': true,
+//     'Advanced Analytics': true,
+//   },
 // };
 
-// /* ---------------- Features ---------------- */
-// const PLAN_FEATURES: Record<string, string[]> = {
-//   free: [
-//     "Generate 5 Sub-Topics",
-//     "Access valid for 7 days",
-//     "Theory & Image Course",
-//     "AI Teacher Chat",
-//   ],
-//   monthly: [
-//     "Generate 10 Sub-Topics",
-//     "1 Month Access",
-//     "Theory & Image Course",
-//     "AI Teacher Chat",
-//   ],
-//   yearly: [
-//     "Generate Unlimited Sub-Topics",
-//     "1 Year Access",
-//     "Theory & Image Course",
-//     "AI Teacher Chat",
-//   ],
-// };
+// /* ------------------------------- COMPONENT -------------------------------- */
 
 // const ProfilePricing = () => {
 //   const navigate = useNavigate();
+//   const pricingRef = useRef<HTMLDivElement>(null);
 
 //   const [plans, setPlans] = useState<any[]>([]);
-//   const [activeType, setActiveType] = useState<string>("free");
-//   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
-//   const [loading, setLoading] = useState(true);
+//   const [isLoading, setIsLoading] = useState(true);
 
-//   /* ---------------- GET ACTIVE USER ---------------- */
+//   // free | monthly | yearly
+//   const activePlan = sessionStorage.getItem('type');
+
 //   useEffect(() => {
-//     const email = sessionStorage.getItem("email");
-
-//     axios.get(`${serverURL}/api/getusers`).then((res) => {
-//       const users = res.data;
-//       const currentUser = users.find((u: any) => u.email === email);
-
-//       if (!currentUser) {
-//         setActiveType("free");
-//         setLoading(false);
-//         return;
-//       }
-
-//       if (currentUser.subscriptionEnd && new Date(currentUser.subscriptionEnd) > new Date()) {
-//         setActiveType(currentUser.type);
-//         setSubscriptionEnd(currentUser.subscriptionEnd);
-//       } else {
-//         setActiveType("free");
-//         setSubscriptionEnd(null);
-//       }
-
-//       setLoading(false);
-//     });
+//     fetchPricing();
 //   }, []);
 
-//   /* ---------------- GET PRICING ---------------- */
-//   useEffect(() => {
-//     axios.get(`${serverURL}/api/pricing`).then((res) => {
-//       const formatted = res.data.pricing.map((p: any) => ({
-//         id: p.planType,
-//         planType: p.planType,
-//         name:
-//           p.planType === "free"
-//             ? "Free"
-//             : p.planType === "monthly"
-//             ? "Monthly"
-//             : "Yearly",
-//         price: p.price,
-//         currency: p.currency,
-//         features: PLAN_FEATURES[p.planType],
-//         popular: p.planType === "monthly", // Monthly is Most Popular
-//       }));
+//   /* ----------------------------- FETCH PRICING ----------------------------- */
 
-//       // Sort by PLAN_ORDER
-//       formatted.sort((a: any, b: any) => PLAN_ORDER[a.planType] - PLAN_ORDER[b.planType]);
+//   const fetchPricing = async () => {
+//     try {
+//       setIsLoading(true);
+//       const response = await axios.get(`${serverURL}/api/pricing`);
 
-//       setPlans(formatted);
-//       setLoading(false);
-//     });
-//   }, []);
+//       if (response.data?.success && response.data?.pricing) {
+//         const pricingData = Array.isArray(response.data.pricing)
+//           ? response.data.pricing
+//           : Object.values(response.data.pricing);
 
-//   /* ---------------- UPGRADE ---------------- */
-//   const handleUpgrade = (plan: any) => {
-//     navigate(`/dashboard/payment/${plan.planType}`, {
+//         const formattedPlans = pricingData.map((plan: any) => {
+//           const planType = plan.planType || 'free';
+
+//           return {
+//             id: planType,
+//             name: plan.planName || plan.name,
+//             description: '',
+//             price: plan.price || 0,
+//             currency: plan.currency || 'INR',
+//             features: PLAN_FEATURES[planType],
+//             featured: planType === 'yearly',
+//             billing: planType,
+//             planType,
+//           };
+//         });
+
+//         const order: any = { free: 0, monthly: 1, yearly: 2 };
+//         formattedPlans.sort((a: any, b: any) => order[a.planType] - order[b.planType]);
+
+//         setPlans(formattedPlans);
+//       }
+//     } catch (error) {
+//       setPlans([
+//         {
+//           id: 'free',
+//           name: FreeType,
+//           price: FreeCost,
+//           currency: 'INR',
+//           features: PLAN_FEATURES.free,
+//           planType: 'free',
+//         },
+//         {
+//           id: 'monthly',
+//           name: MonthType,
+//           price: MonthCost,
+//           currency: 'INR',
+//           features: PLAN_FEATURES.monthly,
+//           planType: 'monthly',
+//         },
+//         {
+//           id: 'yearly',
+//           name: YearType,
+//           price: YearCost,
+//           currency: 'INR',
+//           features: PLAN_FEATURES.yearly,
+//           featured: true,
+//           planType: 'yearly',
+//         },
+//       ]);
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   /* ----------------------------- HELPERS ----------------------------- */
+
+//   const handleSelectPlan = (plan: any) => {
+//     if (activePlan === plan.id) return;
+
+//     navigate(`/dashboard/payment/${plan.id}`, {
 //       state: {
 //         price: plan.price,
+//         currency: plan.currency,
 //         planType: plan.planType,
 //         planName: plan.name,
 //       },
 //     });
 //   };
 
-//   if (loading) {
-//     return (
-//       <div className="grid md:grid-cols-3 gap-6">
-//         {[1, 2, 3].map((i) => (
-//           <Skeleton key={i} className="h-[420px] rounded-xl" />
-//         ))}
-//       </div>
-//     );
-//   }
+//   const getCurrencySymbol = (currency: string) => {
+//     const symbols: any = { INR: '₹', USD: '$', EUR: '€' };
+//     return symbols[currency] || '₹';
+//   };
+
+//   /* -------------------------------- UI -------------------------------- */
 
 //   return (
-//     <div className="max-w-6xl mx-auto py-12">
-//       <h1 className="text-3xl font-bold text-center mb-2">Choose Your Plan</h1>
-//       <p className="text-center text-muted-foreground mb-10">
-//         Upgrade anytime. Cancel anytime.
-//       </p>
+//     <div ref={pricingRef} className="container max-w-6xl mx-auto py-8">
+//       <div className="text-center mb-10">
+//         <h1 className="text-3xl font-bold">Choose Your Plan</h1>
+//         <p className="mt-3 text-muted-foreground">
+//           Select the perfect plan to boost your course creation productivity
+//         </p>
+//       </div>
 
-//       <div className="grid md:grid-cols-3 gap-8">
+//       <div className="grid md:grid-cols-3 gap-6">
 //         {plans.map((plan) => {
-//           const isActive = plan.planType === activeType;
-//           const canUpgrade = PLAN_ORDER[plan.planType] > PLAN_ORDER[activeType];
+//           const isActive = activePlan === plan.id;
+//           const isFreeDisabled = plan.planType === 'free' && activePlan !== 'free' && activePlan;
 
 //           return (
 //             <Card
 //               key={plan.id}
-//               className={`relative rounded-2xl border transition-transform duration-200 ${
-//                 plan.popular
-//                   ? "border-primary shadow-2xl scale-105"
-//                   : "border-gray-200"
+//               className={`relative ${
+//                 plan.featured ? 'border-primary shadow-primary/20' : ''
 //               }`}
 //             >
-//               {plan.popular && (
-//                 <span className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white text-xs px-3 py-1 rounded-full font-semibold">
+//               {plan.featured && (
+//                 <span className="absolute top-3 right-3 text-xs font-semibold bg-primary text-white px-3 py-1 rounded-full">
 //                   MOST POPULAR
 //                 </span>
 //               )}
 
-//               <CardHeader className="text-center mt-4">
-//                 <h3 className="text-xl font-bold">{plan.name}</h3>
-
-//                 <div className="mt-4 text-3xl font-extrabold">
-//                   ₹{plan.price}
-//                   <span className="text-sm text-muted-foreground ml-1">
-//                     {plan.planType === "monthly"
-//                       ? "/Month"
-//                       : plan.planType === "yearly"
-//                       ? "/Year"
-//                       : "/Lifetime"}
-//                   </span>
+//               <CardHeader>
+//                 <div className="flex items-center gap-2">
+//                   {plan.planType === 'yearly' && <Crown className="h-5 w-5 text-primary" />}
+//                   {plan.planType === 'monthly' && <Zap className="h-5 w-5 text-primary" />}
+//                   <CardTitle>{plan.name}</CardTitle>
 //                 </div>
-
-//                 {isActive && subscriptionEnd && (
-//                   <p className="text-xs text-muted-foreground mt-1">
-//                     Valid till {new Date(subscriptionEnd).toDateString()}
-//                   </p>
-//                 )}
+//                 <CardDescription />
 //               </CardHeader>
 
 //               <CardContent>
+//                 <div className="mb-6">
+//                   <span className="text-4xl font-bold">
+//                     {getCurrencySymbol(plan.currency)}
+//                     {plan.price}
+//                   </span>
+//                   {plan.planType !== 'free' && (
+//                     <span className="text-muted-foreground ml-2">
+//                       /{plan.planType === 'monthly' ? 'month' : 'year'}
+//                     </span>
+//                   )}
+//                 </div>
+
 //                 <ul className="space-y-3">
-//                   {plan.features.map((f: string, i: number) => (
-//                     <li key={i} className="flex items-center gap-3">
-//                       <Check className="w-5 h-5 text-primary" />
-//                       {f}
-//                     </li>
-//                   ))}
+//                   {ALL_FEATURES.map((feature, i) => {
+//                     const value = plan.features[feature];
+//                     const enabled = value === true || typeof value === 'string';
+
+//                     return (
+//                       <li key={i} className="flex gap-3 items-center">
+//                         {enabled ? (
+//                           <Check className="h-5 w-5 text-primary" />
+//                         ) : (
+//                           <span className="h-5 w-5 rounded-full border" />
+//                         )}
+//                         <span className={enabled ? '' : 'line-through text-muted-foreground'}>
+//                           {typeof value === 'string'
+//                             ? `${feature}: ${value}`
+//                             : feature}
+//                         </span>
+//                       </li>
+//                     );
+//                   })}
 //                 </ul>
 //               </CardContent>
 
-//               <CardFooter className="pt-6">
-//                 <Button
-//                   className="w-full font-semibold"
-//                   onClick={() => handleUpgrade(plan)}
-//                   variant={isActive ? "secondary" : "default"}
-//                   disabled={isActive}
-//                 >
-//                   {isActive
-//                     ? "Active Plan"
-//                     : plan.planType === "free"
-//                     ? "Choose Free"
-//                     : plan.planType === "monthly"
-//                     ? "Choose Monthly"
-//                     : "Choose Yearly"}
-//                 </Button>
+//               <CardFooter>
+//                 {isActive && (
+//                   <Button disabled className="w-full">
+//                     Active Plan
+//                   </Button>
+//                 )}
+
+//                 {isFreeDisabled && (
+//                   <Button disabled className="w-full">
+//                     Not Available
+//                   </Button>
+//                 )}
+
+//                 {!isActive && !isFreeDisabled && (
+//                   <Button
+//                     onClick={() => handleSelectPlan(plan)}
+//                     className="w-full"
+//                     variant={plan.featured ? 'default' : 'outline'}
+//                   >
+//                     Choose {plan.planType}
+//                   </Button>
+//                 )}
 //               </CardFooter>
 //             </Card>
 //           );
@@ -423,215 +542,291 @@
 // };
 
 // export default ProfilePricing;
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Check, Crown, Zap } from 'lucide-react';
+import {
+  FreeCost,
+  FreeType,
+  MonthCost,
+  MonthType,
+  YearCost,
+  YearType,
+  serverURL,
+} from '@/constants';
 
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { Check } from "lucide-react";
+/* -------------------- FEATURE ORDER -------------------- */
 
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { serverURL } from "@/constants";
+const ALL_FEATURES = [
+  'Sub-Topic Limit',
+  'Access Duration',
+  'Theory & Image Course',
+  'Create Courses',
+  'AI Teacher Chat',
+  'Course in 23+ Languages',
+  'Video & Theory Course',
+  'Priority Support',
+  'Advanced Analytics',
+];
 
-/* ---------------- Plan Order ---------------- */
+/* -------------------- PLAN FEATURES -------------------- */
+
+const PLAN_FEATURES: Record<string, Record<string, boolean | string>> = {
+  free: {
+    'Sub-Topic Limit': '5 only',
+    'Access Duration': '7 days',
+    'Theory & Image Course': true,
+    'Create Courses': '1 course only',
+    'AI Teacher Chat': true,
+    'Course in 23+ Languages': false,
+    'Video & Theory Course': false,
+    'Priority Support': false,
+    'Advanced Analytics': false,
+  },
+
+  monthly: {
+    'Sub-Topic Limit': '10 per course',
+    'Access Duration': '1 month',
+    'Theory & Image Course': true,
+    'Create Courses': '20 courses only',
+    'AI Teacher Chat': true,
+    'Course in 23+ Languages': true,
+    'Video & Theory Course': true,
+    'Priority Support': false,
+    'Advanced Analytics': false,
+  },
+
+  yearly: {
+    'Sub-Topic Limit': 'Unlimited',
+    'Access Duration': '1 year',
+    'Theory & Image Course': true,
+    'Create Courses': 'Unlimited',
+    'AI Teacher Chat': true,
+    'Course in 23+ Languages': true,
+    'Video & Theory Course': true,
+    'Priority Support': true,
+    'Advanced Analytics': true,
+  },
+};
+
+/* -------------------- PLAN ORDER (IMPORTANT) -------------------- */
+
 const PLAN_ORDER: Record<string, number> = {
   free: 0,
   monthly: 1,
   yearly: 2,
 };
 
-/* ---------------- Features ---------------- */
-const PLAN_FEATURES: Record<string, string[]> = {
-  free: [
-    "Generate 5 Sub-Topics",
-    "Access valid for 7 days",
-    "Theory & Image Course",
-    "AI Teacher Chat",
-  ],
-  monthly: [
-    "Generate 10 Sub-Topics",
-    "1 Month Access",
-    "Theory & Image Course",
-    "AI Teacher Chat",
-  ],
-  yearly: [
-    "Generate Unlimited Sub-Topics",
-    "1 Year Access",
-    "Theory & Image Course",
-    "AI Teacher Chat",
-  ],
-};
+/* -------------------- COMPONENT -------------------- */
 
 const ProfilePricing = () => {
   const navigate = useNavigate();
+  const pricingRef = useRef<HTMLDivElement>(null);
 
   const [plans, setPlans] = useState<any[]>([]);
-  const [activeType, setActiveType] = useState<string>("free");
-  const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  /* ---------------- GET ACTIVE USER ---------------- */
+  // free | monthly | yearly
+  const activePlan = sessionStorage.getItem('type') || 'free';
+
   useEffect(() => {
-    const email = sessionStorage.getItem("email");
-
-    axios.get(`${serverURL}/api/getusers`).then((res) => {
-      const users = res.data;
-      const currentUser = users.find((u: any) => u.email === email);
-
-      if (!currentUser) {
-        setActiveType("free");
-        setLoading(false);
-        return;
-      }
-
-      if (
-        currentUser.subscriptionEnd &&
-        new Date(currentUser.subscriptionEnd) > new Date()
-      ) {
-        setActiveType(currentUser.type);
-        setSubscriptionEnd(currentUser.subscriptionEnd);
-      } else {
-        setActiveType("free");
-        setSubscriptionEnd(null);
-      }
-
-      setLoading(false);
-    });
+    fetchPricing();
   }, []);
 
-  /* ---------------- GET PRICING ---------------- */
-  useEffect(() => {
-    axios.get(`${serverURL}/api/pricing`).then((res) => {
-      const formatted = res.data.pricing.map((p: any) => ({
-        id: p.planType,
-        planType: p.planType,
-        name:
-          p.planType === "free"
-            ? "Free"
-            : p.planType === "monthly"
-            ? "Monthly"
-            : "Yearly",
-        price: p.price,
-        currency: p.currency,
-        features: PLAN_FEATURES[p.planType],
-        popular: p.planType === "yearly", // ✅ Yearly is Most Popular
-      }));
+  /* -------------------- FETCH PRICING -------------------- */
 
-      formatted.sort(
-        (a: any, b: any) => PLAN_ORDER[a.planType] - PLAN_ORDER[b.planType]
-      );
+  const fetchPricing = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(`${serverURL}/api/pricing`);
 
-      setPlans(formatted);
-      setLoading(false);
-    });
-  }, []);
+      if (response.data?.success && response.data?.pricing) {
+        const pricingData = Array.isArray(response.data.pricing)
+          ? response.data.pricing
+          : Object.values(response.data.pricing);
 
-  /* ---------------- UPGRADE ---------------- */
-  const handleUpgrade = (plan: any) => {
-    navigate(`/dashboard/payment/${plan.planType}`, {
+        const formattedPlans = pricingData.map((plan: any) => {
+          const planType = plan.planType || 'free';
+
+          return {
+            id: planType,
+            name: plan.planName || plan.name,
+            price: plan.price || 0,
+            currency: plan.currency || 'INR',
+            features: PLAN_FEATURES[planType],
+            featured: planType === 'yearly',
+            planType,
+          };
+        });
+
+        const order: any = { free: 0, monthly: 1, yearly: 2 };
+        formattedPlans.sort((a: any, b: any) => order[a.planType] - order[b.planType]);
+
+        setPlans(formattedPlans);
+      }
+    } catch (error) {
+      setPlans([
+        {
+          id: 'free',
+          name: FreeType,
+          price: FreeCost,
+          currency: 'INR',
+          features: PLAN_FEATURES.free,
+          planType: 'free',
+        },
+        {
+          id: 'monthly',
+          name: MonthType,
+          price: MonthCost,
+          currency: 'INR',
+          features: PLAN_FEATURES.monthly,
+          planType: 'monthly',
+        },
+        {
+          id: 'yearly',
+          name: YearType,
+          price: YearCost,
+          currency: 'INR',
+          features: PLAN_FEATURES.yearly,
+          featured: true,
+          planType: 'yearly',
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /* -------------------- HELPERS -------------------- */
+
+  const handleSelectPlan = (plan: any) => {
+    if (activePlan === plan.id) return;
+
+    navigate(`/dashboard/payment/${plan.id}`, {
       state: {
         price: plan.price,
+        currency: plan.currency,
         planType: plan.planType,
         planName: plan.name,
       },
     });
   };
 
-  if (loading) {
-    return (
-      <div className="grid md:grid-cols-3 gap-6">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-[420px] rounded-xl" />
-        ))}
-      </div>
-    );
-  }
+  const getCurrencySymbol = (currency: string) => {
+    const symbols: any = { INR: '₹', USD: '$', EUR: '€' };
+    return symbols[currency] || '₹';
+  };
+
+  /* -------------------- UI -------------------- */
 
   return (
-    <div className="max-w-6xl mx-auto py-12">
-      <h1 className="text-3xl font-bold text-center mb-2">
-        Choose Your Plan
-      </h1>
-      <p className="text-center text-muted-foreground mb-10">
-        Upgrade anytime. Cancel anytime.
-      </p>
+    <div ref={pricingRef} className="container max-w-6xl mx-auto py-8">
+      <div className="text-center mb-10">
+        <h1 className="text-3xl font-bold">Choose Your Plan</h1>
+        <p className="mt-3 text-muted-foreground">
+          Select the perfect plan to boost your course creation productivity
+        </p>
+      </div>
 
-      <div className="grid md:grid-cols-3 gap-8">
+      <div className="grid md:grid-cols-3 gap-6">
         {plans.map((plan) => {
-          const isActive = plan.planType === activeType;
+          const isActive = activePlan === plan.id;
 
-          // ❌ Free is not available if user already upgraded
-          const isDowngrade =
-            plan.planType === "free" && activeType !== "free";
+          // 🔒 BLOCK DOWNGRADES
+          const isNotAvailable =
+            activePlan &&
+            PLAN_ORDER[plan.planType] < PLAN_ORDER[activePlan];
 
           return (
             <Card
               key={plan.id}
-              className={`relative rounded-2xl border transition-transform duration-200 ${
-                plan.popular
-                  ? "border-primary shadow-2xl scale-105"
-                  : "border-gray-200"
+              className={`relative ${
+                plan.featured ? 'border-primary shadow-primary/20' : ''
               }`}
             >
-              {plan.popular && (
-                <span className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white text-xs px-3 py-1 rounded-full font-semibold">
+              {plan.featured && (
+                <span className="absolute top-3 right-3 text-xs font-semibold bg-primary text-white px-3 py-1 rounded-full">
                   MOST POPULAR
                 </span>
               )}
 
-              <CardHeader className="text-center mt-4">
-                <h3 className="text-xl font-bold">{plan.name}</h3>
-
-                <div className="mt-4 text-3xl font-extrabold">
-                  ₹{plan.price}
-                  <span className="text-sm text-muted-foreground ml-1">
-                    {plan.planType === "monthly"
-                      ? "/Month"
-                      : plan.planType === "yearly"
-                      ? "/Year"
-                      : "/Lifetime"}
-                  </span>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  {plan.planType === 'yearly' && <Crown className="h-5 w-5 text-primary" />}
+                  {plan.planType === 'monthly' && <Zap className="h-5 w-5 text-primary" />}
+                  <CardTitle>{plan.name}</CardTitle>
                 </div>
-
-                {isActive && subscriptionEnd && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Valid till{" "}
-                    {new Date(subscriptionEnd).toDateString()}
-                  </p>
-                )}
+                <CardDescription />
               </CardHeader>
 
               <CardContent>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">
+                    {getCurrencySymbol(plan.currency)}
+                    {plan.price}
+                  </span>
+                  {plan.planType !== 'free' && (
+                    <span className="text-muted-foreground ml-2">
+                      /{plan.planType === 'monthly' ? 'month' : 'year'}
+                    </span>
+                  )}
+                </div>
+
                 <ul className="space-y-3">
-                  {plan.features.map((f: string, i: number) => (
-                    <li key={i} className="flex items-center gap-3">
-                      <Check className="w-5 h-5 text-primary" />
-                      {f}
-                    </li>
-                  ))}
+                  {ALL_FEATURES.map((feature, i) => {
+                    const value = plan.features[feature];
+                    const enabled = value === true || typeof value === 'string';
+
+                    return (
+                      <li key={i} className="flex gap-3 items-center">
+                        {enabled ? (
+                          <Check className="h-5 w-5 text-primary" />
+                        ) : (
+                          <span className="h-5 w-5 rounded-full border" />
+                        )}
+                        <span className={enabled ? '' : 'line-through text-muted-foreground'}>
+                          {typeof value === 'string'
+                            ? `${feature}: ${value}`
+                            : feature}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </CardContent>
 
-              <CardFooter className="pt-6">
-                <Button
-                  className="w-full font-semibold"
-                  onClick={() => handleUpgrade(plan)}
-                  variant={
-                    isActive || isDowngrade ? "secondary" : "default"
-                  }
-                  disabled={isActive || isDowngrade}
-                >
-                  {isActive
-                    ? "Active Plan"
-                    : isDowngrade
-                    ? "Not Available"
-                    : plan.planType === "free"
-                    ? "Choose Free"
-                    : plan.planType === "monthly"
-                    ? "Choose Monthly"
-                    : "Choose Yearly"}
-                </Button>
+              <CardFooter>
+                {isActive && (
+                  <Button disabled className="w-full">
+                    Active Plan
+                  </Button>
+                )}
+
+                {!isActive && isNotAvailable && (
+                  <Button disabled className="w-full">
+                    Not Available
+                  </Button>
+                )}
+
+                {!isActive && !isNotAvailable && (
+                  <Button
+                    onClick={() => handleSelectPlan(plan)}
+                    className="w-full"
+                    variant={plan.featured ? 'default' : 'outline'}
+                  >
+                    Choose {plan.planType}
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           );
