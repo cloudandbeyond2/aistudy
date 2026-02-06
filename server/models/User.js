@@ -1,121 +1,37 @@
-// // import mongoose from 'mongoose';
-
-// // const userSchema = new mongoose.Schema({
-// //   email: { type: String, unique: true, required: true },
-// //   mmName: String,
-// //   password: String,
-// //   type: String,
-// //   resetPasswordToken: { type: String, default: null },
-// //   resetPasswordExpires: { type: Date, default: null },
-// //   date: { type: Date, default: Date.now }
-// // });
-
-// // export default mongoose.model('User', userSchema);
-
-// // models/user.model.js
-
 // import mongoose from 'mongoose';
 
 // const userSchema = new mongoose.Schema({
 //   email: { type: String, unique: true, required: true },
-//   mmName: String,
+//   mName: String,
 //   password: String,
-//   type: String, // free | monthly | yearly | forever
-//   subscriptionStart: { type: Date, default: null },
-//   subscriptionEnd: { type: Date, default: null },
+//   type: String,
 //   resetPasswordToken: { type: String, default: null },
 //   resetPasswordExpires: { type: Date, default: null },
-//   isEmailVerified: { type: Boolean, default: false },
-//   emailVerificationToken: { type: String, default: null },
-//   emailVerificationExpires: { type: Date, default: null },
-//   date: { type: Date, default: Date.now },
-//   userType: {
-//     type: String,
-//     enum: ["individual", "organization"],
-//     default: null
-//   },
- 
-//   // Individual fields
-//   profession: {
-//     type: String,
-//     default: ""
-//   },
-//   experienceLevel: {
-//     type: String,
-//     enum: ["beginner", "intermediate", "advanced"],
-//     default: "beginner"
-//   },
- 
-//   // Organization fields
-//   organizationmName: {
-//     type: String,
-//     default: ""
-//   },
+//   date: { type: Date, default: Date.now }
 // });
 
 // export default mongoose.model('User', userSchema);
 
-import mongoose from "mongoose";
+// models/user.model.js
+import mongoose from 'mongoose';
 
-const userSchema = new mongoose.Schema(
-  {
-    // AUTH
-    email: { type: String, unique: true, required: true },
-    password: { type: String, required: true },
-    isEmailVerified: { type: Boolean, default: false },
-
-    // PROFILE BASIC
-    mName: { type: String, default: "" },          // Full mName
-    phone: { type: String, default: "" },
-    dob: { type: Date, default: null },
-    gender: {
-      type: String,
-      enum: ["male", "female", "other"],
-      default: null,
-    },
-
-    // LOCATION
-    country: { type: String, default: "" },
-    city: { type: String, default: "" },
-    pin: { type: String, default: "" },
-    address: { type: String, default: "" },
-    date: { type: Date, default: Date.now },
-    // USER TYPE
-    userType: {
-      type: String,
-      enum: ["individual", "organization"],
-      default: null,
-    },
-
-    // INDIVIDUAL FIELDS
-    profession: { type: String, default: "" },
-    experienceLevel: {
-      type: String,
-      enum: ["beginner", "intermediate", "advanced"],
-      default: "beginner",
-    },
-
-    // ORGANIZATION FIELDS
-    organizationmName: { type: String, default: "" },
-
-    // SUBSCRIPTION
-    type: {
-      type: String,
-      enum: ["free", "monthly", "yearly", "forever"],
-      default: "free",
-    },
-    subscriptionStart: { type: Date, default: null },
-    subscriptionEnd: { type: Date, default: null },
-
-    // PASSWORD RESET
-    resetPasswordToken: { type: String, default: null },
-    resetPasswordExpires: { type: Date, default: null },
-
-    // EMAIL VERIFY
-    emailVerificationToken: { type: String, default: null },
-    emailVerificationExpires: { type: Date, default: null },
+const userSchema = new mongoose.Schema({
+  email: { type: String, unique: true, required: true },
+  mName: String,
+  password: String,
+  type: { type: String, default: 'free' }, // free | monthly | yearly | forever
+  role: { type: String, enum: ['user', 'student', 'org_admin'], default: 'user' },
+  organization: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization' },
+  studentDetails: {
+    department: String,
+    section: String,
+    rollNo: String
   },
-  { timestamps: true }
-);
+  subscriptionStart: { type: Date, default: null },
+  subscriptionEnd: { type: Date, default: null },
+  resetPasswordToken: { type: String, default: null },
+  resetPasswordExpires: { type: Date, default: null },
+  date: { type: Date, default: Date.now }
+});
 
-export default mongoose.model("User", userSchema);
+export default mongoose.model('User', userSchema);

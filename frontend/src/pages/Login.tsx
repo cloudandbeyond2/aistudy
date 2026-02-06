@@ -54,12 +54,27 @@ const Login = () => {
         sessionStorage.setItem('auth', 'true');
         sessionStorage.setItem('uid', response.data.userData._id);
         sessionStorage.setItem('type', response.data.userData.type);
+        sessionStorage.setItem('role', response.data.userData.role); // Store role
+
+        // Store organization ID for org_admin and student roles
+        if (response.data.userData.organization) {
+          sessionStorage.setItem('orgId', response.data.userData.organization);
+        }
+
         toast({
           title: "Login successful",
           description: "Welcome back to " + appName,
         });
+
         if (sessionStorage.getItem('shared') === null) {
-          redirectHome();
+          // Role based redirect
+          if (response.data.userData.role === 'org_admin') {
+            navigate("/dashboard/org");
+          } else if (response.data.userData.role === 'student') {
+            navigate("/dashboard/student");
+          } else {
+            redirectHome();
+          }
         } else {
           getDataFromDatabase(sessionStorage.getItem('shared'));
         }

@@ -6,7 +6,7 @@ import {
   forgotPassword,
   resetPassword,
   updateProfile,
-  verifyEmail
+  // verifyEmail
 } from '../controllers/auth.controller.js';
 import User from '../models/User.js'; // make sure you import your User model
 
@@ -18,7 +18,7 @@ router.post('/social', socialLogin);
 router.post('/forgot', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.post('/profile', updateProfile);
-router.get('/verify-email/:token', verifyEmail);
+// router.get('/verify-email/:token', verifyEmail);
 
 // Change app.get to router.get
 router.get('/getuser/:uid', async (req, res) => {
