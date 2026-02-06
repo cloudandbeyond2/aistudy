@@ -11,44 +11,74 @@ import { YoutubeTranscript } from 'youtube-transcript';
 
 
 
+// export const generatePrompt = async (req, res) => {
+//   const { prompt } = req.body;
+
+//   const model = genAI.getGenerativeModel({
+//     model: 'gemini-flash-latest',
+//     safetySettings: [
+//       {
+//         category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+//         threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+//       },
+//       {
+//         category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+//         threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+//       },
+//       {
+//         category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+//         threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+//       },
+//       {
+//         category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+//         threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+//       }
+//     ]
+//   });
+
+//   try {
+//     const result = await retryWithBackoff(() =>
+//       model.generateContent(prompt)
+//     );
+
+//     const generatedText = await result.response.text();
+
+//     res.json({ success: true, generatedText });
+//   } catch (error) {
+//     console.log('Gemini error:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: error.message
+//     });
+//   }
+// };
+
+
 export const generatePrompt = async (req, res) => {
   const { prompt } = req.body;
 
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-flash-latest',
-    safetySettings: [
-      {
-        category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
-      },
-      {
-        category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
-      },
-      {
-        category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
-      },
-      {
-        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
-      }
-    ]
-  });
-
   try {
-    const result = await retryWithBackoff(() =>
-      model.generateContent(prompt)
-    );
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-flash-latest'
+    });
 
+    const result = await model.generateContent(prompt);
     const generatedText = await result.response.text();
 
-    res.json({ success: true, generatedText });
+    res.status(200).json({
+      success: true,
+      generatedText
+    });
   } catch (error) {
-    console.log('Gemini error:', error);
-    res.status(500).json({
+    const isRateLimit =
+      error.message?.includes('429') ||
+      error.message?.includes('quota');
+
+    res.status(isRateLimit ? 429 : 500).json({
       success: false,
-      message: error.message
+      message: isRateLimit
+        ? 'API rate limit exceeded'
+        : 'Internal server error'
     });
   }
 };
@@ -199,15 +229,35 @@ export const generateVideo = async (req, res) => {
 /**
  * GET YOUTUBE TRANSCRIPT
  */
+// export const generateTranscript = async (req, res) => {
+//   const { prompt } = req.body;
+
+//   if (!prompt) {
+//     return res.status(400).json({
+//       success: false,
+//       message: 'Video ID or URL is required'
+//     });
+//   }
+
+//   try {
+//     const transcript = await YoutubeTranscript.fetchTranscript(prompt);
+
+//     res.status(200).json({
+//       success: true,
+//       transcript
+//     });
+//   } catch (error) {
+//     console.log('Transcript error:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Failed to fetch transcript'
+//     });
+//   }
+// };
+
+
 export const generateTranscript = async (req, res) => {
   const { prompt } = req.body;
-
-  if (!prompt) {
-    return res.status(400).json({
-      success: false,
-      message: 'Video ID or URL is required'
-    });
-  }
 
   try {
     const transcript = await YoutubeTranscript.fetchTranscript(prompt);
@@ -216,11 +266,10 @@ export const generateTranscript = async (req, res) => {
       success: true,
       transcript
     });
-  } catch (error) {
-    console.log('Transcript error:', error);
+  } catch {
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch transcript'
+      message: 'Transcript unavailable'
     });
   }
 };

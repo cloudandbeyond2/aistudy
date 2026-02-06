@@ -14,11 +14,17 @@ const retryWithBackoff = async (fn, maxRetries = 5, baseDelay = 1000) => {
     } catch (error) {
       lastError = error;
 
+      const isQuotaExceeded = error?.errorDetails?.some(
+        (d) => d['@type'] === 'type.googleapis.com/google.rpc.QuotaFailure'
+      );
+
       const isRateLimitError =
-        error?.message?.includes('429') ||
-        error?.message?.includes('Too Many Requests') ||
-        error?.message?.includes('quota') ||
-        error?.message?.includes('RESOURCE_EXHAUSTED');
+        error?.status === 429 &&
+        !isQuotaExceeded;
+
+      if (isQuotaExceeded) {
+        throw new Error('Daily Gemini quota exhausted');
+      }
 
       if (attempt === maxRetries || !isRateLimitError) {
         throw error;
