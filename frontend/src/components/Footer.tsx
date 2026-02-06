@@ -202,7 +202,7 @@ Transform learning with intelligent technology.
               Newsletter
             </h4>
             <p className="mb-8 text-lg">
-              Get the latest AI learning tips and updates.
+             Actionable AI insights, learning resources, and updates — straight to your inbox.
             </p>
             <input
               type="email"
