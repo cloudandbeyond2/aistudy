@@ -182,7 +182,8 @@ const Dashboard = () => {
         }
         setCourseProgress(progressMap);
         setTotalModules(modulesMap);
-        await setCourses((prevCourses) => [...prevCourses, ...response.data]);
+        // await setCourses((prevCourses) => [...prevCourses, ...response.data]);
+        await setCourses(prevCourses => [...prevCourses, ...response.data].sort((a, b) => b._id.localeCompare(a._id)));
       }
     } catch (error) {
       console.error(error);
@@ -503,7 +504,7 @@ async function getDetails() {
                         asChild
                       >
                         <div>
-                          Continue Learning
+                          {courseProgress[course._id] === 100 ? "View Course" : "Continue Learning"}
                           <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                         </div>
                       </Button>
