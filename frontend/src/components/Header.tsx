@@ -158,7 +158,7 @@ const Header = () => {
             </div>
           ) : (
             <div className="flex items-center space-x-3">
-              <Link to="/login">
+              {/* <Link to="/login">
             <Button
   variant="ghost"
   className={cn(
@@ -171,7 +171,20 @@ const Header = () => {
   Login
 </Button>
 
-              </Link>
+              </Link> */}
+                  <Link to="/login">
+  <Button
+    variant="ghost"
+    className={cn(
+      "bg-white text-black font-bold rounded-full px-8 h-12 shadow-xl shadow-primary/20 transition-all hover:scale-105",
+      isScrolled
+        ? "hover:bg-white/90"
+        : "hover:bg-white/80"
+    )}
+  >
+    Login
+  </Button>
+</Link>
 
               <Link to="/signup">
                 <Button className="bg-primary text-white font-bold rounded-full px-8 h-12 shadow-xl shadow-primary/20 hover:scale-105 transition">

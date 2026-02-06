@@ -19,7 +19,6 @@ import Certificate from "./pages/Certificate";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import VerifyEmail from "./pages/VerifyEmail";
 import About from "./pages/About";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
@@ -31,6 +30,9 @@ import PaymentFailed from "./pages/PaymentFailed";
 
 // Admin imports
 import AdminLayout from "./components/layouts/AdminLayout";
+import OrgDashboard from "./pages/OrgDashboard";
+import StudentPortal from "./pages/StudentPortal";
+import AssignmentPage from "./pages/AssignmentPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminCourses from "./pages/admin/AdminCourses";
@@ -39,8 +41,6 @@ import AdminAdmins from "./pages/admin/AdminAdmins";
 import AdminContacts from "./pages/admin/AdminContacts";
 import AdminTerms from "./pages/admin/AdminTerms";
 import AdminPrivacy from "./pages/admin/AdminPrivacy";
-import AdminCookies from "./pages/admin/AdminCookies";
-
 import AdminCancellation from "./pages/admin/AdminCancellation";
 import AdminRefund from "./pages/admin/AdminRefund";
 import AdminSubscriptionBilling from "./pages/admin/AdminSubscriptionBilling";
@@ -48,18 +48,16 @@ import AdminCreateBlog from "./pages/admin/AdminCreateBlog";
 import AdminPricing from "./pages/admin/AdminPricing";
 import AdminTestimonials from "./pages/admin/AdminTestimonials";
 import SubscriptionBillingPolicy from "./pages/SubscriptionBillingPolicy";
-import Cookies from "./pages/admin/Cookies";{/*suganya */}
 import RefundPolicy from "./pages/RefundPolicy";
 import CancellationPolicy from "./pages/CancellationPolicy";
 import QuizPage from "./pages/QuizPage";
 import BlogPost from "./pages/BlogPost";
 import AdminBlogs from "./pages/admin/AdminBlogs";
-import AdminCertificate from "./pages/admin/AdminCertificate";
 import AdminOrganizations from "./pages/admin/AdminOrganizations";
+import AdminCertificate from "./pages/admin/AdminCertificate";
 import CertificateVerification from "./pages/CertificateVerification";
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { googleClientId } from "./constants";
-
 
 const queryClient = new QueryClient();
 
@@ -93,7 +91,6 @@ const App = () => (
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password/:token" element={<ResetPassword />} />
-                <Route path="/verify-email/:token" element={<VerifyEmail />} />
 
                 {/* Dashboard Routes */}
                 <Route path="/dashboard" element={<DashboardLayout />}>
@@ -102,6 +99,9 @@ const App = () => (
                   <Route path="pricing" element={<ProfilePricing />} />
                   <Route path="payment/:planId" element={<PaymentDetails />} />
                   <Route path="profile" element={<Profile />} />
+                  <Route path="org" element={<OrgDashboard />} />
+                  <Route path="student" element={<StudentPortal />} />
+                  <Route path="student/assignment/:assignmentId" element={<AssignmentPage />} />
                 </Route>
 
                 {/* Course Routes */}
@@ -122,7 +122,6 @@ const App = () => (
                 <Route path="/cancellation-policy" element={<CancellationPolicy />} />
                 <Route path="/refund-policy" element={<RefundPolicy />} />
                 <Route path="/subscription-billing-policy" element={<SubscriptionBillingPolicy />} />
-                <Route path="/cookies" element={<Cookies/>}/> {/*suganya */}
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:id" element={<BlogPost />} />
 
@@ -137,8 +136,6 @@ const App = () => (
                   <Route path="contacts" element={<AdminContacts />} />
                   <Route path="terms" element={<AdminTerms />} />
                   <Route path="privacy" element={<AdminPrivacy />} />
-                   <Route path="cookies" element={<AdminCookies />} /> {/*suganya */}
-
                   <Route path="cancellation" element={<AdminCancellation />} />
                   <Route path="refund" element={<AdminRefund />} />
                   <Route path="subscription-billing" element={<AdminSubscriptionBilling />} />

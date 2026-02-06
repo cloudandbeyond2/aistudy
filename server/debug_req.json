@@ -1,6 +1,6 @@
 {
-  "courseId": "69858f27a087dbfbd54eb814",
-  "mainTopic": "NEXT JS",
-  "subtopicsString": "Project Initialization and CLI setup, Understanding the 'app' directory structure, File conventions: layout.js, page.js, loading.js, error.js, Nested Routing and Dynamic Segments, Route Groups and Private Folders, Client-Side Navigation and the next/link component, Handling 404 Pages and Root Not Found, The Paradigm Shift: Server Components vs Client Components, Defining the boundary with 'use client', Static Rendering (SSG) and Full Static Export, Dynamic Rendering (SSR) and 'no-store' caching, Incremental Static Regeneration (ISR) and revalidation, The Next.js Fetch API and automatic request caching, Understanding Client-side data fetching patterns (SWR/React Query integration), Introduction to Server Actions for mutations, Handling Forms, Data Mutation, and Redirection with Server Actions, Defining API Routes using route.js files, Implementing different HTTP methods (GET, POST, PUT, DELETE), Request body parsing and response object usage, Error Handling in both API Routes and Server Actions, Protecting Server-side functionality (Basic security considerations), Using Middleware for authentication and routing logic, Image Optimization with next/image, Font Optimization and Bundling Strategies, Metadata API and SEO best practices, Managing Environment Variables (public and private), Performance measurement and Web Vitals in Next.js, Deployment workflows (Vercel integration and custom server configuration)",
-  "lang": "english"
+  "courseId": "6982f0e958267dcaa55cc768",
+  "mainTopic": "Java",
+  "subtopicsString": "testting",
+  "lang": "English"
 }
