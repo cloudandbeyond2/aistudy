@@ -139,35 +139,32 @@ import {
 } from "lucide-react";
 import { appName, companyName } from "@/constants";
 
+import Footer from "@/components/Footer";
+
 const About = () => {
   return (
+    <>
+
     <div className="min-h-screen bg-background">
 
-      {/* Back */}
-      <div className="container max-w-7xl mx-auto px-4 pt-6">
-        <Link
-          to="/"
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
-        </Link>
-      </div>
+     
 
       {/* Hero */}
-      <section className="px-4 py-24 text-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-indigo-500/10" />
-        <div className="relative z-10 max-w-4xl mx-auto">
-          <Sparkles className="h-12 w-12 text-primary mx-auto mb-6" />
-          <h1 className="text-5xl font-bold tracking-tight">
-            Learning, Reinvented by AI
-          </h1>
-          <p className="mt-6 text-xl text-muted-foreground">
-            {appName} helps learners and educators create intelligent,
-            personalized courses—faster than ever before.
-          </p>
-        </div>
-      </section>
+<section className="px-4 py-24 text-center
+  bg-gradient-to-br from-[#ababab] via-white to-indigo-50">
+
+  <div className="max-w-4xl mx-auto">
+    <Sparkles className="h-12 w-12 text-primary mx-auto mb-6" />
+    <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
+      Learning, Reinvented by AI
+    </h1>
+    <p className="mt-6 text-lg sm:text-xl text-muted-foreground">
+      {appName} helps learners and educators create intelligent,
+      personalized courses—faster than ever before.
+    </p>
+  </div>
+</section>
+
 
       {/* Story Timeline */}
       <section className="px-4 py-20">
@@ -272,8 +269,9 @@ const About = () => {
           </div>
         </div>
       </section>
-
+<Footer/>
     </div>
+    </>
   );
 };
 

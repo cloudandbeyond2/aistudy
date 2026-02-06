@@ -643,6 +643,50 @@
 //           <DialogFooter>
 //             <Button onClick={handleUpdateUser}>Save changes</Button>
 //           </DialogFooter>
+//                 {/* ---------------------- PAGINATION ---------------------- */}
+//           {totalPages > 1 && (
+//             <div className="mt-6 flex flex-col sm:flex-row sm:justify-end items-center gap-2">
+//               <Button
+//                 size="sm"
+//                 variant="outline"
+//                 disabled={currentPage === 1}
+//                 onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+//               >
+//                 Previous
+//               </Button>
+
+//               <div className="flex gap-1 flex-wrap justify-center">
+//                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+//                   (page) => (
+//                     <Button
+//                       key={page}
+//                       size="sm"
+//                       variant={
+//                         page === currentPage ? 'default' : 'outline'
+//                       }
+//                       onClick={() => setCurrentPage(page)}
+//                       className="min-w-[36px]"
+//                     >
+//                       {page}
+//                     </Button>
+//                   )
+//                 )}
+//               </div>
+
+//               <Button
+//                 size="sm"
+//                 variant="outline"
+//                 disabled={currentPage === totalPages}
+//                 onClick={() =>
+//                   setCurrentPage((p) =>
+//                     Math.min(p + 1, totalPages)
+//                   )
+//                 }
+//               >
+//                 Next
+//               </Button>
+//             </div>
+//           )}
 //         </DialogContent>
 //       </Dialog>
 //     </div>
@@ -686,47 +730,26 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
-const ITEMS_PER_PAGE = 10;
-
 const AdminPaidUsers = () => {
+  const { toast } = useToast();
+
+  /* ---------------------- STATE ---------------------- */
   const [data, setData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
+  // Edit dialog
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editType, setEditType] = useState('monthly');
 
-  const { toast } = useToast();
-
-  /* ---------------------- FILTER ---------------------- */
-  const filteredData = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
-    return data.filter(
-      (u) =>
-        u.mName?.toLowerCase().includes(q) ||
-        u.email?.toLowerCase().includes(q)
-    );
-  }, [data, searchQuery]);
-
-  /* Reset page on search */
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
-
-  /* ---------------------- PAGINATION ---------------------- */
-  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
-
-  const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredData.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredData, currentPage]);
-
-  /* ---------------------- FETCH ---------------------- */
+  /* ---------------------- FETCH USERS ---------------------- */
   const fetchData = async () => {
     try {
       const res = await axios.get(`${serverURL}/api/getpaid`);
@@ -746,6 +769,29 @@ const AdminPaidUsers = () => {
     fetchData();
   }, []);
 
+  /* ---------------------- FILTER ---------------------- */
+  const filteredData = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    return data.filter(
+      (u) =>
+        u.mName?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q)
+    );
+  }, [data, searchQuery]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  /* ---------------------- PAGINATION LOGIC ---------------------- */
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredData.slice(start, start + itemsPerPage);
+  }, [filteredData, currentPage]);
+
   /* ---------------------- EDIT ---------------------- */
   const handleEditClick = (user) => {
     setSelectedUser(user);
@@ -755,49 +801,18 @@ const AdminPaidUsers = () => {
     setIsEditDialogOpen(true);
   };
 
-  /* ---------------------- DELETE ---------------------- */
-  const handleDeleteClick = async (userId) => {
-    if (!window.confirm('Delete this user permanently?')) return;
-
-    try {
-      const res = await axios.post(
-        `${serverURL}/api/admin/deleteuser`,
-        { userId }
-      );
-
-      if (res.data.success) {
-        toast({ title: 'User deleted successfully' });
-        fetchData();
-      }
-    } catch {
-      toast({
-        title: 'Error',
-        description: 'Delete failed',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  /* ---------------------- UPDATE ---------------------- */
   const handleUpdateUser = async () => {
-    if (!selectedUser) return;
-
     try {
-      const res = await axios.post(
-        `${serverURL}/api/admin/updateuser`,
-        {
-          userId: selectedUser._id,
-          mName: editName,
-          email: editEmail,
-          type: editType,
-        }
-      );
+      await axios.post(`${serverURL}/api/admin/updateuser`, {
+        userId: selectedUser._id,
+        mName: editName,
+        email: editEmail,
+        type: editType,
+      });
 
-      if (res.data.success) {
-        toast({ title: 'User updated successfully' });
-        setIsEditDialogOpen(false);
-        fetchData();
-      }
+      toast({ title: 'User updated successfully' });
+      setIsEditDialogOpen(false);
+      fetchData();
     } catch {
       toast({
         title: 'Error',
@@ -807,6 +822,24 @@ const AdminPaidUsers = () => {
     }
   };
 
+  /* ---------------------- DELETE ---------------------- */
+  const handleDeleteClick = async (userId) => {
+    if (!window.confirm('Delete this user permanently?')) return;
+
+    try {
+      await axios.post(`${serverURL}/api/admin/deleteuser`, { userId });
+      toast({ title: 'User deleted successfully' });
+      fetchData();
+    } catch {
+      toast({
+        title: 'Error',
+        description: 'Delete failed',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  /* ---------------------- RENDER ---------------------- */
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -848,14 +881,14 @@ const AdminPaidUsers = () => {
 
             <TableBody>
               {isLoading ? (
-                [...Array(4)].map((_, i) => (
+                [...Array(5)].map((_, i) => (
                   <TableRow key={i}>
                     <TableCell colSpan={6}>
                       <Skeleton className="h-5 w-full" />
                     </TableCell>
                   </TableRow>
                 ))
-              ) : paginatedData.length > 0 ? (
+              ) : paginatedData.length ? (
                 paginatedData.map((user) => (
                   <TableRow key={user._id}>
                     <TableCell className="font-medium">
@@ -878,15 +911,15 @@ const AdminPaidUsers = () => {
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
-                          variant="ghost"
                           size="icon"
+                          variant="ghost"
                           onClick={() => handleEditClick(user)}
                         >
                           <Settings className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="ghost"
                           size="icon"
+                          variant="ghost"
                           className="text-destructive"
                           onClick={() => handleDeleteClick(user._id)}
                         >
@@ -905,55 +938,101 @@ const AdminPaidUsers = () => {
               )}
             </TableBody>
           </Table>
+              {/* ---------------------- PAGINATION ---------------------- */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </p>
 
-          {/* ---------------------- PAGINATION ---------------------- */}
-          {totalPages > 1 && (
-            <div className="mt-6 flex flex-col sm:flex-row sm:justify-end items-center gap-2">
+          <div className="flex gap-1 flex-wrap">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+            >
+              Previous
+            </Button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <Button
+                key={page}
                 size="sm"
-                variant="outline"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                variant={page === currentPage ? 'default' : 'outline'}
+                onClick={() => setCurrentPage(page)}
               >
-                Previous
+                {page}
               </Button>
+            ))}
 
-              <div className="flex gap-1 flex-wrap justify-center">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <Button
-                      key={page}
-                      size="sm"
-                      variant={
-                        page === currentPage ? 'default' : 'outline'
-                      }
-                      onClick={() => setCurrentPage(page)}
-                      className="min-w-[36px]"
-                    >
-                      {page}
-                    </Button>
-                  )
-                )}
-              </div>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
 
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={currentPage === totalPages}
-                onClick={() =>
-                  setCurrentPage((p) =>
-                    Math.min(p + 1, totalPages)
-                  )
-                }
-              >
-                Next
-              </Button>
-            </div>
-          )}
         </CardContent>
+        
       </Card>
 
-      {/* EDIT DIALOG stays unchanged */}
+  
+      {/* ---------------------- EDIT DIALOG ---------------------- */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update user info and subscription plan
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Name</Label>
+              <Input
+                className="col-span-3"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Email</Label>
+              <Input
+                className="col-span-3"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Plan</Label>
+              <Select value={editType} onValueChange={setEditType}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="free">Free (7 days)</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                  <SelectItem value="forever">Lifetime</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={handleUpdateUser}>Save changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
