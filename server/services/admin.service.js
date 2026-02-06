@@ -62,38 +62,38 @@ export const getPaidUsers = async () => {
 
 export const updateUser = async ({ userId, mName, email, type }) => {
 
-const now = new Date();
-let subscriptionStart = now;
-let subscriptionEnd = null;
+  const now = new Date();
+  let subscriptionStart = now;
+  let subscriptionEnd = null;
 
-if (type === 'free') {
-  subscriptionEnd = new Date(now);
-  subscriptionEnd.setDate(subscriptionEnd.getDate() + 7);
-}
+  if (type === 'free') {
+    subscriptionEnd = new Date(now);
+    subscriptionEnd.setDate(subscriptionEnd.getDate() + 7);
+  }
 
-if (type === 'monthly') {
-  subscriptionEnd = new Date(now);
-  subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
-}
+  if (type === 'monthly') {
+    subscriptionEnd = new Date(now);
+    subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
+  }
 
-if (type === 'yearly') {
-  subscriptionEnd = new Date(now);
-  subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1);
-}
+  if (type === 'yearly') {
+    subscriptionEnd = new Date(now);
+    subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1);
+  }
 
-if (type === 'forever') {
-  subscriptionStart = now;
-  subscriptionEnd = null; // permanent
-}
+  if (type === 'forever') {
+    subscriptionStart = now;
+    subscriptionEnd = null; // permanent
+  }
 
 
-await User.findByIdAndUpdate(userId, {
-  mName,
-  email,
-  type,
-  subscriptionStart,
-  subscriptionEnd,
-});
+  await User.findByIdAndUpdate(userId, {
+    mName,
+    email,
+    type,
+    subscriptionStart,
+    subscriptionEnd,
+  });
 
 };
 
@@ -175,5 +175,34 @@ export const saveAdminPolicy = async ({ type, data }) => {
   await Admin.findOneAndUpdate(
     { type: 'main' },
     { $set: { [field]: data } }
+  );
+};
+
+/* ---------------- ORDERS ---------------- */
+import Order from '../models/Order.js';
+
+export const getAllOrders = async () => {
+  return Order.find().sort({ date: -1 });
+};
+
+/* ---------------- PAYMENT SETTINGS ---------------- */
+import PaymentSetting from '../models/PaymentSetting.js';
+
+export const getPaymentSettings = async () => {
+  return PaymentSetting.find();
+};
+
+export const updatePaymentSetting = async ({ provider, isEnabled, isLive, publicKey, secretKey, webhookSecret, currency }) => {
+  return PaymentSetting.findOneAndUpdate(
+    { provider },
+    {
+      isEnabled,
+      isLive,
+      publicKey,
+      secretKey,
+      webhookSecret,
+      currency
+    },
+    { new: true, upsert: true }
   );
 };

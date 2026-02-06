@@ -44,6 +44,8 @@ import AdminSubscriptionBilling from "./pages/admin/AdminSubscriptionBilling";
 import AdminCreateBlog from "./pages/admin/AdminCreateBlog";
 import AdminPricing from "./pages/admin/AdminPricing";
 import AdminTestimonials from "./pages/admin/AdminTestimonials";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminPaymentSettings from "./pages/admin/AdminPaymentSettings";
 import SubscriptionBillingPolicy from "./pages/SubscriptionBillingPolicy";
 import RefundPolicy from "./pages/RefundPolicy";
 import CancellationPolicy from "./pages/CancellationPolicy";
@@ -136,6 +138,8 @@ const App = () => (
                   <Route path="blogs" element={<AdminBlogs />} />
                   <Route path="certificate" element={<AdminCertificate />} />
                   <Route path="testimonials" element={<AdminTestimonials />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                  <Route path="payment-settings" element={<AdminPaymentSettings />} />
                 </Route>
                 <Route path="/verify-certificate" element={<CertificateVerification />} />
 

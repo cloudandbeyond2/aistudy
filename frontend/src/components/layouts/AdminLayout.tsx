@@ -31,11 +31,14 @@ import {
   FileSliders,
   Award,
   Tag,
+  Settings,
+  ClipboardList,
+  Globe
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { serverURL , websiteURL} from '@/constants';
+import { serverURL, websiteURL } from '@/constants';
 import axios from 'axios';
 import Logo from '../../res/logo.svg';
 import { useToast } from '@/hooks/use-toast';
@@ -43,7 +46,7 @@ import { useToast } from '@/hooks/use-toast';
 const AdminLayout = () => {
   const isMobile = useIsMobile();
   const location = useLocation();
-  {/* Star bala */}
+  {/* Star bala */ }
   const { toast } = useToast();
   // Helper to check active route
   const isActive = (path: string) => location.pathname === path;
@@ -70,15 +73,15 @@ const AdminLayout = () => {
       dashboardData();
     }
   });
-{/* Star bala */}
-    function Logout() {
-      sessionStorage.clear();
-      toast({
-        title: "Logged Out",
-        description: "You have logged out successfully",
-      });
-      window.location.href = websiteURL + '/login';
-    }
+  {/* Star bala */ }
+  function Logout() {
+    sessionStorage.clear();
+    toast({
+      title: "Logged Out",
+      description: "You have logged out successfully",
+    });
+    window.location.href = websiteURL + '/login';
+  }
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-gradient-to-br from-background to-muted/20">
@@ -126,6 +129,24 @@ const AdminLayout = () => {
                   <Link to="/admin/paid-users" className={cn(isActive('/admin/paid-users') && "text-primary")}>
                     <DollarSign />
                     <span>Paid Users</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Order History" isActive={isActive('/admin/orders')}>
+                  <Link to="/admin/orders" className={cn(isActive('/admin/orders') && "text-primary")}>
+                    <ClipboardList />
+                    <span>Order History</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Payment Gateways" isActive={isActive('/admin/payment-settings')}>
+                  <Link to="/admin/payment-settings" className={cn(isActive('/admin/payment-settings') && "text-primary")}>
+                    <Settings />
+                    <span>Payment Gateways</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -250,16 +271,25 @@ const AdminLayout = () => {
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Back to Website">
+                  <Link to="/" className="flex items-center space-x-2 w-full">
+                    <Globe />
+                    <span>Back to Website</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               {/* Star bala */}
               <SidebarMenuItem>
-                              <SidebarMenuButton asChild tooltip="Logout"  style={{paddingLeft:"20px"}}>
-                                <button onClick={Logout} className="text-muted-foreground hover:text-destructive transition-colors flex items-center space-x-2 w-full" style={{gap: "22px"}}>
-                                
-                                  <LogOut />
-                                  <span>Logout</span>
-                                </button>
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Logout" style={{ paddingLeft: "20px" }}>
+                  <button onClick={Logout} className="text-muted-foreground hover:text-destructive transition-colors flex items-center space-x-2 w-full" style={{ gap: "22px" }}>
+
+                    <LogOut />
+                    <span>Logout</span>
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>
           <SidebarRail />

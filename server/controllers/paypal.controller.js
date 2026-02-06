@@ -1,7 +1,20 @@
 import Admin from '../models/Admin.js';
 import User from '../models/User.js';
-import { PAYPAL_AUTH, PAYPAL_BASE_URL } from '../config/paypal.js';
+import PaymentSetting from '../models/PaymentSetting.js';
 import { cancelSubscription, renewSubscription } from '../services/subscription.service.js';
+
+const getPaypalSettings = async () => {
+  const setting = await PaymentSetting.findOne({ provider: 'paypal' });
+  if (setting && setting.isEnabled) {
+    return { clientId: setting.publicKey, secretKey: setting.secretKey };
+  }
+  return { clientId: process.env.PAYPAL_CLIENT_ID, secretKey: process.env.PAYPAL_APP_SECRET_KEY };
+};
+
+const getAuth = async () => {
+  const { clientId, secretKey } = await getPaypalSettings();
+  return Buffer.from(`${clientId}:${secretKey}`).toString('base64');
+};
 /**
  * CREATE PAYPAL SUBSCRIPTION
  */
@@ -22,9 +35,7 @@ export const createPaypalSubscription = async (req, res) => {
     const firstLine = address.split(',').slice(0, -1).join(',');
     const secondLine = address.split(',').pop();
 
-    const auth = Buffer.from(
-      `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_APP_SECRET_KEY}`
-    ).toString('base64');
+    const auth = await getAuth();
 
     const payload = {
       plan_id: planId,
@@ -98,9 +109,7 @@ export const getPaypalDetails = async (req, res) => {
 
     await User.findByIdAndUpdate(uid, { $set: { type: plan } });
 
-    const auth = Buffer.from(
-      `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_APP_SECRET_KEY}`
-    ).toString('base64');
+    const auth = await getAuth();
 
     const response = await fetch(
       `https://api-m.paypal.com/v1/billing/subscriptions/${subscriberId}`,
@@ -164,10 +173,22 @@ export const cancelPaypalSubscription = async (req, res) => {
   const { id } = req.body;
 
   try {
-    await fetch(`${PAYPAL_BASE_URL}/v1/billing/subscriptions/${id}/cancel`, {
+    const auth = await getAuth();
+    // Assuming PAYPAL_BASE_URL is standard, or we can add it to settings. 
+    // For now I will hardcode live/sandbox URL logic or keep using the env/config if avail, but since I removed the import...
+    // Let's deduce URL based on isLive setting if I fetched it, but for simplicity let's stick to standard prop or env.
+    // Actually, I should probably check "isLive" from settings.
+
+    // Quick fix: define base URL helper or just use the standard one if I didn't remove it? 
+    // I removed PAYPAL_BASE_URL import.
+    const setting = await PaymentSetting.findOne({ provider: 'paypal' });
+    const isLive = setting?.isLive;
+    const baseUrl = isLive ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+
+    await fetch(`${baseUrl}/v1/billing/subscriptions/${id}/cancel`, {
       method: 'POST',
       headers: {
-        Authorization: 'Basic ' + PAYPAL_AUTH,
+        Authorization: 'Basic ' + auth,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -188,12 +209,17 @@ export const updatePaypalPlan = async (req, res) => {
   const { id, idPlan } = req.body;
 
   try {
+    const auth = await getAuth();
+    const setting = await PaymentSetting.findOne({ provider: 'paypal' });
+    const isLive = setting?.isLive;
+    const baseUrl = isLive ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+
     const response = await fetch(
-      `${PAYPAL_BASE_URL}/v1/billing/subscriptions/${id}/revise`,
+      `${baseUrl}/v1/billing/subscriptions/${id}/revise`,
       {
         method: 'POST',
         headers: {
-          Authorization: 'Basic ' + PAYPAL_AUTH,
+          Authorization: 'Basic ' + auth,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({

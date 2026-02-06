@@ -19,4 +19,8 @@ router.post('/removeadmin', adminController.removeAdmin);
 
 router.post('/saveadmin', adminController.saveAdmin);
 
+router.get('/orders', adminController.getOrders);
+router.get('/payment-settings', adminController.getPaymentSettings);
+router.post('/payment-settings', adminController.updatePaymentSetting);
+
 export default router;

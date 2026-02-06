@@ -61,3 +61,35 @@ export const saveAdmin = async (req, res) => {
   await adminService.saveAdminPolicy(req.body);
   res.json({ success: true });
 };
+
+/* ORDERS */
+export const getOrders = async (req, res) => {
+  try {
+    const orders = await adminService.getAllOrders();
+    res.json(orders);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+/* PAYMENT SETTINGS */
+export const getPaymentSettings = async (req, res) => {
+  try {
+    const settings = await adminService.getPaymentSettings();
+    res.json(settings);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+export const updatePaymentSetting = async (req, res) => {
+  try {
+    const setting = await adminService.updatePaymentSetting(req.body);
+    res.json({ success: true, setting });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
