@@ -23,6 +23,7 @@ const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -79,7 +80,7 @@ const Signup = () => {
       const postURL = serverURL + '/api/signup';
       const type = 'free';
 
-      const response = await axios.post(postURL, { email, mName: mName, password, type, captchaToken });
+      const response = await axios.post(postURL, { email, mName: mName, password, type, phone, captchaToken });
 
       if (response.data.success) {
         if (response.data.autoLogin) {
@@ -354,6 +355,26 @@ const Signup = () => {
             </div>
 
             <div className="space-y-1.5">
+              <Label htmlFor="phone" className="text-xs font-bold tracking-wider uppercase text-muted-foreground/80">
+                Phone Number (Optional)
+              </Label>
+              <div className="relative group">
+                <span className="absolute left-3.5 top-3 text-muted-foreground transition-colors group-focus-within:text-primary font-medium">
+                  +
+                </span>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="1234567890"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="pl-8 h-12 bg-muted/30 border-transparent focus:border-primary focus:bg-background transition-all rounded-xl"
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
               <Label htmlFor="password" { /* @ts-ignore */ ...{}} className="text-xs font-bold tracking-wider uppercase text-muted-foreground/80">
                 Password
               </Label>
@@ -453,7 +474,7 @@ const Signup = () => {
                 const postURL = serverURL + '/api/social';
                 try {
                   setIsLoading(true);
-                  const response = await axios.post(postURL, { email, mName: name  });
+                  const response = await axios.post(postURL, { email, mName: name });
                   if (response.data.success) {
                     toast({
                       title: "Login successful",
