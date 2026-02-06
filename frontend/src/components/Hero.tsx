@@ -16,7 +16,7 @@ const Hero = () => {
           {[
             { label: "Students", value: "50k+" },
             { label: "Active Courses", value: "2.5k+" },
-            { label: "Expert Instructors", value: "450+" },
+            { label: "Organizations", value: "250+" },
             { label: "Satisfaction Rate", value: "99.9%" }
           ].map((stat, i) => (
             <div key={i} className="text-center group">
