@@ -505,7 +505,7 @@ import transporter from '../config/mail.js';
  * SIGNUP
  */
 export const signup = async (req, res) => {
-  const { email, mName, password, type } = req.body;
+  const { email, mName, password, type, phone } = req.body;
 
   try {
     const estimate = await User.estimatedDocumentCount();
@@ -519,13 +519,46 @@ export const signup = async (req, res) => {
         });
       }
 
-      const newUser = new User({ email, mName, password, type });
+      // 3. Generate verification token
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const verificationExpires = Date.now() + 24 * 60 * 60 * 1000;
+
+      const newUser = new User({
+        email,
+        mName,
+        password,
+        type,
+        phone,
+        emailVerificationToken: verificationToken,
+        emailVerificationExpires: verificationExpires,
+        isEmailVerified: false
+      });
       await newUser.save();
+
+      // 4. Send verification email
+      try {
+        const verificationLink = `${process.env.WEBSITE_URL}/verify-email/${verificationToken}`;
+        await transporter.sendMail({
+          from: process.env.EMAIL,
+          to: email,
+          subject: `Verify your email for ${process.env.COMPANY || 'AIstudy'}`,
+          html: `<p>Hello ${mName}, click <a href="${verificationLink}">here</a> to verify your email.</p>`
+        });
+      } catch (mailErr) {
+        console.error('Mail Send Error:', mailErr);
+        return res.json({
+          success: true,
+          message: 'Account created successfully, but verification email could not be sent.',
+          userId: newUser._id,
+          mailError: true
+        });
+      }
 
       return res.json({
         success: true,
-        message: 'Account created successfully',
-        userId: newUser._id
+        message: 'Account created! Please check your email to verify your account.',
+        userId: newUser._id,
+        verificationRequired: true
       });
     } else {
       // First user becomes admin
@@ -533,7 +566,8 @@ export const signup = async (req, res) => {
         email,
         mName,
         password,
-        type: 'forever'
+        type: 'forever',
+        phone
       });
       await newUser.save();
 
@@ -546,8 +580,9 @@ export const signup = async (req, res) => {
 
       return res.json({
         success: true,
-        message: 'Account created successfully',
-        userId: newUser._id
+        message: 'Account created successfully as Admin',
+        userId: newUser._id,
+        autoLogin: true
       });
     }
   } catch (error) {
@@ -582,6 +617,14 @@ export const signin = async (req, res) => {
     }
 
     if (password === user.password) {
+      // Check if email is verified
+      if (user.isEmailVerified === false && user.emailVerificationToken) {
+        return res.json({
+          success: false,
+          message: 'Please verify your email before logging in. Check your inbox for the verification link.'
+        });
+      }
+
       return res.json({
         success: true,
         message: 'SignIn Successful',
@@ -605,6 +648,43 @@ export const signin = async (req, res) => {
       success: false,
       message: 'Invalid email or password',
       error: error.message
+    });
+  }
+};
+
+/**
+ * VERIFY EMAIL
+ */
+export const verifyEmail = async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    const user = await User.findOne({
+      emailVerificationToken: token,
+      emailVerificationExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token.'
+      });
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationToken = null;
+    user.emailVerificationExpires = null;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully! You can now log in.'
+    });
+  } catch (error) {
+    console.error('Email Verification Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal Server Error'
     });
   }
 };

@@ -27,6 +27,7 @@ import Blog from "./pages/Blog";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import PaymentPending from "./pages/PaymentPending";
 import PaymentFailed from "./pages/PaymentFailed";
+import VerifyEmail from "./pages/VerifyEmail";
 
 // Admin imports
 import AdminLayout from "./components/layouts/AdminLayout";
@@ -91,6 +92,7 @@ const App = () => (
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password/:token" element={<ResetPassword />} />
+                <Route path="/verify-email/:token" element={<VerifyEmail />} />
 
                 {/* Dashboard Routes */}
                 <Route path="/dashboard" element={<DashboardLayout />}>
