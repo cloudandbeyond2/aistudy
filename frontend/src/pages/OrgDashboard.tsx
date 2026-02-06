@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, FileText, Bell, Plus, Upload, Search, Trash2, CheckCircle, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X } from 'lucide-react';
+import { Users, FileText, Bell, Plus, Upload, Search, Trash2, CheckCircle, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -216,6 +216,8 @@ const OrgDashboard = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [studentSearch, setStudentSearch] = useState('');
     const [courseSearch, setCourseSearch] = useState('');
+    const [submissions, setSubmissions] = useState([]);
+    const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
     const orgId = sessionStorage.getItem('orgId');
 
     useEffect(() => {
@@ -244,6 +246,23 @@ const OrgDashboard = () => {
         } catch (e) {
             console.error("Failed to fetch assignments", e);
         }
+    };
+
+    const fetchSubmissions = async (assignmentId: string) => {
+        try {
+            const res = await axios.get(`${serverURL}/api/org/assignment/${assignmentId}/submissions`);
+            if (res.data.success) {
+                setSubmissions(res.data.submissions);
+            }
+        } catch (e) {
+            console.error("Failed to fetch submissions", e);
+            toast({ title: "Error", description: "Failed to load submissions", variant: "destructive" });
+        }
+    };
+
+    const handleViewSubmissions = (assignment: any) => {
+        setSelectedAssignment(assignment);
+        fetchSubmissions(assignment._id);
     };
 
     const fetchOrgSettings = async () => {
@@ -930,7 +949,9 @@ const OrgDashboard = () => {
                                                         <span>{assignment.questions?.length || 0} Questions</span>
                                                     </div>
                                                 </div>
-                                                <Button variant="ghost" size="sm">View Submissions</Button>
+                                                <Button variant="outline" size="sm" onClick={() => handleViewSubmissions(assignment)}>
+                                                    View Submissions
+                                                </Button>
                                             </div>
                                         </div>
                                     ))
@@ -1020,6 +1041,53 @@ const OrgDashboard = () => {
                             </Button>
                         </div>
                     )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Submissions Dialog */}
+            <Dialog open={!!selectedAssignment} onOpenChange={(open) => !open && setSelectedAssignment(null)}>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Submissions: {selectedAssignment?.topic}</DialogTitle>
+                        <DialogDescription>List of students who have submitted their work.</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        {submissions.length > 0 ? (
+                            <div className="space-y-4">
+                                {submissions.map((sub: any) => (
+                                    <div key={sub._id} className="p-4 border rounded-lg flex justify-between items-center bg-muted/20">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
+                                                {sub.studentId?.mName?.substring(0, 2).toUpperCase() || 'ST'}
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-sm">{sub.studentId?.mName || 'Unknown Student'}</p>
+                                                <p className="text-xs text-muted-foreground">{sub.studentId?.email}</p>
+                                                <p className="text-[10px] text-muted-foreground mt-1">Submitted: {new Date(sub.createdAt).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            {sub.fileUrl && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    className="h-9"
+                                                    onClick={() => window.open(`${serverURL}${sub.fileUrl}`, '_blank')}
+                                                >
+                                                    <FileText className="w-4 h-4 mr-2" /> View PDF
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-10 text-muted-foreground">
+                                <Clock className="w-10 h-10 mx-auto mb-2 opacity-20" />
+                                <p>No submissions yet for this assignment.</p>
+                            </div>
+                        )}
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>

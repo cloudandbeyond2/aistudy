@@ -269,7 +269,18 @@ export const getAssignments = async (req, res) => {
             }
         }
 
-        const assignments = await Assignment.find(query).sort({ createdAt: -1 });
+        let assignments = await Assignment.find(query).sort({ createdAt: -1 });
+
+        if (studentId) {
+            const submissions = await Submission.find({ studentId });
+            const submittedAssignmentIds = submissions.map(s => s.assignmentId.toString());
+
+            assignments = assignments.map(assign => ({
+                ...assign.toObject(),
+                isSubmitted: submittedAssignmentIds.includes(assign._id.toString())
+            }));
+        }
+
         res.json({ success: true, assignments });
     } catch (error) {
         console.error('getAssignments error:', error);
@@ -278,10 +289,42 @@ export const getAssignments = async (req, res) => {
 };
 
 /**
+ * GET SINGLE ASSIGNMENT
+ */
+export const getAssignment = async (req, res) => {
+    try {
+        const assignment = await Assignment.findById(req.params.assignmentId);
+        if (!assignment) {
+            return res.status(404).json({ success: false, message: 'Assignment not found' });
+        }
+        res.json({ success: true, assignment });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * GET ASSIGNMENT SUBMISSIONS
+ */
+export const getSubmissions = async (req, res) => {
+    try {
+        const { assignmentId } = req.params;
+        const submissions = await Submission.find({ assignmentId })
+            .populate('studentId', 'mName email phone studentDetails')
+            .sort({ createdAt: -1 });
+        res.json({ success: true, submissions });
+    } catch (error) {
+        console.error('getSubmissions error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
  * SUBMIT ASSIGNMENT
  */
 export const submitAssignment = async (req, res) => {
-    const { assignmentId, studentId, content, fileUrl } = req.body;
+    const { assignmentId, studentId, content } = req.body;
+    const fileUrl = req.file ? `/uploads/assignments/${req.file.filename}` : req.body.fileUrl;
     try {
         const submission = new Submission({
             assignmentId,
@@ -293,6 +336,7 @@ export const submitAssignment = async (req, res) => {
         await submission.save();
         res.json({ success: true, message: 'Assignment submitted' });
     } catch (error) {
+        console.error('submitAssignment error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };
