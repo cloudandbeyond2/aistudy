@@ -537,7 +537,10 @@ export const signup = async (req, res) => {
 
       // 4. Send verification email
       try {
-        const verificationLink = `${process.env.WEBSITE_URL}/verify-email/${verificationToken}`;
+        const baseUrl = process.env.WEBSITE_URL.endsWith('/')
+          ? process.env.WEBSITE_URL.slice(0, -1)
+          : process.env.WEBSITE_URL;
+        const verificationLink = `${baseUrl}/verify-email/${verificationToken}`;
         await transporter.sendMail({
           from: process.env.EMAIL,
           to: email,
