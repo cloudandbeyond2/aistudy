@@ -51,7 +51,7 @@ const StudentPortal = () => {
 
     const fetchAssignments = async () => {
         try {
-            const res = await axios.get(`${serverURL}/api/org/assignments?organizationId=${orgId}`);
+            const res = await axios.get(`${serverURL}/api/org/assignments?organizationId=${orgId}&studentId=${studentId}`);
             if (res.data.success) {
                 setAssignments(res.data.assignments);
             }
@@ -62,7 +62,7 @@ const StudentPortal = () => {
 
     const fetchNotices = async () => {
         try {
-            const res = await axios.get(`${serverURL}/api/org/notices?organizationId=${orgId}`);
+            const res = await axios.get(`${serverURL}/api/org/notices?organizationId=${orgId}&studentId=${studentId}`);
             if (res.data.success) {
                 setNotices(res.data.notices);
             }
@@ -157,7 +157,15 @@ const StudentPortal = () => {
                                 </CardHeader>
                                 <CardContent>
                                     <p className="border-b pb-2 mb-2">{assign.description}</p>
-                                    <Button className="w-full" size="sm" onClick={() => window.location.href = `/dashboard/student/assignment/${assign._id}`}>Start Assignment</Button>
+                                    {assign.isSubmitted ? (
+                                        <Button className="w-full" size="sm" variant="secondary" disabled>
+                                            <CheckCircle className="w-4 h-4 mr-2" /> Assignment Submitted
+                                        </Button>
+                                    ) : (
+                                        <Button className="w-full" size="sm" onClick={() => window.location.href = `/dashboard/student/assignment/${assign._id}`}>
+                                            Start Assignment
+                                        </Button>
+                                    )}
                                 </CardContent>
                             </Card>
                         )) : (

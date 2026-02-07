@@ -48,6 +48,7 @@ const app = express();
 if (!process.env.VERCEL) {
   app.use(express.static(`${__dirname}/frontend/dist`));
 }
+app.use('/uploads', express.static('uploads'));
 
 // -------------------- MIDDLEWARES --------------------
 app.use(cors(corsOptions));
@@ -90,5 +91,16 @@ app.use('/api', flutterwaveRoutes);
 app.use('/api', chatRoutes);
 app.use('/api', userRoutes);
 
+// -------------------- ERROR HANDLER --------------------
+app.use((err, req, res, next) => {
+  console.error('SERVER ERROR:', err);
+  if (err instanceof Error && err.message === 'Only PDF files are allowed!') {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ success: false, message: 'File size too large. Max limit is 10MB.' });
+  }
+  res.status(500).json({ success: false, message: err.message || 'Internal Server Error' });
+});
 
 export default app;

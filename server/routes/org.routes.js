@@ -10,7 +10,9 @@ import {
     getDashboardStats,
     createAssignment,
     getAssignments,
+    getAssignment,
     submitAssignment,
+    getSubmissions,
     createNotice,
     getNotices,
     getAllOrganizations,
@@ -22,6 +24,7 @@ import {
     updateOrganization
 } from '../controllers/org.controller.js';
 import Organization from '../models/Organization.js';
+import { uploadAssignment } from '../config/upload.config.js';
 
 const router = express.Router();
 
@@ -42,7 +45,9 @@ router.get('/org/dashboard/stats', getDashboardStats);
 // Assignments
 router.post('/org/assignment/create', createAssignment);
 router.get('/org/assignments', getAssignments); // ?organizationId=...
-router.post('/student/assignment/submit', submitAssignment);
+router.get('/org/assignment/:assignmentId', getAssignment);
+router.get('/org/assignment/:assignmentId/submissions', getSubmissions);
+router.post('/student/assignment/submit', uploadAssignment.single('file'), submitAssignment);
 
 // Notices
 router.post('/org/notice/create', createNotice);
