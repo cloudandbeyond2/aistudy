@@ -501,6 +501,7 @@ import User from '../models/User.js';
 import Admin from '../models/Admin.js';
 import crypto from 'crypto';
 import transporter from '../config/mail.js';
+import bcrypt from 'bcrypt';
 /**
  * SIGNUP
  */
@@ -565,6 +566,7 @@ export const signup = async (req, res) => {
       });
     } else {
       // First user becomes admin
+      const hashedPassword = await bcrypt.hash(password, 10);
       const newUser = new User({
         email,
         mName,
@@ -821,7 +823,7 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    user.password = password;
+    user.password = await bcrypt.hash(password, 10);
     user.resetPasswordToken = null;
     user.resetPasswordExpires = null;
 
@@ -862,7 +864,7 @@ export const updateProfile = async (req, res) => {
 
     // Only update password if provided
     if (password && password.trim() !== '') {
-      updateData.password = password;
+      updateData.password = await bcrypt.hash(password, 10);
     }
 
     const updatedUser = await User.findByIdAndUpdate(

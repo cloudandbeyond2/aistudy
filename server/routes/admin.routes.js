@@ -19,4 +19,13 @@ router.post('/removeadmin', adminController.removeAdmin);
 
 router.post('/saveadmin', adminController.saveAdmin);
 
+router.get('/orders', adminController.getOrders);
+router.get('/payment-settings', adminController.getPaymentSettings);
+router.post('/payment-settings', adminController.updatePaymentSetting);
+
+router.get('/organizations', adminController.getOrganizations);
+router.post('/organization/create', adminController.createOrganization);
+router.post('/organization/:id', adminController.updateOrganization);
+router.post('/organization/:id/block', adminController.toggleBlockOrganization);
+
 export default router;

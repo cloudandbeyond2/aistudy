@@ -54,13 +54,7 @@ const Login = () => {
         sessionStorage.setItem('auth', 'true');
         sessionStorage.setItem('uid', response.data.userData._id);
         sessionStorage.setItem('type', response.data.userData.type);
-        sessionStorage.setItem('role', response.data.userData.role); // Store role
-
-        // Store organization ID for org_admin and student roles
-        if (response.data.userData.organization) {
-          sessionStorage.setItem('orgId', response.data.userData.organization);
-        }
-
+        sessionStorage.setItem('isOrganization', response.data.userData.isOrganization ? 'true' : 'false');
         toast({
           title: "Login successful",
           description: "Welcome back to " + appName,
@@ -333,6 +327,7 @@ const Login = () => {
                       sessionStorage.setItem('auth', 'true');
                       sessionStorage.setItem('uid', response.data.userData._id);
                       sessionStorage.setItem('type', response.data.userData.type);
+                      sessionStorage.setItem('isOrganization', response.data.userData.isOrganization ? 'true' : 'false');
                       redirectHome();
                     } else {
                       setIsLoading(false);

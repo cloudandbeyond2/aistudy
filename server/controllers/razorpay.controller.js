@@ -12,7 +12,10 @@ export const createSubscription = async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({
+      success: false,
+      message: err.response?.data?.error?.description || err.message || 'Internal Server Error'
+    });
   }
 };
 

@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Home, User, DollarSign, LogOut, Sparkles, Menu, Settings2Icon, Users, BookOpen } from 'lucide-react';
+import { Home, User, DollarSign, LogOut, Sparkles, Menu, Settings2Icon, Building2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -26,6 +26,7 @@ import Logo from '../../res/logo.svg';
 import { DownloadIcon } from '@radix-ui/react-icons';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
+import NotificationBell from '../NotificationBell';
 
 const DashboardLayout = () => {
   const isMobile = useIsMobile();
@@ -157,32 +158,19 @@ const DashboardLayout = () => {
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
-                  )}
+                    :
+                    <></>}
 
-                  {/* Org Admin Panel */}
-                  {sessionStorage.getItem('role') === 'org_admin' && (
+                  {sessionStorage.getItem('isOrganization') === 'true' && (
                     <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip="Organization" isActive={isActive('/dashboard/org')}>
-                        <Link to="/dashboard/org" className={cn(isActive('/dashboard/org') && "text-primary")}>
-                          <Users />
-                          <span>Organization</span>
+                      <SidebarMenuButton asChild tooltip="Organization Portal" isActive={isActive('/dashboard/profile')}>
+                        <Link to="/dashboard/profile" className={cn(isActive('/dashboard/profile') && "text-primary")}>
+                          <Building2 />
+                          <span>Organization Portal</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   )}
-
-                  {/* Student Portal */}
-                  {sessionStorage.getItem('role') === 'student' && (
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip="Student Portal" isActive={isActive('/dashboard/student')}>
-                        <Link to="/dashboard/student" className={cn(isActive('/dashboard/student') && "text-primary")}>
-                          <BookOpen />
-                          <span>Student Portal</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )}
-
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -248,14 +236,24 @@ const DashboardLayout = () => {
           <SidebarRail />
         </Sidebar>
 
-        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
+
+
+        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 relative">
+          {/* Desktop Header */}
+          {!isMobile && (
+            <div className="absolute top-4 right-8 z-10 flex items-center gap-4">
+              <NotificationBell />
+            </div>
+          )}
+
           {isMobile && (
             <div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm">
               <SidebarTrigger className="mr-2">
                 <Menu className="h-6 w-6" />
               </SidebarTrigger>
               <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-indigo-500 text-gradient">{appName}</h1>
-              <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-2">
+                <NotificationBell />
                 <ThemeToggle />
               </div>
             </div>

@@ -1,19 +1,27 @@
 import axios from 'axios';
+import PaymentSetting from '../models/PaymentSetting.js';
 import Subscription from '../models/Subscription.js';
 import User from '../models/User.js';
 import Admin from '../models/Admin.js';
 import transporter from '../config/mailer.js';
 
 /* ---------------- CONFIG ---------------- */
-const getRazorpayConfig = () => ({
-  auth: {
-    username: process.env.RAZORPAY_KEY_ID,
-    password: process.env.RAZORPAY_KEY_SECRET
-  },
-  headers: {
-    'Content-Type': 'application/json'
+
+const getRazorpayConfig = async () => {
+  const setting = await PaymentSetting.findOne({ provider: 'razorpay' });
+  let username = process.env.RAZORPAY_KEY_ID;
+  let password = process.env.RAZORPAY_KEY_SECRET;
+
+  if (setting && setting.isEnabled && setting.publicKey && setting.secretKey) {
+    username = setting.publicKey;
+    password = setting.secretKey;
   }
-});
+
+  return {
+    auth: { username, password },
+    headers: { 'Content-Type': 'application/json' }
+  };
+};
 
 /* ---------------- EMAIL HELPERS ---------------- */
 const sendCancelEmail = async (user) => {
@@ -49,9 +57,20 @@ const sendRenewEmail = async (user) => {
 };
 
 /* ---------------- CREATE SUBSCRIPTION ---------------- */
-export const createRazorpaySubscription = async ({ plan, email, fullAddress }) => {
+export const createRazorpaySubscription = async ({ plan, email, fullAddress, planType }) => {
+  const setting = await PaymentSetting.findOne({ provider: 'razorpay' });
+  let plan_id = plan; // fallback to what's sent
+
+  if (setting) {
+    if (planType === 'monthly' && setting.monthlyPlanId) {
+      plan_id = setting.monthlyPlanId;
+    } else if (planType === 'yearly' && setting.yearlyPlanId) {
+      plan_id = setting.yearlyPlanId;
+    }
+  }
+
   const payload = {
-    plan_id: plan,
+    plan_id: plan_id,
     total_count: 12,
     quantity: 1,
     customer_notify: 1,
@@ -62,7 +81,7 @@ export const createRazorpaySubscription = async ({ plan, email, fullAddress }) =
   const response = await axios.post(
     'https://api.razorpay.com/v1/subscriptions',
     payload,
-    getRazorpayConfig()
+    await getRazorpayConfig()
   );
 
   return response.data;
@@ -72,7 +91,7 @@ export const createRazorpaySubscription = async ({ plan, email, fullAddress }) =
 export const getRazorpaySubscription = async (subscriptionId) => {
   const response = await axios.get(
     `https://api.razorpay.com/v1/subscriptions/${subscriptionId}`,
-    getRazorpayConfig()
+    await getRazorpayConfig()
   );
 
   return response.data;
@@ -98,7 +117,7 @@ export const cancelRazorpaySubscription = async (subscriptionId) => {
   await axios.post(
     `https://api.razorpay.com/v1/subscriptions/${subscriptionId}/cancel`,
     { cancel_at_cycle_end: 0 },
-    getRazorpayConfig()
+    await getRazorpayConfig()
   );
 
   const sub = await Subscription.findOne({ subscription: subscriptionId });

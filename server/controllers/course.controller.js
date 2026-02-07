@@ -3,6 +3,7 @@ import OrgCourse from '../models/OrgCourse.js';
 import Lang from '../models/Lang.js';
 import unsplash from '../config/unsplash.js';
 import IssuedCertificate from '../models/IssuedCertificate.js';
+import Notification from '../models/Notification.js';
 
 /**
  * CREATE COURSE
@@ -53,33 +54,17 @@ export const createCourse = async (req, res) => {
     });
     await newLang.save();
 
-    // Generate Assignments in parallel if it's an Organization context or generally requested
-    // For now, we generate for all new courses to satisfy "when course generate parallaly generate assignment topics related to the course topics"
+  //  await newLang.save();
+
+    // Create Notification
     try {
-      const { generateAssignments } = await import('./ai.controller.js');
-      const assignmentsData = await generateAssignments(mainTopic);
-
-      const Assignment = (await import('../models/Assignment.js')).default;
-      // We need an organizationId. If the user is an org student/admin, use their org.
-      // If free user, maybe skip or assign to a default?
-      // For now, check if user has organization
-
-      if (creator && creator.organization) {
-        const newAssignment = new Assignment({
-          courseLikeId: newCourse._id,
-          organizationId: creator.organization,
-          topic: mainTopic,
-          description: `Assignments for ${mainTopic}`,
-          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-          generatedByAI: true,
-          questions: assignmentsData
-        });
-        await newAssignment.save();
-        console.log('Auto-generated assignment created');
-      }
-    } catch (assignErr) {
-      console.error('Failed to auto-generate assignments:', assignErr);
-      // Don't fail the course creation
+      await Notification.create({
+        user,
+        message: `Your course "${mainTopic}" has been successfully generated.`,
+        type: 'success'
+      });
+    } catch (notifError) {
+      console.log('Notification creation failed', notifError);
     }
 
     res.json({

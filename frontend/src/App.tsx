@@ -48,6 +48,11 @@ import AdminSubscriptionBilling from "./pages/admin/AdminSubscriptionBilling";
 import AdminCreateBlog from "./pages/admin/AdminCreateBlog";
 import AdminPricing from "./pages/admin/AdminPricing";
 import AdminTestimonials from "./pages/admin/AdminTestimonials";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminPaymentSettings from "./pages/admin/AdminPaymentSettings";
+import AdminOrganizations from "./pages/admin/AdminOrganizations";
+import AdminCreateOrganization from "./pages/admin/AdminCreateOrganization";
+import AdminOrganizationDetails from "./pages/admin/AdminOrganizationDetails";
 import SubscriptionBillingPolicy from "./pages/SubscriptionBillingPolicy";
 import RefundPolicy from "./pages/RefundPolicy";
 import CancellationPolicy from "./pages/CancellationPolicy";
@@ -146,6 +151,11 @@ const App = () => (
                   <Route path="certificate" element={<AdminCertificate />} />
                   <Route path="orgs" element={<AdminOrganizations />} />
                   <Route path="testimonials" element={<AdminTestimonials />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                  <Route path="payment-settings" element={<AdminPaymentSettings />} />
+                  <Route path="organizations" element={<AdminOrganizations />} />
+                  <Route path="create-organization" element={<AdminCreateOrganization />} />
+                  <Route path="organization/:id" element={<AdminOrganizationDetails />} />
                 </Route>
                 <Route path="/verify-certificate" element={<CertificateVerification />} />
 

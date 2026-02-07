@@ -1,10 +1,29 @@
-import paystack from '../config/paystack.js';
+import axios from 'axios';
+import PaymentSetting from '../models/PaymentSetting.js';
 import Admin from '../models/Admin.js';
 import User from '../models/User.js';
 import Subscription from '../models/Subscription.js';
 import transporter from '../config/mailer.js';
 
+
+
+const getPaystackClient = async () => {
+  const setting = await PaymentSetting.findOne({ provider: 'paystack' });
+  let secretKey = process.env.PAYSTACK_SECRET_KEY;
+  if (setting && setting.isEnabled && setting.secretKey) {
+    secretKey = setting.secretKey;
+  }
+  return axios.create({
+    baseURL: 'https://api.paystack.co',
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      'Content-Type': 'application/json'
+    }
+  });
+};
+
 export const initializePayment = async ({ planId, amountInZar, email }) => {
+  const paystack = await getPaystackClient();
   const response = await paystack.post('/transaction/initialize', {
     email,
     amount: amountInZar,
@@ -19,6 +38,7 @@ export const initializePayment = async ({ planId, amountInZar, email }) => {
 };
 
 export const fetchSubscription = async ({ email, uid, plan }) => {
+  const paystack = await getPaystackClient();
   const response = await paystack.get('/subscription');
   const subscriptions = response.data.data;
 
@@ -49,6 +69,7 @@ export const fetchSubscription = async ({ email, uid, plan }) => {
 };
 
 export const cancelSubscription = async ({ code, token, email }) => {
+  const paystack = await getPaystackClient();
   await paystack.post('/subscription/disable', {
     code,
     token

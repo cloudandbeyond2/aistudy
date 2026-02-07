@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import React, { useState } from 'react';
-import { useParams, useNavigate, useLocation  } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Card,
   CardContent,
@@ -128,14 +128,14 @@ const PaymentDetails = () => {
   const [paymentMethod, setPaymentMethod] = useState<string>('paypal');
   const [isProcessing, setIsProcessing] = useState(false);
   const location = useLocation();
-const state = location.state as any;
+  const state = location.state as any;
 
-const plan = {
-  name: state?.planName || 'Unknown Plan',
-  price: state?.price || 0,
-  currency: state?.currency || 'USD',
-  planType: state?.planType || planId
-};
+  const plan = {
+    name: state?.planName || 'Unknown Plan',
+    price: state?.price || 0,
+    currency: state?.currency || 'USD',
+    planType: state?.planType || planId
+  };
 
   // const plan = planId && plans[planId as keyof typeof plans]
 
@@ -195,7 +195,8 @@ const plan = {
     const dataToSend = {
       plan: planId,
       email: data.email,
-      fullAddress: fullAddress
+      fullAddress: fullAddress,
+      planType: plan.name === 'Monthly Plan' ? 'monthly' : 'yearly'
     };
     try {
       const postURL = serverURL + '/api/razorpaycreate';
@@ -549,9 +550,9 @@ const plan = {
     <div className="container max-w-5xl mx-auto py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Complete Your Purchase</h1>
-       <p className="text-muted-foreground">
-  You're upgrading to the {plan.name}
-</p>
+        <p className="text-muted-foreground">
+          You're upgrading to the {plan.name}
+        </p>
 
       </div>
 
@@ -754,7 +755,7 @@ const plan = {
                         <p className="text-center">
                           You'll be redirected to paystack to complete your purchase securely.
                         </p>
-                        
+
                       </div>
                     </TabsContent>
 
@@ -793,7 +794,7 @@ const plan = {
             <CardContent className="space-y-4">
               <div className="flex justify-between">
                 <span className="font-medium">{plan.name}</span>
-           <span>{plan.currency} {plan.price}</span>
+                <span>{plan.currency} {plan.price}</span>
 
               </div>
 
@@ -801,25 +802,45 @@ const plan = {
 
               <div className="flex justify-between font-bold">
                 <span>Total</span>
-             <span>{plan.currency} {plan.price}</span>
+                <span>{plan.currency} {plan.price}</span>
 
               </div>
 
               <div className="bg-muted/50 p-4 rounded-lg mt-6">
                 <h4 className="font-medium mb-2">What's included:</h4>
-              
-{/* Star bala */}
-                   <ul className="space-y-2 text-sm">
-  {plansFeartures
-    .find((p) => p.name === plan.name)
-    ?.features.map((feature, idx) => (
-      <li key={feature} className="flex items-center">
-        <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-        {feature}
-      </li>
-    ))}
-</ul>
-{/* Star bala */}
+                {/* <ul className="space-y-2 text-sm">
+
+                  {plansFeartures.map((item, index) =>
+                  (
+                    <>
+                      {item.name === plan.name ?
+                        <>
+                          {plansFeartures[index].features.map((item, index) =>
+                          (
+                            <li className="flex items-center">
+                              <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                              {item}
+                            </li>
+                          ))}
+                        </>
+                        :
+                        <></>
+                      }
+                    </>
+                  ))}
+                </ul> */}
+                {/* Star bala */}
+                <ul className="space-y-2 text-sm">
+                  {plansFeartures
+                    .find((p) => p.name === plan.name)
+                    ?.features.map((feature, idx) => (
+                      <li key={feature} className="flex items-center">
+                        <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                        {feature}
+                      </li>
+                    ))}
+                </ul>
+                {/* Star bala */}
               </div>
             </CardContent>
           </Card>

@@ -1,11 +1,26 @@
-import flw from '../config/flutterwave.js';
+import Flutterwave from 'flutterwave-node-v3';
+import PaymentSetting from '../models/PaymentSetting.js';
 import Subscription from '../models/Subscription.js';
 import User from '../models/User.js';
 import transporter from '../config/mailer.js';
 import Admin from '../models/Admin.js';
 
+
+const getFlutterwave = async () => {
+  const setting = await PaymentSetting.findOne({ provider: 'flutterwave' });
+  let publicKey = process.env.FLUTTERWAVE_PUBLIC_KEY;
+  let secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
+
+  if (setting && setting.isEnabled && setting.publicKey && setting.secretKey) {
+    publicKey = setting.publicKey;
+    secretKey = setting.secretKey;
+  }
+  return new Flutterwave(publicKey, secretKey);
+};
+
 export const cancelFlutterwaveSubscription = async ({ code, token, email }) => {
   // Cancel on Flutterwave
+  const flw = await getFlutterwave();
   const response = await flw.Subscription.cancel({ id: code });
 
   if (!response || response.status !== 'success') {
@@ -69,6 +84,7 @@ export const getFlutterwaveSubscriptionDetails = async ({
 
   // Fetch Flutterwave subscription
   const payload = { email };
+  const flw = await getFlutterwave();
   const response = await flw.Subscription.get(payload);
 
   if (!response?.data?.length) {
