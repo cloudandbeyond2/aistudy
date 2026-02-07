@@ -524,10 +524,11 @@ export const signup = async (req, res) => {
       const verificationToken = crypto.randomBytes(32).toString('hex');
       const verificationExpires = Date.now() + 24 * 60 * 60 * 1000;
 
+      const hashedPassword = await bcrypt.hash(password, 10);
       const newUser = new User({
         email,
         mName,
-        password,
+        password: hashedPassword,
         type,
         phone,
         emailVerificationToken: verificationToken,
@@ -570,9 +571,10 @@ export const signup = async (req, res) => {
       const newUser = new User({
         email,
         mName,
-        password,
+        password: hashedPassword,
         type: 'forever',
-        phone
+        phone,
+        isEmailVerified: true
       });
       await newUser.save();
 
@@ -621,7 +623,10 @@ export const signin = async (req, res) => {
       });
     }
 
-    if (password === user.password) {
+    const isMatch = await bcrypt.compare(password, user.password);
+    const isPlainTextMatch = password === user.password;
+
+    if (isMatch || isPlainTextMatch) {
       // Check if email is verified
       if (user.isEmailVerified === false && user.emailVerificationToken) {
         return res.json({

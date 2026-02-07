@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Organization from '../models/Organization.js';
 import bcrypt from 'bcrypt';
 import Course from '../models/Course.js';
 import Admin from '../models/Admin.js';
@@ -250,11 +251,26 @@ export const createOrganization = async ({ email, password, institutionName, inc
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const newUser = new User({
+  // 1. Create Organization document
+  const newOrgDoc = new Organization({
+    name: institutionName,
     email,
     password: hashedPassword,
-    type: 'free', // Or specific org plan
+    address,
+    contactNumber: inchargePhone
+  });
+  await newOrgDoc.save();
+
+  // 2. Create User document with org_admin role
+  const newUser = new User({
+    email,
+    mName: institutionName,
+    password: hashedPassword,
+    type: 'forever',
+    role: 'org_admin',
     isOrganization: true,
+    organization: newOrgDoc._id,
+    isEmailVerified: true,
     organizationDetails: {
       institutionName,
       inchargeName,
@@ -265,8 +281,6 @@ export const createOrganization = async ({ email, password, institutionName, inc
       isBlocked: false
     }
   });
-
-  if (institutionName) newUser.mName = institutionName;
 
   await newUser.save();
   return newUser;

@@ -55,6 +55,9 @@ const Login = () => {
         sessionStorage.setItem('uid', response.data.userData._id);
         sessionStorage.setItem('type', response.data.userData.type);
         sessionStorage.setItem('isOrganization', response.data.userData.isOrganization ? 'true' : 'false');
+        if (response.data.userData.organization) {
+          sessionStorage.setItem('orgId', response.data.userData.organization);
+        }
         toast({
           title: "Login successful",
           description: "Welcome back to " + appName,
@@ -328,6 +331,9 @@ const Login = () => {
                       sessionStorage.setItem('uid', response.data.userData._id);
                       sessionStorage.setItem('type', response.data.userData.type);
                       sessionStorage.setItem('isOrganization', response.data.userData.isOrganization ? 'true' : 'false');
+                      if (response.data.userData.organization) {
+                        sessionStorage.setItem('orgId', response.data.userData.organization);
+                      }
                       redirectHome();
                     } else {
                       setIsLoading(false);

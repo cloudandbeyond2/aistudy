@@ -5,6 +5,7 @@ import Submission from '../models/Submission.js';
 import Notice from '../models/Notice.js';
 import OrgCourse from '../models/OrgCourse.js';
 import Course from '../models/Course.js';
+import bcrypt from 'bcrypt';
 // import { generateAssignments } from './ai.controller.js'; // Will implement this export next
 
 /**
@@ -26,10 +27,11 @@ export const orgSignup = async (req, res) => {
             return res.json({ success: false, message: 'A user account with this email already exists' });
         }
 
+        const hashedPassword = await bcrypt.hash(password, 10);
         const newOrg = new Organization({
             name,
             email,
-            password, // In production, hash this!
+            password: hashedPassword,
             address,
             contactNumber,
             allowAICreation: allowAICreation !== undefined ? allowAICreation : true,
@@ -43,11 +45,12 @@ export const orgSignup = async (req, res) => {
             email,
             mName: name + ' Admin',
             phone: contactNumber,
-            password,
+            password: hashedPassword,
             role: 'org_admin',
             type: 'forever',
             organization: newOrg._id,
-            isVerified: true
+            isEmailVerified: true,
+            isOrganization: true
         });
         await adminUser.save();
 
@@ -65,7 +68,12 @@ export const orgSignin = async (req, res) => {
     const { email, password } = req.body;
     try {
         const org = await Organization.findOne({ email });
-        if (!org || org.password !== password) {
+        if (!org) {
+            return res.json({ success: false, message: 'Invalid credentials' });
+        }
+
+        const isMatch = await bcrypt.compare(password, org.password);
+        if (!isMatch) {
             return res.json({ success: false, message: 'Invalid credentials' });
         }
 
