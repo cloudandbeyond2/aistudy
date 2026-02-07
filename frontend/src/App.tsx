@@ -50,7 +50,7 @@ import AdminPricing from "./pages/admin/AdminPricing";
 import AdminTestimonials from "./pages/admin/AdminTestimonials";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminPaymentSettings from "./pages/admin/AdminPaymentSettings";
-import AdminOrganizations from "./pages/admin/AdminOrganizations";
+// import AdminOrganizations from "./pages/admin/AdminOrganizations";
 import AdminCreateOrganization from "./pages/admin/AdminCreateOrganization";
 import AdminOrganizationDetails from "./pages/admin/AdminOrganizationDetails";
 import SubscriptionBillingPolicy from "./pages/SubscriptionBillingPolicy";

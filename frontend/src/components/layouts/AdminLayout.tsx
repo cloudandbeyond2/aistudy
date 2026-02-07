@@ -127,14 +127,14 @@ const AdminLayout = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              <SidebarMenuItem>
+              {/* <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Organizations" isActive={isActive('/admin/organizations')}>
                   <Link to="/admin/organizations" className={cn(isActive('/admin/organizations') && "text-primary")}>
                     <Building2 />
                     <span>Organizations</span>
                   </Link>
                 </SidebarMenuButton>
-              </SidebarMenuItem>
+              </SidebarMenuItem> */}
 
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Paid Users" isActive={isActive('/admin/paid-users')}>
