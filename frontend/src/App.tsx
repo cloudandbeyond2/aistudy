@@ -27,9 +27,13 @@ import Blog from "./pages/Blog";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import PaymentPending from "./pages/PaymentPending";
 import PaymentFailed from "./pages/PaymentFailed";
+import VerifyEmail from "./pages/VerifyEmail";
 
 // Admin imports
 import AdminLayout from "./components/layouts/AdminLayout";
+import OrgDashboard from "./pages/OrgDashboard";
+import StudentPortal from "./pages/StudentPortal";
+import AssignmentPage from "./pages/AssignmentPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminCourses from "./pages/admin/AdminCourses";
@@ -55,6 +59,7 @@ import CancellationPolicy from "./pages/CancellationPolicy";
 import QuizPage from "./pages/QuizPage";
 import BlogPost from "./pages/BlogPost";
 import AdminBlogs from "./pages/admin/AdminBlogs";
+import AdminOrganizations from "./pages/admin/AdminOrganizations";
 import AdminCertificate from "./pages/admin/AdminCertificate";
 import CertificateVerification from "./pages/CertificateVerification";
 import { GoogleOAuthProvider } from '@react-oauth/google';
@@ -92,6 +97,7 @@ const App = () => (
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password/:token" element={<ResetPassword />} />
+                <Route path="/verify-email/:token" element={<VerifyEmail />} />
 
                 {/* Dashboard Routes */}
                 <Route path="/dashboard" element={<DashboardLayout />}>
@@ -100,6 +106,9 @@ const App = () => (
                   <Route path="pricing" element={<ProfilePricing />} />
                   <Route path="payment/:planId" element={<PaymentDetails />} />
                   <Route path="profile" element={<Profile />} />
+                  <Route path="org" element={<OrgDashboard />} />
+                  <Route path="student" element={<StudentPortal />} />
+                  <Route path="student/assignment/:assignmentId" element={<AssignmentPage />} />
                 </Route>
 
                 {/* Course Routes */}
@@ -140,6 +149,7 @@ const App = () => (
                   <Route path="create-blog" element={<AdminCreateBlog />} />
                   <Route path="blogs" element={<AdminBlogs />} />
                   <Route path="certificate" element={<AdminCertificate />} />
+                  <Route path="orgs" element={<AdminOrganizations />} />
                   <Route path="testimonials" element={<AdminTestimonials />} />
                   <Route path="orders" element={<AdminOrders />} />
                   <Route path="payment-settings" element={<AdminPaymentSettings />} />

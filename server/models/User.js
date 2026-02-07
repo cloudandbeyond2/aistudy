@@ -19,9 +19,20 @@ const userSchema = new mongoose.Schema({
   email: { type: String, unique: true, required: true },
   mName: String,
   password: String,
-  type: String, // free | monthly | yearly | forever
+  type: { type: String, default: 'free' }, // free | monthly | yearly | forever
+  role: { type: String, enum: ['user', 'student', 'org_admin'], default: 'user' },
+  organization: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization' },
+  phone: { type: String, default: null },
+  studentDetails: {
+    department: String,
+    section: String,
+    rollNo: String
+  },
   subscriptionStart: { type: Date, default: null },
   subscriptionEnd: { type: Date, default: null },
+  isEmailVerified: { type: Boolean, default: false },
+  emailVerificationToken: { type: String, default: null },
+  emailVerificationExpires: { type: Date, default: null },
   resetPasswordToken: { type: String, default: null },
   resetPasswordExpires: { type: Date, default: null },
 

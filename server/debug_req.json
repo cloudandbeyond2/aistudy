@@ -1,6 +1,6 @@
 {
-  "courseId": "6953857cf8a7908a05f3a5c0",
-  "mainTopic": "LAPTOP SERVICE",
-  "subtopicsString": "No Power/No Display Diagnosis Flowchart, Using Debug Cards (Post Cards) for error codes, Measuring Voltage and Resistance using a Multimeter, Understanding Block Diagrams and Power Rails, Using Board View Software (e.g., BRD/CAD files), Identifying common ICs, MOSFETs, and Diodes, BGA Reballing and Rework Techniques, Surface Mount Device (SMD) Removal and Replacement, Hot Air Station and Soldering Iron Best Practices, Troubleshooting short circuits using DC power supply injection, Safe Disassembly Procedures for various laptop brands, BIOS Programming and EC Firmware Flashing Techniques, Cleaning and Thermal Management (Heatsink and Fan Service)",
-  "lang": "english"
+  "courseId": "6985d20e1863f2073e2795f9",
+  "mainTopic": "photosynthesis",
+  "subtopicsString": "Introduction to Photosynthesis: Definition, overall equation, and significance, Anatomy of Photosynthesis: Chloroplast structure, pigments (chlorophyll a and b, carotenoids), and location of reactions, The Light-Dependent Reactions: Absorption spectra, photosystems I and II, electron transport chain, and photophosphorylation (cyclic and non-cyclic), The Light-Independent Reactions (The Calvin Cycle): Carbon fixation (RuBisCO), reduction, and regeneration of RuBP, Photorespiration and Alternative Pathways: C4 mechanism and Crassulacean Acid Metabolism (CAM), Factors Affecting Photosynthesis Rate: Light intensity, CO2 concentration, and temperature",
+  "lang": "English"
 }

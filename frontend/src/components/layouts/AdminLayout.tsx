@@ -43,6 +43,8 @@ import { serverURL, websiteURL } from '@/constants';
 import axios from 'axios';
 import Logo from '../../res/logo.svg';
 import { useToast } from '@/hooks/use-toast';
+import { Cookie } from 'lucide-react';
+
 
 const AdminLayout = () => {
   const isMobile = useIsMobile();
@@ -232,6 +234,24 @@ const AdminLayout = () => {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              
+
+              <SidebarMenuItem>
+  <SidebarMenuButton
+    asChild
+    tooltip="Cookies"
+    isActive={isActive('/admin/cookies')}
+  >
+    <Link
+      to="/admin/cookies"
+      className={cn(isActive('/admin/cookies') && "text-primary")}
+    >
+      <Cookie />
+      <span>Cookies</span>
+    </Link>
+  </SidebarMenuButton>
+</SidebarMenuItem>
+
 
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Cancellation" isActive={isActive('/admin/cancellation')}>
@@ -265,6 +285,14 @@ const AdminLayout = () => {
                   <Link to="/admin/certificate" className={cn(isActive('/admin/certificate') && "text-primary")}>
                     <Award />
                     <span>Certificate</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+                 <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Organizations" isActive={isActive('/admin/orgs')}>
+                  <Link to="/admin/orgs" className={cn(isActive('/admin/orgs') && "text-primary")}>
+                    <Building2 />
+                    <span>Organizations</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

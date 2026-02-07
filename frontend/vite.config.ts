@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
       manifest: {
         name: 'AiCourse',
         short_name: 'AiCourse',
-        description: 'Ai Text To Course Generator',
+        description: 'Ai Course Generator',
         theme_color: '#007BFF',
         icons: [
           {

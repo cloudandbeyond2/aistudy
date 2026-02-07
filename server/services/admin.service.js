@@ -167,7 +167,8 @@ export const saveAdminPolicy = async ({ type, data }) => {
     privacy: 'privacy',
     cancel: 'cancel',
     refund: 'refund',
-    billing: 'billing'
+    billing: 'billing',
+    cookies: 'cookies'
   };
 
   const field = fieldMap[type];

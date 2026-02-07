@@ -1,6 +1,6 @@
 const allowedOrigins = [
   process.env.WEBSITE_URL || 'http://traininglabs.in/server',
-  'https://training-aistudy.vercel.app',
+  'https://aistudy-infilabs.vercel.app',
   'http://localhost:5173',
   'http://localhost:4173',
   'http://localhost:3000',

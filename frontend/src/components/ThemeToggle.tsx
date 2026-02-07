@@ -3,24 +3,27 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Moon, Sun } from "lucide-react";
 import { Toggle } from "./ui/toggle";
+import { useState } from "react";
 
-export function ThemeToggle({ className }: { className?: string }) {
-  const { theme, toggleTheme } = useTheme();
-  
+export function ThemeToggle() {
+  const [theme, setTheme] = useState(
+    document.documentElement.classList.contains("dark") ? "dark" : "light"
+  );
+
+  const toggleTheme = () => {
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
+
+    document.documentElement.classList.toggle("dark", newTheme === "dark");
+    localStorage.setItem("theme", newTheme);
+  };
+
   return (
-    <Button
-      variant="ghost"
-      size="icon"
+    <button
       onClick={toggleTheme}
-      className={className}
-      title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+      className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition"
     >
-      {theme === 'light' ? (
-        <Moon className="h-5 w-5" />
-      ) : (
-        <Sun className="h-5 w-5" />
-      )}
-      <span className="sr-only">Toggle theme</span>
-    </Button>
+      {theme === "dark" ? "🌙" : "☀️"}
+    </button>
   );
 }

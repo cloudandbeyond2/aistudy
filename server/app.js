@@ -49,6 +49,7 @@ const app = express();
 if (!process.env.VERCEL) {
   app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 }
+app.use('/uploads', express.static('uploads'));
 
 // -------------------- MIDDLEWARES --------------------
 app.use(cors(corsOptions));
@@ -68,6 +69,7 @@ app.use((req, res, next) => {
 app.use('/api', authRoutes);
 app.use('/api', courseRoutes);
 app.use('/api', certificateRoutes);
+app.use('/api', orgRoutes);
 app.use('/api', examRoutes);
 app.use('/api', contactRoutes);
 app.use('/api', notesRoutes);
@@ -91,5 +93,16 @@ app.use('/api', chatRoutes);
 app.use('/api', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 
+// -------------------- ERROR HANDLER --------------------
+app.use((err, req, res, next) => {
+  console.error('SERVER ERROR:', err);
+  if (err instanceof Error && err.message === 'Only PDF files are allowed!') {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ success: false, message: 'File size too large. Max limit is 10MB.' });
+  }
+  res.status(500).json({ success: false, message: err.message || 'Internal Server Error' });
+});
 
 export default app;

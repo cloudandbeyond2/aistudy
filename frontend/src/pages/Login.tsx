@@ -59,8 +59,16 @@ const Login = () => {
           title: "Login successful",
           description: "Welcome back to " + appName,
         });
+
         if (sessionStorage.getItem('shared') === null) {
-          redirectHome();
+          // Role based redirect
+          if (response.data.userData.role === 'org_admin') {
+            navigate("/dashboard/org");
+          } else if (response.data.userData.role === 'student') {
+            navigate("/dashboard/student");
+          } else {
+            redirectHome();
+          }
         } else {
           getDataFromDatabase(sessionStorage.getItem('shared'));
         }

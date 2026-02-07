@@ -4,7 +4,8 @@ import {
   createSharedCourse,
   updateCourse,
   deleteCourse,
-  finishCourse
+  finishCourse,
+  getShareableCourse
 } from '../controllers/course.controller.js';
 import { getUserCourses } from '../controllers/course.controller.js';
 
@@ -16,5 +17,6 @@ router.post('/update', updateCourse);
 router.post('/deletecourse', deleteCourse);
 router.post('/finish', finishCourse);
 router.get('/courses', getUserCourses);
+router.get('/shareable', getShareableCourse);
 
 export default router;
