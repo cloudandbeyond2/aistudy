@@ -33,8 +33,7 @@ const DashboardLayout = () => {
   const location = useLocation();
   const [installPrompt, setInstallPrompt] = useState(null);
   const { toast } = useToast();
-  const role = sessionStorage.getItem('role');
-  const homePath = role === 'student' ? '/dashboard/student' : (role === 'org_admin' ? '/dashboard/org' : '/dashboard');
+  // Helper to check active route
   const isActive = (path: string) => location.pathname === path;
   const [admin, setAdmin] = useState(false);
 
@@ -43,18 +42,11 @@ const DashboardLayout = () => {
       window.location.href = websiteURL + '/login';
     }
     async function dashboardData() {
-      try {
-        const postURL = serverURL + `/api/dashboard`;
-        const response = await axios.post(postURL);
-        if (response.data && response.data.admin) {
-          sessionStorage.setItem('adminEmail', response.data.admin.email);
-          if (response.data.admin.email === sessionStorage.getItem('email')) {
-            setAdmin(true);
-          }
-        }
-      } catch (error) {
-        console.error('Dashboard data fetch error:', error);
-        // Silently fail - user can still use the dashboard
+      const postURL = serverURL + `/api/dashboard`;
+      const response = await axios.post(postURL);
+      sessionStorage.setItem('adminEmail', response.data.admin.email);
+      if (response.data.admin.email === sessionStorage.getItem('email')) {
+        setAdmin(true);
       }
     }
     if (sessionStorage.getItem('adminEmail')) {
@@ -98,7 +90,7 @@ const DashboardLayout = () => {
       <div className="flex min-h-screen w-full bg-gradient-to-br from-background to-muted/30">
         <Sidebar className="border-r border-border/40">
           <SidebarHeader className="border-b border-border/40">
-            <Link to={homePath} className="flex items-center space-x-2 px-4 py-3">
+            <Link to="/dashboard" className="flex items-center space-x-2 px-4 py-3">
               <div className="h-8 w-8 rounded-md bg-primary from-primary flex items-center justify-center">
                 <img src={Logo} alt="Logo" className='h-6 w-6' />
               </div>
@@ -111,8 +103,8 @@ const DashboardLayout = () => {
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Home" isActive={isActive(homePath)}>
-                      <Link to={homePath} className={cn(isActive(homePath) && "text-primary")}>
+                    <SidebarMenuButton asChild tooltip="Home" isActive={isActive('/dashboard')}>
+                      <Link to="/dashboard" className={cn(isActive('/dashboard') && "text-primary")}>
                         <Home />
                         <span>Home</span>
                       </Link>
@@ -128,16 +120,14 @@ const DashboardLayout = () => {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
 
-                  {role !== 'student' && (
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip="Pricing" isActive={isActive('/dashboard/pricing')}>
-                        <Link to="/dashboard/pricing" className={cn(isActive('/dashboard/pricing') && "text-primary")}>
-                          <DollarSign />
-                          <span>Pricing</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )}
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Pricing" isActive={isActive('/dashboard/pricing')}>
+                      <Link to="/dashboard/pricing" className={cn(isActive('/dashboard/pricing') && "text-primary")}>
+                        <DollarSign />
+                        <span>Pricing</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
 
                   {/* <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip="Generate Course" isActive={isActive('/dashboard/generate-course')}>
@@ -148,8 +138,7 @@ const DashboardLayout = () => {
                     </SidebarMenuButton>
                   </SidebarMenuItem> */}
 
-                  {/* Admin Panel */}
-                  {admin && (
+                  {admin ?
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Admin Panel" isActive={isActive('/admin')}>
                         <Link to="/admin" className={cn(isActive('/admin') && "text-primary")}>
@@ -175,24 +164,22 @@ const DashboardLayout = () => {
               </SidebarGroupContent>
             </SidebarGroup>
 
-            {role !== 'student' && (
-              <SidebarGroup>
-                <SidebarGroupContent>
-                  <div className="px-2">
-                    <Button
-                      className="w-full bg-gradient-to-r from-primary to-indigo-500 hover:from-indigo-500 hover:to-primary shadow-md transition-all"
-                      size="sm"
-                      asChild
-                    >
-                      <Link to="/dashboard/generate-course">
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Generate Course
-                      </Link>
-                    </Button>
-                  </div>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            )}
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <div className="px-2">
+                  <Button
+                    className="w-full bg-gradient-to-r from-primary to-indigo-500 hover:from-indigo-500 hover:to-primary shadow-md transition-all"
+                    size="sm"
+                    asChild
+                  >
+                    <Link to="/dashboard/generate-course">
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Generate Course
+                    </Link>
+                  </Button>
+                </div>
+              </SidebarGroupContent>
+            </SidebarGroup>
           </SidebarContent>
 
           <SidebarFooter className="border-t border-border/40">
