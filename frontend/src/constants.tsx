@@ -40,9 +40,9 @@ export const paypalPlanIdOne = "P-1EM732768S920784HMWKW3OAEA";
 export const paypalPlanIdTwo = "P-8T744865W27080359MWOCE5QRR";
 
 //RAZORPAY
-export const razorpayKeyId = "rzp_test_uqALjZHyTyuiOme";
-export const razorpayPlanIdOne = "plan_NMvvtDfznbRp6Vr";
-export const razorpayPlanIdTwo = "plan_NMRc9HARBQRLWAr";
+export const razorpayKeyId = "rzp_test_SCLaCj6sIAD331";
+export const razorpayPlanIdOne = "plan_SDArK5ibfyHQlJ";
+export const razorpayPlanIdTwo = "plan_SDAsZmKga0PZkq";
 
 //STRIPE
 export const stripePlanIdOne = "price_1OTo7CSDXmLtVnVeaHIHxqCjr";
