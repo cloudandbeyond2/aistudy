@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import path from 'path';
+import mongoose from 'mongoose';
 
 // 🔥 Load env FIRST
 import './config/env.js';
@@ -67,6 +68,18 @@ app.use((req, res, next) => {
 });
 
 // -------------------- ROUTES --------------------
+// Middleware to ensure DB is connected before any API request
+app.use(async (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    try {
+      await connectDB();
+    } catch (err) {
+      console.error('DB Connection Middleware Error:', err);
+    }
+  }
+  next();
+});
+
 app.use('/api', authRoutes);
 app.use('/api', courseRoutes);
 app.use('/api', certificateRoutes);
