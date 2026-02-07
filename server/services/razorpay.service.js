@@ -1,87 +1,55 @@
 import axios from 'axios';
-import PaymentSetting from '../models/PaymentSetting.js';
 import Subscription from '../models/Subscription.js';
 import User from '../models/User.js';
 import Admin from '../models/Admin.js';
 import transporter from '../config/mailer.js';
 
 /* ---------------- CONFIG ---------------- */
-
-const getRazorpayConfig = async () => {
-  const setting = await PaymentSetting.findOne({ provider: 'razorpay' });
-  let username = process.env.RAZORPAY_KEY_ID;
-  let password = process.env.RAZORPAY_KEY_SECRET;
-
-  if (setting && setting.isEnabled && setting.publicKey && setting.secretKey) {
-    username = setting.publicKey;
-    password = setting.secretKey;
+const getRazorpayConfig = () => {
+  if (
+    !process.env.RAZORPAY_KEY_ID ||
+    !process.env.RAZORPAY_KEY_SECRET
+  ) {
+    throw new Error('Razorpay keys missing in environment');
   }
 
   return {
-    auth: { username, password },
-    headers: { 'Content-Type': 'application/json' }
+    auth: {
+      username: process.env.RAZORPAY_KEY_ID,
+      password: process.env.RAZORPAY_KEY_SECRET
+    },
+    headers: {
+      'Content-Type': 'application/json'
+    }
   };
-};
-
-/* ---------------- EMAIL HELPERS ---------------- */
-const sendCancelEmail = async (user) => {
-  const reactivate = `${process.env.WEBSITE_URL}/pricing`;
-
-  await transporter.sendMail({
-    from: process.env.EMAIL,
-    to: user.email,
-    subject: `${user.mName}, Your Subscription Has Been Cancelled`,
-    html: `
-      <h2>Subscription Cancelled</h2>
-      <p>Hello ${user.mName},</p>
-      <p>Your subscription has been cancelled.</p>
-      <a href="${reactivate}">Reactivate Subscription</a>
-      <br/><br/>
-      <strong>${process.env.COMPANY}</strong>
-    `
-  });
-};
-
-const sendRenewEmail = async (user) => {
-  await transporter.sendMail({
-    from: process.env.EMAIL,
-    to: user.email,
-    subject: `${user.mName}, Subscription Renewed 🎉`,
-    html: `
-      <h2>Subscription Renewed</h2>
-      <p>Hello ${user.mName},</p>
-      <p>Your subscription has been renewed successfully.</p>
-      <strong>${process.env.COMPANY}</strong>
-    `
-  });
 };
 
 /* ---------------- CREATE SUBSCRIPTION ---------------- */
-export const createRazorpaySubscription = async ({ plan, email, fullAddress, planType }) => {
-  const setting = await PaymentSetting.findOne({ provider: 'razorpay' });
-  let plan_id = plan; // fallback to what's sent
-
-  if (setting) {
-    if (planType === 'monthly' && setting.monthlyPlanId) {
-      plan_id = setting.monthlyPlanId;
-    } else if (planType === 'yearly' && setting.yearlyPlanId) {
-      plan_id = setting.yearlyPlanId;
-    }
+export const createRazorpaySubscription = async ({
+  plan,
+  email,
+  fullAddress
+}) => {
+  if (!plan) {
+    throw new Error('plan_id is required');
   }
 
   const payload = {
-    plan_id: plan_id,
+    plan_id: plan,          // MUST be plan_xxxxx
     total_count: 12,
     quantity: 1,
     customer_notify: 1,
-    notes: { address: fullAddress },
-    notify_info: { notify_email: email }
+    notes: {
+      address: fullAddress || 'NA'
+    }
   };
+
+  console.log('RAZORPAY PAYLOAD:', payload);
 
   const response = await axios.post(
     'https://api.razorpay.com/v1/subscriptions',
     payload,
-    await getRazorpayConfig()
+    getRazorpayConfig()
   );
 
   return response.data;
@@ -89,24 +57,40 @@ export const createRazorpaySubscription = async ({ plan, email, fullAddress, pla
 
 /* ---------------- FETCH SUBSCRIPTION ---------------- */
 export const getRazorpaySubscription = async (subscriptionId) => {
+  if (!subscriptionId) {
+    throw new Error('subscriptionId required');
+  }
+
   const response = await axios.get(
     `https://api.razorpay.com/v1/subscriptions/${subscriptionId}`,
-    await getRazorpayConfig()
+    getRazorpayConfig()
   );
 
   return response.data;
 };
 
 /* ---------------- ACTIVATE SUBSCRIPTION ---------------- */
-export const activateRazorpaySubscription = async ({ uid, plan, subscriptionId }) => {
+export const activateRazorpaySubscription = async ({
+  uid,
+  plan,
+  subscriptionId
+}) => {
+  if (!uid || !subscriptionId) {
+    throw new Error('uid & subscriptionId required');
+  }
+
   let cost =
     plan === process.env.MONTH_TYPE
-      ? process.env.MONTH_COST
-      : process.env.YEAR_COST;
+      ? Number(process.env.MONTH_COST)
+      : Number(process.env.YEAR_COST);
 
   cost = cost / 4;
 
-  await Admin.findOneAndUpdate({ type: 'main' }, { $inc: { total: cost } });
+  await Admin.findOneAndUpdate(
+    { type: 'main' },
+    { $inc: { total: cost } }
+  );
+
   await User.findByIdAndUpdate(uid, { type: plan });
 
   return getRazorpaySubscription(subscriptionId);
@@ -117,7 +101,7 @@ export const cancelRazorpaySubscription = async (subscriptionId) => {
   await axios.post(
     `https://api.razorpay.com/v1/subscriptions/${subscriptionId}/cancel`,
     { cancel_at_cycle_end: 0 },
-    await getRazorpayConfig()
+    getRazorpayConfig()
   );
 
   const sub = await Subscription.findOne({ subscription: subscriptionId });
@@ -128,14 +112,12 @@ export const cancelRazorpaySubscription = async (subscriptionId) => {
   await User.findByIdAndUpdate(sub.user, { type: 'free' });
   await Subscription.findOneAndDelete({ subscription: subscriptionId });
 
-  if (user) await sendCancelEmail(user);
-};
-
-/* ---------------- RENEW (WEBHOOK) ---------------- */
-export const renewRazorpaySubscription = async (subscriptionId) => {
-  const sub = await Subscription.findOne({ subscription: subscriptionId });
-  if (!sub) return;
-
-  const user = await User.findById(sub.user);
-  if (user) await sendRenewEmail(user);
+  if (user) {
+    await transporter.sendMail({
+      from: process.env.EMAIL,
+      to: user.email,
+      subject: `${user.mName}, Subscription Cancelled`,
+      html: `<p>Your subscription has been cancelled.</p>`
+    });
+  }
 };
