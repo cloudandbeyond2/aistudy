@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
+import mongoose from 'mongoose';
 
 // 🔥 Load env FIRST
 import './config/env.js';
@@ -8,8 +9,7 @@ import './config/env.js';
 // 🔌 DB
 import connectDB from './config/db.js';
 
-// ⚙️ Config
-import corsOptions from './config/cors.js';
+// ⚙️ Utils
 import compressionConfig from './config/compression.js';
 import { __dirname } from './config/env.js';
 
@@ -40,23 +40,33 @@ import chatRoutes from './routes/chat.routes.js';
 import userRoutes from './routes/user.routes.js';
 import orgRoutes from './routes/org.routes.js';
 
-// -------------------- INIT --------------------
-connectDB();
 const app = express();
 
-// -------------------- STATIC (NON-VERCEL) --------------------
+/* -------------------- DB (VERCEL SAFE) -------------------- */
+if (!mongoose.connection.readyState) {
+  await connectDB();
+}
+
+/* -------------------- STATIC (NON-VERCEL) -------------------- */
 if (!process.env.VERCEL) {
   app.use(express.static(`${__dirname}/frontend/dist`));
 }
 app.use('/uploads', express.static('uploads'));
 
-// -------------------- MIDDLEWARES --------------------
-app.use(cors(corsOptions));
+/* -------------------- MIDDLEWARES -------------------- */
+app.use(cors({
+  origin: [
+    'https://aistudy-infilabs.vercel.app',
+    'http://localhost:4173'
+  ],
+  credentials: true
+}));
+
 app.use(compressionConfig);
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(express.json({ limit: '50mb' }));
 
-// OAuth-safe security headers
+/* -------------------- SECURITY HEADERS -------------------- */
 app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
   res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
@@ -64,7 +74,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// -------------------- ROUTES --------------------
+/* -------------------- HEALTH CHECK -------------------- */
+app.get('/api/ping', (req, res) => {
+  res.json({ ok: true, env: process.env.NODE_ENV });
+});
+
+/* -------------------- ROUTES -------------------- */
 app.use('/api', authRoutes);
 app.use('/api', courseRoutes);
 app.use('/api', certificateRoutes);
@@ -91,16 +106,21 @@ app.use('/api', flutterwaveRoutes);
 app.use('/api', chatRoutes);
 app.use('/api', userRoutes);
 
-// -------------------- ERROR HANDLER --------------------
+/* -------------------- ERROR HANDLER -------------------- */
 app.use((err, req, res, next) => {
-  console.error('SERVER ERROR:', err);
-  if (err instanceof Error && err.message === 'Only PDF files are allowed!') {
-    return res.status(400).json({ success: false, message: err.message });
-  }
+  console.error('🔥 SERVER ERROR:', err);
+
   if (err.code === 'LIMIT_FILE_SIZE') {
-    return res.status(400).json({ success: false, message: 'File size too large. Max limit is 10MB.' });
+    return res.status(400).json({
+      success: false,
+      message: 'File size too large. Max 10MB.'
+    });
   }
-  res.status(500).json({ success: false, message: err.message || 'Internal Server Error' });
+
+  res.status(500).json({
+    success: false,
+    message: err.message || 'Internal Server Error'
+  });
 });
 
 export default app;
