@@ -1,30 +1,35 @@
-import express from 'express';
-import upload from '../config/upload.config.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
-const router = express.Router();
+// Ensure uploads directory exists
+const uploadDir = 'uploads/assignments';
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
 
-router.post(
-  '/upload-assignment',
-  upload.single('file'),
-  async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ message: 'No file uploaded' });
-      }
-
-      // req.file.buffer → send to S3 / Cloudinary / Firebase
-      // req.file.originalname
-      // req.file.mimetype
-
-      res.json({
-        success: true,
-        fileName: req.file.originalname,
-        size: req.file.size,
-      });
-    } catch (err) {
-      res.status(500).json({ message: err.message });
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
     }
-  }
-);
+});
 
-export default router;
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+        cb(null, true);
+    } else {
+        cb(new Error('Only PDF files are allowed!'), false);
+    }
+};
+
+export const uploadAssignment = multer({
+    storage: storage,
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB
+    },
+    fileFilter: fileFilter
+});
