@@ -1,0 +1,46 @@
+[dotenv@17.2.3] injecting env (22) from .env -- tip: ???? add observability to secrets: https://dotenvx.com/ops
+node : file:///D:/cab-
+work/Aicon/aistudy4/ai
+study/server/app.js:49
+At line:1 char:1
++ node server.js 2>&1 
+| Out-File -Encoding 
+ASCII 
+server_log_full_2.txt
++ ~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (file:///D:   
+ /cab-...erver/app    
+.js:49:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+  app.use(express.stat
+ic(path.join(__dirname
+, '../../frontend/dist
+')));
+                      
+   ^
+
+ReferenceError: path 
+is not defined
+    at file:///D:/cab-
+work/Aicon/aistudy4/ai
+study/server/app.js:49
+:26
+    at ModuleJob.run (
+node:internal/modules/
+esm/module_job:222:25)
+    at async 
+ModuleLoader.import (n
+ode:internal/modules/e
+sm/loader:316:24)
+    at async asyncRunE
+ntryPointWithESMLoader
+ (node:internal/module
+s/run_main:123:5)
+
+Node.js v20.15.0

@@ -1,0 +1,4 @@
+[dotenv@17.2.3] injecting env (22) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+✅ MongoDB connected
+Organization count: 0
+[]

@@ -159,6 +159,27 @@ const PaymentProviderCard = ({ provider, initialData, onSave, isSaving }: any) =
                         type="password"
                     />
                 </div>
+
+                {provider === 'razorpay' && (
+                    <>
+                        <div className="grid gap-2">
+                            <Label>Monthly Plan ID</Label>
+                            <Input
+                                value={data.monthlyPlanId || ''}
+                                onChange={(e) => handleChange('monthlyPlanId', e.target.value)}
+                                placeholder="plan_..."
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label>Yearly Plan ID</Label>
+                            <Input
+                                value={data.yearlyPlanId || ''}
+                                onChange={(e) => handleChange('yearlyPlanId', e.target.value)}
+                                placeholder="plan_..."
+                            />
+                        </div>
+                    </>
+                )}
                 <Button onClick={() => onSave(provider, data)} disabled={isSaving}>
                     {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Save Changes

@@ -57,9 +57,20 @@ const sendRenewEmail = async (user) => {
 };
 
 /* ---------------- CREATE SUBSCRIPTION ---------------- */
-export const createRazorpaySubscription = async ({ plan, email, fullAddress }) => {
+export const createRazorpaySubscription = async ({ plan, email, fullAddress, planType }) => {
+  const setting = await PaymentSetting.findOne({ provider: 'razorpay' });
+  let plan_id = plan; // fallback to what's sent
+
+  if (setting) {
+    if (planType === 'monthly' && setting.monthlyPlanId) {
+      plan_id = setting.monthlyPlanId;
+    } else if (planType === 'yearly' && setting.yearlyPlanId) {
+      plan_id = setting.yearlyPlanId;
+    }
+  }
+
   const payload = {
-    plan_id: plan,
+    plan_id: plan_id,
     total_count: 12,
     quantity: 1,
     customer_notify: 1,

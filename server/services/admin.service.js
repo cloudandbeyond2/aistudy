@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import bcrypt from 'bcrypt';
 import Course from '../models/Course.js';
 import Admin from '../models/Admin.js';
 import Subscription from '../models/Subscription.js';
@@ -192,7 +193,7 @@ export const getPaymentSettings = async () => {
   return PaymentSetting.find();
 };
 
-export const updatePaymentSetting = async ({ provider, isEnabled, isLive, publicKey, secretKey, webhookSecret, currency }) => {
+export const updatePaymentSetting = async ({ provider, isEnabled, isLive, publicKey, secretKey, webhookSecret, currency, monthlyPlanId, yearlyPlanId }) => {
   return PaymentSetting.findOneAndUpdate(
     { provider },
     {
@@ -201,8 +202,71 @@ export const updatePaymentSetting = async ({ provider, isEnabled, isLive, public
       publicKey,
       secretKey,
       webhookSecret,
-      currency
+      currency,
+      monthlyPlanId,
+      yearlyPlanId
     },
     { new: true, upsert: true }
   );
+};
+
+/* ---------------- ORGANIZATIONS ---------------- */
+export const getDashboardStatsWithOrgs = async () => {
+  const stats = await getDashboardStats();
+
+  const organizations = await User.countDocuments({ isOrganization: true });
+
+  // Count students linked to an organization
+  const orgStudents = await User.countDocuments({ organizationId: { $ne: null } });
+
+  return {
+    ...stats,
+    organizations,
+    orgStudents
+  };
+};
+
+export const getAllOrganizations = async () => {
+  return User.find({ isOrganization: true });
+};
+
+export const updateOrganization = async (id, data) => {
+  const user = await User.findById(id);
+  if (!user) throw new Error('Organization not found');
+
+  user.organizationDetails = { ...user.organizationDetails, ...data };
+  // Also update core user fields if needed
+  if (data.institutionName) user.mName = data.institutionName;
+
+  await user.save();
+  return user;
+};
+
+
+export const createOrganization = async ({ email, password, institutionName, inchargeName, inchargeEmail, inchargePhone, address }) => {
+  const existingUser = await User.findOne({ email });
+  if (existingUser) throw new Error('User already exists');
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const newUser = new User({
+    email,
+    password: hashedPassword,
+    type: 'free', // Or specific org plan
+    isOrganization: true,
+    organizationDetails: {
+      institutionName,
+      inchargeName,
+      inchargeEmail,
+      inchargePhone,
+      address,
+      documents: ['', ''],
+      isBlocked: false
+    }
+  });
+
+  if (institutionName) newUser.mName = institutionName;
+
+  await newUser.save();
+  return newUser;
 };

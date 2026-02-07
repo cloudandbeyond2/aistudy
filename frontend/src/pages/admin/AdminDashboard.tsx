@@ -9,7 +9,7 @@ import {
   ChartLegend,
   ChartLegendContent
 } from '@/components/ui/chart';
-import { Users, Play, RotateCcw, DollarSign } from 'lucide-react';
+import { Users, Play, RotateCcw, DollarSign, Building2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { serverURL } from '@/constants';
@@ -119,6 +119,22 @@ const AdminDashboard = () => {
               description="All-time earnings"
               gradient="from-orange-500 via-orange-600 to-red-600"
               iconColor="text-orange-600"
+            />
+            <AdminStatCard
+              title="Organizations"
+              value={data.organizations || 0}
+              icon={Building2}
+              description="Registered Institutions"
+              gradient="from-cyan-500 via-cyan-600 to-blue-600"
+              iconColor="text-cyan-600"
+            />
+            <AdminStatCard
+              title="Org Students"
+              value={data.orgStudents || 0}
+              icon={Users}
+              description="Students in organizations"
+              gradient="from-teal-500 via-teal-600 to-green-600"
+              iconColor="text-teal-600"
             />
           </>
         )}

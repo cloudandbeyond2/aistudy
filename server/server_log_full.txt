@@ -1,0 +1,66 @@
+node : node:internal/m
+odules/esm/resolve:854
+At line:1 char:1
++ node server.js 2>&1 
+| Out-File -Encoding 
+ASCII 
+server_log_full.txt
++ ~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (node:inter   
+ nal/modules/esm/r    
+esolve:854:String    
+) [], RemoteExcep    
+tion
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+  throw new ERR_MODULE
+_NOT_FOUND(packageName
+, 
+fileURLToPath(base), 
+null);
+        ^
+
+Error [ERR_MODULE_NOT_
+FOUND]: Cannot find 
+package 'bcrypt' 
+imported from D:\cab-w
+ork\Aicon\aistudy4\ais
+tudy\server\services\a
+dmin.service.js
+    at packageResolve 
+(node:internal/modules
+/esm/resolve:854:9)
+    at moduleResolve (
+node:internal/modules/
+esm/resolve:927:18)
+    at defaultResolve 
+(node:internal/modules
+/esm/resolve:1157:11)
+    at ModuleLoader.de
+faultResolve (node:int
+ernal/modules/esm/load
+er:383:12)
+    at 
+ModuleLoader.resolve (
+node:internal/modules/
+esm/loader:352:25)
+    at ModuleLoader.ge
+tModuleJob (node:inter
+nal/modules/esm/loader
+:227:38)
+    at ModuleWrap.<ano
+nymous> (node:internal
+/modules/esm/module_jo
+b:87:39)
+    at link (node:inte
+rnal/modules/esm/modul
+e_job:86:36) {
+  code: 
+'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v20.15.0

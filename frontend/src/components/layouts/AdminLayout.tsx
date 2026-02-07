@@ -33,7 +33,8 @@ import {
   Tag,
   Settings,
   ClipboardList,
-  Globe
+  Globe,
+  Building2
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -120,6 +121,15 @@ const AdminLayout = () => {
                   <Link to="/admin/courses" className={cn(isActive('/admin/courses') && "text-primary")}>
                     <BookOpen />
                     <span>Courses</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Organizations" isActive={isActive('/admin/organizations')}>
+                  <Link to="/admin/organizations" className={cn(isActive('/admin/organizations') && "text-primary")}>
+                    <Building2 />
+                    <span>Organizations</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

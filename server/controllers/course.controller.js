@@ -2,6 +2,7 @@ import Course from '../models/Course.js';
 import Lang from '../models/Lang.js';
 import unsplash from '../config/unsplash.js';
 import IssuedCertificate from '../models/IssuedCertificate.js';
+import Notification from '../models/Notification.js';
 
 /**
  * CREATE COURSE
@@ -46,6 +47,19 @@ export const createCourse = async (req, res) => {
       lang
     });
     await newLang.save();
+
+    await newLang.save();
+
+    // Create Notification
+    try {
+      await Notification.create({
+        user,
+        message: `Your course "${mainTopic}" has been successfully generated.`,
+        type: 'success'
+      });
+    } catch (notifError) {
+      console.log('Notification creation failed', notifError);
+    }
 
     res.json({
       success: true,

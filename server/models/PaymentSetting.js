@@ -8,6 +8,8 @@ const paymentSettingSchema = new mongoose.Schema({
     secretKey: { type: String, default: '' },
     webhookSecret: { type: String, default: '' },
     currency: { type: String, default: 'USD' },
+    monthlyPlanId: { type: String, default: '' },
+    yearlyPlanId: { type: String, default: '' },
 });
 
 export default mongoose.model('PaymentSetting', paymentSettingSchema);

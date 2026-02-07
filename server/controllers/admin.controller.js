@@ -3,7 +3,7 @@ import * as adminService from '../services/admin.service.js';
 /* DASHBOARD */
 export const dashboard = async (req, res) => {
   try {
-    const data = await adminService.getDashboardStats();
+    const data = await adminService.getDashboardStatsWithOrgs();
     res.json(data);
   } catch (err) {
     res.status(500).json({ success: false });
@@ -91,5 +91,54 @@ export const updatePaymentSetting = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+export const getDashboardWithOrgs = async (req, res) => {
+  try {
+    const data = await adminService.getDashboardStatsWithOrgs();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const getOrganizations = async (req, res) => {
+  try {
+    const orgs = await adminService.getAllOrganizations();
+    res.json(orgs);
+  } catch (err) {
+    console.error('Error fetching organizations:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const updateOrganization = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = await adminService.updateOrganization(id, req.body);
+    res.json({ success: true, organization: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const toggleBlockOrganization = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isBlocked } = req.body;
+    await adminService.toggleBlockOrganization(id, isBlocked);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const createOrganization = async (req, res) => {
+  try {
+    const org = await adminService.createOrganization(req.body);
+    res.json({ success: true, organization: org });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };

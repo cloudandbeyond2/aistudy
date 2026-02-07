@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
+import path from 'path';
 
 // 🔥 Load env FIRST
 import './config/env.js';
@@ -38,6 +39,7 @@ import paystackRoutes from './routes/paystack.routes.js';
 import flutterwaveRoutes from './routes/flutterwave.routes.js';
 import chatRoutes from './routes/chat.routes.js';
 import userRoutes from './routes/user.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
 
 // -------------------- INIT --------------------
 connectDB();
@@ -45,7 +47,7 @@ const app = express();
 
 // -------------------- STATIC (NON-VERCEL) --------------------
 if (!process.env.VERCEL) {
-  app.use(express.static(`${__dirname}/frontend/dist`));
+  app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 }
 
 // -------------------- MIDDLEWARES --------------------
@@ -87,6 +89,7 @@ app.use('/api', paystackRoutes);
 app.use('/api', flutterwaveRoutes);
 app.use('/api', chatRoutes);
 app.use('/api', userRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 
 export default app;
