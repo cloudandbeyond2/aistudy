@@ -40,6 +40,7 @@ import flutterwaveRoutes from './routes/flutterwave.routes.js';
 import chatRoutes from './routes/chat.routes.js';
 import userRoutes from './routes/user.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
+import orgRoutes from './routes/org.routes.js';
 
 // -------------------- INIT --------------------
 connectDB();
