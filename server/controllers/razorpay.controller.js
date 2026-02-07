@@ -5,46 +5,61 @@ import {
   cancelRazorpaySubscription
 } from '../services/razorpay.service.js';
 
-/* CREATE */
+/* CREATE SUBSCRIPTION */
 export const createSubscription = async (req, res) => {
   try {
+    console.log('CREATE SUB BODY:', req.body);
+
     const data = await createRazorpaySubscription(req.body);
-    res.json(data);
+    return res.status(200).json(data);
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({
+    console.error(
+      'RAZORPAY CREATE ERROR:',
+      err.response?.data || err.message
+    );
+
+    return res.status(400).json({
       success: false,
-      message: err.response?.data?.error?.description || err.message || 'Internal Server Error'
+      razorpay: err.response?.data || null
     });
   }
 };
 
-/* DETAILS */
+/* SUBSCRIPTION DETAILS */
 export const subscriptionDetails = async (req, res) => {
   try {
     const data = await activateRazorpaySubscription(req.body);
-    res.json(data);
+    return res.json(data);
+
   } catch (err) {
-    res.status(500).json({ success: false });
+    console.error(err);
+    return res.status(500).json({ success: false });
   }
 };
 
-/* PENDING */
+/* FETCH SUBSCRIPTION */
 export const pendingSubscription = async (req, res) => {
   try {
-    const data = await getRazorpaySubscription(req.body.sub);
-    res.json(data);
+    const { sub } = req.body;
+    const data = await getRazorpaySubscription(sub);
+    return res.json(data);
+
   } catch (err) {
-    res.status(500).json({ success: false });
+    console.error(err);
+    return res.status(500).json({ success: false });
   }
 };
 
-/* CANCEL */
+/* CANCEL SUBSCRIPTION */
 export const cancelSubscription = async (req, res) => {
   try {
-    await cancelRazorpaySubscription(req.body.id);
-    res.json({ success: true });
+    const { id } = req.body;
+    await cancelRazorpaySubscription(id);
+    return res.json({ success: true });
+
   } catch (err) {
-    res.status(500).json({ success: false });
+    console.error(err);
+    return res.status(500).json({ success: false });
   }
 };
