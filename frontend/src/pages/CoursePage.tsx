@@ -502,49 +502,49 @@ const CoursePage = () => {
     const topicsList =
       jsonData?.course_topics ||
       jsonData?.[mainTopic?.toLowerCase()];
-  
+
     if (!topicsList) {
       console.error('Topics list not found', jsonData);
       setIsLoading(false);
       return;
     }
-  
+
     const mTopic = topicsList.find(topic => topic.title === topics);
-  
+
     if (!mTopic) {
       console.error('Main topic not found:', topics);
       setIsLoading(false);
       return;
     }
-  
+
     const mSubTopic = mTopic.subtopics?.find(
       subtopic => subtopic.title === sub
     );
-  
+
     if (!mSubTopic) {
       console.error('Subtopic not found:', sub);
       setIsLoading(false);
       return;
     }
-  
+
     // ✅ SAFE TO MUTATE NOW
     mSubTopic.theory = theory;
     mSubTopic.image = image;
     mSubTopic.done = true;
-  
+
     setSelected(mSubTopic.title);
     setTheory(theory);
-  
+
     if (type === 'video & text course') {
       setMedia(mSubTopic.youtube);
     } else {
       setMedia(image);
     }
-  
+
     setIsLoading(false);
     updateCourse();
   }
-  
+
   // async function sendDataVideo(image, theory, topics, sub) {
 
   //   const mTopic = jsonData[mainTopic.toLowerCase()].find(topic => topic.title === topics);
@@ -568,39 +568,39 @@ const CoursePage = () => {
     const topicsList =
       jsonData?.course_topics ||
       jsonData?.[mainTopic?.toLowerCase()];
-  
+
     if (!topicsList) {
       setIsLoading(false);
       return;
     }
-  
+
     const mTopic = topicsList.find(topic => topic.title === topics);
     if (!mTopic) {
       setIsLoading(false);
       return;
     }
-  
+
     const mSubTopic = mTopic.subtopics?.find(
       subtopic => subtopic.title === sub
     );
-  
+
     if (!mSubTopic) {
       setIsLoading(false);
       return;
     }
-  
+
     mSubTopic.theory = theory;
     mSubTopic.youtube = image;
     mSubTopic.done = true;
-  
+
     setSelected(mSubTopic.title);
     setTheory(theory);
     setMedia(image);
-  
+
     setIsLoading(false);
     updateCourse();
   }
-  
+
   async function updateCourse() {
     CountDoneTopics();
     sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
@@ -861,136 +861,159 @@ const CoursePage = () => {
   //   }
   // }
   const normalize = (s: string) =>
-  s.toLowerCase().replace(/\s+/g, ' ').trim();
+    s.toLowerCase().replace(/\s+/g, ' ').trim();
 
-async function redirectExam() {
-  if (isLoading) return;
+  async function redirectExam() {
+    if (isLoading) return;
 
-  if (!jsonData?.course_topics || !Array.isArray(jsonData.course_topics)) {
-    console.error('Invalid course_topics:', jsonData);
-    toast({
-      title: "Error",
-      description: "Course data not loaded",
-    });
-    return;
-  }
+    // Check for manual quizzes first
+    if (jsonData?.quizzes && Array.isArray(jsonData.quizzes) && jsonData.quizzes.length > 0) {
+      const manualQuizzes = jsonData.quizzes.map((q, index) => ({
+        id: index + 1,
+        question: q.question,
+        options: q.options.map((opt, i) => ({
+          id: String.fromCharCode(97 + i), // 'a', 'b', 'c', ...
+          text: opt
+        })),
+        correctAnswer: q.answer, // Assuming 'answer' stores the correct option text or ID. QuizPage logic handles both.
+        answer: q.answer // Pass original answer for QuizPage flexible matching
+      }));
 
-  if (!mainTopic) {
-    console.error('mainTopic missing');
-    toast({
-      title: "Error",
-      description: "Main topic not selected",
-    });
-    return;
-  }
-
-  // ✅ Collect ALL subtopics from ALL chapters
-  const allSubtopics = jsonData.course_topics.flatMap((topic: any) =>
-    Array.isArray(topic.subtopics) ? topic.subtopics : []
-  );
-
-  if (!allSubtopics.length) {
-    console.error('No subtopics found:', jsonData.course_topics);
-    toast({
-      title: "Error",
-      description: "No subtopics available for exam",
-    });
-    return;
-  }
-
-  // ✅ Build subtopics string
-  const subtopicsString = allSubtopics
-    .map((sub: any) => sub.title)
-    .join(', ');
-
-  setIsLoading(true);
-
-  try {
-    const response = await axios.post(
-      `${serverURL}/api/aiexam`,
-      {
-        courseId,
-        mainTopic,          // "REACT"
-        subtopicsString,    // all React subtopics
-        lang,
-      }
-    );
-
-    if (!response.data?.success) {
-      throw new Error('API failed');
+      navigate(`/course/${courseId}/quiz`, {
+        state: {
+          topic: mainTopic,
+          courseId,
+          questions: manualQuizzes,
+        },
+      });
+      return;
     }
 
-    const questions = JSON.parse(response.data.message);
+    if (!jsonData?.course_topics || !Array.isArray(jsonData.course_topics)) {
+      console.error('Invalid course_topics:', jsonData);
+      toast({
+        title: "Error",
+        description: "Course data not loaded",
+      });
+      return;
+    }
 
-    navigate(`/course/${courseId}/quiz`, {
-      state: {
-        topic: mainTopic,
-        courseId,
-        questions,
-      },
-    });
-  } catch (error) {
-    console.error('redirectExam error:', error);
-    toast({
-      title: "Error",
-      description: "Failed to generate exam",
-    });
-  } finally {
-    setIsLoading(false);
+    if (!mainTopic) {
+      console.error('mainTopic missing');
+      toast({
+        title: "Error",
+        description: "Main topic not selected",
+      });
+      return;
+    }
+
+    // ✅ Collect ALL subtopics from ALL chapters
+    const allSubtopics = jsonData.course_topics.flatMap((topic: any) =>
+      Array.isArray(topic.subtopics) ? topic.subtopics : []
+    );
+
+    if (!allSubtopics.length) {
+      console.error('No subtopics found:', jsonData.course_topics);
+      toast({
+        title: "Error",
+        description: "No subtopics available for exam",
+      });
+      return;
+    }
+
+    // ✅ Build subtopics string
+    const subtopicsString = allSubtopics
+      .map((sub: any) => sub.title)
+      .join(', ');
+
+    setIsLoading(true);
+
+    try {
+      const response = await axios.post(
+        `${serverURL}/api/aiexam`,
+        {
+          courseId,
+          mainTopic,          // "REACT"
+          subtopicsString,    // all React subtopics
+          lang,
+        }
+      );
+
+      if (!response.data?.success) {
+        throw new Error('API failed');
+      }
+
+      const questions = JSON.parse(response.data.message);
+
+      navigate(`/course/${courseId}/quiz`, {
+        state: {
+          topic: mainTopic,
+          courseId,
+          questions,
+        },
+      });
+    } catch (error) {
+      console.error('redirectExam error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate exam",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
-}
 
 
 
 
-// async function redirectExam() {
-//   if (isLoading) return;
+  // async function redirectExam() {
+  //   if (isLoading) return;
 
-//   setIsLoading(true);
+  //   setIsLoading(true);
 
-//   const key = mainTopic?.toLowerCase();
-//   const mainTopicExam = key ? jsonData?.[key] : undefined;
+  //   const key = mainTopic?.toLowerCase();
+  //   const mainTopicExam = key ? jsonData?.[key] : undefined;
 
-//   if (!Array.isArray(mainTopicExam)) {
-//     setIsLoading(false);
-//     toast({
-//       title: "Error",
-//       description: "Topics not available yet. Please try again.",
-//     });
-//     return;
-//   }
+  //   if (!Array.isArray(mainTopicExam)) {
+  //     setIsLoading(false);
+  //     toast({
+  //       title: "Error",
+  //       description: "Topics not available yet. Please try again.",
+  //     });
+  //     return;
+  //   }
 
-//   let subtopicsString = '';
-//   mainTopicExam.forEach((topicTemp) => {
-//     subtopicsString += `, ${topicTemp.title}`;
-//   });
+  //   let subtopicsString = '';
+  //   mainTopicExam.forEach((topicTemp) => {
+  //     subtopicsString += `, ${topicTemp.title}`;
+  //   });
 
-//   try {
-//     const postURL = serverURL + '/api/aiexam';
-//     const response = await axios.post(postURL, {
-//       courseId,
-//       mainTopic,
-//       subtopicsString,
-//       lang,
-//     });
+  //   try {
+  //     const postURL = serverURL + '/api/aiexam';
+  //     const response = await axios.post(postURL, {
+  //       courseId,
+  //       mainTopic,
+  //       subtopicsString,
+  //       lang,
+  //     });
 
-//     if (response.data.success) {
-//       const questions = JSON.parse(response.data.message);
-//       navigate(`/course/${courseId}/quiz`, {
-//         state: { topic: mainTopic, courseId, questions },
-//       });
-//     } else {
-//       throw new Error("API failed");
-//     }
-//   } catch (err) {
-//     toast({
-//       title: "Error",
-//       description: "Internal Server Error",
-//     });
-//   } finally {
-//     setIsLoading(false);
-//   }
-// }
+  //     if (response.data.success) {
+  //       const questions = JSON.parse(response.data.message);
+  //       navigate(`/course/${courseId}/quiz`, {
+  //         state: { topic: mainTopic, courseId, questions },
+  //       });
+  //     } else {
+  //       throw new Error("API failed");
+  //     }
+  //   } catch (err) {
+  //     toast({
+  //       title: "Error",
+  //       description: "Internal Server Error",
+  //     });
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }
 
   const renderTopicsList = (topics) => {
     if (!topics || !Array.isArray(topics)) return null;
@@ -1200,13 +1223,13 @@ async function redirectExam() {
               </Link>
             </Button>
             {plan !== "free" && (
-            <Button onClick={certificateCheck} variant="ghost" size="sm" asChild>
-            <span className="cursor-pointer">
-            <Award className="h-4 w-4 mr-1" /> Certificate
-            </span>
-            </Button>
+              <Button onClick={certificateCheck} variant="ghost" size="sm" asChild>
+                <span className="cursor-pointer">
+                  <Award className="h-4 w-4 mr-1" /> Certificate
+                </span>
+              </Button>
             )}
- 
+
             <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm" asChild>
               <span className='cursor-pointer'><Download className="h-4 w-4 mr-1" />{exporting ? 'Exporting...' : 'Export'}</span>
             </Button>
