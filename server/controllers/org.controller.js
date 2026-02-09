@@ -280,13 +280,20 @@ export const getAssignments = async (req, res) => {
         let assignments = await Assignment.find(query).sort({ createdAt: -1 });
 
         if (studentId) {
-            const submissions = await Submission.find({ studentId });
-            const submittedAssignmentIds = submissions.map(s => s.assignmentId.toString());
+            const submissions = await Submission.find({ studentId }).sort({ submittedAt: -1 });
 
-            assignments = assignments.map(assign => ({
-                ...assign.toObject(),
-                isSubmitted: submittedAssignmentIds.includes(assign._id.toString())
-            }));
+            assignments = assignments.map(assign => {
+                const latestSubmission = submissions.find(s => s.assignmentId.toString() === assign._id.toString());
+                const isSubmitted = latestSubmission && latestSubmission.status !== 'resubmit_required';
+
+                return {
+                    ...assign.toObject(),
+                    isSubmitted,
+                    latestSubmissionStatus: latestSubmission ? latestSubmission.status : null,
+                    latestGrade: latestSubmission ? latestSubmission.grade : null,
+                    latestSubmissionId: latestSubmission ? latestSubmission._id : null
+                };
+            });
         }
 
         res.json({ success: true, assignments });
@@ -319,7 +326,7 @@ export const getSubmissions = async (req, res) => {
         const { assignmentId } = req.params;
         const submissions = await Submission.find({ assignmentId })
             .populate('studentId', 'mName email phone studentDetails')
-            .sort({ createdAt: -1 });
+            .sort({ submittedAt: -1 });
         res.json({ success: true, submissions });
     } catch (error) {
         console.error('getSubmissions error:', error);
@@ -334,6 +341,16 @@ export const submitAssignment = async (req, res) => {
     const { assignmentId, studentId, content } = req.body;
     const fileUrl = req.file ? `/uploads/assignments/${req.file.filename}` : req.body.fileUrl;
     try {
+        // Check for due date
+        const assignment = await Assignment.findById(assignmentId);
+        if (!assignment) {
+            return res.status(404).json({ success: false, message: 'Assignment not found' });
+        }
+
+        if (new Date() > new Date(assignment.dueDate)) {
+            return res.status(400).json({ success: false, message: 'Assignment is overdue. Submission closed.' });
+        }
+
         const submission = new Submission({
             assignmentId,
             studentId,
@@ -577,6 +594,71 @@ export const deleteCourse = async (req, res) => {
         }
         res.json({ success: true, message: 'Course deleted successfully' });
     } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * GRADE SUBMISSION
+ */
+export const gradeSubmission = async (req, res) => {
+    const { submissionId } = req.params;
+    const { grade } = req.body;
+
+    try {
+        const submission = await Submission.findById(submissionId);
+        if (!submission) {
+            return res.status(404).json({ success: false, message: 'Submission not found' });
+        }
+
+        submission.grade = grade;
+        // If grade is 'E', force resubmission
+        if (grade === 'E') {
+            submission.status = 'resubmit_required';
+        } else {
+            submission.status = 'graded';
+        }
+
+        await submission.save();
+
+        res.json({ success: true, message: 'Grade updated successfully', submission });
+    } catch (error) {
+        console.error('Grade submission error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * GET ASSIGNMENT CERTIFICATE DATA
+ */
+export const getAssignmentCertificate = async (req, res) => {
+    const { submissionId } = req.params;
+    try {
+        const submission = await Submission.findById(submissionId)
+            .populate('studentId', 'mName')
+            .populate('assignmentId', 'topic');
+
+        if (!submission) {
+            return res.status(404).json({ success: false, message: 'Submission not found' });
+        }
+
+        if (['A', 'B', 'C', 'D'].includes(submission.grade)) {
+            res.json({
+                success: true,
+                certificate: {
+                    studentName: submission.studentId.mName,
+                    assignmentTopic: submission.assignmentId.topic,
+                    grade: submission.grade,
+                    grade: submission.grade,
+                    date: submission.submittedAt || submission.updatedAt || submission.createdAt
+                }
+            });
+        } else {
+            res.status(400).json({ success: false, message: 'Certificate not available for this grade.' });
+        }
+
+    } catch (error) {
+        console.error('Certificate error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };

@@ -21,7 +21,9 @@ import {
     getStudentCourses,
     updateCourse,
     deleteCourse,
-    updateOrganization
+    updateOrganization,
+    gradeSubmission,
+    getAssignmentCertificate
 } from '../controllers/org.controller.js';
 import Organization from '../models/Organization.js';
 import { uploadAssignment } from '../config/upload.config.js';
@@ -47,6 +49,8 @@ router.post('/org/assignment/create', createAssignment);
 router.get('/org/assignments', getAssignments); // ?organizationId=...
 router.get('/org/assignment/:assignmentId', getAssignment);
 router.get('/org/assignment/:assignmentId/submissions', getSubmissions);
+router.get('/org/assignment/certificate/:submissionId', getAssignmentCertificate);
+router.post('/org/assignment/submission/:submissionId/grade', gradeSubmission);
 router.post('/student/assignment/submit', uploadAssignment.single('file'), submitAssignment);
 
 // Notices
