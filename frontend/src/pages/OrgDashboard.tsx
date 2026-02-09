@@ -162,24 +162,31 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false }: any) => {
                             <Button size="sm" variant="ghost" onClick={() => removeQuiz(qIdx)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            {quiz.options.map((opt: string, oIdx: number) => (
-                                <div key={oIdx} className="flex items-center gap-2">
-                                    <Input
-                                        className={`h-8 ${quiz.answer === opt && opt !== '' ? 'border-primary bg-primary/5' : ''}`}
-                                        value={opt}
-                                        onChange={(e) => updateQuiz(qIdx, 'option', { optIndex: oIdx, text: e.target.value })}
-                                        placeholder={`Option ${oIdx + 1}`}
-                                    />
-                                    <Button
-                                        size="sm"
-                                        variant={quiz.answer === opt && opt !== '' ? 'default' : 'ghost'}
-                                        className="h-8 w-8 p-0"
-                                        onClick={() => updateQuiz(qIdx, 'answer', opt)}
-                                    >
-                                        <Check className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            ))}
+                            {quiz.options.map((opt: string, oIdx: number) => {
+                                const optionId = String.fromCharCode(97 + oIdx); // 'a', 'b', 'c', 'd'
+                                const isSelected = quiz.answer === optionId || quiz.answer === opt; // Support legacy (text) and new (id)
+
+                                return (
+                                    <div key={oIdx} className="flex items-center gap-2">
+                                        <span className="font-mono font-bold text-muted-foreground w-4 text-center">{optionId}</span>
+                                        <Input
+                                            className={`h-8 ${isSelected ? 'border-primary bg-primary/5' : ''}`}
+                                            value={opt}
+                                            onChange={(e) => updateQuiz(qIdx, 'option', { optIndex: oIdx, text: e.target.value })}
+                                            placeholder={`Option ${optionId.toUpperCase()}`}
+                                        />
+                                        <Button
+                                            size="sm"
+                                            variant={isSelected ? 'default' : 'outline'}
+                                            className={`h-8 w-8 p-0 ${isSelected ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                                            onClick={() => updateQuiz(qIdx, 'answer', optionId)}
+                                            title="Mark as correct answer"
+                                        >
+                                            <Check className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                )
+                            })}
                         </div>
                         <Input
                             value={quiz.explanation}
