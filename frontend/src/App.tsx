@@ -33,6 +33,10 @@ import VerifyEmail from "./pages/VerifyEmail";
 import AdminLayout from "./components/layouts/AdminLayout";
 import OrgDashboard from "./pages/OrgDashboard";
 import StudentPortal from "./pages/StudentPortal";
+import StudentAssignments from "./pages/StudentAssignments";
+import StudentNotices from "./pages/StudentNotices";
+import StudentBlogs from "./pages/StudentBlogs";
+import StudentNews from "./pages/StudentNews";
 import AssignmentPage from "./pages/AssignmentPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -108,6 +112,10 @@ const App = () => (
                   <Route path="profile" element={<Profile />} />
                   <Route path="org" element={<OrgDashboard />} />
                   <Route path="student" element={<StudentPortal />} />
+                  <Route path="student/assignments" element={<StudentAssignments />} />
+                  <Route path="student/notices" element={<StudentNotices />} />
+                  <Route path="student/blogs" element={<StudentBlogs />} />
+                  <Route path="student/news" element={<StudentNews />} />
                   <Route path="student/assignment/:assignmentId" element={<AssignmentPage />} />
                 </Route>
 

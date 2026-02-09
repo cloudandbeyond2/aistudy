@@ -65,6 +65,8 @@ const Login = () => {
 
         if (sessionStorage.getItem('shared') === null) {
           // Role based redirect
+          sessionStorage.setItem('role', response.data.userData.role);
+
           if (response.data.userData.role === 'org_admin') {
             navigate("/dashboard/org");
           } else if (response.data.userData.role === 'student') {

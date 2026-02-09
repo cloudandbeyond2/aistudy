@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Home, User, DollarSign, LogOut, Sparkles, Menu, Settings2Icon, Building2 } from 'lucide-react';
+import { Home, User, DollarSign, LogOut, Sparkles, Menu, Settings2Icon, Building2, BookOpen, Bell, Newspaper, LayoutDashboard } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -102,41 +102,107 @@ const DashboardLayout = () => {
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Home" isActive={isActive('/dashboard')}>
-                      <Link to="/dashboard" className={cn(isActive('/dashboard') && "text-primary")}>
-                        <Home />
-                        <span>Home</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  {sessionStorage.getItem('role') !== 'student' && (
+                    <>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Home" isActive={isActive('/dashboard')}>
+                          <Link to="/dashboard" className={cn(isActive('/dashboard') && "text-primary")}>
+                            <Home />
+                            <span>Home</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
 
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Profile" isActive={isActive('/dashboard/profile')}>
-                      <Link to="/dashboard/profile" className={cn(isActive('/dashboard/profile') && "text-primary")}>
-                        <User />
-                        <span>Profile</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Profile" isActive={isActive('/dashboard/profile')}>
+                          <Link to="/dashboard/profile" className={cn(isActive('/dashboard/profile') && "text-primary")}>
+                            <User />
+                            <span>Profile</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
 
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Pricing" isActive={isActive('/dashboard/pricing')}>
-                      <Link to="/dashboard/pricing" className={cn(isActive('/dashboard/pricing') && "text-primary")}>
-                        <DollarSign />
-                        <span>Pricing</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Pricing" isActive={isActive('/dashboard/pricing')}>
+                          <Link to="/dashboard/pricing" className={cn(isActive('/dashboard/pricing') && "text-primary")}>
+                            <DollarSign />
+                            <span>Pricing</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </>
+                  )}
 
-                  {/* <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Generate Course" isActive={isActive('/dashboard/generate-course')}>
-                      <Link to="/dashboard/generate-course" className={cn(isActive('/dashboard/generate-course') && "text-primary")}>
-                        <Sparkles />
-                        <span>Generate Course</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem> */}
+                  {/* Common Menu Items - Hidden for Organization Students to keep their view clean, OR kept?
+                      The request implies a specific left nav. "Assignments, Notices, Blogs, News, dashboard"
+                      Let's hide the default "Home" and "Pricing" for students if we want to be strict,
+                      but keeping "Profile" might be good.
+                      For now, I'll add the student specific ones conditionally.
+                   */}
+
+                  {sessionStorage.getItem('role') === 'student' ? (
+                    <>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Dashboard" isActive={isActive('/dashboard/student')}>
+                          <Link to="/dashboard/student" className={cn(isActive('/dashboard/student') && "text-primary")}>
+                            <LayoutDashboard />
+                            <span>Dashboard</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Assignments" isActive={isActive('/dashboard/student/assignments')}>
+                          <Link to="/dashboard/student/assignments" className={cn(isActive('/dashboard/student/assignments') && "text-primary")}>
+                            <BookOpen />
+                            <span>Assignments</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Notices" isActive={isActive('/dashboard/student/notices')}>
+                          <Link to="/dashboard/student/notices" className={cn(isActive('/dashboard/student/notices') && "text-primary")}>
+                            <Bell />
+                            <span>Notices</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Blogs" isActive={isActive('/dashboard/student/blogs')}>
+                          <Link to="/dashboard/student/blogs" className={cn(isActive('/dashboard/student/blogs') && "text-primary")}>
+                            <Sparkles />
+                            <span>Blogs</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="News" isActive={isActive('/dashboard/student/news')}>
+                          <Link to="/dashboard/student/news" className={cn(isActive('/dashboard/student/news') && "text-primary")}>
+                            <Newspaper />
+                            <span>News</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      {/* Default Menu Items for non-students (Regular Users / Admins / Org Admins) */}
+                      {/* Note: Org Admin has their own "Organization Portal" link below */}
+
+                      {/* Only showing Generate Course if NOT a student (or handled by routing permission) */}
+                      {/* <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Generate Course" isActive={isActive('/dashboard/generate-course')}>
+                          <Link to="/dashboard/generate-course" className={cn(isActive('/dashboard/generate-course') && "text-primary")}>
+                            <Sparkles />
+                            <span>Generate Course</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem> */}
+                    </>
+                  )}
 
                   {admin ?
                     <SidebarMenuItem>
