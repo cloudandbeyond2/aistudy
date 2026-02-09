@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
+import OrganizationEnquiry from "./pages/OrganizationEnquiry";
 import Dashboard from "./pages/Dashboard";
 import CoursePage from "./pages/CoursePage";
 import GenerateCourse from "./pages/GenerateCourse";
@@ -56,9 +57,10 @@ import AdminPricing from "./pages/admin/AdminPricing";
 import AdminTestimonials from "./pages/admin/AdminTestimonials";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminPaymentSettings from "./pages/admin/AdminPaymentSettings";
-// import AdminOrganizations from "./pages/admin/AdminOrganizations";
 import AdminCreateOrganization from "./pages/admin/AdminCreateOrganization";
 import AdminOrganizationDetails from "./pages/admin/AdminOrganizationDetails";
+import AdminOrganizationEnquiries from "./pages/admin/AdminOrganizationEnquiries";
+
 import SubscriptionBillingPolicy from "./pages/SubscriptionBillingPolicy";
 import RefundPolicy from "./pages/RefundPolicy";
 import CancellationPolicy from "./pages/CancellationPolicy";
@@ -138,6 +140,8 @@ const App = () => (
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/organization-enquiry" element={<OrganizationEnquiry />}/>
+
                 <Route path="/cancellation-policy" element={<CancellationPolicy />} />
                 <Route path="/refund-policy" element={<RefundPolicy />} />
                 <Route path="/subscription-billing-policy" element={<SubscriptionBillingPolicy />} />
@@ -162,6 +166,8 @@ const App = () => (
                   <Route path="blogs" element={<AdminBlogs />} />
                   <Route path="certificate" element={<AdminCertificate />} />
                   <Route path="orgs" element={<AdminOrganizations />} />
+                  <Route path="organization-enquiries" element={<AdminOrganizationEnquiries />} />
+
                   <Route path="testimonials" element={<AdminTestimonials />} />
                   <Route path="orders" element={<AdminOrders />} />
                   <Route path="payment-settings" element={<AdminPaymentSettings />} />
@@ -170,6 +176,7 @@ const App = () => (
                   <Route path="organization/:id" element={<AdminOrganizationDetails />} />
                 </Route>
                 <Route path="/verify-certificate" element={<CertificateVerification />} />
+
 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

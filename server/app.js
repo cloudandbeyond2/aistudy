@@ -42,6 +42,9 @@ import chatRoutes from './routes/chat.routes.js';
 import userRoutes from './routes/user.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import orgRoutes from './routes/org.routes.js';
+import organizationEnquiryRoutes from "./routes/organizationEnquiry.routes.js";
+
+
 
 // -------------------- INIT --------------------
 connectDB();
@@ -106,6 +109,9 @@ app.use('/api', flutterwaveRoutes);
 app.use('/api', chatRoutes);
 app.use('/api', userRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use("/api/organization-enquiries", organizationEnquiryRoutes);
+
+
 
 // -------------------- ERROR HANDLER --------------------
 app.use((err, req, res, next) => {
