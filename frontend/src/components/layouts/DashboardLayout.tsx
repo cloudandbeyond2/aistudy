@@ -152,8 +152,8 @@ const DashboardLayout = () => {
 
                   {sessionStorage.getItem('isOrganization') === 'true' && (
                     <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip="Organization Portal" isActive={isActive('/dashboard/profile')}>
-                        <Link to="/dashboard/profile" className={cn(isActive('/dashboard/profile') && "text-primary")}>
+                      <SidebarMenuButton asChild tooltip="Organization Portal" isActive={isActive('/dashboard/org')}>
+                        <Link to="/dashboard/org" className={cn(isActive('/dashboard/org') && "text-primary")}>
                           <Building2 />
                           <span>Organization Portal</span>
                         </Link>
