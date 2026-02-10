@@ -6,6 +6,9 @@ import Notice from '../models/Notice.js';
 import OrgCourse from '../models/OrgCourse.js';
 import Course from '../models/Course.js';
 import bcrypt from 'bcrypt';
+import Meeting from '../models/Meeting.js';
+import Project from '../models/Project.js';
+import Material from '../models/Material.js';
 // import { generateAssignments } from './ai.controller.js'; // Will implement this export next
 
 /**
@@ -659,6 +662,134 @@ export const getAssignmentCertificate = async (req, res) => {
 
     } catch (error) {
         console.error('Certificate error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+
+/**
+ * MEETINGS
+ */
+export const createMeeting = async (req, res) => {
+    const { organizationId, title, link, platform, date, time, department } = req.body;
+    try {
+        const meeting = new Meeting({ organizationId, title, link, platform, date, time, department });
+        await meeting.save();
+        res.json({ success: true, message: 'Meeting created', meeting });
+    } catch (error) {
+        console.error('Create Meeting Error:', error);
+        res.status(500).json({ success: false, message: error.message || 'Server error' });
+    }
+};
+
+export const getMeetings = async (req, res) => {
+    const { organizationId, studentId } = req.query;
+    try {
+        let query = { organizationId };
+        if (studentId) {
+            const student = await User.findById(studentId);
+            if (student) {
+                const department = student.studentDetails?.department;
+                query.$or = [{ department: department }, { department: 'all' }, { department: '' }];
+            }
+        }
+        const meetings = await Meeting.find(query).sort({ date: 1, time: 1 });
+        res.json({ success: true, meetings });
+    } catch (error) {
+        console.error('Get Meetings Error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+export const deleteMeeting = async (req, res) => {
+    try {
+        await Meeting.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Meeting deleted' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * PROJECTS
+ */
+export const createProject = async (req, res) => {
+    const { organizationId, title, description, type, department, dueDate } = req.body;
+    try {
+        const project = new Project({ organizationId, title, description, type, department, dueDate });
+        await project.save();
+        res.json({ success: true, message: 'Project created', project });
+    } catch (error) {
+        console.error('Create Project Error:', error);
+        res.status(500).json({ success: false, message: error.message || 'Server error' });
+    }
+};
+
+export const getProjects = async (req, res) => {
+    const { organizationId, studentId } = req.query;
+    try {
+        let query = { organizationId };
+        if (studentId) {
+            const student = await User.findById(studentId);
+            if (student) {
+                const department = student.studentDetails?.department;
+                query.$or = [{ department: department }, { department: 'all' }, { department: '' }];
+            }
+        }
+        const projects = await Project.find(query).sort({ createdAt: -1 });
+        res.json({ success: true, projects });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+export const deleteProject = async (req, res) => {
+    try {
+        await Project.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Project deleted' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * MATERIALS
+ */
+export const createMaterial = async (req, res) => {
+    const { organizationId, title, description, fileUrl, type, department } = req.body;
+    try {
+        const material = new Material({ organizationId, title, description, fileUrl, type, department });
+        await material.save();
+        res.json({ success: true, message: 'Material added', material });
+    } catch (error) {
+        console.error('Create Material Error:', error);
+        res.status(500).json({ success: false, message: error.message || 'Server error' });
+    }
+};
+
+export const getMaterials = async (req, res) => {
+    const { organizationId, studentId } = req.query;
+    try {
+        let query = { organizationId };
+        if (studentId) {
+            const student = await User.findById(studentId);
+            if (student) {
+                const department = student.studentDetails?.department;
+                query.$or = [{ department: department }, { department: 'all' }, { department: '' }];
+            }
+        }
+        const materials = await Material.find(query).sort({ createdAt: -1 });
+        res.json({ success: true, materials });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+export const deleteMaterial = async (req, res) => {
+    try {
+        await Material.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Material deleted' });
+    } catch (error) {
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };

@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Home, User, DollarSign, LogOut, Sparkles, Menu, Settings2Icon, Building2, BookOpen, Bell, Newspaper, LayoutDashboard } from 'lucide-react';
+import { Home, User, DollarSign, LogOut, Sparkles, Menu, Settings2Icon, Building2, BookOpen, Bell, Newspaper, LayoutDashboard, Briefcase, Video, Users, FileText, Download } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -27,6 +27,9 @@ import { DownloadIcon } from '@radix-ui/react-icons';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import NotificationBell from '../NotificationBell';
+  import { useTheme } from '@/contexts/ThemeContext';
+ 
+ 
 
 const DashboardLayout = () => {
   const isMobile = useIsMobile();
@@ -36,6 +39,7 @@ const DashboardLayout = () => {
   // Helper to check active route
   const isActive = (path: string) => location.pathname === path;
   const [admin, setAdmin] = useState(false);
+  const { toggleTheme } = useTheme();
 
   useEffect(() => {
     if (sessionStorage.getItem('uid') === null) {
@@ -130,6 +134,16 @@ const DashboardLayout = () => {
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+
+
+                      {/* <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Pricing" isActive={isActive('/dashboard/pricing')}>
+                          <Link to="/dashboard/pricing" className={cn(isActive('/dashboard/pricing') && "text-primary")}>
+                            <DollarSign />
+                            <span>Pricing</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem> */}
                     </>
                   )}
 
@@ -186,6 +200,33 @@ const DashboardLayout = () => {
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Meetings" isActive={isActive('/dashboard/student/meetings')}>
+                          <Link to="/dashboard/student/meetings" className={cn(isActive('/dashboard/student/meetings') && "text-primary")}>
+                            <Menu />
+                            <span>Meetings</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Projects" isActive={isActive('/dashboard/student/projects')}>
+                          <Link to="/dashboard/student/projects" className={cn(isActive('/dashboard/student/projects') && "text-primary")}>
+                            <Briefcase />
+                            <span>Projects</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Materials" isActive={isActive('/dashboard/student/materials')}>
+                          <Link to="/dashboard/student/materials" className={cn(isActive('/dashboard/student/materials') && "text-primary")}>
+                            <BookOpen />
+                            <span>Materials</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
                     </>
                   ) : (
                     <>
@@ -204,7 +245,8 @@ const DashboardLayout = () => {
                     </>
                   )}
 
-                  {admin ?
+                  {/* Admin Panel */}
+                  {admin && (
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Admin Panel" isActive={isActive('/admin')}>
                         <Link to="/admin" className={cn(isActive('/admin') && "text-primary")}>
@@ -213,18 +255,84 @@ const DashboardLayout = () => {
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
-                    :
-                    <></>}
+                  )}
+
 
                   {sessionStorage.getItem('isOrganization') === 'true' && (
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip="Organization Portal" isActive={isActive('/dashboard/org')}>
-                        <Link to="/dashboard/org" className={cn(isActive('/dashboard/org') && "text-primary")}>
-                          <Building2 />
-                          <span>Organization Portal</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    <>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Organization Portal" isActive={isActive('/dashboard/org')}>
+                          <Link to="/dashboard/org" className={cn(isActive('/dashboard/org') && "text-primary")}>
+                            <Building2 />
+                            <span>Organization Portal</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+
+                      {/* Organization Management Sub-menu */}
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Students" isActive={location.pathname === '/dashboard/org' && location.search === '?tab=students'}>
+                          <Link to="/dashboard/org?tab=students" className={cn((location.pathname === '/dashboard/org' && location.search === '?tab=students') && "text-primary")}>
+                            <Users className="ml-4" />
+                            <span>Students</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Courses" isActive={location.search === '?tab=courses'}>
+                          <Link to="/dashboard/org?tab=courses" className={cn(location.search === '?tab=courses' && "text-primary")}>
+                            <BookOpen className="ml-4" />
+                            <span>Courses</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Assignments" isActive={location.search === '?tab=assignments'}>
+                          <Link to="/dashboard/org?tab=assignments" className={cn(location.search === '?tab=assignments' && "text-primary")}>
+                            <FileText className="ml-4" />
+                            <span>Assignments</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Meetings" isActive={location.search === '?tab=meetings'}>
+                          <Link to="/dashboard/org?tab=meetings" className={cn(location.search === '?tab=meetings' && "text-primary")}>
+                            <Video className="ml-4" />
+                            <span>Meetings</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Projects" isActive={location.search === '?tab=projects'}>
+                          <Link to="/dashboard/org?tab=projects" className={cn(location.search === '?tab=projects' && "text-primary")}>
+                            <Briefcase className="ml-4" />
+                            <span>Projects</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Materials" isActive={location.search === '?tab=materials'}>
+                          <Link to="/dashboard/org?tab=materials" className={cn(location.search === '?tab=materials' && "text-primary")}>
+                            <Download className="ml-4" />
+                            <span>Materials</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Notices" isActive={location.search === '?tab=notices'}>
+                          <Link to="/dashboard/org?tab=notices" className={cn(location.search === '?tab=notices' && "text-primary")}>
+                            <Bell className="ml-4" />
+                            <span>Notices</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </>
                   )}
                 </SidebarMenu>
               </SidebarGroupContent>
@@ -248,7 +356,7 @@ const DashboardLayout = () => {
             </SidebarGroup>
           </SidebarContent>
 
-          <SidebarFooter className="border-t border-border/40">
+         <SidebarFooter className="border-t border-border/40">
             <SidebarMenu>
               {installPrompt && (
                 <SidebarMenuItem>
@@ -268,17 +376,30 @@ const DashboardLayout = () => {
                 </SidebarMenuItem>
               )
               }
+                {/* Toggle Theme */}
+            <SidebarMenuButton asChild tooltip="Theme" onClick={toggleTheme}>
+                <div     className="
+                      group
+                      rounded-md
+                      transition-all
+                      hover:bg-destructive/10
+                      hover:shadow-md
+                    ">
+                  <ThemeToggle />
+                  <span className="pl-3">Toggle Theme</span>
+                </div>
+              </SidebarMenuButton>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Theme">
-                  <div className="flex items-center space-x-2">
-                    <ThemeToggle />
-                    <span>Toggle Theme</span>
-                  </div>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Logout" style={{ paddingLeft: "20px" }}>
-                  <Link onClick={Logout} className="text-muted-foreground hover:text-destructive transition-colors" style={{ gap: "30px" }}>
+                <SidebarMenuButton asChild tooltip="Logout"
+                    className="
+          group
+          rounded-md
+          transition-all
+          hover:bg-destructive/10
+          hover:shadow-md
+        "
+                style={{ paddingLeft: "18px" }}>
+                  <Link onClick={Logout} className="text-muted-foreground hover:text-destructive transition-colors" style={{ gap: "24px" }}>
                     <LogOut />
                     <span>Logout</span>
                   </Link>

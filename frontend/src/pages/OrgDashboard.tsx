@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, FileText, Bell, Plus, Upload, Search, Trash2, CheckCircle, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock } from 'lucide-react';
+import { Users, FileText, Bell, Plus, Upload, Search, Trash2, CheckCircle, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -162,31 +162,24 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false }: any) => {
                             <Button size="sm" variant="ghost" onClick={() => removeQuiz(qIdx)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            {quiz.options.map((opt: string, oIdx: number) => {
-                                const optionId = String.fromCharCode(97 + oIdx); // 'a', 'b', 'c', 'd'
-                                const isSelected = quiz.answer === optionId || quiz.answer === opt; // Support legacy (text) and new (id)
-
-                                return (
-                                    <div key={oIdx} className="flex items-center gap-2">
-                                        <span className="font-mono font-bold text-muted-foreground w-4 text-center">{optionId}</span>
-                                        <Input
-                                            className={`h-8 ${isSelected ? 'border-primary bg-primary/5' : ''}`}
-                                            value={opt}
-                                            onChange={(e) => updateQuiz(qIdx, 'option', { optIndex: oIdx, text: e.target.value })}
-                                            placeholder={`Option ${optionId.toUpperCase()}`}
-                                        />
-                                        <Button
-                                            size="sm"
-                                            variant={isSelected ? 'default' : 'outline'}
-                                            className={`h-8 w-8 p-0 ${isSelected ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                                            onClick={() => updateQuiz(qIdx, 'answer', optionId)}
-                                            title="Mark as correct answer"
-                                        >
-                                            <Check className="w-4 h-4" />
-                                        </Button>
-                                    </div>
-                                )
-                            })}
+                            {quiz.options.map((opt: string, oIdx: number) => (
+                                <div key={oIdx} className="flex items-center gap-2">
+                                    <Input
+                                        className={`h-8 ${quiz.answer === opt && opt !== '' ? 'border-primary bg-primary/5' : ''}`}
+                                        value={opt}
+                                        onChange={(e) => updateQuiz(qIdx, 'option', { optIndex: oIdx, text: e.target.value })}
+                                        placeholder={`Option ${oIdx + 1}`}
+                                    />
+                                    <Button
+                                        size="sm"
+                                        variant={quiz.answer === opt && opt !== '' ? 'default' : 'ghost'}
+                                        className="h-8 w-8 p-0"
+                                        onClick={() => updateQuiz(qIdx, 'answer', opt)}
+                                    >
+                                        <Check className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            ))}
                         </div>
                         <Input
                             value={quiz.explanation}
@@ -206,7 +199,8 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false }: any) => {
 };
 
 const OrgDashboard = () => {
-    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeTab = searchParams.get('tab') || 'students';
     const { toast } = useToast();
     const [stats, setStats] = useState({ studentCount: 0, assignmentCount: 0, submissionCount: 0 });
     const [students, setStudents] = useState([]); // Simplified for now
@@ -227,7 +221,16 @@ const OrgDashboard = () => {
     const [courseSearch, setCourseSearch] = useState('');
     const [submissions, setSubmissions] = useState([]);
     const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
-    const orgId = sessionStorage.getItem('orgId');
+
+    // New features state
+    const [meetings, setMeetings] = useState<any[]>([]);
+    const [projects, setProjects] = useState<any[]>([]);
+    const [materials, setMaterials] = useState<any[]>([]);
+    const [newMeeting, setNewMeeting] = useState({ title: '', link: '', platform: 'google-meet', date: '', time: '', department: '' });
+    const [newProject, setNewProject] = useState({ title: '', description: '', type: 'Project', department: '', dueDate: '' });
+    const [newMaterial, setNewMaterial] = useState({ title: '', description: '', fileUrl: '', type: 'PDF', department: '' });
+
+    const orgId = sessionStorage.getItem('orgId') || sessionStorage.getItem('uid');
 
     useEffect(() => {
         if (!orgId) {
@@ -244,7 +247,115 @@ const OrgDashboard = () => {
         fetchCourses();
         fetchAssignments();
         fetchOrgSettings();
+        fetchMeetings();
+        fetchProjects();
+        fetchMaterials();
     }, [orgId, toast]);
+
+    const fetchMeetings = async () => {
+        try {
+            const res = await axios.get(`${serverURL}/api/org/meetings?organizationId=${orgId}`);
+            if (res.data.success) setMeetings(res.data.meetings);
+        } catch (e) {
+            console.error("Failed to fetch meetings", e);
+        }
+    };
+
+    const fetchProjects = async () => {
+        try {
+            const res = await axios.get(`${serverURL}/api/org/projects?organizationId=${orgId}`);
+            if (res.data.success) setProjects(res.data.projects);
+        } catch (e) {
+            console.error("Failed to fetch projects", e);
+        }
+    };
+
+    const fetchMaterials = async () => {
+        try {
+            const res = await axios.get(`${serverURL}/api/org/materials?organizationId=${orgId}`);
+            if (res.data.success) setMaterials(res.data.materials);
+        } catch (e) {
+            console.error("Failed to fetch materials", e);
+        }
+    };
+
+    const handleCreateMeeting = async () => {
+        try {
+            const res = await axios.post(`${serverURL}/api/org/meeting/create`, { ...newMeeting, organizationId: orgId });
+            if (res.data.success) {
+                toast({ title: "Success", description: "Meeting scheduled successfully" });
+                setNewMeeting({ title: '', link: '', platform: 'google-meet', date: '', time: '', department: '' });
+                fetchMeetings();
+            }
+        } catch (e: any) {
+            toast({ title: "Error", description: e.response?.data?.message || "Failed to schedule meeting" });
+        }
+    };
+
+    const handleDeleteMeeting = async (id: string) => {
+        if (!confirm('Delete this meeting?')) return;
+        try {
+            const res = await axios.delete(`${serverURL}/api/org/meeting/${id}`);
+            if (res.data.success) {
+                toast({ title: "Success", description: "Meeting deleted" });
+                fetchMeetings();
+            }
+        } catch (e) {
+            toast({ title: "Error", description: "Failed to delete meeting" });
+        }
+    };
+
+    const handleCreateProject = async () => {
+        try {
+            const res = await axios.post(`${serverURL}/api/org/project/create`, { ...newProject, organizationId: orgId });
+            if (res.data.success) {
+                toast({ title: "Success", description: "Project/Practical added" });
+                setNewProject({ title: '', description: '', type: 'Project', department: '', dueDate: '' });
+                fetchProjects();
+            }
+        } catch (e: any) {
+            toast({ title: "Error", description: e.response?.data?.message || "Failed to add project" });
+        }
+    };
+
+    const handleDeleteProject = async (id: string) => {
+        if (!confirm('Delete this project?')) return;
+        try {
+            const res = await axios.delete(`${serverURL}/api/org/project/${id}`);
+            if (res.data.success) {
+                toast({ title: "Success", description: "Project deleted" });
+                fetchProjects();
+            }
+        } catch (e) {
+            toast({ title: "Error", description: "Failed to delete project" });
+        }
+    };
+
+    const handleCreateMaterial = async () => {
+        try {
+            const res = await axios.post(`${serverURL}/api/org/material/create`, { ...newMaterial, organizationId: orgId });
+            if (res.data.success) {
+                toast({ title: "Success", description: "Material added successfully" });
+                setNewMaterial({ title: '', description: '', fileUrl: '', type: 'PDF', department: '' });
+                fetchMaterials();
+            }
+        } catch (e: any) {
+            toast({ title: "Error", description: e.response?.data?.message || "Failed to add material" });
+        }
+    };
+
+    const handleDeleteMaterial = async (id: string) => {
+        if (!confirm('Delete this material?')) return;
+        try {
+            const res = await axios.delete(`${serverURL}/api/org/material/${id}`);
+            if (res.data.success) {
+                toast({ title: "Success", description: "Material deleted" });
+                fetchMaterials();
+            }
+        } catch (e) {
+            toast({ title: "Error", description: "Failed to delete material" });
+        }
+    };
 
     const fetchAssignments = async () => {
         try {
@@ -270,7 +381,8 @@ const OrgDashboard = () => {
     };
 
     const handleViewSubmissions = (assignment: any) => {
-        navigate(`/dashboard/org/assignment/${assignment._id}/submissions`);
+        setSelectedAssignment(assignment);
+        fetchSubmissions(assignment._id);
     };
 
     const fetchOrgSettings = async () => {
@@ -679,12 +791,15 @@ const OrgDashboard = () => {
                 </Card>
             </div>
 
-            <Tabs defaultValue="students" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="students">Students</TabsTrigger>
-                    <TabsTrigger value="courses">Courses</TabsTrigger>
-                    <TabsTrigger value="assignments">Assignments</TabsTrigger>
-                    <TabsTrigger value="notices">Notices</TabsTrigger>
+            <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })} className="w-full">
+                <TabsList className="flex flex-wrap h-auto w-full gap-1 p-1 bg-muted rounded-xl mb-6">
+                    <TabsTrigger value="students" className="flex-1 min-w-[120px]">Students</TabsTrigger>
+                    <TabsTrigger value="courses" className="flex-1 min-w-[120px]">Courses</TabsTrigger>
+                    <TabsTrigger value="assignments" className="flex-1 min-w-[120px]">Assignments</TabsTrigger>
+                    <TabsTrigger value="meetings" className="flex-1 min-w-[120px]">Meetings</TabsTrigger>
+                    <TabsTrigger value="projects" className="flex-1 min-w-[120px]">Projects/Research</TabsTrigger>
+                    <TabsTrigger value="materials" className="flex-1 min-w-[120px]">Materials</TabsTrigger>
+                    <TabsTrigger value="notices" className="flex-1 min-w-[120px]">Notices</TabsTrigger>
                 </TabsList>
 
                 {/* STUDENTS TAB */}
@@ -973,6 +1088,253 @@ const OrgDashboard = () => {
                     </Card>
                 </TabsContent>
 
+                {/* MEETINGS TAB */}
+                <TabsContent value="meetings" className="space-y-4">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Online Meetings</CardTitle>
+                                <CardDescription>Schedule and manage Google Meet or Zoom sessions.</CardDescription>
+                            </div>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button><Plus className="w-4 h-4 mr-2" /> Schedule Meeting</Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Schedule New Meeting</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="grid gap-4 py-4">
+                                        <div className="grid gap-2">
+                                            <Label>Meeting Title</Label>
+                                            <Input value={newMeeting.title} onChange={(e) => setNewMeeting({ ...newMeeting, title: e.target.value })} placeholder="e.g., Weekly Sync" />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label>Platform</Label>
+                                            <select
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                value={newMeeting.platform}
+                                                onChange={(e) => setNewMeeting({ ...newMeeting, platform: e.target.value as any })}
+                                            >
+                                                <option value="google-meet">Google Meet</option>
+                                                <option value="zoom">Zoom</option>
+                                                <option value="other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label>Meeting Link</Label>
+                                            <Input value={newMeeting.link} onChange={(e) => setNewMeeting({ ...newMeeting, link: e.target.value })} placeholder="https://meet.google.com/..." />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid gap-2">
+                                                <Label>Date</Label>
+                                                <Input type="date" value={newMeeting.date} onChange={(e) => setNewMeeting({ ...newMeeting, date: e.target.value })} />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label>Time</Label>
+                                                <Input type="time" value={newMeeting.time} onChange={(e) => setNewMeeting({ ...newMeeting, time: e.target.value })} />
+                                            </div>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label>Department (Optional)</Label>
+                                            <Input value={newMeeting.department} onChange={(e) => setNewMeeting({ ...newMeeting, department: e.target.value })} placeholder="e.g., CS" />
+                                        </div>
+                                        <Button onClick={handleCreateMeeting}>Schedule Meeting</Button>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {meetings.length > 0 ? meetings.map((m: any) => (
+                                    <div key={m._id} className="p-4 border rounded-lg flex justify-between items-start bg-card hover:shadow-md transition-all">
+                                        <div className="flex gap-4">
+                                            <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                                <Video className="w-6 h-6" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold text-lg">{m.title}</h3>
+                                                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
+                                                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(m.date).toLocaleDateString()} at {m.time}</span>
+                                                    <span className="capitalize">{m.platform.replace('-', ' ')}</span>
+                                                    {m.department && m.department !== 'all' && <span className="text-primary font-medium">Dept: {m.department}</span>}
+                                                </div>
+                                                <a href={m.link} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline mt-2 flex items-center gap-1">
+                                                    {m.link.substring(0, 40)}... <ExternalLink className="w-3 h-3" />
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => handleDeleteMeeting(m._id)}><Trash2 className="w-4 h-4" /></Button>
+                                    </div>
+                                )) : (
+                                    <div className="col-span-full py-10 text-center text-muted-foreground border-2 border-dashed rounded-lg">
+                                        No meetings scheduled yet.
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* PROJECTS TAB */}
+                <TabsContent value="projects" className="space-y-4">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Projects & Research</CardTitle>
+                                <CardDescription>Assign practical projects, research topics, or lab work.</CardDescription>
+                            </div>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button><Plus className="w-4 h-4 mr-2" /> Add Project</Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Add Project/Practical</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="grid gap-4 py-4">
+                                        <div className="grid gap-2">
+                                            <Label>Project Title</Label>
+                                            <Input value={newProject.title} onChange={(e) => setNewProject({ ...newProject, title: e.target.value })} placeholder="e.g., AI Research Phase 1" />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label>Type</Label>
+                                            <select
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                value={newProject.type}
+                                                onChange={(e) => setNewProject({ ...newProject, type: e.target.value })}
+                                            >
+                                                <option value="Project">Project</option>
+                                                <option value="Practical">Practical</option>
+                                                <option value="Research">Research</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label>Description</Label>
+                                            <Textarea value={newProject.description} onChange={(e) => setNewProject({ ...newProject, description: e.target.value })} placeholder="Project guidelines..." />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid gap-2">
+                                                <Label>Due Date</Label>
+                                                <Input type="date" value={newProject.dueDate} onChange={(e) => setNewProject({ ...newProject, dueDate: e.target.value })} />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label>Department</Label>
+                                                <Input value={newProject.department} onChange={(e) => setNewProject({ ...newProject, department: e.target.value })} placeholder="e.g., CS" />
+                                            </div>
+                                        </div>
+                                        <Button onClick={handleCreateProject}>Add Project</Button>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {projects.length > 0 ? projects.map((p: any) => (
+                                    <Card key={p._id} className="relative group overflow-hidden border-primary/20">
+                                        <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => handleDeleteProject(p._id)}><Trash2 className="w-3 h-3" /></Button>
+                                        </div>
+                                        <CardHeader className="pb-2">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-bold uppercase tracking-wider">{p.type}</span>
+                                            </div>
+                                            <CardTitle className="text-base line-clamp-1">{p.title}</CardTitle>
+                                            <CardDescription className="line-clamp-2 text-xs">{p.description}</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="pt-0 text-[11px] text-muted-foreground flex justify-between">
+                                            <span>Dept: {p.department || 'All'}</span>
+                                            {p.dueDate && <span>Due: {new Date(p.dueDate).toLocaleDateString()}</span>}
+                                        </CardContent>
+                                    </Card>
+                                )) : (
+                                    <div className="col-span-full py-10 text-center text-muted-foreground border-2 border-dashed rounded-lg">
+                                        No projects or research topics added.
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* MATERIALS TAB */}
+                <TabsContent value="materials" className="space-y-4">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Study Materials & Notes</CardTitle>
+                                <CardDescription>Share documents, PDF notes, and useful links with students.</CardDescription>
+                            </div>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button><Plus className="w-4 h-4 mr-2" /> Add Material</Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Add Study Material</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="grid gap-4 py-4">
+                                        <div className="grid gap-2">
+                                            <Label>Material Title</Label>
+                                            <Input value={newMaterial.title} onChange={(e) => setNewMaterial({ ...newMaterial, title: e.target.value })} placeholder="e.g., Python Course Notes" />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label>Link / URL</Label>
+                                            <Input value={newMaterial.fileUrl} onChange={(e) => setNewMaterial({ ...newMaterial, fileUrl: e.target.value })} placeholder="https://..." />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label>Type</Label>
+                                            <select
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                value={newMaterial.type}
+                                                onChange={(e) => setNewMaterial({ ...newMaterial, type: e.target.value })}
+                                            >
+                                                <option value="PDF">PDF Document</option>
+                                                <option value="Link">External Link</option>
+                                                <option value="Slide">Slides/PPT</option>
+                                                <option value="Video">Video Resource</option>
+                                            </select>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label>Department</Label>
+                                            <Input value={newMaterial.department} onChange={(e) => setNewMaterial({ ...newMaterial, department: e.target.value })} placeholder="e.g., CS" />
+                                        </div>
+                                        <Button onClick={handleCreateMaterial}>Add Material</Button>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {materials.length > 0 ? materials.map((m: any) => (
+                                    <div key={m._id} className="p-4 border rounded-lg flex items-center justify-between hover:bg-muted/30 transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-10 w-10 bg-primary/10 rounded flex items-center justify-center text-primary">
+                                                <Download className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-sm">{m.title}</p>
+                                                <p className="text-[10px] text-muted-foreground">{m.type} • {m.department || 'All'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <a href={m.fileUrl} target="_blank" rel="noopener noreferrer" className="p-2 hover:text-primary transition-colors">
+                                                <ExternalLink className="w-4 h-4" />
+                                            </a>
+                                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDeleteMaterial(m._id)}><Trash2 className="w-4 h-4" /></Button>
+                                        </div>
+                                    </div>
+                                )) : (
+                                    <div className="col-span-full py-10 text-center text-muted-foreground border-2 border-dashed rounded-lg">
+                                        No materials added yet.
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
                 {/* NOTICES TAB */}
                 <TabsContent value="notices" className="space-y-4">
                     <Card>
@@ -1052,7 +1414,52 @@ const OrgDashboard = () => {
                 </DialogContent>
             </Dialog>
 
-
+            {/* Submissions Dialog */}
+            <Dialog open={!!selectedAssignment} onOpenChange={(open) => !open && setSelectedAssignment(null)}>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Submissions: {selectedAssignment?.topic}</DialogTitle>
+                        <DialogDescription>List of students who have submitted their work.</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        {submissions.length > 0 ? (
+                            <div className="space-y-4">
+                                {submissions.map((sub: any) => (
+                                    <div key={sub._id} className="p-4 border rounded-lg flex justify-between items-center bg-muted/20">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
+                                                {sub.studentId?.mName?.substring(0, 2).toUpperCase() || 'ST'}
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-sm">{sub.studentId?.mName || 'Unknown Student'}</p>
+                                                <p className="text-xs text-muted-foreground">{sub.studentId?.email}</p>
+                                                <p className="text-[10px] text-muted-foreground mt-1">Submitted: {new Date(sub.createdAt).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            {sub.fileUrl && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    className="h-9"
+                                                    onClick={() => window.open(`${serverURL}${sub.fileUrl}`, '_blank')}
+                                                >
+                                                    <FileText className="w-4 h-4 mr-2" /> View PDF
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-10 text-muted-foreground">
+                                <Clock className="w-10 h-10 mx-auto mb-2 opacity-20" />
+                                <p>No submissions yet for this assignment.</p>
+                            </div>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

@@ -23,7 +23,16 @@ import {
     deleteCourse,
     updateOrganization,
     gradeSubmission,
-    getAssignmentCertificate
+    getAssignmentCertificate,
+    createMeeting,
+    getMeetings,
+    deleteMeeting,
+    createProject,
+    getProjects,
+    deleteProject,
+    createMaterial,
+    getMaterials,
+    deleteMaterial
 } from '../controllers/org.controller.js';
 import Organization from '../models/Organization.js';
 import { uploadAssignment } from '../config/upload.config.js';
@@ -74,5 +83,20 @@ router.get('/org/courses', getCourses);
 router.get('/student/courses', getStudentCourses);
 router.put('/org/course/:courseId', updateCourse);
 router.delete('/org/course/:courseId', deleteCourse);
+
+// Meetings
+router.post('/org/meeting/create', createMeeting);
+router.get('/org/meetings', getMeetings);
+router.delete('/org/meeting/:id', deleteMeeting);
+
+// Projects
+router.post('/org/project/create', createProject);
+router.get('/org/projects', getProjects);
+router.delete('/org/project/:id', deleteProject);
+
+// Materials
+router.post('/org/material/create', createMaterial);
+router.get('/org/materials', getMaterials);
+router.delete('/org/material/:id', deleteMaterial);
 
 export default router;

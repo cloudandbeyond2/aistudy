@@ -40,6 +40,9 @@ import OrgAssignmentCertificate from "./pages/OrgAssignmentCertificate";
 import StudentNotices from "./pages/StudentNotices";
 import StudentBlogs from "./pages/StudentBlogs";
 import StudentNews from "./pages/StudentNews";
+import StudentMeetings from "./pages/StudentMeetings";
+import StudentProjects from "./pages/StudentProjects";
+import StudentMaterials from "./pages/StudentMaterials";
 import AssignmentPage from "./pages/AssignmentPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -122,6 +125,9 @@ const App = () => (
                   <Route path="student/notices" element={<StudentNotices />} />
                   <Route path="student/blogs" element={<StudentBlogs />} />
                   <Route path="student/news" element={<StudentNews />} />
+                  <Route path="student/meetings" element={<StudentMeetings />} />
+                  <Route path="student/projects" element={<StudentProjects />} />
+                  <Route path="student/materials" element={<StudentMaterials />} />
                   <Route path="student/assignment/:assignmentId" element={<AssignmentPage />} />
                 </Route>
 
@@ -140,7 +146,7 @@ const App = () => (
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/contact" element={<Contact />} />
-                <Route path="/organization-enquiry" element={<OrganizationEnquiry />}/>
+                <Route path="/organization-enquiry" element={<OrganizationEnquiry />} />
 
                 <Route path="/cancellation-policy" element={<CancellationPolicy />} />
                 <Route path="/refund-policy" element={<RefundPolicy />} />

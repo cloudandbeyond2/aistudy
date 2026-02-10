@@ -55,6 +55,18 @@ const Login = () => {
         sessionStorage.setItem('uid', response.data.userData._id);
         sessionStorage.setItem('type', response.data.userData.type);
         sessionStorage.setItem('isOrganization', response.data.userData.isOrganization ? 'true' : 'false');
+        sessionStorage.setItem('role', response.data.userData.role);
+
+        
+         // Set organization ID for consistent access//new
+        const organizationId = response.data.userData.isOrganization
+          ? response.data.userData._id
+          : response.data.userData.organizationId;
+        if (organizationId) {
+          sessionStorage.setItem('orgId', organizationId);
+        }
+ 
+        
         if (response.data.userData.organization) {
           sessionStorage.setItem('orgId', response.data.userData.organization);
         }
@@ -333,6 +345,17 @@ const Login = () => {
                       sessionStorage.setItem('uid', response.data.userData._id);
                       sessionStorage.setItem('type', response.data.userData.type);
                       sessionStorage.setItem('isOrganization', response.data.userData.isOrganization ? 'true' : 'false');
+                      sessionStorage.setItem('role', response.data.userData.role);
+
+
+ const organizationId = response.data.userData.isOrganization
+                        ? response.data.userData._id
+                        : response.data.userData.organizationId;
+                      if (organizationId) {
+                        sessionStorage.setItem('orgId', organizationId);
+                      }
+ 
+
                       if (response.data.userData.organization) {
                         sessionStorage.setItem('orgId', response.data.userData.organization);
                       }
