@@ -156,66 +156,142 @@ const PaymentDetails = () => {
     },
   });
 
-  const onSubmit = (data: FormValues) => {
-    setIsProcessing(true);
-    if (paymentMethod === 'paypal') {
-      startPayPal(data);
-    } else if (paymentMethod === 'stripe') {
-      startStripe();
-    } else if (paymentMethod === 'flutterwave') {
-      setIsProcessing(false);
-      handleFlutterPayment({
-        callback: (response) => {
-          sessionStorage.setItem('stripe', "" + response.transaction_id);
-          sessionStorage.setItem('method', 'flutterwave');
-          sessionStorage.setItem('plan', plan.name);
-          navigate('/payment-success/' + response.transaction_id);
-          closePaymentModal();
-        },
-        onClose: () => { },
-      });
-    } else if (paymentMethod === 'paystack') {
-      startPaystack(data);
-    } else if (paymentMethod === 'razorpay') {
-      startRazorpay(data);
-    } else {
-      return;
-    }
+  // const onSubmit = (data: FormValues) => {
+  //   setIsProcessing(true);
+  //   if (paymentMethod === 'paypal') {
+  //     startPayPal(data);
+  //   } else if (paymentMethod === 'stripe') {
+  //     startStripe();
+  //   } else if (paymentMethod === 'flutterwave') {
+  //     setIsProcessing(false);
+  //     handleFlutterPayment({
+  //       callback: (response) => {
+  //         sessionStorage.setItem('stripe', "" + response.transaction_id);
+  //         sessionStorage.setItem('method', 'flutterwave');
+  //         sessionStorage.setItem('plan', plan.name);
+  //         navigate('/payment-success/' + response.transaction_id);
+  //         closePaymentModal();
+  //       },
+  //       onClose: () => { },
+  //     });
+  //   } else if (paymentMethod === 'paystack') {
+  //     startPaystack(data);
+  //   } else if (paymentMethod === 'razorpay') {
+  //     startRazorpay(data);
+  //   } else {
+  //     return;
+  //   }
 
-  };
+  // };
 
+const onSubmit = (data: FormValues) => {
+  setIsProcessing(true);
+  
+  // Save common data to sessionStorage for ALL payment methods
+  sessionStorage.setItem('price', plan.price.toString());
+  sessionStorage.setItem('planCurrency', plan.currency);
+  sessionStorage.setItem('plan', plan.name); // Also save plan name here
+  
+  if (paymentMethod === 'paypal') {
+    startPayPal(data);
+  } else if (paymentMethod === 'stripe') {
+    startStripe();
+  } else if (paymentMethod === 'flutterwave') {
+    setIsProcessing(false);
+    handleFlutterPayment({
+      callback: (response) => {
+        sessionStorage.setItem('stripe', "" + response.transaction_id);
+        sessionStorage.setItem('method', 'flutterwave');
+        navigate('/payment-success/' + response.transaction_id, { 
+          state: { 
+            planName: plan.name,
+            price: plan.price,
+            currency: plan.currency,
+            method: 'flutterwave'
+          }
+        });
+        closePaymentModal();
+      },
+      onClose: () => { },
+    });
+  } else if (paymentMethod === 'paystack') {
+    startPaystack(data);
+  } else if (paymentMethod === 'razorpay') {
+    startRazorpay(data);
+  } else {
+    return;
+  }
+};
+  // async function startRazorpay(data: FormValues) {
+
+  //   const fullAddress = data.address + ' ' + data.state + ' ' + data.zipCode + ' ' + data.country;
+  //   let planId = razorpayPlanIdTwo;
+  //   if (plan.name === 'Monthly Plan') {
+  //     planId = razorpayPlanIdOne;
+  //   }
+  //   const dataToSend = {
+  //     plan: planId,
+  //     email: data.email,
+  //     fullAddress: fullAddress,
+  //     planType: plan.name === 'Monthly Plan' ? 'monthly' : 'yearly'
+  //   };
+  //   try {
+  //     const postURL = serverURL + '/api/razorpaycreate';
+  //     const res = await axios.post(postURL, dataToSend);
+  //     sessionStorage.setItem('method', 'razorpay');
+  //     setIsProcessing(false);
+  //     sessionStorage.setItem('plan', plan.name);
+  //     window.open(res.data.short_url, '_blank');
+  //     navigate('/payment-pending', { state: { sub: res.data.id, link: res.data.short_url, planName: plan.name, planCost: plan.price } });
+  //   } catch (error) {
+  //     console.error(error);
+  //     setIsProcessing(false);
+  //     toast({
+  //       title: "Error",
+  //       description: "Internal Server Error",
+  //     });
+  //   }
+  // }
 
   async function startRazorpay(data: FormValues) {
-
-    const fullAddress = data.address + ' ' + data.state + ' ' + data.zipCode + ' ' + data.country;
-    let planId = razorpayPlanIdTwo;
-    if (plan.name === 'Monthly Plan') {
-      planId = razorpayPlanIdOne;
-    }
-    const dataToSend = {
-      plan: planId,
-      email: data.email,
-      fullAddress: fullAddress,
-      planType: plan.name === 'Monthly Plan' ? 'monthly' : 'yearly'
-    };
-    try {
-      const postURL = serverURL + '/api/razorpaycreate';
-      const res = await axios.post(postURL, dataToSend);
-      sessionStorage.setItem('method', 'razorpay');
-      setIsProcessing(false);
-      sessionStorage.setItem('plan', plan.name);
-      window.open(res.data.short_url, '_blank');
-      navigate('/payment-pending', { state: { sub: res.data.id, link: res.data.short_url, planName: plan.name, planCost: plan.price } });
-    } catch (error) {
-      console.error(error);
-      setIsProcessing(false);
-      toast({
-        title: "Error",
-        description: "Internal Server Error",
-      });
-    }
+  const fullAddress = data.address + ' ' + data.state + ' ' + data.zipCode + ' ' + data.country;
+  let planId = razorpayPlanIdTwo;
+  if (plan.name === 'Monthly Plan') {
+    planId = razorpayPlanIdOne;
   }
-
+  const dataToSend = {
+    plan: planId,
+    email: data.email,
+    fullAddress: fullAddress,
+    planType: plan.name === 'Monthly Plan' ? 'monthly' : 'yearly'
+  };
+  try {
+    const postURL = serverURL + '/api/razorpaycreate';
+    const res = await axios.post(postURL, dataToSend);
+    
+    // Already saved price/currency in onSubmit, just set method
+    sessionStorage.setItem('method', 'razorpay');
+    setIsProcessing(false);
+    
+    window.open(res.data.short_url, '_blank');
+    navigate('/payment-pending', { 
+      state: { 
+        sub: res.data.id, 
+        link: res.data.short_url, 
+        planName: plan.name, 
+        planCost: plan.price,
+        currency: plan.currency
+      } 
+    });
+  } catch (error) {
+    console.error(error);
+    setIsProcessing(false);
+    toast({
+      title: "Error",
+      description: "Internal Server Error",
+    });
+  }
+}
   async function startPaystack(data: FormValues) {
     let planId = paystackPlanIdTwo;
     let amountInZar = amountInZarTwo;
