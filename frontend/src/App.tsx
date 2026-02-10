@@ -110,7 +110,7 @@ const App = () => (
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password/:token" element={<ResetPassword />} />
                 <Route path="/verify-email/:token" element={<VerifyEmail />} />
-                <Route path="cookies" element={<AdminCookies />} />  
+                
 
                 {/* Dashboard Routes */}
                   <Route path="/dashboard" element={<DashboardLayout />}>
@@ -161,6 +161,7 @@ const App = () => (
                   <Route index element={<AdminDashboard />} />
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="courses" element={<AdminCourses />} />
+                  <Route path="cookies" element={<AdminCookies />} />  
                   <Route path="pricing" element={<AdminPricing />} />
                   <Route path="paid-users" element={<AdminPaidUsers />} />
                   <Route path="admins" element={<AdminAdmins />} />
