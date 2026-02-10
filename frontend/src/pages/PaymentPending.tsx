@@ -13,9 +13,22 @@ const PaymentPending = () => {
     const navigate = useNavigate();
     const { toast } = useToast();
     const { state } = useLocation();
-    const { sub, link, planName, planCost } = state || {};
+    const { sub, link, planName, planCost,plancurrency } = state || {};
     const [processing, setProcessing] = useState(false);
+// ✅ Currency formatter (SAFE & PRODUCTION READY)
+  const formatAmount = (currency, amount) => {
+    if (!currency || amount === undefined || amount === null) return "";
 
+    try {
+      return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency
+      }).format(amount);
+    } catch {
+      return `${currency} ${amount}`;
+    }
+  };
+  
     const handleVerifyPayment = async () => {
         const dataToSend = {
             sub: sub
@@ -84,7 +97,7 @@ const PaymentPending = () => {
                             </div>
                             <div className="text-right">
                                 <p className="text-sm text-muted-foreground">Amount</p>
-                                <p className="font-medium">${planCost}</p>
+                                <p className="font-medium">{formatAmount(plancurrency || "INR", planCost)}</p>
                             </div>
                         </div>
 
