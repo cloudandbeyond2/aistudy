@@ -44,11 +44,13 @@ import axios from 'axios';
 import Logo from '../../res/logo.svg';
 import { useToast } from '@/hooks/use-toast';
 import { Cookie } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
 
 
 const AdminLayout = () => {
   const isMobile = useIsMobile();
   const location = useLocation();
+    const { toggleTheme } = useTheme();
   {/* Star bala */ }
   const { toast } = useToast();
   // Helper to check active route
@@ -318,37 +320,80 @@ const AdminLayout = () => {
           </SidebarContent>
           
 
-          <SidebarFooter className="border-t border-border/40">
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Theme">
-                  <div className="flex items-center space-x-2">
-                    <ThemeToggle />
-                    <span>Toggle Theme</span>
-                  </div>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+       <SidebarFooter className="border-t border-border/40">
+  <SidebarMenu className="py-2">
 
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Back to Website">
-                  <Link to="/" className="flex items-center space-x-2 w-full">
-                    <Globe />
-                    <span>Back to Website</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              {/* Star bala */}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Logout" style={{ paddingLeft: "20px" }}>
-                  <button onClick={Logout} className="text-muted-foreground hover:text-destructive transition-colors flex items-center space-x-2 w-full" style={{ gap: "22px" }}>
+    {/* Toggle Theme */}
+<SidebarMenuButton asChild tooltip="Theme" onClick={toggleTheme}>
+    <div     className="
+          group
+          rounded-md
+          transition-all
+          hover:bg-destructive/10
+          hover:shadow-md
+        " style={{paddingLeft:"0px"}}>
+      <ThemeToggle />
+      <span className="pl-3">Toggle Theme</span>
+    </div>
+  </SidebarMenuButton>
 
-                    <LogOut />
-                    <span>Logout</span>
-                  </button>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarFooter>
+    {/* Back to Website */}
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        tooltip="Back to Website"
+        className="
+          group
+          rounded-md
+          transition-all
+          hover:bg-accent
+          hover:shadow-md
+        "
+        style={{gap: "38px"}}
+      >
+        <Link to="/" className="flex items-center gap-3 w-full">
+          <Globe className="h-4 w-4" />
+          <span className="text-sm group-data-[collapsible=icon]:hidden">
+            Back to Website
+          </span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+
+    {/* Logout */}
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        tooltip="Logout"
+        className="
+          group
+          rounded-md
+          transition-all
+          hover:bg-destructive/10
+          hover:shadow-md
+        "
+         style={{gap: "38px"}}
+      >
+        <button
+          onClick={Logout}
+          className="
+            flex items-center gap-3 w-full
+            text-muted-foreground
+            hover:text-destructive
+          "
+        >
+          <LogOut className="h-4 w-4" />
+          <span className="text-sm group-data-[collapsible=icon]:hidden">
+            Logout
+          </span>
+        </button>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+
+  </SidebarMenu>
+</SidebarFooter>
+
+          
           <SidebarRail />
         </Sidebar>
 

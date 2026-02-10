@@ -75,6 +75,7 @@ import AdminCertificate from "./pages/admin/AdminCertificate";
 import CertificateVerification from "./pages/CertificateVerification";
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { googleClientId } from "./constants";
+import AdminCookies from "./pages/admin/AdminCookies";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +110,7 @@ const App = () => (
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password/:token" element={<ResetPassword />} />
                 <Route path="/verify-email/:token" element={<VerifyEmail />} />
+                <Route path="cookies" element={<AdminCookies />} />  
 
                 {/* Dashboard Routes */}
                 <Route path="/dashboard" element={<DashboardLayout />}>
