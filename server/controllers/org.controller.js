@@ -226,7 +226,11 @@ export const getDashboardStats = async (req, res) => {
     try {
         const studentCount = await User.countDocuments({ organization: organizationId, role: 'student' });
         const assignmentCount = await Assignment.countDocuments({ organizationId });
-        const submissionCount = await Submission.countDocuments({}); // Need better filtering logic later
+
+        // Filter submissions by assignments belonging to this organization
+        const assignments = await Assignment.find({ organizationId }).select('_id');
+        const assignmentIds = assignments.map(a => a._id);
+        const submissionCount = await Submission.countDocuments({ assignmentId: { $in: assignmentIds } });
 
         res.json({ success: true, studentCount, assignmentCount, submissionCount });
     } catch (error) {

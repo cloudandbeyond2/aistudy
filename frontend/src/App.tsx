@@ -113,7 +113,7 @@ const App = () => (
                 <Route path="cookies" element={<AdminCookies />} />  
 
                 {/* Dashboard Routes */}
-                <Route path="/dashboard" element={<DashboardLayout />}>
+                  <Route path="/dashboard" element={<DashboardLayout />}>
                   <Route index element={<Dashboard />} />
                   <Route path="generate-course" element={<GenerateCourse />} />
                   <Route path="pricing" element={<ProfilePricing />} />
