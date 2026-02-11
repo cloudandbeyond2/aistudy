@@ -1,5 +1,5 @@
 import retryWithBackoff from '../utils/retryWithBackoff.js';
-import genAI from '../config/gemini.js';
+import { getGenAI } from '../config/gemini.js';
 import {
   HarmCategory,
   HarmBlockThreshold
@@ -10,6 +10,8 @@ import {
  */
 export const generateAIExam = async (req, res) => {
   const { mainTopic, subtopicsString, lang } = req.body;
+
+  const genAI = await getGenAI();
 
   // (Optional) Debug logging – safe to remove later
   try {

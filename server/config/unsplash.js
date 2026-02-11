@@ -1,13 +1,14 @@
 import { createApi } from 'unsplash-js';
+import Admin from '../models/Admin.js';
 
-let unsplash = null;
+export const getUnsplashApi = async () => {
+  const admin = await Admin.findOne({ type: 'main' });
+  const accessKey = admin?.unsplashApiKey || process.env.UNSPLASH_ACCESS_KEY;
 
-if (process.env.UNSPLASH_ACCESS_KEY) {
-  unsplash = createApi({
-    accessKey: process.env.UNSPLASH_ACCESS_KEY
-  });
-} else {
-  console.warn('⚠️ UNSPLASH_ACCESS_KEY not set');
-}
+  if (!accessKey) {
+    console.warn('⚠️ UNSPLASH_ACCESS_KEY not set');
+    return null;
+  }
 
-export default unsplash;
+  return createApi({ accessKey });
+};

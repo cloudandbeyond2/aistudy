@@ -3,8 +3,7 @@ import {
   HarmCategory,
   HarmBlockThreshold
 } from '@google/generative-ai';
-
-const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+import Admin from '../models/Admin.js';
 
 export const safetySettings = [
   {
@@ -25,7 +24,13 @@ export const safetySettings = [
   }
 ];
 
-export const chatModel = genAI.getGenerativeModel({
-  model: 'gemini-flash-latest',
-  safetySettings
-});
+export const getChatModel = async () => {
+  const admin = await Admin.findOne({ type: 'main' });
+  const key = admin?.geminiApiKey || process.env.API_KEY;
+  const genAI = new GoogleGenerativeAI(key);
+
+  return genAI.getGenerativeModel({
+    model: 'gemini-flash-latest',
+    safetySettings
+  });
+};

@@ -1,7 +1,7 @@
 import Course from '../models/Course.js';
 import OrgCourse from '../models/OrgCourse.js';
 import Lang from '../models/Lang.js';
-import unsplash from '../config/unsplash.js';
+import { getUnsplashApi } from '../config/unsplash.js';
 import IssuedCertificate from '../models/IssuedCertificate.js';
 import Notification from '../models/Notification.js';
 
@@ -18,16 +18,19 @@ export const createCourse = async (req, res) => {
     let photo = defaultPhoto;
 
     try {
-      const result = await unsplash.search.getPhotos({
-        query: mainTopic,
-        page: 1,
-        perPage: 1,
-        orientation: 'landscape'
-      });
+      const unsplash = await getUnsplashApi();
+      if (unsplash) {
+        const result = await unsplash.search.getPhotos({
+          query: mainTopic,
+          page: 1,
+          perPage: 1,
+          orientation: 'landscape'
+        });
 
-      const photos = result.response?.results;
-      if (photos && photos.length > 0) {
-        photo = photos[0].urls.regular;
+        const photos = result.response?.results;
+        if (photos && photos.length > 0) {
+          photo = photos[0].urls.regular;
+        }
       }
     } catch (err) {
       console.log('Unsplash failed, using default image');
@@ -54,7 +57,7 @@ export const createCourse = async (req, res) => {
     });
     await newLang.save();
 
-  //  await newLang.save();
+    //  await newLang.save();
 
     // Create Notification
     try {
@@ -88,14 +91,19 @@ export const createSharedCourse = async (req, res) => {
   const { user, content, type, mainTopic } = req.body;
 
   try {
-    const result = await unsplash.search.getPhotos({
-      query: mainTopic,
-      page: 1,
-      perPage: 1,
-      orientation: 'landscape'
-    });
+    const unsplash = await getUnsplashApi();
+    let photo = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
 
-    const photo = result.response.results[0].urls.regular;
+    if (unsplash) {
+      const result = await unsplash.search.getPhotos({
+        query: mainTopic,
+        page: 1,
+        perPage: 1,
+        orientation: 'landscape'
+      });
+
+      photo = result.response.results[0].urls.regular;
+    }
 
     const newCourse = new Course({
       user,

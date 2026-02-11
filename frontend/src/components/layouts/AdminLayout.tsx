@@ -41,16 +41,17 @@ import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { serverURL, websiteURL } from '@/constants';
 import axios from 'axios';
-import Logo from '../../res/logo.svg';
+import { useBranding } from '@/contexts/BrandingContext';
 import { useToast } from '@/hooks/use-toast';
 import { Cookie } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 
 const AdminLayout = () => {
+  const { appName, appLogo } = useBranding();
   const isMobile = useIsMobile();
   const location = useLocation();
-    const { toggleTheme } = useTheme();
+  const { toggleTheme } = useTheme();
   {/* Star bala */ }
   const { toast } = useToast();
   // Helper to check active route
@@ -94,7 +95,7 @@ const AdminLayout = () => {
           <SidebarHeader className="border-b border-border/40">
             <Link to="/admin" className="flex items-center space-x-2 px-4 py-3">
               <div className="h-8 w-8 rounded-md bg-primary from-primary flex items-center justify-center">
-                <img src={Logo} alt="Logo" className='h-5 w-5' />
+                <img src={appLogo} alt="Logo" className='h-6 w-6' />
               </div>
               <span className="font-display text-lg font-bold">Admin Panel</span>
             </Link>
@@ -129,14 +130,14 @@ const AdminLayout = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Organizations" isActive={isActive('/admin/organizations')}>
-                  <Link to="/admin/organizations" className={cn(isActive('/admin/organizations') && "text-primary")}>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Organizations" isActive={isActive('/admin/orgs')}>
+                  <Link to="/admin/orgs" className={cn(isActive('/admin/orgs') && "text-primary")}>
                     <Building2 />
                     <span>Organizations</span>
                   </Link>
                 </SidebarMenuButton>
-              </SidebarMenuItem> */}
+              </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Paid Users" isActive={isActive('/admin/paid-users')}>
@@ -236,23 +237,23 @@ const AdminLayout = () => {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              
+
 
               <SidebarMenuItem>
-  <SidebarMenuButton
-    asChild
-    tooltip="Cookies"
-    isActive={isActive('/admin/cookies')}
-  >
-    <Link
-      to="/admin/cookies"
-      className={cn(isActive('/admin/cookies') && "text-primary")}
-    >
-      <Cookie />
-      <span>Cookies</span>
-    </Link>
-  </SidebarMenuButton>
-</SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Cookies"
+                  isActive={isActive('/admin/cookies')}
+                >
+                  <Link
+                    to="/admin/cookies"
+                    className={cn(isActive('/admin/cookies') && "text-primary")}
+                  >
+                    <Cookie />
+                    <span>Cookies</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
 
               <SidebarMenuItem>
@@ -291,109 +292,103 @@ const AdminLayout = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-                 <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Organizations" isActive={isActive('/admin/orgs')}>
-                  <Link to="/admin/orgs" className={cn(isActive('/admin/orgs') && "text-primary")}>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Organization Enquiries" isActive={isActive('/admin/organization-enquiries')}>
+                  <Link to="/admin/organization-enquiries" className={cn(isActive('/admin/organization-enquiries') && "text-primary")}>
                     <Building2 />
-                    <span>Organizations</span>
+                    <span>Organization Enquiries</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-<SidebarMenuItem>
-  <SidebarMenuButton
-    asChild
-    tooltip="Organization Enquiries"
-    isActive={isActive('/admin/organization-enquiries')}
-  >
-    <Link
-      to="/admin/organization-enquiries"
-      className={cn(isActive('/admin/organization-enquiries') && "text-primary")}
-    >
-      <Building2 />
-      <span>Organization Enquiries</span>
-    </Link>
-  </SidebarMenuButton>
-</SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Settings" isActive={isActive('/admin/settings')}>
+                  <Link to="/admin/settings" className={cn(isActive('/admin/settings') && "text-primary")}>
+                    <Settings />
+                    <span>Settings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
             </SidebarMenu>
           </SidebarContent>
-          
 
-       <SidebarFooter className="border-t border-border/40">
-  <SidebarMenu className="py-2">
 
-    {/* Toggle Theme */}
-<SidebarMenuButton asChild tooltip="Theme" onClick={toggleTheme}>
-    <div     className="
+          <SidebarFooter className="border-t border-border/40">
+            <SidebarMenu className="py-2">
+
+              {/* Toggle Theme */}
+              <SidebarMenuButton asChild tooltip="Theme" onClick={toggleTheme}>
+                <div className="
           group
+          flex items-center
           rounded-md
           transition-all
-          hover:bg-destructive/10
+          hover:bg-accent
           hover:shadow-md
-        " style={{paddingLeft:"0px"}}>
-      <ThemeToggle />
-      <span className="pl-3">Toggle Theme</span>
-    </div>
-  </SidebarMenuButton>
+          px-3 py-2
+        ">
+                  <ThemeToggle />
+                  <span className="pl-3">Toggle Theme</span>
+                </div>
+              </SidebarMenuButton>
 
-    {/* Back to Website */}
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        asChild
-        tooltip="Back to Website"
-        className="
+              {/* Back to Website */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Back to Website"
+                  className="
           group
           rounded-md
           transition-all
           hover:bg-accent
           hover:shadow-md
         "
-        style={{gap: "38px"}}
-      >
-        <Link to="/" className="flex items-center gap-3 w-full">
-          <Globe className="h-4 w-4" />
-          <span className="text-sm group-data-[collapsible=icon]:hidden">
-            Back to Website
-          </span>
-        </Link>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
+                >
+                  <Link to="/" className="flex items-center gap-3 w-full px-3 py-2">
+                    <Globe className="h-4 w-4" />
+                    <span className="text-sm">
+                      Back to Website
+                    </span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
-    {/* Logout */}
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        asChild
-        tooltip="Logout"
-        className="
+              {/* Logout */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Logout"
+                  className="
           group
           rounded-md
           transition-all
           hover:bg-destructive/10
           hover:shadow-md
         "
-         style={{gap: "38px"}}
-      >
-        <button
-          onClick={Logout}
-          className="
-            flex items-center gap-3 w-full
+                >
+                  <button
+                    onClick={Logout}
+                    className="
+            flex items-center gap-3 w-full px-3 py-2
             text-muted-foreground
             hover:text-destructive
           "
-        >
-          <LogOut className="h-4 w-4" />
-          <span className="text-sm group-data-[collapsible=icon]:hidden">
-            Logout
-          </span>
-        </button>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span className="text-sm">
+                      Logout
+                    </span>
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
-  </SidebarMenu>
-</SidebarFooter>
+            </SidebarMenu>
+          </SidebarFooter>
 
-          
+
           <SidebarRail />
         </Sidebar>
 
@@ -411,8 +406,8 @@ const AdminLayout = () => {
           )}
           <Outlet />
         </main>
-      </div>
-    </SidebarProvider>
+      </div >
+    </SidebarProvider >
   );
 };
 

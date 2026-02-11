@@ -1,5 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Admin from '../models/Admin.js';
 
-const genAI = new GoogleGenerativeAI(process.env.API_KEY);
-
-export default genAI;
+export const getGenAI = async () => {
+    const admin = await Admin.findOne({ type: 'main' });
+    const key = admin?.geminiApiKey || process.env.API_KEY;
+    return new GoogleGenerativeAI(key);
+};

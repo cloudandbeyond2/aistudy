@@ -1,4 +1,4 @@
-import genAI from '../config/gemini.js';
+import { getGenAI } from '../config/gemini.js';
 import retryWithBackoff from '../utils/retryWithBackoff.js';
 import {
   HarmCategory,
@@ -58,6 +58,7 @@ export const generatePrompt = async (req, res) => {
   const { prompt } = req.body;
 
   try {
+    const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
       model: 'gemini-flash-latest'
     });
@@ -117,6 +118,7 @@ export const generateHtml = async (req, res) => {
   ];
 
   try {
+    const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
       model: 'gemini-flash-latest',
       safetySettings
@@ -307,6 +309,7 @@ export const generateAIExam = async (req, res) => {
       }
     ];
 
+    const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
       model: 'gemini-flash-latest',
       safetySettings

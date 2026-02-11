@@ -26,6 +26,7 @@ import Terms from "./pages/Terms";
 import Contact from "./pages/Contact";
 import Blog from "./pages/Blog";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { BrandingProvider } from "./contexts/BrandingContext";
 import PaymentPending from "./pages/PaymentPending";
 import PaymentFailed from "./pages/PaymentFailed";
 import VerifyEmail from "./pages/VerifyEmail";
@@ -47,6 +48,8 @@ import AssignmentPage from "./pages/AssignmentPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminCourses from "./pages/admin/AdminCourses";
+import AdminCookies from "./pages/admin/AdminCookies";
+import AdminPricing from "./pages/admin/AdminPricing";
 import AdminPaidUsers from "./pages/admin/AdminPaidUsers";
 import AdminAdmins from "./pages/admin/AdminAdmins";
 import AdminContacts from "./pages/admin/AdminContacts";
@@ -56,10 +59,16 @@ import AdminCancellation from "./pages/admin/AdminCancellation";
 import AdminRefund from "./pages/admin/AdminRefund";
 import AdminSubscriptionBilling from "./pages/admin/AdminSubscriptionBilling";
 import AdminCreateBlog from "./pages/admin/AdminCreateBlog";
-import AdminPricing from "./pages/admin/AdminPricing";
+import AdminBlogs from "./pages/admin/AdminBlogs";
+import AdminCertificate from "./pages/admin/AdminCertificate";
+import CertificateVerification from "./pages/CertificateVerification";
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { googleClientId } from "./constants";
+import AdminSettings from "./pages/admin/AdminSettings";
 import AdminTestimonials from "./pages/admin/AdminTestimonials";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminPaymentSettings from "./pages/admin/AdminPaymentSettings";
+import AdminOrganizations from "./pages/admin/AdminOrganizations";
 import AdminCreateOrganization from "./pages/admin/AdminCreateOrganization";
 import AdminOrganizationDetails from "./pages/admin/AdminOrganizationDetails";
 import AdminOrganizationEnquiries from "./pages/admin/AdminOrganizationEnquiries";
@@ -69,132 +78,111 @@ import RefundPolicy from "./pages/RefundPolicy";
 import CancellationPolicy from "./pages/CancellationPolicy";
 import QuizPage from "./pages/QuizPage";
 import BlogPost from "./pages/BlogPost";
-import AdminBlogs from "./pages/admin/AdminBlogs";
-import AdminOrganizations from "./pages/admin/AdminOrganizations";
-import AdminCertificate from "./pages/admin/AdminCertificate";
-import CertificateVerification from "./pages/CertificateVerification";
-import { GoogleOAuthProvider } from '@react-oauth/google';
-import { googleClientId } from "./constants";
-import AdminCookies from "./pages/admin/AdminCookies";
 
 const queryClient = new QueryClient();
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('SW registered:', registration);
-      })
-      .catch(error => {
-        console.log('SW registration failed:', error);
-      });
-  });
-}
-
-//TODO : Add failed payment link in server.js
-//TODO : compare main server with edited server file
-
 const App = () => (
   <GoogleOAuthProvider clientId={googleClientId}>
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <HelmetProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password/:token" element={<ResetPassword />} />
-                <Route path="/verify-email/:token" element={<VerifyEmail />} />
-                
+    <QueryClientProvider client={queryClient}>
+      <HelmetProvider>
+        <ThemeProvider>
+          <BrandingProvider>
+            <TooltipProvider>
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password/:token" element={<ResetPassword />} />
+                  <Route path="/verify-email/:token" element={<VerifyEmail />} />
 
-                {/* Dashboard Routes */}
+                  {/* Dashboard Routes */}
                   <Route path="/dashboard" element={<DashboardLayout />}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="generate-course" element={<GenerateCourse />} />
-                  <Route path="pricing" element={<ProfilePricing />} />
-                  <Route path="payment/:planId" element={<PaymentDetails />} />
-                  <Route path="profile" element={<Profile />} />
-                  <Route path="org" element={<OrgDashboard />} />
-                  <Route path="org/assignment/:assignmentId/submissions" element={<OrgAssignmentSubmissions />} />
-                  <Route path="student" element={<StudentPortal />} />
-                  <Route path="student/assignments" element={<StudentAssignments />} />
-                  <Route path="student/assignment/certificate/:submissionId" element={<OrgAssignmentCertificate />} />
-                  <Route path="student/notices" element={<StudentNotices />} />
-                  <Route path="student/blogs" element={<StudentBlogs />} />
-                  <Route path="student/news" element={<StudentNews />} />
-                  <Route path="student/meetings" element={<StudentMeetings />} />
-                  <Route path="student/projects" element={<StudentProjects />} />
-                  <Route path="student/materials" element={<StudentMaterials />} />
-                  <Route path="student/assignment/:assignmentId" element={<AssignmentPage />} />
-                </Route>
+                    <Route index element={<Dashboard />} />
+                    <Route path="generate-course" element={<GenerateCourse />} />
+                    <Route path="pricing" element={<ProfilePricing />} />
+                    <Route path="payment/:planId" element={<PaymentDetails />} />
+                    <Route path="profile" element={<Profile />} />
+                    <Route path="org" element={<OrgDashboard />} />
+                    <Route path="org/assignment/:assignmentId/submissions" element={<OrgAssignmentSubmissions />} />
+                    <Route path="student" element={<StudentPortal />} />
+                    <Route path="student/assignments" element={<StudentAssignments />} />
+                    <Route path="student/assignment/certificate/:submissionId" element={<OrgAssignmentCertificate />} />
+                    <Route path="student/notices" element={<StudentNotices />} />
+                    <Route path="student/blogs" element={<StudentBlogs />} />
+                    <Route path="student/news" element={<StudentNews />} />
+                    <Route path="student/meetings" element={<StudentMeetings />} />
+                    <Route path="student/projects" element={<StudentProjects />} />
+                    <Route path="student/materials" element={<StudentMaterials />} />
+                    <Route path="student/assignment/:assignmentId" element={<AssignmentPage />} />
+                  </Route>
 
-                {/* Course Routes */}
-                <Route path="/course/:courseId" element={<CoursePage />} />
-                <Route path="/course/:courseId/certificate" element={<Certificate />} />
-                <Route path="/course/:courseId/quiz" element={<QuizPage />} />
+                  {/* Course Routes */}
+                  <Route path="/course/:courseId" element={<CoursePage />} />
+                  <Route path="/course/:courseId/certificate" element={<Certificate />} />
+                  <Route path="/course/:courseId/quiz" element={<QuizPage />} />
 
-                {/* Payment Routes */}
-                <Route path="/payment-success/:planId" element={<PaymentSuccess />} />
-                <Route path="/payment-pending" element={<PaymentPending />} />
-                <Route path="/payment-failed" element={<PaymentFailed />} />
+                  {/* Payment Routes */}
+                  <Route path="/payment-success/:planId" element={<PaymentSuccess />} />
+                  <Route path="/payment-pending" element={<PaymentPending />} />
+                  <Route path="/payment-failed" element={<PaymentFailed />} />
 
-                {/* Static Pages */}
-                <Route path="/about" element={<About />} />
-                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/organization-enquiry" element={<OrganizationEnquiry />} />
+                  {/* Static Pages */}
+                  <Route path="/about" element={<About />} />
+                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/organization-enquiry" element={<OrganizationEnquiry />} />
 
-                <Route path="/cancellation-policy" element={<CancellationPolicy />} />
-                <Route path="/refund-policy" element={<RefundPolicy />} />
-                <Route path="/subscription-billing-policy" element={<SubscriptionBillingPolicy />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:id" element={<BlogPost />} />
+                  <Route path="/cancellation-policy" element={<CancellationPolicy />} />
+                  <Route path="/refund-policy" element={<RefundPolicy />} />
+                  <Route path="/subscription-billing-policy" element={<SubscriptionBillingPolicy />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/:id" element={<BlogPost />} />
 
-                {/* Admin Routes */}
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="users" element={<AdminUsers />} />
-                  <Route path="courses" element={<AdminCourses />} />
-                  <Route path="cookies" element={<AdminCookies />} />  
-                  <Route path="pricing" element={<AdminPricing />} />
-                  <Route path="paid-users" element={<AdminPaidUsers />} />
-                  <Route path="admins" element={<AdminAdmins />} />
-                  <Route path="contacts" element={<AdminContacts />} />
-                  <Route path="terms" element={<AdminTerms />} />
-                  <Route path="privacy" element={<AdminPrivacy />} />
-                  <Route path="cancellation" element={<AdminCancellation />} />
-                  <Route path="refund" element={<AdminRefund />} />
-                  <Route path="subscription-billing" element={<AdminSubscriptionBilling />} />
-                  <Route path="create-blog" element={<AdminCreateBlog />} />
-                  <Route path="blogs" element={<AdminBlogs />} />
-                  <Route path="certificate" element={<AdminCertificate />} />
-                  <Route path="orgs" element={<AdminOrganizations />} />
-                  <Route path="organization-enquiries" element={<AdminOrganizationEnquiries />} />
+                  {/* Admin Routes */}
+                  <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<AdminDashboard />} />
+                    <Route path="users" element={<AdminUsers />} />
+                    <Route path="courses" element={<AdminCourses />} />
+                    <Route path="cookies" element={<AdminCookies />} />
+                    <Route path="pricing" element={<AdminPricing />} />
+                    <Route path="paid-users" element={<AdminPaidUsers />} />
+                    <Route path="admins" element={<AdminAdmins />} />
+                    <Route path="contacts" element={<AdminContacts />} />
+                    <Route path="terms" element={<AdminTerms />} />
+                    <Route path="privacy" element={<AdminPrivacy />} />
+                    <Route path="cancellation" element={<AdminCancellation />} />
+                    <Route path="refund" element={<AdminRefund />} />
+                    <Route path="subscription-billing" element={<AdminSubscriptionBilling />} />
+                    <Route path="create-blog" element={<AdminCreateBlog />} />
+                    <Route path="blogs" element={<AdminBlogs />} />
+                    <Route path="certificate" element={<AdminCertificate />} />
+                    <Route path="orgs" element={<AdminOrganizations />} />
+                    <Route path="organization-enquiries" element={<AdminOrganizationEnquiries />} />
 
-                  <Route path="testimonials" element={<AdminTestimonials />} />
-                  <Route path="orders" element={<AdminOrders />} />
-                  <Route path="payment-settings" element={<AdminPaymentSettings />} />
-                  <Route path="organizations" element={<AdminOrganizations />} />
-                  <Route path="create-organization" element={<AdminCreateOrganization />} />
-                  <Route path="organization/:id" element={<AdminOrganizationDetails />} />
-                </Route>
-                <Route path="/verify-certificate" element={<CertificateVerification />} />
+                    <Route path="testimonials" element={<AdminTestimonials />} />
+                    <Route path="orders" element={<AdminOrders />} />
+                    <Route path="payment-settings" element={<AdminPaymentSettings />} />
+                    <Route path="organizations" element={<AdminOrganizations />} />
+                    <Route path="create-organization" element={<AdminCreateOrganization />} />
+                    <Route path="organization/:id" element={<AdminOrganizationDetails />} />
+                    <Route path="settings" element={<AdminSettings />} />
+                  </Route>
+                  <Route path="/verify-certificate" element={<CertificateVerification />} />
 
-
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </HelmetProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <Toaster />
+                <Sonner />
+              </BrowserRouter>
+            </TooltipProvider>
+          </BrandingProvider>
+        </ThemeProvider>
+      </HelmetProvider>
+    </QueryClientProvider>
   </GoogleOAuthProvider>
 );
 

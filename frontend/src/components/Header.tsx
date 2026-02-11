@@ -3,15 +3,18 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
-import { appName } from '@/constants';
-import Logo from '../res/logo.svg';
+import { useBranding } from '@/contexts/BrandingContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { serverURL } from '@/constants';
+import axios from 'axios';
 
 const Header = () => {
+  const { appName, appLogo } = useBranding();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuth, setIsAuth] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [open, setOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -31,6 +34,31 @@ const Header = () => {
       setUserName(name);
     }
   }, []);
+
+  useEffect(() => {
+    async function checkAdmin() {
+      try {
+        const email = sessionStorage.getItem('email');
+        if (!email) return;
+
+        let adminEmail = sessionStorage.getItem('adminEmail');
+        if (!adminEmail) {
+          const res = await axios.post(`${serverURL}/api/dashboard`);
+          adminEmail = res.data.admin.email;
+          sessionStorage.setItem('adminEmail', adminEmail);
+        }
+
+        if (adminEmail === email) {
+          setIsAdmin(true);
+        }
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+      }
+    }
+    if (isAuth) {
+      checkAdmin();
+    }
+  }, [isAuth]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -66,7 +94,7 @@ const Header = () => {
             whileHover={{ rotate: 10, scale: 1.1 }}
             className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20"
           >
-            <img src={Logo} alt="Logo" className="h-7 w-7" />
+            <img src={appLogo} alt="Logo" className="h-7 w-7" />
           </motion.div>
 
           <span
@@ -146,6 +174,16 @@ const Header = () => {
                       Profile
                     </Link>
 
+                    {isAdmin && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setOpen(false)}
+                        className="block px-4 py-3 text-sm font-bold rounded-2xl hover:bg-primary/5 dark:hover:bg-white/10 transition text-primary"
+                      >
+                        Admin Panel
+                      </Link>
+                    )}
+
                     <button
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-3 text-sm font-bold rounded-2xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition"
@@ -172,19 +210,19 @@ const Header = () => {
 </Button>
 
               </Link> */}
-                  <Link to="/login">
-  <Button
-    variant="ghost"
-    className={cn(
-      "bg-white text-black font-bold rounded-full px-8 h-12 shadow-xl shadow-primary/20 transition-all hover:scale-105",
-      isScrolled
-        ? "hover:bg-white/90"
-        : "hover:bg-white/80"
-    )}
-  >
-    Login
-  </Button>
-</Link>
+              <Link to="/login">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "bg-white text-black font-bold rounded-full px-8 h-12 shadow-xl shadow-primary/20 transition-all hover:scale-105",
+                    isScrolled
+                      ? "hover:bg-white/90"
+                      : "hover:bg-white/80"
+                  )}
+                >
+                  Login
+                </Button>
+              </Link>
 
               <Link to="/signup">
                 <Button className="bg-primary text-white font-bold rounded-full px-8 h-12 shadow-xl shadow-primary/20 hover:scale-105 transition">

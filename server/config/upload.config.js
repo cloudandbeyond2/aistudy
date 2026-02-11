@@ -4,8 +4,8 @@ import fs from 'fs';
 
 // Ensure uploads directory exists (local only)
 const uploadDir = 'uploads/assignments';
-if (!process.env.VERCEL && !fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+if (!process.env.VERCEL) {
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 // Use memory storage on Vercel, disk storage locally
@@ -35,4 +35,23 @@ export const uploadAssignment = multer({
         fileSize: 10 * 1024 * 1024 // 10MB
     },
     fileFilter: fileFilter
+});
+
+const logoStorage = multer.memoryStorage();
+
+const logoFileFilter = (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'];
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Only JPEG, JPG, PNG, and SVG files are allowed!'), false);
+    }
+};
+
+export const uploadLogo = multer({
+    storage: logoStorage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB
+    },
+    fileFilter: logoFileFilter
 });

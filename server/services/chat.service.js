@@ -1,5 +1,5 @@
 import showdown from 'showdown';
-import { chatModel } from '../config/genai.js';
+import { getChatModel } from '../config/genai.js';
 
 const converter = new showdown.Converter();
 
@@ -8,6 +8,7 @@ export const generateChatResponse = async (prompt) => {
     throw new Error('Prompt is required');
   }
 
+  const chatModel = await getChatModel();
   const result = await chatModel.generateContent(prompt);
   const response = result.response;
   const text = await response.text();

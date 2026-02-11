@@ -1,7 +1,7 @@
 
-import { appName } from '@/constants';
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useBranding } from '@/contexts/BrandingContext';
 
 interface SEOProps {
   title: string;
@@ -17,6 +17,7 @@ const SEO = ({
   keywords = '',
   canonicalUrl = ''
 }: SEOProps) => {
+  const { appName } = useBranding();
   // Format the title to include the brand name
   const formattedTitle = `${title} | ${appName}`;
 

@@ -21,17 +21,18 @@ import { Home, User, DollarSign, LogOut, Sparkles, Menu, Settings2Icon, Building
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { appName, serverURL, websiteURL } from '@/constants';
-import Logo from '../../res/logo.svg';
+import { websiteURL, serverURL } from '@/constants';
+import { useBranding } from '@/contexts/BrandingContext';
 import { DownloadIcon } from '@radix-ui/react-icons';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import NotificationBell from '../NotificationBell';
-  import { useTheme } from '@/contexts/ThemeContext';
- 
- 
+import { useTheme } from '@/contexts/ThemeContext';
+
+
 
 const DashboardLayout = () => {
+  const { appName, appLogo } = useBranding();
   const isMobile = useIsMobile();
   const location = useLocation();
   const [installPrompt, setInstallPrompt] = useState(null);
@@ -96,7 +97,7 @@ const DashboardLayout = () => {
           <SidebarHeader className="border-b border-border/40">
             <Link to="/dashboard" className="flex items-center space-x-2 px-4 py-3">
               <div className="h-8 w-8 rounded-md bg-primary from-primary flex items-center justify-center">
-                <img src={Logo} alt="Logo" className='h-6 w-6' />
+                <img src={appLogo} alt="Logo" className='h-6 w-6' />
               </div>
               <span className="font-display text-lg font-bold bg-primary text-gradient">{appName}</span>
             </Link>
@@ -356,7 +357,7 @@ const DashboardLayout = () => {
             </SidebarGroup>
           </SidebarContent>
 
-         <SidebarFooter className="border-t border-border/40">
+          <SidebarFooter className="border-t border-border/40">
             <SidebarMenu>
               {installPrompt && (
                 <SidebarMenuItem>
@@ -376,9 +377,9 @@ const DashboardLayout = () => {
                 </SidebarMenuItem>
               )
               }
-                {/* Toggle Theme */}
-            <SidebarMenuButton asChild tooltip="Theme" onClick={toggleTheme}>
-                <div     className="
+              {/* Toggle Theme */}
+              <SidebarMenuButton asChild tooltip="Theme" onClick={toggleTheme}>
+                <div className="
                       group
                       rounded-md
                       transition-all
@@ -391,14 +392,14 @@ const DashboardLayout = () => {
               </SidebarMenuButton>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Logout"
-                    className="
+                  className="
           group
           rounded-md
           transition-all
           hover:bg-destructive/10
           hover:shadow-md
         "
-                style={{ paddingLeft: "18px" }}>
+                  style={{ paddingLeft: "18px" }}>
                   <Link onClick={Logout} className="text-muted-foreground hover:text-destructive transition-colors" style={{ gap: "24px" }}>
                     <LogOut />
                     <span>Logout</span>

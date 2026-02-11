@@ -142,3 +142,41 @@ export const createOrganization = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+/* SETTINGS */
+export const getAdminSettings = async (req, res) => {
+  try {
+    const settings = await adminService.getAdminSettings();
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const updateAdminSettings = async (req, res) => {
+  try {
+    await adminService.updateAdminSettings(req.body);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const uploadLogo = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    // For Vercel/Memory storage, convert buffer to Base64
+    const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+
+    res.json({
+      success: true,
+      url: base64Image
+    });
+  } catch (err) {
+    console.error('Error uploading logo:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

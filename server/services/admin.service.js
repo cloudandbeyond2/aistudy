@@ -219,12 +219,19 @@ export const getDashboardStatsWithOrgs = async () => {
   const organizations = await User.countDocuments({ isOrganization: true });
 
   // Count students linked to an organization
-  const orgStudents = await User.countDocuments({ organizationId: { $ne: null } });
+  const orgStudents = await User.countDocuments({ role: 'student' });
+
+  const admin = await Admin.findOne({ type: 'main' });
 
   return {
     ...stats,
     organizations,
-    orgStudents
+    orgStudents,
+    admin: {
+      email: stats.admin.email,
+      websiteName: admin?.websiteName || 'AIstudy',
+      websiteLogo: admin?.websiteLogo || '/logo.png'
+    }
   };
 };
 
@@ -284,4 +291,29 @@ export const createOrganization = async ({ email, password, institutionName, inc
 
   await newUser.save();
   return newUser;
+};
+
+/* ---------------- SETTINGS ---------------- */
+export const getAdminSettings = async () => {
+  const admin = await Admin.findOne({ type: 'main' });
+  return {
+    geminiApiKey: admin?.geminiApiKey || '',
+    unsplashApiKey: admin?.unsplashApiKey || '',
+    websiteName: admin?.websiteName || 'AIstudy',
+    websiteLogo: admin?.websiteLogo || '/logo.png'
+  };
+};
+
+export const updateAdminSettings = async (data) => {
+  await Admin.findOneAndUpdate(
+    { type: 'main' },
+    {
+      $set: {
+        geminiApiKey: data.geminiApiKey,
+        unsplashApiKey: data.unsplashApiKey,
+        websiteName: data.websiteName,
+        websiteLogo: data.websiteLogo
+      }
+    }
+  );
 };
