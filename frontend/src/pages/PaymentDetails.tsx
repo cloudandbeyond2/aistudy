@@ -156,34 +156,6 @@ const PaymentDetails = () => {
     },
   });
 
-  // const onSubmit = (data: FormValues) => {
-  //   setIsProcessing(true);
-  //   if (paymentMethod === 'paypal') {
-  //     startPayPal(data);
-  //   } else if (paymentMethod === 'stripe') {
-  //     startStripe();
-  //   } else if (paymentMethod === 'flutterwave') {
-  //     setIsProcessing(false);
-  //     handleFlutterPayment({
-  //       callback: (response) => {
-  //         sessionStorage.setItem('stripe', "" + response.transaction_id);
-  //         sessionStorage.setItem('method', 'flutterwave');
-  //         sessionStorage.setItem('plan', plan.name);
-  //         navigate('/payment-success/' + response.transaction_id);
-  //         closePaymentModal();
-  //       },
-  //       onClose: () => { },
-  //     });
-  //   } else if (paymentMethod === 'paystack') {
-  //     startPaystack(data);
-  //   } else if (paymentMethod === 'razorpay') {
-  //     startRazorpay(data);
-  //   } else {
-  //     return;
-  //   }
-
-  // };
-
 const onSubmit = (data: FormValues) => {
   setIsProcessing(true);
   
@@ -222,80 +194,131 @@ const onSubmit = (data: FormValues) => {
     return;
   }
 };
-  // async function startRazorpay(data: FormValues) {
+ 
 
-  //   const fullAddress = data.address + ' ' + data.state + ' ' + data.zipCode + ' ' + data.country;
-  //   let planId = razorpayPlanIdTwo;
-  //   if (plan.name === 'Monthly Plan') {
-  //     planId = razorpayPlanIdOne;
-  //   }
-  //   const dataToSend = {
-  //     plan: planId,
-  //     email: data.email,
-  //     fullAddress: fullAddress,
-  //     planType: plan.name === 'Monthly Plan' ? 'monthly' : 'yearly'
-  //   };
-  //   try {
-  //     const postURL = serverURL + '/api/razorpaycreate';
-  //     const res = await axios.post(postURL, dataToSend);
-  //     sessionStorage.setItem('method', 'razorpay');
-  //     setIsProcessing(false);
-  //     sessionStorage.setItem('plan', plan.name);
-  //     window.open(res.data.short_url, '_blank');
-  //     navigate('/payment-pending', { state: { sub: res.data.id, link: res.data.short_url, planName: plan.name, planCost: plan.price } });
-  //   } catch (error) {
-  //     console.error(error);
-  //     setIsProcessing(false);
-  //     toast({
-  //       title: "Error",
-  //       description: "Internal Server Error",
-  //     });
-  //   }
-  // }
+//   async function startRazorpay(data: FormValues) {
+//   const fullAddress = data.address + ' ' + data.state + ' ' + data.zipCode + ' ' + data.country;
+//   let planId = razorpayPlanIdTwo;
+//   if (plan.name === 'Monthly Plan') {
+//     planId = razorpayPlanIdOne;
+//   }
+//   const dataToSend = {
+//     plan: planId,
+//     email: data.email,
+//     fullAddress: fullAddress,
+//     planType: plan.name === 'Monthly Plan' ? 'monthly' : 'yearly'
+//   };
+//   try {
+//     const postURL = serverURL + '/api/razorpaycreate';
+//     const res = await axios.post(postURL, dataToSend);
+    
+//     // Already saved price/currency in onSubmit, just set method
+//     sessionStorage.setItem('method', 'razorpay');
+//     setIsProcessing(false);
+    
+//     window.open(res.data.short_url, '_blank');
+//     navigate('/payment-pending', { 
+//       state: { 
+//         sub: res.data.id, 
+//         link: res.data.short_url, 
+//         planName: plan.name, 
+//         planCost: plan.price,
+//         currency: plan.currency
+//       } 
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     setIsProcessing(false);
+//     toast({
+//       title: "Error",
+//       description: "Internal Server Error",
+//     });
+//   }
+// }
 
-  async function startRazorpay(data: FormValues) {
-  const fullAddress = data.address + ' ' + data.state + ' ' + data.zipCode + ' ' + data.country;
-  let planId = razorpayPlanIdTwo;
-  if (plan.name === 'Monthly Plan') {
+
+// In PaymentDetails.jsx - Fix startRazorpay function
+async function startRazorpay(data: FormValues) {
+  const fullAddress = `${data.address || ''} ${data.city || ''} ${data.state || ''} ${data.zipCode || ''} ${data.country || ''}`.trim();
+  
+  let planId = razorpayPlanIdTwo; // Default to yearly
+  let planType = 'yearly';
+  let planNameDisplay = 'Yearly';
+  
+  if (plan.name === 'Monthly' || plan.planType === 'monthly' || planId === 'monthly') {
     planId = razorpayPlanIdOne;
+    planType = 'monthly';
+    planNameDisplay = 'Monthly';
   }
+
+  // Save user data to session
+  const fullName = `${data.firstName || ''} ${data.lastName || ''}`.trim() || sessionStorage.getItem('mName') || 'Customer';
+  const userEmail = data.email || sessionStorage.getItem('email');
+  
+  sessionStorage.setItem('mName', fullName);
+  sessionStorage.setItem('email', userEmail);
+  sessionStorage.setItem('plan', planNameDisplay);
+  sessionStorage.setItem('price', plan.price.toString());
+  sessionStorage.setItem('planCurrency', plan.currency);
+  sessionStorage.setItem('planType', planType);
+  sessionStorage.setItem('uid', sessionStorage.getItem('uid') || '');
+
   const dataToSend = {
     plan: planId,
-    email: data.email,
+    email: userEmail,
     fullAddress: fullAddress,
-    planType: plan.name === 'Monthly Plan' ? 'monthly' : 'yearly'
+    planType: planType,
+    planName: planNameDisplay,
+    amount: parseFloat(plan.price),
+    currency: plan.currency,
+    userName: fullName
   };
+
   try {
+    setIsProcessing(true);
     const postURL = serverURL + '/api/razorpaycreate';
     const res = await axios.post(postURL, dataToSend);
     
-    // Already saved price/currency in onSubmit, just set method
-    sessionStorage.setItem('method', 'razorpay');
-    setIsProcessing(false);
-    
-    window.open(res.data.short_url, '_blank');
-    navigate('/payment-pending', { 
-      state: { 
-        sub: res.data.id, 
-        link: res.data.short_url, 
-        planName: plan.name, 
-        planCost: plan.price,
-        currency: plan.currency
-      } 
-    });
+    if (res.data.success !== false) {
+      sessionStorage.setItem('method', 'razorpay');
+      sessionStorage.setItem('subscriptionId', res.data.id);
+      sessionStorage.setItem('orderId', res.data.orderId);
+      
+      toast({
+        title: "Redirecting to payment",
+        description: "Please complete your payment",
+      });
+      
+      window.open(res.data.short_url, '_blank');
+      
+      navigate('/payment-pending', { 
+        state: { 
+          sub: res.data.id, 
+          link: res.data.short_url, 
+          planName: planNameDisplay, 
+          planCost: plan.price,
+          currency: plan.currency,
+          orderId: res.data.orderId
+        } 
+      });
+    } else {
+      throw new Error(res.data.message || 'Failed to create subscription');
+    }
   } catch (error) {
-    console.error(error);
-    setIsProcessing(false);
+    console.error('Razorpay error:', error);
     toast({
       title: "Error",
-      description: "Internal Server Error",
+      description: error.response?.data?.message || error.message || "Internal Server Error",
+      variant: "destructive"
     });
+  } finally {
+    setIsProcessing(false);
   }
 }
   async function startPaystack(data: FormValues) {
     let planId = paystackPlanIdTwo;
     let amountInZar = amountInZarTwo;
-    if (plan.name === 'Monthly Plan') {
+    if (plan.name === 'Monthly') {
       planId = paystackPlanIdOne;
       amountInZar = amountInZarOne;
     }
@@ -327,9 +350,9 @@ const onSubmit = (data: FormValues) => {
     public_key: flutterwavePublicKey,
     tx_ref: Date.now(),
     currency: 'USD',
-    amount: plan.name === 'Monthly Plan' ? MonthCost : YearCost,
+    amount: plan.name === 'Monthly' ? MonthCost : YearCost,
     payment_options: "card",
-    payment_plan: plan.name === 'Monthly Plan' ? flutterwavePlanIdOne : flutterwavePlanIdTwo,
+    payment_plan: plan.name === 'Monthly' ? flutterwavePlanIdOne : flutterwavePlanIdTwo,
     customer: {
       email: sessionStorage.getItem('email'),
       name: sessionStorage.getItem('mName'),
@@ -345,7 +368,7 @@ const onSubmit = (data: FormValues) => {
 
   async function startStripe() {
     let planId = stripePlanIdTwo;
-    if (plan.name === 'Monthly Plan') {
+    if (plan.name === 'Monthly') {
       planId = stripePlanIdOne;
     }
     const dataToSend = {

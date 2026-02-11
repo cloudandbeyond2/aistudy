@@ -1,11 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useBranding } from '@/contexts/BrandingContext';
-import { Facebook, X, Instagram, Linkedin } from 'lucide-react';
+import { Facebook, X, Instagram, Linkedin, Send } from 'lucide-react';
+import axios from 'axios';
+import { serverURL } from '@/constants';
+import { useToast } from '@/hooks/use-toast';
 
 const Footer = () => {
   const { appName, appLogo } = useBranding();
   const currentYear = new Date().getFullYear();
+  const [email, setEmail] = React.useState('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { toast } = useToast();
 
   const socialLinks = [
     {
@@ -25,6 +31,31 @@ const Footer = () => {
       url: 'https://www.linkedin.com/in'
     }
   ];
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setIsSubmitting(true);
+    try {
+      const res = await axios.post(`${serverURL}/api/subscribe`, { email });
+      if (res.data.success) {
+        toast({
+          title: "Subscribed!",
+          description: "Thank you for joining our newsletter.",
+        });
+        setEmail('');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <footer className="bg-slate-950 text-slate-400 py-20 border-t border-slate-900">
@@ -108,11 +139,32 @@ const Footer = () => {
             <p className="mb-8 text-lg">
               Actionable AI insights, learning resources, and updates — straight to your inbox.
             </p>
-            <input
-              type="email"
-              placeholder="Your email address"
-              className="w-full bg-slate-900 border-slate-800 text-white rounded-2xl px-6 py-4"
-            />
+            <form onSubmit={handleSubscribe} className="space-y-3">
+              <div className="relative group">
+                <input
+                  type="email"
+                  placeholder="Your email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 text-white rounded-2xl px-6 py-4 pr-14 focus:outline-none focus:border-primary transition-all text-lg"
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-11 w-11 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed group-hover:scale-105"
+                >
+                  {isSubmitting ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></div>
+                  ) : (
+                    <Send className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 italic px-2">
+                We respect your privacy. Unsubscribe at any time.
+              </p>
+            </form>
           </div>
         </div>
 

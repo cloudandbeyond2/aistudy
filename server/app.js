@@ -44,6 +44,7 @@ import userRoutes from './routes/user.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import orgRoutes from './routes/org.routes.js';
 import organizationEnquiryRoutes from "./routes/organizationEnquiry.routes.js";
+import subscriberRoutes from './routes/subscriber.routes.js';
 
 
 
@@ -111,6 +112,7 @@ app.use('/api', chatRoutes);
 app.use('/api', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use("/api/organization-enquiries", organizationEnquiryRoutes);
+app.use('/api', subscriberRoutes);
 
 
 

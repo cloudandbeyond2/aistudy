@@ -72,6 +72,7 @@ import AdminOrganizations from "./pages/admin/AdminOrganizations";
 import AdminCreateOrganization from "./pages/admin/AdminCreateOrganization";
 import AdminOrganizationDetails from "./pages/admin/AdminOrganizationDetails";
 import AdminOrganizationEnquiries from "./pages/admin/AdminOrganizationEnquiries";
+import AdminSubscribers from "./pages/admin/AdminSubscribers";
 
 import SubscriptionBillingPolicy from "./pages/SubscriptionBillingPolicy";
 import RefundPolicy from "./pages/RefundPolicy";

@@ -34,7 +34,8 @@ import {
   Settings,
   ClipboardList,
   Globe,
-  Building2
+  Building2,
+  Mail
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -153,6 +154,15 @@ const AdminLayout = () => {
                   <Link to="/admin/orders" className={cn(isActive('/admin/orders') && "text-primary")}>
                     <ClipboardList />
                     <span>Order History</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Subscribers" isActive={isActive('/admin/subscribers')}>
+                  <Link to="/admin/subscribers" className={cn(isActive('/admin/subscribers') && "text-primary")}>
+                    <Mail />
+                    <span>Subscribers</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
