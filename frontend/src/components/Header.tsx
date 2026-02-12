@@ -75,6 +75,26 @@ const Header = () => {
     navigate('/login');
   };
 
+  const handleMobileNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+
+    const destinationId = href.substring(1);
+    const destinationElement = document.getElementById(destinationId);
+
+    if (destinationElement) {
+      // Close the menu first
+      setIsMobileMenuOpen(false);
+
+      // Wait for menu animation to complete, then scroll
+      setTimeout(() => {
+        window.scrollTo({
+          top: destinationElement.offsetTop - 80, // Adjust for header height
+          behavior: 'smooth',
+        });
+      }, 300); // Match the animation duration
+    }
+  };
+
   return (
     <motion.header
       initial={{ y: -100 }}
@@ -256,16 +276,19 @@ const Header = () => {
             className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800"
           >
             <div className="p-8 flex flex-col space-y-2">
-              {['Features', 'How It Works', 'Pricing'].map((item) => (
-                <a
-                  key={item}
-                  href={`#${item.toLowerCase().replace(/\s+/g, '-')}`}
-                  className="px-4 py-4 text-xl font-bold text-slate-800 dark:text-white hover:text-primary rounded-2xl hover:bg-slate-50 dark:hover:bg-white/10 transition"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {item}
-                </a>
-              ))}
+              {['Features', 'How It Works', 'Pricing'].map((item) => {
+                const href = `#${item.toLowerCase().replace(/\s+/g, '-')}`;
+                return (
+                  <a
+                    key={item}
+                    href={href}
+                    className="px-4 py-4 text-xl font-bold text-slate-800 dark:text-white hover:text-primary rounded-2xl hover:bg-slate-50 dark:hover:bg-white/10 transition"
+                    onClick={(e) => handleMobileNavClick(e, href)}
+                  >
+                    {item}
+                  </a>
+                );
+              })}
 
               <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
                 {isAuth ? (
