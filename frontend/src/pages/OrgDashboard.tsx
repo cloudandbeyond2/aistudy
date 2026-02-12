@@ -14,6 +14,7 @@ import axios from 'axios';
 import { serverURL } from '@/constants';
 import SEO from '@/components/SEO';
 import * as XLSX from 'xlsx';
+import RichTextEditor from '@/components/RichTextEditor';
 
 const CourseForm = ({ course, setCourse, onSave, isEdit = false }: any) => {
     if (!course) return null;
@@ -32,7 +33,18 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false }: any) => {
 
     const updateSubtopic = (topicIndex: number, subIndex: number, field: string, value: any) => {
         const updatedTopics = [...course.topics];
-        updatedTopics[topicIndex].subtopics[subIndex] = { ...updatedTopics[topicIndex].subtopics[subIndex], [field]: value };
+        let finalValue = value;
+
+        // Extract YouTube ID if it's a videoUrl
+        if (field === 'videoUrl' && value) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = value.match(regExp);
+            if (match && match[2].length === 11) {
+                finalValue = match[2];
+            }
+        }
+
+        updatedTopics[topicIndex].subtopics[subIndex] = { ...updatedTopics[topicIndex].subtopics[subIndex], [field]: finalValue };
         setCourse({ ...course, topics: updatedTopics });
     };
 
@@ -66,11 +78,27 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false }: any) => {
                 </div>
                 <div className="grid gap-2">
                     <Label>Description</Label>
-                    <Textarea value={course.description} onChange={(e) => setCourse({ ...course, description: e.target.value })} placeholder="Course overview..." />
+                    <RichTextEditor
+                        value={course.description || ''}
+                        onChange={(content) => setCourse({ ...course, description: content })}
+                        placeholder="Course overview..."
+                        className="min-h-[150px]"
+                    />
                 </div>
                 <div className="grid gap-2">
                     <Label>Assign to Department (Optional)</Label>
                     <Input value={course.department} onChange={(e) => setCourse({ ...course, department: e.target.value })} placeholder="e.g., Computer Science" />
+                </div>
+                <div className="grid gap-2">
+                    <Label>Course Type</Label>
+                    <select
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={course.type || 'video & text course'}
+                        onChange={(e) => setCourse({ ...course, type: e.target.value })}
+                    >
+                        <option value="video & text course">Video & Text Course</option>
+                        <option value="image & text course">Image & Text Course</option>
+                    </select>
                 </div>
             </div>
 
@@ -118,17 +146,26 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false }: any) => {
                                             />
                                             <Button size="sm" variant="ghost" onClick={() => removeSubtopic(tIdx, sIdx)}><X className="w-3 h-3" /></Button>
                                         </div>
-                                        <Textarea
-                                            value={sub.content}
-                                            onChange={(e) => updateSubtopic(tIdx, sIdx, 'content', e.target.value)}
+                                        <div className="flex items-center gap-2">
+                                            <Video className="w-4 h-4 text-muted-foreground" />
+                                            <Input
+                                                className="h-8 text-xs bg-muted/20"
+                                                value={sub.videoUrl || ''}
+                                                onChange={(e) => updateSubtopic(tIdx, sIdx, 'videoUrl', e.target.value)}
+                                                placeholder="YouTube Video URL (Optional)"
+                                            />
+                                        </div>
+                                        <RichTextEditor
+                                            value={sub.content || ''}
+                                            onChange={(content) => updateSubtopic(tIdx, sIdx, 'content', content)}
                                             placeholder="Content for this subtopic..."
-                                            className="min-h-[100px] text-sm"
+                                            className="min-h-[200px]"
                                         />
                                     </div>
                                 ))}
                                 <Button type="button" variant="ghost" size="sm" className="w-full border-dashed border-2" onClick={() => {
                                     const updated = [...course.topics];
-                                    updated[tIdx].subtopics.push({ title: '', content: '', order: 0 });
+                                    updated[tIdx].subtopics.push({ title: '', content: '', videoUrl: '', order: 0 });
                                     setCourse({ ...course, topics: updated });
                                 }}>
                                     <Plus className="w-4 h-4 mr-2" /> Add Subtopic
@@ -1033,7 +1070,12 @@ const OrgDashboard = () => {
                                             <Label>Topic</Label>
                                             <Input value={newAssignment.topic} onChange={(e) => setNewAssignment({ ...newAssignment, topic: e.target.value })} />
                                             <Label>Description</Label>
-                                            <Textarea value={newAssignment.description} onChange={(e) => setNewAssignment({ ...newAssignment, description: e.target.value })} />
+                                            <RichTextEditor
+                                                value={newAssignment.description || ''}
+                                                onChange={(content) => setNewAssignment({ ...newAssignment, description: content })}
+                                                placeholder="Assignment instructions..."
+                                                className="min-h-[150px]"
+                                            />
                                             <Label>Due Date</Label>
                                             <Input type="date" value={newAssignment.dueDate} onChange={(e) => setNewAssignment({ ...newAssignment, dueDate: e.target.value })} />
                                             <Label>Department (Optional)</Label>
@@ -1198,7 +1240,12 @@ const OrgDashboard = () => {
                                         </div>
                                         <div className="grid gap-2">
                                             <Label>Description</Label>
-                                            <Textarea value={newProject.description} onChange={(e) => setNewProject({ ...newProject, description: e.target.value })} placeholder="Project guidelines..." />
+                                            <RichTextEditor
+                                                value={newProject.description || ''}
+                                                onChange={(content) => setNewProject({ ...newProject, description: content })}
+                                                placeholder="Project guidelines..."
+                                                className="min-h-[150px]"
+                                            />
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="grid gap-2">
@@ -1336,7 +1383,12 @@ const OrgDashboard = () => {
                                 </div>
                                 <div className="grid gap-2">
                                     <Label>Message</Label>
-                                    <Textarea value={newNotice.content} onChange={(e) => setNewNotice({ ...newNotice, content: e.target.value })} placeholder="Write your message here..." />
+                                    <RichTextEditor
+                                        value={newNotice.content || ''}
+                                        onChange={(content) => setNewNotice({ ...newNotice, content: content })}
+                                        placeholder="Write your message here..."
+                                        className="min-h-[200px]"
+                                    />
                                 </div>
                                 <Button onClick={handleCreateNotice}><Bell className="w-4 h-4 mr-2" /> Post Notice</Button>
                             </div>

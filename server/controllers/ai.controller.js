@@ -60,7 +60,7 @@ export const generatePrompt = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-flash-latest'
+      model: 'gemini-1.5-flash'
     });
 
     const result = await model.generateContent(prompt);
@@ -120,7 +120,7 @@ export const generateHtml = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-flash-latest',
+      model: 'gemini-1.5-flash',
       safetySettings
     });
 
@@ -135,7 +135,7 @@ export const generateHtml = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      text: html
+      generatedText: html
     });
   } catch (error) {
     console.log('Generate HTML error:', error);
@@ -311,7 +311,7 @@ export const generateAIExam = async (req, res) => {
 
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-flash-latest',
+      model: 'gemini-1.5-flash',
       safetySettings
     });
 

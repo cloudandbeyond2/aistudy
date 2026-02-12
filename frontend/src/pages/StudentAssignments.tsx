@@ -43,12 +43,14 @@ const StudentAssignments = () => {
                 {assignments.length > 0 ? assignments.map((assign: any) => (
                     <Card key={assign._id} className="hover:shadow-md transition-all">
                         <CardHeader>
-                            <CardTitle className="line-clamp-1">{assign.topic}</CardTitle>
+                            <CardTitle className="text-lg line-clamp-1">{assign.topic}</CardTitle>
                             <CardDescription>Due: {new Date(assign.dueDate).toLocaleDateString()}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="flex justify-between items-center mb-4">
-                                <p className="border-b pb-2 line-clamp-3 text-sm text-muted-foreground flex-1">{assign.description}</p>
+                                <p className="border-b pb-2 line-clamp-3 text-sm text-muted-foreground flex-1">
+                                    {(assign.description || '').replace(/<[^>]*>?/gm, '')}
+                                </p>
                                 {assign.latestGrade && (
                                     <div className="ml-2 flex flex-col items-end">
                                         <span className="text-xs font-semibold text-muted-foreground uppercase">Grade</span>
@@ -86,7 +88,7 @@ const StudentAssignments = () => {
 
                                 if (isOverdue) {
                                     return (
-                                        <Button className="w-full" size="sm" variant="outline" disabled className="text-destructive border-destructive/50 bg-destructive/5">
+                                        <Button className="w-full text-destructive border-destructive/50 bg-destructive/5" size="sm" variant="outline" disabled>
                                             <span className="mr-2">⚠️</span> Overdue
                                         </Button>
                                     );

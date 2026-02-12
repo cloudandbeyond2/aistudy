@@ -45,7 +45,9 @@ const StudentProjects = () => {
                                 {p.dueDate && <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(p.dueDate).toLocaleDateString()}</span>}
                             </div>
                             <CardTitle className="text-lg line-clamp-1">{p.title}</CardTitle>
-                            <CardDescription className="line-clamp-3 mt-2 flex-grow">{p.description}</CardDescription>
+                            <CardDescription className="line-clamp-3 mt-2 flex-grow">
+                                {(p.description || '').replace(/<[^>]*>?/gm, '')}
+                            </CardDescription>
                         </CardHeader>
                         <CardContent className="mt-auto pt-4 border-t">
                             <div className="flex items-center justify-between text-xs text-muted-foreground">

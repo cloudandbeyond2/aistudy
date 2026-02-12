@@ -1260,7 +1260,7 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
     setIsLoadingCourse(true);
 
     try {
-      if (type === 'Video & Text Course') {
+      if (type === 'video & text course') {
         const query = `${firstSubtopic.title} ${courseName} in english`;
         await sendVideo(query);
       } else {
@@ -1268,7 +1268,12 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
         const imagePrompt = `Example of ${firstSubtopic.title} in ${courseName}`;
         await sendPrompt(prompt, imagePrompt);
       }
-    } catch {
+    } catch (error: any) {
+      console.error("Course Generation Error:", error);
+      toast({
+        title: "Generation Failed",
+        description: error.response?.data?.message || error.message || "An error occurred during course generation."
+      });
       setIsLoadingCourse(false);
     }
   }
@@ -1368,23 +1373,23 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
         {courseName.toUpperCase()}
       </h1>
 
-   <ScrollArea className="h-[70vh]">
-  <div className="max-w-3xl mx-auto space-y-8 px-2">
-    {getCourseTopics()?.map((topic: any, i: number) => (
-      <div key={i} className="space-y-4">
-        {/* TOPIC */}
-        <Card className="bg-black text-white rounded-md">
-          <CardContent className="px-6 py-3 text-base font-semibold">
-            {topic.title}
-          </CardContent>
-        </Card>
+      <ScrollArea className="h-[70vh]">
+        <div className="max-w-3xl mx-auto space-y-8 px-2">
+          {getCourseTopics()?.map((topic: any, i: number) => (
+            <div key={i} className="space-y-4">
+              {/* TOPIC */}
+              <Card className="bg-black text-white rounded-md">
+                <CardContent className="px-6 py-3 text-base font-semibold">
+                  {topic.title}
+                </CardContent>
+              </Card>
 
-        {/* SUBTOPICS */}
-        <div className="ml-6 space-y-2">
-          {topic.subtopics?.map((s: any, j: number) => (
-            <div
-              key={j}
-              className="
+              {/* SUBTOPICS */}
+              <div className="ml-6 space-y-2">
+                {topic.subtopics?.map((s: any, j: number) => (
+                  <div
+                    key={j}
+                    className="
                 flex items-center
                 px-4 py-2
                 border border-gray-300
@@ -1392,15 +1397,15 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
                 text-sm text-gray-700
                 bg-white
               "
-            >
-              {s.title}
+                  >
+                    {s.title}
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
-      </div>
-    ))}
-  </div>
-</ScrollArea>
+      </ScrollArea>
 
       <div className="flex justify-center gap-4">
         <Button variant="outline" onClick={onClose}>

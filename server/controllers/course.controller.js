@@ -4,6 +4,7 @@ import Lang from '../models/Lang.js';
 import { getUnsplashApi } from '../config/unsplash.js';
 import IssuedCertificate from '../models/IssuedCertificate.js';
 import Notification from '../models/Notification.js';
+import StudentProgress from '../models/StudentProgress.js';
 
 /**
  * CREATE COURSE
@@ -279,8 +280,8 @@ export const getShareableCourse = async (req, res) => {
             subtopics: t.subtopics.map(s => ({
               title: s.title,
               theory: s.content,
-              youtube: s.videoUrl,
-              image: s.videoUrl // Fallback for image courses
+              youtube: course.type === 'video & text course' ? s.videoUrl : '',
+              image: course.type === 'image & text course' ? s.videoUrl : s.videoUrl // Allow as fallback
             }))
           })),
           quizzes: course.quizzes
@@ -295,5 +296,85 @@ export const getShareableCourse = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
+/**
+ * UPDATE STUDENT PROGRESS
+ */
+export const updateStudentProgress = async (req, res) => {
+  const { userId, courseId, topicTitle, subtopicTitle, totalSubtopics } = req.body;
 
+  try {
+    let progress = await StudentProgress.findOne({ userId, courseId });
+
+    if (!progress) {
+      progress = new StudentProgress({
+        userId,
+        courseId,
+        completedSubtopics: [],
+        totalSubtopics
+      });
+    }
+
+    // Check if already completed
+    const alreadyDone = progress.completedSubtopics.some(
+      s => s.topicTitle === topicTitle && s.subtopicTitle === subtopicTitle
+    );
+
+    if (!alreadyDone) {
+      progress.completedSubtopics.push({ topicTitle, subtopicTitle });
+      progress.lastUpdated = Date.now();
+
+      // Update totalSubtopics if changed (e.g. course updated)
+      if (totalSubtopics) progress.totalSubtopics = totalSubtopics;
+
+      // Calculate percentage
+      if (progress.totalSubtopics > 0) {
+        progress.percentage = Math.round((progress.completedSubtopics.length / progress.totalSubtopics) * 100);
+      }
+
+      await progress.save();
+    }
+
+    res.json({
+      success: true,
+      progress: {
+        percentage: progress.percentage,
+        completedSubtopics: progress.completedSubtopics
+      }
+    });
+  } catch (error) {
+    console.error('updateStudentProgress error:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+/**
+ * GET STUDENT PROGRESS
+ */
+export const getStudentProgress = async (req, res) => {
+  const { userId, courseId } = req.query;
+
+  try {
+    const progress = await StudentProgress.findOne({ userId, courseId });
+    if (!progress) {
+      return res.json({
+        success: true,
+        progress: {
+          percentage: 0,
+          completedSubtopics: []
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      progress: {
+        percentage: progress.percentage,
+        completedSubtopics: progress.completedSubtopics
+      }
+    });
+  } catch (error) {
+    console.error('getStudentProgress error:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
 

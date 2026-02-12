@@ -9,6 +9,7 @@ import bcrypt from 'bcrypt';
 import Meeting from '../models/Meeting.js';
 import Project from '../models/Project.js';
 import Material from '../models/Material.js';
+import StudentProgress from '../models/StudentProgress.js';
 // import { generateAssignments } from './ai.controller.js'; // Will implement this export next
 
 /**
@@ -527,11 +528,18 @@ export const getStudentCourses = async (req, res) => {
             ]
         }).sort({ createdAt: -1 });
 
-        console.log('Found courses:', { orgCoursesCount: orgCourses.length, aiCoursesCount: aiCourses.length });
-
         const combined = [...orgCourses, ...aiCourses];
 
-        res.json({ success: true, courses: combined });
+        // Fetch progress for each course
+        const coursesWithProgress = await Promise.all(combined.map(async (course) => {
+            const progress = await StudentProgress.findOne({ userId: studentId, courseId: course._id });
+            return {
+                ...((course.toObject ? course.toObject() : course)),
+                progressPercentage: progress?.percentage || 0
+            };
+        }));
+
+        res.json({ success: true, courses: coursesWithProgress });
     } catch (error) {
         console.error('Get student courses error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
@@ -794,6 +802,24 @@ export const deleteMaterial = async (req, res) => {
         await Material.findByIdAndDelete(req.params.id);
         res.json({ success: true, message: 'Material deleted' });
     } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * UPLOAD COURSE IMAGE
+ */
+export const uploadImage = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No file uploaded' });
+        }
+
+        // Return the path to the uploaded file
+        const fileUrl = `/uploads/courses/${req.file.filename}`;
+        res.json({ success: true, url: fileUrl });
+    } catch (error) {
+        console.error('Upload image error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };

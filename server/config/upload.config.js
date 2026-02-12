@@ -55,3 +55,37 @@ export const uploadLogo = multer({
     },
     fileFilter: logoFileFilter
 });
+
+const courseImageUploadDir = 'uploads/courses';
+if (!process.env.VERCEL) {
+    if (!fs.existsSync(courseImageUploadDir)) fs.mkdirSync(courseImageUploadDir, { recursive: true });
+}
+
+const courseImageStorage = process.env.VERCEL
+    ? multer.memoryStorage()
+    : multer.diskStorage({
+        destination: (req, file, cb) => {
+            cb(null, courseImageUploadDir);
+        },
+        filename: (req, file, cb) => {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            cb(null, 'course-' + uniqueSuffix + path.extname(file.originalname));
+        }
+    });
+
+const imageFileFilter = (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Only JPEG, JPG, PNG, GIF, and WebP files are allowed!'), false);
+    }
+};
+
+export const uploadCourseImage = multer({
+    storage: courseImageStorage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB
+    },
+    fileFilter: imageFileFilter
+});

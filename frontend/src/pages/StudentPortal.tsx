@@ -66,7 +66,8 @@ const StudentPortal = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {courses.length > 0 ? courses.map((course: any) => {
                     const title = course.title || course.mainTopic;
-                    const description = course.description || (course.content ? "AI Generated Course" : "");
+                    const rawDescription = course.description || (course.content ? "AI Generated Course" : "");
+                    const description = rawDescription.replace(/<[^>]*>?/gm, '');
                     let topicCount = 0;
                     if (course.topics) {
                         topicCount = course.topics.length;
@@ -89,12 +90,25 @@ const StudentPortal = () => {
                                 <CardDescription className="line-clamp-2">{description}</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                    <span className="flex items-center gap-1">
-                                        <FileText className="w-4 h-4" />
-                                        {topicCount} topics
-                                    </span>
-                                    <Button size="sm" variant="outline" className="group-hover:bg-primary group-hover:text-primary-foreground">View Course</Button>
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                        <span className="flex items-center gap-1">
+                                            <FileText className="w-4 h-4" />
+                                            {topicCount} topics
+                                        </span>
+                                        <span className="font-medium text-primary">{course.progressPercentage || 0}% Complete</span>
+                                    </div>
+                                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                                        <div
+                                            className="bg-primary h-full transition-all duration-500"
+                                            style={{ width: `${course.progressPercentage || 0}%` }}
+                                        />
+                                    </div>
+                                    <div className="flex justify-end pt-2">
+                                        <Button size="sm" variant="outline" className="group-hover:bg-primary group-hover:text-primary-foreground">
+                                            {course.progressPercentage > 0 ? 'Continue Learning' : 'Start Learning'}
+                                        </Button>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>

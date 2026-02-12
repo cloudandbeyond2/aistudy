@@ -32,10 +32,11 @@ import {
     deleteProject,
     createMaterial,
     getMaterials,
-    deleteMaterial
+    deleteMaterial,
+    uploadImage
 } from '../controllers/org.controller.js';
 import Organization from '../models/Organization.js';
-import { uploadAssignment } from '../config/upload.config.js';
+import { uploadAssignment, uploadCourseImage } from '../config/upload.config.js';
 
 const router = express.Router();
 
@@ -98,5 +99,8 @@ router.delete('/org/project/:id', deleteProject);
 router.post('/org/material/create', createMaterial);
 router.get('/org/materials', getMaterials);
 router.delete('/org/material/:id', deleteMaterial);
+
+// File Uploads
+router.post('/org/upload/image', uploadCourseImage.single('image'), uploadImage);
 
 export default router;

@@ -289,8 +289,9 @@ const QuizPage = () => {
     async function updateResult(correct: number) {
         const marks = correct * 10;
         const marksString = "" + marks;
+        const userId = sessionStorage.getItem('uid');
         try {
-            const response = await axios.post(serverURL + '/api/updateresult', { courseId, marksString });
+            const response = await axios.post(serverURL + '/api/updateresult', { courseId, marksString, userId });
             if (response.data.success && response.data.certificateId) {
                 setCertificateId(response.data.certificateId);
             }

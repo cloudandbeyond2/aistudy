@@ -19,7 +19,7 @@ const courseFormSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters" }),
   subtopics: z.array(z.string()),
   topicsLimit: z.enum(["1", "4", "8"]),
-  courseType: z.enum(["Text & Image Course", "Video & Text Course"]),
+  courseType: z.enum(["image & text course", "video & text course"]),
   language: z.string().min(1, { message: "Please select a language" })
 });
 
@@ -33,7 +33,7 @@ const GenerateCourse = () => {
   const [generatedTopics, setGeneratedTopics] = useState({});
   const maxSubtopics = 5;
   const [selectedValue, setSelectedValue] = useState('1');
-  const [selectedType, setSelectedType] = useState('Text & Image Course');
+  const [selectedType, setSelectedType] = useState('image & text course');
   const [paidMember, setPaidMember] = useState(false);
   const [lang, setLang] = useState('English');
   const { toast } = useToast();
@@ -94,7 +94,7 @@ const GenerateCourse = () => {
       topic: '',
       subtopics: [],
       topicsLimit: "1",
-      courseType: "Text & Image Course",
+      courseType: "image & text course",
       language: "English"
     }
   });
@@ -360,11 +360,11 @@ const GenerateCourse = () => {
                               className="space-y-2"
                             >
                               <div className="flex items-center space-x-2 border p-3 rounded-md">
-                                <RadioGroupItem defaultChecked value="Text & Image Course" id="ct1" />
+                                <RadioGroupItem defaultChecked value="image & text course" id="ct1" />
                                 <FormLabel htmlFor="ct1" className="mb-0">Theory & Image Course</FormLabel>
                               </div>
                               <div onClick={paidToad} className="flex items-center space-x-2 border p-3 rounded-md">
-                                <RadioGroupItem disabled={!paidMember} value="Video & Text Course" id="ct2" />
+                                <RadioGroupItem disabled={!paidMember} value="video & text course" id="ct2" />
                                 <FormLabel htmlFor="ct2" className="mb-0">Video & Theory Course</FormLabel>
                               </div>
                             </RadioGroup>

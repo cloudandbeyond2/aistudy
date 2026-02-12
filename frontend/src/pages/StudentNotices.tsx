@@ -5,6 +5,7 @@ import { Bell } from 'lucide-react';
 import SEO from '@/components/SEO';
 import axios from 'axios';
 import { serverURL } from '@/constants';
+import StyledText from '@/components/styledText';
 
 const StudentNotices = () => {
     const [notices, setNotices] = useState([]);
@@ -49,9 +50,7 @@ const StudentNotices = () => {
                             <CardDescription>{new Date(notice.createdAt).toLocaleDateString()}</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="prose dark:prose-invert max-w-none">
-                                {notice.content}
-                            </div>
+                            <StyledText text={notice.content} />
                         </CardContent>
                     </Card>
                 )) : (

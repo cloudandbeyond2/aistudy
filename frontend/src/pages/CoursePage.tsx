@@ -12,7 +12,7 @@ import { Content } from '@tiptap/react'
 import { MinimalTiptapEditor } from '../minimal-tiptap'
 import YouTube from 'react-youtube';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award } from 'lucide-react';
+import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
@@ -78,6 +78,11 @@ const CoursePage = () => {
   const isMobile = useIsMobile();
   const mainContentRef = useRef<HTMLDivElement>(null);
   const [value, setValue] = useState<Content>('')
+  const [completedSubtopics, setCompletedSubtopics] = useState([]);
+  const [progressLoading, setProgressLoading] = useState(true);
+  const userId = sessionStorage.getItem('uid');
+  const userRole = sessionStorage.getItem('role');
+  const isOrgAdmin = userRole === 'org_admin' || sessionStorage.getItem('isOrganization') === 'true';
 
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -144,6 +149,28 @@ const CoursePage = () => {
     };
     fetchCourseData();
   }, [activeCourseId, courseData]);
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      if (courseId && userId) {
+        try {
+          const res = await axios.get(`${serverURL}/api/progress?userId=${userId}&courseId=${courseId}`);
+          if (res.data.success) {
+            setCompletedSubtopics(res.data.progress.completedSubtopics || []);
+            // Set percentage from backend initially
+            setPercentage(res.data.progress.percentage || 0);
+          }
+        } catch (error) {
+          console.error("Failed to fetch progress:", error);
+        } finally {
+          setProgressLoading(false);
+        }
+      } else {
+        setProgressLoading(false);
+      }
+    };
+    fetchProgress();
+  }, [courseId, userId]);
 
   async function getNotes() {
     try {
@@ -219,7 +246,7 @@ const CoursePage = () => {
 
     const updateQuizStatus = async () => {
       try {
-        const response = await axios.post(serverURL + '/api/getmyresult', { courseId });
+        const response = await axios.post(serverURL + '/api/getmyresult', { courseId, userId });
         if (response.data.success) {
           setIsQuizPassed(response.data.message);
         }
@@ -239,33 +266,6 @@ const CoursePage = () => {
     // Ensure window also scrolls to top
     window.scrollTo(0, 0);
 
-    const CountDoneTopics = (passed) => {
-      let doneCount = 0;
-      let totalTopics = 0;
-
-      const topicsData = jsonData['course_topics'] || (mainTopic ? jsonData[mainTopic.toLowerCase()] : []);
-      if (!topicsData) return;
-
-      topicsData.forEach((topic) => {
-        topic.subtopics.forEach((subtopic) => {
-          if (subtopic.done) {
-            doneCount++;
-          }
-          totalTopics++;
-        });
-      });
-      totalTopics = totalTopics + 1;
-
-      // Use the passed argument which represents the fresh quiz status
-      if (passed) {
-        doneCount = doneCount + 1;
-      }
-      const completionPercentage = Math.round((doneCount / totalTopics) * 100);
-      setPercentage(completionPercentage);
-      if (completionPercentage >= 100) { // loose comparison or number
-        setIsCompleted(true);
-      }
-    }
 
     if (!mainTopic) {
       // Only redirect if explicitly missing after load attempt
@@ -280,7 +280,6 @@ const CoursePage = () => {
 
         // If nothing selected yet, select first
         if (!selected) {
-          firstSubtopic.done = true
           setSelected(firstSubtopic.title)
           setTheory(firstSubtopic.theory);
           if (type === 'video & text course') {
@@ -295,7 +294,83 @@ const CoursePage = () => {
       sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
       CountDoneTopics(isQuizPassed);
     }
-  }, [courseData, jsonData]); // Depend on data availability
+  }, [courseData, jsonData, completedSubtopics, isOrgAdmin, isQuizPassed]); // Depend on consistency
+
+  const isSubtopicUnlocked = (topicTitle, subtopicTitle) => {
+    if (isOrgAdmin) return true;
+    if (!jsonData) return false;
+
+    const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+    if (!topicsList) return false;
+
+    // Flatten all subtopics to check order
+    const allSubtopics = [];
+    topicsList.forEach(t => {
+      t.subtopics.forEach(s => {
+        allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
+      });
+    });
+
+    const index = allSubtopics.findIndex(s => s.topicTitle === topicTitle && s.subtopicTitle === subtopicTitle);
+    if (index === 0) return true; // First subtopic always unlocked
+
+    const prevSubtopic = allSubtopics[index - 1];
+    return completedSubtopics.some(s => s.topicTitle === prevSubtopic.topicTitle && s.subtopicTitle === prevSubtopic.subtopicTitle);
+  };
+
+  const handleMarkAsComplete = async () => {
+    if (!userId || !courseId || !selected) return;
+
+    // Find current topic title
+    const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+    let currentTopicTitle = '';
+    topicsList.forEach(t => {
+      if (t.subtopics.some(s => s.title === selected)) {
+        currentTopicTitle = t.title;
+      }
+    });
+
+    // Count total subtopics
+    let total = 0;
+    topicsList.forEach(t => total += t.subtopics.length);
+
+    try {
+      const res = await axios.post(`${serverURL}/api/progress/update`, {
+        userId,
+        courseId,
+        topicTitle: currentTopicTitle,
+        subtopicTitle: selected,
+        totalSubtopics: total
+      });
+
+      if (res.data.success) {
+        setCompletedSubtopics(res.data.progress.completedSubtopics);
+        setPercentage(res.data.progress.percentage);
+
+        // Find next subtopic and select it
+        const allSubtopics = [];
+        topicsList.forEach(t => {
+          t.subtopics.forEach(s => {
+            allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
+          });
+        });
+
+        const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
+        if (currentIndex < allSubtopics.length - 1) {
+          const next = allSubtopics[currentIndex + 1];
+          handleSelect(next.topicTitle, next.subtopicTitle);
+        } else {
+          toast({
+            title: "Course Completed!",
+            description: "You've finished all lessons. You can now take the quiz.",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to update progress:", error);
+      toast({ title: "Error", description: "Failed to save progress" });
+    }
+  };
 
   const loadMessages = async () => {
     try {
@@ -361,23 +436,35 @@ const CoursePage = () => {
     }
   }, [isQuizPassed]);
 
-  const CountDoneTopics = () => {
+  const CountDoneTopics = (passed = isQuizPassed) => {
+    if (isOrgAdmin) {
+      setPercentage(100);
+      setIsCompleted(true);
+      return;
+    }
+
+    if (!jsonData) return;
+
     let doneCount = 0;
     let totalTopics = 0;
 
-    const topicsData = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+    const topicsData = jsonData['course_topics'] || (mainTopic ? jsonData[mainTopic.toLowerCase()] : []);
+    if (!topicsData) return;
+
     topicsData.forEach((topic) => {
-
       topic.subtopics.forEach((subtopic) => {
-
-        if (subtopic.done) {
+        const isDone = completedSubtopics.some(
+          s => s.topicTitle === topic.title && s.subtopicTitle === subtopic.title
+        );
+        if (isDone) {
           doneCount++;
         }
         totalTopics++;
       });
     });
     totalTopics = totalTopics + 1;
-    if (isQuizPassed) {
+
+    if (passed) {
       doneCount = doneCount + 1;
     }
     const completionPercentage = Math.round((doneCount / totalTopics) * 100);
@@ -394,6 +481,10 @@ const CoursePage = () => {
       const mSubTopic = mTopic?.subtopics.find(subtopic => subtopic.title === sub);
 
       if (mSubTopic.theory === '' || mSubTopic.theory === undefined || mSubTopic.theory === null) {
+        if (!isSubtopicUnlocked(topics, sub)) {
+          toast({ title: "Locked", description: "Complete previous lessons to unlock this one." });
+          return;
+        }
         if (type === 'video & text course') {
 
           const query = `${mSubTopic.title} ${mainTopic} in english`;
@@ -866,6 +957,29 @@ const CoursePage = () => {
   async function redirectExam() {
     if (isLoading) return;
 
+    // Check if all subtopics are completed
+    if (!isOrgAdmin && jsonData) {
+      const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+      if (topicsList) {
+        let allDone = true;
+        topicsList.forEach(t => {
+          t.subtopics.forEach(s => {
+            if (!completedSubtopics.some(cs => cs.topicTitle === t.title && cs.subtopicTitle === s.title)) {
+              allDone = false;
+            }
+          });
+        });
+
+        if (!allDone) {
+          toast({
+            title: "Quiz Locked",
+            description: "Please complete all lessons before taking the quiz.",
+          });
+          return;
+        }
+      }
+    }
+
     // Check for manual quizzes first
     if (jsonData?.quizzes && Array.isArray(jsonData.quizzes) && jsonData.quizzes.length > 0) {
       const manualQuizzes = jsonData.quizzes.map((q, index) => ({
@@ -1032,15 +1146,24 @@ const CoursePage = () => {
             <AccordionContent className="pl-2">
               {topic.subtopics.map((subtopic) => (
                 <div
-                  onClick={() => handleSelect(topic.title, subtopic.title)}
+                  onClick={() => {
+                    if (isSubtopicUnlocked(topic.title, subtopic.title)) {
+                      handleSelect(topic.title, subtopic.title);
+                    } else {
+                      toast({ title: "Locked", description: "Complete previous lessons to unlock this one." });
+                    }
+                  }}
                   key={subtopic.title}
                   className={cn(
-                    "flex items-center px-4 py-2 rounded-md hover:bg-accent/50 transition-colors cursor-pointer",
+                    "flex items-center px-4 py-2 rounded-md transition-colors",
+                    isSubtopicUnlocked(topic.title, subtopic.title) ? "cursor-pointer hover:bg-accent/50" : "opacity-50 cursor-not-allowed",
                     selected === subtopic.title && "bg-accent/50 font-medium text-primary"
                   )}
                 >
-                  {subtopic.done && (
+                  {completedSubtopics.some(s => s.topicTitle === topic.title && s.subtopicTitle === subtopic.title) ? (
                     <span className="mr-2 text-primary">✓</span>
+                  ) : !isSubtopicUnlocked(topic.title, subtopic.title) && (
+                    <Lock className="w-3 h-3 mr-2 opacity-50" />
                   )}
                   <span className="text-sm">{subtopic.title}</span>
                 </div>
@@ -1222,10 +1345,10 @@ const CoursePage = () => {
                 <Home className="h-4 w-4 mr-1" /> Home
               </Link>
             </Button>
-            {plan !== "free" && (
-              <Button onClick={certificateCheck} variant="ghost" size="sm" asChild>
+            {(plan !== "free" || isOrgAdmin || userRole === 'student') && isQuizPassed && (
+              <Button onClick={certificateCheck} variant="default" size="sm" asChild className="bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 shadow-none">
                 <span className="cursor-pointer">
-                  <Award className="h-4 w-4 mr-1" /> Certificate
+                  <Award className="h-4 w-4 mr-1" /> Download Certificate
                 </span>
               </Button>
             )}
@@ -1272,16 +1395,32 @@ const CoursePage = () => {
                 <>
                   <h1 className="text-3xl font-bold mb-6">{selected}</h1>
                   <div className="space-y-4">
-                    {type === 'video & text course' ?
-                      <div>
-                        <YouTube key={media} className='mb-5' videoId={media} opts={opts} />
-                      </div>
-                      :
-                      <div>
-                        <img className='overflow-hidden h-96 max-md:h-64' src={media} alt="Media" />
-                      </div>
-                    }
+                    {media && (
+                      type === 'video & text course' ?
+                        <div>
+                          <YouTube key={media} className='mb-5' videoId={media} opts={opts} />
+                        </div>
+                        :
+                        <div>
+                          <img className='overflow-hidden h-96 max-md:h-64' src={media} alt="Media" />
+                        </div>
+                    )}
                     <StyledText text={theory} />
+
+                    {!isOrgAdmin && (
+                      <div className="pt-8 border-t border-border mt-8 flex justify-center">
+                        <Button
+                          onClick={handleMarkAsComplete}
+                          className="px-8 py-6 text-lg gap-2"
+                        >
+                          {completedSubtopics.some(s => s.subtopicTitle === selected) ? (
+                            <>Next Lesson <CheckCircle2 className="w-5 h-5" /></>
+                          ) : (
+                            <>Mark as Complete & Next <CheckCircle2 className="w-5 h-5" /></>
+                          )}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </>
               }
@@ -1296,11 +1435,13 @@ const CoursePage = () => {
             <Home className="h-5 w-5" />
           </Link>
         </Button>
-        <Button onClick={certificateCheck} variant="ghost" size="sm" asChild>
-          <span>
-            <Award className="h-5 w-5" />
-          </span>
-        </Button>
+        {(plan !== "free" || isOrgAdmin || userRole === 'student') && isQuizPassed && (
+          <Button onClick={certificateCheck} variant="ghost" size="sm" asChild className="text-primary font-bold">
+            <span>
+              <Award className="h-5 w-5" />
+            </span>
+          </Button>
+        )}
         <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm">
           <Download className="h-5 w-5" />
         </Button>

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import { serverURL } from '@/constants';
+import StyledText from '@/components/styledText';
 import SEO from '@/components/SEO';
 import { ArrowLeft, Upload, Send, FileText, X } from 'lucide-react';
 
@@ -100,7 +101,7 @@ const AssignmentPage = () => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="bg-muted/30 p-4 rounded-lg">
-                        <p>{assignment?.description || 'Please complete the attached questions.'}</p>
+                        <StyledText text={assignment?.description || 'Please complete the following task.'} />
                     </div>
 
                     <div className="space-y-4">

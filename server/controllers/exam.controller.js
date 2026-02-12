@@ -10,35 +10,38 @@ import { sendMail } from '../services/mail.service.js';
  * UPDATE RESULT & ISSUE CERTIFICATE
  */
 export const updateResult = async (req, res) => {
-  const { courseId, marksString } = req.body;
+  const { courseId, marksString, userId: providedUserId } = req.body;
 
   try {
+    const course = await Course.findById(courseId);
+    let userId = providedUserId || (course ? course.user : null);
+
+    // If userId is still an email or invalid ObjectId, try to find the user
+    if (userId && !mongoose.Types.ObjectId.isValid(userId)) {
+      const userObj = await User.findOne({ email: userId });
+      if (userObj) userId = userObj._id;
+    }
+
     const newExam = new Exam({
       course: courseId,
+      userId: userId,
       marks: marksString,
       passed: true
     });
     await newExam.save();
 
-    const course = await Course.findOneAndUpdate(
-      { _id: courseId },
-      { $set: { completed: true, end: Date.now() } },
-      { new: true }
-    );
+    // Only update course as completed if it's the creator taking it
+    if (course && String(course.user) === String(userId)) {
+      await Course.findOneAndUpdate(
+        { _id: courseId },
+        { $set: { completed: true, end: Date.now() } }
+      );
+    }
 
     let studentName = 'Student';
-    let userId = course.user;
-
-    const userObj = await User.findOne({
-      $or: [
-        { _id: mongoose.Types.ObjectId.isValid(course.user) ? course.user : null },
-        { email: course.user }
-      ]
-    });
-
+    const userObj = await User.findById(userId);
     if (userObj) {
       studentName = userObj.mName;
-      userId = userObj._id;
     }
 
     let issuedCert = await IssuedCertificate.findOne({
@@ -55,7 +58,7 @@ export const updateResult = async (req, res) => {
         user: userId,
         course: courseId,
         studentName,
-        courseName: course.mainTopic
+        courseName: course ? course.mainTopic : 'Course'
       });
 
       await issuedCert.save();
@@ -79,13 +82,32 @@ export const updateResult = async (req, res) => {
  * GET MY RESULT
  */
 export const getMyResult = async (req, res) => {
-  const { courseId } = req.body;
+  const { courseId, userId: providedUserId } = req.body;
 
   try {
-    const exam = await Exam.findOne({
+    const course = await Course.findById(courseId);
+    let userId = providedUserId || (course ? course.user : null);
+
+    // Normalize userId
+    if (userId && !mongoose.Types.ObjectId.isValid(userId)) {
+      const userObj = await User.findOne({ email: userId });
+      if (userObj) userId = userObj._id;
+    }
+
+    let exam = await Exam.findOne({
       course: courseId,
+      userId: userId,
       passed: true
     });
+
+    // Fallback for legacy exams (without userId) if the user is the course creator
+    if (!exam && userId && course && String(course.user) === String(userId)) {
+      exam = await Exam.findOne({
+        course: courseId,
+        userId: { $exists: false },
+        passed: true
+      });
+    }
 
     const langObj = await Lang.findOne({ course: courseId });
     const language = langObj ? langObj.lang : 'English';
@@ -96,19 +118,6 @@ export const getMyResult = async (req, res) => {
         message: false,
         lang: language
       });
-    }
-
-    const course = await Course.findById(courseId);
-    let userId = null;
-
-    if (course) {
-      const userObj = await User.findOne({
-        $or: [
-          { _id: mongoose.Types.ObjectId.isValid(course.user) ? course.user : null },
-          { email: course.user }
-        ]
-      });
-      if (userObj) userId = userObj._id;
     }
 
     let certificateId = null;
