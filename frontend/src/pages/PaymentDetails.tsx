@@ -125,7 +125,7 @@ const PaymentMethodButton = ({
 const PaymentDetails = () => {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
-  const [paymentMethod, setPaymentMethod] = useState<string>('paypal');
+  const [paymentMethod, setPaymentMethod] = useState<string>('razorpay');
   const [isProcessing, setIsProcessing] = useState(false);
   const location = useLocation();
   const state = location.state as any;
@@ -814,11 +814,11 @@ async function startRazorpay(data: FormValues) {
                 <CardContent>
                   <Tabs value={paymentMethod} onValueChange={setPaymentMethod} className="w-full">
                     <TabsList className="grid grid-cols-5 mb-6">
+                      {razorpayEnabled ? <TabsTrigger value="razorpay">Razorpay</TabsTrigger> : null}
                       {paypalEnabled ? <TabsTrigger value="paypal">PayPal</TabsTrigger> : null}
                       {stripeEnabled ? <TabsTrigger value="stripe">Stripe</TabsTrigger> : null}
                       {flutterwaveEnabled ? <TabsTrigger value="flutterwave">Flutterwave</TabsTrigger> : null}
                       {paystackEnabled ? <TabsTrigger value="paystack">Paystack</TabsTrigger> : null}
-                      {razorpayEnabled ? <TabsTrigger value="razorpay">Razorpay</TabsTrigger> : null}
                     </TabsList>
 
                     <TabsContent value="paypal">
