@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import ShareOnSocial from 'react-share-on-social';
 import StatsCard from '@/components/dashboard/StatsCard';
 import { response } from 'express';
+import NotificationBell from '@/components/NotificationBell';
 
 const Dashboard = () => {
   const daysleftRaw = sessionStorage.getItem("daysLeft");
@@ -304,66 +305,64 @@ async function getDetails() {
           </div>
             {/* RIGHT */}
             {/* Star bala */}
-  <div className="flex gap-3">
-    <h6 onClick={()=>redirectPricing()}
-  style={{
-    display: "inline-block",
-    padding: "6px 14px",
-    cursor: "pointer",
-    borderRadius: "20px",
-    backgroundColor:
-      plan === "free"
-        ? "#E0E7FF" // Free
-        : isUnlimited
-        ? "#FEF3C7" // Unlimited (gold)
-        : plan === "monthly" && daysleft && daysleft > 7
-        ? "#ECFDF5" // Monthly active
-        : "#FEF2F2", // Expiring / expired
-    color:
-      plan === "free"
-        ? "#3730A3"
-        : isUnlimited
-        ? "#92400E"
-        : plan === "monthly" && daysleft && daysleft > 7
-        ? "#065F46"
-        : "#991B1B",
-    fontWeight: 600,
-    fontSize: "14px",
-    paddingTop: "10px",
-  }}
->
-  {plan === "free"
-    ? "🧪 Free Plan"
-    : isUnlimited
-    ? "👑 Unlimited Access"
-    : plan === "monthly"
-    ? daysleft && daysleft > 0
-      ? `📅 ${daysleft} days left`
-      : "⛔ Expired"
-    : daysleft && daysleft > 0
-    ? `⏳ ${daysleft} days left`
-    : "⛔ Expired"}
-</h6>
- 
+<div className="flex items-center gap-3 flex-wrap">
 
+  {/* Plan Badge */}
+  <h6
+    onClick={redirectPricing}
+    style={{
+      display: "inline-block",
+      padding: "8px 14px",
+      cursor: "pointer",
+      borderRadius: "20px",
+      backgroundColor:
+        plan === "free"
+          ? "#E0E7FF"
+          : isUnlimited
+          ? "#FEF3C7"
+          : "#ECFDF5",
+      color:
+        plan === "free"
+          ? "#3730A3"
+          : isUnlimited
+          ? "#92400E"
+          : "#065F46",
+      fontWeight: 600,
+      fontSize: "14px",
+    }}
+  >
+    {plan === "free"
+      ? "🧪 Free Plan"
+      : isUnlimited
+      ? "👑 Unlimited Access"
+      : `📅 ${daysleft} days left`}
+  </h6>
 
-
+  {/* View Website */}
   <Button
-  onClick={() => (window.location.href = websiteURL)}
-  variant="outline"
-  className="shadow-md"
->
-  View Website
-</Button>
+    onClick={() => (window.location.href = websiteURL)}
+    variant="outline"
+    className="shadow-md"
+  >
+    View Website
+  </Button>
 
-<Button
-      onClick={() =>courses.length === 1 && plan === 'free' ? redirectPricing():redirectCreate()}
-      className="shadow-md bg-gradient-to-r from-primary to-indigo-500 hover:from-indigo-500 hover:to-primary"
->
-      <Sparkles className="mr-2 h-4 w-4" />
-      Generate New Course
-    </Button>
-  </div>
+  {/* Generate */}
+  <Button
+    onClick={() =>
+      courses.length === 1 && plan === "free"
+        ? redirectPricing()
+        : redirectCreate()
+    }
+    className="shadow-md bg-gradient-to-r from-primary to-indigo-500 hover:from-indigo-500 hover:to-primary"
+  >
+    <Sparkles className="mr-2 h-4 w-4" />
+    Generate New Course
+  </Button>
+
+  {/* 🔔 Bell */}
+  <NotificationBell />
+</div>
         </div>
 
         {/* Stats Cards Section */}

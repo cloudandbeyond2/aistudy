@@ -130,7 +130,6 @@
 //   }
 // };
 
-
 // /**
 //  * SIGNIN
 //  */
@@ -275,8 +274,6 @@
 //   }
 // };
 
-
-
 // /**
 //  * FORGOT PASSWORD
 //  */
@@ -419,7 +416,6 @@
 // // };
 // // GET profile
 
-
 // export const updateProfile = async (req, res) => {
 //   const {
 //     uid,
@@ -497,11 +493,11 @@
 //     });
 //   }
 // };
-import User from '../models/User.js';
-import Admin from '../models/Admin.js';
-import crypto from 'crypto';
-import transporter from '../config/mail.js';
-import bcrypt from 'bcrypt';
+import User from "../models/User.js";
+import Admin from "../models/Admin.js";
+import crypto from "crypto";
+import transporter from "../config/mail.js";
+import bcrypt from "bcrypt";
 /**
  * SIGNUP
  */
@@ -516,12 +512,12 @@ export const signup = async (req, res) => {
       if (existingUser) {
         return res.json({
           success: false,
-          message: 'User with this email already exists'
+          message: "User with this email already exists",
         });
       }
 
       // 3. Generate verification token
-      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const verificationToken = crypto.randomBytes(32).toString("hex");
       const verificationExpires = Date.now() + 24 * 60 * 60 * 1000;
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -533,37 +529,111 @@ export const signup = async (req, res) => {
         phone,
         emailVerificationToken: verificationToken,
         emailVerificationExpires: verificationExpires,
-        isEmailVerified: false
+        isEmailVerified: false,
       });
       await newUser.save();
 
       // 4. Send verification email
       try {
-        const baseUrl = process.env.WEBSITE_URL.endsWith('/')
+        const baseUrl = process.env.WEBSITE_URL.endsWith("/")
           ? process.env.WEBSITE_URL.slice(0, -1)
           : process.env.WEBSITE_URL;
         const verificationLink = `${baseUrl}/verify-email/${verificationToken}`;
         await transporter.sendMail({
           from: process.env.EMAIL,
           to: email,
-          subject: `Verify your email for ${process.env.COMPANY || 'AIstudy'}`,
-          html: `<p>Hello ${mName}, click <a href="${verificationLink}">here</a> to verify your email.</p>`
+          subject: `Verify your email for ${process.env.COMPANY || "AIstudy"}`,
+          html: `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Email Verification</title>
+</head>
+
+<body style="margin:0;padding:0;background:#f2f2f2;font-family:Arial,Helvetica,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+<tr>
+<td align="center">
+
+<!-- MAIN CARD -->
+<table width="700" cellpadding="0" cellspacing="0"
+style="background:#e9e9e9;border-radius:10px;border:1px solid #d0d0d0;">
+
+<tr>
+<td style="padding:35px 40px; color:#333;">
+
+<!-- TITLE -->
+<h2 style="text-align:center;margin-top:0;margin-bottom:25px;color:#333;">
+Email Verification
+</h2>
+
+<!-- CONTENT -->
+<p>Hello <strong>${mName}</strong>,</p>
+
+<p>
+Thank you for signing up for <strong>${process.env.COMPANY || "Traininglabs Ai Solutions"}</strong>.
+Please click the button below to verify your email address and activate your account.
+</p>
+
+<!-- BUTTON -->
+<div style="text-align:center;margin:35px 0;">
+<a href="${verificationLink}"
+style="
+background:#1a73e8;
+color:#ffffff;
+text-decoration:none;
+padding:12px 26px;
+border-radius:6px;
+font-weight:bold;
+display:inline-block;
+font-size:15px;">
+Verify Email Address
+</a>
+</div>
+
+<p>This link will expire in 24 hours.</p>
+
+<p>If you did not create an account, no further action is required.</p>
+
+<hr style="border:none;border-top:1px solid #cfcfcf;margin:30px 0;">
+
+<!-- FOOTER -->
+<p style="text-align:center;font-size:12px;color:#666;margin-bottom:0;">
+© ${new Date().getFullYear()} ${process.env.COMPANY || "Traininglabs Ai Solutions"}. All rights reserved.
+</p>
+
+</td>
+</tr>
+</table>
+<!-- END CARD -->
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
+`,
         });
       } catch (mailErr) {
-        console.error('Mail Send Error:', mailErr);
+        console.error("Mail Send Error:", mailErr);
         return res.json({
           success: true,
-          message: 'Account created successfully, but verification email could not be sent.',
+          message:
+            "Account created successfully, but verification email could not be sent.",
           userId: newUser._id,
-          mailError: true
+          mailError: true,
         });
       }
 
       return res.json({
         success: true,
-        message: 'Account created! Please check your email to verify your account.',
+        message:
+          "Account created! Please check your email to verify your account.",
         userId: newUser._id,
-        verificationRequired: true
+        verificationRequired: true,
       });
     } else {
       // First user becomes admin
@@ -572,37 +642,37 @@ export const signup = async (req, res) => {
         email,
         mName,
         password: hashedPassword,
-        type: 'forever',
+        type: "forever",
         phone,
-        isEmailVerified: true
+        isEmailVerified: true,
       });
       await newUser.save();
 
       const newAdmin = new Admin({
         email,
         mName,
-        type: 'main'
+        type: "main",
       });
       await newAdmin.save();
 
       return res.json({
         success: true,
-        message: 'Account created successfully as Admin',
+        message: "Account created successfully as Admin",
         userId: newUser._id,
-        autoLogin: true
+        autoLogin: true,
       });
     }
   } catch (error) {
-    console.error('Signup Error Details:', {
+    console.error("Signup Error Details:", {
       message: error.message,
       stack: error.stack,
-      name: error.name
+      name: error.name,
     });
 
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
-      error: error.message
+      message: "Internal server error",
+      error: error.message,
     });
   }
 };
@@ -619,7 +689,7 @@ export const signin = async (req, res) => {
     if (!user) {
       return res.json({
         success: false,
-        message: 'Invalid email or password'
+        message: "Invalid email or password",
       });
     }
 
@@ -631,33 +701,33 @@ export const signin = async (req, res) => {
       if (user.isEmailVerified === false && user.emailVerificationToken) {
         return res.json({
           success: false,
-          message: 'Please verify your email before logging in. Check your inbox for the verification link.'
+          message:
+            "Please verify your email before logging in. Check your inbox for the verification link.",
         });
       }
 
       return res.json({
         success: true,
-        message: 'SignIn Successful',
-        userData: user
+        message: "SignIn Successful",
+        userData: user,
       });
     }
 
     return res.json({
       success: false,
-      message: 'Invalid email or password'
+      message: "Invalid email or password",
     });
-
   } catch (error) {
-    console.error('Signin Error Details:', {
+    console.error("Signin Error Details:", {
       message: error.message,
       stack: error.stack,
-      name: error.name
+      name: error.name,
     });
 
     res.status(500).json({
       success: false,
-      message: 'Invalid email or password',
-      error: error.message
+      message: "Invalid email or password",
+      error: error.message,
     });
   }
 };
@@ -671,13 +741,13 @@ export const verifyEmail = async (req, res) => {
   try {
     const user = await User.findOne({
       emailVerificationToken: token,
-      emailVerificationExpires: { $gt: Date.now() }
+      emailVerificationExpires: { $gt: Date.now() },
     });
 
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid or expired verification token.'
+        message: "Invalid or expired verification token.",
       });
     }
 
@@ -688,13 +758,13 @@ export const verifyEmail = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Email verified successfully! You can now log in.'
+      message: "Email verified successfully! You can now log in.",
     });
   } catch (error) {
-    console.error('Email Verification Error:', error);
+    console.error("Email Verification Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal Server Error'
+      message: "Internal Server Error",
     });
   }
 };
@@ -705,8 +775,8 @@ export const socialLogin = async (req, res) => {
   const { email, name } = req.body;
 
   const mName = name;
-  const password = ''; // Social login → no password
-  const type = 'free';
+  const password = ""; // Social login → no password
+  const type = "free";
 
   try {
     let user = await User.findOne({ email });
@@ -715,8 +785,8 @@ export const socialLogin = async (req, res) => {
     if (user) {
       return res.json({
         success: true,
-        message: 'SignIn Successful',
-        userData: user
+        message: "SignIn Successful",
+        userData: user,
       });
     }
 
@@ -727,7 +797,7 @@ export const socialLogin = async (req, res) => {
       email,
       mName,
       password,
-      type: estimate === 0 ? 'forever' : 'free'
+      type: estimate === 0 ? "forever" : "free",
     });
 
     await user.save();
@@ -737,26 +807,24 @@ export const socialLogin = async (req, res) => {
       const admin = new Admin({
         email,
         mName,
-        type: 'main'
+        type: "main",
       });
       await admin.save();
     }
 
     res.json({
       success: true,
-      message: 'Account created successfully',
-      userData: user
+      message: "Account created successfully",
+      userData: user,
     });
   } catch (error) {
-    console.error('Social Login Error:', error);
+    console.error("Social Login Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal Server Error'
+      message: "Internal Server Error",
     });
   }
 };
-
-
 
 /**
  * FORGOT PASSWORD
@@ -768,10 +836,10 @@ export const forgotPassword = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.json({ success: false, message: 'User not found' });
+      return res.json({ success: false, message: "User not found" });
     }
 
-    const token = crypto.randomBytes(20).toString('hex');
+    const token = crypto.randomBytes(20).toString("hex");
 
     user.resetPasswordToken = token;
     user.resetPasswordExpires = Date.now() + 60 * 60 * 1000; // 1 hour
@@ -791,20 +859,20 @@ export const forgotPassword = async (req, res) => {
            Reset Password
         </a>
         <p><strong>${company}</strong></p>
-      `
+      `,
     };
 
     await transporter.sendMail(mailOptions);
 
     res.json({
       success: true,
-      message: 'Password reset link sent to your email'
+      message: "Password reset link sent to your email",
     });
   } catch (error) {
-    console.log('Forgot password error:', error);
+    console.log("Forgot password error:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Internal server error",
     });
   }
 };
@@ -818,13 +886,13 @@ export const resetPassword = async (req, res) => {
   try {
     const user = await User.findOne({
       resetPasswordToken: token,
-      resetPasswordExpires: { $gt: Date.now() }
+      resetPasswordExpires: { $gt: Date.now() },
     });
 
     if (!user) {
       return res.json({
         success: false,
-        message: 'Invalid or expired token'
+        message: "Invalid or expired token",
       });
     }
 
@@ -836,14 +904,14 @@ export const resetPassword = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Password updated successfully',
-      email: user.email
+      message: "Password updated successfully",
+      email: user.email,
     });
   } catch (error) {
-    console.log('Reset password error:', error);
+    console.log("Reset password error:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Internal server error",
     });
   }
 };
@@ -919,13 +987,13 @@ export const updateProfile = async (req, res) => {
     userType,
     profession,
     experienceLevel,
-    organizationName
+    organizationName,
   } = req.body;
 
   if (!uid || !email || !mName) {
     return res.status(400).json({
       success: false,
-      message: "Missing required fields"
+      message: "Missing required fields",
     });
   }
 
@@ -943,7 +1011,7 @@ export const updateProfile = async (req, res) => {
       userType,
       profession,
       experienceLevel,
-      organizationName
+      organizationName,
     };
 
     // Only update password if provided
@@ -954,27 +1022,26 @@ export const updateProfile = async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       uid,
       { $set: updateData },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedUser) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
     res.json({
       success: true,
       message: "Profile updated successfully",
-      user: updatedUser
+      user: updatedUser,
     });
-
   } catch (error) {
     console.log("Profile update error:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error"
+      message: "Internal server error",
     });
   }
 };
