@@ -400,7 +400,7 @@ const DashboardLayout = () => {
           hover:shadow-md
         "
                   style={{ paddingLeft: "18px" }}>
-                  <Link onClick={Logout} className="text-muted-foreground hover:text-destructive transition-colors" style={{ gap: "24px" }}>
+                  <Link onClick={Logout} className="text-muted-foreground hover:text-destructive transition-colors" style={{ gap: "37px" }}>
                     <LogOut />
                     <span>Logout</span>
                   </Link>

@@ -13,6 +13,7 @@
 // export default mongoose.model('User', userSchema);
 
 // models/user.model.js
+
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
@@ -23,6 +24,15 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['user', 'student', 'org_admin'], default: 'user' },
   organization: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization' },
   phone: { type: String, default: null },
+  dob: { type: Date, default: null },
+  gender: { type: String, default: null },
+  country: { type: String, default: null },
+  city: { type: String, default: null },
+  pin: { type: String, default: null },
+  address: { type: String, default: null },
+  userType: { type: String, enum: ['individual', 'organization'], default: 'individual' },
+  profession: { type: String, default: null },
+  experienceLevel: { type: String, default: 'beginner' },
   studentDetails: {
     department: String,
     section: String,

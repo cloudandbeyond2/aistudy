@@ -1,7 +1,7 @@
 //BRAND
 export const appName = 'AIstudy';
 export const companyName = 'AIstudy by traininglabs';
-export const websiteURL = 'https://aistudy-infilabs.vercel.app';
+export const websiteURL = 'http://localhost:4173';
 export const serverURL = import.meta.env.PROD
   ? 'https://aistudy-backend1.vercel.app'
   : 'http://localhost:5001';

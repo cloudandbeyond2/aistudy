@@ -851,24 +851,103 @@ export const resetPassword = async (req, res) => {
 /**
  * UPDATE USER PROFILE
  */
+
+// export const updateProfile = async (req, res) => {
+//   const { email, mName, password, uid } = req.body;
+
+//   if (!uid || !email || !mName) {
+//     return res.status(400).json({
+//       success: false,
+//       message: 'Missing required fields'
+//     });
+//   }
+
+//   try {
+//     const updateData = {
+//       email,
+//       mName
+//     };
+
+//     // Only update password if provided
+//     if (password && password.trim() !== '') {
+//       updateData.password = await bcrypt.hash(password, 10);
+//     }
+
+//     const updatedUser = await User.findByIdAndUpdate(
+//       uid,
+//       { $set: updateData },
+//       { new: true }
+//     );
+
+//     if (!updatedUser) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'User not found'
+//       });
+//     }
+
+//     res.json({
+//       success: true,
+//       message: 'Profile updated successfully',
+//       user: updatedUser
+//     });
+//   } catch (error) {
+//     console.log('Profile update error:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Internal server error'
+//     });
+//   }
+// };
+
 export const updateProfile = async (req, res) => {
-  const { email, mName, password, uid } = req.body;
+  const {
+    uid,
+    email,
+    mName,
+    password,
+
+    phone,
+    dob,
+    gender,
+
+    country,
+    city,
+    pin,
+    address,
+
+    userType,
+    profession,
+    experienceLevel,
+    organizationName
+  } = req.body;
 
   if (!uid || !email || !mName) {
     return res.status(400).json({
       success: false,
-      message: 'Missing required fields'
+      message: "Missing required fields"
     });
   }
 
   try {
     const updateData = {
       email,
-      mName
+      mName,
+      phone,
+      dob,
+      gender,
+      country,
+      city,
+      pin,
+      address,
+      userType,
+      profession,
+      experienceLevel,
+      organizationName
     };
 
     // Only update password if provided
-    if (password && password.trim() !== '') {
+    if (password && password.trim() !== "") {
       updateData.password = await bcrypt.hash(password, 10);
     }
 
@@ -881,20 +960,21 @@ export const updateProfile = async (req, res) => {
     if (!updatedUser) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found"
       });
     }
 
     res.json({
       success: true,
-      message: 'Profile updated successfully',
+      message: "Profile updated successfully",
       user: updatedUser
     });
+
   } catch (error) {
-    console.log('Profile update error:', error);
+    console.log("Profile update error:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Internal server error"
     });
   }
 };

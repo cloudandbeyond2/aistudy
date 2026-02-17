@@ -356,6 +356,7 @@ const AdminLayout = () => {
           hover:bg-accent
           hover:shadow-md
         "
+                style={{ gap: "34px",  paddingLeft: "23px"}}
                 >
                   <Link to="/" className="flex items-center gap-3 w-full px-3 py-2">
                     <Globe className="h-4 w-4" />
@@ -378,6 +379,7 @@ const AdminLayout = () => {
           hover:bg-destructive/10
           hover:shadow-md
         "
+        style={{ gap: "34px",  paddingLeft: "23px"}}
                 >
                   <button
                     onClick={Logout}
