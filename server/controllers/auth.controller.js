@@ -495,6 +495,7 @@
 // };
 import User from "../models/User.js";
 import Admin from "../models/Admin.js";
+import Organization from '../models/Organization.js';
 import crypto from "crypto";
 import transporter from "../config/mail.js";
 import bcrypt from "bcrypt";
@@ -697,7 +698,17 @@ export const signin = async (req, res) => {
     const isPlainTextMatch = password === user.password;
 
     if (isMatch || isPlainTextMatch) {
-      // Check if email is verified
+      // Check if user is part of a blocked organization
+      if (user.organization) {
+        const org = await Organization.findById(user.organization);
+        if (org && org.isBlocked) {
+          return res.json({
+            success: false,
+            message: 'Your organization account is blocked. Please contact support.'
+          });
+        }
+      }
+
       if (user.isEmailVerified === false && user.emailVerificationToken) {
         return res.json({
           success: false,

@@ -317,3 +317,13 @@ export const updateAdminSettings = async (data) => {
     }
   );
 };
+export const toggleBlockOrganization = async (id, isBlocked) => {
+  // Update Organization document
+  await Organization.findByIdAndUpdate(id, { isBlocked });
+
+  // Update Org Admin User document
+  await User.findOneAndUpdate(
+    { organization: id, role: 'org_admin' },
+    { 'organizationDetails.isBlocked': isBlocked }
+  );
+};

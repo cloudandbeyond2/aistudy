@@ -156,7 +156,7 @@ const AdminOrganizations = () => {
                                             <Button
                                                 variant={org.organizationDetails?.isBlocked ? "outline" : "destructive"}
                                                 size="sm"
-                                                onClick={() => toggleBlock(org._id, org.organizationDetails?.isBlocked)}
+                                                onClick={() => toggleBlock(org.organization, org.organizationDetails?.isBlocked)}
                                             >
                                                 {org.organizationDetails?.isBlocked ? <CheckCircle className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
                                             </Button>
@@ -181,9 +181,9 @@ const AdminOrganizations = () => {
                         <div className="space-y-4 py-4">
                             <div className="flex items-center gap-4">
                                 {selectedOrg.organizationDetails?.logo ? (
-                                    <img 
-                                        src={selectedOrg.organizationDetails.logo} 
-                                        alt="Logo" 
+                                    <img
+                                        src={selectedOrg.organizationDetails.logo}
+                                        alt="Logo"
                                         className="h-16 w-16 object-contain rounded border bg-muted/50"
                                     />
                                 ) : (
@@ -196,7 +196,7 @@ const AdminOrganizations = () => {
                                     <p className="text-sm text-muted-foreground">{selectedOrg.organizationDetails?.planDetails || 'No plan details'}</p>
                                 </div>
                             </div>
-                            
+
                             <div className="grid gap-3">
                                 <div className="flex items-center gap-3 text-sm">
                                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -239,27 +239,27 @@ const AdminOrganizations = () => {
                                 </div>
                             </div>
 
-                             {selectedOrg.organizationDetails?.documents?.length > 0 && selectedOrg.organizationDetails.documents.some(d => d) && (
+                            {selectedOrg.organizationDetails?.documents?.length > 0 && selectedOrg.organizationDetails.documents.some(d => d) && (
                                 <div className="pt-2">
-                                     <p className="text-sm font-medium mb-2">Documents</p>
-                                     <div className="flex flex-wrap gap-2">
-                                         {selectedOrg.organizationDetails.documents.map((doc, index) => (
-                                             doc && (
-                                                <a 
+                                    <p className="text-sm font-medium mb-2">Documents</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedOrg.organizationDetails.documents.map((doc, index) => (
+                                            doc && (
+                                                <a
                                                     key={index}
-                                                    href={doc} 
-                                                    target="_blank" 
+                                                    href={doc}
+                                                    target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="inline-flex items-center gap-1 text-xs border rounded-full px-3 py-1 hover:bg-muted transition-colors"
                                                 >
                                                     <FileText className="h-3 w-3" />
                                                     View Document {index + 1}
                                                 </a>
-                                             )
-                                         ))}
-                                     </div>
+                                            )
+                                        ))}
+                                    </div>
                                 </div>
-                             )}
+                            )}
                         </div>
                     )}
                 </DialogContent>
@@ -270,22 +270,22 @@ const AdminOrganizations = () => {
 
 function UserIcon(props) {
     return (
-      <svg
-        {...props}
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
-      </svg>
+        <svg
+            {...props}
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+        </svg>
     )
-  }
+}
 
 export default AdminOrganizations;

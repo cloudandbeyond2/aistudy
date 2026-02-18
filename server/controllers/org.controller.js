@@ -81,6 +81,10 @@ export const orgSignin = async (req, res) => {
             return res.json({ success: false, message: 'Invalid credentials' });
         }
 
+        if (org.isBlocked) {
+            return res.json({ success: false, message: 'Your organization account is blocked. Please contact support.' });
+        }
+
         // Find the admin user user for this org
         const user = await User.findOne({ email, role: 'org_admin' });
 

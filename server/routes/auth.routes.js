@@ -23,8 +23,17 @@ router.get('/verify-email/:token', verifyEmail);
 // Change app.get to router.get
 router.get('/getuser/:uid', async (req, res) => {
   try {
-    const user = await User.findById(req.params.uid);
+    const user = await User.findById(req.params.uid).populate('organization');
     if (!user) return res.json({ success: false, message: "User not found" });
+
+    // Check if organization is blocked
+    if (user.organization && user.organization.isBlocked) {
+      return res.json({ success: false, message: "Organization blocked", isBlocked: true });
+    }
+
+    if (user.organizationDetails && user.organizationDetails.isBlocked) {
+      return res.json({ success: false, message: "Organization blocked", isBlocked: true });
+    }
 
     res.json({ success: true, user });
   } catch (error) {
