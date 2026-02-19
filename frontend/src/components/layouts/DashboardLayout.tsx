@@ -413,11 +413,11 @@ const DashboardLayout = () => {
 
         <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 relative">
           {/* Desktop Header */}
-          {!isMobile && location.pathname.startsWith("/dashboard/org") && (
-  <div className="absolute top-4 right-8 z-10 flex items-center gap-4">
-    <NotificationBell />
-  </div>
-)}
+          {!isMobile && (location.pathname.startsWith("/dashboard/org") || location.pathname.startsWith("/dashboard/student")) && (
+            <div className="absolute top-4 right-8 z-10 flex items-center gap-4">
+              <NotificationBell />
+            </div>
+          )}
           {isMobile && (
             <div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm">
               <SidebarTrigger className="mr-2">
