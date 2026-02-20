@@ -107,7 +107,7 @@ export const getPaypalDetails = async (req, res) => {
       { $inc: { total: cost } }
     );
 
-    await User.findByIdAndUpdate(uid, { $set: { type: plan } });
+    const updatedUser = await User.findByIdAndUpdate(uid, { $set: { type: plan } }, { new: true });
 
     const auth = await getAuth();
 
@@ -123,7 +123,10 @@ export const getPaypalDetails = async (req, res) => {
     );
 
     const session = await response.json();
-    res.json(session);
+    res.json({
+      ...session,
+      user: updatedUser
+    });
   } catch (error) {
     console.error('PayPal details error:', error);
     res.status(500).json({

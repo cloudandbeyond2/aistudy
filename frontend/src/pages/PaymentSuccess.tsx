@@ -117,6 +117,14 @@ const PaymentSuccess = () => {
 
         console.log('Verification response:', response.data);
 
+        // 🔥 CRITICAL: Refresh user state in storage so UI updates without logout
+        if (response.data?.success && response.data?.data?.user) {
+          const updatedUser = response.data.data.user;
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+          sessionStorage.setItem('type', updatedUser.type);
+          console.log('✅ User state refreshed after Razorpay payment:', updatedUser.type);
+        }
+
         toast({
           title: 'Payment verified',
           description: 'Your subscription has been activated',
@@ -142,12 +150,22 @@ const PaymentSuccess = () => {
         }
 
         if (endpoint) {
-          await axios.post(serverURL + endpoint, {
+          const response = await axios.post(serverURL + endpoint, {
             subscriberId: planId,
             uid: uid,
             email: email,
             plan: planType
           });
+
+          console.log('Verification response:', response.data);
+
+          // 🔥 CRITICAL: Refresh user state in storage so UI updates without logout
+          const updatedUser = response.data?.user || response.data?.details?.user || response.data?.data?.user;
+          if (updatedUser) {
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            sessionStorage.setItem('type', updatedUser.type);
+            console.log(`✅ User state refreshed after ${method} payment:`, updatedUser.type);
+          }
         }
       }
 

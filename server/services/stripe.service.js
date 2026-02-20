@@ -56,9 +56,13 @@ export const stripeDetails = async ({ subscriberId, uid, plan }) => {
   cost = cost / 4;
 
   await Admin.findOneAndUpdate({ type: 'main' }, { $inc: { total: cost } });
-  await User.findByIdAndUpdate(uid, { type: plan });
+  const updatedUser = await User.findByIdAndUpdate(uid, { type: plan }, { new: true });
 
-  return stripe.checkout.sessions.retrieve(subscriberId);
+  const session = await stripe.checkout.sessions.retrieve(subscriberId);
+  return {
+    ...session,
+    user: updatedUser
+  };
 };
 
 export const cancelStripeSubscription = async ({ id, email }) => {

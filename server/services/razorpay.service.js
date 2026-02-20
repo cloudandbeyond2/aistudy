@@ -581,7 +581,7 @@ export const activateRazorpaySubscription = async ({
     userUpdates.mName = mName;
   }
 
-  await User.findByIdAndUpdate(uid, userUpdates, { new: true });
+  const updatedUser = await User.findByIdAndUpdate(uid, userUpdates, { new: true });
 
   // Update order with subscription dates
   await Order.findOneAndUpdate(
@@ -600,7 +600,8 @@ export const activateRazorpaySubscription = async ({
     ...(await getRazorpaySubscription(subscriptionId)),
     subscriptionStart,
     subscriptionEnd,
-    userUpdated: true
+    userUpdated: true,
+    user: updatedUser
   };
 };
 /* ---------------- CANCEL SUBSCRIPTION ---------------- */

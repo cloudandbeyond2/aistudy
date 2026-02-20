@@ -80,7 +80,7 @@ export const getFlutterwaveSubscriptionDetails = async ({
   );
 
   // Update user plan
-  await User.findByIdAndUpdate(uid, { type: plan });
+  const updatedUser = await User.findByIdAndUpdate(uid, { type: plan }, { new: true });
 
   // Fetch Flutterwave subscription
   const payload = { email };
@@ -91,5 +91,8 @@ export const getFlutterwaveSubscriptionDetails = async ({
     throw new Error('No subscription found');
   }
 
-  return response.data[0];
+  return {
+    ...response.data[0],
+    user: updatedUser
+  };
 };
