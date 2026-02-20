@@ -1,3 +1,4 @@
+import CookiePopup from "./components/CookiePopup";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +24,7 @@ import ResetPassword from "./pages/ResetPassword";
 import About from "./pages/About";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
+import Cookies from "./pages/Cookies";
 import Contact from "./pages/Contact";
 import Blog from "./pages/Blog";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -133,6 +135,7 @@ const App = () => (
                   <Route path="/about" element={<About />} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                   <Route path="/terms" element={<Terms />} />
+                  <Route path="/cookies" element={<Cookies />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/organization-enquiry" element={<OrganizationEnquiry />} />
 
@@ -176,6 +179,7 @@ const App = () => (
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
+                <CookiePopup />
                 <Toaster />
                 <Sonner />
               </BrowserRouter>

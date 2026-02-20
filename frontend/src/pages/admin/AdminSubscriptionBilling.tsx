@@ -1,48 +1,75 @@
-
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { serverURL } from '@/constants';
-import axios from 'axios';
-import { toast } from '@/hooks/use-toast';
-import { MinimalTiptapEditor } from '../../minimal-tiptap'
-import { Content } from '@tiptap/react'
-import { Save } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Save } from "lucide-react";
+import { serverURL } from "@/constants";
+import axios from "axios";
+import { toast } from "@/hooks/use-toast";
+import { MinimalTiptapEditor } from "../../minimal-tiptap";
+import { Content } from "@tiptap/react";
 
 const AdminSubscriptionBilling = () => {
-  const [value, setValue] = useState<Content>(sessionStorage.getItem('billing'));
+  const [value, setValue] = useState<Content>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
 
-  async function saveBilling() {
+  // ✅ LOAD existing subscriptionBilling
+  useEffect(() => {
+    const fetchPolicy = async () => {
+      try {
+        const response = await axios.get(`${serverURL}/api/policies`);
+        setValue(response.data?.subscriptionBilling || "");
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load Subscription & Billing policy",
+        });
+      } finally {
+        setIsFetching(false);
+      }
+    };
+
+    fetchPolicy();
+  }, []);
+
+  // ✅ SAVE subscriptionBilling
+  const saveBilling = async () => {
     setIsLoading(true);
-    const postURL = serverURL + '/api/saveadmin';
-    const response = await axios.post(postURL, { data: value, type: 'billing' });
-    if (response.data.success) {
-      sessionStorage.setItem('billing', '' + value);
-      setIsLoading(false);
+
+    try {
+      await axios.put(`${serverURL}/api/policies`, {
+        subscriptionBilling: value,   // ✅ FIXED FIELD NAME
+      });
+
       toast({
-        title: "Saved",
+        title: "Success",
         description: "Subscription & Billing policy saved successfully",
       });
-    } else {
-      setIsLoading(false);
+    } catch (error) {
       toast({
         title: "Error",
-        description: "Internal Server Error",
+        description: "Failed to save Subscription & Billing policy",
       });
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Subscription & Billing Policy</h1>
-          <p className="text-muted-foreground mt-1">Manage subscription and billing policy content</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Subscription & Billing Policy
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Manage subscription and billing policy content
+          </p>
         </div>
-        <Button onClick={saveBilling}>
+
+        <Button onClick={saveBilling} disabled={isLoading}>
           <Save className="mr-2 h-4 w-4" />
-          {isLoading ? 'Saving...' : ' Save Changes'}
+          {isLoading ? "Saving..." : "Save Changes"}
         </Button>
       </div>
 
@@ -51,24 +78,17 @@ const AdminSubscriptionBilling = () => {
           <CardTitle>Edit Subscription & Billing Policy</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex flex-col space-y-1.5">
-              <MinimalTiptapEditor
-                value={value}
-                onChange={setValue}
-                className="w-full"
-                editorContentClassName="p-5"
-                output="html"
-                placeholder="Start writing Subscription & Billing Policy."
-                autofocus={true}
-                editable={true}
-                editorClassName="focus:outline-none"
-              />
-              <p className="text-xs text-muted-foreground">
-                Use Markdown formatting for headers, lists, and other text formatting.
-              </p>
-            </div>
-          </div>
+          {isFetching ? (
+            <p>Loading Subscription & Billing policy...</p>
+          ) : (
+            <MinimalTiptapEditor
+              value={value}
+              onChange={setValue}
+              output="html"
+              placeholder="Start writing Subscription & Billing Policy..."
+              editable
+            />
+          )}
         </CardContent>
       </Card>
     </div>

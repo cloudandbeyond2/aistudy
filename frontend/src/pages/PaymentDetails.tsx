@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import React, { useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   Card,
   CardContent,
@@ -42,6 +42,8 @@ import { toast } from '@/hooks/use-toast';
 import { amountInZarOne, amountInZarTwo, appLogo, appName, companyName, flutterwaveEnabled, flutterwavePlanIdOne, flutterwavePlanIdTwo, flutterwavePublicKey, FreeCost, FreeType, MonthCost, MonthType, paypalEnabled, paypalPlanIdOne, paypalPlanIdTwo, paystackEnabled, paystackPlanIdOne, paystackPlanIdTwo, razorpayEnabled, razorpayPlanIdOne, razorpayPlanIdTwo, serverURL, stripeEnabled, stripePlanIdOne, stripePlanIdTwo, YearCost, YearType } from '@/constants';
 import axios from 'axios';
 import { useFlutterwave, closePaymentModal } from 'flutterwave-react-v3';
+
+
 
 // Form validation schema
 const formSchema = z.object({
@@ -127,6 +129,7 @@ const PaymentDetails = () => {
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState<string>('razorpay');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const location = useLocation();
   const state = location.state as any;
 
@@ -868,17 +871,62 @@ async function startRazorpay(data: FormValues) {
                     </TabsContent>
                   </Tabs>
                 </CardContent>
-                <CardFooter>
-                  <Button
-                    type="submit"
-                    className="w-full bg-primary"
-                    disabled={isProcessing}
-                  >
-                    {/* {isProcessing ? "Processing..." : `Pay $${plan.price}`} */}
-                    {isProcessing ? "Processing..." : `Pay ${plan.currency} ${plan.price}`}
+             <CardFooter className="flex flex-col space-y-4 pt-4">
 
-                  </Button>
-                </CardFooter>
+  {/* Divider */}
+  <Separator />
+
+  {/* Agreement Section */}
+  <div className="flex items-start space-x-3">
+    <input
+      type="checkbox"
+      checked={agreed}
+      onChange={() => setAgreed(!agreed)}
+      className="mt-1 accent-primary"
+    />
+    <div className="text-sm text-muted-foreground leading-relaxed">
+      <p>
+        I agree to the{" "}
+        <Link to="/terms" className="text-primary hover:underline">
+          Terms of Service
+        </Link>{" "}
+        and{" "}
+        <Link to="/privacy-policy" className="text-primary hover:underline">
+          Privacy Policy
+        </Link>.
+      </p>
+
+      <p className="mt-1">
+        By subscribing, you acknowledge our{" "}
+        <Link to="/refund-policy" className="text-primary hover:underline">
+          Refund & Non-Refund Policy
+        </Link>{" "}
+        and{" "}
+        <Link to="/subscription-billing-policy" className="text-primary hover:underline">
+          Subscription & Billing Policy
+        </Link>.
+      </p>
+    </div>
+  </div>
+
+  {/* Non Refund Warning */}
+  <div className="flex items-center text-xs text-amber-600 bg-amber-50 p-3 rounded-md">
+    ⚠ Payments are non-refundable once access is granted.
+  </div>
+
+  {/* Pay Button */}
+  <Button
+    type="submit"
+    size="lg"
+    className="w-full mt-2"
+    disabled={isProcessing || !agreed}
+  >
+    {isProcessing ? "Processing..." : `Pay ${plan.currency} ${plan.price}`}
+  </Button>
+
+</CardFooter>
+
+
               </Card>
             </form>
           </Form>

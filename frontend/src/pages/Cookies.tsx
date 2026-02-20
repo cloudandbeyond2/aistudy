@@ -3,44 +3,44 @@ import axios from "axios";
 import { serverURL } from "@/constants";
 import StyledText from "@/components/styledText";
 import PolicyLayout from "@/components/PolicyLayout";
-import { FileText } from "lucide-react"; // ✅ ADD THIS
+import { Cookie } from "lucide-react"; // ✅ ADD THIS
 
-const Terms = () => {
+const Cookies = () => {
   const [data, setData] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchTerms() {
+    const fetchCookies = async () => {
       try {
         const response = await axios.get(`${serverURL}/api/policies`);
-        setData(response.data?.terms || "");
+        setData(response.data?.cookies || "");
       } catch (error) {
-        console.error("Failed to fetch terms:", error);
+        console.error("Failed to fetch cookies policy:", error);
       } finally {
         setLoading(false);
       }
-    }
+    };
 
-    fetchTerms();
+    fetchCookies();
   }, []);
 
   return (
     <PolicyLayout
-      title="Terms of Service"
+      title="Cookies Policy"
       effectiveDate="18 February 2026"
-      icon={FileText}   // ✅ REQUIRED
+      icon={Cookie}   // ✅ REQUIRED FIX
     >
       {loading ? (
         <p className="text-center text-muted-foreground">
-          Loading terms of service...
+          Loading Cookies Policy...
         </p>
       ) : data ? (
         <StyledText text={data} />
       ) : (
-        <p>No terms of service available.</p>
+        <p>No cookies policy available.</p>
       )}
     </PolicyLayout>
   );
 };
 
-export default Terms;
+export default Cookies;

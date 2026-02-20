@@ -177,9 +177,7 @@ const Footer = () => {
           <div className="flex items-center space-x-8 text-sm font-medium">
             <Link to="/privacy-policy" className="hover:text-white">Privacy</Link>
             <Link to="/terms" className="hover:text-white">Terms</Link>
-            <Link to="#" className="hover:text-white">
-              Cookies
-            </Link>
+            <Link to="/cookies" className="hover:text-white">Cookies</Link>
           </div>
         </div>
       </div>

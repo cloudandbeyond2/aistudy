@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
@@ -6,42 +6,53 @@ import { serverURL } from "@/constants";
 import axios from "axios";
 import { toast } from "@/hooks/use-toast";
 import { MinimalTiptapEditor } from "../../minimal-tiptap";
-import { Content } from "@tiptap/react";
-
 
 const AdminCookies = () => {
-  const [value, setValue] = useState<Content>(
-    sessionStorage.getItem("cookies") || ""
-  );
+  const [value, setValue] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
 
-  async function saveCookies() {
+  // ✅ LOAD existing cookies from DB
+  useEffect(() => {
+    const fetchPolicy = async () => {
+      try {
+        const response = await axios.get(`${serverURL}/api/policies`);
+        setValue(response.data?.cookies || "");
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load cookies policy",
+        });
+      } finally {
+        setIsFetching(false);
+      }
+    };
+
+    fetchPolicy();
+  }, []);
+
+  // ✅ SAVE to DB (same as privacy & terms)
+  const saveCookies = async () => {
     setIsLoading(true);
+
     try {
-      const postURL = serverURL + "/api/saveadmin";
-      const response = await axios.post(postURL, {
-        data: value,
-        type: "cookies",
+      await axios.put(`${serverURL}/api/policies`, {
+        cookies: value,
       });
 
-      if (response.data.success) {
-        sessionStorage.setItem("cookies", String(value));
-        toast({
-          title: "Saved",
-          description: "Cookies Policy saved successfully",
-        });
-      } else {
-        throw new Error("Save failed");
-      }
+      toast({
+        title: "Success",
+        description: "Cookies Policy saved successfully",
+      });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Internal Server Error",
+        description: "Failed to save cookies policy",
       });
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -66,14 +77,17 @@ const AdminCookies = () => {
           <CardTitle>Edit Cookies Policy</CardTitle>
         </CardHeader>
         <CardContent>
-          <MinimalTiptapEditor
-            value={value}
-            onChange={setValue}
-            output="html"
-            placeholder="Start writing Cookies Policy."
-            autofocus
-            editable
-          />
+          {isFetching ? (
+            <p>Loading cookies policy...</p>
+          ) : (
+            <MinimalTiptapEditor
+              value={value}
+              onChange={setValue}
+              output="html"
+              placeholder="Start writing Cookies Policy..."
+              editable
+            />
+          )}
         </CardContent>
       </Card>
     </div>
