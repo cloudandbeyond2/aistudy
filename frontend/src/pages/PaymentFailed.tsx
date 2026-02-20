@@ -8,6 +8,20 @@ import { XCircle, Home, RefreshCw } from 'lucide-react';
 const PaymentFailed = () => {
   const navigate = useNavigate();
 
+  const [countdown, setCountdown] = React.useState(5);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => prev - 1);
+    }, 1000);
+
+    if (countdown === 0) {
+      navigate('/dashboard/pricing');
+    }
+
+    return () => clearInterval(timer);
+  }, [countdown, navigate]);
+
   const handleTryAgain = () => {
     navigate(`/dashboard/pricing`);
   };
@@ -21,13 +35,13 @@ const PaymentFailed = () => {
           </div>
           <CardTitle className="text-2xl font-bold">Payment Failed</CardTitle>
           <p className="text-muted-foreground mt-2">
-            There was an issue processing your payment.
+            There was an issue processing your payment. Redirecting back to pricing in {countdown} seconds...
           </p>
         </CardHeader>
-        
+
         <CardContent className="pt-6">
           <div className="space-y-6">
-            
+
             <div className="bg-muted/50 p-4 rounded-lg">
               <h3 className="font-medium mb-2">What went wrong?</h3>
               <p className="text-sm text-muted-foreground">
@@ -45,13 +59,13 @@ const PaymentFailed = () => {
             </div>
           </div>
         </CardContent>
-        
+
         <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 pt-4 border-t">
           <Button variant="outline" onClick={() => navigate('/')}>
             <Home className="mr-2 h-4 w-4" />
             Go Home
           </Button>
-          
+
           <Button onClick={handleTryAgain}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Try Again

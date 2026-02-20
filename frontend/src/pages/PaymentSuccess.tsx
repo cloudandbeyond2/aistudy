@@ -40,10 +40,24 @@ const PaymentSuccess = () => {
   const [email, setEmail] = useState('');
   const [uid, setUid] = useState('');
   const [isVerifying, setIsVerifying] = useState(true);
+  const [countdown, setCountdown] = useState(7);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   useEffect(() => {
     init();
   }, []);
+
+  useEffect(() => {
+    let timer;
+    if (shouldRedirect && countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    } else if (shouldRedirect && countdown === 0) {
+      navigate('/dashboard/pricing');
+    }
+    return () => clearInterval(timer);
+  }, [shouldRedirect, countdown, navigate]);
 
   const init = async () => {
     if (!planId) {
@@ -79,10 +93,10 @@ const PaymentSuccess = () => {
   const verifyPayment = async (method, plan, price, currency, name, email, uid) => {
     try {
       setIsVerifying(true);
-      
+
       // Determine plan type from plan name
       const planType = plan.includes('Year') ? 'yearly' : 'monthly';
-      
+
       if (method === 'razorpay') {
         // For Razorpay - send to razorapydetails endpoint
         const response = await axios.post(`${serverURL}/api/razorapydetails`, {
@@ -94,9 +108,9 @@ const PaymentSuccess = () => {
           currency: currency,
           mName: name
         });
-        
+
         console.log('Verification response:', response.data);
-        
+
         toast({
           title: 'Payment verified',
           description: 'Your subscription has been activated',
@@ -120,7 +134,7 @@ const PaymentSuccess = () => {
           default:
             endpoint = '';
         }
-        
+
         if (endpoint) {
           await axios.post(serverURL + endpoint, {
             subscriberId: planId,
@@ -130,10 +144,10 @@ const PaymentSuccess = () => {
           });
         }
       }
-      
+
       // Send email receipt
       await sendEmail(plan, price, currency, method, email, name, planId);
-      
+
     } catch (error) {
       console.error('Payment verification error:', error.response?.data || error.message);
       toast({
@@ -143,6 +157,7 @@ const PaymentSuccess = () => {
       });
     } finally {
       setIsVerifying(false);
+      setShouldRedirect(true);
     }
   };
 
@@ -176,7 +191,7 @@ const PaymentSuccess = () => {
         subscription: receiptId,
         method
       });
-      
+
       console.log('Receipt email sent');
     } catch (error) {
       console.error('Email sending error:', error);
@@ -221,11 +236,17 @@ const PaymentSuccess = () => {
 
         <CardContent className="pt-6 space-y-6">
           {isVerifying && (
-            <div className="bg-blue-50 text-blue-700 p-3 rounded-md text-center">
+            <div className="bg-blue-50 text-blue-700 p-3 rounded-md text-center animate-pulse">
               Verifying payment and activating subscription...
             </div>
           )}
-          
+
+          {shouldRedirect && !isVerifying && (
+            <div className="bg-green-50 text-green-700 p-3 rounded-md text-center">
+              Redirecting to pricing page in {countdown} seconds...
+            </div>
+          )}
+
           <div className="flex justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Receipt ID</p>
@@ -267,20 +288,17 @@ const PaymentSuccess = () => {
             Download Receipt
           </Button>
 
-       <Button
-  onClick={() => {
-    // Clear authentication/session data
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.clear();
-
-    // Navigate to login page
-    navigate('/login');
-  }}
->
-  Go to Login
-  <ArrowRight className="ml-2 h-4 w-4" />
-</Button>
+          <Button
+            onClick={() => {
+              sessionStorage.removeItem('method');
+              sessionStorage.removeItem('subscriptionId');
+              sessionStorage.removeItem('orderId');
+              navigate('/dashboard/pricing');
+            }}
+          >
+            Go to Dashboard
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
 
         </CardFooter>
       </Card>
