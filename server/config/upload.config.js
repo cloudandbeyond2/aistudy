@@ -2,90 +2,160 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-// Ensure uploads directory exists (local only)
-const uploadDir = 'uploads/assignments';
-if (!process.env.VERCEL) {
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-}
+/* =========================================================
+   HELPER: CREATE FOLDER (LOCAL ONLY)
+========================================================= */
 
-// Use memory storage on Vercel, disk storage locally
-const storage = process.env.VERCEL
+const createFolderIfNotExists = (dirPath) => {
+    if (!process.env.VERCEL) {
+        if (!fs.existsSync(dirPath)) {
+            fs.mkdirSync(dirPath, { recursive: true });
+        }
+    }
+};
+
+/* =========================================================
+   1️⃣ ASSIGNMENT UPLOAD (PDF)
+========================================================= */
+
+const assignmentDir = 'uploads/assignments';
+createFolderIfNotExists(assignmentDir);
+
+const assignmentStorage = process.env.VERCEL
     ? multer.memoryStorage()
     : multer.diskStorage({
-        destination: (req, file, cb) => {
-            cb(null, uploadDir);
-        },
-        filename: (req, file, cb) => {
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-            cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-        }
-    });
-
-const fileFilter = (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
-        cb(null, true);
-    } else {
-        cb(new Error('Only PDF files are allowed!'), false);
-    }
-};
+          destination: (req, file, cb) => {
+              cb(null, assignmentDir);
+          },
+          filename: (req, file, cb) => {
+              const uniqueSuffix =
+                  Date.now() + '-' + Math.round(Math.random() * 1e9);
+              cb(
+                  null,
+                  'assignment-' +
+                      uniqueSuffix +
+                      path.extname(file.originalname)
+              );
+          },
+      });
 
 export const uploadAssignment = multer({
-    storage: storage,
-    limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB
+    storage: assignmentStorage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype !== 'application/pdf') {
+            return cb(new Error('Only PDF files are allowed!'), false);
+        }
+        cb(null, true);
     },
-    fileFilter: fileFilter
 });
 
-const logoStorage = multer.memoryStorage();
-
-const logoFileFilter = (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'];
-    if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Only JPEG, JPG, PNG, and SVG files are allowed!'), false);
-    }
-};
+/* =========================================================
+   2️⃣ ORGANIZATION LOGO UPLOAD (Images)
+========================================================= */
 
 export const uploadLogo = multer({
-    storage: logoStorage,
-    limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: (req, file, cb) => {
+        const allowed = [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/svg+xml',
+        ];
+        if (!allowed.includes(file.mimetype)) {
+            return cb(
+                new Error(
+                    'Only JPEG, JPG, PNG, and SVG files are allowed!'
+                ),
+                false
+            );
+        }
+        cb(null, true);
     },
-    fileFilter: logoFileFilter
 });
 
-const courseImageUploadDir = 'uploads/courses';
-if (!process.env.VERCEL) {
-    if (!fs.existsSync(courseImageUploadDir)) fs.mkdirSync(courseImageUploadDir, { recursive: true });
-}
+/* =========================================================
+   3️⃣ COURSE IMAGE UPLOAD
+========================================================= */
+
+const courseImageDir = 'uploads/courses';
+createFolderIfNotExists(courseImageDir);
 
 const courseImageStorage = process.env.VERCEL
     ? multer.memoryStorage()
     : multer.diskStorage({
-        destination: (req, file, cb) => {
-            cb(null, courseImageUploadDir);
-        },
-        filename: (req, file, cb) => {
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-            cb(null, 'course-' + uniqueSuffix + path.extname(file.originalname));
-        }
-    });
-
-const imageFileFilter = (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Only JPEG, JPG, PNG, GIF, and WebP files are allowed!'), false);
-    }
-};
+          destination: (req, file, cb) => {
+              cb(null, courseImageDir);
+          },
+          filename: (req, file, cb) => {
+              const uniqueSuffix =
+                  Date.now() + '-' + Math.round(Math.random() * 1e9);
+              cb(
+                  null,
+                  'course-' +
+                      uniqueSuffix +
+                      path.extname(file.originalname)
+              );
+          },
+      });
 
 export const uploadCourseImage = multer({
     storage: courseImageStorage,
-    limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const allowed = [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+        ];
+        if (!allowed.includes(file.mimetype)) {
+            return cb(
+                new Error(
+                    'Only JPEG, JPG, PNG, GIF, and WebP allowed!'
+                ),
+                false
+            );
+        }
+        cb(null, true);
     },
-    fileFilter: imageFileFilter
+});
+
+/* =========================================================
+   4️⃣ MATERIAL UPLOAD (PDF ONLY)
+========================================================= */
+
+const materialDir = 'uploads/materials';
+createFolderIfNotExists(materialDir);
+
+const materialStorage = process.env.VERCEL
+    ? multer.memoryStorage()
+    : multer.diskStorage({
+          destination: (req, file, cb) => {
+              cb(null, materialDir);
+          },
+          filename: (req, file, cb) => {
+              const uniqueSuffix =
+                  Date.now() + '-' + Math.round(Math.random() * 1e9);
+              cb(
+                  null,
+                  'material-' +
+                      uniqueSuffix +
+                      path.extname(file.originalname)
+              );
+          },
+      });
+
+export const uploadMaterial = multer({
+    storage: materialStorage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype !== 'application/pdf') {
+            return cb(new Error('Only PDF files are allowed!'), false);
+        }
+        cb(null, true);
+    },
 });

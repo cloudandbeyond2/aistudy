@@ -264,7 +264,15 @@ const OrgDashboard = () => {
     const [materials, setMaterials] = useState<any[]>([]);
     const [newMeeting, setNewMeeting] = useState({ title: '', link: '', platform: 'google-meet', date: '', time: '', department: '' });
     const [newProject, setNewProject] = useState({ title: '', description: '', type: 'Project', department: '', dueDate: '' });
-    const [newMaterial, setNewMaterial] = useState({ title: '', description: '', fileUrl: '', type: 'PDF', department: '' });
+    // const [newMaterial, setNewMaterial] = useState({ title: '', description: '', fileUrl: '', type: 'PDF', department: '' });
+    const [newMaterial, setNewMaterial] = useState({
+  title: '',
+  description: '',
+  fileUrl: '',
+  file: null,
+  type: 'PDF',
+  department: ''
+});
 
     const orgId = sessionStorage.getItem('orgId') || sessionStorage.getItem('uid');
 
@@ -367,18 +375,51 @@ const OrgDashboard = () => {
         }
     };
 
-    const handleCreateMaterial = async () => {
-        try {
-            const res = await axios.post(`${serverURL}/api/org/material/create`, { ...newMaterial, organizationId: orgId });
-            if (res.data.success) {
-                toast({ title: "Success", description: "Material added successfully" });
-                setNewMaterial({ title: '', description: '', fileUrl: '', type: 'PDF', department: '' });
-                fetchMaterials();
-            }
-        } catch (e: any) {
-            toast({ title: "Error", description: e.response?.data?.message || "Failed to add material" });
-        }
-    };
+ const handleCreateMaterial = async () => {
+  try {
+    let res;
+
+if (newMaterial.type === 'PDF' && newMaterial.file) {
+  const formData = new FormData();
+  formData.append('title', newMaterial.title);
+  formData.append('description', newMaterial.description);
+  formData.append('type', newMaterial.type);
+  formData.append('department', newMaterial.department);
+  formData.append('organizationId', orgId);
+  formData.append('file', newMaterial.file);
+
+      res = await axios.post(
+        `${serverURL}/api/org/material/create`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+    } else {
+      res = await axios.post(`${serverURL}/api/org/material/create`, {
+        ...newMaterial,
+        organizationId: orgId,
+      });
+    }
+
+    if (res.data.success) {
+      toast({ title: "Success", description: "Material added successfully" });
+      setNewMaterial({
+        title: '',
+        description: '',
+        fileUrl: '',
+        file: null,
+        type: 'PDF',
+        department: ''
+      });
+      fetchMaterials();
+    }
+
+  } catch (e: any) {
+    toast({
+      title: "Error",
+      description: e.response?.data?.message || "Failed to add material"
+    });
+  }
+};
 
     const handleDeleteMaterial = async (id: string) => {
         if (!confirm('Delete this material?')) return;
@@ -1312,10 +1353,30 @@ const OrgDashboard = () => {
                                             <Label>Material Title</Label>
                                             <Input value={newMaterial.title} onChange={(e) => setNewMaterial({ ...newMaterial, title: e.target.value })} placeholder="e.g., Python Course Notes" />
                                         </div>
-                                        <div className="grid gap-2">
-                                            <Label>Link / URL</Label>
-                                            <Input value={newMaterial.fileUrl} onChange={(e) => setNewMaterial({ ...newMaterial, fileUrl: e.target.value })} placeholder="https://..." />
-                                        </div>
+                                      {/* TYPE BASED FIELD */}
+<div className="grid gap-2">
+  <Label>
+    {newMaterial.type === 'PDF' ? 'Upload PDF File' : 'Link / URL'}
+  </Label>
+
+  {newMaterial.type === 'PDF' ? (
+    <Input
+      type="file"
+      accept="application/pdf"
+      onChange={(e: any) =>
+        setNewMaterial({ ...newMaterial, file: e.target.files[0] })
+      }
+    />
+  ) : (
+    <Input
+      value={newMaterial.fileUrl}
+      onChange={(e) =>
+        setNewMaterial({ ...newMaterial, fileUrl: e.target.value })
+      }
+      placeholder="https://..."
+    />
+  )}
+</div>
                                         <div className="grid gap-2">
                                             <Label>Type</Label>
                                             <select
@@ -1338,6 +1399,7 @@ const OrgDashboard = () => {
                                 </DialogContent>
                             </Dialog>
                         </CardHeader>
+
                         <CardContent>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {materials.length > 0 ? materials.map((m: any) => (

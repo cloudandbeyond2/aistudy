@@ -10,6 +10,7 @@ import Meeting from '../models/Meeting.js';
 import Project from '../models/Project.js';
 import Material from '../models/Material.js';
 import StudentProgress from '../models/StudentProgress.js';
+import { createNotification } from './notification.controller.js';
 // import { generateAssignments } from './ai.controller.js'; // Will implement this export next
 
 /**
@@ -258,6 +259,29 @@ export const createAssignment = async (req, res) => {
             questions
         });
         await assignment.save();
+
+        // Send notifications to students
+        try {
+            let studentQuery = { organization: organizationId, role: 'student' };
+            if (department && department !== 'all') {
+                studentQuery['studentDetails.department'] = department;
+            }
+
+            const students = await User.find(studentQuery).select('_id');
+
+            const notificationPromises = students.map(student =>
+                createNotification({
+                    user: student._id,
+                    message: `New assignment created: ${topic}`,
+                    type: 'info'
+                })
+            );
+            await Promise.all(notificationPromises);
+        } catch (notifError) {
+            console.error("Failed to send assignment notifications:", notifError);
+            // Don't fail the request if notifications fail
+        }
+
         res.json({ success: true, message: 'Assignment created', assignment });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error' });
@@ -771,15 +795,68 @@ export const deleteProject = async (req, res) => {
 /**
  * MATERIALS
  */
+// export const createMaterial = async (req, res) => {
+//     const { organizationId, title, description, fileUrl, type, department } = req.body;
+//     try {
+//         const material = new Material({ organizationId, title, description, fileUrl, type, department });
+//         await material.save();
+//         res.json({ success: true, message: 'Material added', material });
+//     } catch (error) {
+//         console.error('Create Material Error:', error);
+//         res.status(500).json({ success: false, message: error.message || 'Server error' });
+//     }
+// };
+
 export const createMaterial = async (req, res) => {
-    const { organizationId, title, description, fileUrl, type, department } = req.body;
     try {
-        const material = new Material({ organizationId, title, description, fileUrl, type, department });
+        const {
+            organizationId,
+            title,
+            description,
+            fileUrl,
+            type,
+            department
+        } = req.body;
+
+        let finalFileUrl = fileUrl;
+
+        // If PDF and file uploaded
+        if (type === 'PDF' && req.file) {
+            finalFileUrl = process.env.VERCEL
+                ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`
+                : req.file.path;
+        }
+
+        if (!finalFileUrl) {
+            return res.status(400).json({
+                success: false,
+                message: 'File or URL is required'
+            });
+        }
+
+        const material = new Material({
+            organizationId,
+            title,
+            description,
+            fileUrl: finalFileUrl,
+            type,
+            department
+        });
+
         await material.save();
-        res.json({ success: true, message: 'Material added', material });
+
+        res.json({
+            success: true,
+            message: 'Material added successfully',
+            material
+        });
+
     } catch (error) {
         console.error('Create Material Error:', error);
-        res.status(500).json({ success: false, message: error.message || 'Server error' });
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Server error'
+        });
     }
 };
 
