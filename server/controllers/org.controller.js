@@ -10,6 +10,7 @@ import Meeting from '../models/Meeting.js';
 import Project from '../models/Project.js';
 import Material from '../models/Material.js';
 import StudentProgress from '../models/StudentProgress.js';
+import { createNotification } from './notification.controller.js';
 // import { generateAssignments } from './ai.controller.js'; // Will implement this export next
 
 /**
@@ -258,6 +259,29 @@ export const createAssignment = async (req, res) => {
             questions
         });
         await assignment.save();
+
+        // Send notifications to students
+        try {
+            let studentQuery = { organization: organizationId, role: 'student' };
+            if (department && department !== 'all') {
+                studentQuery['studentDetails.department'] = department;
+            }
+
+            const students = await User.find(studentQuery).select('_id');
+
+            const notificationPromises = students.map(student =>
+                createNotification({
+                    user: student._id,
+                    message: `New assignment created: ${topic}`,
+                    type: 'info'
+                })
+            );
+            await Promise.all(notificationPromises);
+        } catch (notifError) {
+            console.error("Failed to send assignment notifications:", notifError);
+            // Don't fail the request if notifications fail
+        }
+
         res.json({ success: true, message: 'Assignment created', assignment });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error' });
