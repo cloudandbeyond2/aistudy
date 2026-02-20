@@ -1,502 +1,3 @@
-// import React, { useEffect, useState, useMemo } from 'react';
-// import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-// import { Search, Download, Eye, RefreshCw } from 'lucide-react';
-// import { Input } from '@/components/ui/input';
-// import { Button } from '@/components/ui/button';
-// import {
-//     Table,
-//     TableBody,
-//     TableCell,
-//     TableHead,
-//     TableHeader,
-//     TableRow,
-// } from '@/components/ui/table';
-// import { Badge } from '@/components/ui/badge';
-// import { Skeleton } from '@/components/ui/skeleton';
-// import {
-//     Select,
-//     SelectContent,
-//     SelectItem,
-//     SelectTrigger,
-//     SelectValue,
-// } from '@/components/ui/select';
-// import {
-//     Dialog,
-//     DialogContent,
-//     DialogDescription,
-//     DialogHeader,
-//     DialogTitle,
-// } from '@/components/ui/dialog';
-// import { serverURL } from '@/constants';
-// import axios from 'axios';
-// import { useToast } from '@/hooks/use-toast';
-// import { format } from 'date-fns';
-
-// const AdminOrders = () => {
-//     const [data, setData] = useState([]);
-//     const [searchQuery, setSearchQuery] = useState('');
-//     const [statusFilter, setStatusFilter] = useState('all');
-//     const [providerFilter, setProviderFilter] = useState('all');
-//     const [isLoading, setIsLoading] = useState(true);
-//     const [isRefreshing, setIsRefreshing] = useState(false);
-//     const [selectedOrder, setSelectedOrder] = useState(null);
-//     const [isDialogOpen, setIsDialogOpen] = useState(false);
-//     const { toast } = useToast();
-
-//     const filteredData = useMemo(() => {
-//         let filtered = data;
-
-//         // Search filter
-//         if (searchQuery) {
-//             const q = searchQuery.toLowerCase().trim();
-//             filtered = filtered.filter(
-//                 (order) =>
-//                     order.user?.toLowerCase().includes(q) ||
-//                     order.email?.toLowerCase().includes(q) ||
-//                     order.transactionId?.toLowerCase().includes(q) ||
-//                     order.subscriptionId?.toLowerCase().includes(q)
-//             );
-//         }
-
-//         // Status filter
-//         if (statusFilter !== 'all') {
-//             filtered = filtered.filter(order => order.status === statusFilter);
-//         }
-
-//         // Provider filter
-//         if (providerFilter !== 'all') {
-//             filtered = filtered.filter(order => order.provider === providerFilter);
-//         }
-
-//         return filtered;
-//     }, [data, searchQuery, statusFilter, providerFilter]);
-// // Inside the component, add this function
-// const handleManualUpdate = async (orderId, subscriptionId) => {
-//   try {
-//     const response = await axios.post(`${serverURL}/api/orders/manual-update`, {
-//       orderId,
-//       subscriptionId,
-//       status: 'success',
-//       amount: 3999,
-//       userName: 'Star bala',
-//       planName: 'Yearly Plan'
-//     });
-    
-//     if (response.data.success) {
-//       toast({
-//         title: 'Success',
-//         description: 'Order updated successfully',
-//       });
-//       fetchOrders(); // Refresh the list
-//     }
-//   } catch (error) {
-//     console.error(error);
-//     toast({
-//       title: 'Error',
-//       description: 'Failed to update order',
-//       variant: 'destructive',
-//     });
-//   }
-// };
-
-// // Add this button to your table row
-// const handleFixAllPending = async () => {
-//   try {
-//     const response = await axios.post(`${serverURL}/api/orders/fix-pending`);
-    
-//     toast({
-//       title: 'Success',
-//       description: `Fixed ${response.data.updates?.length || 0} pending orders`,
-//     });
-    
-//     fetchOrders(); // Refresh the list
-//   } catch (error) {
-//     console.error(error);
-//     toast({
-//       title: 'Error',
-//       description: 'Failed to fix pending orders',
-//       variant: 'destructive',
-//     });
-//   }
-// };
-
-//     useEffect(() => {
-//         fetchOrders();
-//     }, []);
-
-//     const fetchOrders = async () => {
-//         try {
-//             const res = await axios.get(`${serverURL}/api/orders`);
-//             setData(res.data);
-//         } catch (err) {
-//             console.error(err);
-//             toast({
-//                 title: 'Error',
-//                 description: 'Failed to load orders',
-//                 variant: 'destructive',
-//             });
-//         } finally {
-//             setIsLoading(false);
-//             setIsRefreshing(false);
-//         }
-//     };
-
-//     const handleRefresh = () => {
-//         setIsRefreshing(true);
-//         fetchOrders();
-//     };
-
-//     const handleViewOrder = async (orderId) => {
-//         try {
-//             const res = await axios.get(`${serverURL}/api/orders/${orderId}`);
-//             setSelectedOrder(res.data);
-//             setIsDialogOpen(true);
-//         } catch (err) {
-//             console.error(err);
-//             toast({
-//                 title: 'Error',
-//                 description: 'Failed to fetch order details',
-//                 variant: 'destructive',
-//             });
-//         }
-//     };
-
-//     const handleStatusUpdate = async (orderId, newStatus) => {
-//         try {
-//             await axios.patch(`${serverURL}/api/orders/${orderId}/status`, {
-//                 status: newStatus
-//             });
-            
-//             toast({
-//                 title: 'Success',
-//                 description: 'Order status updated',
-//             });
-            
-//             fetchOrders(); // Refresh data
-//         } catch (err) {
-//             console.error(err);
-//             toast({
-//                 title: 'Error',
-//                 description: 'Failed to update status',
-//                 variant: 'destructive',
-//             });
-//         }
-//     };
-
-//     const exportToCSV = () => {
-//         const headers = ['Date', 'User', 'Email', 'Plan', 'Amount', 'Currency', 'Provider', 'Status', 'Transaction ID', 'Subscription ID'];
-//         const csvData = filteredData.map(order => [
-//             format(new Date(order.date), 'yyyy-MM-dd HH:mm:ss'),
-//             order.user,
-//             order.email,
-//             order.plan,
-//             order.amount,
-//             order.currency,
-//             order.provider,
-//             order.status,
-//             order.transactionId,
-//             order.subscriptionId || 'N/A'
-//         ]);
-
-//         const csvContent = [
-//             headers.join(','),
-//             ...csvData.map(row => row.join(','))
-//         ].join('\n');
-
-//         const blob = new Blob([csvContent], { type: 'text/csv' });
-//         const url = window.URL.createObjectURL(blob);
-//         const a = document.createElement('a');
-//         a.href = url;
-//         a.download = `orders-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-//         a.click();
-//         window.URL.revokeObjectURL(url);
-//     };
-
-//     const getStatusColor = (status) => {
-//         switch (status) {
-//             case 'success': return 'bg-green-100 text-green-800 border-green-200';
-//             case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-//             case 'failed': return 'bg-red-100 text-red-800 border-red-200';
-//             case 'cancelled': return 'bg-gray-100 text-gray-800 border-gray-200';
-//             default: return 'bg-gray-100 text-gray-800 border-gray-200';
-//         }
-//     };
-
-//     return (
-//         <div className="space-y-6 animate-fade-in">
-//             <div className="flex justify-between items-center">
-//                 <div>
-//                     <h1 className="text-3xl font-bold tracking-tight">Order History</h1>
-//                     <p className="text-muted-foreground mt-1">
-//                         View and manage all payment transactions
-//                     </p>
-//                 </div>
-//                 <div className="flex gap-2">
-//                     <Button
-//                         variant="outline"
-//                         size="sm"
-//                         onClick={exportToCSV}
-//                         disabled={filteredData.length === 0}
-//                     >
-//                         <Download className="h-4 w-4 mr-2" />
-//                         Export CSV
-//                     </Button>
-//                     <Button
-//                         variant="outline"
-//                         size="sm"
-//                         onClick={handleRefresh}
-//                         disabled={isRefreshing}
-//                     >
-//                         <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-//                         Refresh
-//                     </Button>
-                    
-
-// <Button
-//   variant="outline"
-//   size="sm"
-//   onClick={handleFixAllPending}
-//   disabled={isRefreshing}
-// >
-//   <RefreshCw className="h-4 w-4 mr-2" />
-//   Fix Pending Orders
-// </Button>
-//                 </div>
-//             </div>
-
-//             <Card>
-//                 <CardHeader className="pb-3">
-//                     <div className="flex flex-col sm:flex-row justify-between gap-4">
-//                         <CardTitle>Transactions ({filteredData.length})</CardTitle>
-//                         <div className="flex flex-col sm:flex-row gap-3">
-//                             <div className="relative w-full sm:w-64">
-//                                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-//                                 <Input
-//                                     type="search"
-//                                     placeholder="Search orders..."
-//                                     className="pl-8"
-//                                     value={searchQuery}
-//                                     onChange={(e) => setSearchQuery(e.target.value)}
-//                                 />
-//                             </div>
-//                             <Select value={statusFilter} onValueChange={setStatusFilter}>
-//                                 <SelectTrigger className="w-full sm:w-40">
-//                                     <SelectValue placeholder="Status" />
-//                                 </SelectTrigger>
-//                                 <SelectContent>
-//                                     <SelectItem value="all">All Status</SelectItem>
-//                                     <SelectItem value="success">Success</SelectItem>
-//                                     <SelectItem value="pending">Pending</SelectItem>
-//                                     <SelectItem value="failed">Failed</SelectItem>
-//                                     <SelectItem value="cancelled">Cancelled</SelectItem>
-//                                 </SelectContent>
-//                             </Select>
-//                             <Select value={providerFilter} onValueChange={setProviderFilter}>
-//                                 <SelectTrigger className="w-full sm:w-40">
-//                                     <SelectValue placeholder="Provider" />
-//                                 </SelectTrigger>
-//                                 <SelectContent>
-//                                     <SelectItem value="all">All Providers</SelectItem>
-//                                     <SelectItem value="razorpay">Razorpay</SelectItem>
-//                                     <SelectItem value="stripe">Stripe</SelectItem>
-//                                     <SelectItem value="paypal">PayPal</SelectItem>
-//                                 </SelectContent>
-//                             </Select>
-//                         </div>
-//                     </div>
-//                 </CardHeader>
-
-//                 <CardContent>
-//                     <Table>
-//                         <TableHeader>
-//                             <TableRow>
-//                                 <TableHead>Date</TableHead>
-//                                 <TableHead>User / Email</TableHead>
-//                                 <TableHead>Plan</TableHead>
-//                                 <TableHead>Amount</TableHead>
-//                                 <TableHead>Provider</TableHead>
-//                                 <TableHead>Status</TableHead>
-//                                 <TableHead className="text-right">Actions</TableHead>
-//                             </TableRow>
-//                         </TableHeader>
-
-//                         <TableBody>
-//                             {isLoading ? (
-//                                 [...Array(5)].map((_, i) => (
-//                                     <TableRow key={i}>
-//                                         <TableCell colSpan={7}>
-//                                             <Skeleton className="h-5 w-full" />
-//                                         </TableCell>
-//                                     </TableRow>
-//                                 ))
-//                             ) : filteredData.length > 0 ? (
-//                                 filteredData.map((order) => (
-//                        // In the table body, replace the TableRow with this:
-// <TableRow key={order._id} className="hover:bg-muted/50">
-//   <TableCell>
-//     {order.createdAt ? format(new Date(order.createdAt), 'dd/MM/yyyy HH:mm') : 
-//      order.date ? format(new Date(order.date), 'dd/MM/yyyy HH:mm') : 'N/A'}
-//   </TableCell>
-//   <TableCell>
-//     <div className="flex flex-col">
-//       <span className="font-medium">{order.userMName || order.userName || order.userData?.mName || order.userData?.name || 'N/A'}</span>
-//       <span className="text-xs text-muted-foreground">{order.userEmail}</span>
-//       {order.userId && (
-//         <span className="text-xs text-blue-600 mt-1">
-//           ID: {typeof order.userId === 'object' ? order.userId._id?.slice(-6) : order.userId?.slice(-6)}
-//         </span>
-//       )}
-//     </div>
-//   </TableCell>
-//   <TableCell>
-//     <div className="flex flex-col">
-//       <Badge variant="outline" className="capitalize">
-//         {order.plan || 'N/A'}
-//       </Badge>
-//       <span className="text-xs text-muted-foreground mt-1">
-//         {order.planName}
-//       </span>
-//     </div>
-//   </TableCell>
-//   <TableCell className="font-medium">
-//     <span className="font-mono">
-//       {order.currency || 'INR'} {order.price || order.amount || 0}
-//     </span>
-//   </TableCell>
-//   <TableCell>
-//     <Badge variant="secondary" className="capitalize">
-//       {order.provider || 'razorpay'}
-//     </Badge>
-//   </TableCell>
-//   <TableCell>
-//     <div className="flex flex-col gap-1">
-//       <Badge className={`${getStatusColor(order.status)} capitalize`}>
-//         {order.status}
-//       </Badge>
-//       {order.subscriptionStartDate && (
-//         <div className="text-xs text-muted-foreground">
-//           Starts: {format(new Date(order.subscriptionStartDate), 'dd/MM/yy')}
-//         </div>
-//       )}
-//       {order.subscriptionEndDate && (
-//         <div className="text-xs text-muted-foreground">
-//           Ends: {format(new Date(order.subscriptionEndDate), 'dd/MM/yy')}
-//         </div>
-//       )}
-//     </div>
-//   </TableCell>
-//   <TableCell className="text-right">
-//     <div className="flex justify-end gap-2">
-//       <Button
-//         variant="ghost"
-//         size="sm"
-//         onClick={() => handleViewOrder(order._id)}
-//         title="View Details"
-//       >
-//         <Eye className="h-4 w-4" />
-//       </Button>
-//       {order.status === 'pending' && (
-//         <Button
-//           variant="outline"
-//           size="sm"
-//           onClick={() => handleManualUpdate(order._id, order.subscriptionId)}
-//           className="text-yellow-600 border-yellow-200 hover:bg-yellow-50"
-//           title="Fix Order"
-//         >
-//           Fix
-//         </Button>
-//       )}
-//     </div>
-//   </TableCell>
-// </TableRow>
-//                                 ))
-//                             ) : (
-//                                 <TableRow>
-//                                     <TableCell colSpan={7} className="text-center py-8">
-//                                         <div className="flex flex-col items-center justify-center">
-//                                             <p className="text-muted-foreground">No orders found</p>
-//                                             {searchQuery || statusFilter !== 'all' || providerFilter !== 'all' ? (
-//                                                 <Button
-//                                                     variant="link"
-//                                                     onClick={() => {
-//                                                         setSearchQuery('');
-//                                                         setStatusFilter('all');
-//                                                         setProviderFilter('all');
-//                                                     }}
-//                                                 >
-//                                                     Clear filters
-//                                                 </Button>
-//                                             ) : null}
-//                                         </div>
-//                                     </TableCell>
-//                                 </TableRow>
-//                             )}
-//                         </TableBody>
-//                     </Table>
-//                 </CardContent>
-//             </Card>
-
-//             {/* Order Details Dialog */}
-//             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-//                 <DialogContent className="max-w-3xl">
-//                     <DialogHeader>
-//                         <DialogTitle>Order Details</DialogTitle>
-//                         <DialogDescription>
-//                             Complete transaction information
-//                         </DialogDescription>
-//                     </DialogHeader>
-                    
-//                     {selectedOrder && (
-//                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//                             <div className="space-y-2">
-//                                 <h4 className="font-semibold">Customer Information</h4>
-//                                 <p><strong>User:</strong> {selectedOrder.userId?.mName || selectedOrder.userName}</p>
-//                                 <p><strong>Email:</strong> {selectedOrder.userEmail}</p>
-//                                 <p><strong>User ID:</strong> {selectedOrder.userId?._id || 'N/A'}</p>
-//                             </div>
-                            
-//                             <div className="space-y-2">
-//                                 <h4 className="font-semibold">Order Information</h4>
-//                                 <p><strong>Order ID:</strong> {selectedOrder._id}</p>
-//                                 <p><strong>Date:</strong> {format(new Date(selectedOrder.createdAt), 'PPpp')}</p>
-//                                 <p><strong>Status:</strong> 
-//                                     <Badge className={`ml-2 ${getStatusColor(selectedOrder.status)}`}>
-//                                         {selectedOrder.status}
-//                                     </Badge>
-//                                 </p>
-//                             </div>
-                            
-//                             <div className="space-y-2">
-//                                 <h4 className="font-semibold">Payment Information</h4>
-//                                 <p><strong>Amount:</strong> {selectedOrder.currency} {selectedOrder.amount}</p>
-//                                 <p><strong>Plan:</strong> {selectedOrder.planName} ({selectedOrder.plan})</p>
-//                                 <p><strong>Provider:</strong> {selectedOrder.provider}</p>
-//                                 <p><strong>Subscription ID:</strong> {selectedOrder.subscriptionId || 'N/A'}</p>
-//                                 <p><strong>Payment ID:</strong> {selectedOrder.razorpayPaymentId || 'N/A'}</p>
-//                             </div>
-                            
-//                             <div className="space-y-2">
-//                                 <h4 className="font-semibold">Additional Information</h4>
-//                                 <p><strong>Address:</strong> {selectedOrder.address || 'N/A'}</p>
-//                                 {selectedOrder.notes && (
-//                                     <div>
-//                                         <strong>Notes:</strong>
-//                                         <pre className="text-xs mt-1 p-2 bg-muted rounded">
-//                                             {JSON.stringify(selectedOrder.notes, null, 2)}
-//                                         </pre>
-//                                     </div>
-//                                 )}
-//                             </div>
-//                         </div>
-//                     )}
-//                 </DialogContent>
-//             </Dialog>
-//         </div>
-//     );
-// };
-
-// export default AdminOrders;
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Search, Download, Eye, RefreshCw } from 'lucide-react';
@@ -519,14 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { serverURL } from '@/constants';
+import { appName, appLogo, companyName, serverURL, websiteURL } from '@/constants';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -538,18 +32,27 @@ const AdminOrders = () => {
   const [providerFilter, setProviderFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [taxPercentage, setTaxPercentage] = useState(0);
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const { toast } = useToast();
 
   useEffect(() => {
     fetchOrders();
+    fetchSettings();
   }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const res = await axios.get(`${serverURL}/api/settings`);
+      setTaxPercentage(res.data.taxPercentage || 0);
+    } catch (err) {
+      console.error('Failed to fetch tax settings');
+    }
+  };
 
   useEffect(() => {
     setCurrentPage(1);
@@ -569,6 +72,73 @@ const AdminOrders = () => {
       setIsLoading(false);
       setIsRefreshing(false);
     }
+  };
+
+  const handleDownloadReceipt = (order) => {
+    if (isDownloading) return;
+
+    const totalPaid = order.price || order.amount || 0;
+    const subtotalCalc = totalPaid / (1 + taxPercentage / 100);
+    const taxCalc = totalPaid - subtotalCalc;
+
+    const receiptData = {
+      ...order,
+      subtotal: subtotalCalc.toFixed(2),
+      taxAmount: taxCalc.toFixed(2),
+      totalPrice: totalPaid.toFixed(2),
+      formattedDate: format(new Date(order.createdAt || order.date), 'dd/MM/yyyy')
+    };
+
+    setSelectedReceipt(receiptData);
+    setIsDownloading(true);
+
+    toast({
+      title: 'Preparing Receipt',
+      description: 'Please wait while we generate the PDF...',
+    });
+
+    // Increased delay to ensure React renders the data and browser paints it
+    setTimeout(() => {
+      const element = document.getElementById('premium-receipt-admin-content');
+      if (!element) {
+        console.error('Receipt content element not found');
+        setIsDownloading(false);
+        return;
+      }
+
+      const opt = {
+        margin: [0.3, 0.3],
+        filename: `receipt-${order.subscriptionId || order._id}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          scrollY: 0,
+          scrollX: 0,
+          windowWidth: 800
+        },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      import('html2pdf.js').then(html2pdf => {
+        html2pdf.default().from(element).set(opt).save().then(() => {
+          setIsDownloading(false);
+          toast({
+            title: 'Success',
+            description: 'Receipt downloaded successfully',
+          });
+        });
+      }).catch(err => {
+        console.error('PDF generation error:', err);
+        setIsDownloading(false);
+        toast({
+          title: 'Error',
+          description: 'Failed to generate PDF',
+          variant: 'destructive',
+        });
+      });
+    }, 2000);
   };
 
   const filteredData = useMemo(() => {
@@ -622,7 +192,7 @@ const AdminOrders = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in relative">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Order History</h1>
@@ -639,9 +209,7 @@ const AdminOrders = () => {
             disabled={isRefreshing}
           >
             <RefreshCw
-              className={`h-4 w-4 mr-2 ${
-                isRefreshing ? 'animate-spin' : ''
-              }`}
+              className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`}
             />
             Refresh
           </Button>
@@ -704,13 +272,14 @@ const AdminOrders = () => {
                 <TableHead>Plan</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5}>
+                  <TableCell colSpan={6}>
                     <Skeleton className="h-5 w-full" />
                   </TableCell>
                 </TableRow>
@@ -718,10 +287,7 @@ const AdminOrders = () => {
                 paginatedData.map((order) => (
                   <TableRow key={order._id}>
                     <TableCell>
-                      {format(
-                        new Date(order.createdAt),
-                        'dd/MM/yyyy HH:mm'
-                      )}
+                      {format(new Date(order.createdAt), 'dd/MM/yyyy HH:mm')}
                     </TableCell>
                     <TableCell>
                       {order.userName} <br />
@@ -734,19 +300,27 @@ const AdminOrders = () => {
                       {order.currency} {order.amount}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        className={`${getStatusColor(
-                          order.status
-                        )} capitalize`}
-                      >
+                      <Badge className={`${getStatusColor(order.status)} capitalize`}>
                         {order.status}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDownloadReceipt(order)}
+                        title="Download Receipt"
+                        disabled={isDownloading}
+                        className="text-primary hover:text-primary hover:bg-primary/10"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-6">
+                  <TableCell colSpan={6} className="text-center py-6">
                     No orders found
                   </TableCell>
                 </TableRow>
@@ -759,11 +333,7 @@ const AdminOrders = () => {
             <div className="flex justify-between items-center mt-6">
               <div className="text-sm text-muted-foreground">
                 Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-                {Math.min(
-                  currentPage * itemsPerPage,
-                  filteredData.length
-                )}{' '}
-                of {filteredData.length}
+                {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length}
               </div>
 
               <div className="flex gap-2">
@@ -771,9 +341,7 @@ const AdminOrders = () => {
                   size="sm"
                   variant="outline"
                   disabled={currentPage === 1}
-                  onClick={() =>
-                    setCurrentPage((prev) => prev - 1)
-                  }
+                  onClick={() => setCurrentPage((prev) => prev - 1)}
                 >
                   Previous
                 </Button>
@@ -782,11 +350,7 @@ const AdminOrders = () => {
                   <Button
                     key={index}
                     size="sm"
-                    variant={
-                      currentPage === index + 1
-                        ? 'default'
-                        : 'outline'
-                    }
+                    variant={currentPage === index + 1 ? 'default' : 'outline'}
                     onClick={() => setCurrentPage(index + 1)}
                   >
                     {index + 1}
@@ -797,9 +361,7 @@ const AdminOrders = () => {
                   size="sm"
                   variant="outline"
                   disabled={currentPage === totalPages}
-                  onClick={() =>
-                    setCurrentPage((prev) => prev + 1)
-                  }
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
                 >
                   Next
                 </Button>
@@ -808,6 +370,105 @@ const AdminOrders = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* 
+          OFF-SCREEN RECEIPT CONTAINER
+          This is always in the DOM but positioned far off-screen.
+          We render the content only when selectedReceipt has data.
+      */}
+      <div
+        id="premium-receipt-admin-container"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: '-2000px', // Far off-screen but valid
+          width: '800px',
+          zIndex: -1000,
+          background: '#fff'
+        }}
+      >
+        <div id="premium-receipt-admin-content" style={{ padding: '40px', backgroundColor: '#fff', minHeight: '800px' }}>
+          {selectedReceipt ? (
+            <div style={{ color: '#1a1a1a', fontFamily: 'Arial, sans-serif' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #efefef', paddingBottom: '20px', marginBottom: '30px' }}>
+                <div>
+                  <img src={appLogo} alt="Logo" style={{ height: '50px', marginBottom: '10px' }} />
+                  <h1 style={{ margin: 0, fontSize: '24px', color: '#000' }}>{appName}</h1>
+                  <p style={{ margin: '5px 0', fontSize: '12px', color: '#666' }}>{companyName}</p>
+                  <p style={{ margin: '3px 0', fontSize: '12px', color: '#666' }}>{websiteURL}</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <h2 style={{ margin: 0, fontSize: '28px', color: '#ddd' }}>RECEIPT</h2>
+                  <p style={{ margin: '15px 0 5px', fontSize: '12px', color: '#666' }}><b>Receipt #:</b> {selectedReceipt.subscriptionId || selectedReceipt._id}</p>
+                  <p style={{ margin: '3px 0', fontSize: '12px', color: '#666' }}><b>Date:</b> {selectedReceipt.formattedDate}</p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px' }}>
+                <div style={{ width: '50%' }}>
+                  <h4 style={{ margin: '0 0 10px', fontSize: '14px', textTransform: 'uppercase', color: '#999' }}>Bill To:</h4>
+                  <p style={{ margin: '5px 0', fontSize: '16px', fontWeight: 'bold' }}>{selectedReceipt.userName || 'Customer'}</p>
+                  <p style={{ margin: '3px 0', fontSize: '14px', color: '#444' }}>{selectedReceipt.userEmail || 'N/A'}</p>
+                </div>
+                <div style={{ width: '40%', textAlign: 'right' }}>
+                  <h4 style={{ margin: '0 0 10px', fontSize: '14px', textTransform: 'uppercase', color: '#999' }}>Payment Details:</h4>
+                  <p style={{ margin: '5px 0', fontSize: '14px', color: '#444' }}><b>Method:</b> <span style={{ textTransform: 'capitalize' }}>{selectedReceipt.provider || 'Gateway'}</span></p>
+                  <p style={{ margin: '3px 0', fontSize: '14px', color: '#444' }}><b>Currency:</b> {selectedReceipt.currency}</p>
+                  <p style={{ margin: '3px 0', fontSize: '14px', color: '#444' }}><b>Status:</b> <span style={{ textTransform: 'capitalize' }}>{selectedReceipt.status}</span></p>
+                </div>
+              </div>
+
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '40px' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f9f9f9', borderBottom: '1px solid #efefef' }}>
+                    <th style={{ textAlign: 'left', padding: '15px', fontSize: '13px', color: '#666' }}>Description</th>
+                    <th style={{ textAlign: 'right', padding: '15px', fontSize: '13px', color: '#666' }}>Unit Price</th>
+                    <th style={{ textAlign: 'center', padding: '15px', fontSize: '13px', color: '#666' }}>Qty</th>
+                    <th style={{ textAlign: 'right', padding: '15px', fontSize: '13px', color: '#666' }}>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ borderBottom: '1px solid #f1f1f1' }}>
+                    <td style={{ padding: '20px 15px', fontSize: '15px' }}>
+                      <p style={{ margin: 0, fontWeight: 'bold' }}>{selectedReceipt.planName}</p>
+                      <p style={{ margin: '5px 0 0', fontSize: '12px', color: '#888' }}>Full access to premium features</p>
+                    </td>
+                    <td style={{ textAlign: 'right', padding: '20px 15px', fontSize: '15px' }}>{selectedReceipt.currency} {selectedReceipt.subtotal}</td>
+                    <td style={{ textAlign: 'center', padding: '20px 15px', fontSize: '15px' }}>1</td>
+                    <td style={{ textAlign: 'right', padding: '20px 15px', fontSize: '15px', fontWeight: 'bold' }}>{selectedReceipt.currency} {selectedReceipt.subtotal}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ width: '250px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f1f1' }}>
+                    <span style={{ fontSize: '14px', color: '#666' }}>Subtotal</span>
+                    <span style={{ fontSize: '14px' }}>{selectedReceipt.currency} {selectedReceipt.subtotal}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f1f1' }}>
+                    <span style={{ fontSize: '14px', color: '#666' }}>Tax ({taxPercentage}%)</span>
+                    <span style={{ fontSize: '14px' }}>{selectedReceipt.currency} {selectedReceipt.taxAmount}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px 0' }}>
+                    <span style={{ fontSize: '18px', fontWeight: 'bold' }}>Grand Total</span>
+                    <span style={{ fontSize: '22px', fontWeight: 'bold', color: '#000' }}>{selectedReceipt.currency} {selectedReceipt.totalPrice}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '100px', textAlign: 'center', borderTop: '1px solid #f1f1f1', paddingTop: '40px' }}>
+                <p style={{ margin: 0, color: '#999', fontSize: '14px' }}>Thank you for your business!</p>
+                <p style={{ margin: '5px 0 0', color: '#ccc', fontSize: '11px' }}>This is a computer generated receipt.</p>
+              </div>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '100px', color: '#ccc' }}>
+              No receipt selected
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

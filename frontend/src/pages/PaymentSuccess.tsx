@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle, ArrowRight, Receipt } from 'lucide-react';
-import { appLogo, companyName, serverURL, websiteURL, FreeCost, MonthCost, YearCost, FreeType, MonthType, YearType } from '@/constants';
+import { appName, appLogo, companyName, serverURL, websiteURL, FreeCost, MonthCost, YearCost, FreeType, MonthType, YearType } from '@/constants';
 
 // Generate PDF function
 const generatePDF = (target, options) => {
@@ -42,6 +42,8 @@ const PaymentSuccess = () => {
   const [isVerifying, setIsVerifying] = useState(true);
   const [countdown, setCountdown] = useState(7);
   const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [subtotal, setSubtotal] = useState('0');
+  const [taxAmount, setTaxAmount] = useState('0');
 
   useEffect(() => {
     init();
@@ -77,10 +79,14 @@ const PaymentSuccess = () => {
     const storedName = sessionStorage.getItem('mName') || '';
     const storedEmail = sessionStorage.getItem('email') || '';
     const storedUid = sessionStorage.getItem('uid') || '';
+    const storedSubtotal = sessionStorage.getItem('subtotal') || '0';
+    const storedTaxAmount = sessionStorage.getItem('taxAmount') || '0';
 
     setReceiptId(planId);
     setPlanName(storedPlan);
     setPrice(storedPrice);
+    setSubtotal(storedSubtotal);
+    setTaxAmount(storedTaxAmount);
     setCurrency(storedCurrency);
     setMethod(storedMethod);
     setName(storedName);
@@ -199,9 +205,20 @@ const PaymentSuccess = () => {
   };
 
   const handleDownload = () => {
-    generatePDF(pdfRef, {
-      filename: `receipt-${receiptId}.pdf`
-    });
+    const element = document.getElementById('premium-receipt');
+    if (!element) return;
+
+    const opt = {
+      margin: 0.5,
+      filename: `receipt-${receiptId}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+
+    import('html2pdf.js').then(html2pdf => {
+      html2pdf.default().from(element).set(opt).save();
+    }).catch(err => console.error('PDF generation error:', err));
 
     toast({
       title: 'Receipt downloaded',
@@ -217,91 +234,193 @@ const PaymentSuccess = () => {
     });
 
   return (
-    <div
-      ref={pdfRef}
-      className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-12 px-4 flex justify-center"
-    >
-      <Card className="w-full max-w-2xl shadow-lg">
-        <CardHeader className="text-center border-b">
-          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="h-8 w-8 text-primary" />
-          </div>
-          <CardTitle className="text-2xl font-bold">
-            Payment Successful
-          </CardTitle>
-          <p className="text-muted-foreground mt-2">
-            Your payment has been processed successfully.
-          </p>
-        </CardHeader>
-
-        <CardContent className="pt-6 space-y-6">
-          {isVerifying && (
-            <div className="bg-blue-50 text-blue-700 p-3 rounded-md text-center animate-pulse">
-              Verifying payment and activating subscription...
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-12 px-4">
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Main Success Card */}
+        <Card className="shadow-lg border-none bg-background/60 backdrop-blur-sm overflow-hidden">
+          <div className="h-2 bg-primary"></div>
+          <CardHeader className="text-center pt-8">
+            <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6 scale-110">
+              <CheckCircle className="h-10 w-10 text-green-500 animate-in zoom-in duration-300" />
             </div>
-          )}
-
-          {shouldRedirect && !isVerifying && (
-            <div className="bg-green-50 text-green-700 p-3 rounded-md text-center">
-              Redirecting to pricing page in {countdown} seconds...
-            </div>
-          )}
-
-          <div className="flex justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Receipt ID</p>
-              <p className="font-medium">{receiptId}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">Date</p>
-              <p className="font-medium">{getCurrentDate()}</p>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div>
-            <h3 className="font-medium mb-2">Plan Details</h3>
-            <div className="flex justify-between">
-              <p>{planName}</p>
-              <p className="font-bold">
-                {currency} {price}
-              </p>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              Payment Method: {method}
+            <CardTitle className="text-3xl font-bold tracking-tight">
+              Payment Successful!
+            </CardTitle>
+            <p className="text-muted-foreground mt-2 text-lg">
+              Thank you for choosesing {appName}. Your subscription is now active.
             </p>
+          </CardHeader>
+
+          <CardContent className="px-8 pb-8">
+            <div className="grid md:grid-cols-2 gap-8 mt-4">
+              {/* Order Info */}
+              <div className="space-y-6">
+                <div className="bg-muted/30 p-4 rounded-xl space-y-4">
+                  <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Order Information</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground italic">Receipt ID</span>
+                      <span className="font-mono font-medium text-xs bg-muted p-1 rounded">{receiptId}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground italic">Date</span>
+                      <span className="font-medium">{getCurrentDate()}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground italic">Method</span>
+                      <span className="font-medium capitalize">{method}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-muted/30 p-4 rounded-xl space-y-4">
+                  <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Plan Details</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground italic">Plan Name</span>
+                      <span className="font-medium">{planName}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground italic">Currency</span>
+                      <span className="font-medium">{currency}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pricing breakdown UI */}
+              <div className="flex flex-col justify-between">
+                <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 space-y-4">
+                  <h3 className="font-semibold text-lg text-primary">Price Breakdown</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span>{currency} {subtotal}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Tax</span>
+                      <span>{currency} {taxAmount}</span>
+                    </div>
+                    <Separator className="bg-primary/10" />
+                    <div className="flex justify-between items-end pt-2">
+                      <span className="font-bold text-lg">Total Paid</span>
+                      <span className="font-bold text-2xl text-primary">{currency} {price}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {isVerifying && (
+                  <div className="mt-6 bg-blue-50/50 border border-blue-100 text-blue-700 p-4 rounded-xl flex items-center gap-3 animate-pulse">
+                    <div className="h-2 w-2 bg-blue-500 rounded-full animate-ping"></div>
+                    <span className="text-sm font-medium">Finalizing your subscription...</span>
+                  </div>
+                )}
+
+                {shouldRedirect && !isVerifying && (
+                  <div className="mt-6 bg-green-50/50 border border-green-100 text-green-700 p-4 rounded-xl text-center">
+                    <span className="text-sm font-medium">Automatic redirect to dashboard in <span className="font-bold">{countdown}s</span></span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+
+          <CardFooter className="bg-muted/20 px-8 py-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
+            <Button variant="outline" size="lg" className="w-full sm:w-auto hover:bg-muted font-medium" onClick={handleDownload}>
+              <Receipt className="mr-2 h-5 w-5" />
+              Download PDF Receipt
+            </Button>
+
+            <Button
+              size="lg"
+              className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all"
+              onClick={() => {
+                sessionStorage.removeItem('method');
+                sessionStorage.removeItem('subscriptionId');
+                sessionStorage.removeItem('orderId');
+                navigate('/dashboard/pricing');
+              }}
+            >
+              Go to Dashboard
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </CardFooter>
+        </Card>
+
+        {/* Hidden Premium Receipt Template for PDF Export */}
+        <div id="premium-receipt" style={{ position: 'absolute', left: '-10000px', top: 0, width: '800px', backgroundColor: '#fff', color: '#1a1a1a', padding: '40px', fontFamily: 'Arial, sans-serif' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #efefef', paddingBottom: '20px', marginBottom: '30px' }}>
+            <div>
+              <img src={appLogo} alt="Logo" style={{ height: '50px', marginBottom: '10px' }} />
+              <h1 style={{ margin: 0, fontSize: '24px', color: '#000' }}>{appName}</h1>
+              <p style={{ margin: '5px 0', fontSize: '12px', color: '#666' }}>{companyName}</p>
+              <p style={{ margin: '3px 0', fontSize: '12px', color: '#666' }}>{websiteURL}</p>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <h2 style={{ margin: 0, fontSize: '28px', color: '#ddd' }}>RECEIPT</h2>
+              <p style={{ margin: '15px 0 5px', fontSize: '12px', color: '#666' }}><b>Receipt #:</b> {receiptId}</p>
+              <p style={{ margin: '3px 0', fontSize: '12px', color: '#666' }}><b>Date:</b> {getCurrentDate()}</p>
+            </div>
           </div>
 
-          <Separator />
-
-          <div>
-            <h3 className="font-medium mb-2">Billing Details</h3>
-            <p>{name || 'Customer'}</p>
-            <p className="text-sm text-muted-foreground">{email}</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px' }}>
+            <div style={{ width: '50%' }}>
+              <h4 style={{ margin: '0 0 10px', fontSize: '14px', textTransform: 'uppercase', color: '#999' }}>Bill To:</h4>
+              <p style={{ margin: '5px 0', fontSize: '16px', fontWeight: 'bold' }}>{name || 'Customer'}</p>
+              <p style={{ margin: '3px 0', fontSize: '14px', color: '#444' }}>{email}</p>
+            </div>
+            <div style={{ width: '40%', textAlign: 'right' }}>
+              <h4 style={{ margin: '0 0 10px', fontSize: '14px', textTransform: 'uppercase', color: '#999' }}>Payment Details:</h4>
+              <p style={{ margin: '5px 0', fontSize: '14px', color: '#444' }}><b>Method:</b> <span style={{ textTransform: 'capitalize' }}>{method}</span></p>
+              <p style={{ margin: '3px 0', fontSize: '14px', color: '#444' }}><b>Currency:</b> {currency}</p>
+            </div>
           </div>
-        </CardContent>
 
-        <CardFooter className="flex flex-col sm:flex-row gap-4 justify-between border-t pt-4">
-          <Button variant="outline" onClick={handleDownload}>
-            <Receipt className="mr-2 h-4 w-4" />
-            Download Receipt
-          </Button>
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '40px' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f9f9f9', borderBottom: '1px solid #efefef' }}>
+                <th style={{ textAlign: 'left', padding: '15px', fontSize: '13px', color: '#666' }}>Description</th>
+                <th style={{ textAlign: 'right', padding: '15px', fontSize: '13px', color: '#666' }}>Unit Price</th>
+                <th style={{ textAlign: 'center', padding: '15px', fontSize: '13px', color: '#666' }}>Qty</th>
+                <th style={{ textAlign: 'right', padding: '15px', fontSize: '13px', color: '#666' }}>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style={{ borderBottom: '1px solid #f1f1f1' }}>
+                <td style={{ padding: '20px 15px', fontSize: '15px' }}>
+                  <p style={{ margin: 0, fontWeight: 'bold' }}>{planName}</p>
+                  <p style={{ margin: '5px 0 0', fontSize: '12px', color: '#888' }}>Full access to premium features</p>
+                </td>
+                <td style={{ textAlign: 'right', padding: '20px 15px', fontSize: '15px' }}>{currency} {subtotal}</td>
+                <td style={{ textAlign: 'center', padding: '20px 15px', fontSize: '15px' }}>1</td>
+                <td style={{ textAlign: 'right', padding: '20px 15px', fontSize: '15px', fontWeight: 'bold' }}>{currency} {subtotal}</td>
+              </tr>
+            </tbody>
+          </table>
 
-          <Button
-            onClick={() => {
-              sessionStorage.removeItem('method');
-              sessionStorage.removeItem('subscriptionId');
-              sessionStorage.removeItem('orderId');
-              navigate('/dashboard/pricing');
-            }}
-          >
-            Go to Dashboard
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ width: '250px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f1f1' }}>
+                <span style={{ fontSize: '14px', color: '#666' }}>Subtotal</span>
+                <span style={{ fontSize: '14px' }}>{currency} {subtotal}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f1f1' }}>
+                <span style={{ fontSize: '14px', color: '#666' }}>Tax</span>
+                <span style={{ fontSize: '14px' }}>{currency} {taxAmount}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px 0' }}>
+                <span style={{ fontSize: '18px', fontWeight: 'bold' }}>Grand Total</span>
+                <span style={{ fontSize: '22px', fontWeight: 'bold', color: '#000' }}>{currency} {price}</span>
+              </div>
+            </div>
+          </div>
 
-        </CardFooter>
-      </Card>
+          <div style={{ marginTop: '100px', textAlign: 'center', borderTop: '1px solid #f1f1f1', paddingTop: '40px' }}>
+            <p style={{ margin: 0, color: '#999', fontSize: '14px' }}>Thank you for your business!</p>
+            <p style={{ margin: '5px 0 0', color: '#ccc', fontSize: '11px' }}>This is a computer generated receipt and does not require a signature.</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

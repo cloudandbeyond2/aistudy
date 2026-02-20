@@ -181,6 +181,8 @@ const PaymentDetails = () => {
 
     // Save common data to sessionStorage for ALL payment methods
     sessionStorage.setItem('price', totalPrice.toFixed(2));
+    sessionStorage.setItem('subtotal', plan.price.toString());
+    sessionStorage.setItem('taxAmount', taxAmount.toFixed(2));
     sessionStorage.setItem('planCurrency', plan.currency);
     sessionStorage.setItem('plan', plan.name); // Also save plan name here
 
