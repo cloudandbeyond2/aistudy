@@ -300,7 +300,8 @@ export const getAdminSettings = async () => {
     geminiApiKey: admin?.geminiApiKey || '',
     unsplashApiKey: admin?.unsplashApiKey || '',
     websiteName: admin?.websiteName || 'AIstudy',
-    websiteLogo: admin?.websiteLogo || '/logo.png'
+    websiteLogo: admin?.websiteLogo || '/logo.png',
+    taxPercentage: admin?.taxPercentage || 0
   };
 };
 
@@ -312,7 +313,8 @@ export const updateAdminSettings = async (data) => {
         geminiApiKey: data.geminiApiKey,
         unsplashApiKey: data.unsplashApiKey,
         websiteName: data.websiteName,
-        websiteLogo: data.websiteLogo
+        websiteLogo: data.websiteLogo,
+        taxPercentage: data.taxPercentage
       }
     }
   );

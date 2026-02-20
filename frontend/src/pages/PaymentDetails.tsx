@@ -130,6 +130,7 @@ const PaymentDetails = () => {
   const [paymentMethod, setPaymentMethod] = useState<string>('razorpay');
   const [isProcessing, setIsProcessing] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [taxPercentage, setTaxPercentage] = useState<number>(0);
   const location = useLocation();
   const state = location.state as any;
 
@@ -138,6 +139,22 @@ const PaymentDetails = () => {
     price: state?.price || 0,
     currency: state?.currency || 'USD',
     planType: state?.planType || planId
+  };
+
+  const taxAmount = (plan.price * taxPercentage) / 100;
+  const totalPrice = plan.price + taxAmount;
+
+  React.useEffect(() => {
+    fetchTaxSettings();
+  }, []);
+
+  const fetchTaxSettings = async () => {
+    try {
+      const res = await axios.get(`${serverURL}/api/settings`);
+      setTaxPercentage(res.data.taxPercentage || 0);
+    } catch (error) {
+      console.error('Failed to fetch tax settings:', error);
+    }
   };
 
   // const plan = planId && plans[planId as keyof typeof plans]
@@ -159,175 +176,177 @@ const PaymentDetails = () => {
     },
   });
 
-const onSubmit = (data: FormValues) => {
-  setIsProcessing(true);
-  
-  // Save common data to sessionStorage for ALL payment methods
-  sessionStorage.setItem('price', plan.price.toString());
-  sessionStorage.setItem('planCurrency', plan.currency);
-  sessionStorage.setItem('plan', plan.name); // Also save plan name here
-  
-  if (paymentMethod === 'paypal') {
-    startPayPal(data);
-  } else if (paymentMethod === 'stripe') {
-    startStripe();
-  } else if (paymentMethod === 'flutterwave') {
-    setIsProcessing(false);
-    handleFlutterPayment({
-      callback: (response) => {
-        sessionStorage.setItem('stripe', "" + response.transaction_id);
-        sessionStorage.setItem('method', 'flutterwave');
-        navigate('/payment-success/' + response.transaction_id, { 
-          state: { 
-            planName: plan.name,
-            price: plan.price,
-            currency: plan.currency,
-            method: 'flutterwave'
-          }
-        });
-        closePaymentModal();
-      },
-      onClose: () => { },
-    });
-  } else if (paymentMethod === 'paystack') {
-    startPaystack(data);
-  } else if (paymentMethod === 'razorpay') {
-    startRazorpay(data);
-  } else {
-    return;
-  }
-};
- 
+  const onSubmit = (data: FormValues) => {
+    setIsProcessing(true);
 
-//   async function startRazorpay(data: FormValues) {
-//   const fullAddress = data.address + ' ' + data.state + ' ' + data.zipCode + ' ' + data.country;
-//   let planId = razorpayPlanIdTwo;
-//   if (plan.name === 'Monthly Plan') {
-//     planId = razorpayPlanIdOne;
-//   }
-//   const dataToSend = {
-//     plan: planId,
-//     email: data.email,
-//     fullAddress: fullAddress,
-//     planType: plan.name === 'Monthly Plan' ? 'monthly' : 'yearly'
-//   };
-//   try {
-//     const postURL = serverURL + '/api/razorpaycreate';
-//     const res = await axios.post(postURL, dataToSend);
-    
-//     // Already saved price/currency in onSubmit, just set method
-//     sessionStorage.setItem('method', 'razorpay');
-//     setIsProcessing(false);
-    
-//     window.open(res.data.short_url, '_blank');
-//     navigate('/payment-pending', { 
-//       state: { 
-//         sub: res.data.id, 
-//         link: res.data.short_url, 
-//         planName: plan.name, 
-//         planCost: plan.price,
-//         currency: plan.currency
-//       } 
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     setIsProcessing(false);
-//     toast({
-//       title: "Error",
-//       description: "Internal Server Error",
-//     });
-//   }
-// }
+    // Save common data to sessionStorage for ALL payment methods
+    sessionStorage.setItem('price', totalPrice.toFixed(2));
+    sessionStorage.setItem('planCurrency', plan.currency);
+    sessionStorage.setItem('plan', plan.name); // Also save plan name here
 
-
-// In PaymentDetails.jsx - Fix startRazorpay function
-async function startRazorpay(data: FormValues) {
-  const fullAddress = `${data.address || ''} ${data.city || ''} ${data.state || ''} ${data.zipCode || ''} ${data.country || ''}`.trim();
-  
-  let planId = razorpayPlanIdTwo; // Default to yearly
-  let planType = 'yearly';
-  let planNameDisplay = 'Yearly';
-  
-  if (plan.name === 'Monthly' || plan.planType === 'monthly' || planId === 'monthly') {
-    planId = razorpayPlanIdOne;
-    planType = 'monthly';
-    planNameDisplay = 'Monthly';
-  }
-
-  // Save user data to session
-  const fullName = `${data.firstName || ''} ${data.lastName || ''}`.trim() || sessionStorage.getItem('mName') || 'Customer';
-  const userEmail = data.email || sessionStorage.getItem('email');
-  
-  sessionStorage.setItem('mName', fullName);
-  sessionStorage.setItem('email', userEmail);
-  sessionStorage.setItem('plan', planNameDisplay);
-  sessionStorage.setItem('price', plan.price.toString());
-  sessionStorage.setItem('planCurrency', plan.currency);
-  sessionStorage.setItem('planType', planType);
-  sessionStorage.setItem('uid', sessionStorage.getItem('uid') || '');
-
-  const dataToSend = {
-    plan: planId,
-    email: userEmail,
-    fullAddress: fullAddress,
-    planType: planType,
-    planName: planNameDisplay,
-    amount: parseFloat(plan.price),
-    currency: plan.currency,
-    userName: fullName
+    if (paymentMethod === 'paypal') {
+      startPayPal(data);
+    } else if (paymentMethod === 'stripe') {
+      startStripe();
+    } else if (paymentMethod === 'flutterwave') {
+      setIsProcessing(false);
+      handleFlutterPayment({
+        callback: (response) => {
+          sessionStorage.setItem('stripe', "" + response.transaction_id);
+          sessionStorage.setItem('method', 'flutterwave');
+          navigate('/payment-success/' + response.transaction_id, {
+            state: {
+              planName: plan.name,
+              price: plan.price,
+              currency: plan.currency,
+              method: 'flutterwave'
+            }
+          });
+          closePaymentModal();
+        },
+        onClose: () => { },
+      });
+    } else if (paymentMethod === 'paystack') {
+      startPaystack(data);
+    } else if (paymentMethod === 'razorpay') {
+      startRazorpay(data);
+    } else {
+      return;
+    }
   };
 
-  try {
-    setIsProcessing(true);
-    const postURL = serverURL + '/api/razorpaycreate';
-    const res = await axios.post(postURL, dataToSend);
-    
-    if (res.data.success !== false) {
-      sessionStorage.setItem('method', 'razorpay');
-      sessionStorage.setItem('subscriptionId', res.data.id);
-      sessionStorage.setItem('orderId', res.data.orderId);
-      
-      toast({
-        title: "Redirecting to payment",
-        description: "Please complete your payment",
-      });
-      
-      window.open(res.data.short_url, '_blank');
-      
-      navigate('/payment-pending', { 
-        state: { 
-          sub: res.data.id, 
-          link: res.data.short_url, 
-          planName: planNameDisplay, 
-          planCost: plan.price,
-          currency: plan.currency,
-          orderId: res.data.orderId
-        } 
-      });
-    } else {
-      throw new Error(res.data.message || 'Failed to create subscription');
+
+  //   async function startRazorpay(data: FormValues) {
+  //   const fullAddress = data.address + ' ' + data.state + ' ' + data.zipCode + ' ' + data.country;
+  //   let planId = razorpayPlanIdTwo;
+  //   if (plan.name === 'Monthly Plan') {
+  //     planId = razorpayPlanIdOne;
+  //   }
+  //   const dataToSend = {
+  //     plan: planId,
+  //     email: data.email,
+  //     fullAddress: fullAddress,
+  //     planType: plan.name === 'Monthly Plan' ? 'monthly' : 'yearly'
+  //   };
+  //   try {
+  //     const postURL = serverURL + '/api/razorpaycreate';
+  //     const res = await axios.post(postURL, dataToSend);
+
+  //     // Already saved price/currency in onSubmit, just set method
+  //     sessionStorage.setItem('method', 'razorpay');
+  //     setIsProcessing(false);
+
+  //     window.open(res.data.short_url, '_blank');
+  //     navigate('/payment-pending', { 
+  //       state: { 
+  //         sub: res.data.id, 
+  //         link: res.data.short_url, 
+  //         planName: plan.name, 
+  //         planCost: plan.price,
+  //         currency: plan.currency
+  //       } 
+  //     });
+  //   } catch (error) {
+  //     console.error(error);
+  //     setIsProcessing(false);
+  //     toast({
+  //       title: "Error",
+  //       description: "Internal Server Error",
+  //     });
+  //   }
+  // }
+
+
+  // In PaymentDetails.jsx - Fix startRazorpay function
+  async function startRazorpay(data: FormValues) {
+    const fullAddress = `${data.address || ''} ${data.city || ''} ${data.state || ''} ${data.zipCode || ''} ${data.country || ''}`.trim();
+
+    let planId = razorpayPlanIdTwo; // Default to yearly
+    let planType = 'yearly';
+    let planNameDisplay = 'Yearly';
+
+    if (plan.name === 'Monthly' || plan.planType === 'monthly' || planId === 'monthly') {
+      planId = razorpayPlanIdOne;
+      planType = 'monthly';
+      planNameDisplay = 'Monthly';
     }
-  } catch (error) {
-    console.error('Razorpay error:', error);
-    toast({
-      title: "Error",
-      description: error.response?.data?.message || error.message || "Internal Server Error",
-      variant: "destructive"
-    });
-  } finally {
-    setIsProcessing(false);
+
+    // Save user data to session
+    const fullName = `${data.firstName || ''} ${data.lastName || ''}`.trim() || sessionStorage.getItem('mName') || 'Customer';
+    const userEmail = data.email || sessionStorage.getItem('email');
+
+    sessionStorage.setItem('mName', fullName);
+    sessionStorage.setItem('email', userEmail);
+    sessionStorage.setItem('plan', planNameDisplay);
+    sessionStorage.setItem('price', totalPrice.toFixed(2));
+    sessionStorage.setItem('planCurrency', plan.currency);
+    sessionStorage.setItem('planType', planType);
+    sessionStorage.setItem('uid', sessionStorage.getItem('uid') || '');
+
+    const dataToSend = {
+      plan: planId,
+      email: userEmail,
+      fullAddress: fullAddress,
+      planType: planType,
+      planName: planNameDisplay,
+      amount: parseFloat(totalPrice.toFixed(2)),
+      currency: plan.currency,
+      userName: fullName
+    };
+
+    try {
+      setIsProcessing(true);
+      const postURL = serverURL + '/api/razorpaycreate';
+      const res = await axios.post(postURL, dataToSend);
+
+      if (res.data.success !== false) {
+        sessionStorage.setItem('method', 'razorpay');
+        sessionStorage.setItem('subscriptionId', res.data.id);
+        sessionStorage.setItem('orderId', res.data.orderId);
+
+        toast({
+          title: "Redirecting to payment",
+          description: "Please complete your payment",
+        });
+
+        window.open(res.data.short_url, '_blank');
+
+        navigate('/payment-pending', {
+          state: {
+            sub: res.data.id,
+            link: res.data.short_url,
+            planName: planNameDisplay,
+            planCost: totalPrice.toFixed(2),
+            currency: plan.currency,
+            orderId: res.data.orderId
+          }
+        });
+      } else {
+        throw new Error(res.data.message || 'Failed to create subscription');
+      }
+    } catch (error) {
+      console.error('Razorpay error:', error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || error.message || "Internal Server Error",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   }
-}
   async function startPaystack(data: FormValues) {
     let planId = paystackPlanIdTwo;
     let amountInZar = amountInZarTwo;
-    if (plan.name === 'Monthly') {
+    if (plan.name === 'Monthly' || planId === 'monthly') {
       planId = paystackPlanIdOne;
       amountInZar = amountInZarOne;
     }
+    // Apply tax to amountInZar
+    const amountWithTax = amountInZar + (amountInZar * taxPercentage / 100);
     const dataToSend = {
       planId: planId,
-      amountInZar,
+      amountInZar: parseFloat(amountWithTax.toFixed(2)),
       email: data.email
     };
     try {
@@ -353,7 +372,7 @@ async function startRazorpay(data: FormValues) {
     public_key: flutterwavePublicKey,
     tx_ref: Date.now(),
     currency: 'USD',
-    amount: plan.name === 'Monthly' ? MonthCost : YearCost,
+    amount: totalPrice,
     payment_options: "card",
     payment_plan: plan.name === 'Monthly' ? flutterwavePlanIdOne : flutterwavePlanIdTwo,
     customer: {
@@ -375,7 +394,9 @@ async function startRazorpay(data: FormValues) {
       planId = stripePlanIdOne;
     }
     const dataToSend = {
-      planId: planId
+      planId: planId,
+      amount: parseFloat(totalPrice.toFixed(2)),
+      currency: plan.currency
     };
     try {
       const postURL = serverURL + '/api/stripepayment';
@@ -612,7 +633,9 @@ async function startRazorpay(data: FormValues) {
       address: data.address,
       country: codeCountry,
       brand: companyName,
-      admin: data.state
+      admin: data.state,
+      amount: parseFloat(totalPrice.toFixed(2)),
+      currency: plan.currency
     };
     try {
       const postURL = serverURL + '/api/paypal';
@@ -871,60 +894,60 @@ async function startRazorpay(data: FormValues) {
                     </TabsContent>
                   </Tabs>
                 </CardContent>
-             <CardFooter className="flex flex-col space-y-4 pt-4">
+                <CardFooter className="flex flex-col space-y-4 pt-4">
 
-  {/* Divider */}
-  <Separator />
+                  {/* Divider */}
+                  <Separator />
 
-  {/* Agreement Section */}
-  <div className="flex items-start space-x-3">
-    <input
-      type="checkbox"
-      checked={agreed}
-      onChange={() => setAgreed(!agreed)}
-      className="mt-1 accent-primary"
-    />
-    <div className="text-sm text-muted-foreground leading-relaxed">
-      <p>
-        I agree to the{" "}
-        <Link to="/terms" className="text-primary hover:underline">
-          Terms of Service
-        </Link>{" "}
-        and{" "}
-        <Link to="/privacy-policy" className="text-primary hover:underline">
-          Privacy Policy
-        </Link>.
-      </p>
+                  {/* Agreement Section */}
+                  <div className="flex items-start space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={agreed}
+                      onChange={() => setAgreed(!agreed)}
+                      className="mt-1 accent-primary"
+                    />
+                    <div className="text-sm text-muted-foreground leading-relaxed">
+                      <p>
+                        I agree to the{" "}
+                        <Link to="/terms" className="text-primary hover:underline">
+                          Terms of Service
+                        </Link>{" "}
+                        and{" "}
+                        <Link to="/privacy-policy" className="text-primary hover:underline">
+                          Privacy Policy
+                        </Link>.
+                      </p>
 
-      <p className="mt-1">
-        By subscribing, you acknowledge our{" "}
-        <Link to="/refund-policy" className="text-primary hover:underline">
-          Refund & Non-Refund Policy
-        </Link>{" "}
-        and{" "}
-        <Link to="/subscription-billing-policy" className="text-primary hover:underline">
-          Subscription & Billing Policy
-        </Link>.
-      </p>
-    </div>
-  </div>
+                      <p className="mt-1">
+                        By subscribing, you acknowledge our{" "}
+                        <Link to="/refund-policy" className="text-primary hover:underline">
+                          Refund & Non-Refund Policy
+                        </Link>{" "}
+                        and{" "}
+                        <Link to="/subscription-billing-policy" className="text-primary hover:underline">
+                          Subscription & Billing Policy
+                        </Link>.
+                      </p>
+                    </div>
+                  </div>
 
-  {/* Non Refund Warning */}
-  <div className="flex items-center text-xs text-amber-600 bg-amber-50 p-3 rounded-md">
-    ⚠ Payments are non-refundable once access is granted.
-  </div>
+                  {/* Non Refund Warning */}
+                  <div className="flex items-center text-xs text-amber-600 bg-amber-50 p-3 rounded-md">
+                    ⚠ Payments are non-refundable once access is granted.
+                  </div>
 
-  {/* Pay Button */}
-  <Button
-    type="submit"
-    size="lg"
-    className="w-full mt-2"
-    disabled={isProcessing || !agreed}
-  >
-    {isProcessing ? "Processing..." : `Pay ${plan.currency} ${plan.price}`}
-  </Button>
+                  {/* Pay Button */}
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full mt-2"
+                    disabled={isProcessing || !agreed}
+                  >
+                    {isProcessing ? "Processing..." : `Pay ${plan.currency} ${totalPrice.toFixed(2)}`}
+                  </Button>
 
-</CardFooter>
+                </CardFooter>
 
 
               </Card>
@@ -947,10 +970,23 @@ async function startRazorpay(data: FormValues) {
 
               <Separator />
 
-              <div className="flex justify-between font-bold">
-                <span>Total</span>
-                <span>{plan.currency} {plan.price}</span>
+              <div className="flex justify-between text-muted-foreground text-sm">
+                <span>Subtotal</span>
+                <span>{plan.currency} {plan.price.toFixed(2)}</span>
+              </div>
 
+              {taxPercentage > 0 && (
+                <div className="flex justify-between text-muted-foreground text-sm">
+                  <span>Tax ({taxPercentage}%)</span>
+                  <span>{plan.currency} {taxAmount.toFixed(2)}</span>
+                </div>
+              )}
+
+              <Separator />
+
+              <div className="flex justify-between font-bold text-lg">
+                <span>Total</span>
+                <span>{plan.currency} {totalPrice.toFixed(2)}</span>
               </div>
 
               <div className="bg-muted/50 p-4 rounded-lg mt-6">
@@ -993,7 +1029,7 @@ async function startRazorpay(data: FormValues) {
           </Card>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

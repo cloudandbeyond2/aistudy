@@ -2,7 +2,7 @@ import * as stripeService from '../services/stripe.service.js';
 
 export const stripePayment = async (req, res) => {
   try {
-    const session = await stripeService.createStripeSession(req.body.planId);
+    const session = await stripeService.createStripeSession(req.body);
     res.json({ url: session.url, id: session.id });
   } catch (e) {
     res.status(500).json({ error: e.message });

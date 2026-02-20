@@ -14,7 +14,8 @@ const adminSchema = new mongoose.Schema({
   geminiApiKey: { type: String, default: '' },
   unsplashApiKey: { type: String, default: '' },
   websiteName: { type: String, default: 'AIstudy' },
-  websiteLogo: { type: String, default: '/logo.png' }
+  websiteLogo: { type: String, default: '/logo.png' },
+  taxPercentage: { type: Number, default: 0 }
 });
 
 export default mongoose.model('Admin', adminSchema);

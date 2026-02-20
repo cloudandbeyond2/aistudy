@@ -17,14 +17,33 @@ const getStripe = async () => {
   throw new Error('Stripe is not configured');
 };
 
-export const createStripeSession = async (planId) => {
+export const createStripeSession = async ({ planId, amount, currency }) => {
   const stripe = await getStripe();
-  return stripe.checkout.sessions.create({
+  const sessionData = {
     success_url: `${process.env.WEBSITE_URL}/payment-success/${planId}`,
     cancel_url: `${process.env.WEBSITE_URL}/payment-failed`,
-    line_items: [{ price: planId, quantity: 1 }],
     mode: 'subscription'
-  });
+  };
+
+  if (amount && currency) {
+    sessionData.line_items = [{
+      price_data: {
+        currency: currency.toLowerCase(),
+        product_data: {
+          name: planId.includes('monthly') ? 'Monthly Subscription' : 'Yearly Subscription'
+        },
+        unit_amount: Math.round(amount * 100),
+        recurring: {
+          interval: planId.toLowerCase().includes('monthly') || planId === process.env.STRIPE_MONTHLY_PLAN_ID ? 'month' : 'year'
+        }
+      },
+      quantity: 1
+    }];
+  } else {
+    sessionData.line_items = [{ price: planId, quantity: 1 }];
+  }
+
+  return stripe.checkout.sessions.create(sessionData);
 };
 
 export const stripeDetails = async ({ subscriberId, uid, plan }) => {

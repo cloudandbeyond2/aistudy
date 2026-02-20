@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { serverURL } from '@/constants';
 import axios from 'axios';
-import { Key, Save, AlertCircle, Upload, Image as ImageIcon } from 'lucide-react';
+import { Key, Save, AlertCircle, Upload, Image as ImageIcon, HandCoins } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const AdminSettings = () => {
@@ -14,6 +14,7 @@ const AdminSettings = () => {
     const [unsplashApiKey, setUnsplashApiKey] = useState('');
     const [websiteName, setWebsiteName] = useState('');
     const [websiteLogo, setWebsiteLogo] = useState('');
+    const [taxPercentage, setTaxPercentage] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -30,6 +31,7 @@ const AdminSettings = () => {
             setUnsplashApiKey(res.data.unsplashApiKey || '');
             setWebsiteName(res.data.websiteName || 'AIstudy');
             setWebsiteLogo(res.data.websiteLogo || '/logo.png');
+            setTaxPercentage(res.data.taxPercentage || 0);
         } catch (error) {
             console.error('Failed to fetch settings:', error);
             toast({
@@ -105,7 +107,8 @@ const AdminSettings = () => {
                 geminiApiKey,
                 unsplashApiKey,
                 websiteName,
-                websiteLogo
+                websiteLogo,
+                taxPercentage: Number(taxPercentage)
             });
             if (res.data.success) {
                 toast({
@@ -224,6 +227,34 @@ const AdminSettings = () => {
                                             />
                                         </div>
                                     )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 pt-4 border-t border-border/30">
+                                <Label htmlFor="tax-percentage" className="flex items-center gap-2">
+                                    <div className="bg-primary/10 p-1.5 rounded-md text-primary">
+                                        <HandCoins className="h-4 w-4" />
+                                    </div>
+                                    Tax Percentage (%)
+                                </Label>
+                                <div className="max-w-[200px]">
+                                    <div className="relative">
+                                        <Input
+                                            id="tax-percentage"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            max="100"
+                                            placeholder="e.g. 18"
+                                            value={taxPercentage}
+                                            onChange={(e) => setTaxPercentage(Number(e.target.value))}
+                                            className="pl-4 pr-10"
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">%</div>
+                                    </div>
+                                    <p className="text-[11px] text-muted-foreground mt-1.5 italic">
+                                        This tax will be added to all plan prices during checkout.
+                                    </p>
                                 </div>
                             </div>
                         </CardContent>
