@@ -298,6 +298,16 @@ const AdminContacts = () => {
     ).padStart(2, '0')}/${d.getFullYear()}`;
   };
 
+  const sendReply = (email: string, subject: string) => {
+    const ccMail = adminEmail || 'traininglabs2017@gmail.com';
+    const encodedSubject = encodeURIComponent(subject || 'Reply to Inquiry');
+
+    // Direct Gmail Compose URL
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&cc=${encodeURIComponent(ccMail)}&su=${encodedSubject}`;
+
+    window.open(gmailUrl, '_blank');
+  };
+
 
 
   return (
@@ -369,12 +379,9 @@ const AdminContacts = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onSelect={() => {
+                            onClick={() => {
                               setTimeout(() => {
-                                const email = contact.email || '';
-                                const subject = encodeURIComponent(contact.lname || 'Reply to Inquiry');
-                                const url = `mailto:${email}?cc=${encodeURIComponent(adminEmail)}&subject=${subject}`;
-                                window.location.href = url;
+                                sendReply(contact.email, contact.lname);
                               }, 100);
                             }}
                           >

@@ -698,6 +698,13 @@ export const signin = async (req, res) => {
     const isPlainTextMatch = password === user.password;
 
     if (isMatch || isPlainTextMatch) {
+      if (user.isBlocked) {
+        return res.json({
+          success: false,
+          message: 'Your account has been blocked. Please contact support.'
+        });
+      }
+
       // Check if user is part of a blocked organization
       if (user.organization) {
         const org = await Organization.findById(user.organization);
@@ -794,6 +801,12 @@ export const socialLogin = async (req, res) => {
 
     // Existing user → login
     if (user) {
+      if (user.isBlocked) {
+        return res.json({
+          success: false,
+          message: 'Your account has been blocked. Please contact support.'
+        });
+      }
       return res.json({
         success: true,
         message: "SignIn Successful",
