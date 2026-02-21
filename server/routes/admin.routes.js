@@ -10,6 +10,7 @@ router.get('/getusers', adminController.getUsers);
 router.get('/getpaid', adminController.getPaidUsers);
 router.post('/admin/deleteuser', adminController.deleteUser);
 router.post('/admin/updateuser', adminController.updateUser);
+router.post('/admin/block-user', adminController.toggleBlockUser);
 
 router.get('/getcourses', adminController.getCourses);
 router.post('/admin/updatecourse', adminController.updateCourse);

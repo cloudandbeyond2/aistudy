@@ -45,12 +45,13 @@ import notificationRoutes from './routes/notification.routes.js';
 import orgRoutes from './routes/org.routes.js';
 import organizationEnquiryRoutes from "./routes/organizationEnquiry.routes.js";
 import subscriberRoutes from './routes/subscriber.routes.js';
-
+import { startCronJobs } from './services/cron.service.js';
 
 
 // -------------------- INIT --------------------
 connectDB();
 const app = express();
+startCronJobs();
 
 // -------------------- STATIC (NON-VERCEL) --------------------
 if (!process.env.VERCEL) {

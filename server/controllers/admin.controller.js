@@ -180,3 +180,13 @@ export const uploadLogo = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+export const toggleBlockUser = async (req, res) => {
+  try {
+    const { userId, isBlocked } = req.body;
+    await adminService.toggleBlockUser(userId, isBlocked);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

@@ -486,18 +486,16 @@ const CoursePage = () => {
           return;
         }
         if (type === 'video & text course') {
-
           const query = `${mSubTopic.title} ${mainTopic} in english`;
           setIsLoading(true);
           sendVideo(query, topics, sub, mSubTopic.title);
-
         } else {
-
-          const prompt = `Strictly in ${lang}, Explain me about this subtopic of ${mainTopic} with examples :- ${mSubTopic.title}. Please Strictly Don't Give Additional Resources And Images.`;
-          const promptImage = `Example of ${mSubTopic.title} in ${mainTopic}`;
+          // Batch-generate all ungenerated subtopics in this topic in ONE API call
+          const ungenerated = mTopic.subtopics
+            .filter((s: any) => !s.theory)
+            .map((s: any) => s.title);
           setIsLoading(true);
-          sendPrompt(prompt, promptImage, topics, sub);
-
+          sendBatchSubtopics(topics, sub, ungenerated);
         }
       } else {
         setSelected(mSubTopic.title)
@@ -510,6 +508,66 @@ const CoursePage = () => {
       }
     }
   };
+
+  /* -------- BATCH TEXT COURSE (one API call per topic click) -------- */
+
+  async function sendBatchSubtopics(topicTitle: string, clickedSub: string, ungeneratedTitles: string[]) {
+    try {
+      const res = await axios.post(serverURL + '/api/generate-batch', {
+        mainTopic,
+        topicTitle,
+        subtopics: ungeneratedTitles,
+        lang
+      });
+
+      if (!res.data.success || !res.data.subtopics) {
+        throw new Error(res.data.message || 'Batch generation failed');
+      }
+
+      const topicsList = jsonData?.course_topics || jsonData?.[mainTopic?.toLowerCase()];
+      const mTopic = topicsList?.find((t: any) => t.title === topicTitle);
+
+      // Fill in all the generated theories
+      res.data.subtopics.forEach((generated: any) => {
+        const target = mTopic?.subtopics?.find((s: any) => s.title === generated.title);
+        if (target) {
+          target.theory = generated.theory;
+          target.done = true;
+        }
+      });
+
+      // Now fetch image for the specific clicked subtopic
+      const clickedSubtopicData = mTopic?.subtopics?.find((s: any) => s.title === clickedSub);
+      if (clickedSubtopicData) {
+        const promptImage = `Example of ${clickedSub} in ${mainTopic}`;
+        sendImageForBatch(promptImage, topicTitle, clickedSub, clickedSubtopicData.theory);
+      } else {
+        setIsLoading(false);
+        updateCourse();
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        title: 'Error',
+        description: error?.response?.data?.message || error.message || 'Content generation failed'
+      });
+      setIsLoading(false);
+    }
+  }
+
+  // For batch flow: theory already set, only fetch image for the clicked subtopic
+  async function sendImageForBatch(promptImage: string, topics: string, sub: string, theory: string) {
+    try {
+      const postURL = serverURL + '/api/image';
+      const res = await axios.post(postURL, { prompt: promptImage });
+      const imageUrl = res.data.url || '';
+      sendData(imageUrl, theory, topics, sub);
+    } catch (error) {
+      console.error(error);
+      // Even if image fails, still show the content
+      sendData('', theory, topics, sub);
+    }
+  }
 
   async function sendPrompt(prompt, promptImage, topics, sub) {
     const dataToSend = {

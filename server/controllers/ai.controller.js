@@ -60,10 +60,10 @@ export const generatePrompt = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash'
+      model: 'gemini-flash-latest'
     });
 
-    const result = await model.generateContent(prompt);
+    const result = await retryWithBackoff(() => model.generateContent(prompt));
     const generatedText = await result.response.text();
 
     res.status(200).json({
@@ -75,11 +75,121 @@ export const generatePrompt = async (req, res) => {
       error.message?.includes('429') ||
       error.message?.includes('quota');
 
-    res.status(isRateLimit ? 429 : 500).json({
+    const isMissingKey = error.status === 401;
+    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid');
+
+    let status = 500;
+    let message = 'Internal server error';
+
+    if (isMissingKey || isInvalidKey) {
+      status = isMissingKey ? 401 : 403;
+      message = isMissingKey ? error.message : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
+    } else if (isRateLimit) {
+      status = 429;
+      message = 'API rate limit or quota exceeded.';
+    }
+
+    res.status(status).json({
       success: false,
-      message: isRateLimit
-        ? 'API rate limit exceeded'
-        : 'Internal server error'
+      message
+    });
+  }
+};
+
+
+/**
+ * GENERATE BATCH SUBTOPIC CONTENT (all subtopics of a topic in ONE API call)
+ */
+export const generateBatchSubtopics = async (req, res) => {
+  const { mainTopic, topicTitle, subtopics, lang } = req.body;
+
+  if (!mainTopic || !topicTitle || !subtopics || !subtopics.length) {
+    return res.status(400).json({
+      success: false,
+      message: 'Missing required fields: mainTopic, topicTitle, subtopics'
+    });
+  }
+
+  const safetySettings = [
+    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }
+  ];
+
+  const subtopicList = subtopics.map((s, i) => `${i + 1}. ${s}`).join('\n');
+
+  const prompt = `Strictly in ${lang || 'English'}, generate educational explanations for the following subtopics of the chapter "${topicTitle}" from the course "${mainTopic}".
+
+For each subtopic, provide a thorough explanation with examples.
+Do NOT include images, external links, or additional resource suggestions.
+
+Subtopics:
+${subtopicList}
+
+Respond ONLY with a valid JSON object in this exact format:
+{
+  "subtopics": [
+    { "title": "Subtopic title here", "theory": "Full explanation here (HTML is fine)" }
+  ]
+}
+
+Only return JSON. No markdown code blocks.`;
+
+  try {
+    const genAI = await getGenAI();
+    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest', safetySettings });
+
+    const result = await retryWithBackoff(() => model.generateContent(prompt));
+    const rawText = await result.response.text();
+
+    const cleanedText = rawText
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
+
+    let parsed;
+    try {
+      parsed = JSON.parse(cleanedText);
+    } catch {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to parse AI response as JSON. Please try again.',
+        raw: cleanedText
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      subtopics: parsed.subtopics
+    });
+
+  } catch (error) {
+    console.log('Batch generation error:', error);
+
+    const isRateLimitError =
+      error.message?.includes('429') ||
+      error.message?.includes('Too Many Requests') ||
+      error.message?.includes('quota');
+
+    const isMissingKey = error.status === 401;
+    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid');
+
+    let status = 500;
+    let message = 'Internal server error';
+
+    if (isMissingKey || isInvalidKey) {
+      status = isMissingKey ? 401 : 403;
+      message = isMissingKey ? error.message : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
+    } else if (isRateLimitError) {
+      status = 429;
+      message = 'API rate limit or quota exceeded. Please try again later.';
+    }
+
+    res.status(status).json({
+      success: false,
+      message,
+      error: error.message
     });
   }
 };
@@ -120,7 +230,7 @@ export const generateHtml = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-flash-latest',
       safetySettings
     });
 
@@ -145,11 +255,23 @@ export const generateHtml = async (req, res) => {
       error.message?.includes('Too Many Requests') ||
       error.message?.includes('quota');
 
-    res.status(isRateLimitError ? 429 : 500).json({
+    const isMissingKey = error.status === 401;
+    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid');
+
+    let status = 500;
+    let message = 'Internal server error';
+
+    if (isMissingKey || isInvalidKey) {
+      status = isMissingKey ? 401 : 403;
+      message = isMissingKey ? error.message : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
+    } else if (isRateLimitError) {
+      status = 429;
+      message = 'API rate limit or quota exceeded. Please try again later.';
+    }
+
+    res.status(status).json({
       success: false,
-      message: isRateLimitError
-        ? 'API rate limit exceeded. Please try again later.'
-        : 'Internal server error',
+      message,
       error: error.message
     });
   }
@@ -311,7 +433,7 @@ export const generateAIExam = async (req, res) => {
 
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-flash-latest',
       safetySettings
     });
 
@@ -353,11 +475,23 @@ Only return JSON.`;
       error.message?.includes('Too Many Requests') ||
       error.message?.includes('quota');
 
-    res.status(isRateLimitError ? 429 : 500).json({
+    const isMissingKey = error.status === 401;
+    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid');
+
+    let status = 500;
+    let message = 'Failed to generate exam';
+
+    if (isMissingKey || isInvalidKey) {
+      status = isMissingKey ? 401 : 403;
+      message = isMissingKey ? error.message : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
+    } else if (isRateLimitError) {
+      status = 429;
+      message = 'API rate limit or quota exceeded. Please try again later.';
+    }
+
+    res.status(status).json({
       success: false,
-      message: isRateLimitError
-        ? 'API rate limit exceeded. Please try again later.'
-        : 'Failed to generate exam',
+      message,
       error: error.message
     });
   }
