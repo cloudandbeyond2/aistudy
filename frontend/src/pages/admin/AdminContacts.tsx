@@ -243,7 +243,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { serverURL } from '@/constants';
+import { serverURL, adminEmail } from '@/constants';
 import axios from 'axios';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -298,11 +298,7 @@ const AdminContacts = () => {
     ).padStart(2, '0')}/${d.getFullYear()}`;
   };
 
-  function sendReply(email: string, subject: string) {
-    window.location.href = `mailto:${email}?subject=${encodeURIComponent(
-      subject
-    )}`;
-  }
+
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -373,9 +369,14 @@ const AdminContacts = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={() =>
-                              sendReply(contact.email, contact.lname)
-                            }
+                            onSelect={() => {
+                              setTimeout(() => {
+                                const email = contact.email || '';
+                                const subject = encodeURIComponent(contact.lname || 'Reply to Inquiry');
+                                const url = `mailto:${email}?cc=${encodeURIComponent(adminEmail)}&subject=${subject}`;
+                                window.location.href = url;
+                              }, 100);
+                            }}
                           >
                             <Reply className="mr-2 h-4 w-4" />
                             Reply
