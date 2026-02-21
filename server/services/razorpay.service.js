@@ -385,6 +385,7 @@ import Admin from '../models/Admin.js';
 import transporter from '../config/mailer.js';
 import Order from '../models/Order.js';
 import crypto from 'crypto';
+import Notification from '../models/Notification.js';
 
 /* ---------------- CONFIG ---------------- */
 const getRazorpayConfig = () => {
@@ -582,6 +583,17 @@ export const activateRazorpaySubscription = async ({
   }
 
   const updatedUser = await User.findByIdAndUpdate(uid, userUpdates, { new: true });
+
+  // ✅ In-app notification for payment success
+  try {
+    await Notification.create({
+      user: uid,
+      message: `🎉 Payment successful! Your ${planType} plan is now active.`,
+      type: 'success'
+    });
+  } catch (notifErr) {
+    console.error('Failed to create payment notification:', notifErr.message);
+  }
 
   // Update order with subscription dates
   await Order.findOneAndUpdate(

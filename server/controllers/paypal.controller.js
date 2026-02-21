@@ -1,6 +1,7 @@
 import Admin from '../models/Admin.js';
 import User from '../models/User.js';
 import PaymentSetting from '../models/PaymentSetting.js';
+import Notification from '../models/Notification.js';
 import { cancelSubscription, renewSubscription } from '../services/subscription.service.js';
 
 const getPaypalSettings = async () => {
@@ -108,6 +109,17 @@ export const getPaypalDetails = async (req, res) => {
     );
 
     const updatedUser = await User.findByIdAndUpdate(uid, { $set: { type: plan } }, { new: true });
+
+    // ✅ In-app notification for payment success
+    try {
+      await Notification.create({
+        user: uid,
+        message: `🎉 Payment successful! Your ${plan} plan is now active.`,
+        type: 'success'
+      });
+    } catch (notifErr) {
+      console.error('Failed to create payment notification:', notifErr.message);
+    }
 
     const auth = await getAuth();
 
