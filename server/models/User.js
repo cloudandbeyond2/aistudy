@@ -61,6 +61,7 @@ const userSchema = new mongoose.Schema({
     planDetails: String
   },
 
+  isBlocked: { type: Boolean, default: false },
   date: { type: Date, default: Date.now }
 });
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Search, Edit, Trash } from 'lucide-react';
+import { Search, Edit, Trash, Ban, UserCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -139,6 +139,24 @@ const AdminUsers = () => {
     }
   };
 
+  const handleBlockToggle = async (userId, currentBlockedStatus) => {
+    try {
+      const response = await axios.post(`${serverURL}/api/admin/block-user`, {
+        userId,
+        isBlocked: !currentBlockedStatus,
+      });
+
+      if (response.data.success) {
+        toast({ title: `User ${!currentBlockedStatus ? 'blocked' : 'unblocked'} successfully` });
+        fetchData();
+      } else {
+        toast({ title: 'Action failed', variant: 'destructive' });
+      }
+    } catch (err) {
+      toast({ title: 'Server error', variant: 'destructive' });
+    }
+  };
+
   // ---------------- UI ----------------
   return (
     <div className="space-y-6">
@@ -190,11 +208,28 @@ const AdminUsers = () => {
                       <Badge variant={user.type !== 'free' ? 'default' : 'secondary'}>
                         {user.type !== 'free' ? 'Paid' : 'Free'}
                       </Badge>
+                      {user.isBlocked && (
+                        <Badge variant="destructive" className="ml-2">
+                          Blocked
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       {user.date ? format(new Date(user.date), 'PPP') : 'N/A'}
                     </TableCell>
                     <TableCell className="text-right">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleBlockToggle(user._id, user.isBlocked)}
+                        title={user.isBlocked ? 'Unblock User' : 'Block User'}
+                      >
+                        {user.isBlocked ? (
+                          <UserCheck className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <Ban className="h-4 w-4 text-destructive" />
+                        )}
+                      </Button>
                       <Button size="icon" variant="ghost" onClick={() => handleEditClick(user)}>
                         <Edit className="h-4 w-4" />
                       </Button>

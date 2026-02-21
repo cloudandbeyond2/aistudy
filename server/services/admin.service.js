@@ -329,3 +329,7 @@ export const toggleBlockOrganization = async (id, isBlocked) => {
     { 'organizationDetails.isBlocked': isBlocked }
   );
 };
+
+export const toggleBlockUser = async (userId, isBlocked) => {
+  await User.findByIdAndUpdate(userId, { isBlocked });
+};
