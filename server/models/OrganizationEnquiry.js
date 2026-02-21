@@ -8,6 +8,17 @@ const organizationEnquirySchema = new mongoose.Schema(
     phone: String,
     teamSize: String,
     message: String,
+
+    referBy: {
+      type: String,
+      required: true,
+    },
+
+    handledBy: {          // ✅ NEW FIELD (Admin Name)
+      type: String,
+      default: null,
+    },
+
     status: {
       type: String,
       default: "new", // new | contacted | closed

@@ -12,13 +12,13 @@ export const getOrganizationEnquiries = async (req, res) => {
   res.json(enquiries);
 };
 
-/* UPDATE STATUS */
+/* UPDATE STATUS + CONTACT METHOD */
 export const updateOrganizationEnquiryStatus = async (req, res) => {
-  const { status } = req.body;
+  const { status, handledBy } = req.body;
 
   const enquiry = await OrganizationEnquiry.findByIdAndUpdate(
     req.params.id,
-    { status },
+    { status, handledBy },
     { new: true }
   );
 
