@@ -1,46 +1,30 @@
-console.log("Script execution started...");
-const path = require('path');
-// Try loading .env from different possible locations
-require('dotenv').config({ path: path.resolve(__dirname, 'server/.env') }); // If running from root
-require('dotenv').config({ path: path.resolve(__dirname, '.env') }); // If running from server dir
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-
-async function testGemini() {
-    console.log("Testing Gemini API connection...");
-    console.log("Current working directory:", process.cwd());
-
-    if (!process.env.API_KEY) {
-        console.error("❌ Error: API_KEY is missing from process.env");
-        console.log("Have you created the .env file?");
-        return;
-    } else {
-        console.log("API_KEY found (length: " + process.env.API_KEY.length + ")");
-    }
-
+const runTest = async () => {
     try {
-        const genAI = new GoogleGenerativeAI(process.env.API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const key = "AIzaSyBgkqIWIl6mGLMOJ8fZ4Kuf2Ga3BLkJr1g";
+        console.log("Using Key Length:", key.length);
 
-        const prompt = "Explain AI in one sentence.";
-        console.log(`Sending prompt: "${prompt}"`);
+        const genAI = new GoogleGenerativeAI(key);
+        const modelsToTest = ['gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-
-        console.log("✅ Success! Gemini response:");
-        console.log(text);
-
-    } catch (error) {
-        console.error("❌ Gemini API Failed:");
-        console.error(error);
-        if (error.message && error.message.includes("429")) {
-            console.error("👉 CAUSE: Quota Exceeded (You ran out of free usage)");
-        } else if (error.message && error.message.includes("API key")) {
-            console.error("👉 CAUSE: Invalid API Key");
+        for (const modelName of modelsToTest) {
+            console.log(`Testing model: ${modelName}`);
+            try {
+                const model = genAI.getGenerativeModel({ model: modelName });
+                const result = await model.generateContent("Say 'hello world'");
+                console.log(`Success with ${modelName}:`, result.response.text());
+                process.exit(0); // exit on first success
+            } catch (err) {
+                console.error(`Failed with ${modelName}:`, err.message);
+            }
         }
+
+        console.log("All models failed.");
+        process.exit(1);
+    } catch (e) {
+        console.error("Error:", e.message);
+        process.exit(1);
     }
 }
-
-testGemini();
+runTest();

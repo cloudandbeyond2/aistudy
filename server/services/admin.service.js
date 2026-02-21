@@ -306,18 +306,29 @@ export const getAdminSettings = async () => {
 };
 
 export const updateAdminSettings = async (data) => {
-  await Admin.findOneAndUpdate(
-    { type: 'main' },
-    {
-      $set: {
-        geminiApiKey: data.geminiApiKey,
-        unsplashApiKey: data.unsplashApiKey,
-        websiteName: data.websiteName,
-        websiteLogo: data.websiteLogo,
-        taxPercentage: data.taxPercentage
-      }
+  let admin = await Admin.findOne({ type: 'main' });
+
+  if (!admin) {
+    const existingAdmins = await Admin.find({});
+    if (existingAdmins.length > 0) {
+      admin = existingAdmins[0];
+      admin.type = 'main';
+    } else {
+      admin = new Admin({
+        email: 'admin@system.local',
+        type: 'main',
+        mName: 'System Admin'
+      });
     }
-  );
+  }
+
+  admin.geminiApiKey = data.geminiApiKey;
+  admin.unsplashApiKey = data.unsplashApiKey;
+  admin.websiteName = data.websiteName;
+  admin.websiteLogo = data.websiteLogo;
+  admin.taxPercentage = data.taxPercentage;
+
+  await admin.save();
 };
 export const toggleBlockOrganization = async (id, isBlocked) => {
   // Update Organization document
