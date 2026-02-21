@@ -15,7 +15,7 @@ import { YoutubeTranscript } from 'youtube-transcript';
 //   const { prompt } = req.body;
 
 //   const model = genAI.getGenerativeModel({
-//     model: 'gemini-flash-latest',
+//     model: 'gemini-1.5-flash',
 //     safetySettings: [
 //       {
 //         category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -60,7 +60,7 @@ export const generatePrompt = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-flash-latest'
+      model: 'gemini-1.5-flash'
     });
 
     const result = await retryWithBackoff(() => model.generateContent(prompt));
@@ -138,7 +138,7 @@ Only return JSON. No markdown code blocks.`;
 
   try {
     const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest', safetySettings });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', safetySettings });
 
     const result = await retryWithBackoff(() => model.generateContent(prompt));
     const rawText = await result.response.text();
@@ -230,7 +230,7 @@ export const generateHtml = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-flash-latest',
+      model: 'gemini-1.5-flash',
       safetySettings
     });
 
@@ -433,7 +433,7 @@ export const generateAIExam = async (req, res) => {
 
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-flash-latest',
+      model: 'gemini-1.5-flash',
       safetySettings
     });
 
