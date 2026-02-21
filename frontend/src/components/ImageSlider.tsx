@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 const slides = [
     {
         id: 1,
-        image: "/slider1.png",
+        image: "/slider4.png",
         title: "Revolutionize Your Learning",
         subtitle: "Experience the power of AI-driven course generation tailored to your needs.",
         cta: "Explore Courses",
@@ -15,7 +15,7 @@ const slides = [
     },
     {
         id: 2,
-        image: "/slider2.png",
+        image: "/slider5.png",
         title: "Learn Anywhere, Anytime",
         subtitle: "Flexible learning paths designed for the modern student and professional.",
         cta: "Get Started",
@@ -23,7 +23,7 @@ const slides = [
     },
     {
         id: 3,
-        image: "/Artificial-Intelligence.jpg",
+        image: "/slider6.png",
         title: "AI-Powered Excellence",
         subtitle: "Turn concepts into comprehensive interactive courses in minutes.",
         cta: "Start Creating",
