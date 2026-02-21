@@ -11,6 +11,8 @@ export const paypalEnabled = true;
 export const stripeEnabled = true;
 export const paystackEnabled = true;
 export const flutterwaveEnabled = true;
+export const adminEmail = 'traininglabs2017@gmail.com';
+
 
 //PRICING :-
 
