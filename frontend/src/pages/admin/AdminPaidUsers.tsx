@@ -559,7 +559,7 @@
 //                         ? format(new Date(user.subscriptionEnd), 'PPP')
 //                         : 'Lifetime'}
 //                     </TableCell>
-                    
+
 
 //                     <TableCell className="text-right">
 //                       <div className="flex justify-end gap-2">
@@ -696,7 +696,7 @@
 // export default AdminPaidUsers;
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, Settings, Trash2 } from 'lucide-react';
+import { Search, Settings, Trash2, Ban, UserCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -822,6 +822,25 @@ const AdminPaidUsers = () => {
     }
   };
 
+  /* ---------------------- BLOCK TOGGLE ---------------------- */
+  const handleBlockToggle = async (userId: string, currentBlockedStatus: boolean) => {
+    try {
+      const response = await axios.post(`${serverURL}/api/admin/block-user`, {
+        userId,
+        isBlocked: !currentBlockedStatus,
+      });
+
+      if (response.data.success) {
+        toast({ title: `User ${!currentBlockedStatus ? 'blocked' : 'unblocked'} successfully` });
+        fetchData();
+      } else {
+        toast({ title: 'Action failed', variant: 'destructive' });
+      }
+    } catch (err) {
+      toast({ title: 'Server error', variant: 'destructive' });
+    }
+  };
+
   /* ---------------------- DELETE ---------------------- */
   const handleDeleteClick = async (userId) => {
     if (!window.confirm('Delete this user permanently?')) return;
@@ -897,6 +916,11 @@ const AdminPaidUsers = () => {
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
                       <Badge>{user.type}</Badge>
+                      {user.isBlocked && (
+                        <Badge variant="destructive" className="ml-2">
+                          Blocked
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       {user.subscriptionStart
@@ -910,6 +934,18 @@ const AdminPaidUsers = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleBlockToggle(user._id, user.isBlocked)}
+                          title={user.isBlocked ? 'Unblock User' : 'Block User'}
+                        >
+                          {user.isBlocked ? (
+                            <UserCheck className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <Ban className="h-4 w-4 text-destructive" />
+                          )}
+                        </Button>
                         <Button
                           size="icon"
                           variant="ghost"
@@ -938,51 +974,51 @@ const AdminPaidUsers = () => {
               )}
             </TableBody>
           </Table>
-              {/* ---------------------- PAGINATION ---------------------- */}
-      {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages}
-          </p>
+          {/* ---------------------- PAGINATION ---------------------- */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+              <p className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </p>
 
-          <div className="flex gap-1 flex-wrap">
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-            >
-              Previous
-            </Button>
+              <div className="flex gap-1 flex-wrap">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => p - 1)}
+                >
+                  Previous
+                </Button>
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <Button
-                key={page}
-                size="sm"
-                variant={page === currentPage ? 'default' : 'outline'}
-                onClick={() => setCurrentPage(page)}
-              >
-                {page}
-              </Button>
-            ))}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <Button
+                    key={page}
+                    size="sm"
+                    variant={page === currentPage ? 'default' : 'outline'}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </Button>
+                ))}
 
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => p + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => p + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
 
         </CardContent>
-        
+
       </Card>
 
-  
+
       {/* ---------------------- EDIT DIALOG ---------------------- */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
