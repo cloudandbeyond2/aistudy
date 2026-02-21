@@ -23,7 +23,7 @@ const slides = [
     },
     {
         id: 3,
-        image: "/slider3.png",
+        image: "/Artificial-Intelligence.jpg",
         title: "AI-Powered Excellence",
         subtitle: "Turn concepts into comprehensive interactive courses in minutes.",
         cta: "Start Creating",
