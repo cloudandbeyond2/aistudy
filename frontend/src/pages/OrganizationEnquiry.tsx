@@ -1,588 +1,4 @@
 
-// // import React, { useState } from "react";
-// // import axios from "axios";
-// // import { Button } from "@/components/ui/button";
-// // import { Input } from "@/components/ui/input";
-// // import { Textarea } from "@/components/ui/textarea";
-// // import { useToast } from "@/hooks/use-toast";
-// // import { serverURL, recaptchaSiteKey } from "@/constants";
-// // import ReCAPTCHA from "react-google-recaptcha";
-
-// // const OrganizationEnquiry = () => {
-// //   const { toast } = useToast();
-
-// //   const [form, setForm] = useState({
-// //     organizationName: "",
-// //     contactPerson: "",
-// //     email: "",
-// //     phone: "",
-// //     teamSize: "",
-// //     message: "",
-// //   });
-
-// //   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-// //   const [loading, setLoading] = useState(false);
-
-// //   const handleChange = (
-// //     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-// //   ) => {
-// //     setForm({ ...form, [e.target.name]: e.target.value });
-// //   };
-
-// //   const handleSubmit = async (e: React.FormEvent) => {
-// //     e.preventDefault();
-
-// //     // Basic validation
-// //     if (
-// //       !form.organizationName ||
-// //       !form.contactPerson ||
-// //       !form.email ||
-// //       !form.message
-// //     ) {
-// //       toast({
-// //         title: "Missing fields",
-// //         description: "Please fill all required fields.",
-// //         variant: "destructive",
-// //       });
-// //       return;
-// //     }
-
-// //     if (!captchaToken) {
-// //       toast({
-// //         title: "reCAPTCHA required",
-// //         description: "Please complete the reCAPTCHA verification.",
-// //         variant: "destructive",
-// //       });
-// //       return;
-// //     }
-
-// //     try {
-// //       setLoading(true);
-
-// //       await axios.post(`${serverURL}/api/organization-enquiries`, {
-// //         ...form,
-// //         captchaToken,
-// //       });
-
-// //       toast({
-// //         title: "Enquiry submitted",
-// //         description: "Our team will contact you shortly.",
-// //       });
-
-// //       // Reset form
-// //       setForm({
-// //         organizationName: "",
-// //         contactPerson: "",
-// //         email: "",
-// //         phone: "",
-// //         teamSize: "",
-// //         message: "",
-// //       });
-
-// //       setCaptchaToken(null);
-// //     } catch (error) {
-// //       toast({
-// //         title: "Submission failed",
-// //         description: "Please try again later.",
-// //         variant: "destructive",
-// //       });
-// //     } finally {
-// //       setLoading(false);
-// //     }
-// //   };
-
-// //   return (
-// //     <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
-// //       <div className="w-full max-w-xl bg-white/5 backdrop-blur-xl p-8 rounded-2xl border border-white/10">
-// //         <h1 className="text-3xl font-bold text-white mb-6 text-center">
-// //           Organization Enquiry
-// //         </h1>
-
-// //         <form onSubmit={handleSubmit} className="space-y-4">
-// //           <Input
-// //             name="organizationName"
-// //             placeholder="Organization Name"
-// //             value={form.organizationName}
-// //             onChange={handleChange}
-// //             required
-// //           />
-
-// //           <Input
-// //             name="contactPerson"
-// //             placeholder="Contact Person Name"
-// //             value={form.contactPerson}
-// //             onChange={handleChange}
-// //             required
-// //           />
-
-// //           <Input
-// //             type="email"
-// //             name="email"
-// //             placeholder="Email Address"
-// //             value={form.email}
-// //             onChange={handleChange}
-// //             required
-// //           />
-
-// //           <Input
-// //             name="phone"
-// //             placeholder="Phone Number"
-// //             value={form.phone}
-// //             onChange={handleChange}
-// //           />
-
-// //           <Input
-// //             name="teamSize"
-// //             placeholder="Team Size (e.g. 50, 200)"
-// //             value={form.teamSize}
-// //             onChange={handleChange}
-// //           />
-
-// //           <Textarea
-// //             name="message"
-// //             placeholder="Tell us about your requirement"
-// //             value={form.message}
-// //             onChange={handleChange}
-// //             rows={4}
-// //             required
-// //           />
-
-// //           {/* ✅ RECAPTCHA */}
-// //           <div className="flex justify-center py-2">
-// //             <ReCAPTCHA
-// //               sitekey={recaptchaSiteKey}
-// //               onChange={(token) => setCaptchaToken(token)}
-// //               theme="dark"
-// //             />
-// //           </div>
-
-// //           <Button
-// //             type="submit"
-// //             className="w-full"
-// //             disabled={loading}
-// //           >
-// //             {loading ? "Submitting..." : "Submit Enquiry"}
-// //           </Button>
-// //         </form>
-// //       </div>
-// //     </div>
-// //   );
-// // };
-
-// // export default OrganizationEnquiry;
-// import React, { useState } from "react";
-// import axios from "axios";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
-// import { Textarea } from "@/components/ui/textarea";
-// import { useToast } from "@/hooks/use-toast";
-// import { serverURL, recaptchaSiteKey } from "@/constants";
-// import ReCAPTCHA from "react-google-recaptcha";
-// import { Link } from "react-router-dom";
-
-// const OrganizationEnquiry = () => {
-//   const { toast } = useToast();
-
-//   const [form, setForm] = useState({
-//     organizationName: "",
-//     contactPerson: "",
-//     email: "",
-//     phone: "",
-//     teamSize: "",
-//     message: "",
-//   });
-
-//   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-//   const [loading, setLoading] = useState(false);
-
-//   const handleChange = (
-//     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-//   ) => {
-//     setForm({ ...form, [e.target.name]: e.target.value });
-//   };
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-
-//     if (!captchaToken) {
-//       toast({
-//         title: "Verification required",
-//         description: "Please confirm you are not a robot.",
-//         variant: "destructive",
-//       });
-//       return;
-//     }
-
-//     try {
-//       setLoading(true);
-
-//       await axios.post(`${serverURL}/api/organization-enquiries`, {
-//         ...form,
-//         captchaToken,
-//       });
-
-//       toast({
-//         title: "Enquiry submitted",
-//         description: "Our enterprise team will contact you shortly.",
-//       });
-
-//       setForm({
-//         organizationName: "",
-//         contactPerson: "",
-//         email: "",
-//         phone: "",
-//         teamSize: "",
-//         message: "",
-//       });
-
-//       setCaptchaToken(null);
-//     } catch {
-//       toast({
-//         title: "Submission failed",
-//         description: "Please try again later.",
-//         variant: "destructive",
-//       });
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <div className="bg-slate-950 text-white">
-
-//       {/* ================= HEADER ================= */}
-//       <header className="w-full border-b border-white/10 bg-slate-900/80 backdrop-blur">
-//         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-//           <Link to="/" className="text-xl font-bold">
-//             AI Study
-//           </Link>
-//           <nav className="hidden md:flex gap-6 text-sm text-slate-300">
-//             <Link to="/" className="hover:text-white">Home</Link>
-//             <Link to="/courses" className="hover:text-white">Courses</Link>
-//             <Link to="/contact" className="hover:text-white">Contact</Link>
-//           </nav>
-//         </div>
-//       </header>
-
-//       {/* ================= HERO SECTION ================= */}
-//       <section className="py-20 bg-gradient-to-br from-slate-900 to-slate-950 text-center">
-//         <div className="max-w-3xl mx-auto px-6">
-//           <h1 className="text-4xl font-bold mb-4">
-//             Empower Your Team with AI Skills
-//           </h1>
-//           <p className="text-slate-400 text-lg">
-//             Partner with AI Study to build customized training programs
-//             tailored for your organization’s growth.
-//           </p>
-//         </div>
-//       </section>
-
-//       {/* ================= MAIN CONTENT ================= */}
-//       <section className="max-w-7xl mx-auto px-6 py-20 grid lg:grid-cols-2 gap-16">
-
-//         {/* LEFT CONTENT */}
-//         <div className="space-y-6 text-slate-300">
-//           <h2 className="text-2xl font-semibold text-white">
-//             Why Choose Our Enterprise Training?
-//           </h2>
-
-//           <ul className="space-y-4 list-disc list-inside">
-//             <li>Customized AI & Data Science curriculum</li>
-//             <li>Dedicated mentors for your organization</li>
-//             <li>Team progress tracking & analytics</li>
-//             <li>Flexible scheduling for working professionals</li>
-//           </ul>
-
-//           <p>
-//             Our enterprise solutions are trusted by teams looking to upgrade
-//             their skills in Artificial Intelligence, Machine Learning,
-//             and emerging technologies.
-//           </p>
-//         </div>
-
-//         {/* RIGHT FORM */}
-//         <div className="bg-white/5 backdrop-blur-xl p-8 rounded-2xl border border-white/10">
-//           <h2 className="text-2xl font-bold mb-6 text-center">
-//             Organization Enquiry
-//           </h2>
-
-//           <form onSubmit={handleSubmit} className="space-y-4">
-//             <Input
-//               name="organizationName"
-//               placeholder="Organization Name"
-//               value={form.organizationName}
-//               onChange={handleChange}
-//               required
-//             />
-
-//             <Input
-//               name="contactPerson"
-//               placeholder="Contact Person Name"
-//               value={form.contactPerson}
-//               onChange={handleChange}
-//               required
-//             />
-
-//             <Input
-//               type="email"
-//               name="email"
-//               placeholder="Email Address"
-//               value={form.email}
-//               onChange={handleChange}
-//               required
-//             />
-
-//             <Input
-//               name="phone"
-//               placeholder="Phone Number"
-//               value={form.phone}
-//               onChange={handleChange}
-//             />
-
-//             <Input
-//               name="teamSize"
-//               placeholder="Team Size (e.g. 50, 200)"
-//               value={form.teamSize}
-//               onChange={handleChange}
-//             />
-
-//             <Textarea
-//               name="message"
-//               placeholder="Tell us about your requirement"
-//               value={form.message}
-//               onChange={handleChange}
-//               rows={4}
-//               required
-//             />
-
-//             <div className="flex justify-center py-2">
-//               <ReCAPTCHA
-//                 sitekey={recaptchaSiteKey}
-//                 onChange={(token) => setCaptchaToken(token)}
-//                 theme="dark"
-//               />
-//             </div>
-
-//             <Button
-//               type="submit"
-//               className="w-full"
-//               disabled={loading}
-//             >
-//               {loading ? "Submitting..." : "Submit Enquiry"}
-//             </Button>
-//           </form>
-//         </div>
-//       </section>
-
-//       {/* ================= FOOTER ================= */}
-//       <footer className="border-t border-white/10 bg-slate-900 py-10 mt-20">
-//         <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-8 text-sm text-slate-400">
-
-//           <div>
-//             <h3 className="text-white font-semibold mb-3">AI Study</h3>
-//             <p>AI-powered learning platform for individuals and organizations.</p>
-//           </div>
-
-//           <div>
-//             <h3 className="text-white font-semibold mb-3">Enterprise</h3>
-//             <ul className="space-y-2">
-//               <li>Corporate Training</li>
-//               <li>Custom Programs</li>
-//               <li>Team Analytics</li>
-//             </ul>
-//           </div>
-
-//           <div>
-//             <h3 className="text-white font-semibold mb-3">Contact</h3>
-//             <ul className="space-y-2">
-//               <li>support@aistudy.com</li>
-//               <li>Privacy Policy</li>
-//               <li>Terms & Conditions</li>
-//             </ul>
-//           </div>
-//         </div>
-
-//         <div className="text-center text-xs text-slate-500 mt-8">
-//           © {new Date().getFullYear()} AI Study. All rights reserved.
-//         </div>
-//       </footer>
-//     </div>
-//   );
-// };
-
-// export default OrganizationEnquiry;
-
-// import React, { useState } from "react";
-// import axios from "axios";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
-// import { Textarea } from "@/components/ui/textarea";
-// import { useToast } from "@/hooks/use-toast";
-// import { serverURL, recaptchaSiteKey } from "@/constants";
-// import ReCAPTCHA from "react-google-recaptcha";
-
-// const OrganizationEnquiry = () => {
-//   const { toast } = useToast();
-
-//   const [form, setForm] = useState({
-//     organizationName: "",
-//     contactPerson: "",
-//     email: "",
-//     phone: "",
-//     teamSize: "",
-//     message: "",
-//   });
-
-//   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-//   const [loading, setLoading] = useState(false);
-
-//   const handleChange = (
-//     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-//   ) => {
-//     setForm({ ...form, [e.target.name]: e.target.value });
-//   };
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-
-//     // Basic validation
-//     if (
-//       !form.organizationName ||
-//       !form.contactPerson ||
-//       !form.email ||
-//       !form.message
-//     ) {
-//       toast({
-//         title: "Missing fields",
-//         description: "Please fill all required fields.",
-//         variant: "destructive",
-//       });
-//       return;
-//     }
-
-//     if (!captchaToken) {
-//       toast({
-//         title: "reCAPTCHA required",
-//         description: "Please complete the reCAPTCHA verification.",
-//         variant: "destructive",
-//       });
-//       return;
-//     }
-
-//     try {
-//       setLoading(true);
-
-//       await axios.post(`${serverURL}/api/organization-enquiries`, {
-//         ...form,
-//         captchaToken,
-//       });
-
-//       toast({
-//         title: "Enquiry submitted",
-//         description: "Our team will contact you shortly.",
-//       });
-
-//       // Reset form
-//       setForm({
-//         organizationName: "",
-//         contactPerson: "",
-//         email: "",
-//         phone: "",
-//         teamSize: "",
-//         message: "",
-//       });
-
-//       setCaptchaToken(null);
-//     } catch (error) {
-//       toast({
-//         title: "Submission failed",
-//         description: "Please try again later.",
-//         variant: "destructive",
-//       });
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
-//       <div className="w-full max-w-xl bg-white/5 backdrop-blur-xl p-8 rounded-2xl border border-white/10">
-//         <h1 className="text-3xl font-bold text-white mb-6 text-center">
-//           Organization Enquiry
-//         </h1>
-
-//         <form onSubmit={handleSubmit} className="space-y-4">
-//           <Input
-//             name="organizationName"
-//             placeholder="Organization Name"
-//             value={form.organizationName}
-//             onChange={handleChange}
-//             required
-//           />
-
-//           <Input
-//             name="contactPerson"
-//             placeholder="Contact Person Name"
-//             value={form.contactPerson}
-//             onChange={handleChange}
-//             required
-//           />
-
-//           <Input
-//             type="email"
-//             name="email"
-//             placeholder="Email Address"
-//             value={form.email}
-//             onChange={handleChange}
-//             required
-//           />
-
-//           <Input
-//             name="phone"
-//             placeholder="Phone Number"
-//             value={form.phone}
-//             onChange={handleChange}
-//           />
-
-//           <Input
-//             name="teamSize"
-//             placeholder="Team Size (e.g. 50, 200)"
-//             value={form.teamSize}
-//             onChange={handleChange}
-//           />
-
-//           <Textarea
-//             name="message"
-//             placeholder="Tell us about your requirement"
-//             value={form.message}
-//             onChange={handleChange}
-//             rows={4}
-//             required
-//           />
-
-//           {/* ✅ RECAPTCHA */}
-//           <div className="flex justify-center py-2">
-//             <ReCAPTCHA
-//               sitekey={recaptchaSiteKey}
-//               onChange={(token) => setCaptchaToken(token)}
-//               theme="dark"
-//             />
-//           </div>
-
-//           <Button
-//             type="submit"
-//             className="w-full"
-//             disabled={loading}
-//           >
-//             {loading ? "Submitting..." : "Submit Enquiry"}
-//           </Button>
-//         </form>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default OrganizationEnquiry;
 import React, { useState } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -594,27 +10,39 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { Link } from "react-router-dom";
 import { Mail, Phone } from "lucide-react";
 import Logo from "../res/logo.svg";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 
 const OrganizationEnquiry = () => {
   const { toast } = useToast();
 
   const [form, setForm] = useState({
-    organizationName: "",
-    contactPerson: "",
-    email: "",
-    phone: "",
-    teamSize: "",
-    message: "",
-  });
+  organizationName: "",
+  contactPerson: "",
+  email: "",
+  phone: "",
+  teamSize: "",
+  message: "",
+  referBy: "",   // ✅ NEW FIELD
+});
 
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  e: React.ChangeEvent<
+    HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+  >
+) => {
+  setForm({ ...form, [e.target.name]: e.target.value });
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -648,6 +76,7 @@ const OrganizationEnquiry = () => {
         phone: "",
         teamSize: "",
         message: "",
+         referBy: "", 
       });
 
       setCaptchaToken(null);
@@ -668,13 +97,15 @@ const OrganizationEnquiry = () => {
       {/* ================= HERO ================= */}
       <div className="relative min-h-[75vh] overflow-hidden">
 
-        <div
+         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage:
               "url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b')",
           }}
-        />
+        /> 
+
+<div className="absolute inset-0 bg-black/50" />
 
         <div className="absolute inset-0 bg-gradient-to-br from-[#0b1f3a]/90 via-[#0f2f5f]/80 to-[#0a1a2f]/90" />
 
@@ -782,6 +213,13 @@ const OrganizationEnquiry = () => {
               onChange={handleChange}
               className="bg-white text-black"
             />
+            <Input
+  name="referBy"
+  placeholder="Refer By"
+  value={form.referBy}
+  onChange={handleChange}
+  className="bg-white text-black"
+/>
 
             <Textarea
               name="message"

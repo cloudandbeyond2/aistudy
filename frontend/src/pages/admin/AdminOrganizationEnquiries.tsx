@@ -37,7 +37,7 @@ import { Search, Eye } from "lucide-react";
 import { serverURL } from "@/constants";
 import { useToast } from "@/hooks/use-toast";
 
-const ITEMS_PER_PAGE =5;
+const ITEMS_PER_PAGE = 10;
 
 const AdminOrganizationEnquiries = () => {
   const { toast } = useToast();
@@ -49,10 +49,10 @@ const AdminOrganizationEnquiries = () => {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<any>(null);
   const [status, setStatus] = useState("new");
+  const [handledBy, setHandledBy] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
 
-  /* ================= STATUS COLOR FUNCTION ================= */
   const getStatusStyles = (status: string) => {
     switch (status) {
       case "new":
@@ -97,51 +97,51 @@ const AdminOrganizationEnquiries = () => {
     );
   }, [data, search]);
 
-  /* ================= PAGINATION ================= */
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
 
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    const end = start + ITEMS_PER_PAGE;
-    return filtered.slice(start, end);
+    return filtered.slice(start, start + ITEMS_PER_PAGE);
   }, [filtered, currentPage]);
 
   useEffect(() => {
-    setCurrentPage(1); // reset page when search changes
+    setCurrentPage(1);
   }, [search]);
 
-  /* ================= ACTIONS ================= */
+  /* ================= OPEN DIALOG ================= */
   const openDialog = (item: any) => {
     setSelected(item);
     setStatus(item.status);
+    setHandledBy(item.handledBy || "");
     setOpen(true);
   };
 
+  /* ================= UPDATE ================= */
   const updateStatus = async () => {
     try {
       await axios.put(
         `${serverURL}/api/organization-enquiries/${selected._id}`,
-        { status }
+        { status, handledBy }
       );
-
-      toast({
-        title: "Updated",
-        description: "Status updated successfully",
-      });
 
       setData((prev) =>
         prev.map((item) =>
           item._id === selected._id
-            ? { ...item, status }
+            ? { ...item, status, handledBy }
             : item
         )
       );
+
+      toast({
+        title: "Updated",
+        description: "Enquiry updated successfully",
+      });
 
       setOpen(false);
     } catch {
       toast({
         title: "Error",
-        description: "Failed to update status",
+        description: "Failed to update",
         variant: "destructive",
       });
     }
@@ -149,9 +149,7 @@ const AdminOrganizationEnquiries = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">
-        Organization Enquiries
-      </h1>
+      <h1 className="text-3xl font-bold">Organization Enquiries</h1>
 
       <Card>
         <CardHeader className="flex flex-row justify-between">
@@ -166,104 +164,102 @@ const AdminOrganizationEnquiries = () => {
             />
           </div>
         </CardHeader>
+<CardContent>
+  <Table>
+    <TableHeader>
+      <TableRow>
+        <TableHead>Organization</TableHead>
+        <TableHead>Contact</TableHead>
+        <TableHead>Phone</TableHead>
+        <TableHead>Email</TableHead>
+        <TableHead>Refer By</TableHead>
+        <TableHead>Handled By</TableHead>
+        <TableHead>Status</TableHead>
+        <TableHead className="text-right">Action</TableHead>
+      </TableRow>
+    </TableHeader>
 
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Organization</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">
-                  Action
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={4}>
-                    <Skeleton className="h-6 w-full" />
-                  </TableCell>
-                </TableRow>
-              ) : paginatedData.length ? (
-                paginatedData.map((item) => (
-                  <TableRow key={item._id}>
-                    <TableCell>{item.organizationName}</TableCell>
-                    <TableCell>{item.contactPerson}</TableCell>
-                    <TableCell>
-                      <Badge
-                        className={`capitalize border ${getStatusStyles(
-                          item.status
-                        )}`}
-                      >
-                        {item.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() =>
-                          openDialog(item)
-                        }
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="text-center"
-                  >
-                    No enquiries found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-
-          {/* ================= PAGINATION UI ================= */}
-          {totalPages > 1 && (
-            <div className="flex justify-between items-center mt-6">
-              <Button
-                variant="outline"
-                disabled={currentPage === 1}
-                onClick={() =>
-                  setCurrentPage((prev) => prev - 1)
-                }
+    <TableBody>
+      {loading ? (
+        <TableRow>
+          <TableCell colSpan={8}>
+            <Skeleton className="h-6 w-full" />
+          </TableCell>
+        </TableRow>
+      ) : paginatedData.length ? (
+        paginatedData.map((item) => (
+          <TableRow key={item._id}>
+            <TableCell>{item.organizationName}</TableCell>
+            <TableCell>{item.contactPerson}</TableCell>
+            <TableCell>{item.phone || "—"}</TableCell>
+            <TableCell>{item.email}</TableCell>
+            <TableCell>{item.referBy || "—"}</TableCell>
+            <TableCell>{item.handledBy || "—"}</TableCell>
+            <TableCell>
+              <Badge
+                className={`capitalize border ${getStatusStyles(
+                  item.status
+                )}`}
               >
-                Previous
-              </Button>
-
-              <span className="text-sm text-muted-foreground">
-                Page {currentPage} of {totalPages}
-              </span>
-
+                {item.status}
+              </Badge>
+            </TableCell>
+            <TableCell className="text-right">
               <Button
-                variant="outline"
-                disabled={currentPage === totalPages}
-                onClick={() =>
-                  setCurrentPage((prev) => prev + 1)
-                }
+                size="icon"
+                variant="ghost"
+                onClick={() => openDialog(item)}
               >
-                Next
+                <Eye className="h-4 w-4" />
               </Button>
-            </div>
-          )}
-        </CardContent>
+            </TableCell>
+          </TableRow>
+        ))
+      ) : (
+        <TableRow>
+          <TableCell colSpan={8} className="text-center">
+            No enquiries found
+          </TableCell>
+        </TableRow>
+      )}
+    </TableBody>
+  </Table>
+
+  {/* ================= PAGINATION ================= */}
+  {totalPages > 1 && (
+    <div className="flex justify-between items-center mt-6">
+      <Button
+        variant="outline"
+        disabled={currentPage === 1}
+        onClick={() => setCurrentPage((prev) => prev - 1)}
+      >
+        Previous
+      </Button>
+
+      <span className="text-sm text-muted-foreground">
+        Page {currentPage} of {totalPages}
+      </span>
+
+      <Button
+        variant="outline"
+        disabled={currentPage === totalPages}
+        onClick={() => setCurrentPage((prev) => prev + 1)}
+      >
+        Next
+      </Button>
+    </div>
+  )}
+</CardContent>
       </Card>
-{/* ================= DIALOG ================= */}
+
+      {/* ================= DIALOG ================= */}
+   {/* ================= DIALOG ================= */}
 <Dialog open={open} onOpenChange={setOpen}>
-  <DialogContent className="max-w-lg">
+  <DialogContent className="max-w-2xl">
     {selected && (
       <>
         <DialogHeader className="flex justify-between items-center">
-          <DialogTitle>
+          <DialogTitle className="text-xl font-semibold">
             Organization Enquiry
           </DialogTitle>
 
@@ -276,13 +272,14 @@ const AdminOrganizationEnquiries = () => {
           </Badge>
         </DialogHeader>
 
-        <div className="space-y-6">
+        {/* ================= DETAILS SECTION ================= */}
+        <div className="grid grid-cols-2 gap-6 mt-4">
 
           <div>
             <Label className="text-xs text-muted-foreground">
-              Organization Name
+              Organization
             </Label>
-            <div className="mt-1 rounded-md bg-muted px-3 py-2 text-sm font-medium">
+            <div className="mt-1 bg-muted rounded-md px-3 py-2 text-sm">
               {selected.organizationName}
             </div>
           </div>
@@ -291,7 +288,7 @@ const AdminOrganizationEnquiries = () => {
             <Label className="text-xs text-muted-foreground">
               Contact Person
             </Label>
-            <div className="mt-1 rounded-md bg-muted px-3 py-2 text-sm">
+            <div className="mt-1 bg-muted rounded-md px-3 py-2 text-sm">
               {selected.contactPerson}
             </div>
           </div>
@@ -300,7 +297,7 @@ const AdminOrganizationEnquiries = () => {
             <Label className="text-xs text-muted-foreground">
               Email
             </Label>
-            <div className="mt-1 rounded-md bg-muted px-3 py-2 text-sm">
+            <div className="mt-1 bg-muted rounded-md px-3 py-2 text-sm">
               {selected.email}
             </div>
           </div>
@@ -309,7 +306,7 @@ const AdminOrganizationEnquiries = () => {
             <Label className="text-xs text-muted-foreground">
               Phone
             </Label>
-            <div className="mt-1 rounded-md bg-muted px-3 py-2 text-sm">
+            <div className="mt-1 bg-muted rounded-md px-3 py-2 text-sm">
               {selected.phone || "—"}
             </div>
           </div>
@@ -318,24 +315,37 @@ const AdminOrganizationEnquiries = () => {
             <Label className="text-xs text-muted-foreground">
               Team Size
             </Label>
-            <div className="mt-1 rounded-md bg-muted px-3 py-2 text-sm">
+            <div className="mt-1 bg-muted rounded-md px-3 py-2 text-sm">
               {selected.teamSize || "—"}
             </div>
           </div>
 
           <div>
             <Label className="text-xs text-muted-foreground">
-              Requirement
+              Refer By
             </Label>
-            <div className="mt-1 rounded-md bg-muted px-3 py-3 text-sm whitespace-pre-wrap">
-              {selected.message}
+            <div className="mt-1 bg-muted rounded-md px-3 py-2 text-sm">
+              {selected.referBy}
             </div>
           </div>
 
+        </div>
+
+        {/* ================= REQUIREMENT ================= */}
+        <div className="mt-6">
+          <Label className="text-xs text-muted-foreground">
+            Requirement Details
+          </Label>
+          <div className="mt-1 bg-muted rounded-md px-4 py-3 text-sm whitespace-pre-wrap min-h-[80px]">
+            {selected.message}
+          </div>
+        </div>
+
+        {/* ================= UPDATE SECTION ================= */}
+        <div className="border-t pt-6 mt-6 space-y-4">
+
           <div>
-            <Label className="text-xs text-muted-foreground">
-              Update Status
-            </Label>
+            <Label>Update Status</Label>
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger className="mt-1">
                 <SelectValue />
@@ -348,10 +358,20 @@ const AdminOrganizationEnquiries = () => {
             </Select>
           </div>
 
+          <div>
+            <Label>Handled By</Label>
+            <Input
+              value={handledBy}
+              onChange={(e) => setHandledBy(e.target.value)}
+              placeholder="Enter admin name"
+              className="mt-1"
+            />
+          </div>
+
         </div>
 
-        <DialogFooter>
-          <Button onClick={updateStatus}>
+        <DialogFooter className="mt-6">
+          <Button onClick={updateStatus} className="px-6">
             Save Changes
           </Button>
         </DialogFooter>
@@ -359,8 +379,6 @@ const AdminOrganizationEnquiries = () => {
     )}
   </DialogContent>
 </Dialog>
-
-      {/* Dialog remains same as your previous code */}
     </div>
   );
 };
