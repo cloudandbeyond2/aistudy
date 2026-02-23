@@ -1369,7 +1369,7 @@
 //       setIsLoading(false);
 //     }
 //   };
-  
+
 
 //   /* -------------------- HELPERS -------------------- */
 
@@ -1610,6 +1610,7 @@ const ProfilePricing = () => {
   const [plans, setPlans] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserPlan, setCurrentUserPlan] = useState<string>('free');
+  const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
 
   /* -------------------- FETCH USER PLAN & PRICING -------------------- */
 
@@ -1622,11 +1623,11 @@ const ProfilePricing = () => {
   const fetchUserCurrentPlan = async () => {
     try {
       const token = localStorage.getItem('token');
-      
+
       // Get user ID from localStorage
       const userStr = localStorage.getItem('user');
       let userId = null;
-      
+
       if (userStr) {
         try {
           const userData = JSON.parse(userStr);
@@ -1643,6 +1644,7 @@ const ProfilePricing = () => {
           if (userData && userData.type) {
             const userPlan = userData.type.toLowerCase();
             setCurrentUserPlan(userPlan);
+            setSubscriptionEnd(userData.subscriptionEnd || null);
             sessionStorage.setItem('type', userPlan);
             console.log('✅ User plan set from localStorage:', userPlan);
             return; // Exit if we got it from localStorage
@@ -1665,13 +1667,14 @@ const ProfilePricing = () => {
         const meResponse = await axios.get(`${serverURL}/api/user/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
+
         if (meResponse.data && meResponse.data.type) {
           const userPlan = meResponse.data.type.toLowerCase();
           setCurrentUserPlan(userPlan);
+          setSubscriptionEnd(meResponse.data.subscriptionEnd || null);
           sessionStorage.setItem('type', userPlan);
           console.log('✅ User plan set from /api/user/me:', userPlan);
-          
+
           // Update localStorage with fresh data
           localStorage.setItem('user', JSON.stringify(meResponse.data));
           return;
@@ -1697,14 +1700,14 @@ const ProfilePricing = () => {
         }
         // Case 2: Response is array of users
         else if (Array.isArray(response.data) && userId) {
-          userData = response.data.find((user: any) => 
+          userData = response.data.find((user: any) =>
             user._id === userId || user.id === userId
           );
         }
         // Case 3: Response is wrapped in data property
         else if (response.data.data) {
           if (Array.isArray(response.data.data)) {
-            userData = response.data.data.find((user: any) => 
+            userData = response.data.data.find((user: any) =>
               user._id === userId || user.id === userId
             );
           } else if (response.data.data._id) {
@@ -1715,6 +1718,7 @@ const ProfilePricing = () => {
         if (userData && userData.type) {
           const userPlan = userData.type.toLowerCase();
           setCurrentUserPlan(userPlan);
+          setSubscriptionEnd(userData.subscriptionEnd || null);
           sessionStorage.setItem('type', userPlan);
           localStorage.setItem('user', JSON.stringify(userData));
           console.log('✅ User plan set from /api/getusers:', userPlan);
@@ -1804,16 +1808,16 @@ const ProfilePricing = () => {
   // Call refresh when component mounts and when returning from payment
   useEffect(() => {
     fetchUserCurrentPlan();
-    
+
     // Listen for storage events (in case plan is updated in another tab)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'user' || e.key === 'type') {
         fetchUserCurrentPlan();
       }
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
-    
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
@@ -1865,6 +1869,11 @@ const ProfilePricing = () => {
                 Active Subscription
               </span>
             )}
+            {subscriptionEnd && new Date(subscriptionEnd) < new Date() && (
+              <span className="ml-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                Expired
+              </span>
+            )}
           </p>
         </div>
       </div>
@@ -1872,25 +1881,31 @@ const ProfilePricing = () => {
       <div className="grid md:grid-cols-3 gap-6">
         {plans.map((plan) => {
           const isActive = currentUserPlan === plan.id;
-          const isNotAvailable = !isActive && 
+          const isExpired = isActive && !!subscriptionEnd && new Date(subscriptionEnd) < new Date();
+          const isNotAvailable = !isActive &&
             PLAN_ORDER[plan.planType] < PLAN_ORDER[currentUserPlan];
 
           return (
             <Card
               key={plan.id}
-              className={`relative ${
-                plan.featured ? 'border-primary shadow-lg' : ''
-              } ${isActive ? 'ring-2 ring-green-500 border-green-500' : ''}`}
+              className={`relative transition-all duration-300 ${plan.featured ? 'border-primary shadow-lg' : ''
+                } ${isActive ? (isExpired ? 'border-red-500 ring-2 ring-red-500 shadow-red-100' : 'ring-2 ring-green-500 border-green-500 shadow-green-100') : ''}`}
             >
               {plan.featured && !isActive && (
                 <span className="absolute top-3 right-3 text-xs font-semibold bg-primary text-white px-3 py-1 rounded-full">
                   MOST POPULAR
                 </span>
               )}
-              
-              {isActive && (
+
+              {isActive && !isExpired && (
                 <span className="absolute top-3 right-3 text-xs font-semibold bg-green-600 text-white px-3 py-1 rounded-full">
                   ACTIVE PLAN
+                </span>
+              )}
+
+              {isExpired && (
+                <span className="absolute top-3 right-3 text-xs font-semibold bg-red-600 text-white px-3 py-1 rounded-full animate-pulse">
+                  EXPIRED
                 </span>
               )}
 
