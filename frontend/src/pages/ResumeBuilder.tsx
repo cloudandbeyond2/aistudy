@@ -10,7 +10,7 @@ import axios from 'axios';
 import { serverURL, websiteURL } from '@/constants';
 import {
     Plus, Trash2, Download, Share2, ChevronRight, ChevronLeft,
-    FileText, Briefcase, GraduationCap, Award, Eye, CheckCircle, Loader2, User, Link2
+    FileText, Briefcase, GraduationCap, Award, Eye, CheckCircle, Loader2, User, Link2, Sparkles
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import jsPDF from 'jspdf';
@@ -36,18 +36,18 @@ interface ResumeData {
 
 // ─── Profession options ───────────────────────────────────────────────────────
 const PROFESSIONS = [
-    { label: 'Software Developer', icon: '💻' },
-    { label: 'Data Scientist', icon: '📊' },
-    { label: 'Product Manager', icon: '🎯' },
-    { label: 'UI/UX Designer', icon: '🎨' },
-    { label: 'DevOps Engineer', icon: '⚙️' },
-    { label: 'Business Analyst', icon: '📈' },
-    { label: 'Digital Marketer', icon: '📣' },
-    { label: 'Cybersecurity Analyst', icon: '🔐' },
-    { label: 'Cloud Architect', icon: '☁️' },
-    { label: 'AI/ML Engineer', icon: '🤖' },
-    { label: 'Full Stack Developer', icon: '🌐' },
-    { label: 'Other', icon: '🧑‍💼' },
+    { label: 'Software Developer', icon: '💻', suggestedSkills: ['JavaScript', 'React', 'Node.js', 'TypeScript', 'MongoDB', 'Git', 'CSS', 'HTML', 'REST API'] },
+    { label: 'Data Scientist', icon: '📊', suggestedSkills: ['Python', 'R', 'SQL', 'Machine Learning', 'Statistics', 'Data Visualization', 'Pandas', 'NumPy'] },
+    { label: 'Product Manager', icon: '🎯', suggestedSkills: ['Agile', 'Scrum', 'Product Roadmap', 'User Research', 'Data Analysis', 'Stakeholder Management'] },
+    { label: 'UI/UX Designer', icon: '🎨', suggestedSkills: ['Figma', 'Adobe XD', 'Sketch', 'User Interface Design', 'User Experience', 'Prototyping', 'Wireframing'] },
+    { label: 'DevOps Engineer', icon: '⚙️', suggestedSkills: ['Docker', 'Kubernetes', 'AWS', 'CI/CD', 'Jenkins', 'Terraform', 'Linux', 'Ansible'] },
+    { label: 'Business Analyst', icon: '📈', suggestedSkills: ['Business Analysis', 'Requirement Gathering', 'Process Mapping', 'SQL', 'Excel', 'Problem Solving'] },
+    { label: 'Digital Marketer', icon: '📣', suggestedSkills: ['SEO', 'SEM', 'Content Marketing', 'Social Media', 'Google Analytics', 'Email Marketing', 'Copywriting'] },
+    { label: 'Cybersecurity Analyst', icon: '🔐', suggestedSkills: ['Network Security', 'Penetration Testing', 'Incident Response', 'Cryptography', 'SIEM', 'Compliance'] },
+    { label: 'Cloud Architect', icon: '☁️', suggestedSkills: ['Cloud Infrastructure', 'AWS/Azure/GCP', 'Virtualization', 'Networking', 'Security', 'Disaster Recovery'] },
+    { label: 'AI/ML Engineer', icon: '🤖', suggestedSkills: ['Natural Language Processing', 'Computer Vision', 'Deep Learning', 'PyTorch', 'TensorFlow', 'Neural Networks'] },
+    { label: 'Full Stack Developer', icon: '🌐', suggestedSkills: ['React', 'Node.js', 'Express', 'SQL/NoSQL', 'Frontend', 'Backend', 'DevOps', 'Mobile Apps'] },
+    { label: 'Other', icon: '🧑‍💼', suggestedSkills: [] },
 ];
 
 const STEPS = [
@@ -149,9 +149,12 @@ const ResumePrint = React.forwardRef<HTMLDivElement, { resume: ResumeData; userN
                 {selectedCerts.length > 0 && (
                     <Section title="Certifications">
                         {selectedCerts.map((c, i) => (
-                            <div key={i} style={{ marginBottom: '6px', display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ fontSize: '13px' }}>🏅 {c.courseName}</span>
-                                <span style={{ fontSize: '11px', color: '#666' }}>{c.date ? new Date(c.date).toLocaleDateString('en-IN') : ''}</span>
+                            <div key={i} style={{ marginBottom: '10px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                                    <strong style={{ fontSize: '13px' }}>🏅 {c.courseName}</strong>
+                                    <span style={{ fontSize: '11px', color: '#666' }}>{c.date ? new Date(c.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' }) : ''}</span>
+                                </div>
+                                <p style={{ fontSize: '11px', color: '#777', marginTop: '2px' }}>ID: {c.certificateId}</p>
                             </div>
                         ))}
                     </Section>
@@ -184,8 +187,8 @@ const ResumeBuilder = () => {
     const [userName, setUserName] = useState('');
     const [allCerts, setAllCerts] = useState<Certificate[]>([]);
     const [customProfession, setCustomProfession] = useState('');
+    const [generatingSummary, setGeneratingSummary] = useState(false);
     const [skillInput, setSkillInput] = useState('');
-
     const printRef = useRef<HTMLDivElement>(null);
 
     const [resume, setResume] = useState<ResumeData>({
@@ -275,6 +278,29 @@ const ResumeBuilder = () => {
         setField('selectedCertificateIds', selected.includes(certId)
             ? selected.filter(id => id !== certId)
             : [...selected, certId]);
+    };
+
+    // ── AI Summary ──────────────────────────────────────────
+    const handleAISummary = async () => {
+        if (!resume.profession) {
+            toast({ title: 'Select Profession First', description: 'Please select your profession in Step 1 to generate an AI summary.', variant: 'destructive' });
+            return;
+        }
+        setGeneratingSummary(true);
+        try {
+            const professionToUse = resume.profession === 'Other' ? customProfession : resume.profession;
+            const prompt = `Create a professional 2-3 sentence resume summary for ${userName}, a ${professionToUse}. Focus on expertise, impact, and a professional tone.`;
+            const res = await axios.post(`${serverURL}/api/ai/prompt`, { prompt });
+            if (res.data) {
+                setField('summary', res.data.trim());
+                toast({ title: '✨ Summary Generated', description: 'AI has generated a summary based on your profession.' });
+            }
+        } catch (err) {
+            console.error(err);
+            toast({ title: 'AI Error', description: 'Could not generate AI summary. Please try manual entry.', variant: 'destructive' });
+        } finally {
+            setGeneratingSummary(false);
+        }
     };
 
     // ── Save ─────────────────────────────────────────────────
@@ -445,7 +471,19 @@ const ResumeBuilder = () => {
                             <FormField label="Website / Portfolio" value={resume.website} onChange={v => setField('website', v)} placeholder="yoursite.com" />
                         </div>
                         <div className="space-y-2">
-                            <Label>Professional Summary</Label>
+                            <div className="flex items-center justify-between">
+                                <Label>Professional Summary</Label>
+                                <Button
+                                    onClick={handleAISummary}
+                                    disabled={generatingSummary}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 gap-2 text-primary hover:text-primary hover:bg-primary/5 rounded-full"
+                                >
+                                    {generatingSummary ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                                    AI Generate
+                                </Button>
+                            </div>
                             <Textarea
                                 value={resume.summary} rows={5}
                                 onChange={e => setField('summary', e.target.value)}
@@ -454,21 +492,69 @@ const ResumeBuilder = () => {
                             />
                         </div>
                         {/* Skills */}
-                        <div className="space-y-2">
+                        <div className="space-y-4">
                             <Label>Skills</Label>
                             <div className="flex gap-2">
-                                <Input value={skillInput} onChange={e => setSkillInput(e.target.value)}
+                                <Input
+                                    value={skillInput}
+                                    onChange={e => setSkillInput(e.target.value)}
                                     onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-                                    placeholder="Add skill and press Enter" className="rounded-xl" />
-                                <Button onClick={addSkill} variant="outline" className="rounded-xl"><Plus className="h-4 w-4" /></Button>
+                                    placeholder="Add skill and press Enter"
+                                    className="rounded-xl"
+                                />
+                                <Button onClick={addSkill} variant="outline" className="rounded-xl">
+                                    <Plus className="h-4 w-4" />
+                                </Button>
                             </div>
-                            <div className="flex flex-wrap gap-2 mt-2">
+
+                            <div className="flex flex-wrap gap-2">
                                 {resume.skills.map(s => (
-                                    <span key={s} className="flex items-center gap-1 bg-primary/10 text-primary text-sm px-3 py-1 rounded-full">
+                                    <span key={s} className="flex items-center gap-1 bg-primary/10 text-primary text-sm px-3 py-1 rounded-full border border-primary/20">
                                         {s}
-                                        <button onClick={() => removeSkill(s)}><Trash2 className="h-3 w-3" /></button>
+                                        <button onClick={() => removeSkill(s)} className="hover:text-destructive transition-colors">
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
                                     </span>
                                 ))}
+                            </div>
+
+                            {/* Suggested Skills */}
+                            <div className="bg-muted/30 p-4 rounded-xl border border-border/40">
+                                <p className="text-xs font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                                    <Sparkles className="h-3 w-3 text-primary" /> Suggested based on profession & certificates:
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {(() => {
+                                        const prof = PROFESSIONS.find(p => p.label === resume.profession);
+                                        const suggested = [...(prof?.suggestedSkills || [])];
+
+                                        allCerts.forEach(c => {
+                                            const name = c.courseName.toLowerCase();
+                                            if (name.includes('react')) suggested.push('React.js');
+                                            if (name.includes('node')) suggested.push('Node.js');
+                                            if (name.includes('python')) suggested.push('Python');
+                                            if (name.includes('java')) suggested.push('Java');
+                                            if (name.includes('javascript')) suggested.push('JavaScript');
+                                            if (name.includes('aws')) suggested.push('AWS');
+                                            if (name.includes('mongo')) suggested.push('MongoDB');
+                                            if (name.includes('sql')) suggested.push('SQL');
+                                            if (name.includes('machine learning')) suggested.push('Machine Learning');
+                                            if (name.includes('ai')) suggested.push('Artificial Intelligence');
+                                        });
+
+                                        const uniqueSuggested = Array.from(new Set(suggested)).filter(s => !resume.skills.includes(s));
+
+                                        return uniqueSuggested.length > 0 ? uniqueSuggested.map(s => (
+                                            <button
+                                                key={s}
+                                                onClick={() => setField('skills', [...resume.skills, s])}
+                                                className="text-xs bg-background hover:bg-primary/10 hover:border-primary/50 transition-all px-3 py-1.5 rounded-lg border border-border/50 shadow-sm"
+                                            >
+                                                + {s}
+                                            </button>
+                                        )) : <p className="text-xs text-muted-foreground italic">No suggestions available for this profession.</p>;
+                                    })()}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -682,7 +768,7 @@ const ResumeBuilder = () => {
                     </Button>
                 )}
             </div>
-        </div>
+        </div >
     );
 };
 
