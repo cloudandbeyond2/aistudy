@@ -52,27 +52,84 @@ export const createBlog = async (req, res) => {
 /**
  * UPDATE BLOG (POPULAR / FEATURED)
  */
+
+// export const updateBlog = async (req, res) => {
+//   try {
+//     const { id, type, value } = req.body;
+//     const booleanValue = value === 'true';
+
+//     if (type === 'popular') {
+//       await Blog.findOneAndUpdate(
+//         { _id: id },
+//         { $set: { popular: booleanValue } }
+//       );
+//     } else {
+//       await Blog.findOneAndUpdate(
+//         { _id: id },
+//         { $set: { featured: booleanValue } }
+//       );
+//     }
+
+//     res.json({
+//       success: true,
+//       message: 'Blog updated successfully'
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     res.json({
+//       success: false,
+//       message: 'Internal Server Error'
+//     });
+//   }
+// };
+
+/**
+ * UPDATE BLOG (FULL EDIT + POPULAR / FEATURED)
+ */
 export const updateBlog = async (req, res) => {
   try {
-    const { id, type, value } = req.body;
-    const booleanValue = value === 'true';
+    const { id, type, value, title, excerpt, content, image, category, tags } = req.body;
 
-    if (type === 'popular') {
-      await Blog.findOneAndUpdate(
-        { _id: id },
-        { $set: { popular: booleanValue } }
-      );
-    } else {
-      await Blog.findOneAndUpdate(
-        { _id: id },
-        { $set: { featured: booleanValue } }
-      );
+    // ===============================
+    // CASE 1: POPULAR / FEATURED TOGGLE
+    // ===============================
+    if (type === 'popular' || type === 'featured') {
+      const booleanValue = value === 'true';
+
+      await Blog.findByIdAndUpdate(id, {
+        $set: { [type]: booleanValue }
+      });
+
+      return res.json({
+        success: true,
+        message: 'Blog updated successfully'
+      });
     }
+
+    // ===============================
+    // CASE 2: FULL BLOG EDIT
+    // ===============================
+    const updateData = {
+      title,
+      excerpt,
+      content,
+      category,
+      tags
+    };
+
+    // Update image only if new one is sent
+    if (image) {
+      const buffer = Buffer.from(image.split(',')[1], 'base64');
+      updateData.image = buffer;
+    }
+
+    await Blog.findByIdAndUpdate(id, updateData);
 
     res.json({
       success: true,
       message: 'Blog updated successfully'
     });
+
   } catch (error) {
     console.log(error);
     res.json({
@@ -81,7 +138,6 @@ export const updateBlog = async (req, res) => {
     });
   }
 };
-
 /**
  * DELETE BLOG
  */

@@ -162,6 +162,7 @@ const App = () => (
                     <Route path="subscription-billing" element={<AdminSubscriptionBilling />} />
                     <Route path="subscribers" element={<AdminSubscribers />} />
                     <Route path="create-blog" element={<AdminCreateBlog />} />
+                    <Route path="/admin/create-blog/:id" element={<AdminCreateBlog />} />
                     <Route path="blogs" element={<AdminBlogs />} />
                     <Route path="certificate" element={<AdminCertificate />} />
                     <Route path="orgs" element={<AdminOrganizations />} />
