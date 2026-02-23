@@ -843,48 +843,8 @@ const PaymentDetails = () => {
                   <Tabs value={paymentMethod} onValueChange={setPaymentMethod} className="w-full">
                     <TabsList className="grid grid-cols-5 mb-6">
                       {razorpayEnabled ? <TabsTrigger value="razorpay">Razorpay</TabsTrigger> : null}
-                      {paypalEnabled ? <TabsTrigger value="paypal">PayPal</TabsTrigger> : null}
-                      {stripeEnabled ? <TabsTrigger value="stripe">Stripe</TabsTrigger> : null}
-                      {flutterwaveEnabled ? <TabsTrigger value="flutterwave">Flutterwave</TabsTrigger> : null}
-                      {paystackEnabled ? <TabsTrigger value="paystack">Paystack</TabsTrigger> : null}
+                    
                     </TabsList>
-
-                    <TabsContent value="paypal">
-                      <div className="flex flex-col items-center justify-center space-y-4 py-8">
-                        <Globe className="h-12 w-12 text-blue-500" />
-                        <p className="text-center">
-                          You'll be redirected to PayPal to complete your purchase securely.
-                        </p>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="stripe">
-                      <div className="flex flex-col items-center justify-center space-y-4 py-8">
-                        <CreditCardIcon className="h-12 w-12 text-indigo-500" />
-                        <p className="text-center">
-                          You'll be redirected to Stripe to complete your purchase securely.
-                        </p>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="flutterwave">
-                      <div className="flex flex-col items-center justify-center space-y-4 py-8">
-                        <Smartphone className="h-12 w-12 text-orange-500" />
-                        <p className="text-center">
-                          You'll be redirected to Flutterwave to complete your purchase securely.
-                        </p>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="paystack">
-                      <div className="flex flex-col items-center justify-center space-y-4 py-8">
-                        <HandCoins className="h-12 w-12 text-purple-500" />
-                        <p className="text-center">
-                          You'll be redirected to paystack to complete your purchase securely.
-                        </p>
-
-                      </div>
-                    </TabsContent>
 
                     <TabsContent value="razorpay">
                       <div className="flex flex-col items-center justify-center space-y-4 py-8">
@@ -953,6 +913,8 @@ const PaymentDetails = () => {
 
 
               </Card>
+
+              
             </form>
           </Form>
         </div>

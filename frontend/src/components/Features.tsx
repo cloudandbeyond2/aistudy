@@ -30,8 +30,8 @@ const features = [
   },
   {
     icon: <BarChart className="h-8 w-8" />,
-    title: "Export Tools",
-    description: "Download your generated course in various formats for offline access."
+    title: "Organization Connect",
+    description: "Collaborate with schools, institutions, and enterprises. Manage teams, track progress, and deliver structured learning at scale."
   }
 ];
 
