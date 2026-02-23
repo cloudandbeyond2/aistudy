@@ -1286,12 +1286,9 @@ return (
       <div className="space-y-2">
         <Label>User Type</Label>
         <Select
-          value={formData.userType}
-          onValueChange={(value) =>
-            setFormData((prev) => ({ ...prev, userType: value }))
-          }
-          disabled={!isEditing}
-        >
+  value={formData.userType}
+  disabled={true}   // ALWAYS readonly
+>
           <SelectTrigger>
             <SelectValue placeholder="Select user type" />
           </SelectTrigger>
