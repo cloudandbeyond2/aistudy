@@ -266,13 +266,13 @@ const OrgDashboard = () => {
     const [newProject, setNewProject] = useState({ title: '', description: '', type: 'Project', department: '', dueDate: '' });
     // const [newMaterial, setNewMaterial] = useState({ title: '', description: '', fileUrl: '', type: 'PDF', department: '' });
     const [newMaterial, setNewMaterial] = useState({
-  title: '',
-  description: '',
-  fileUrl: '',
-  file: null,
-  type: 'PDF',
-  department: ''
-});
+        title: '',
+        description: '',
+        fileUrl: '',
+        file: null,
+        type: 'PDF',
+        department: ''
+    });
 
     const orgId = sessionStorage.getItem('orgId') || sessionStorage.getItem('uid');
 
@@ -375,51 +375,51 @@ const OrgDashboard = () => {
         }
     };
 
- const handleCreateMaterial = async () => {
-  try {
-    let res;
+    const handleCreateMaterial = async () => {
+        try {
+            let res;
 
-if (newMaterial.type === 'PDF' && newMaterial.file) {
-  const formData = new FormData();
-  formData.append('title', newMaterial.title);
-  formData.append('description', newMaterial.description);
-  formData.append('type', newMaterial.type);
-  formData.append('department', newMaterial.department);
-  formData.append('organizationId', orgId);
-  formData.append('file', newMaterial.file);
+            if (newMaterial.type === 'PDF' && newMaterial.file) {
+                const formData = new FormData();
+                formData.append('title', newMaterial.title);
+                formData.append('description', newMaterial.description);
+                formData.append('type', newMaterial.type);
+                formData.append('department', newMaterial.department);
+                formData.append('organizationId', orgId);
+                formData.append('file', newMaterial.file);
 
-      res = await axios.post(
-        `${serverURL}/api/org/material/create`,
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
-    } else {
-      res = await axios.post(`${serverURL}/api/org/material/create`, {
-        ...newMaterial,
-        organizationId: orgId,
-      });
-    }
+                res = await axios.post(
+                    `${serverURL}/api/org/material/create`,
+                    formData,
+                    { headers: { 'Content-Type': 'multipart/form-data' } }
+                );
+            } else {
+                res = await axios.post(`${serverURL}/api/org/material/create`, {
+                    ...newMaterial,
+                    organizationId: orgId,
+                });
+            }
 
-    if (res.data.success) {
-      toast({ title: "Success", description: "Material added successfully" });
-      setNewMaterial({
-        title: '',
-        description: '',
-        fileUrl: '',
-        file: null,
-        type: 'PDF',
-        department: ''
-      });
-      fetchMaterials();
-    }
+            if (res.data.success) {
+                toast({ title: "Success", description: "Material added successfully" });
+                setNewMaterial({
+                    title: '',
+                    description: '',
+                    fileUrl: '',
+                    file: null,
+                    type: 'PDF',
+                    department: ''
+                });
+                fetchMaterials();
+            }
 
-  } catch (e: any) {
-    toast({
-      title: "Error",
-      description: e.response?.data?.message || "Failed to add material"
-    });
-  }
-};
+        } catch (e: any) {
+            toast({
+                title: "Error",
+                description: e.response?.data?.message || "Failed to add material"
+            });
+        }
+    };
 
     const handleDeleteMaterial = async (id: string) => {
         if (!confirm('Delete this material?')) return;
@@ -705,14 +705,16 @@ if (newMaterial.type === 'PDF' && newMaterial.file) {
 
                 // Map Excel columns to our expected format
                 // Expected columns: Name, Email, Password, Department, Section, Roll No
-                const studentsData = jsonData.map((row: any) => ({
-                    name: row.Name || row.name || '',
-                    email: row.Email || row.email || '',
-                    password: row.Password || row.password || 'Student@123', // Default password if empty
-                    department: row.Department || row.department || '',
-                    section: row.Section || row.section || '',
-                    rollNo: row.RollNo || row['Roll No'] || row.rollno || ''
-                }));
+                const studentsData = jsonData
+                    .map((row: any) => ({
+                        name: row.Name || row.name || '',
+                        email: row.Email || row.email || '',
+                        password: row.Password || row.password || 'Student@123', // Default password if empty
+                        department: row.Department || row.department || '',
+                        section: row.Section || row.section || '',
+                        rollNo: row.RollNo || row['Roll No'] || row.rollno || ''
+                    }))
+                    .filter(student => student.name.trim() !== '' || student.email.trim() !== '');
 
                 // Validate data
                 const invalidRows = studentsData.filter(h => !h.email || !h.name);
@@ -1353,30 +1355,30 @@ if (newMaterial.type === 'PDF' && newMaterial.file) {
                                             <Label>Material Title</Label>
                                             <Input value={newMaterial.title} onChange={(e) => setNewMaterial({ ...newMaterial, title: e.target.value })} placeholder="e.g., Python Course Notes" />
                                         </div>
-                                      {/* TYPE BASED FIELD */}
-<div className="grid gap-2">
-  <Label>
-    {newMaterial.type === 'PDF' ? 'Upload PDF File' : 'Link / URL'}
-  </Label>
+                                        {/* TYPE BASED FIELD */}
+                                        <div className="grid gap-2">
+                                            <Label>
+                                                {newMaterial.type === 'PDF' ? 'Upload PDF File' : 'Link / URL'}
+                                            </Label>
 
-  {newMaterial.type === 'PDF' ? (
-    <Input
-      type="file"
-      accept="application/pdf"
-      onChange={(e: any) =>
-        setNewMaterial({ ...newMaterial, file: e.target.files[0] })
-      }
-    />
-  ) : (
-    <Input
-      value={newMaterial.fileUrl}
-      onChange={(e) =>
-        setNewMaterial({ ...newMaterial, fileUrl: e.target.value })
-      }
-      placeholder="https://..."
-    />
-  )}
-</div>
+                                            {newMaterial.type === 'PDF' ? (
+                                                <Input
+                                                    type="file"
+                                                    accept="application/pdf"
+                                                    onChange={(e: any) =>
+                                                        setNewMaterial({ ...newMaterial, file: e.target.files[0] })
+                                                    }
+                                                />
+                                            ) : (
+                                                <Input
+                                                    value={newMaterial.fileUrl}
+                                                    onChange={(e) =>
+                                                        setNewMaterial({ ...newMaterial, fileUrl: e.target.value })
+                                                    }
+                                                    placeholder="https://..."
+                                                />
+                                            )}
+                                        </div>
                                         <div className="grid gap-2">
                                             <Label>Type</Label>
                                             <select

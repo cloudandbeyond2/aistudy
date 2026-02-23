@@ -200,6 +200,15 @@ export const bulkUploadStudents = async (req, res) => {
         for (const student of students) {
             const { email, name, password, department, section, rollNo } = student;
 
+            // Simple validation: skip rows with no email and no name
+            if (!email && !name) continue;
+
+            // If only name is provided but no email, we can't create a user
+            if (!email) {
+                errors.push(`Row for ${name || 'unknown'} skipped because email is missing`);
+                continue;
+            }
+
             const existing = await User.findOne({ email });
             if (existing) {
                 errors.push(`Email ${email} already exists`);
@@ -208,7 +217,7 @@ export const bulkUploadStudents = async (req, res) => {
 
             await new User({
                 email,
-                mName: name,
+                mName: name || 'Student',
                 password,
                 role: 'student',
                 organization: organizationId,
