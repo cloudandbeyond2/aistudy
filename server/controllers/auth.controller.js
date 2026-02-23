@@ -1004,6 +1004,7 @@ export const updateProfile = async (req, res) => {
     gender,
 
     country,
+    state,
     city,
     pin,
     address,
@@ -1029,6 +1030,7 @@ export const updateProfile = async (req, res) => {
       dob,
       gender,
       country,
+      state,
       city,
       pin,
       address,

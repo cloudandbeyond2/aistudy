@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema({
   gender: { type: String, default: null },
   country: { type: String, default: null },
   city: { type: String, default: null },
+  state: { type: String, default: null },
   pin: { type: String, default: null },
   address: { type: String, default: null },
   userType: { type: String, enum: ['individual', 'organization'], default: 'individual' },
