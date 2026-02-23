@@ -34,4 +34,6 @@ router.get('/settings', adminController.getAdminSettings);
 router.post('/settings', adminController.updateAdminSettings);
 router.post('/settings/upload-logo', uploadLogo.single('logo'), adminController.uploadLogo);
 
+// We use a GET request here for easier fetching on the landing/login page
+router.get('/public-stats', adminController.dashboard);
 export default router;
