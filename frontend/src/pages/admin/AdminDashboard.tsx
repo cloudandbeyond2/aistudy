@@ -428,82 +428,102 @@ export default function AdminDashboard() {
       </div>
 
       {/* ======== RECENT ORDERS SECTION ======== */}
-      <div className="bg-white rounded-2xl shadow-lg p-8">
-        <div className="flex items-center gap-2 mb-6">
-          <ShoppingBag className="w-6 h-6 text-blue-600" />
-          <h2 className="text-xl font-bold">Recent Orders</h2>
-          <span className="text-sm text-gray-500 ml-2">(Last 5 orders)</span>
-        </div>
+    
+<div className="bg-card rounded-2xl shadow-lg p-8 border border-border">
+  <div className="flex items-center gap-2 mb-6">
+    <ShoppingBag className="w-6 h-6 text-primary" />
+    <h2 className="text-xl font-bold">Recent Orders</h2>
+    <span className="text-sm text-muted-foreground ml-2">
+      (Last 5 orders)
+    </span>
+  </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Order ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {recentOrders.length > 0 ? (
-                recentOrders.map((order, index) => (
-                  <tr key={order.id || index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      #{typeof order.id === 'string' ? order.id.slice(-6) : order.id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {order.userName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                      ₹{Number(order.price).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {order.date}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        order.status === 'completed' 
-                          ? 'bg-green-100 text-green-800' 
-                          : order.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                    No recent orders found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+  <div className="overflow-x-auto">
+    <table className="min-w-full divide-y divide-border">
+      <thead className="bg-muted/40">
+        <tr>
+          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Order ID
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            User
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Amount
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Date
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Status
+          </th>
+        </tr>
+      </thead>
+
+      <tbody className="divide-y divide-border">
+        {recentOrders.length > 0 ? (
+          recentOrders.map((order, index) => (
+            <tr
+              key={order.id || index}
+              className="hover:bg-muted/50 transition-colors"
+            >
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                #{typeof order.id === "string"
+                  ? order.id.slice(-6)
+                  : order.id}
+              </td>
+
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                {order.userName}
+              </td>
+
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                ₹{Number(order.price).toLocaleString()}
+              </td>
+
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                {order.date}
+              </td>
+
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span
+                  className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    order.status === "completed"
+                      ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                      : order.status === "pending"
+                      ? "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {order.status}
+                </span>
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td
+              colSpan={6}
+              className="px-6 py-8 text-center text-muted-foreground"
+            >
+              No recent orders found
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
 
       {/* ======== CHART SECTION ======== */}
-      <div className="bg-white rounded-2xl shadow-lg p-8">
+      {/* <div className="bg-white rounded-2xl shadow-lg p-8"> */}
+        <div className="bg-card rounded-2xl shadow-lg p-8 border border-border">
         <h2 className="text-xl font-bold mb-6">
           User & Course Analytics
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
           {/* USER CHART */}
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
