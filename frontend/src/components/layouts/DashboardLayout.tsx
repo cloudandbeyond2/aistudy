@@ -136,6 +136,18 @@ const DashboardLayout = () => {
                         </SidebarMenuButton>
                       </SidebarMenuItem>
 
+                      {/* Resume Builder — paid users only */}
+                      {['monthly', 'yearly', 'forever'].includes(sessionStorage.getItem('type')) && (
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild tooltip="Resume Builder" isActive={isActive('/dashboard/resume-builder')}>
+                            <Link to="/dashboard/resume-builder" className={cn(isActive('/dashboard/resume-builder') && "text-primary")}>
+                              <FileText />
+                              <span>Resume Builder</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
+
 
                       {/* <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Pricing" isActive={isActive('/dashboard/pricing')}>

@@ -15,6 +15,7 @@ const Header = () => {
   const [isAuth, setIsAuth] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userType, setUserType] = useState<string>('free');
   const [open, setOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -32,6 +33,7 @@ const Header = () => {
     if (auth === 'true' && name) {
       setIsAuth(true);
       setUserName(name);
+      setUserType(sessionStorage.getItem('type') || 'free');
     }
   }, []);
 
@@ -193,6 +195,16 @@ const Header = () => {
                     >
                       Profile
                     </Link>
+
+                    {['monthly', 'yearly', 'forever'].includes(userType) && (
+                      <Link
+                        to="/dashboard/resume-builder"
+                        onClick={() => setOpen(false)}
+                        className="block px-4 py-3 text-sm font-bold rounded-2xl hover:bg-primary/5 dark:hover:bg-white/10 transition text-indigo-600 dark:text-indigo-400"
+                      >
+                        📄 Resume Builder
+                      </Link>
+                    )}
 
                     {isAdmin && (
                       <Link

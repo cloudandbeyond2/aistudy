@@ -45,6 +45,7 @@ import notificationRoutes from './routes/notification.routes.js';
 import orgRoutes from './routes/org.routes.js';
 import organizationEnquiryRoutes from "./routes/organizationEnquiry.routes.js";
 import subscriberRoutes from './routes/subscriber.routes.js';
+import resumeRoutes from './routes/resume.routes.js';
 import { startCronJobs } from './services/cron.service.js';
 
 
@@ -114,6 +115,7 @@ app.use('/api', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use("/api/organization-enquiries", organizationEnquiryRoutes);
 app.use('/api', subscriberRoutes);
+app.use('/api', resumeRoutes);
 
 
 

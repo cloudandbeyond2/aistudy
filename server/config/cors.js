@@ -34,7 +34,8 @@ const corsOptions = {
     'Content-Type',
     'Authorization',
     'X-Requested-With',
-    'Accept'
+    'Accept',
+    'x-user-id'
   ],
   optionsSuccessStatus: 200
 };
