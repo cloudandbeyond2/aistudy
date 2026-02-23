@@ -191,11 +191,14 @@ const ResumeView = () => {
                         <Section title="Certifications" icon={<Award className="h-4 w-4" />}>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {certs.map((c: any, i: number) => (
-                                    <div key={i} className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                                    <div key={i} className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-100 rounded-xl hover:shadow-md transition-shadow">
                                         <Award className="h-5 w-5 text-yellow-500 flex-shrink-0" />
                                         <div>
                                             <p className="font-semibold text-sm text-slate-700">{c.courseName}</p>
-                                            {c.date && <p className="text-xs text-slate-400">{new Date(c.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' })}</p>}
+                                            <div className="flex flex-col gap-0.5 mt-0.5">
+                                                {c.date && <p className="text-[10px] text-slate-400 font-medium">{new Date(c.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' })}</p>}
+                                                <p className="text-[10px] text-slate-400 font-mono tracking-tighter">ID: {c.certificateId}</p>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
