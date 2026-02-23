@@ -60,7 +60,7 @@ export const generatePrompt = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash'
+      model: 'gemini-flash-latest'
     });
 
     const result = await retryWithBackoff(() => model.generateContent(prompt));
@@ -76,14 +76,14 @@ export const generatePrompt = async (req, res) => {
       error.message?.includes('quota');
 
     const isMissingKey = error.status === 401;
-    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid');
+    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
 
     let status = 500;
     let message = 'Internal server error';
 
     if (isMissingKey || isInvalidKey) {
       status = isMissingKey ? 401 : 403;
-      message = isMissingKey ? error.message : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
+      message = error.message ? `Gemini API Error: ${error.message}` : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
     } else if (isRateLimit) {
       status = 429;
       message = 'API rate limit or quota exceeded.';
@@ -138,7 +138,7 @@ Only return JSON. No markdown code blocks.`;
 
   try {
     const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', safetySettings });
+    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest', safetySettings });
 
     const result = await retryWithBackoff(() => model.generateContent(prompt));
     const rawText = await result.response.text();
@@ -173,14 +173,14 @@ Only return JSON. No markdown code blocks.`;
       error.message?.includes('quota');
 
     const isMissingKey = error.status === 401;
-    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid');
+    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
 
     let status = 500;
     let message = 'Internal server error';
 
     if (isMissingKey || isInvalidKey) {
       status = isMissingKey ? 401 : 403;
-      message = isMissingKey ? error.message : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
+      message = error.message ? `Gemini API Error: ${error.message}` : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
     } else if (isRateLimitError) {
       status = 429;
       message = 'API rate limit or quota exceeded. Please try again later.';
@@ -230,7 +230,7 @@ export const generateHtml = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-flash-latest',
       safetySettings
     });
 
@@ -256,14 +256,14 @@ export const generateHtml = async (req, res) => {
       error.message?.includes('quota');
 
     const isMissingKey = error.status === 401;
-    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid');
+    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
 
     let status = 500;
     let message = 'Internal server error';
 
     if (isMissingKey || isInvalidKey) {
       status = isMissingKey ? 401 : 403;
-      message = isMissingKey ? error.message : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
+      message = error.message ? `Gemini API Error: ${error.message}` : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
     } else if (isRateLimitError) {
       status = 429;
       message = 'API rate limit or quota exceeded. Please try again later.';
@@ -433,7 +433,7 @@ export const generateAIExam = async (req, res) => {
 
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-flash-latest',
       safetySettings
     });
 
@@ -476,14 +476,14 @@ Only return JSON.`;
       error.message?.includes('quota');
 
     const isMissingKey = error.status === 401;
-    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid');
+    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
 
     let status = 500;
     let message = 'Failed to generate exam';
 
     if (isMissingKey || isInvalidKey) {
       status = isMissingKey ? 401 : 403;
-      message = isMissingKey ? error.message : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
+      message = error.message ? `Gemini API Error: ${error.message}` : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
     } else if (isRateLimitError) {
       status = 429;
       message = 'API rate limit or quota exceeded. Please try again later.';
