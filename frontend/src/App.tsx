@@ -81,6 +81,8 @@ import RefundPolicy from "./pages/RefundPolicy";
 import CancellationPolicy from "./pages/CancellationPolicy";
 import QuizPage from "./pages/QuizPage";
 import BlogPost from "./pages/BlogPost";
+import ResumeBuilder from "./pages/ResumeBuilder";
+import ResumeView from "./pages/ResumeView";
 
 const queryClient = new QueryClient();
 
@@ -119,6 +121,7 @@ const App = () => (
                     <Route path="student/projects" element={<StudentProjects />} />
                     <Route path="student/materials" element={<StudentMaterials />} />
                     <Route path="student/assignment/:assignmentId" element={<AssignmentPage />} />
+                    <Route path="resume-builder" element={<ResumeBuilder />} />
                   </Route>
 
                   {/* Course Routes */}
@@ -144,6 +147,7 @@ const App = () => (
                   <Route path="/subscription-billing-policy" element={<SubscriptionBillingPolicy />} />
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:id" element={<BlogPost />} />
+                  <Route path="/resume/:userId" element={<ResumeView />} />
 
                   {/* Admin Routes */}
                   <Route path="/admin" element={<AdminLayout />}>
