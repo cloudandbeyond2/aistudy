@@ -162,17 +162,49 @@ const PaymentDetails = () => {
   //   ? plans[planId as keyof typeof plans]
   //   : { name: 'Unknown Plan', price: 0 };
 
+  React.useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    const uid = sessionStorage.getItem('uid');
+    if (!uid) return;
+
+    try {
+      const res = await axios.get(`${serverURL}/api/getuser/${uid}`);
+      if (res.data.success && res.data.user) {
+        const user = res.data.user;
+        const names = (user.mName || '').split(' ');
+        const firstName = names[0] || '';
+        const lastName = names.slice(1).join(' ') || '';
+
+        form.reset({
+          firstName: firstName,
+          lastName: lastName,
+          email: user.email || '',
+          address: user.address || '',
+          city: user.city || '',
+          state: user.state || '',
+          zipCode: user.pin || '',
+          country: user.country || ''
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+    }
+  };
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      firstName: sessionStorage.getItem('mName'),
+      firstName: sessionStorage.getItem('mName') || '',
       lastName: '',
-      email: sessionStorage.getItem('email'),
-      address: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: ''
+      email: sessionStorage.getItem('email') || '',
+      address: sessionStorage.getItem('address') || '',
+      city: sessionStorage.getItem('city') || '',
+      state: sessionStorage.getItem('state') || '',
+      zipCode: sessionStorage.getItem('pin') || '',
+      country: sessionStorage.getItem('country') || ''
     },
   });
 
@@ -843,7 +875,7 @@ const PaymentDetails = () => {
                   <Tabs value={paymentMethod} onValueChange={setPaymentMethod} className="w-full">
                     <TabsList className="grid grid-cols-5 mb-6">
                       {razorpayEnabled ? <TabsTrigger value="razorpay">Razorpay</TabsTrigger> : null}
-                    
+
                     </TabsList>
 
                     <TabsContent value="razorpay">
@@ -914,7 +946,7 @@ const PaymentDetails = () => {
 
               </Card>
 
-              
+
             </form>
           </Form>
         </div>
