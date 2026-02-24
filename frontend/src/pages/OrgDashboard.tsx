@@ -831,7 +831,7 @@ const OrgDashboard = () => {
                             </div>
                         </DialogContent>
                     </Dialog>
-                    <Button>Settings</Button>
+                    {/* <Button>Settings</Button> */}
                 </div>
             </div>
 

@@ -259,12 +259,30 @@ const Signup = () => {
       </div>
 
       {/* Back to Website Button */}
-      <div className="absolute top-4 right-4 z-50">
-        <Link to="/" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors bg-background/50 backdrop-blur-sm px-4 py-2 rounded-full border border-border/50 hover:bg-background hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5">
-          <Home className="w-4 h-4" />
-          Back to Website
-        </Link>
-      </div>
+  {/* Back to Website Button */}
+<div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
+  <Link
+    to="/"
+    className="
+      flex items-center gap-2
+      text-xs sm:text-sm
+      font-medium
+      text-muted-foreground hover:text-primary
+      transition-all duration-200
+      bg-background/70 backdrop-blur-md
+      px-3 py-1.5 sm:px-4 sm:py-2
+      rounded-full
+      border border-border/50
+      hover:bg-background
+      hover:border-primary/20
+      hover:shadow-md
+    "
+  >
+    <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+    <span className="hidden xs:inline">Back to Website</span>
+    <span className="xs:hidden">Back</span>
+  </Link>
+</div>
 
       {/* Right Panel - Signup Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12">
@@ -285,7 +303,7 @@ const Signup = () => {
           </div>
 
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2 tracking-tight">Create an account</h1>
+            <h1 className="text-3xl font-bold mb-2 tracking-tight">Sign Up</h1>
             <p className="text-muted-foreground">Join the future of learning</p>
           </div>
 
@@ -444,7 +462,7 @@ const Signup = () => {
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2">
-                  Create account
+                  Sign Up
                   <ArrowRight className="h-5 w-5" />
                 </div>
               )}

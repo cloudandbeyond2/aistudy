@@ -24,8 +24,8 @@ const slides = [
     {
         id: 3,
         image: "/slider6.png",
-        title: "AI-Powered Excellence",
-        subtitle: "Turn concepts into comprehensive interactive courses in minutes.",
+        title: "Build a Job-Winning Resume in Minutes",
+        subtitle: "Create professional, ATS-friendly resumes with smart formatting and expert-designed templates.",
         cta: "Start Creating",
         link: "/dashboard"
     }

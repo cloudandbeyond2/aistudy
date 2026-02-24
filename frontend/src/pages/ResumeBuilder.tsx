@@ -290,7 +290,7 @@ const ResumeBuilder = () => {
         try {
             const professionToUse = resume.profession === 'Other' ? customProfession : resume.profession;
             const prompt = `Create a professional 2-3 sentence resume summary for ${userName}, a ${professionToUse}. Focus on expertise, impact, and a professional tone.`;
-            const res = await axios.post(`${serverURL}/api/ai/prompt`, { prompt });
+            const res = await axios.post(`${serverURL}/api/prompt`, { prompt });
             if (res.data && res.data.generatedText) {
                 setField('summary', res.data.generatedText.trim());
                 toast({ title: '✨ Summary Generated', description: 'AI has generated a summary based on your profession.' });
