@@ -38,7 +38,7 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const uid = sessionStorage.getItem('uid');
-  function redirectCreate() { 
+  function redirectCreate() {
     navigate("/dashboard/generate-course");
   }
 
@@ -87,41 +87,41 @@ const Dashboard = () => {
       });
     }
   }
-   useEffect(() => {
+  useEffect(() => {
     fetchData();
   }, []);
 
-    async function fetchData() {
-  const postURL = serverURL + `/api/getusers`;
-  const response = await axios.get(postURL);
+  async function fetchData() {
+    const postURL = serverURL + `/api/getusers`;
+    const response = await axios.get(postURL);
 
-  const filteredData = response.data.filter(
-    (user: any) => user._id === uid
-  );
+    const filteredData = response.data.filter(
+      (user: any) => user._id === uid
+    );
 
-  setData(filteredData);
+    setData(filteredData);
 
-  if (filteredData.length > 0) {
-    const endDate = filteredData[0].subscriptionEnd;
+    if (filteredData.length > 0) {
+      const endDate = filteredData[0].subscriptionEnd;
 
-    // ✅ UNLIMITED ACCESS CASE
-    if (endDate === null) {
-      sessionStorage.setItem("daysLeft", "UNLIMITED");
-      setIsUnlimited(true);
-    } else {
-      const today = new Date();
-      const end = new Date(endDate);
+      // ✅ UNLIMITED ACCESS CASE
+      if (endDate === null) {
+        sessionStorage.setItem("daysLeft", "UNLIMITED");
+        setIsUnlimited(true);
+      } else {
+        const today = new Date();
+        const end = new Date(endDate);
 
-      const diffTime = end.getTime() - today.getTime();
-      const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const diffTime = end.getTime() - today.getTime();
+        const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      sessionStorage.setItem("daysLeft", daysLeft.toString());
-      setIsUnlimited(false);
+        sessionStorage.setItem("daysLeft", daysLeft.toString());
+        setIsUnlimited(false);
+      }
     }
-  }
 
-  setIsLoading(false);
-}
+    setIsLoading(false);
+  }
 
 
   const handleDeleteCourse = async (courseId: number) => {
@@ -255,31 +255,31 @@ const Dashboard = () => {
     }
   }
 
-  
-async function getDetails() {
-      if (sessionStorage.getItem('type') !== 'free') {
-        const dataToSend = {
-          uid: sessionStorage.getItem('uid'),
-          email: sessionStorage.getItem('email'),
-        };
-        try {
-          const postURL = serverURL + '/api/subscriptiondetail';
-          await axios.post(postURL, dataToSend).then(res => {
-            setMethod(res.data.method);
-            setJsonData(res.data.session);
-            setPlan(sessionStorage.getItem('type'));
-            setCost(sessionStorage.getItem('plan') === 'Monthly Plan' ? '' + MonthCost : '' + YearCost);
-          });
-        } catch (error) {
-          console.error(error);
-          toast({
-            title: "Error",
-            description: "Internal Server Error",
-          });
-        }
+
+  async function getDetails() {
+    if (sessionStorage.getItem('type') !== 'free') {
+      const dataToSend = {
+        uid: sessionStorage.getItem('uid'),
+        email: sessionStorage.getItem('email'),
+      };
+      try {
+        const postURL = serverURL + '/api/subscriptiondetail';
+        await axios.post(postURL, dataToSend).then(res => {
+          setMethod(res.data.method);
+          setJsonData(res.data.session);
+          setPlan(sessionStorage.getItem('type'));
+          setCost(sessionStorage.getItem('plan') === 'Monthly Plan' ? '' + MonthCost : '' + YearCost);
+        });
+      } catch (error) {
+        console.error(error);
+        toast({
+          title: "Error",
+          description: "Internal Server Error",
+        });
       }
     }
- 
+  }
+
   async function getQuiz(courseId: string) {
     const postURL = serverURL + '/api/getmyresult';
     const response = await axios.post(postURL, { courseId });
@@ -298,71 +298,83 @@ async function getDetails() {
         keywords="dashboard, courses, learning, education, AI-generated courses"
       />
       <div className="space-y-8 animate-fade-in">
+        <div className="p-8 rounded-3xl bg-gradient-to-br from-primary/10 via-indigo-500/5 to-transparent border border-primary/10 shadow-sm relative overflow-hidden group transition-all duration-500 hover:shadow-md hover:border-primary/20">
+          <div className="absolute -right-12 -top-12 w-48 h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
+          <div className="relative z-10">
+            <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+              Welcome back, {sessionStorage.getItem('mName') || 'Learner'}! <Sparkles className="h-6 w-6 text-yellow-500 animate-pulse" />
+            </h2>
+            <p className="text-muted-foreground mt-2 text-lg">
+              Ready to continue your learning journey? You're doing a great job!
+            </p>
+          </div>
+        </div>
+
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-gradient bg-gradient-to-r from-primary to-indigo-500">My Courses</h1>
             <p className="text-muted-foreground mt-1">Continue learning where you left off</p>
           </div>
-            {/* RIGHT */}
-            {/* Star bala */}
-<div className="flex items-center gap-3 flex-wrap">
+          {/* RIGHT */}
+          {/* Star bala */}
+          <div className="flex items-center gap-3 flex-wrap">
 
-  {/* Plan Badge */}
-  <h6
-    onClick={redirectPricing}
-    style={{
-      display: "inline-block",
-      padding: "8px 14px",
-      cursor: "pointer",
-      borderRadius: "20px",
-      backgroundColor:
-        plan === "free"
-          ? "#E0E7FF"
-          : isUnlimited
-          ? "#FEF3C7"
-          : "#ECFDF5",
-      color:
-        plan === "free"
-          ? "#3730A3"
-          : isUnlimited
-          ? "#92400E"
-          : "#065F46",
-      fontWeight: 600,
-      fontSize: "14px",
-    }}
-  >
-    {plan === "free"
-      ? "🧪 Free Plan"
-      : isUnlimited
-      ? "👑 Unlimited Access"
-      : `📅 ${daysleft} days left`}
-  </h6>
+            {/* Plan Badge */}
+            <h6
+              onClick={redirectPricing}
+              style={{
+                display: "inline-block",
+                padding: "8px 14px",
+                cursor: "pointer",
+                borderRadius: "20px",
+                backgroundColor:
+                  plan === "free"
+                    ? "#E0E7FF"
+                    : isUnlimited
+                      ? "#FEF3C7"
+                      : "#ECFDF5",
+                color:
+                  plan === "free"
+                    ? "#3730A3"
+                    : isUnlimited
+                      ? "#92400E"
+                      : "#065F46",
+                fontWeight: 600,
+                fontSize: "14px",
+              }}
+            >
+              {plan === "free"
+                ? "🧪 Free Plan"
+                : isUnlimited
+                  ? "👑 Unlimited Access"
+                  : `📅 ${daysleft} days left`}
+            </h6>
 
-  {/* View Website */}
-  <Button
-    onClick={() => (window.location.href = websiteURL)}
-    variant="outline"
-    className="shadow-md"
-  >
-    View Website
-  </Button>
+            {/* View Website */}
+            <Button
+              onClick={() => (window.location.href = websiteURL)}
+              variant="outline"
+              className="shadow-md"
+            >
+              View Website
+            </Button>
 
-  {/* Generate */}
-  <Button
-    onClick={() =>
-      courses.length === 1 && plan === "free"
-        ? redirectPricing()
-        : redirectCreate()
-    }
-    className="shadow-md bg-gradient-to-r from-primary to-indigo-500 hover:from-indigo-500 hover:to-primary"
-  >
-    <Sparkles className="mr-2 h-4 w-4" />
-    Generate New Course
-  </Button>
+            {/* Generate */}
+            <Button
+              onClick={() =>
+                courses.length === 1 && plan === "free"
+                  ? redirectPricing()
+                  : redirectCreate()
+              }
+              className="shadow-md bg-gradient-to-r from-primary to-indigo-500 hover:from-indigo-500 hover:to-primary"
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              Generate New Course
+            </Button>
 
-  {/* 🔔 Bell */}
-  <NotificationBell />
-</div>
+            {/* 🔔 Bell */}
+            <NotificationBell />
+          </div>
         </div>
 
         {/* Stats Cards Section */}

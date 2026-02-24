@@ -773,6 +773,18 @@ const OrgDashboard = () => {
         <div className="container mx-auto py-10 space-y-8 animate-fade-in">
             <SEO title="Organization Dashboard" description="Manage your organization, students, and curriculum." />
 
+            <div className="p-8 rounded-3xl bg-gradient-to-br from-blue-600/10 via-indigo-600/5 to-transparent border border-blue-600/10 shadow-sm relative overflow-hidden group transition-all duration-500 hover:shadow-md hover:border-blue-600/20">
+                <div className="absolute -right-12 -top-12 w-48 h-48 bg-blue-600/5 rounded-full blur-3xl group-hover:bg-blue-600/10 transition-colors" />
+                <div className="relative z-10">
+                    <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+                        Welcome back, {sessionStorage.getItem('mName') || 'Admin'}! <Sparkles className="h-6 w-6 text-yellow-500 animate-pulse" />
+                    </h2>
+                    <p className="text-muted-foreground mt-2 text-lg">
+                        Manage your organization's growth and student success with ease.
+                    </p>
+                </div>
+            </div>
+
             <div className="flex flex-col md:flex-row justify-between items-center">
                 <div>
                     <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
