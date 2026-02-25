@@ -75,6 +75,8 @@ import AdminCreateOrganization from "./pages/admin/AdminCreateOrganization";
 import AdminOrganizationDetails from "./pages/admin/AdminOrganizationDetails";
 import AdminOrganizationEnquiries from "./pages/admin/AdminOrganizationEnquiries";
 import AdminSubscribers from "./pages/admin/AdminSubscribers";
+import AdminTickets from "./pages/admin/AdminTickets";
+import SupportTickets from "./pages/SupportTickets";
 
 import SubscriptionBillingPolicy from "./pages/SubscriptionBillingPolicy";
 import RefundPolicy from "./pages/RefundPolicy";
@@ -122,6 +124,10 @@ const App = () => (
                     <Route path="student/materials" element={<StudentMaterials />} />
                     <Route path="student/assignment/:assignmentId" element={<AssignmentPage />} />
                     <Route path="resume-builder" element={<ResumeBuilder />} />
+
+<Route path="support" element={<SupportTickets />} />
+
+
                   </Route>
 
                   {/* Course Routes */}
@@ -179,6 +185,7 @@ const App = () => (
                     <Route path="create-organization" element={<AdminCreateOrganization />} />
                     <Route path="organization/:id" element={<AdminOrganizationDetails />} />
                     <Route path="settings" element={<AdminSettings />} />
+                    <Route path="tickets" element={<AdminTickets />} />
                   </Route>
                   <Route path="/verify-certificate" element={<CertificateVerification />} />
 

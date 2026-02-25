@@ -28,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import NotificationBell from '../NotificationBell';
 import { useTheme } from '@/contexts/ThemeContext';
+import { MessageSquare } from "lucide-react";
 
 
 
@@ -147,6 +148,28 @@ const DashboardLayout = () => {
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       )}
+
+
+                      {/* Support — show only if NOT admin */}
+{!admin && (
+  <SidebarMenuItem>
+    <SidebarMenuButton
+      asChild
+      tooltip="Support"
+      isActive={isActive('/dashboard/support')}
+    >
+      <Link
+        to="/dashboard/support"
+        className={cn(isActive('/dashboard/support') && "text-primary")}
+      >
+        <MessageSquare />
+        <span>Support</span>
+      </Link>
+    </SidebarMenuButton>
+  </SidebarMenuItem>
+)}
+
+
 
 
                       {/* <SidebarMenuItem>

@@ -4,6 +4,7 @@ import bodyParser from 'body-parser';
 import path from 'path';
 import mongoose from 'mongoose';
 // import orgRoutes from './routes/org.routes.js';
+import ticketRoutes from './routes/ticket.routes.js';
 
 // 🔥 Load env FIRST
 import './config/env.js';
@@ -116,6 +117,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use("/api/organization-enquiries", organizationEnquiryRoutes);
 app.use('/api', subscriberRoutes);
 app.use('/api', resumeRoutes);
+app.use('/api', ticketRoutes);
 
 
 
