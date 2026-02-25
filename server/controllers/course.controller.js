@@ -7,6 +7,28 @@ import Notification from '../models/Notification.js';
 import StudentProgress from '../models/StudentProgress.js';
 
 /**
+ * CHECK COURSE EXISTS
+ */
+export const checkCourseExists = async (req, res) => {
+  const { userId, mainTopic } = req.query;
+
+  try {
+    const existingCourse = await Course.findOne({
+      user: userId,
+      mainTopic: { $regex: new RegExp(`^${mainTopic}$`, 'i') }
+    });
+
+    res.json({
+      success: true,
+      exists: !!existingCourse
+    });
+  } catch (error) {
+    console.error('Check course exists error:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+/**
  * CREATE COURSE
  */
 export const createCourse = async (req, res) => {
@@ -16,6 +38,19 @@ export const createCourse = async (req, res) => {
     'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
 
   try {
+    // Safeguard: Check if course already exists for this user
+    const existingCourse = await Course.findOne({
+      user,
+      mainTopic: { $regex: new RegExp(`^${mainTopic}$`, 'i') }
+    });
+
+    if (existingCourse) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already generated a course with this title'
+      });
+    }
+
     let photo = defaultPhoto;
 
     try {

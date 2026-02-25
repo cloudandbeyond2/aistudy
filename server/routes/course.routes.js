@@ -7,7 +7,8 @@ import {
   finishCourse,
   getShareableCourse,
   updateStudentProgress,
-  getStudentProgress
+  getStudentProgress,
+  checkCourseExists
 } from '../controllers/course.controller.js';
 import { getUserCourses } from '../controllers/course.controller.js';
 
@@ -22,5 +23,6 @@ router.get('/courses', getUserCourses);
 router.get('/shareable', getShareableCourse);
 router.post('/progress/update', updateStudentProgress);
 router.get('/progress', getStudentProgress);
+router.get('/check-existence', checkCourseExists);
 
 export default router;
