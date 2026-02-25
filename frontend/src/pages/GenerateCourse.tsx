@@ -81,6 +81,10 @@ const GenerateCourse = () => {
   ];
 
   useEffect(() => {
+    if (sessionStorage.getItem('role') === 'student') {
+      window.location.href = '/dashboard/student';
+      return;
+    }
 
     if (sessionStorage.getItem('type') !== 'free') {
       setPaidMember(true);

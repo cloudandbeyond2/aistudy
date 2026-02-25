@@ -1411,14 +1411,16 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button onClick={handleCreateCourse} disabled={isLoadingCourse}>
-          {isLoadingCourse ? (
-            <Loader className="animate-spin mr-2 h-4 w-4" />
-          ) : (
-            <CheckCircle className="mr-2 h-4 w-4" />
-          )}
-          Generate Course
-        </Button>
+        {sessionStorage.getItem('role') !== 'student' && (
+          <Button onClick={handleCreateCourse} disabled={isLoadingCourse}>
+            {isLoadingCourse ? (
+              <Loader className="animate-spin mr-2 h-4 w-4" />
+            ) : (
+              <CheckCircle className="mr-2 h-4 w-4" />
+            )}
+            Generate Course
+          </Button>
+        )}
       </div>
     </div>
   );
