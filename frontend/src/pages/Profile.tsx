@@ -1013,7 +1013,7 @@ const Profile = () => {
             {/* Left Section */}
             <div>
               <h2 className="text-xl font-semibold tracking-tight">
-                User Profile
+                My Profile
               </h2>
               <p className="text-sm text-muted-foreground">
                 Manage your personal information and account settings
