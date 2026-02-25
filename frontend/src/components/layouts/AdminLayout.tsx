@@ -139,6 +139,21 @@ const AdminLayout = () => {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+<SidebarMenuItem>
+  <SidebarMenuButton
+    asChild
+    tooltip="Tickets"
+    isActive={isActive('/admin/tickets')}
+  >
+    <Link
+      to="/admin/tickets"
+      className={cn(isActive('/admin/tickets') && "text-primary")}
+    >
+      <MessageSquare />
+      <span>Tickets</span>
+    </Link>
+  </SidebarMenuButton>
+</SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Paid Users" isActive={isActive('/admin/paid-users')}>
