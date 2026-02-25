@@ -81,6 +81,10 @@ const GenerateCourse = () => {
   ];
 
   useEffect(() => {
+    if (sessionStorage.getItem('role') === 'student') {
+      window.location.href = '/dashboard/student';
+      return;
+    }
 
     if (sessionStorage.getItem('type') !== 'free') {
       setPaidMember(true);
@@ -135,6 +139,27 @@ const GenerateCourse = () => {
     const mainTopic = data.topic;
     const lang = data.language;
     const number = data.topicsLimit;
+
+    // Check if course already exists
+    try {
+      const userId = sessionStorage.getItem('uid');
+      const checkURL = serverURL + `/api/check-existence?userId=${userId}&mainTopic=${encodeURIComponent(mainTopic)}`;
+      const checkRes = await axios.get(checkURL);
+
+      if (checkRes.data.exists) {
+        setIsLoading(false);
+        setIsSubmitted(false);
+        toast({
+          title: "Course Already Exists",
+          description: "You have already generated a course with this title. Please try a different topic.",
+          variant: "destructive"
+        });
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking course existence:', error);
+      // Continue if check fails, but log it
+    }
 
     const prompt = `Strictly in ${lang}, Generate a list of EXACTLY ${number} topics (chapters) for the course "${mainTopic}". 
     For each topic, include relevant subtopics.

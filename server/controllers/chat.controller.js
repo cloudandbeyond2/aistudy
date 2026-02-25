@@ -6,7 +6,7 @@ export const chat = async (req, res) => {
 
     const html = await generateChatResponse(prompt);
 
-    res.status(200).json({ text: html });
+    res.status(200).json({ success: true, text: html });
   } catch (error) {
     console.error('/api/chat error:', error);
 

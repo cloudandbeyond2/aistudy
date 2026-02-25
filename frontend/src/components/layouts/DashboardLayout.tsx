@@ -122,7 +122,7 @@ const DashboardLayout = () => {
                         <SidebarMenuButton asChild tooltip="Profile" isActive={isActive('/dashboard/profile')}>
                           <Link to="/dashboard/profile" className={cn(isActive('/dashboard/profile') && "text-primary")}>
                             <User />
-                            <span>Profile</span>
+                            <span>My Profile</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -351,22 +351,24 @@ const DashboardLayout = () => {
               </SidebarGroupContent>
             </SidebarGroup>
 
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <div className="px-2">
-                  <Button
-                    className="w-full bg-gradient-to-r from-primary to-indigo-500 hover:from-indigo-500 hover:to-primary shadow-md transition-all"
-                    size="sm"
-                    asChild
-                  >
-                    <Link to="/dashboard/generate-course">
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      Generate Course
-                    </Link>
-                  </Button>
-                </div>
-              </SidebarGroupContent>
-            </SidebarGroup>
+            {sessionStorage.getItem('role') !== 'student' && (
+              <SidebarGroup>
+                <SidebarGroupContent>
+                  <div className="px-2">
+                    <Button
+                      className="w-full bg-gradient-to-r from-primary to-indigo-500 hover:from-indigo-500 hover:to-primary shadow-md transition-all"
+                      size="sm"
+                      asChild
+                    >
+                      <Link to="/dashboard/generate-course">
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Generate Course
+                      </Link>
+                    </Button>
+                  </div>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
           </SidebarContent>
 
           <SidebarFooter className="border-t border-border/40">
