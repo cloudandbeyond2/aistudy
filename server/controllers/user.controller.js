@@ -3,6 +3,45 @@ import {
   upgradeUserToForever
 } from '../services/user.service.js';
 import User from '../models/User.js';
+import Course from '../models/Course.js';
+import IssuedCertificate from '../models/IssuedCertificate.js';
+import Contact from '../models/Contact.js';
+
+/**
+ * GET USER STATS (COURSES, CERTIFICATES, TICKETS)
+ */
+export const getUserStats = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const coursesCount = await Course.countDocuments({ user: userId });
+    const certificatesCount = await IssuedCertificate.countDocuments({ user: userId });
+    const ticketsCount = await Contact.countDocuments({ email: user.email });
+
+    res.json({
+      success: true,
+      stats: {
+        courses: coursesCount,
+        certifications: certificatesCount,
+        tickets: ticketsCount
+      }
+    });
+  } catch (error) {
+    console.error('Get user stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
 
 /**
  * GET USER BY ID

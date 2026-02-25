@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { PenLine, Save, ShieldCheck, CreditCard, Loader, User, Settings, MessageSquare, Linkedin, Twitter, Globe, BookOpen, Award, Ticket  } from "lucide-react";
+import { PenLine, Save, ShieldCheck, CreditCard, Loader, User, Settings, MessageSquare, Linkedin, Twitter, Globe, BookOpen, Award, Ticket } from "lucide-react";
 import { MonthCost, MonthType, serverURL, YearCost, websiteURL } from '@/constants';
 import axios from 'axios';
 import { DownloadIcon, TrashIcon } from '@radix-ui/react-icons';
@@ -39,7 +39,7 @@ const PLAN_FEATURES: Record<string, string[]> = {
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
-  
+
   // const [socialLinks, setSocialLinks] = useState({
   //   linkedin: "",
   //   twitter: "",
@@ -115,11 +115,11 @@ const Profile = () => {
   const [cost, setCost] = useState('');
   const [plan, setPlan] = useState('');
   const [jsonData, setJsonData] = useState({});
-const [socialLinks, setSocialLinks] = useState({
-  linkedin: "",
-  twitter: "",
-  website: "",
-});
+  const [socialLinks, setSocialLinks] = useState({
+    linkedin: "",
+    twitter: "",
+    website: "",
+  });
   useEffect(() => {
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault()
@@ -128,38 +128,54 @@ const [socialLinks, setSocialLinks] = useState({
   }, []);
 
   useEffect(() => {
-  async function fetchProfile() {
-    const uid = sessionStorage.getItem("uid");
-    if (!uid) return;
+    async function fetchProfile() {
+      const uid = sessionStorage.getItem("uid");
+      if (!uid) return;
 
-    try {
-      const response = await axios.get(`${serverURL}/api/getuser/${uid}`);
+      try {
+        const response = await axios.get(`${serverURL}/api/getuser/${uid}`);
 
-      if (response.data.success) {
-        const user = response.data.user;
+        if (response.data.success) {
+          const user = response.data.user;
 
-        setFormData({
-          mName: user.mName || "",
-          email: user.email || "",
-          userType: user.userType || "",
-          city: user.city || "",
-          country: user.country || "",
-        });
+          setFormData({
+            mName: user.mName || "",
+            email: user.email || "",
+            userType: user.userType || "",
+            city: user.city || "",
+            country: user.country || "",
+          });
 
-        // 🔥 ADD THIS
-        setSocialLinks({
-          linkedin: user.linkedin || "",
-          twitter: user.twitter || "",
-          website: user.website || "",
-        });
+          // 🔥 ADD THIS
+          setSocialLinks({
+            linkedin: user.linkedin || "",
+            twitter: user.twitter || "",
+            website: user.website || "",
+          });
+        }
+      } catch (error) {
+        console.error(error);
       }
-    } catch (error) {
-      console.error(error);
     }
-  }
 
-  fetchProfile();
-}, []);
+    fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const uid = sessionStorage.getItem("uid");
+      if (!uid) return;
+      try {
+        const response = await axios.get(`${serverURL}/api/user-stats/${uid}`);
+        if (response.data.success) {
+          setStats(response.data.stats);
+        }
+      } catch (error) {
+        console.error("Failed to fetch stats:", error);
+      }
+    };
+    fetchStats();
+  }, []);
 
 
   // star bala
@@ -1073,467 +1089,467 @@ const [socialLinks, setSocialLinks] = useState({
       </div>
 
       {/* ================= MAIN 2 COLUMN SECTION ================= */}
-<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-  {/* ================= LEFT SIDE (MAIN CONTENT) ================= */}
-  <div className="lg:col-span-2 space-y-6">
+        {/* ================= LEFT SIDE (MAIN CONTENT) ================= */}
+        <div className="lg:col-span-2 space-y-6">
 
-    {/* ===== TABS CARD ===== */}
-    <Card className="rounded-2xl shadow-sm">
-      <CardContent className="p-0">
-
-     
-      <Tabs
-  defaultValue="account"
-  className="w-full"
-  onValueChange={(value) => {
-    if (value === "billing") {
-      getDetails();
-    }
-  }}
->
-
-{/* ================= TAB HEADER ================= */}
-<TabsList className="grid w-full grid-cols-4 border-b rounded-none bg-muted/30 p-1">
-
-  <TabsTrigger
-    value="account"
-    className="flex items-center justify-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg py-2 transition-all"
-  >
-    <User className="h-4 w-4" />
-    <span>Account</span>
-  </TabsTrigger>
-
-  <TabsTrigger
-    value="notifications"
-    className="flex items-center justify-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg py-2 transition-all"
-  >
-    <Settings className="h-4 w-4" />
-    <span>Settings</span>
-  </TabsTrigger>
-
-  <TabsTrigger
-    value="billing"
-    className="flex items-center justify-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg py-2 transition-all"
-  >
-    <CreditCard className="h-4 w-4" />
-    <span>Billing</span>
-  </TabsTrigger>
-
-  <TabsTrigger
-    value="testimonial"
-    className="flex items-center justify-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg py-2 transition-all"
-  >
-    <MessageSquare className="h-4 w-4" />
-    <span>Testimonial</span>
-  </TabsTrigger>
-
-</TabsList>
+          {/* ===== TABS CARD ===== */}
+          <Card className="rounded-2xl shadow-sm">
+            <CardContent className="p-0">
 
 
-  {/* ================= ACCOUNT TAB ================= */}
-  <TabsContent value="account" className="p-6">
-<div className="flex gap-3 mb-6 justify-end">
-  {!isEditing ? (
-    <Button
-      type="button"
-      variant="outline"
-      onClick={() => {
-        setOriginalData(formData); // store current data
-        setIsEditing(true);
-      }}
-    >
-      <PenLine className="mr-2 h-4 w-4" />
-      Edit Profile
-    </Button>
-  ) : (
-    <>
-      {/* SAVE BUTTON */}
-      <Button
-        type="button"
-        disabled={processing}
-        onClick={handleSubmit}
-      >
-        {processing && (
-          <Loader className="animate-spin mr-2 h-4 w-4" />
-        )}
-        <Save className="mr-2 h-4 w-4" />
-        {processing ? "Saving..." : "Save"}
-      </Button>
-
-      {/* CANCEL BUTTON */}
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => {
-          setFormData(originalData); // restore old data
-          setIsEditing(false);       // disable edit mode
-        }}
-      >
-        Cancel
-      </Button>
-    </>
-  )}
-</div>
-
-
- <form onSubmit={handleSubmit}>
-    <div className="space-y-6">
-
-      {/* NAME + EMAIL */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Full Name</Label>
-          <Input
-            id="mName"
-            name="mName"
-            value={formData.mName}
-            onChange={handleChange}
-            disabled={!isEditing}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            disabled={!isEditing}
-          />
-        </div>
-      </div>
-
-      {/* PASSWORD */}
-      <div className="space-y-2">
-        <Label htmlFor="password">New Password</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          disabled={!isEditing}
-        />
-      </div>
-
-      {/* DOB + PHONE */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Date of Birth</Label>
-          <Input
-            type="date"
-            name="dob"
-            value={formData.dob}
-            onChange={handleChange}
-            disabled={!isEditing}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Phone Number</Label>
-          <Input
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            disabled={!isEditing}
-            placeholder="+91 XXXXX XXXXX"
-          />
-        </div>
-      </div>
-
-      {/* GENDER */}
-      <div className="space-y-2">
-        <Label>Gender</Label>
-        <Select
-          value={formData.gender}
-          onValueChange={(value) =>
-            setFormData((prev) => ({ ...prev, gender: value }))
-          }
-          disabled={!isEditing}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select gender" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="male">Male</SelectItem>
-            <SelectItem value="female">Female</SelectItem>
-            <SelectItem value="other">Other</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* LOCATION */}
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label>Country</Label>
-          <Input
-            name="country"
-            value={formData.country}
-            onChange={handleChange}
-            disabled={!isEditing}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>City</Label>
-            <Input
-              name="city"
-              value={formData.city}
-              onChange={handleChange}
-              disabled={!isEditing}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>PIN Code</Label>
-            <Input
-              name="pin"
-              value={formData.pin}
-              onChange={handleChange}
-              disabled={!isEditing}
-              placeholder="e.g. 600001"
-              inputMode="numeric"
-              maxLength={6}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Address</Label>
-          <Input
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            disabled={!isEditing}
-            placeholder="Street, Area, Landmark"
-          />
-        </div>
-      </div>
-
-      {/* USER TYPE */}
-      <div className="space-y-2">
-        <Label>User Type</Label>
-        <Select
-  value={formData.userType}
-  disabled={true}   // ALWAYS readonly
->
-          <SelectTrigger>
-            <SelectValue placeholder="Select user type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="individual">Individual</SelectItem>
-            <SelectItem value="organization">Organization</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* INDIVIDUAL */}
-      {formData.userType === "individual" && (
-        <>
-          <div className="space-y-2">
-            <Label>Profession</Label>
-            <Input
-              name="profession"
-              value={formData.profession}
-              onChange={handleChange}
-              disabled={!isEditing}
-              placeholder="e.g. Software Developer"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Experience Level</Label>
-            <Select
-              value={formData.experienceLevel}
-              onValueChange={(value) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  experienceLevel: value,
-                }))
-              }
-              disabled={!isEditing}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select experience level" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="beginner">Beginner</SelectItem>
-                <SelectItem value="intermediate">Intermediate</SelectItem>
-                <SelectItem value="advanced">Advanced</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </>
-      )}
-
-      {/* ORGANIZATION */}
-      {formData.userType === "organization" && (
-        <div className="space-y-2">
-          <Label>Organization Name</Label>
-          <Input
-            name="organizationName"
-            value={formData.organizationName}
-            onChange={handleChange}
-            disabled={!isEditing}
-            placeholder="Company / Institute name"
-          />
-        </div>
-      )}
-
-    </div>
-  </form>
-  </TabsContent>
-
-  {/* ================= SETTINGS TAB ================= */}
-  <TabsContent value="notifications" className="p-6">
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold">Settings</h3>
-
-      <div className="flex items-center justify-between">
-        <div>
-          <Label>Delete Profile</Label>
-          <p className="text-sm text-muted-foreground">
-            Permanently remove profile and all associated data
-          </p>
-        </div>
-
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="bg-red-500 hover:bg-red-600">
-              Delete
-            </Button>
-          </DialogTrigger>
-
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                Are you sure you want to delete your profile?
-              </DialogTitle>
-              <DialogDescription>
-                This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-
-            <DialogFooter>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-40">
-                  Cancel
-                </Button>
-              </DialogTrigger>
-
-              <Button
-                onClick={deleteProfile}
-                className="bg-red-500 hover:bg-red-600 w-40"
+              <Tabs
+                defaultValue="account"
+                className="w-full"
+                onValueChange={(value) => {
+                  if (value === "billing") {
+                    getDetails();
+                  }
+                }}
               >
-                {processingDelete && (
-                  <Loader className="animate-spin mr-2 h-4 w-4" />
-                )}
-                {processingDelete ? "Deleting..." : "Delete"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </div>
-  </TabsContent>
 
-  {/* ================= BILLING TAB ================= */}
-  <TabsContent value="billing" className="p-6">
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">
-        Subscription Plan
-      </h3>
+                {/* ================= TAB HEADER ================= */}
+                <TabsList className="grid w-full grid-cols-4 border-b rounded-none bg-muted/30 p-1">
 
-      {loading ? (
-        <p>Loading...</p>
-      ) : activeType === "free" ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Free Plan</CardTitle>
-            <CardDescription>
-              {activePlan?.currency} {activePlan?.price} / 7 days
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              This plan is completely free.
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button size="sm" onClick={redirectPricing}>
-              Upgrade Plan
-            </Button>
-          </CardFooter>
-        </Card>
-      ) : activePlan ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>{activePlan.name} Plan</CardTitle>
-            <CardDescription>
-              {activePlan.currency} {activePlan.price} /
-              {activePlan.planType === "monthly"
-                ? " month"
-                : " year"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Your subscription is active.
-            </p>
-          </CardContent>
-        </Card>
-      ) : null}
-    </div>
-  </TabsContent>
+                  <TabsTrigger
+                    value="account"
+                    className="flex items-center justify-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg py-2 transition-all"
+                  >
+                    <User className="h-4 w-4" />
+                    <span>Account</span>
+                  </TabsTrigger>
 
-  {/* ================= TESTIMONIAL TAB ================= */}
-  <TabsContent value="testimonial" className="p-6">
-    <TestimonialSubmission />
-  </TabsContent>
-</Tabs>
+                  <TabsTrigger
+                    value="notifications"
+                    className="flex items-center justify-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg py-2 transition-all"
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Settings</span>
+                  </TabsTrigger>
+
+                  <TabsTrigger
+                    value="billing"
+                    className="flex items-center justify-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg py-2 transition-all"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    <span>Billing</span>
+                  </TabsTrigger>
+
+                  <TabsTrigger
+                    value="testimonial"
+                    className="flex items-center justify-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg py-2 transition-all"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    <span>Testimonial</span>
+                  </TabsTrigger>
+
+                </TabsList>
 
 
+                {/* ================= ACCOUNT TAB ================= */}
+                <TabsContent value="account" className="p-6">
+                  <div className="flex gap-3 mb-6 justify-end">
+                    {!isEditing ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setOriginalData(formData); // store current data
+                          setIsEditing(true);
+                        }}
+                      >
+                        <PenLine className="mr-2 h-4 w-4" />
+                        Edit Profile
+                      </Button>
+                    ) : (
+                      <>
+                        {/* SAVE BUTTON */}
+                        <Button
+                          type="button"
+                          disabled={processing}
+                          onClick={handleSubmit}
+                        >
+                          {processing && (
+                            <Loader className="animate-spin mr-2 h-4 w-4" />
+                          )}
+                          <Save className="mr-2 h-4 w-4" />
+                          {processing ? "Saving..." : "Save"}
+                        </Button>
 
-      </CardContent>
-    </Card>
+                        {/* CANCEL BUTTON */}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setFormData(originalData); // restore old data
+                            setIsEditing(false);       // disable edit mode
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </>
+                    )}
+                  </div>
 
-  </div>
 
-  {/* ================= RIGHT SIDE (STATS + SOCIAL) ================= */}
-  <div className="space-y-6">
+                  <form onSubmit={handleSubmit}>
+                    <div className="space-y-6">
 
-    {/* ===== ACTIVITY STATS ===== */}
-    <Card className="rounded-2xl shadow-sm">
-      <CardContent className="p-6">
-        <h3 className="font-semibold text-lg mb-4">Your Activity</h3>
+                      {/* NAME + EMAIL */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Full Name</Label>
+                          <Input
+                            id="mName"
+                            name="mName"
+                            value={formData.mName}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
 
-        <div className="grid grid-cols-3 gap-4 text-center">
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
+                      </div>
 
-          <div className="bg-muted rounded-xl p-4">
-            <BookOpen className="h-5 w-5 mx-auto mb-1" />
-            <p className="text-2xl font-bold">{stats.courses}</p>
-            <p className="text-xs text-muted-foreground">Courses</p>
-          </div>
+                      {/* PASSWORD */}
+                      <div className="space-y-2">
+                        <Label htmlFor="password">New Password</Label>
+                        <Input
+                          id="password"
+                          name="password"
+                          type="password"
+                          value={formData.password}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                        />
+                      </div>
 
-          <div className="bg-muted rounded-xl p-4">
-            <Award className="h-5 w-5 mx-auto mb-1" />
-            <p className="text-2xl font-bold">{stats.certifications}</p>
-            <p className="text-xs text-muted-foreground">Certificates</p>
-          </div>
+                      {/* DOB + PHONE */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Date of Birth</Label>
+                          <Input
+                            type="date"
+                            name="dob"
+                            value={formData.dob}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
 
-          <div className="bg-muted rounded-xl p-4">
-            <Ticket className="h-5 w-5 mx-auto mb-1" />
-            <p className="text-2xl font-bold">{stats.tickets}</p>
-            <p className="text-xs text-muted-foreground">Tickets</p>
-          </div>
+                        <div className="space-y-2">
+                          <Label>Phone Number</Label>
+                          <Input
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            placeholder="+91 XXXXX XXXXX"
+                          />
+                        </div>
+                      </div>
+
+                      {/* GENDER */}
+                      <div className="space-y-2">
+                        <Label>Gender</Label>
+                        <Select
+                          value={formData.gender}
+                          onValueChange={(value) =>
+                            setFormData((prev) => ({ ...prev, gender: value }))
+                          }
+                          disabled={!isEditing}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="male">Male</SelectItem>
+                            <SelectItem value="female">Female</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* LOCATION */}
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Country</Label>
+                          <Input
+                            name="country"
+                            value={formData.country}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>City</Label>
+                            <Input
+                              name="city"
+                              value={formData.city}
+                              onChange={handleChange}
+                              disabled={!isEditing}
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>PIN Code</Label>
+                            <Input
+                              name="pin"
+                              value={formData.pin}
+                              onChange={handleChange}
+                              disabled={!isEditing}
+                              placeholder="e.g. 600001"
+                              inputMode="numeric"
+                              maxLength={6}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Address</Label>
+                          <Input
+                            name="address"
+                            value={formData.address}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            placeholder="Street, Area, Landmark"
+                          />
+                        </div>
+                      </div>
+
+                      {/* USER TYPE */}
+                      <div className="space-y-2">
+                        <Label>User Type</Label>
+                        <Select
+                          value={formData.userType}
+                          disabled={true}   // ALWAYS readonly
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select user type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="individual">Individual</SelectItem>
+                            <SelectItem value="organization">Organization</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* INDIVIDUAL */}
+                      {formData.userType === "individual" && (
+                        <>
+                          <div className="space-y-2">
+                            <Label>Profession</Label>
+                            <Input
+                              name="profession"
+                              value={formData.profession}
+                              onChange={handleChange}
+                              disabled={!isEditing}
+                              placeholder="e.g. Software Developer"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Experience Level</Label>
+                            <Select
+                              value={formData.experienceLevel}
+                              onValueChange={(value) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  experienceLevel: value,
+                                }))
+                              }
+                              disabled={!isEditing}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select experience level" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="beginner">Beginner</SelectItem>
+                                <SelectItem value="intermediate">Intermediate</SelectItem>
+                                <SelectItem value="advanced">Advanced</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </>
+                      )}
+
+                      {/* ORGANIZATION */}
+                      {formData.userType === "organization" && (
+                        <div className="space-y-2">
+                          <Label>Organization Name</Label>
+                          <Input
+                            name="organizationName"
+                            value={formData.organizationName}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            placeholder="Company / Institute name"
+                          />
+                        </div>
+                      )}
+
+                    </div>
+                  </form>
+                </TabsContent>
+
+                {/* ================= SETTINGS TAB ================= */}
+                <TabsContent value="notifications" className="p-6">
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-semibold">Settings</h3>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Delete Profile</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Permanently remove profile and all associated data
+                        </p>
+                      </div>
+
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button className="bg-red-500 hover:bg-red-600">
+                            Delete
+                          </Button>
+                        </DialogTrigger>
+
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>
+                              Are you sure you want to delete your profile?
+                            </DialogTitle>
+                            <DialogDescription>
+                              This action cannot be undone.
+                            </DialogDescription>
+                          </DialogHeader>
+
+                          <DialogFooter>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" className="w-40">
+                                Cancel
+                              </Button>
+                            </DialogTrigger>
+
+                            <Button
+                              onClick={deleteProfile}
+                              className="bg-red-500 hover:bg-red-600 w-40"
+                            >
+                              {processingDelete && (
+                                <Loader className="animate-spin mr-2 h-4 w-4" />
+                              )}
+                              {processingDelete ? "Deleting..." : "Delete"}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* ================= BILLING TAB ================= */}
+                <TabsContent value="billing" className="p-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">
+                      Subscription Plan
+                    </h3>
+
+                    {loading ? (
+                      <p>Loading...</p>
+                    ) : activeType === "free" ? (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Free Plan</CardTitle>
+                          <CardDescription>
+                            {activePlan?.currency} {activePlan?.price} / 7 days
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-muted-foreground">
+                            This plan is completely free.
+                          </p>
+                        </CardContent>
+                        <CardFooter>
+                          <Button size="sm" onClick={redirectPricing}>
+                            Upgrade Plan
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    ) : activePlan ? (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>{activePlan.name} Plan</CardTitle>
+                          <CardDescription>
+                            {activePlan.currency} {activePlan.price} /
+                            {activePlan.planType === "monthly"
+                              ? " month"
+                              : " year"}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-muted-foreground">
+                            Your subscription is active.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ) : null}
+                  </div>
+                </TabsContent>
+
+                {/* ================= TESTIMONIAL TAB ================= */}
+                <TabsContent value="testimonial" className="p-6">
+                  <TestimonialSubmission />
+                </TabsContent>
+              </Tabs>
+
+
+
+            </CardContent>
+          </Card>
 
         </div>
 
-        {/* <Button
+        {/* ================= RIGHT SIDE (STATS + SOCIAL) ================= */}
+        <div className="space-y-6">
+
+          {/* ===== ACTIVITY STATS ===== */}
+          <Card className="rounded-2xl shadow-sm">
+            <CardContent className="p-6">
+              <h3 className="font-semibold text-lg mb-4">Your Activity</h3>
+
+              <div className="grid grid-cols-3 gap-4 text-center">
+
+                <div className="bg-muted rounded-xl p-4">
+                  <BookOpen className="h-5 w-5 mx-auto mb-1" />
+                  <p className="text-2xl font-bold">{stats.courses}</p>
+                  <p className="text-xs text-muted-foreground">Courses</p>
+                </div>
+
+                <div className="bg-muted rounded-xl p-4">
+                  <Award className="h-5 w-5 mx-auto mb-1" />
+                  <p className="text-2xl font-bold">{stats.certifications}</p>
+                  <p className="text-xs text-muted-foreground">Certificates</p>
+                </div>
+
+                <div className="bg-muted rounded-xl p-4">
+                  <Ticket className="h-5 w-5 mx-auto mb-1" />
+                  <p className="text-2xl font-bold">{stats.tickets}</p>
+                  <p className="text-xs text-muted-foreground">Tickets</p>
+                </div>
+
+              </div>
+
+              {/* <Button
           variant="outline"
           className="w-full mt-6"
           onClick={() => navigate("/dashboard/support")}
@@ -1541,95 +1557,95 @@ const [socialLinks, setSocialLinks] = useState({
           Create Support Ticket
         </Button> */}
 
-      </CardContent>
-    </Card>
+            </CardContent>
+          </Card>
 
 
-    {/* ===== SOCIAL LINKS (BOTTOM) ===== */}
-  {/* ===== SOCIAL LINKS (BOTTOM) ===== */}
+          {/* ===== SOCIAL LINKS (BOTTOM) ===== */}
+          {/* ===== SOCIAL LINKS (BOTTOM) ===== */}
 
-{formData.userType === "individual" && (
-  <Card className="rounded-2xl shadow-sm">
-    <CardContent className="p-6 space-y-4">
-      <h3 className="font-semibold text-lg">Social Links</h3>
-      <Separator />
+          {formData.userType === "individual" && (
+            <Card className="rounded-2xl shadow-sm">
+              <CardContent className="p-6 space-y-4">
+                <h3 className="font-semibold text-lg">Social Links</h3>
+                <Separator />
 
-    <div className="space-y-4 text-sm">
+                <div className="space-y-4 text-sm">
 
-  {/* LinkedIn */}
-  <div className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted/40 transition">
-    <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-xl shrink-0">
-      <Linkedin className="h-5 w-5 text-blue-600" />
-    </div>
+                  {/* LinkedIn */}
+                  <div className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted/40 transition">
+                    <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-xl shrink-0">
+                      <Linkedin className="h-5 w-5 text-blue-600" />
+                    </div>
 
-    {socialLinks.linkedin ? (
-      <a
-        href={socialLinks.linkedin}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="font-medium text-blue-600 break-all"
-      >
-        {socialLinks.linkedin}
-      </a>
-    ) : (
-      <span className="text-muted-foreground">
-        LinkedIn not added
-      </span>
-    )}
-  </div>
+                    {socialLinks.linkedin ? (
+                      <a
+                        href={socialLinks.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-blue-600 break-all"
+                      >
+                        {socialLinks.linkedin}
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        LinkedIn not added
+                      </span>
+                    )}
+                  </div>
 
-  {/* X */}
-  <div className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted/40 transition">
-    <div className="flex items-center justify-center w-10 h-10 bg-black rounded-xl shrink-0">
-      <span className="text-white font-semibold text-sm">X</span>
-    </div>
+                  {/* X */}
+                  <div className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted/40 transition">
+                    <div className="flex items-center justify-center w-10 h-10 bg-black rounded-xl shrink-0">
+                      <span className="text-white font-semibold text-sm">X</span>
+                    </div>
 
-    {socialLinks.twitter ? (
-      <a
-        href={socialLinks.twitter}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="font-medium text-black break-all"
-      >
-        {socialLinks.twitter}
-      </a>
-    ) : (
-      <span className="text-muted-foreground">
-        X not added
-      </span>
-    )}
-  </div>
+                    {socialLinks.twitter ? (
+                      <a
+                        href={socialLinks.twitter}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-black break-all"
+                      >
+                        {socialLinks.twitter}
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        X not added
+                      </span>
+                    )}
+                  </div>
 
-  {/* Website */}
-  <div className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted/40 transition">
-    <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-xl shrink-0">
-      <Globe className="h-5 w-5 text-green-600" />
-    </div>
+                  {/* Website */}
+                  <div className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted/40 transition">
+                    <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-xl shrink-0">
+                      <Globe className="h-5 w-5 text-green-600" />
+                    </div>
 
-    {socialLinks.website ? (
-      <a
-        href={socialLinks.website}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="font-medium text-green-600 break-all"
-      >
-        {socialLinks.website}
-      </a>
-    ) : (
-      <span className="text-muted-foreground">
-        Website not added
-      </span>
-    )}
-  </div>
+                    {socialLinks.website ? (
+                      <a
+                        href={socialLinks.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-green-600 break-all"
+                      >
+                        {socialLinks.website}
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        Website not added
+                      </span>
+                    )}
+                  </div>
 
-</div>
-    </CardContent>
-  </Card>
-)}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-  </div>
+        </div>
 
-</div>
+      </div>
 
     </div>
   );
