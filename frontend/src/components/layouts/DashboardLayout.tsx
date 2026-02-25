@@ -122,7 +122,7 @@ const DashboardLayout = () => {
                         <SidebarMenuButton asChild tooltip="Profile" isActive={isActive('/dashboard/profile')}>
                           <Link to="/dashboard/profile" className={cn(isActive('/dashboard/profile') && "text-primary")}>
                             <User />
-                            <span>Profile</span>
+                            <span>My Profile</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
