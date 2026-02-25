@@ -65,6 +65,7 @@ const CoursePage = () => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [isChatLoading, setIsChatLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [saving, setSaving] = useState(false);
   const defaultMessage = `<p>Hey there! I'm your AI teacher. If you have any questions about your ${mainTopic || 'current'} course, whether it's about videos, images, or theory, just ask me. I'm here to clear your doubts.</p>`;
@@ -376,11 +377,16 @@ const CoursePage = () => {
     try {
       const jsonValue = sessionStorage.getItem(mainTopic);
       if (jsonValue !== null) {
-        setMessages(JSON.parse(jsonValue));
+        // Ensure all historical messages have an id if they don't already
+        const savedMessages = JSON.parse(jsonValue).map((msg, index) => ({
+          ...msg,
+          id: msg.id || `msg-${Date.now()}-${index}`
+        }));
+        setMessages(savedMessages);
       } else {
-        const newMessages = [...messages, { text: defaultMessage, sender: 'bot' }];
-        setMessages(newMessages);
-        await storeLocal(newMessages);
+        const initialMessages = [{ id: `msg-${Date.now()}`, text: defaultMessage, sender: 'bot' }];
+        setMessages(initialMessages);
+        await storeLocal(initialMessages);
       }
     } catch (error) {
       console.error(error);
@@ -396,13 +402,14 @@ const CoursePage = () => {
   }
 
   const sendMessage = async () => {
-    if (newMessage.trim() === '') return;
+    if (newMessage.trim() === '' || isChatLoading) return;
 
-    const userMessage = { text: newMessage, sender: 'user' };
+    const userMessage = { id: `msg-${Date.now()}`, text: newMessage, sender: 'user' };
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     await storeLocal(updatedMessages);
     setNewMessage('');
+    setIsChatLoading(true);
 
     const mainPrompt = defaultPrompt + newMessage;
     const dataToSend = { prompt: mainPrompt };
@@ -412,21 +419,23 @@ const CoursePage = () => {
       const response = await axios.post(url, dataToSend);
       if (response.data.success === false) {
         toast({
-          title: "Error",
-          description: "Internal Server Error",
+          title: "Assistant Error",
+          description: response.data.message || "Failed to get a response.",
         });
       } else {
-        const botMessage = { text: response.data.text, sender: 'bot' };
+        const botMessage = { id: `bot-${Date.now()}`, text: response.data.text, sender: 'bot' };
         const updatedMessagesWithBot = [...updatedMessages, botMessage];
         setMessages(updatedMessagesWithBot);
         await storeLocal(updatedMessagesWithBot);
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Internal Server Error",
+        title: "Assistant Error",
+        description: "Communication failure with AI assistant.",
       });
       console.error(error);
+    } finally {
+      setIsChatLoading(false);
     }
   };
 
@@ -1561,9 +1570,10 @@ const CoursePage = () => {
 
               <div className="flex items-center gap-2 p-4 border-t border-border">
                 <Input
-                  placeholder="Type your message..."
+                  placeholder={isChatLoading ? "Assistant is thinking..." : "Type your message..."}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
+                  disabled={isChatLoading}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       sendMessage();
@@ -1571,7 +1581,9 @@ const CoursePage = () => {
                   }}
                   className="flex-1"
                 />
-                <Button onClick={sendMessage}>Send</Button>
+                <Button onClick={sendMessage} disabled={isChatLoading}>
+                  {isChatLoading ? "..." : "Send"}
+                </Button>
               </div>
             </div>
           </SheetContent>
@@ -1601,9 +1613,10 @@ const CoursePage = () => {
 
               <div className="flex items-center gap-2">
                 <Input
-                  placeholder="Type your message..."
+                  placeholder={isChatLoading ? "Assistant is thinking..." : "Type your message..."}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
+                  disabled={isChatLoading}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       sendMessage();
@@ -1611,7 +1624,9 @@ const CoursePage = () => {
                   }}
                   className="flex-1"
                 />
-                <Button onClick={sendMessage}>Send</Button>
+                <Button onClick={sendMessage} disabled={isChatLoading}>
+                  {isChatLoading ? "..." : "Send"}
+                </Button>
               </div>
             </div>
           </DialogContent>
