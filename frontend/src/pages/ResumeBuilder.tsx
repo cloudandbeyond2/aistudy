@@ -408,7 +408,7 @@ const ResumeBuilder = () => {
             </div>
 
             {/* Step Indicator */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
                 {STEPS.map((s, idx) => {
                     const Icon = s.icon;
                     const active = step === s.id;
