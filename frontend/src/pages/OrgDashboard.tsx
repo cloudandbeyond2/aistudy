@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, FileText, Bell, Plus, Upload, Search, Trash2, CheckCircle, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink } from 'lucide-react';
+import { Users, FileText, Bell, Plus, Upload, Search, Trash2,   DollarSign,CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -15,6 +15,8 @@ import { serverURL } from '@/constants';
 import SEO from '@/components/SEO';
 import * as XLSX from 'xlsx';
 import RichTextEditor from '@/components/RichTextEditor';
+import AdminStatCard from "@/components/admin/AdminStatCard";
+
 
 const CourseForm = ({ course, setCourse, onSave, isEdit = false }: any) => {
     if (!course) return null;
@@ -837,7 +839,7 @@ const OrgDashboard = () => {
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="hover:shadow-lg transition-all">
+                {/* <Card className="hover:shadow-lg transition-all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Students</CardTitle>
                         <Users className="h-4 w-4 text-muted-foreground" />
@@ -866,7 +868,29 @@ const OrgDashboard = () => {
                         <div className="text-2xl font-bold">{stats.submissionCount || 0}</div>
                         <p className="text-xs text-muted-foreground">Pending grading</p>
                     </CardContent>
-                </Card>
+                </Card> */}
+
+ <AdminStatCard
+            title="Total Students"
+            value={stats.studentCount}
+            icon={Users}
+            description="+20% from last month"
+            className="border-l-4 border-l-emerald-500"
+          />
+          <AdminStatCard
+            title="Active Assignments"
+            value={stats.assignmentCount}
+            icon={FileText}
+            description="5 due this week"
+            className="border-l-4 border-l-blue-500"
+          />
+          <AdminStatCard
+            title="Submissions"
+            value={stats.submissionCount}
+            icon={BarChart}
+            description="Pending grading"
+            className="border-l-4 border-l-amber-500"
+          />
             </div>
 
             <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })} className="w-full">
