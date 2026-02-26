@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Home, User, DollarSign, LogOut, Sparkles, Menu, Settings2Icon, Building2, BookOpen, Bell, Newspaper, LayoutDashboard, Briefcase, Video, Users, FileText, Download } from 'lucide-react';
+import { Home, User, DollarSign, LogOut, Sparkles, Menu, Settings2Icon, Building2, BookOpen, Bell, Newspaper, LayoutDashboard, Briefcase, Video, Users, FileText, Download, BrainCircuit } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -149,25 +149,37 @@ const DashboardLayout = () => {
                         </SidebarMenuItem>
                       )}
 
+                      {['monthly', 'yearly', 'forever'].includes(sessionStorage.getItem('type')) && (
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild tooltip="AI Notebook" isActive={isActive('/dashboard/notebook')}>
+                            <Link to="/dashboard/notebook" className={cn(isActive('/dashboard/notebook') && "text-primary")}>
+                              <BrainCircuit />
+                              <span>AI Notebook</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
+
+
 
                       {/* Support — show only if NOT admin */}
-{!admin && (
-  <SidebarMenuItem>
-    <SidebarMenuButton
-      asChild
-      tooltip="Support"
-      isActive={isActive('/dashboard/support')}
-    >
-      <Link
-        to="/dashboard/support"
-        className={cn(isActive('/dashboard/support') && "text-primary")}
-      >
-        <MessageSquare />
-        <span>Support</span>
-      </Link>
-    </SidebarMenuButton>
-  </SidebarMenuItem>
-)}
+                      {!admin && (
+                        <SidebarMenuItem>
+                          <SidebarMenuButton
+                            asChild
+                            tooltip="Support"
+                            isActive={isActive('/dashboard/support')}
+                          >
+                            <Link
+                              to="/dashboard/support"
+                              className={cn(isActive('/dashboard/support') && "text-primary")}
+                            >
+                              <MessageSquare />
+                              <span>Support</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
 
 
 
@@ -200,6 +212,16 @@ const DashboardLayout = () => {
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="AI Notebook" isActive={isActive('/dashboard/notebook')}>
+                          <Link to="/dashboard/notebook" className={cn(isActive('/dashboard/notebook') && "text-primary")}>
+                            <BrainCircuit />
+                            <span>AI Notebook</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+
 
                       <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Assignments" isActive={isActive('/dashboard/student/assignments')}>

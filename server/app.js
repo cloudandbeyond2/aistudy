@@ -48,7 +48,7 @@ import organizationEnquiryRoutes from "./routes/organizationEnquiry.routes.js";
 import subscriberRoutes from './routes/subscriber.routes.js';
 import resumeRoutes from './routes/resume.routes.js';
 import { startCronJobs } from './services/cron.service.js';
-
+import notebookRoutes from './routes/notebook.routes.js';
 
 // -------------------- INIT --------------------
 connectDB();
@@ -118,6 +118,7 @@ app.use("/api/organization-enquiries", organizationEnquiryRoutes);
 app.use('/api', subscriberRoutes);
 app.use('/api', resumeRoutes);
 app.use('/api', ticketRoutes);
+app.use('/api/notebook', notebookRoutes);
 
 
 

@@ -86,6 +86,7 @@ import QuizPage from "./pages/QuizPage";
 import BlogPost from "./pages/BlogPost";
 import ResumeBuilder from "./pages/ResumeBuilder";
 import ResumeView from "./pages/ResumeView";
+import AINotebook from "./pages/AINotebook";
 
 const queryClient = new QueryClient();
 
@@ -124,6 +125,8 @@ const App = () => (
                     <Route path="student/projects" element={<StudentProjects />} />
                     <Route path="student/materials" element={<StudentMaterials />} />
                     <Route path="student/assignment/:assignmentId" element={<AssignmentPage />} />
+
+                    <Route path="notebook" element={<AINotebook />} />
                     <Route path="resume-builder" element={<ResumeBuilder />} />
 
                     <Route path="support" element={<SupportTickets />} />
