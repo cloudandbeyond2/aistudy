@@ -63,6 +63,11 @@ const userSchema = new mongoose.Schema({
   },
 
   isBlocked: { type: Boolean, default: false },
+  notifications: {
+    mail: { type: Boolean, default: true },
+    payments: { type: Boolean, default: true },
+    chat: { type: Boolean, default: true }
+  },
   date: { type: Date, default: Date.now }
 });
 
