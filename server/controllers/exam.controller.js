@@ -79,6 +79,39 @@ export const updateResult = async (req, res) => {
 };
 
 /**
+ * BATCH: GET QUIZ RESULTS FOR MULTIPLE COURSES AT ONCE
+ * Replaces N individual /api/getmyresult calls with a single query.
+ */
+export const getMyResultsBatch = async (req, res) => {
+  const { courseIds, userId: providedUserId } = req.body;
+
+  if (!Array.isArray(courseIds) || courseIds.length === 0) {
+    return res.json({ success: true, results: [] });
+  }
+
+  try {
+    // Find all passed exams for the given courseIds in one query
+    const exams = await Exam.find({
+      course: { $in: courseIds },
+      passed: true
+    }).select('course userId');
+
+    // Build a quick lookup set keyed by courseId
+    const passedSet = new Set(exams.map(e => String(e.course)));
+
+    const results = courseIds.map(courseId => ({
+      courseId,
+      passed: passedSet.has(String(courseId))
+    }));
+
+    res.json({ success: true, results });
+  } catch (error) {
+    console.error('getMyResultsBatch error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+/**
  * GET MY RESULT
  */
 export const getMyResult = async (req, res) => {

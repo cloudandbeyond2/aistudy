@@ -92,35 +92,31 @@ const Dashboard = () => {
   }, []);
 
   async function fetchData() {
-    const postURL = serverURL + `/api/getusers`;
-    const response = await axios.get(postURL);
-
-    const filteredData = response.data.filter(
-      (user: any) => user._id === uid
-    );
-
-    setData(filteredData);
-
-    if (filteredData.length > 0) {
-      const endDate = filteredData[0].subscriptionEnd;
-
-      // ✅ UNLIMITED ACCESS CASE
-      if (endDate === null) {
-        sessionStorage.setItem("daysLeft", "UNLIMITED");
-        setIsUnlimited(true);
-      } else {
-        const today = new Date();
-        const end = new Date(endDate);
-
-        const diffTime = end.getTime() - today.getTime();
-        const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        sessionStorage.setItem("daysLeft", daysLeft.toString());
-        setIsUnlimited(false);
+    // Use the single-user endpoint instead of fetching ALL users
+    const uid = sessionStorage.getItem('uid');
+    if (!uid) { setIsLoading(false); return; }
+    try {
+      const response = await axios.get(`${serverURL}/api/user/${uid}`);
+      const user = response.data.user;
+      if (user) {
+        const endDate = user.subscriptionEnd;
+        if (endDate === null) {
+          sessionStorage.setItem("daysLeft", "UNLIMITED");
+          setIsUnlimited(true);
+        } else {
+          const today = new Date();
+          const end = new Date(endDate);
+          const diffTime = end.getTime() - today.getTime();
+          const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          sessionStorage.setItem("daysLeft", daysLeft.toString());
+          setIsUnlimited(false);
+        }
       }
+    } catch (error) {
+      console.error('fetchData error:', error);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   }
 
 
@@ -173,18 +169,38 @@ const Dashboard = () => {
       if (response.data.length === 0) {
         setHasMore(false);
       } else {
-        const progressMap = { ...courseProgress }; // Spread existing state
-        const modulesMap = { ...modules }; // Spread existing state
-        for (const course of response.data) {
-          const progress = await CountDoneTopics(course.content, course.mainTopic, course._id);
-          const totalModules = await CountTotalTopics(course.content, course.mainTopic, course._id);
-          progressMap[course._id] = progress;
-          modulesMap[course._id] = totalModules;
+        const coursesData = response.data;
+        const courseIds = coursesData.map((c: any) => c._id);
+
+        // Batch-fetch all quiz results in ONE request instead of one per course
+        const quizMap: Record<string, boolean> = {};
+        try {
+          const quizResponse = await axios.post(`${serverURL}/api/getmyresults-batch`, { courseIds });
+          if (quizResponse.data.success) {
+            quizResponse.data.results.forEach((r: any) => {
+              quizMap[r.courseId] = r.passed;
+            });
+          }
+        } catch {
+          // Fallback: all quizzes considered incomplete
         }
+
+        // Compute progress for all courses in PARALLEL
+        const [progressValues, moduleValues] = await Promise.all([
+          Promise.all(coursesData.map((course: any) => CountDoneTopics(course.content, course.mainTopic, course._id, quizMap[course._id]))),
+          Promise.all(coursesData.map((course: any) => CountTotalTopics(course.content, course.mainTopic)))
+        ]);
+
+        const progressMap = { ...courseProgress };
+        const modulesMap = { ...modules };
+        coursesData.forEach((course: any, i: number) => {
+          progressMap[course._id] = progressValues[i];
+          modulesMap[course._id] = moduleValues[i];
+        });
+
         setCourseProgress(progressMap);
         setTotalModules(modulesMap);
-        // await setCourses((prevCourses) => [...prevCourses, ...response.data]);
-        await setCourses(prevCourses => [...prevCourses, ...response.data].sort((a, b) => b._id.localeCompare(a._id)));
+        setCourses(prevCourses => [...prevCourses, ...coursesData].sort((a, b) => b._id.localeCompare(a._id)));
       }
     } catch (error) {
       console.error(error);
@@ -211,7 +227,8 @@ const Dashboard = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  const CountDoneTopics = async (json: string, mainTopic: string, courseId: string) => {
+  // Progress is computed from course JSON content locally — no API call needed
+  const CountDoneTopics = async (json: string, mainTopic: string, courseId: string, quizPassed: boolean) => {
     try {
       const jsonData = JSON.parse(json);
       let doneCount = 0;
@@ -219,74 +236,31 @@ const Dashboard = () => {
       const topicsData = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
       topicsData.forEach((topic: { subtopics: string[]; }) => {
         topic.subtopics.forEach((subtopic) => {
-          if (subtopic.done) {
-            doneCount++;
-          }
+          if (subtopic.done) doneCount++;
           totalTopics++;
         });
       });
-      const quizCount = await getQuiz(courseId);
-      totalTopics = totalTopics + 1;
-      if (quizCount) {
-        totalTopics = totalTopics - 1;
-      }
-      const completionPercentage = Math.round((doneCount / totalTopics) * 100);
-      return completionPercentage;
+      // Add 1 for quiz slot unless quiz is already passed
+      if (!quizPassed) totalTopics = totalTopics + 1;
+      return Math.round((doneCount / totalTopics) * 100);
     } catch (error) {
       console.error(error);
       return 0;
     }
   }
 
-  const CountTotalTopics = async (json: string, mainTopic: string, courseId: string) => {
+  const CountTotalTopics = async (json: string, mainTopic: string) => {
     try {
       const jsonData = JSON.parse(json);
       let totalTopics = 0;
       const topicsData = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
       topicsData.forEach((topic: { subtopics: string[]; }) => {
-        topic.subtopics.forEach((subtopic) => {
-          totalTopics++;
-        });
+        topic.subtopics.forEach(() => { totalTopics++; });
       });
       return totalTopics;
     } catch (error) {
       console.error(error);
       return 0;
-    }
-  }
-
-
-  async function getDetails() {
-    if (sessionStorage.getItem('type') !== 'free') {
-      const dataToSend = {
-        uid: sessionStorage.getItem('uid'),
-        email: sessionStorage.getItem('email'),
-      };
-      try {
-        const postURL = serverURL + '/api/subscriptiondetail';
-        await axios.post(postURL, dataToSend).then(res => {
-          setMethod(res.data.method);
-          setJsonData(res.data.session);
-          setPlan(sessionStorage.getItem('type'));
-          setCost(sessionStorage.getItem('plan') === 'Monthly Plan' ? '' + MonthCost : '' + YearCost);
-        });
-      } catch (error) {
-        console.error(error);
-        toast({
-          title: "Error",
-          description: "Internal Server Error",
-        });
-      }
-    }
-  }
-
-  async function getQuiz(courseId: string) {
-    const postURL = serverURL + '/api/getmyresult';
-    const response = await axios.post(postURL, { courseId });
-    if (response.data.success) {
-      return response.data.message;
-    } else {
-      return false;
     }
   }
 
