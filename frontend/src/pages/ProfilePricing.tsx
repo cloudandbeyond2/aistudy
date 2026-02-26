@@ -1627,115 +1627,70 @@ const ProfilePricing = () => {
   const fetchUserCurrentPlan = async () => {
     try {
       const token = localStorage.getItem('token');
+      const userIdFromSession = sessionStorage.getItem('uid'); // The authoritative ID for this session
 
       // Get user ID from localStorage
       const userStr = localStorage.getItem('user');
-      let userId = null;
 
-      if (userStr) {
+      // FIRST: Try to get user data from localStorage, but ONLY if it belongs to the current session user
+      if (userStr && userIdFromSession) {
         try {
           const userData = JSON.parse(userStr);
-          userId = userData._id || userData.id;
-        } catch (e) {
-          console.error('Error parsing user data:', e);
-        }
-      }
+          const userIdFromLocal = userData._id || userData.id;
 
-      // FIRST: Try to get user data from localStorage first (most reliable)
-      if (userStr) {
-        try {
-          const userData = JSON.parse(userStr);
-          if (userData && userData.type) {
+          if (userIdFromLocal === userIdFromSession && userData.type) {
             const userPlan = userData.type.toLowerCase();
             setCurrentUserPlan(userPlan);
             setSubscriptionEnd(userData.subscriptionEnd || null);
             sessionStorage.setItem('type', userPlan);
-            console.log('✅ User plan set from localStorage:', userPlan);
-            return; // Exit if we got it from localStorage
+            console.log('✅ User plan set from validated localStorage:', userPlan);
+            return; // Exit if we got valid local data
+          } else {
+            console.log('⚠️ localStorage data belongs to a different user, ignoring.');
+            // Clear stale localStorage data if it doesn't match
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
           }
         } catch (e) {
           console.error('Error parsing user data:', e);
         }
       }
 
-      // SECOND: If not in localStorage, fetch from API
-      if (!token) {
-        const storedPlan = sessionStorage.getItem('type') || 'free';
-        setCurrentUserPlan(storedPlan);
+      // SECOND: Fallback to sessionStorage "type" if we have it
+      const sessionPlan = sessionStorage.getItem('type');
+      if (sessionPlan) {
+        const userPlan = sessionPlan.toLowerCase();
+        setCurrentUserPlan(userPlan);
+        console.log('✅ User plan set from sessionStorage:', userPlan);
+      }
+
+      // THIRD: If not validated or need fresh data, fetch from API
+      if (!userIdFromSession) {
         return;
       }
 
-      // Try to get current user directly instead of all users
       try {
-        // First try: Get current user endpoint
-        const meResponse = await axios.get(`${serverURL}/api/user/me`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        // Use the specific user endpoint which is more reliable than fetching all
+        const response = await axios.get(`${serverURL}/api/user/${userIdFromSession}`);
 
-        if (meResponse.data && meResponse.data.type) {
-          const userPlan = meResponse.data.type.toLowerCase();
-          setCurrentUserPlan(userPlan);
-          setSubscriptionEnd(meResponse.data.subscriptionEnd || null);
-          sessionStorage.setItem('type', userPlan);
-          console.log('✅ User plan set from /api/user/me:', userPlan);
+        if (response.data && response.data.user) {
+          const user = response.data.user;
+          if (user.type) {
+            const userPlan = user.type.toLowerCase();
+            setCurrentUserPlan(userPlan);
+            setSubscriptionEnd(user.subscriptionEnd || null);
+            sessionStorage.setItem('type', userPlan);
 
-          // Update localStorage with fresh data
-          localStorage.setItem('user', JSON.stringify(meResponse.data));
-          return;
-        }
-      } catch (meError) {
-        console.log('⚠️ /api/user/me not available, trying /api/getusers');
-      }
-
-      // Third try: Get from getusers endpoint
-      const response = await axios.get(`${serverURL}/api/getusers`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      console.log('📦 API Response:', response.data);
-
-      // Handle different response structures
-      if (response.data) {
-        let userData = null;
-
-        // Case 1: Response is the direct user object (like your screenshot)
-        if (response.data._id && response.data.type) {
-          userData = response.data;
-        }
-        // Case 2: Response is array of users
-        else if (Array.isArray(response.data) && userId) {
-          userData = response.data.find((user: any) =>
-            user._id === userId || user.id === userId
-          );
-        }
-        // Case 3: Response is wrapped in data property
-        else if (response.data.data) {
-          if (Array.isArray(response.data.data)) {
-            userData = response.data.data.find((user: any) =>
-              user._id === userId || user.id === userId
-            );
-          } else if (response.data.data._id) {
-            userData = response.data.data;
+            // Sync back to localStorage for other components
+            localStorage.setItem('user', JSON.stringify(user));
+            console.log('✅ User plan synced from API:', userPlan);
           }
         }
-
-        if (userData && userData.type) {
-          const userPlan = userData.type.toLowerCase();
-          setCurrentUserPlan(userPlan);
-          setSubscriptionEnd(userData.subscriptionEnd || null);
-          sessionStorage.setItem('type', userPlan);
-          localStorage.setItem('user', JSON.stringify(userData));
-          console.log('✅ User plan set from /api/getusers:', userPlan);
-        } else {
-          console.log('⚠️ No user type found in response');
-          const storedPlan = sessionStorage.getItem('type') || 'free';
-          setCurrentUserPlan(storedPlan);
-        }
+      } catch (apiError) {
+        console.error('❌ API fetch failed:', apiError);
       }
     } catch (error) {
-      console.error('❌ Error fetching user plan:', error);
-      const storedPlan = sessionStorage.getItem('type') || 'free';
-      setCurrentUserPlan(storedPlan);
+      console.error('❌ Error in fetchUserCurrentPlan:', error);
     }
   };
 
