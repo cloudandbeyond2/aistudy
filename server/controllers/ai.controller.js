@@ -1,5 +1,6 @@
 import { getGenAI } from '../config/gemini.js';
 import retryWithBackoff from '../utils/retryWithBackoff.js';
+import { getPlanLimits, isPlanActive } from '../config/planLimits.js';
 import {
   HarmCategory,
   HarmBlockThreshold
@@ -101,7 +102,7 @@ export const generatePrompt = async (req, res) => {
  * GENERATE BATCH SUBTOPIC CONTENT (all subtopics of a topic in ONE API call)
  */
 export const generateBatchSubtopics = async (req, res) => {
-  const { mainTopic, topicTitle, subtopics, lang } = req.body;
+  const { mainTopic, topicTitle, subtopics, lang, userId } = req.body;
 
   if (!mainTopic || !topicTitle || !subtopics || !subtopics.length) {
     return res.status(400).json({
@@ -109,6 +110,39 @@ export const generateBatchSubtopics = async (req, res) => {
       message: 'Missing required fields: mainTopic, topicTitle, subtopics'
     });
   }
+
+  // ── PLAN SUBTOPIC LIMIT CHECK ─────────────────────────────────────────────
+  if (userId) {
+    try {
+      const User = (await import('../models/User.js')).default;
+      const user = await User.findById(userId);
+      if (user) {
+        const planType = user.type || 'free';
+        const limits = getPlanLimits(planType);
+
+        // Expiry check
+        if (!isPlanActive(planType, user.subscriptionEnd)) {
+          return res.status(403).json({
+            success: false,
+            message: 'Your subscription has expired. Please renew your plan.',
+            planExpired: true
+          });
+        }
+
+        // Subtopic count check
+        if (subtopics.length > limits.maxSubtopics) {
+          return res.status(403).json({
+            success: false,
+            message: `Your ${planType} plan allows a maximum of ${limits.maxSubtopics} subtopics per topic. Please upgrade your plan for more.`,
+            subtopicLimitReached: true
+          });
+        }
+      }
+    } catch (planCheckErr) {
+      console.log('Plan check error (non-blocking):', planCheckErr.message);
+    }
+  }
+  // ──────────────────────────────────────────────────────────────────────────
 
   const safetySettings = [
     { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },

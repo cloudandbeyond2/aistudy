@@ -59,6 +59,7 @@ import AdminTerms from "./pages/admin/AdminTerms";
 import AdminPrivacy from "./pages/admin/AdminPrivacy";
 import AdminCancellation from "./pages/admin/AdminCancellation";
 import AdminRefund from "./pages/admin/AdminRefund";
+import AdminDeletionRequests from "./pages/admin/AdminDeletionRequests";
 import AdminSubscriptionBilling from "./pages/admin/AdminSubscriptionBilling";
 import AdminCreateBlog from "./pages/admin/AdminCreateBlog";
 import AdminBlogs from "./pages/admin/AdminBlogs";
@@ -125,7 +126,7 @@ const App = () => (
                     <Route path="student/assignment/:assignmentId" element={<AssignmentPage />} />
                     <Route path="resume-builder" element={<ResumeBuilder />} />
 
-<Route path="support" element={<SupportTickets />} />
+                    <Route path="support" element={<SupportTickets />} />
 
 
                   </Route>
@@ -159,6 +160,7 @@ const App = () => (
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminDashboard />} />
                     <Route path="users" element={<AdminUsers />} />
+                    <Route path="deletion-requests" element={<AdminDeletionRequests />} />
                     <Route path="courses" element={<AdminCourses />} />
                     <Route path="cookies" element={<AdminCookies />} />
                     <Route path="pricing" element={<AdminPricing />} />

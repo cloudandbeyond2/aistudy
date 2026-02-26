@@ -24,6 +24,7 @@ import {
   Shield,
   X,
   ArrowLeft,
+  UserMinus,
   CreditCard,
   LogOut,
   Menu,
@@ -123,6 +124,15 @@ const AdminLayout = () => {
               </SidebarMenuItem>
 
               <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Deletion Requests" isActive={isActive('/admin/deletion-requests')}>
+                  <Link to="/admin/deletion-requests" className={cn(isActive('/admin/deletion-requests') && "text-primary")}>
+                    <UserMinus />
+                    <span>Deletion Requests</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Courses" isActive={isActive('/admin/courses')}>
                   <Link to="/admin/courses" className={cn(isActive('/admin/courses') && "text-primary")}>
                     <BookOpen />
@@ -139,21 +149,21 @@ const AdminLayout = () => {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-<SidebarMenuItem>
-  <SidebarMenuButton
-    asChild
-    tooltip="Tickets"
-    isActive={isActive('/admin/tickets')}
-  >
-    <Link
-      to="/admin/tickets"
-      className={cn(isActive('/admin/tickets') && "text-primary")}
-    >
-      <MessageSquare />
-      <span>Tickets</span>
-    </Link>
-  </SidebarMenuButton>
-</SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Tickets"
+                  isActive={isActive('/admin/tickets')}
+                >
+                  <Link
+                    to="/admin/tickets"
+                    className={cn(isActive('/admin/tickets') && "text-primary")}
+                  >
+                    <MessageSquare />
+                    <span>Tickets</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Paid Users" isActive={isActive('/admin/paid-users')}>
@@ -371,7 +381,7 @@ const AdminLayout = () => {
           hover:bg-accent
           hover:shadow-md
         "
-                style={{ gap: "34px",  paddingLeft: "23px"}}
+                  style={{ gap: "34px", paddingLeft: "23px" }}
                 >
                   <Link to="/" className="flex items-center gap-3 w-full px-3 py-2">
                     <Globe className="h-4 w-4" />
@@ -394,7 +404,7 @@ const AdminLayout = () => {
           hover:bg-destructive/10
           hover:shadow-md
         "
-        style={{ gap: "34px",  paddingLeft: "23px"}}
+                  style={{ gap: "34px", paddingLeft: "23px" }}
                 >
                   <button
                     onClick={Logout}

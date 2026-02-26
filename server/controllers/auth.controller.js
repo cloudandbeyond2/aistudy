@@ -522,12 +522,16 @@ export const signup = async (req, res) => {
       const verificationExpires = Date.now() + 24 * 60 * 60 * 1000;
 
       const hashedPassword = await bcrypt.hash(password, 10);
+      const freePlanStart = new Date();
+      const freePlanEnd = new Date(freePlanStart.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
       const newUser = new User({
         email,
         mName,
         password: hashedPassword,
         type,
         phone,
+        subscriptionStart: freePlanStart,
+        subscriptionEnd: freePlanEnd,
         emailVerificationToken: verificationToken,
         emailVerificationExpires: verificationExpires,
         isEmailVerified: false,
@@ -817,11 +821,16 @@ export const socialLogin = async (req, res) => {
     // First user logic (same as signup)
     const estimate = await User.estimatedDocumentCount();
 
+    const socialFreePlanStart = new Date();
+    const socialFreePlanEnd = new Date(socialFreePlanStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+
     user = new User({
       email,
       mName,
       password,
       type: estimate === 0 ? "forever" : "free",
+      subscriptionStart: estimate === 0 ? null : socialFreePlanStart,
+      subscriptionEnd: estimate === 0 ? null : socialFreePlanEnd,
     });
 
     await user.save();

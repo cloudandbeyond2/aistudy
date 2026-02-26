@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { PenLine, Save, ShieldCheck, CreditCard, Loader, User, Settings, MessageSquare, Linkedin, Twitter, Globe, BookOpen, Award, Ticket } from "lucide-react";
+import { PenLine, Save, ShieldCheck, CreditCard, Loader, User, Settings, MessageSquare, Linkedin, Twitter, Globe, BookOpen, Award, Ticket, Bell, AlertTriangle } from "lucide-react";
+import { Switch } from '@/components/ui/switch';
 import { MonthCost, MonthType, serverURL, YearCost, websiteURL } from '@/constants';
 import axios from 'axios';
 import { DownloadIcon, TrashIcon } from '@radix-ui/react-icons';
@@ -51,6 +52,14 @@ const Profile = () => {
     certifications: 0,
     tickets: 0,
   });
+  const [notifications, setNotifications] = useState({
+    mail: true,
+    payments: true,
+    chat: true,
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [requestingDeletion, setRequestingDeletion] = useState(false);
+  const [deletionReason, setDeletionReason] = useState('');
   const [formData, setFormData] = useState({
     mName: sessionStorage.getItem('mName') || "",
     email: sessionStorage.getItem('email') || "",
@@ -176,6 +185,73 @@ const Profile = () => {
     };
     fetchStats();
   }, []);
+
+  // Fetch notification settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const uid = sessionStorage.getItem("uid");
+      if (!uid) return;
+      try {
+        const response = await axios.get(`${serverURL}/api/getuser/${uid}`);
+        if (response.data.success && response.data.user.notifications) {
+          setNotifications(response.data.user.notifications);
+        }
+      } catch (error) {
+        console.error("Failed to fetch settings:", error);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const updateNotifications = async (updated: typeof notifications) => {
+    const uid = sessionStorage.getItem("uid");
+    if (!uid) return;
+    setSavingSettings(true);
+    try {
+      const response = await axios.post(`${serverURL}/api/update-settings`, {
+        userId: uid,
+        notifications: updated,
+      });
+      if (response.data.success) {
+        toast({ title: "Saved", description: "Notification settings updated." });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to save settings." });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const handleToggle = (key: keyof typeof notifications) => {
+    const updated = { ...notifications, [key]: !notifications[key] };
+    setNotifications(updated);
+    updateNotifications(updated);
+  };
+
+  const requestDeletion = async (reason: string) => {
+    const uid = sessionStorage.getItem("uid");
+    if (!uid) return;
+    setRequestingDeletion(true);
+    try {
+      const response = await axios.post(`${serverURL}/api/request-deletion`, {
+        userId: uid,
+        reason,
+      });
+      if (response.data.success) {
+        toast({
+          title: "Request Submitted",
+          description: response.data.message,
+        });
+      } else {
+        toast({ title: "Notice", description: response.data.message });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to submit deletion request." });
+    } finally {
+      setRequestingDeletion(false);
+      setDeletionReason('');
+    }
+  };
 
 
   // star bala
@@ -1409,51 +1485,116 @@ const Profile = () => {
                   <div className="space-y-6">
                     <h3 className="text-lg font-semibold">Settings</h3>
 
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Delete Profile</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Permanently remove profile and all associated data
-                        </p>
+                    {/* Notification Toggles */}
+                    <div className="space-y-4">
+                      <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                        <Bell className="h-4 w-4" /> Notification Preferences
+                      </h4>
+
+                      {/* Mail Notification */}
+                      <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                          <Label className="font-medium">Mail Notifications</Label>
+                          <p className="text-sm text-muted-foreground">Receive email updates about your courses and account</p>
+                        </div>
+                        <Switch
+                          checked={notifications.mail}
+                          disabled={savingSettings}
+                          onCheckedChange={() => handleToggle('mail')}
+                        />
                       </div>
 
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button className="bg-red-500 hover:bg-red-600">
-                            Delete
-                          </Button>
-                        </DialogTrigger>
+                      {/* Payment Alerts */}
+                      <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                          <Label className="font-medium">Payment Alerts</Label>
+                          <p className="text-sm text-muted-foreground">Get notified about subscription renewals and billing</p>
+                        </div>
+                        <Switch
+                          checked={notifications.payments}
+                          disabled={savingSettings}
+                          onCheckedChange={() => handleToggle('payments')}
+                        />
+                      </div>
 
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>
-                              Are you sure you want to delete your profile?
-                            </DialogTitle>
-                            <DialogDescription>
-                              This action cannot be undone.
-                            </DialogDescription>
-                          </DialogHeader>
-
-                          <DialogFooter>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" className="w-40">
-                                Cancel
-                              </Button>
-                            </DialogTrigger>
-
-                            <Button
-                              onClick={deleteProfile}
-                              className="bg-red-500 hover:bg-red-600 w-40"
-                            >
-                              {processingDelete && (
-                                <Loader className="animate-spin mr-2 h-4 w-4" />
-                              )}
-                              {processingDelete ? "Deleting..." : "Delete"}
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
+                      {/* Chat Notifications */}
+                      <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                          <Label className="font-medium">Chat Notifications</Label>
+                          <p className="text-sm text-muted-foreground">Receive notifications from the course assistant</p>
+                        </div>
+                        <Switch
+                          checked={notifications.chat}
+                          disabled={savingSettings}
+                          onCheckedChange={() => handleToggle('chat')}
+                        />
+                      </div>
                     </div>
+
+                    <Separator />
+
+                    {/* Danger Zone */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-red-500 uppercase tracking-wider flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4" /> Danger Zone
+                      </h4>
+                      <div className="flex items-center justify-between rounded-lg border border-red-200 p-4 bg-red-50/30">
+                        <div>
+                          <Label className="font-medium">Request Account Deletion</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Submit a request to permanently remove your account. An admin will review and process it.
+                          </p>
+                        </div>
+
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="destructive">
+                              Request Deletion
+                            </Button>
+                          </DialogTrigger>
+
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Request Account Deletion</DialogTitle>
+                              <DialogDescription>
+                                Your account will not be deleted immediately. An admin will review your request. You may optionally provide a reason below.
+                              </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="space-y-3 py-2">
+                              <Label htmlFor="deletion-reason">Reason (optional)</Label>
+                              <Input
+                                id="deletion-reason"
+                                placeholder="Why do you want to delete your account?"
+                                value={deletionReason}
+                                onChange={(e) => setDeletionReason(e.target.value)}
+                              />
+                            </div>
+
+                            <DialogFooter>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" className="w-40">
+                                  Cancel
+                                </Button>
+                              </DialogTrigger>
+
+                              <Button
+                                onClick={() => requestDeletion(deletionReason)}
+                                variant="destructive"
+                                className="w-40"
+                                disabled={requestingDeletion}
+                              >
+                                {requestingDeletion && (
+                                  <Loader className="animate-spin mr-2 h-4 w-4" />
+                                )}
+                                {requestingDeletion ? "Submitting..." : "Submit Request"}
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </div>
+
                   </div>
                 </TabsContent>
 
