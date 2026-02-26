@@ -151,7 +151,7 @@ const DashboardLayout = () => {
 
 
                       {/* Support — show only if NOT admin */}
-{/* {!admin && (
+{!admin && (
   <SidebarMenuItem>
     <SidebarMenuButton
       asChild
@@ -167,7 +167,7 @@ const DashboardLayout = () => {
       </Link>
     </SidebarMenuButton>
   </SidebarMenuItem>
-)} */}
+)}
 
 
 

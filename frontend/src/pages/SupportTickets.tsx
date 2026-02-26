@@ -94,12 +94,15 @@ const SupportTickets = () => {
   return (
     <div className="space-y-6 p-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Order History & Support</h1>
-          <p className="text-muted-foreground text-sm">
-            View and manage all payment transactions and support requests from this page.
-          </p>
-        </div>
+         <div className="space-y-4">
+  <h1 className="text-4xl font-bold tracking-tight text-slate-900">
+    Organization Support Center
+  </h1>
+ 
+  <p className="text-muted-foreground text-base leading-relaxed max-w-2xl">
+    Submit and manage support requests for organization-level concerns including account access, billing inquiries, feature requests, and system issues.
+  </p>
+</div>
         <Button onClick={() => setOpen(true)} className="bg-blue-600 hover:bg-blue-700">
           <PlusCircle className="w-4 h-4 mr-2" /> Create Ticket
         </Button>

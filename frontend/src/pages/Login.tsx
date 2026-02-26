@@ -57,7 +57,7 @@
 //         sessionStorage.setItem('isOrganization', response.data.userData.isOrganization ? 'true' : 'false');
 //         sessionStorage.setItem('role', response.data.userData.role);
 
-        
+
 //          // Set organization ID for consistent access//new
 //         const organizationId = response.data.userData.isOrganization
 //           ? response.data.userData._id
@@ -65,8 +65,8 @@
 //         if (organizationId) {
 //           sessionStorage.setItem('orgId', organizationId);
 //         }
- 
-        
+
+
 //         if (response.data.userData.organization) {
 //           sessionStorage.setItem('orgId', response.data.userData.organization);
 //         }
@@ -354,7 +354,7 @@
 //                       if (organizationId) {
 //                         sessionStorage.setItem('orgId', organizationId);
 //                       }
- 
+
 
 //                       if (response.data.userData.organization) {
 //                         sessionStorage.setItem('orgId', response.data.userData.organization);
@@ -469,6 +469,7 @@ const Login = () => {
         sessionStorage.setItem('auth', 'true');
         sessionStorage.setItem('uid', response.data.userData._id);
         sessionStorage.setItem('type', response.data.userData.type);
+        sessionStorage.setItem('subscriptionEnd', response.data.userData.subscriptionEnd || '');
         sessionStorage.setItem('isOrganization', response.data.userData.isOrganization ? 'true' : 'false');
         sessionStorage.setItem('role', response.data.userData.role);
 
@@ -482,7 +483,7 @@ const Login = () => {
         if (response.data.userData.organization) {
           sessionStorage.setItem('orgId', response.data.userData.organization);
         }
-        
+
         toast({
           title: "Login successful",
           description: "Welcome back to " + appName,
@@ -738,6 +739,7 @@ const Login = () => {
                       sessionStorage.setItem('auth', 'true');
                       sessionStorage.setItem('uid', response.data.userData._id);
                       sessionStorage.setItem('type', response.data.userData.type);
+                      sessionStorage.setItem('subscriptionEnd', response.data.userData.subscriptionEnd || '');
                       sessionStorage.setItem('isOrganization', response.data.userData.isOrganization ? 'true' : 'false');
                       sessionStorage.setItem('role', response.data.userData.role);
 

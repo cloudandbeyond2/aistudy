@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { Sparkles, Plus } from 'lucide-react';
+import { Sparkles, Plus, Lock, AlertTriangle } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import CoursePreview from '@/components/CoursePreview';
@@ -14,6 +14,15 @@ import SEO from '@/components/SEO';
 import { useToast } from '@/hooks/use-toast';
 import { serverURL } from '@/constants';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+
+// ─── Plan limits (mirrors server/config/planLimits.js) ─────────────────────
+const PLAN_LIMITS: Record<string, { maxCourses: number; maxSubtopics: number; allowVideo: boolean; allowMultiLang: boolean }> = {
+  free: { maxCourses: 1, maxSubtopics: 5, allowVideo: false, allowMultiLang: false },
+  monthly: { maxCourses: 20, maxSubtopics: 10, allowVideo: true, allowMultiLang: false },
+  yearly: { maxCourses: Infinity, maxSubtopics: 10, allowVideo: true, allowMultiLang: true },
+  forever: { maxCourses: Infinity, maxSubtopics: 10, allowVideo: true, allowMultiLang: true },
+};
 
 const courseFormSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters" }),
@@ -31,12 +40,26 @@ const GenerateCourse = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [generatedTopics, setGeneratedTopics] = useState({});
-  const maxSubtopics = 5;
-  const [selectedValue, setSelectedValue] = useState('1');
+  const [selectedValue, setSelectedValue] = useState('4');
   const [selectedType, setSelectedType] = useState('image & text course');
-  const [paidMember, setPaidMember] = useState(false);
   const [lang, setLang] = useState('English');
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // ─── Derived plan state ───────────────────────────────────────────────────
+  const userType = (sessionStorage.getItem('type') || 'free') as string;
+  const subscriptionEndStr = sessionStorage.getItem('subscriptionEnd') || '';
+  const planLimits = PLAN_LIMITS[userType] || PLAN_LIMITS.free;
+
+  const isPlanExpired = (() => {
+    if (userType === 'forever') return false;
+    if (!subscriptionEndStr) return true; // No date set = treat as expired
+    return new Date(subscriptionEndStr) < new Date();
+  })();
+
+  const canUseVideo = planLimits.allowVideo;
+  const canUseMultiLang = planLimits.allowMultiLang;
+  const maxSubtopics = planLimits.maxSubtopics;
 
   const languages = [
     { "code": "en", "name": "English" },
@@ -85,11 +108,6 @@ const GenerateCourse = () => {
       window.location.href = '/dashboard/student';
       return;
     }
-
-    if (sessionStorage.getItem('type') !== 'free') {
-      setPaidMember(true);
-    }
-
   }, []);
 
   const form = useForm<CourseFormValues>({
@@ -103,41 +121,60 @@ const GenerateCourse = () => {
     }
   });
 
-  const paidToad = () => {
-    if (!paidMember) {
-      toast({
-        title: "Go Premium",
-        description: "Access all features with a Premium upgrade."
-      });
-    }
+  /** Show an upgrade/plan toast when a restricted feature is clicked */
+  const showUpgradeToast = (feature: string) => {
+    toast({
+      title: "Upgrade Required",
+      description: `${feature} is not available on your ${userType} plan. Please upgrade to access this feature.`,
+      variant: "destructive"
+    });
   };
 
+  /** Show expiry toast and redirect to pricing */
+  const showExpiryToast = () => {
+    toast({
+      title: "Plan Expired",
+      description: "Your subscription has expired. Please renew your plan to continue generating courses.",
+      variant: "destructive"
+    });
+    setTimeout(() => navigate('/dashboard'), 1500);
+  };
 
   const addSubtopic = () => {
-    if (subtopics.length < maxSubtopics) {
-      if (subtopicInput.trim() === '') return;
-      setSubtopics([...subtopics, subtopicInput.trim()]);
-      setSubtopicInput('');
-      form.setValue('subtopics', [...subtopics, subtopicInput.trim()]);
-    } else {
-      toast({
-        title: "Upgrade to Premium",
-        description: "You are limited to adding only 5 subtopics."
-      });
+    if (isPlanExpired) {
+      showExpiryToast();
+      return;
     }
+    if (subtopics.length >= maxSubtopics) {
+      toast({
+        title: "Subtopic Limit Reached",
+        description: `Your ${userType} plan allows a maximum of ${maxSubtopics} subtopics. ${userType === 'free' ? 'Upgrade to get up to 10.' : ''}`,
+        variant: "destructive"
+      });
+      return;
+    }
+    if (subtopicInput.trim() === '') return;
+    const updated = [...subtopics, subtopicInput.trim()];
+    setSubtopics(updated);
+    setSubtopicInput('');
+    form.setValue('subtopics', updated);
   };
 
   const onSubmit = async (data: CourseFormValues) => {
+    // Plan expiry gate
+    if (isPlanExpired) {
+      showExpiryToast();
+      return;
+    }
+
     setIsLoading(true);
     setIsSubmitted(true);
 
-    const subtopics = [];
-    data.subtopics.forEach(subtopic => {
-      subtopics.push(subtopic);
-    });
+    const subtopicsList: string[] = [];
+    data.subtopics.forEach(s => subtopicsList.push(s));
 
     const mainTopic = data.topic;
-    const lang = data.language;
+    const language = data.language;
     const number = data.topicsLimit;
 
     // Check if course already exists
@@ -158,10 +195,9 @@ const GenerateCourse = () => {
       }
     } catch (error) {
       console.error('Error checking course existence:', error);
-      // Continue if check fails, but log it
     }
 
-    const prompt = `Strictly in ${lang}, Generate a list of EXACTLY ${number} topics (chapters) for the course "${mainTopic}". 
+    const prompt = `Strictly in ${language}, Generate a list of EXACTLY ${number} topics (chapters) for the course "${mainTopic}". 
     For each topic, include relevant subtopics.
     The output must take the form of a JSON object with a "course_topics" array containing EXACTLY ${number} items.
     
@@ -175,7 +211,7 @@ const GenerateCourse = () => {
       ]
     }
 
-    Strictly include these requested subtopics if provided: ${subtopics.join(', ')}.
+    Strictly include these requested subtopics if provided: ${subtopicsList.join(', ')}.
     Keep "theory", "youtube", "image" fields empty.
     "done" should be false.
     `;
@@ -184,15 +220,12 @@ const GenerateCourse = () => {
   };
 
   async function sendPrompt(prompt: string) {
-    const dataToSend = {
-      prompt: prompt,
-    };
+    const dataToSend = { prompt };
     try {
       const postURL = serverURL + '/api/prompt';
       const res = await axios.post(postURL, dataToSend);
       const generatedText = res.data.generatedText;
 
-      // Check if generatedText exists before trying to use it
       if (!generatedText) {
         setIsLoading(false);
         toast({
@@ -205,7 +238,7 @@ const GenerateCourse = () => {
       const cleanedJsonString = generatedText.replace(/```json/g, '').replace(/```/g, '');
       try {
         const parsedJson = JSON.parse(cleanedJsonString);
-        setGeneratedTopics(parsedJson)
+        setGeneratedTopics(parsedJson);
         setIsLoading(false);
       } catch (error: any) {
         console.error(error);
@@ -215,13 +248,30 @@ const GenerateCourse = () => {
           description: error.response?.data?.message || error.message || "Internal Server Error",
         });
       }
-
     } catch (error: any) {
-      console.error(error);
       setIsLoading(false);
+
+      // Handle backend plan errors gracefully
+      const errData = error.response?.data;
+      if (errData?.planExpired) {
+        showExpiryToast();
+        setIsSubmitted(false);
+        return;
+      }
+      if (errData?.courseLimitReached) {
+        setIsSubmitted(false);
+        toast({
+          title: "Course Limit Reached",
+          description: errData.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.error(error);
       toast({
         title: "Error",
-        description: error.response?.data?.message || error.message || "Internal Server Error",
+        description: errData?.message || error.message || "Internal Server Error",
       });
     }
   }
@@ -267,6 +317,32 @@ const GenerateCourse = () => {
           </p>
         </div>
 
+        {/* Plan Expiry Banner */}
+        {isPlanExpired && (
+          <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/50 bg-destructive/10 text-destructive">
+            <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-sm">Your subscription has expired</p>
+              <p className="text-xs mt-0.5">Please <a href="/dashboard" className="underline font-medium">renew your plan</a> to continue generating courses.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Plan Info Badge */}
+        {!isPlanExpired && (
+          <div className="flex items-center gap-2 p-3 rounded-lg border bg-muted/30 text-sm text-muted-foreground">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span>
+              <strong className="capitalize">{userType} Plan</strong> — up to{' '}
+              <strong>{planLimits.maxCourses === Infinity ? 'unlimited' : planLimits.maxCourses}</strong> course{planLimits.maxCourses === 1 ? '' : 's'},{' '}
+              <strong>{maxSubtopics}</strong> subtopics per course
+              {subscriptionEndStr && userType !== 'forever' && (
+                <> · Expires <strong>{new Date(subscriptionEndStr).toLocaleDateString()}</strong></>
+              )}
+            </span>
+          </div>
+        )}
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Card>
@@ -286,7 +362,7 @@ const GenerateCourse = () => {
                   />
 
                   <div className="space-y-2">
-                    <FormLabel>Sub Topic (Optional)</FormLabel>
+                    <FormLabel>Sub Topic (Optional) <span className="text-muted-foreground font-normal">— max {maxSubtopics}</span></FormLabel>
                     <div className="flex gap-2">
                       <Input
                         placeholder="Enter subtopic"
@@ -333,6 +409,7 @@ const GenerateCourse = () => {
                     )}
                   </div>
 
+                  {/* Number of Sub-Topics */}
                   <div>
                     <FormLabel>Select Number Of Sub Topic</FormLabel>
                     <FormField
@@ -343,23 +420,28 @@ const GenerateCourse = () => {
                           <FormControl>
                             <RadioGroup
                               value={selectedValue}
-                              onValueChange={(selectedValue) => {
-                                setSelectedValue(selectedValue);
-                                field.onChange(selectedValue);
+                              onValueChange={(val) => {
+                                setSelectedValue(val);
+                                field.onChange(val);
                               }}
                               className="space-y-2"
                             >
+                              {/* Option: 5 — always available */}
                               <div className="flex items-center space-x-2 border p-3 rounded-md">
-                                <RadioGroupItem defaultChecked value="1" id="r0" />
-                                <FormLabel htmlFor="r0" className="mb-0">1</FormLabel>
-                              </div>
-                              <div className="flex items-center space-x-2 border p-3 rounded-md">
-                                <RadioGroupItem value="4" id="r1" />
+                                <RadioGroupItem defaultChecked value="4" id="r1" />
                                 <FormLabel htmlFor="r1" className="mb-0">5</FormLabel>
                               </div>
-                              <div onClick={paidToad} className="flex items-center space-x-2 border p-3 rounded-md">
-                                <RadioGroupItem disabled={!paidMember} value="8" id="r2" />
-                                <FormLabel htmlFor="r2" className="mb-0">10</FormLabel>
+
+                              {/* Option: 10 — monthly/yearly/forever only */}
+                              <div
+                                onClick={() => { if (maxSubtopics < 10) showUpgradeToast('10 subtopics per topic'); }}
+                                className={`flex items-center space-x-2 border p-3 rounded-md ${maxSubtopics < 10 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              >
+                                <RadioGroupItem disabled={maxSubtopics < 10} value="8" id="r2" />
+                                <FormLabel htmlFor="r2" className="mb-0 flex items-center gap-2">
+                                  10
+                                  {maxSubtopics < 10 && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                                </FormLabel>
                               </div>
                             </RadioGroup>
                           </FormControl>
@@ -368,6 +450,7 @@ const GenerateCourse = () => {
                     />
                   </div>
 
+                  {/* Course Type */}
                   <div>
                     <FormLabel>Select Course Type</FormLabel>
                     <FormField
@@ -378,19 +461,28 @@ const GenerateCourse = () => {
                           <FormControl>
                             <RadioGroup
                               value={selectedType}
-                              onValueChange={(selectedValue) => {
-                                setSelectedType(selectedValue);
-                                field.onChange(selectedValue);
+                              onValueChange={(val) => {
+                                setSelectedType(val);
+                                field.onChange(val);
                               }}
                               className="space-y-2"
                             >
+                              {/* Theory & Image — always available */}
                               <div className="flex items-center space-x-2 border p-3 rounded-md">
                                 <RadioGroupItem defaultChecked value="image & text course" id="ct1" />
-                                <FormLabel htmlFor="ct1" className="mb-0">Theory & Image Course</FormLabel>
+                                <FormLabel htmlFor="ct1" className="mb-0">Theory &amp; Image Course</FormLabel>
                               </div>
-                              <div onClick={paidToad} className="flex items-center space-x-2 border p-3 rounded-md">
-                                <RadioGroupItem disabled={!paidMember} value="video & text course" id="ct2" />
-                                <FormLabel htmlFor="ct2" className="mb-0">Video & Theory Course</FormLabel>
+
+                              {/* Video & Theory — monthly/yearly/forever only */}
+                              <div
+                                onClick={() => { if (!canUseVideo) showUpgradeToast('Video & Theory courses'); }}
+                                className={`flex items-center space-x-2 border p-3 rounded-md ${!canUseVideo ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              >
+                                <RadioGroupItem disabled={!canUseVideo} value="video & text course" id="ct2" />
+                                <FormLabel htmlFor="ct2" className="mb-0 flex items-center gap-2">
+                                  Video &amp; Theory Course
+                                  {!canUseVideo && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                                </FormLabel>
                               </div>
                             </RadioGroup>
                           </FormControl>
@@ -399,20 +491,27 @@ const GenerateCourse = () => {
                     />
                   </div>
 
+                  {/* Language */}
                   <FormField
                     control={form.control}
                     name="language"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Course Language</FormLabel>
-                        <Select onValueChange={(selectedValue) => {
-                          if (!paidMember) {
-                            paidToad();
-                          } else {
-                            setLang(selectedValue);
-                            field.onChange(selectedValue);
-                          }
-                        }} value={lang}>
+                        <FormLabel className="flex items-center gap-2">
+                          Course Language
+                          {!canUseMultiLang && <span className="text-xs text-muted-foreground font-normal">(Yearly plan for 23+ languages)</span>}
+                        </FormLabel>
+                        <Select
+                          onValueChange={(val) => {
+                            if (!canUseMultiLang && val !== 'English') {
+                              showUpgradeToast('Multi-language support (23+ languages)');
+                              return;
+                            }
+                            setLang(val);
+                            field.onChange(val);
+                          }}
+                          value={lang}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select language" />
@@ -420,7 +519,14 @@ const GenerateCourse = () => {
                           </FormControl>
                           <SelectContent>
                             {languages.map((country) => (
-                              <SelectItem key={country.code} value={country.name}>{country.name}</SelectItem>
+                              <SelectItem
+                                key={country.code}
+                                value={country.name}
+                                disabled={!canUseMultiLang && country.name !== 'English'}
+                              >
+                                {country.name}
+                                {!canUseMultiLang && country.name !== 'English' && ' 🔒'}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -429,12 +535,12 @@ const GenerateCourse = () => {
                   />
 
                   <Button
-                    onClick={() => onSubmit}
                     type="submit"
-                    className="w-full bg-black text-white hover:bg-gray-800"
+                    disabled={isPlanExpired}
+                    className="w-full bg-black text-white hover:bg-gray-800 disabled:opacity-50"
                   >
                     <Sparkles className="mr-2 h-4 w-4" />
-                    Submit
+                    {isPlanExpired ? 'Plan Expired — Renew to Generate' : 'Submit'}
                   </Button>
                 </div>
               </CardContent>

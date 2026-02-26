@@ -5,6 +5,7 @@ import { getUnsplashApi } from '../config/unsplash.js';
 import IssuedCertificate from '../models/IssuedCertificate.js';
 import Notification from '../models/Notification.js';
 import StudentProgress from '../models/StudentProgress.js';
+import { getPlanLimits, isPlanActive } from '../config/planLimits.js';
 
 /**
  * CHECK COURSE EXISTS
@@ -38,6 +39,46 @@ export const createCourse = async (req, res) => {
     'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
 
   try {
+    // ── PLAN LIMITS CHECK ──────────────────────────────────────────────────
+    const User = (await import('../models/User.js')).default;
+    const creator = await User.findById(user);
+
+    if (creator) {
+      const planType = creator.type || 'free';
+      const limits = getPlanLimits(planType);
+
+      // 1. Subscription expiry check
+      if (!isPlanActive(planType, creator.subscriptionEnd)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Your subscription has expired. Please renew your plan to create courses.',
+          planExpired: true
+        });
+      }
+
+      // 2. Course count limit
+      if (limits.maxCourses !== Infinity) {
+        const courseCount = await Course.countDocuments({ user });
+        if (courseCount >= limits.maxCourses) {
+          return res.status(403).json({
+            success: false,
+            message: `Your ${planType} plan allows a maximum of ${limits.maxCourses} course${limits.maxCourses === 1 ? '' : 's'}. Please upgrade your plan to create more.`,
+            courseLimitReached: true
+          });
+        }
+      }
+
+      // 3. Course type restriction
+      if (type === 'video & text course' && !limits.allowVideo) {
+        return res.status(403).json({
+          success: false,
+          message: 'Video & Theory courses are not available on your current plan. Please upgrade to access this feature.',
+          upgradeRequired: true
+        });
+      }
+    }
+    // ──────────────────────────────────────────────────────────────────────
+
     // Safeguard: Check if course already exists for this user
     const existingCourse = await Course.findOne({
       user,
@@ -72,13 +113,16 @@ export const createCourse = async (req, res) => {
       console.log('Unsplash failed, using default image');
     }
 
-    // Find the user to get their organizationId
-    const User = (await import('../models/User.js')).default;
-    const creator = await User.findById(user);
+    // Find the user to get their organizationId (already fetched above for plan check, re-fetch if needed)
+    if (!creator) {
+      const UserModel = (await import('../models/User.js')).default;
+      var creatorFallback = await UserModel.findById(user);
+    }
+    const resolvedCreator = creator || creatorFallback;
 
     const newCourse = new Course({
       user,
-      organizationId: creator?.organization || null,
+      organizationId: resolvedCreator?.organization || null,
       content,
       type,
       mainTopic,
