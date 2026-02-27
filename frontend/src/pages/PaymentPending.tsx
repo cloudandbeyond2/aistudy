@@ -7,7 +7,8 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { serverURL, websiteURL } from '@/constants';
 import axios from 'axios';
-import logopayment from '../../public/pwa-512x512.png'
+// import logopayment from '../../public/pwa-512x512.png'
+import logopayment from "@/assets/images/pwa-512x512.png";
 
 const PaymentPending = () => {
     const navigate = useNavigate();
