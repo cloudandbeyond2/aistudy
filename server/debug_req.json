@@ -1,6 +1,6 @@
 {
-  "courseId": "6999844b4ff0022c752682cb",
-  "mainTopic": "DIGITAL SIGNAL PROCESSING",
-  "subtopicsString": "Mathematical Definition of the DFT and IDFT, Properties of the DFT: Linearity, Periodicity, and Symmetry, Circular Convolution and its Relationship to Linear Convolution, Radix-2 Decimation-in-Time (DIT) FFT Algorithm, Radix-2 Decimation-in-Frequency (DIF) FFT Algorithm, Computational Complexity and Efficiency of FFT vs. DFT",
+  "courseId": "69a16cbcf73b0f044c031045",
+  "mainTopic": "ANGULAR",
+  "subtopicsString": "Introduction to Components and Decorators, Template Syntax and Data Binding, Directives: Structural and Attribute, Component Communication with @Input and @Output, Lifecycle Hooks",
   "lang": "english"
 }

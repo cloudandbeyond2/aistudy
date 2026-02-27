@@ -62,7 +62,7 @@ const Dashboard = () => {
           type: type.toLowerCase(),
           courseId,
           end: ending,
-          pass: response.data.message,
+          pass: response.data.message || completed,
           lang: response.data.lang,
           certificateId: response.data.certificateId
         }
@@ -81,7 +81,7 @@ const Dashboard = () => {
           type: type.toLowerCase(),
           courseId,
           end: ending,
-          pass: false,
+          pass: completed,
           lang: response.data.lang
         }
       });
@@ -187,19 +187,19 @@ const Dashboard = () => {
 
         // Compute progress for all courses in PARALLEL
         const [progressValues, moduleValues] = await Promise.all([
-          Promise.all(coursesData.map((course: any) => CountDoneTopics(course.content, course.mainTopic, course._id, quizMap[course._id]))),
+          Promise.all(coursesData.map((course: any) => CountDoneTopics(course.content, course.mainTopic, course._id, quizMap[course._id] || course.completed))),
           Promise.all(coursesData.map((course: any) => CountTotalTopics(course.content, course.mainTopic)))
         ]);
 
-        const progressMap = { ...courseProgress };
-        const modulesMap = { ...modules };
+        const newProgressMap: Record<string, number> = {};
+        const newModulesMap: Record<string, number> = {};
         coursesData.forEach((course: any, i: number) => {
-          progressMap[course._id] = progressValues[i];
-          modulesMap[course._id] = moduleValues[i];
+          newProgressMap[course._id] = progressValues[i];
+          newModulesMap[course._id] = moduleValues[i];
         });
 
-        setCourseProgress(progressMap);
-        setTotalModules(modulesMap);
+        setCourseProgress(prev => ({ ...prev, ...newProgressMap }));
+        setTotalModules(prev => ({ ...prev, ...newModulesMap }));
         setCourses(prevCourses => [...prevCourses, ...coursesData].sort((a, b) => b._id.localeCompare(a._id)));
       }
     } catch (error) {
@@ -230,24 +230,34 @@ const Dashboard = () => {
   // Progress is computed from course JSON content locally — no API call needed
   const CountDoneTopics = async (json: string, mainTopic: string, courseId: string, quizPassed: boolean) => {
     try {
+      if (quizPassed) return 100;
+
       const jsonData = JSON.parse(json);
       let doneCount = 0;
       let totalTopics = 0;
-      const topicsData = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+
+      const topicsData = jsonData['course_topics'] || (mainTopic ? jsonData[mainTopic.toLowerCase()] : []);
+      if (!topicsData) return 0;
+
       topicsData.forEach((topic: { subtopics: string[]; }) => {
         topic.subtopics.forEach((subtopic) => {
           if (subtopic.done) doneCount++;
           totalTopics++;
         });
       });
-      // Add 1 for quiz slot unless quiz is already passed
-      if (!quizPassed) totalTopics = totalTopics + 1;
-      return Math.round((doneCount / totalTopics) * 100);
+
+      // Total items = subtopics + 1 (quiz)
+      const totalItems = totalTopics + 1;
+      const effectiveDoneCount = doneCount; // Since quizPassed is handled at the start
+
+      const percentage = Math.round((effectiveDoneCount / totalItems) * 100);
+      return Math.min(percentage, 99); // Max 99 if quiz not passed
     } catch (error) {
       console.error(error);
       return 0;
     }
   }
+
 
   const CountTotalTopics = async (json: string, mainTopic: string) => {
     try {

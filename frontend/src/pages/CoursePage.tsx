@@ -249,7 +249,8 @@ const CoursePage = () => {
       try {
         const response = await axios.post(serverURL + '/api/getmyresult', { courseId, userId });
         if (response.data.success) {
-          setIsQuizPassed(response.data.message);
+          // If already marked completed in courseData, keep it true even if quiz isn't found
+          setIsQuizPassed(response.data.message || (courseData?.pass === true));
         }
       } catch (error) {
         console.error('Error fetching quiz status:', error);
@@ -446,7 +447,7 @@ const CoursePage = () => {
   }, [isQuizPassed]);
 
   const CountDoneTopics = (passed = isQuizPassed) => {
-    if (isOrgAdmin) {
+    if (isOrgAdmin || passed) {
       setPercentage(100);
       setIsCompleted(true);
       return;
@@ -473,15 +474,14 @@ const CoursePage = () => {
     });
     totalTopics = totalTopics + 1;
 
-    if (passed) {
-      doneCount = doneCount + 1;
-    }
     const completionPercentage = Math.round((doneCount / totalTopics) * 100);
-    setPercentage(completionPercentage);
-    if (completionPercentage >= 100) {
+    const finalPercentage = Math.min(completionPercentage, 99);
+    setPercentage(finalPercentage);
+    if (finalPercentage >= 100) {
       setIsCompleted(true);
     }
   }
+
 
   const handleSelect = (topics, sub) => {
     if (!isLoading) {
