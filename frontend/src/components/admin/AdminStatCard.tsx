@@ -1,74 +1,47 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LucideIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AdminStatCardProps {
-    title: string;
-    value: string | number;
-    icon: LucideIcon;
-    description?: string;
-    trend?: {
-        value: number;
-        isPositive: boolean;
-    };
-    gradient?: string;
-    iconColor?: string;
+  title: string;
+  value: string | number;
+  icon: LucideIcon;
+  description: string;
+  trend?: number; // Optional percentage trend
+  className?: string;
 }
 
-const AdminStatCard: React.FC<AdminStatCardProps> = ({
-    title,
-    value,
-    icon: Icon,
-    description,
-    trend,
-    gradient = 'from-blue-500 via-blue-600 to-indigo-600',
-    iconColor = 'text-blue-600'
-}) => {
-    return (
-        <Card className="relative overflow-hidden border-border/50 hover:shadow-xl transition-all duration-300 group">
-            {/* Animated gradient background */}
-            <div className={cn(
-                "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-5 transition-opacity duration-300",
-                gradient
-            )} />
-
-            {/* Decorative circle */}
-            <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-gradient-to-br from-primary/10 to-purple-500/10 blur-2xl" />
-
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {title}
-                </CardTitle>
-                <div className={cn(
-                    "p-2 rounded-lg bg-gradient-to-br from-background to-muted",
-                    "ring-1 ring-border/50"
-                )}>
-                    <Icon className={cn("h-4 w-4", iconColor)} />
-                </div>
-            </CardHeader>
-
-            <CardContent className="relative z-10">
-                <div className="flex items-baseline gap-2">
-                    <div className="text-3xl font-bold tracking-tight">{value}</div>
-                    {trend && (
-                        <div className={cn(
-                            "flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full",
-                            trend.isPositive
-                                ? "bg-green-500/10 text-green-600"
-                                : "bg-red-500/10 text-red-600"
-                        )}>
-                            <span>{trend.isPositive ? "↑" : "↓"}</span>
-                            <span>{Math.abs(trend.value)}%</span>
-                        </div>
-                    )}
-                </div>
-                {description && (
-                    <p className="text-xs text-muted-foreground mt-1">{description}</p>
-                )}
-            </CardContent>
-        </Card>
-    );
-};
-
-export default AdminStatCard;
+export default function AdminStatCard({
+  title,
+  value,
+  icon: Icon,
+  description,
+  trend,
+  className,
+}: AdminStatCardProps) {
+  return (
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md",
+        className
+      )}
+    >
+      <div className="flex items-center justify-between space-y-0 pb-2">
+        <h3 className="text-sm font-medium text-muted-foreground tracking-tight">
+          {title}
+        </h3>
+        <div className="rounded-full bg-primary/10 p-2 text-primary">
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
+      <div className="flex flex-col gap-1">
+        <div className="text-2xl font-bold tracking-tight">{value}</div>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      
+      {/* Optional decorative background element */}
+      <div className="absolute -right-4 -bottom-4 opacity-[0.03] pointer-events-none">
+        <Icon className="h-24 w-24" />
+      </div>
+    </div>
+  );
+}
