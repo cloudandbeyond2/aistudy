@@ -456,4 +456,36 @@ export const getStudentProgress = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
+/**
+ * GET BATCH STUDENT PROGRESS
+ */
+export const getBatchStudentProgress = async (req, res) => {
+  const { userId, courseIds } = req.body;
 
+  if (!userId || !Array.isArray(courseIds)) {
+    return res.status(400).json({ success: false, message: 'Missing userId or courseIds' });
+  }
+
+  try {
+    const progressRecords = await StudentProgress.find({
+      userId,
+      courseId: { $in: courseIds }
+    });
+
+    const progressMap = {};
+    progressRecords.forEach(p => {
+      progressMap[p.courseId] = {
+        percentage: p.percentage,
+        completedSubtopics: p.completedSubtopics
+      };
+    });
+
+    res.json({
+      success: true,
+      progress: progressMap
+    });
+  } catch (error) {
+    console.error('getBatchStudentProgress error:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};

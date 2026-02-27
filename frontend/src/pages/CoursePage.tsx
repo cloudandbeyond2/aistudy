@@ -472,15 +472,16 @@ const CoursePage = () => {
         totalTopics++;
       });
     });
-    totalTopics = totalTopics + 1;
 
-    const completionPercentage = Math.round((doneCount / totalTopics) * 100);
+    // Subtopic-only percentage (matches server logic)
+    const completionPercentage = totalTopics > 0 ? Math.round((doneCount / totalTopics) * 100) : 0;
     const finalPercentage = Math.min(completionPercentage, 99);
     setPercentage(finalPercentage);
     if (finalPercentage >= 100) {
       setIsCompleted(true);
     }
   }
+
 
 
   const handleSelect = (topics, sub) => {

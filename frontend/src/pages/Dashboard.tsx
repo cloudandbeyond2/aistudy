@@ -172,29 +172,35 @@ const Dashboard = () => {
         const coursesData = response.data;
         const courseIds = coursesData.map((c: any) => c._id);
 
-        // Batch-fetch all quiz results in ONE request instead of one per course
+        // Batch-fetch all quiz results and subtopic progress in parallel
+        const [quizResponse, progressResponse] = await Promise.all([
+          axios.post(`${serverURL}/api/getmyresults-batch`, { courseIds }),
+          axios.post(`${serverURL}/api/progress/batch`, { userId, courseIds })
+        ]).catch(() => [{ data: { results: [] } }, { data: { progress: {} } }]);
+
         const quizMap: Record<string, boolean> = {};
-        try {
-          const quizResponse = await axios.post(`${serverURL}/api/getmyresults-batch`, { courseIds });
-          if (quizResponse.data.success) {
-            quizResponse.data.results.forEach((r: any) => {
-              quizMap[r.courseId] = r.passed;
-            });
-          }
-        } catch {
-          // Fallback: all quizzes considered incomplete
+        if (quizResponse.data?.success) {
+          quizResponse.data.results.forEach((r: any) => {
+            quizMap[r.courseId] = r.passed;
+          });
         }
 
-        // Compute progress for all courses in PARALLEL
-        const [progressValues, moduleValues] = await Promise.all([
-          Promise.all(coursesData.map((course: any) => CountDoneTopics(course.content, course.mainTopic, course._id, quizMap[course._id] || course.completed))),
-          Promise.all(coursesData.map((course: any) => CountTotalTopics(course.content, course.mainTopic)))
-        ]);
+        const apiProgressMap = progressResponse.data?.progress || {};
+
+        // Compute modules count (still local)
+        const moduleValues = await Promise.all(
+          coursesData.map((course: any) => CountTotalTopics(course.content, course.mainTopic))
+        );
 
         const newProgressMap: Record<string, number> = {};
         const newModulesMap: Record<string, number> = {};
+
         coursesData.forEach((course: any, i: number) => {
-          newProgressMap[course._id] = progressValues[i];
+          // Priority: 1. Manual completion/Quiz passed -> 100%
+          //           2. API progress percentage
+          //           3. Default to 0
+          const isPassed = quizMap[course._id] || course.completed;
+          newProgressMap[course._id] = isPassed ? 100 : (apiProgressMap[course._id]?.percentage || 0);
           newModulesMap[course._id] = moduleValues[i];
         });
 
