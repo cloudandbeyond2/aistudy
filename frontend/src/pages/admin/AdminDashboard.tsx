@@ -160,17 +160,39 @@ const [organizations, setOrganizations] = useState([]);
 
       /* ================= USER DISTRIBUTION ================= */
 
-      const paidUsers = users.filter(
-        (u) => u.type === "monthly" || u.type === "yearly"
-      ).length;
+//       const paidUsers = users.filter(
+//         (u) => u.type === "monthly" || u.type === "yearly"
+//       ).length;
+//  const res = await axios.get(`${serverURL}/api/getpaid`);
+//       const freeUsers = users.filter((u) => u.type === "free").length;
 
-      const freeUsers = users.filter((u) => u.type === "free").length;
+//       setUserTypeChart([
+//         { name: "Paid Users", value: paidUsers },
+//         { name: "Free Users", value: freeUsers },
+//       ]);
 
-      setUserTypeChart([
-        { name: "Paid Users", value: paidUsers },
-        { name: "Free Users", value: freeUsers },
-      ]);
+/* ================= USER DISTRIBUTION (API BASED CORRECT) ================= */
 
+// Fetch paid users separately
+const paidRes = await axios.get(`${serverURL}/api/getpaid`, {
+  headers: { Authorization: `Bearer ${token}` },
+});
+
+const paidUsersData = paidRes.data || [];
+
+// Total users from /api/getusers
+const totalUsers = users.length;
+
+// Paid users count
+const paidUsers = paidUsersData.length;
+
+// Free users = total - paid
+const freeUsers = totalUsers - paidUsers;
+
+setUserTypeChart([
+  { name: "Paid Users", value: paidUsers },
+  { name: "Free Users", value: freeUsers },
+]);
       /* ================= COURSE DISTRIBUTION ================= */
 
       const paidCourses = courses.filter((c) => c.restricted).length;
@@ -378,20 +400,7 @@ const latest = [...orders]
             description="Students in organizations"
             className="border-l-4 border-l-violet-500"
           />
-           {/* <AdminStatCard
-            title="Org Over All Revenue"
-            value={stats.organizations}
-            icon={Building2}
-            description="Registered Institutions"
-            className="border-l-4 border-l-indigo-500"
-          />
-          <AdminStatCard
-            title="Org This Month Revenue"
-            value={stats.orgStudents}
-            icon={School}
-            description="Students in organizations"
-            className="border-l-4 border-l-violet-500"
-          /> */}
+           
         </div>
 
      {/* MAIN ANALYTICS */}
@@ -454,7 +463,7 @@ const latest = [...orders]
 
         {/* Organization Enquiries Chart */}
            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-1 flex flex-col gap-6">
-            <div className="pt-6 border-t border-slate-100">
+         
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">Enquiry Sources</h2>
@@ -495,7 +504,7 @@ const latest = [...orders]
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+           
 </div>
 
         </div>
