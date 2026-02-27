@@ -13,6 +13,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const AdminUsers = () => {
   const [data, setData] = useState([]);
@@ -29,6 +39,14 @@ const AdminUsers = () => {
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editType, setEditType] = useState('');
+
+  // delete confirmation
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+
+  // block confirmation
+  const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
+  const [userToBlock, setUserToBlock] = useState(null); // stores { id, isBlocked }
 
   const { toast } = useToast();
 
@@ -81,11 +99,16 @@ const AdminUsers = () => {
     setIsEditDialogOpen(true);
   };
 
-  const handleDeleteClick = async (userId) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+  const handleDeleteClick = (userId) => {
+    setUserToDelete(userId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
 
     try {
-      const response = await axios.post(`${serverURL}/api/admin/deleteuser`, { userId });
+      const response = await axios.post(`${serverURL}/api/admin/deleteuser`, { userId: userToDelete });
       if (response.data.success) {
         toast({ title: 'User deleted successfully' });
         fetchData();
@@ -94,6 +117,9 @@ const AdminUsers = () => {
       }
     } catch (err) {
       toast({ title: 'Server error', variant: 'destructive' });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
     }
   };
 
@@ -139,21 +165,31 @@ const AdminUsers = () => {
     }
   };
 
-  const handleBlockToggle = async (userId, currentBlockedStatus) => {
+  const handleBlockToggle = (userId, currentBlockedStatus) => {
+    setUserToBlock({ id: userId, isBlocked: currentBlockedStatus });
+    setIsBlockDialogOpen(true);
+  };
+
+  const confirmBlockToggle = async () => {
+    if (!userToBlock) return;
+
     try {
       const response = await axios.post(`${serverURL}/api/admin/block-user`, {
-        userId,
-        isBlocked: !currentBlockedStatus,
+        userId: userToBlock.id,
+        isBlocked: !userToBlock.isBlocked,
       });
 
       if (response.data.success) {
-        toast({ title: `User ${!currentBlockedStatus ? 'blocked' : 'unblocked'} successfully` });
+        toast({ title: `User ${!userToBlock.isBlocked ? 'blocked' : 'unblocked'} successfully` });
         fetchData();
       } else {
         toast({ title: 'Action failed', variant: 'destructive' });
       }
     } catch (err) {
       toast({ title: 'Server error', variant: 'destructive' });
+    } finally {
+      setIsBlockDialogOpen(false);
+      setUserToBlock(null);
     }
   };
 
@@ -305,6 +341,47 @@ const AdminUsers = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user
+              account and remove their data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Block Confirmation Dialog */}
+      <AlertDialog open={isBlockDialogOpen} onOpenChange={setIsBlockDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {userToBlock?.isBlocked ? 'Unblock User?' : 'Block User?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {userToBlock?.isBlocked
+                ? 'Are you sure you want to unblock this user? They will regain access to the platform.'
+                : 'Are you sure you want to block this user? They will lose access to the platform until unblocked.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmBlockToggle}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
