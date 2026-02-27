@@ -87,7 +87,8 @@ import BlogPost from "./pages/BlogPost";
 import ResumeBuilder from "./pages/ResumeBuilder";
 import ResumeView from "./pages/ResumeView";
 import AINotebook from "./pages/AINotebook";
-
+import StudentSupportTickets from "./pages/StudentSupportTickets";
+import OrgStudentTickets from "./pages/OrgStudentTickets";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -130,8 +131,9 @@ const App = () => (
                     <Route path="resume-builder" element={<ResumeBuilder />} />
 
                     <Route path="support" element={<SupportTickets />} />
+                    <Route path="student/support-tickets" element={<StudentSupportTickets />} /> 
 
-
+<Route path="org/student-tickets" element={<OrgStudentTickets />} />
                   </Route>
 
                   {/* Course Routes */}

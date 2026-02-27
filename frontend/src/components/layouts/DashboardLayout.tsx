@@ -160,8 +160,6 @@ const DashboardLayout = () => {
                         </SidebarMenuItem>
                       )}
 
-
-
                       {/* Support — show only if NOT admin */}
                       {!admin && (
                         <SidebarMenuItem>
@@ -180,8 +178,6 @@ const DashboardLayout = () => {
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       )}
-
-
 
 
                       {/* <SidebarMenuItem>
@@ -285,7 +281,23 @@ const DashboardLayout = () => {
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
-                    </>
+
+                      <SidebarMenuItem>
+  <SidebarMenuButton
+    asChild
+    tooltip="Support Tickets"
+    isActive={isActive('/dashboard/student/support-tickets')}
+  >
+    <Link
+      to="/dashboard/student/support-tickets"
+      className={cn(isActive('/dashboard/student/support-tickets') && "text-primary")}
+    >
+      <MessageSquare />
+      <span>Support Tickets</span>
+    </Link>
+  </SidebarMenuButton>
+</SidebarMenuItem>
+                   </>
                   ) : (
                     <>
                       {/* Default Menu Items for non-students (Regular Users / Admins / Org Admins) */}
@@ -390,11 +402,28 @@ const DashboardLayout = () => {
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+ {/* ✅ Student Tickets (NEW CLEAN ROUTE) */}
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        tooltip="Student Tickets"
+        isActive={isActive('/dashboard/org/student-tickets')}
+      >
+        <Link
+          to="/dashboard/org/student-tickets"
+          className={cn(isActive('/dashboard/org/student-tickets') && "text-primary")}
+        >
+          <MessageSquare className="ml-4" />
+          <span>Student Tickets</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
                     </>
                   )}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
+
 
             {sessionStorage.getItem('role') !== 'student' && (
               <SidebarGroup>

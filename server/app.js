@@ -5,6 +5,7 @@ import path from 'path';
 import mongoose from 'mongoose';
 // import orgRoutes from './routes/org.routes.js';
 import ticketRoutes from './routes/ticket.routes.js';
+import studentTicketRoutes from "./routes/studentTicket.routes.js";
 
 // 🔥 Load env FIRST
 import './config/env.js';
@@ -119,6 +120,7 @@ app.use('/api', subscriberRoutes);
 app.use('/api', resumeRoutes);
 app.use('/api', ticketRoutes);
 app.use('/api/notebook', notebookRoutes);
+app.use("/api", studentTicketRoutes);
 
 
 
