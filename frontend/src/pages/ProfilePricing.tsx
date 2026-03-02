@@ -1530,7 +1530,18 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Check, Crown, Zap } from 'lucide-react';
+import { Check, Crown, Zap, AlertTriangle } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/use-toast';
 import {
   FreeCost,
   FreeType,
@@ -1615,6 +1626,10 @@ const ProfilePricing = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserPlan, setCurrentUserPlan] = useState<string>('free');
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
+  const { toast } = useToast();
 
   /* -------------------- FETCH USER PLAN & PRICING -------------------- */
 
@@ -1802,6 +1817,52 @@ const ProfilePricing = () => {
     return symbols[currency] || '₹';
   };
 
+  const handleRequestCancellation = async () => {
+    try {
+      setIsSubmittingCancel(true);
+      const userId = sessionStorage.getItem('uid');
+
+      if (!userId) {
+        toast({
+          title: "Error",
+          description: "User session not found. Please log in again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await axios.post(`${serverURL}/api/request-cancellation`, {
+        userId,
+        plan: currentUserPlan,
+        reason: cancelReason,
+      });
+
+      if (response.data.success) {
+        toast({
+          title: "Success",
+          description: response.data.message,
+        });
+        setIsCancelDialogOpen(false);
+        setCancelReason('');
+      } else {
+        toast({
+          title: "Request Failed",
+          description: response.data.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Cancellation request error:', error);
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingCancel(false);
+    }
+  };
+
   /* -------------------- UI -------------------- */
 
   if (isLoading) {
@@ -1949,6 +2010,56 @@ const ProfilePricing = () => {
           );
         })}
       </div>
+
+      {(currentUserPlan === 'monthly' || currentUserPlan === 'yearly') && (
+        <div className="mt-16 text-center border-t pt-10">
+          <h2 className="text-xl font-semibold mb-2">Need to cancel your subscription?</h2>
+          <p className="text-gray-500 mb-6">
+            We're sorry to see you go. You can request a plan cancellation below.
+          </p>
+
+          <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700">
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                Request for plan cancellation
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Request Plan Cancellation</DialogTitle>
+                <DialogDescription>
+                  Please let us know why you'd like to cancel. Your request will be reviewed by our team.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <Textarea
+                  placeholder="Reason for cancellation (optional)"
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  className="min-h-[100px]"
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="ghost"
+                  onClick={() => setIsCancelDialogOpen(false)}
+                  disabled={isSubmittingCancel}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleRequestCancellation}
+                  disabled={isSubmittingCancel}
+                >
+                  {isSubmittingCancel ? "Submitting..." : "Submit Request"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
     </div>
   );
 };

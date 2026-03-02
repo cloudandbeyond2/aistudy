@@ -60,6 +60,7 @@ import AdminPrivacy from "./pages/admin/AdminPrivacy";
 import AdminCancellation from "./pages/admin/AdminCancellation";
 import AdminRefund from "./pages/admin/AdminRefund";
 import AdminDeletionRequests from "./pages/admin/AdminDeletionRequests";
+import AdminCancellationRequests from "./pages/admin/AdminCancellationRequests";
 import AdminSubscriptionBilling from "./pages/admin/AdminSubscriptionBilling";
 import AdminCreateBlog from "./pages/admin/AdminCreateBlog";
 import AdminBlogs from "./pages/admin/AdminBlogs";
@@ -131,9 +132,9 @@ const App = () => (
                     <Route path="resume-builder" element={<ResumeBuilder />} />
 
                     <Route path="support" element={<SupportTickets />} />
-                    <Route path="student/support-tickets" element={<StudentSupportTickets />} /> 
+                    <Route path="student/support-tickets" element={<StudentSupportTickets />} />
 
-<Route path="org/student-tickets" element={<OrgStudentTickets />} />
+                    <Route path="org/student-tickets" element={<OrgStudentTickets />} />
                   </Route>
 
                   {/* Course Routes */}
@@ -166,6 +167,7 @@ const App = () => (
                     <Route index element={<AdminDashboard />} />
                     <Route path="users" element={<AdminUsers />} />
                     <Route path="deletion-requests" element={<AdminDeletionRequests />} />
+                    <Route path="cancellation-requests" element={<AdminCancellationRequests />} />
                     <Route path="courses" element={<AdminCourses />} />
                     <Route path="cookies" element={<AdminCookies />} />
                     <Route path="pricing" element={<AdminPricing />} />

@@ -133,6 +133,15 @@ const AdminLayout = () => {
               </SidebarMenuItem>
 
               <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Cancellation Requests" isActive={isActive('/admin/cancellation-requests')}>
+                  <Link to="/admin/cancellation-requests" className={cn(isActive('/admin/cancellation-requests') && "text-primary")}>
+                    <X />
+                    <span>Cancellation Requests</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Courses" isActive={isActive('/admin/courses')}>
                   <Link to="/admin/courses" className={cn(isActive('/admin/courses') && "text-primary")}>
                     <BookOpen />
