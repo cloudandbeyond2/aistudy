@@ -778,6 +778,52 @@ export const verifyEmail = async (req, res) => {
     user.emailVerificationExpires = null;
     await user.save();
 
+    // Send account creation/welcome email
+    try {
+      await transporter.sendMail({
+        from: process.env.EMAIL,
+        to: user.email,
+        subject: `Welcome to ${process.env.COMPANY || "AIstudy"}!`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Account Verified</title>
+</head>
+<body style="margin:0;padding:0;background:#f2f2f2;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+<tr>
+<td align="center">
+<table width="700" cellpadding="0" cellspacing="0" style="background:#e9e9e9;border-radius:10px;border:1px solid #d0d0d0;">
+<tr>
+<td style="padding:35px 40px; color:#333;">
+<h2 style="text-align:center;margin-top:0;margin-bottom:25px;color:#333;">Account Verified Successfully!</h2>
+<p>Hello <strong>${user.mName}</strong>,</p>
+<p>Your email has been verified successfully. Your account is now fully active.</p>
+<p>You can now log in to access all the features of <strong>${process.env.COMPANY || "Traininglabs Ai Solutions"}</strong>.</p>
+<div style="text-align:center;margin:35px 0;">
+<a href="${process.env.WEBSITE_URL}/login" style="background:#1a73e8;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:bold;display:inline-block;font-size:15px;">Login to Your Account</a>
+</div>
+<hr style="border:none;border-top:1px solid #cfcfcf;margin:30px 0;">
+<p style="text-align:center;font-size:12px;color:#666;margin-bottom:0;">
+© ${new Date().getFullYear()} ${process.env.COMPANY || "Traininglabs Ai Solutions"}. All rights reserved.
+</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</body>
+</html>
+`,
+      });
+    } catch (mailErr) {
+      console.error("Welcome Mail Send Error:", mailErr);
+      // We don't return error here because the account IS verified
+    }
+
     res.json({
       success: true,
       message: "Email verified successfully! You can now log in.",
@@ -834,6 +880,51 @@ export const socialLogin = async (req, res) => {
     });
 
     await user.save();
+
+    // Send welcome email for social login
+    try {
+      await transporter.sendMail({
+        from: process.env.EMAIL,
+        to: user.email,
+        subject: `Welcome to ${process.env.COMPANY || "AIstudy"}!`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Welcome to AIstudy</title>
+</head>
+<body style="margin:0;padding:0;background:#f2f2f2;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+<tr>
+<td align="center">
+<table width="700" cellpadding="0" cellspacing="0" style="background:#e9e9e9;border-radius:10px;border:1px solid #d0d0d0;">
+<tr>
+<td style="padding:35px 40px; color:#333;">
+<h2 style="text-align:center;margin-top:0;margin-bottom:25px;color:#333;">Welcome to the Platform!</h2>
+<p>Hello <strong>${mName}</strong>,</p>
+<p>Thank you for joining <strong>${process.env.COMPANY || "Traininglabs Ai Solutions"}</strong> via social login.</p>
+<p>Your account is now ready. You can explore all our courses and features immediately.</p>
+<div style="text-align:center;margin:35px 0;">
+<a href="${process.env.WEBSITE_URL}/dashboard" style="background:#1a73e8;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:bold;display:inline-block;font-size:15px;">Go to Your Dashboard</a>
+</div>
+<hr style="border:none;border-top:1px solid #cfcfcf;margin:30px 0;">
+<p style="text-align:center;font-size:12px;color:#666;margin-bottom:0;">
+© ${new Date().getFullYear()} ${process.env.COMPANY || "Traininglabs Ai Solutions"}. All rights reserved.
+</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</body>
+</html>
+`,
+      });
+    } catch (mailErr) {
+      console.error("Social Welcome Mail Send Error:", mailErr);
+    }
 
     // First user becomes admin
     if (estimate === 0) {

@@ -11,6 +11,7 @@ import Project from '../models/Project.js';
 import Material from '../models/Material.js';
 import StudentProgress from '../models/StudentProgress.js';
 import { createNotification } from './notification.controller.js';
+import { sendMail } from '../services/mail.service.js';
 // import { generateAssignments } from './ai.controller.js'; // Will implement this export next
 
 /**
@@ -58,6 +59,50 @@ export const orgSignup = async (req, res) => {
             isOrganization: true
         });
         await adminUser.save();
+
+        // Send welcome email to Org
+        try {
+            await sendMail({
+                to: email,
+                subject: `Welcome to ${process.env.COMPANY || "AIstudy"}! - Organization Registered`,
+                html: `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Organization Registered</title>
+</head>
+<body style="margin:0;padding:0;background:#f2f2f2;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+<tr>
+<td align="center">
+<table width="700" cellpadding="0" cellspacing="0" style="background:#e9e9e9;border-radius:10px;border:1px solid #d0d0d0;">
+<tr>
+<td style="padding:35px 40px; color:#333;">
+<h2 style="text-align:center;margin-top:0;margin-bottom:25px;color:#333;">Organization Registered Successfully!</h2>
+<p>Hello <strong>${name}</strong>,</p>
+<p>Congratulations! Your organization has been successfully registered on <strong>${process.env.COMPANY || "Traininglabs Ai Solutions"}</strong>.</p>
+<p>You can now log in to manage your students, courses, and assignments from the dashboard.</p>
+<div style="text-align:center;margin:35px 0;">
+<a href="${process.env.WEBSITE_URL}/login" style="background:#1a73e8;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:bold;display:inline-block;font-size:15px;">Login to Dashboard</a>
+</div>
+<hr style="border:none;border-top:1px solid #cfcfcf;margin:30px 0;">
+<p style="text-align:center;font-size:12px;color:#666;margin-bottom:0;">
+© ${new Date().getFullYear()} ${process.env.COMPANY || "Traininglabs Ai Solutions"}. All rights reserved.
+</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</body>
+</html>
+`
+            });
+        } catch (mailErr) {
+            console.error("Org Signup Mail Send Error:", mailErr);
+        }
 
         res.json({ success: true, message: 'Organization registered successfully', orgId: newOrg._id });
     } catch (error) {
@@ -119,6 +164,56 @@ export const addStudent = async (req, res) => {
         });
 
         await user.save();
+
+        // Send welcome email to student
+        try {
+            await sendMail({
+                to: email,
+                subject: `Account Created - ${process.env.COMPANY || "AIstudy"}`,
+                html: `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Student Account Created</title>
+</head>
+<body style="margin:0;padding:0;background:#f2f2f2;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+<tr>
+<td align="center">
+<table width="700" cellpadding="0" cellspacing="0" style="background:#e9e9e9;border-radius:10px;border:1px solid #d0d0d0;">
+<tr>
+<td style="padding:35px 40px; color:#333;">
+<h2 style="text-align:center;margin-top:0;margin-bottom:25px;color:#333;">Welcome to the Platform!</h2>
+<p>Hello <strong>${name}</strong>,</p>
+<p>An account has been created for you on <strong>${process.env.COMPANY || "Traininglabs Ai Solutions"}</strong> by your organization.</p>
+<p>You can now log in using the following details:</p>
+<ul style="list-style:none;padding:0;">
+<li><strong>Login URL:</strong> <a href="${process.env.WEBSITE_URL}/login">${process.env.WEBSITE_URL}/login</a></li>
+<li><strong>Email:</strong> ${email}</li>
+</ul>
+<p>Please use the password provided by your organization or use the "Forgot Password" feature if you need to set a new one.</p>
+<div style="text-align:center;margin:35px 0;">
+<a href="${process.env.WEBSITE_URL}/login" style="background:#1a73e8;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:bold;display:inline-block;font-size:15px;">Go to Dashboard</a>
+</div>
+<hr style="border:none;border-top:1px solid #cfcfcf;margin:30px 0;">
+<p style="text-align:center;font-size:12px;color:#666;margin-bottom:0;">
+© ${new Date().getFullYear()} ${process.env.COMPANY || "Traininglabs Ai Solutions"}. All rights reserved.
+</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</body>
+</html>
+`
+            });
+        } catch (mailErr) {
+            console.error("Student Addition Mail Send Error:", mailErr);
+        }
+
         res.json({ success: true, message: 'Student added successfully' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error' });

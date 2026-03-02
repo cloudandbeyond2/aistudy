@@ -6,6 +6,7 @@ import Admin from '../models/Admin.js';
 import Subscription from '../models/Subscription.js';
 
 import { addOneMonthSafe } from '../utils/date.utils.js';
+import { sendMail } from './mail.service.js';
 /* ---------------- DASHBOARD ---------------- */
 export const getDashboardStats = async () => {
   const users = await User.estimatedDocumentCount();
@@ -290,6 +291,57 @@ export const createOrganization = async ({ email, password, institutionName, inc
   });
 
   await newUser.save();
+
+  // Send account creation email to Org
+  try {
+    const loginUrl = `${process.env.WEBSITE_URL}/login`;
+    await sendMail({
+      to: email,
+      subject: `Organization Account Created - ${institutionName}`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Organization Account Created</title>
+</head>
+<body style="margin:0;padding:0;background:#f2f2f2;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+<tr>
+<td align="center">
+<table width="700" cellpadding="0" cellspacing="0" style="background:#e9e9e9;border-radius:10px;border:1px solid #d0d0d0;">
+<tr>
+<td style="padding:35px 40px; color:#333;">
+<h2 style="text-align:center;margin-top:0;margin-bottom:25px;color:#333;">Organization Account Created</h2>
+<p>Hello <strong>${institutionName}</strong>,</p>
+<p>An institutional account has been created for you on <strong>${process.env.COMPANY || "Traininglabs Ai Solutions"}</strong>.</p>
+<p>You can now log in using the following details:</p>
+<ul style="list-style:none;padding:0;">
+<li><strong>Login URL:</strong> <a href="${loginUrl}">${loginUrl}</a></li>
+<li><strong>Email:</strong> ${email}</li>
+</ul>
+<p>For security reasons, your password is not included in this email. Please use the password provided by your administrator.</p>
+<div style="text-align:center;margin:35px 0;">
+<a href="${loginUrl}" style="background:#1a73e8;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:bold;display:inline-block;font-size:15px;">Login to Dashboard</a>
+</div>
+<hr style="border:none;border-top:1px solid #cfcfcf;margin:30px 0;">
+<p style="text-align:center;font-size:12px;color:#666;margin-bottom:0;">
+© ${new Date().getFullYear()} ${process.env.COMPANY || "Traininglabs Ai Solutions"}. All rights reserved.
+</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</body>
+</html>
+`
+    });
+  } catch (mailErr) {
+    console.error("Org Creation Mail Send Error:", mailErr);
+  }
+
   return newUser;
 };
 
