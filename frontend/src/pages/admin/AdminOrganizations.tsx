@@ -17,6 +17,16 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { Building2, Search, Edit, Ban, CheckCircle, Eye, Phone, Mail, MapPin, FileText } from 'lucide-react';
 import { serverURL } from '@/constants';
@@ -30,6 +40,8 @@ const AdminOrganizations = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedOrg, setSelectedOrg] = useState(null);
     const [isViewOpen, setIsViewOpen] = useState(false);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [orgToToggle, setOrgToToggle] = useState(null);
     const { toast } = useToast();
     const navigate = useNavigate();
 
@@ -61,6 +73,8 @@ const AdminOrganizations = () => {
                 title: "Success",
                 description: `Organization ${!currentStatus ? 'blocked' : 'unblocked'} successfully`
             });
+            setIsConfirmOpen(false);
+            setOrgToToggle(null);
             fetchOrganizations();
         } catch (error) {
             toast({
@@ -68,6 +82,17 @@ const AdminOrganizations = () => {
                 description: "Failed to update status",
                 variant: "destructive"
             });
+        }
+    };
+
+    const handleToggleClick = (id, currentStatus) => {
+        if (!currentStatus) {
+            // If they are NOT blocked, we are about to block them. show confirmation.
+            setOrgToToggle({ id, currentStatus });
+            setIsConfirmOpen(true);
+        } else {
+            // Unblocking can be direct
+            toggleBlock(id, currentStatus);
         }
     };
 
@@ -156,7 +181,7 @@ const AdminOrganizations = () => {
                                             <Button
                                                 variant={org.organizationDetails?.isBlocked ? "outline" : "destructive"}
                                                 size="sm"
-                                                onClick={() => toggleBlock(org.organization, org.organizationDetails?.isBlocked)}
+                                                onClick={() => handleToggleClick(org.organization, org.organizationDetails?.isBlocked)}
                                             >
                                                 {org.organizationDetails?.isBlocked ? <CheckCircle className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
                                             </Button>
@@ -264,6 +289,26 @@ const AdminOrganizations = () => {
                     )}
                 </DialogContent>
             </Dialog>
+
+            <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure you want to block this organization?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will prevent all users from this organization from accessing their courses and the platform.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setOrgToToggle(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => orgToToggle && toggleBlock(orgToToggle.id, orgToToggle.currentStatus)}
+                        >
+                            Block Organization
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };
