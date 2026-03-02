@@ -200,9 +200,9 @@ const Header = () => {
                       <Link
                         to="/dashboard/resume-builder"
                         onClick={() => setOpen(false)}
-                        className="block px-4 py-3 text-sm font-bold rounded-2xl hover:bg-primary/5 dark:hover:bg-white/10 transition text-indigo-600 dark:text-indigo-400"
+                        className="block px-4 py-3 text-sm font-bold rounded-2xl hover:bg-primary/5 dark:hover:bg-white/10 transition"
                       >
-                        📄 Resume Builder
+                       Resume Builder
                       </Link>
                     )}
 
