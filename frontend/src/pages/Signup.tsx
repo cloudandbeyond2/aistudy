@@ -38,7 +38,9 @@ const Signup = () => {
       redirectHome();
     }
   }, []);
-
+useEffect(() => {
+  window.scrollTo(0, 0);
+}, []);
   function redirectHome() {
     navigate("/dashboard");
   }
