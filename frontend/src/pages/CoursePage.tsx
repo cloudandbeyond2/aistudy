@@ -868,44 +868,63 @@ const CoursePage = () => {
     }
   }
 
-  async function htmlDownload() {
+ async function htmlDownload() {
+  try {
     setExporting(true);
-    // Generate the combined HTML content
-    const combinedHtml = await getCombinedHtml(mainTopic, jsonData[mainTopic.toLowerCase()]);
 
-    // Create a temporary div element
-    const tempDiv = document.createElement('div');
-    tempDiv.style.width = '100%';  // Ensure div is 100% width
-    tempDiv.style.height = '100%';  // Ensure div is 100% height
+    const topics =
+      jsonData?.course_topics ||
+      jsonData?.[mainTopic?.toLowerCase()];
+
+    if (!topics || !Array.isArray(topics)) {
+      toast({
+        title: "Export Failed",
+        description: "Course topics not found",
+      });
+      setExporting(false);
+      return;
+    }
+
+    const combinedHtml = await getCombinedHtml(mainTopic, topics);
+
+    const tempDiv = document.createElement("div");
+    tempDiv.style.width = "100%";
     tempDiv.innerHTML = combinedHtml;
     document.body.appendChild(tempDiv);
 
-    // Create the PDF options
     const options = {
       filename: `${mainTopic}.pdf`,
-      image: { type: 'jpeg', quality: 1 },
+      image: { type: "jpeg", quality: 1 },
       margin: [15, 15, 15, 15],
       pagebreak: { mode: ["avoid-all", "css", "legacy"] },
       html2canvas: {
         scale: 2,
-        logging: false,
-        scrollX: 0,
-        scrollY: 0,
-        useCORS: true
+        useCORS: true,
       },
-      jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
+      jsPDF: { unit: "pt", format: "a4", orientation: "portrait" },
     };
 
-    // Generate the PDF
-    html2pdf().from(tempDiv).set(options).save().then(() => {
-      // Save the PDF
-      document.body.removeChild(tempDiv);
-      setExporting(false);
+    await html2pdf().from(tempDiv).set(options).save();
+
+    document.body.removeChild(tempDiv);
+  } catch (error) {
+    console.error("PDF Export Error:", error);
+    toast({
+      title: "Export Failed",
+      description: "Something went wrong while exporting PDF.",
     });
+  } finally {
+    setExporting(false);
   }
+}
 
   async function getCombinedHtml(mainTopic, topics) {
 
+  // ✅ ADD THIS BLOCK HERE
+  if (!topics || !Array.isArray(topics)) {
+    console.error("Invalid topics passed to getCombinedHtml:", topics);
+    return "<p>No topics available</p>";
+  }
     async function toDataUrl(url) {
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
