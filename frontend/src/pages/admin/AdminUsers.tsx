@@ -28,9 +28,8 @@ const AdminUsers = () => {
   const [data, setData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-
-  // pagination
   const [currentPage, setCurrentPage] = useState(1);
+  const [typeFilter, setTypeFilter] = useState('all');
   const itemsPerPage = 10;
 
   // edit dialog
@@ -70,17 +69,23 @@ const AdminUsers = () => {
   const filteredData = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
     return data.filter((user) => {
+      // Type filter
+      const matchesType = typeFilter === 'all' || user.type === typeFilter;
+      if (!matchesType) return false;
+
+      // Search filter
       const nameMatch = user.mName?.toLowerCase().includes(query);
       const emailMatch = user.email?.toLowerCase().includes(query);
-      const typeMatch = (user.type !== 'free' ? 'paid' : 'free').includes(query);
-      return nameMatch || emailMatch || typeMatch;
-    });
-  }, [data, searchQuery]);
+      const searchTypeMatch = (user.type !== 'free' ? 'paid' : 'free').includes(query);
 
-  // reset page when search changes
+      return !query || nameMatch || emailMatch || searchTypeMatch;
+    });
+  }, [data, searchQuery, typeFilter]);
+
+  // reset page when search or filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, typeFilter]);
 
   // ---------------- PAGINATION ----------------
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -202,14 +207,28 @@ const AdminUsers = () => {
         <CardHeader>
           <div className="flex justify-between items-center gap-4">
             <CardTitle>All Users</CardTitle>
-            <div className="relative w-64">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search users..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-full sm:w-32">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                  <SelectItem value="forever">Lifetime</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search users..."
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
           </div>
         </CardHeader>

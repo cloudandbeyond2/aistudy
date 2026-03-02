@@ -305,10 +305,10 @@
 // )}
 
 //         </CardContent>
-        
+
 //       </Card>
 
-    
+
 
 //       {/* Edit Dialog */}
 //       <Dialog
@@ -419,6 +419,8 @@ const AdminCourses = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
@@ -460,21 +462,32 @@ const AdminCourses = () => {
     fetchData();
   }, []);
 
-  /* ================= SEARCH ================= */
+  /* ================= SEARCH & FILTER ================= */
   const filteredData = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
     return data.filter((course) => {
+      // Search filter
       const titleMatch = course.mainTopic?.toLowerCase().includes(query);
-      const userMatch = course.userDetails?.mName
-        ?.toLowerCase()
-        .includes(query);
-      return titleMatch || userMatch;
+      const userMatch = course.userDetails?.mName?.toLowerCase().includes(query);
+      const searchMatch = !query || titleMatch || userMatch;
+
+      // Status filter
+      let statusMatch = true;
+      if (statusFilter === 'pending') statusMatch = !course.completed;
+      if (statusFilter === 'completed') statusMatch = course.completed;
+
+      // Type filter
+      let typeMatch = true;
+      if (typeFilter === 'video') typeMatch = course.type !== 'text & image course';
+      if (typeFilter === 'image') typeMatch = course.type === 'text & image course';
+
+      return searchMatch && statusMatch && typeMatch;
     });
-  }, [data, searchQuery]);
+  }, [data, searchQuery, statusFilter, typeFilter]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, statusFilter, typeFilter]);
 
   /* ================= PAGINATION ================= */
   const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
@@ -518,10 +531,10 @@ const AdminCourses = () => {
           prev.map((course) =>
             course._id === selectedCourse._id
               ? {
-                  ...course,
-                  completed: payload.completed,
-                  restricted: payload.restricted,
-                }
+                ...course,
+                completed: payload.completed,
+                restricted: payload.restricted,
+              }
               : course
           )
         );
@@ -548,16 +561,40 @@ const AdminCourses = () => {
 
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <CardTitle>All Courses</CardTitle>
-            <div className="relative w-64">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-32">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-full sm:w-32">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="video">Video</SelectItem>
+                  <SelectItem value="image">Image</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search..."
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
           </div>
         </CardHeader>

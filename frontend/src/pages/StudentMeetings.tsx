@@ -57,9 +57,19 @@ const StudentMeetings = () => {
                                     <Clock className="w-4 h-4" /> {new Date(m.date).toLocaleDateString()} at {m.time}
                                 </span>
                             </div>
-                            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => window.open(m.link, '_blank')}>
-                                Join Meeting <ExternalLink className="w-4 h-4 ml-2" />
-                            </Button>
+                            {(() => {
+                                const isExpired = new Date(m.date).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0);
+                                return (
+                                    <Button
+                                        className={`w-full ${isExpired ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
+                                        onClick={() => !isExpired && window.open(m.link, '_blank')}
+                                        disabled={isExpired}
+                                    >
+                                        {isExpired ? 'Meeting Expired' : 'Join Meeting'}
+                                        {!isExpired && <ExternalLink className="w-4 h-4 ml-2" />}
+                                    </Button>
+                                );
+                            })()}
                         </CardContent>
                     </Card>
                 )) : (
