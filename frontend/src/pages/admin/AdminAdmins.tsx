@@ -19,6 +19,13 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircledIcon, CrossCircledIcon } from '@radix-ui/react-icons';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { serverURL } from '@/constants';
 import axios from 'axios';
 import { toast } from '@/hooks/use-toast';
@@ -32,26 +39,39 @@ const AdminAdmins = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [roleFilter, setRoleFilter] = useState('all');
 
-  /* ---------------- FILTER USERS ---------------- */
-  const filteredUsers = useMemo(() => {
-    const query = searchQuery.toLowerCase().trim();
-    return users.filter(
-      (u) =>
-        u.mName?.toLowerCase().includes(query) ||
-        u.email?.toLowerCase().includes(query)
-    );
-  }, [users, searchQuery]);
-
-  /* ---------------- COMBINE DATA ---------------- */
+  /* ---------------- COMBINE AND FILTER DATA ---------------- */
   const combinedData = useMemo(() => {
-    return [...admins, ...filteredUsers];
-  }, [admins, filteredUsers]);
+    const query = searchQuery.toLowerCase().trim();
+
+    // Add role tag to distinguish during filtering/rendering
+    const taggedAdmins = admins.map(a => ({ ...a, role: 'admin' }));
+    const taggedUsers = users.map(u => ({ ...u, role: 'user' }));
+
+    let combined = [...taggedAdmins, ...taggedUsers];
+
+    // Filter by role
+    if (roleFilter !== 'all') {
+      combined = combined.filter(item => item.role === roleFilter);
+    }
+
+    // Filter by search query (applies to both admins and users now)
+    if (query) {
+      combined = combined.filter(
+        (u) =>
+          u.mName?.toLowerCase().includes(query) ||
+          u.email?.toLowerCase().includes(query)
+      );
+    }
+
+    return combined;
+  }, [admins, users, searchQuery, roleFilter]);
 
   /* Reset page on search */
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, roleFilter]);
 
   /* ---------------- PAGINATION ---------------- */
   const totalPages = Math.ceil(combinedData.length / ITEMS_PER_PAGE);
@@ -101,14 +121,26 @@ const AdminAdmins = () => {
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <CardTitle>All Administrators</CardTitle>
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4" />
-              <Input
-                placeholder="Search admins..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-full sm:w-32">
+                  <SelectValue placeholder="Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="user">User</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4" />
+                <Input
+                  placeholder="Search..."
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -136,7 +168,7 @@ const AdminAdmins = () => {
                 ))
               ) : paginatedData.length ? (
                 paginatedData.map((row) => {
-                  const isAdmin = admins.some((a) => a._id === row._id);
+                  const isAdmin = row.role === 'admin';
 
                   return (
                     <TableRow key={row._id}>
