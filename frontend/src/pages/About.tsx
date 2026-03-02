@@ -10,10 +10,13 @@ import {
   Award,
 } from "lucide-react";
 import { appName, companyName } from "@/constants";
-
+import { useEffect } from "react";
 import Footer from "@/components/Footer";
 
 const About = () => {
+  useEffect(() => {
+  window.scrollTo(0, 0);
+}, []);
   return (
     <>
 

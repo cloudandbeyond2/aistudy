@@ -11,7 +11,7 @@ const slides = [
         title: "Revolutionize Your Learning",
         subtitle: "Experience the power of AI-driven course generation tailored to your needs.",
         cta: "Explore Courses",
-        link: "/dashboard"
+        link: "/signup"
     },
     {
         id: 2,
@@ -27,7 +27,7 @@ const slides = [
         title: "Build a Job-Winning Resume in Minutes",
         subtitle: "Create professional, ATS-friendly resumes with smart formatting and expert-designed templates.",
         cta: "Start Creating",
-        link: "/dashboard"
+        link: "/signup"
     }
 ];
 

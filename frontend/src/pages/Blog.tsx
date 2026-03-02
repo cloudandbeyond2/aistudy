@@ -37,7 +37,9 @@ const Blog = () => {
   const [popular, setPopular] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-
+useEffect(() => {
+  window.scrollTo(0, 0);
+}, []);
   useEffect(() => {
     async function dashboardData() {
       const postURL = serverURL + `/api/getblogs`;

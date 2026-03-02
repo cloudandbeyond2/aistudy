@@ -10,6 +10,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { Link } from "react-router-dom";
 import { Mail, Phone } from "lucide-react";
 import Logo from "../res/logo.svg";
+import { useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -34,7 +35,9 @@ const OrganizationEnquiry = () => {
 
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  
+  useEffect(() => {
+  window.scrollTo(0, 0);
+}, []);
 
   const handleChange = (
   e: React.ChangeEvent<
