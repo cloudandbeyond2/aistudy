@@ -57,10 +57,8 @@ import AdminAdmins from "./pages/admin/AdminAdmins";
 import AdminContacts from "./pages/admin/AdminContacts";
 import AdminTerms from "./pages/admin/AdminTerms";
 import AdminPrivacy from "./pages/admin/AdminPrivacy";
-import AdminCancellation from "./pages/admin/AdminCancellation";
 import AdminRefund from "./pages/admin/AdminRefund";
 import AdminDeletionRequests from "./pages/admin/AdminDeletionRequests";
-import AdminCancellationRequests from "./pages/admin/AdminCancellationRequests";
 import AdminSubscriptionBilling from "./pages/admin/AdminSubscriptionBilling";
 import AdminCreateBlog from "./pages/admin/AdminCreateBlog";
 import AdminBlogs from "./pages/admin/AdminBlogs";
@@ -167,7 +165,6 @@ const App = () => (
                     <Route index element={<AdminDashboard />} />
                     <Route path="users" element={<AdminUsers />} />
                     <Route path="deletion-requests" element={<AdminDeletionRequests />} />
-                    <Route path="cancellation-requests" element={<AdminCancellationRequests />} />
                     <Route path="courses" element={<AdminCourses />} />
                     <Route path="cookies" element={<AdminCookies />} />
                     <Route path="pricing" element={<AdminPricing />} />
@@ -176,7 +173,6 @@ const App = () => (
                     <Route path="contacts" element={<AdminContacts />} />
                     <Route path="terms" element={<AdminTerms />} />
                     <Route path="privacy" element={<AdminPrivacy />} />
-                    <Route path="cancellation" element={<AdminCancellation />} />
                     <Route path="refund" element={<AdminRefund />} />
                     <Route path="subscription-billing" element={<AdminSubscriptionBilling />} />
                     <Route path="subscribers" element={<AdminSubscribers />} />

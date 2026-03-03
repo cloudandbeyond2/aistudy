@@ -61,8 +61,6 @@ const Profile = () => {
   const [savingSettings, setSavingSettings] = useState(false);
   const [requestingDeletion, setRequestingDeletion] = useState(false);
   const [deletionReason, setDeletionReason] = useState('');
-  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
-  const [cancelReason, setCancelReason] = useState('');
   const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
   const [formData, setFormData] = useState({
     mName: sessionStorage.getItem('mName') || "",
@@ -257,51 +255,7 @@ const Profile = () => {
     }
   };
 
-  const handleRequestCancellation = async () => {
-    try {
-      setIsSubmittingCancel(true);
-      const userId = sessionStorage.getItem('uid');
 
-      if (!userId) {
-        toast({
-          title: "Error",
-          description: "User session not found. Please log in again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const response = await axios.post(`${serverURL}/api/request-cancellation`, {
-        userId,
-        plan: activeType,
-        reason: cancelReason,
-      });
-
-      if (response.data.success) {
-        toast({
-          title: "Success",
-          description: response.data.message,
-        });
-        setIsCancelDialogOpen(false);
-        setCancelReason('');
-      } else {
-        toast({
-          title: "Request Failed",
-          description: response.data.message,
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Cancellation request error:', error);
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again later.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmittingCancel(false);
-    }
-  };
 
 
   // star bala
@@ -1589,57 +1543,7 @@ const Profile = () => {
                         <AlertTriangle className="h-4 w-4" /> Danger Zone
                       </h4>
 
-                      {/* Plan Cancellation */}
-                      {(activeType === 'monthly' || activeType === 'yearly') && (
-                        <div className="flex items-center justify-between rounded-lg border border-red-200 p-4 bg-red-50/30">
-                          <div>
-                            <Label className="font-medium">Request Plan Cancellation</Label>
-                            <p className="text-sm text-muted-foreground">
-                              We're sorry to see you go. Submit a request to cancel your paid subscription.
-                            </p>
-                          </div>
 
-                          <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700">
-                                Request Cancellation
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[425px]">
-                              <DialogHeader>
-                                <DialogTitle>Request Plan Cancellation</DialogTitle>
-                                <DialogDescription>
-                                  Please let us know why you'd like to cancel. Your request will be reviewed by our team.
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="grid gap-4 py-4">
-                                <Textarea
-                                  placeholder="Reason for cancellation (optional)"
-                                  value={cancelReason}
-                                  onChange={(e) => setCancelReason(e.target.value)}
-                                  className="min-h-[100px]"
-                                />
-                              </div>
-                              <DialogFooter>
-                                <Button
-                                  variant="ghost"
-                                  onClick={() => setIsCancelDialogOpen(false)}
-                                  disabled={isSubmittingCancel}
-                                >
-                                  Cancel
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  onClick={handleRequestCancellation}
-                                  disabled={isSubmittingCancel}
-                                >
-                                  {isSubmittingCancel ? "Submitting..." : "Submit Request"}
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      )}
 
                       <div className="flex items-center justify-between rounded-lg border border-red-200 p-4 bg-red-50/30">
                         <div>

@@ -7,7 +7,8 @@ import Course from '../models/Course.js';
 import IssuedCertificate from '../models/IssuedCertificate.js';
 import Contact from '../models/Contact.js';
 import AccountDeleteRequest from '../models/AccountDeleteRequest.js';
-import PlanCancellationRequest from '../models/PlanCancellationRequest.js';
+import AccountDeleteRequest from '../models/AccountDeleteRequest.js';
+
 
 /**
  * GET USER STATS (COURSES, CERTIFICATES, TICKETS)
@@ -248,84 +249,3 @@ export const upgradeUser = async (req, res) => {
   }
 };
 
-/**
- * REQUEST PLAN CANCELLATION
- */
-export const requestCancellation = async (req, res) => {
-  try {
-    const { userId, plan, reason } = req.body;
-
-    if (!userId || !plan) {
-      return res.status(400).json({ success: false, message: 'User ID and Plan are required' });
-    }
-
-    // Check if already pending for this plan
-    const existing = await PlanCancellationRequest.findOne({ user: userId, plan, status: 'pending' });
-    if (existing) {
-      return res.json({
-        success: false,
-        message: 'A cancellation request for this plan is already pending.'
-      });
-    }
-
-    await PlanCancellationRequest.create({ user: userId, plan, reason: reason || '' });
-
-    res.json({
-      success: true,
-      message: 'Plan cancellation request submitted. Admin will review it shortly.'
-    });
-  } catch (error) {
-    console.error('Request cancellation error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-};
-
-/**
- * ADMIN - GET CANCELLATION REQUESTS
- */
-export const getCancellationRequests = async (req, res) => {
-  try {
-    const requests = await PlanCancellationRequest.find()
-      .populate('user', 'mName email')
-      .sort({ createdAt: -1 });
-
-    res.json({
-      success: true,
-      requests
-    });
-  } catch (error) {
-    console.error('Get cancellation requests error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-};
-
-/**
- * ADMIN - UPDATE CANCELLATION REQUEST STATUS
- */
-export const updateCancellationRequestStatus = async (req, res) => {
-  try {
-    const { requestId, status } = req.body;
-
-    if (!['approved', 'rejected'].includes(status)) {
-      return res.status(400).json({ success: false, message: 'Invalid status' });
-    }
-
-    const request = await PlanCancellationRequest.findById(requestId);
-
-    if (!request) {
-      return res.status(404).json({ success: false, message: 'Request not found' });
-    }
-
-    request.status = status;
-    await request.save();
-
-    res.json({
-      success: true,
-      message: `Request marked as ${status}`,
-      request
-    });
-  } catch (error) {
-    console.error('Update cancellation request error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-};
