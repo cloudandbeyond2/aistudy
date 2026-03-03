@@ -63,6 +63,7 @@ const userSchema = new mongoose.Schema({
   },
 
   isBlocked: { type: Boolean, default: false },
+  failedAttempts: { type: Number, default: 0 },
   notifications: {
     mail: { type: Boolean, default: true },
     payments: { type: Boolean, default: true },

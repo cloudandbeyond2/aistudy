@@ -728,6 +728,10 @@ export const signin = async (req, res) => {
         });
       }
 
+      // Reset failed attempts on successful login
+      user.failedAttempts = 0;
+      await user.save();
+
       return res.json({
         success: true,
         message: "SignIn Successful",
@@ -735,9 +739,25 @@ export const signin = async (req, res) => {
       });
     }
 
+    // Increment failed attempts on failure
+    user.failedAttempts = (user.failedAttempts || 0) + 1;
+
+    let message = "Invalid email or password";
+    const maxAttempts = 6;
+    const attemptsLeft = maxAttempts - user.failedAttempts;
+
+    if (user.failedAttempts >= maxAttempts) {
+      user.isBlocked = true;
+      message = "Your account has been blocked due to 6 failed login attempts. Please contact support.";
+    } else {
+      message = `Invalid email or password. ${attemptsLeft} reattempts left.`;
+    }
+
+    await user.save();
+
     return res.json({
       success: false,
-      message: "Invalid email or password",
+      message: message,
     });
   } catch (error) {
     console.error("Signin Error Details:", {
