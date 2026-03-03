@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { serverURL } from '@/constants';
 import axios from 'axios';
-import { Key, Save, AlertCircle, Upload, Image as ImageIcon, HandCoins } from 'lucide-react';
+import { Key, Save, AlertCircle, Upload, Image as ImageIcon, HandCoins, Sparkles } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const AdminSettings = () => {
@@ -15,6 +15,22 @@ const AdminSettings = () => {
     const [websiteName, setWebsiteName] = useState('');
     const [websiteLogo, setWebsiteLogo] = useState('');
     const [taxPercentage, setTaxPercentage] = useState<number>(0);
+    const [notebookEnabled, setNotebookEnabled] = useState({
+        free: false,
+        monthly: true,
+        yearly: true,
+        forever: true,
+        org_admin: true,
+        student: false
+    });
+    const [resumeEnabled, setResumeEnabled] = useState({
+        free: false,
+        monthly: true,
+        yearly: true,
+        forever: true,
+        org_admin: true,
+        student: false
+    });
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -32,6 +48,12 @@ const AdminSettings = () => {
             setWebsiteName(res.data.websiteName || 'AIstudy');
             setWebsiteLogo(res.data.websiteLogo || '/logo.png');
             setTaxPercentage(res.data.taxPercentage || 0);
+            if (res.data.notebookEnabled) {
+                setNotebookEnabled(res.data.notebookEnabled);
+            }
+            if (res.data.resumeEnabled) {
+                setResumeEnabled(res.data.resumeEnabled);
+            }
         } catch (error) {
             console.error('Failed to fetch settings:', error);
             toast({
@@ -108,7 +130,9 @@ const AdminSettings = () => {
                 unsplashApiKey,
                 websiteName,
                 websiteLogo,
-                taxPercentage: Number(taxPercentage)
+                taxPercentage: Number(taxPercentage),
+                notebookEnabled,
+                resumeEnabled
             });
             if (res.data.success) {
                 toast({
@@ -130,6 +154,20 @@ const AdminSettings = () => {
         }
     };
 
+    const handleNotebookToggle = (role: keyof typeof notebookEnabled) => {
+        setNotebookEnabled(prev => ({
+            ...prev,
+            [role]: !prev[role]
+        }));
+    };
+
+    const handleResumeToggle = (role: keyof typeof resumeEnabled) => {
+        setResumeEnabled(prev => ({
+            ...prev,
+            [role]: !prev[role]
+        }));
+    };
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -145,187 +183,346 @@ const AdminSettings = () => {
                 <p className="text-muted-foreground mt-1">Configure platform-wide settings and API integrations</p>
             </div>
 
-            <div className="max-w-2xl">
+            <div className="max-w-5xl">
                 <form onSubmit={handleSave} className="space-y-6">
-                    <Card className="border-border/50 shadow-lg">
-                        <CardHeader>
-                            <div className="flex items-center gap-2">
-                                <Save className="h-5 w-5 text-primary" />
-                                <CardTitle>General Branding</CardTitle>
-                            </div>
-                            <CardDescription>
-                                Customize your website's appearance and identity.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="website-name">Website Name</Label>
-                                <Input
-                                    id="website-name"
-                                    placeholder="e.g. AIstudy"
-                                    value={websiteName}
-                                    onChange={(e) => setWebsiteName(e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="website-logo">Logo</Label>
-                                <div className="flex items-start gap-4">
-                                    <div className="flex-1 space-y-2">
-                                        <div className="flex gap-2">
-                                            <Input
-                                                id="website-logo"
-                                                placeholder="e.g. /logo.png or https://..."
-                                                value={websiteLogo}
-                                                onChange={(e) => setWebsiteLogo(e.target.value)}
-                                            />
-                                            <div className="relative">
-                                                <input
-                                                    type="file"
-                                                    id="logo-upload"
-                                                    className="hidden"
-                                                    accept="image/*"
-                                                    onChange={handleLogoUpload}
-                                                    disabled={isUploading}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <Card className="border-border/50 shadow-lg h-full">
+                            <CardHeader>
+                                <div className="flex items-center gap-2">
+                                    <Save className="h-5 w-5 text-primary" />
+                                    <CardTitle>General Branding</CardTitle>
+                                </div>
+                                <CardDescription>
+                                    Customize your website's appearance and identity.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="website-name">Website Name</Label>
+                                    <Input
+                                        id="website-name"
+                                        placeholder="e.g. AIstudy"
+                                        value={websiteName}
+                                        onChange={(e) => setWebsiteName(e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="website-logo">Logo</Label>
+                                    <div className="flex items-start gap-4">
+                                        <div className="flex-1 space-y-2">
+                                            <div className="flex gap-2">
+                                                <Input
+                                                    id="website-logo"
+                                                    placeholder="e.g. /logo.png or https://..."
+                                                    value={websiteLogo}
+                                                    onChange={(e) => setWebsiteLogo(e.target.value)}
                                                 />
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="icon"
-                                                    className="shrink-0"
-                                                    asChild
-                                                >
-                                                    <label htmlFor="logo-upload" className="cursor-pointer">
-                                                        {isUploading ? (
-                                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-r-transparent"></div>
-                                                        ) : (
-                                                            <Upload className="h-4 w-4" />
-                                                        )}
-                                                    </label>
-                                                </Button>
+                                                <div className="relative">
+                                                    <input
+                                                        type="file"
+                                                        id="logo-upload"
+                                                        className="hidden"
+                                                        accept="image/*"
+                                                        onChange={handleLogoUpload}
+                                                        disabled={isUploading}
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="icon"
+                                                        className="shrink-0"
+                                                        asChild
+                                                    >
+                                                        <label htmlFor="logo-upload" className="cursor-pointer">
+                                                            {isUploading ? (
+                                                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-r-transparent"></div>
+                                                            ) : (
+                                                                <Upload className="h-4 w-4" />
+                                                            )}
+                                                        </label>
+                                                    </Button>
+                                                </div>
                                             </div>
+                                            <p className="text-xs text-muted-foreground italic">
+                                                Recommended: Square image or SVG with transparent background.
+                                            </p>
                                         </div>
-                                        <p className="text-xs text-muted-foreground italic">
-                                            Recommended: Square image or SVG with transparent background.
+
+                                        {websiteLogo && (
+                                            <div className="h-20 w-20 rounded-xl border border-border/50 bg-muted/30 flex items-center justify-center overflow-hidden shrink-0">
+                                                <img
+                                                    src={
+                                                        websiteLogo.startsWith('/uploads/')
+                                                            ? `${serverURL}${websiteLogo}`
+                                                            : websiteLogo.startsWith('http')
+                                                                ? websiteLogo
+                                                                : websiteLogo // Assume it's a public frontend asset if it's any other relative path
+                                                    }
+                                                    alt="Logo Preview"
+                                                    className="max-h-full max-w-full object-contain p-2"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=Logo';
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 pt-4 border-t border-border/30">
+                                    <Label htmlFor="tax-percentage" className="flex items-center gap-2">
+                                        <div className="bg-primary/10 p-1.5 rounded-md text-primary">
+                                            <HandCoins className="h-4 w-4" />
+                                        </div>
+                                        Tax Percentage (%)
+                                    </Label>
+                                    <div className="max-w-[200px]">
+                                        <div className="relative">
+                                            <Input
+                                                id="tax-percentage"
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                max="100"
+                                                placeholder="e.g. 18"
+                                                value={taxPercentage}
+                                                onChange={(e) => setTaxPercentage(Number(e.target.value))}
+                                                className="pl-4 pr-10"
+                                            />
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">%</div>
+                                        </div>
+                                        <p className="text-[11px] text-muted-foreground mt-1.5 italic">
+                                            This tax will be added to all plan prices during checkout.
+                                        </p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <div className="space-y-6">
+                            <Card className="border-border/50 shadow-lg">
+                                <CardHeader>
+                                    <div className="flex items-center gap-2">
+                                        <Key className="h-5 w-5 text-primary" />
+                                        <CardTitle>AI Configuration</CardTitle>
+                                    </div>
+                                    <CardDescription>
+                                        Manage your Google Gemini API settings for course generation and AI features.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="gemini-api-key">Gemini API Key</Label>
+                                        <div className="relative">
+                                            <Input
+                                                id="gemini-api-key"
+                                                type="password"
+                                                placeholder="Enter your Gemini API key"
+                                                value={geminiApiKey}
+                                                onChange={(e) => setGeminiApiKey(e.target.value)}
+                                                className="pr-10"
+                                            />
+                                            <Key className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            This key is used for all AI-powered features including course and exam generation.
                                         </p>
                                     </div>
 
-                                    {websiteLogo && (
-                                        <div className="h-20 w-20 rounded-xl border border-border/50 bg-muted/30 flex items-center justify-center overflow-hidden shrink-0">
-                                            <img
-                                                src={
-                                                    websiteLogo.startsWith('/uploads/')
-                                                        ? `${serverURL}${websiteLogo}`
-                                                        : websiteLogo.startsWith('http')
-                                                            ? websiteLogo
-                                                            : websiteLogo // Assume it's a public frontend asset if it's any other relative path
-                                                }
-                                                alt="Logo Preview"
-                                                className="max-h-full max-w-full object-contain p-2"
-                                                onError={(e) => {
-                                                    (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=Logo';
-                                                }}
+                                    <Alert className="bg-primary/5 border-primary/20">
+                                        <AlertCircle className="h-4 w-4 text-primary" />
+                                        <AlertTitle className="text-primary">Important</AlertTitle>
+                                        <AlertDescription className="text-xs">
+                                            If left empty, the system will fallback to the key defined in the server's environment variables.
+                                        </AlertDescription>
+                                    </Alert>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-border/50 shadow-lg">
+                                <CardHeader>
+                                    <div className="flex items-center gap-2">
+                                        <Key className="h-5 w-5 text-indigo-500" />
+                                        <CardTitle>Image Content (Unsplash)</CardTitle>
+                                    </div>
+                                    <CardDescription>
+                                        Manage your Unsplash API settings for fetching high-quality course cover images.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="unsplash-api-key">Unsplash Access Key</Label>
+                                        <div className="relative">
+                                            <Input
+                                                id="unsplash-api-key"
+                                                type="password"
+                                                placeholder="Enter your Unsplash Access Key"
+                                                value={unsplashApiKey}
+                                                onChange={(e) => setUnsplashApiKey(e.target.value)}
+                                                className="pr-10"
                                             />
+                                            <Key className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="space-y-2 pt-4 border-t border-border/30">
-                                <Label htmlFor="tax-percentage" className="flex items-center gap-2">
-                                    <div className="bg-primary/10 p-1.5 rounded-md text-primary">
-                                        <HandCoins className="h-4 w-4" />
+                                        <p className="text-xs text-muted-foreground">
+                                            This key is used to fetch relevant background images for newly generated courses.
+                                        </p>
                                     </div>
-                                    Tax Percentage (%)
-                                </Label>
-                                <div className="max-w-[200px]">
-                                    <div className="relative">
-                                        <Input
-                                            id="tax-percentage"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            max="100"
-                                            placeholder="e.g. 18"
-                                            value={taxPercentage}
-                                            onChange={(e) => setTaxPercentage(Number(e.target.value))}
-                                            className="pl-4 pr-10"
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+
+                    <Card className="border-border/50 shadow-lg border-primary/20">
+                        <CardHeader>
+                            <div className="flex items-center gap-2">
+                                <Sparkles className="h-5 w-5 text-primary" />
+                                <CardTitle>Feature Management</CardTitle>
+                            </div>
+                            <CardDescription>
+                                Enable or disable specific features for different types of users.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between border-b pb-4 border-border/30">
+                                    <div>
+                                        <Label className="text-base font-semibold">AI Notebook Visibility</Label>
+                                        <p className="text-sm text-muted-foreground">Control which users can see the AI Notebook in their sidemenu.</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="nb-free" className="cursor-pointer font-medium">Free Users</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="nb-free"
+                                            checked={notebookEnabled.free}
+                                            onChange={() => handleNotebookToggle('free')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
                                         />
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">%</div>
                                     </div>
-                                    <p className="text-[11px] text-muted-foreground mt-1.5 italic">
-                                        This tax will be added to all plan prices during checkout.
-                                    </p>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="nb-monthly" className="cursor-pointer font-medium">Monthly Paid</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="nb-monthly"
+                                            checked={notebookEnabled.monthly}
+                                            onChange={() => handleNotebookToggle('monthly')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="nb-yearly" className="cursor-pointer font-medium">Yearly Paid</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="nb-yearly"
+                                            checked={notebookEnabled.yearly}
+                                            onChange={() => handleNotebookToggle('yearly')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="nb-forever" className="cursor-pointer font-medium">Lifetime Access</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="nb-forever"
+                                            checked={notebookEnabled.forever}
+                                            onChange={() => handleNotebookToggle('forever')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="nb-org" className="cursor-pointer font-medium">Organization Admins</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="nb-org"
+                                            checked={notebookEnabled.org_admin}
+                                            onChange={() => handleNotebookToggle('org_admin')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="nb-student" className="cursor-pointer font-medium">Organization Students</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="nb-student"
+                                            checked={notebookEnabled.student}
+                                            onChange={() => handleNotebookToggle('student')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                        </CardContent>
-                    </Card>
 
-                    <Card className="border-border/50 shadow-lg">
-                        <CardHeader>
-                            <div className="flex items-center gap-2">
-                                <Key className="h-5 w-5 text-primary" />
-                                <CardTitle>AI Configuration</CardTitle>
-                            </div>
-                            <CardDescription>
-                                Manage your Google Gemini API settings for course generation and AI features.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="gemini-api-key">Gemini API Key</Label>
-                                <div className="relative">
-                                    <Input
-                                        id="gemini-api-key"
-                                        type="password"
-                                        placeholder="Enter your Gemini API key"
-                                        value={geminiApiKey}
-                                        onChange={(e) => setGeminiApiKey(e.target.value)}
-                                        className="pr-10"
-                                    />
-                                    <Key className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <div className="flex items-center justify-between border-b pb-4 border-border/30 pt-4">
+                                    <div>
+                                        <Label className="text-base font-semibold">Resume Builder Visibility</Label>
+                                        <p className="text-sm text-muted-foreground">Control which users can see the Resume Builder in their sidemenu.</p>
+                                    </div>
                                 </div>
-                                <p className="text-xs text-muted-foreground">
-                                    This key is used for all AI-powered features including course and exam generation.
-                                </p>
-                            </div>
 
-                            <Alert className="bg-primary/5 border-primary/20">
-                                <AlertCircle className="h-4 w-4 text-primary" />
-                                <AlertTitle className="text-primary">Important</AlertTitle>
-                                <AlertDescription className="text-xs">
-                                    If left empty, the system will fallback to the key defined in the server's environment variables.
-                                </AlertDescription>
-                            </Alert>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="border-border/50 shadow-lg">
-                        <CardHeader>
-                            <div className="flex items-center gap-2">
-                                <Key className="h-5 w-5 text-indigo-500" />
-                                <CardTitle>Image Content (Unsplash)</CardTitle>
-                            </div>
-                            <CardDescription>
-                                Manage your Unsplash API settings for fetching high-quality course cover images.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="unsplash-api-key">Unsplash Access Key</Label>
-                                <div className="relative">
-                                    <Input
-                                        id="unsplash-api-key"
-                                        type="password"
-                                        placeholder="Enter your Unsplash Access Key"
-                                        value={unsplashApiKey}
-                                        onChange={(e) => setUnsplashApiKey(e.target.value)}
-                                        className="pr-10"
-                                    />
-                                    <Key className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="rb-free" className="cursor-pointer font-medium">Free Users</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="rb-free"
+                                            checked={resumeEnabled.free}
+                                            onChange={() => handleResumeToggle('free')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="rb-monthly" className="cursor-pointer font-medium">Monthly Paid</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="rb-monthly"
+                                            checked={resumeEnabled.monthly}
+                                            onChange={() => handleResumeToggle('monthly')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="rb-yearly" className="cursor-pointer font-medium">Yearly Paid</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="rb-yearly"
+                                            checked={resumeEnabled.yearly}
+                                            onChange={() => handleResumeToggle('yearly')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="rb-forever" className="cursor-pointer font-medium">Lifetime Access</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="rb-forever"
+                                            checked={resumeEnabled.forever}
+                                            onChange={() => handleResumeToggle('forever')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="rb-org" className="cursor-pointer font-medium">Organization Admins</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="rb-org"
+                                            checked={resumeEnabled.org_admin}
+                                            onChange={() => handleResumeToggle('org_admin')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="rb-student" className="cursor-pointer font-medium">Organization Students</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="rb-student"
+                                            checked={resumeEnabled.student}
+                                            onChange={() => handleResumeToggle('student')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
                                 </div>
-                                <p className="text-xs text-muted-foreground">
-                                    This key is used to fetch relevant background images for newly generated courses.
-                                </p>
                             </div>
                         </CardContent>
                     </Card>

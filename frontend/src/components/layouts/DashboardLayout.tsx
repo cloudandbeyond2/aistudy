@@ -30,8 +30,6 @@ import NotificationBell from '../NotificationBell';
 import { useTheme } from '@/contexts/ThemeContext';
 import { MessageSquare } from "lucide-react";
 
-
-
 const DashboardLayout = () => {
   const { appName, appLogo } = useBranding();
   const isMobile = useIsMobile();
@@ -42,6 +40,22 @@ const DashboardLayout = () => {
   const isActive = (path: string) => location.pathname === path;
   const [admin, setAdmin] = useState(false);
   const { toggleTheme } = useTheme();
+  const [notebookEnabled, setNotebookEnabled] = useState({
+    free: false,
+    monthly: true,
+    yearly: true,
+    forever: true,
+    org_admin: true,
+    student: false
+  });
+  const [resumeEnabled, setResumeEnabled] = useState({
+    free: false,
+    monthly: true,
+    yearly: true,
+    forever: true,
+    org_admin: true,
+    student: false
+  });
 
   useEffect(() => {
     if (sessionStorage.getItem('uid') === null) {
@@ -54,11 +68,18 @@ const DashboardLayout = () => {
       if (response.data.admin.email === sessionStorage.getItem('email')) {
         setAdmin(true);
       }
+      if (response.data.admin.notebookEnabled) {
+        setNotebookEnabled(response.data.admin.notebookEnabled);
+      }
+      if (response.data.admin.resumeEnabled) {
+        setResumeEnabled(response.data.admin.resumeEnabled);
+      }
     }
     if (sessionStorage.getItem('adminEmail')) {
       if (sessionStorage.getItem('adminEmail') === sessionStorage.getItem('email')) {
         setAdmin(true);
       }
+      dashboardData(); // Always fetch to get latest settings like notebookEnabled
     } else {
       dashboardData();
     }
@@ -137,8 +158,8 @@ const DashboardLayout = () => {
                         </SidebarMenuButton>
                       </SidebarMenuItem>
 
-                      {/* Resume Builder — paid users only */}
-                      {['monthly', 'yearly', 'forever'].includes(sessionStorage.getItem('type')) && (
+                      {/* Resume Builder — restricted by settings */}
+                      {resumeEnabled[sessionStorage.getItem('role') === 'org_admin' ? 'org_admin' : (sessionStorage.getItem('type') as keyof typeof resumeEnabled)] && (
                         <SidebarMenuItem>
                           <SidebarMenuButton asChild tooltip="Resume Builder" isActive={isActive('/dashboard/resume-builder')}>
                             <Link to="/dashboard/resume-builder" className={cn(isActive('/dashboard/resume-builder') && "text-primary")}>
@@ -149,7 +170,8 @@ const DashboardLayout = () => {
                         </SidebarMenuItem>
                       )}
 
-                      {['monthly', 'yearly', 'forever'].includes(sessionStorage.getItem('type')) && (
+                      {/* AI Notebook — restricted by settings */}
+                      {notebookEnabled[sessionStorage.getItem('role') === 'org_admin' ? 'org_admin' : (sessionStorage.getItem('type') as keyof typeof notebookEnabled)] && (
                         <SidebarMenuItem>
                           <SidebarMenuButton asChild tooltip="AI Notebook" isActive={isActive('/dashboard/notebook')}>
                             <Link to="/dashboard/notebook" className={cn(isActive('/dashboard/notebook') && "text-primary")}>
@@ -208,17 +230,26 @@ const DashboardLayout = () => {
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
-
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="AI Notebook" isActive={isActive('/dashboard/notebook')}>
-                          <Link to="/dashboard/notebook" className={cn(isActive('/dashboard/notebook') && "text-primary")}>
-                            <BrainCircuit />
-                            <span>AI Notebook</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-
-
+                      {notebookEnabled.student && (
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild tooltip="AI Notebook" isActive={isActive('/dashboard/notebook')}>
+                            <Link to="/dashboard/notebook" className={cn(isActive('/dashboard/notebook') && "text-primary")}>
+                              <BrainCircuit />
+                              <span>AI Notebook</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
+                      {resumeEnabled.student && (
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild tooltip="Resume Builder" isActive={isActive('/dashboard/resume-builder')}>
+                            <Link to="/dashboard/resume-builder" className={cn(isActive('/dashboard/resume-builder') && "text-primary")}>
+                              <FileText />
+                              <span>Resume Builder</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
                       <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Assignments" isActive={isActive('/dashboard/student/assignments')}>
                           <Link to="/dashboard/student/assignments" className={cn(isActive('/dashboard/student/assignments') && "text-primary")}>
@@ -283,21 +314,21 @@ const DashboardLayout = () => {
                       </SidebarMenuItem>
 
                       <SidebarMenuItem>
-  <SidebarMenuButton
-    asChild
-    tooltip="Support Tickets"
-    isActive={isActive('/dashboard/student/support-tickets')}
-  >
-    <Link
-      to="/dashboard/student/support-tickets"
-      className={cn(isActive('/dashboard/student/support-tickets') && "text-primary")}
-    >
-      <MessageSquare />
-      <span>Support Tickets</span>
-    </Link>
-  </SidebarMenuButton>
-</SidebarMenuItem>
-                   </>
+                        <SidebarMenuButton
+                          asChild
+                          tooltip="Support Tickets"
+                          isActive={isActive('/dashboard/student/support-tickets')}
+                        >
+                          <Link
+                            to="/dashboard/student/support-tickets"
+                            className={cn(isActive('/dashboard/student/support-tickets') && "text-primary")}
+                          >
+                            <MessageSquare />
+                            <span>Support Tickets</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </>
                   ) : (
                     <>
                       {/* Default Menu Items for non-students (Regular Users / Admins / Org Admins) */}
@@ -402,22 +433,22 @@ const DashboardLayout = () => {
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
- {/* ✅ Student Tickets (NEW CLEAN ROUTE) */}
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        asChild
-        tooltip="Student Tickets"
-        isActive={isActive('/dashboard/org/student-tickets')}
-      >
-        <Link
-          to="/dashboard/org/student-tickets"
-          className={cn(isActive('/dashboard/org/student-tickets') && "text-primary")}
-        >
-          <MessageSquare className="ml-4" />
-          <span>Student Tickets</span>
-        </Link>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
+                      {/* ✅ Student Tickets (NEW CLEAN ROUTE) */}
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
+                          asChild
+                          tooltip="Student Tickets"
+                          isActive={isActive('/dashboard/org/student-tickets')}
+                        >
+                          <Link
+                            to="/dashboard/org/student-tickets"
+                            className={cn(isActive('/dashboard/org/student-tickets') && "text-primary")}
+                          >
+                            <MessageSquare className="ml-4" />
+                            <span>Student Tickets</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
                     </>
                   )}
                 </SidebarMenu>

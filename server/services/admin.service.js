@@ -231,7 +231,23 @@ export const getDashboardStatsWithOrgs = async () => {
     admin: {
       email: stats.admin.email,
       websiteName: admin?.websiteName || 'AIstudy',
-      websiteLogo: admin?.websiteLogo || '/logo.png'
+      websiteLogo: admin?.websiteLogo || '/logo.png',
+      notebookEnabled: admin?.notebookEnabled || {
+        free: false,
+        monthly: true,
+        yearly: true,
+        forever: true,
+        org_admin: true,
+        student: false
+      },
+      resumeEnabled: admin?.resumeEnabled || {
+        free: false,
+        monthly: true,
+        yearly: true,
+        forever: true,
+        org_admin: true,
+        student: false
+      }
     }
   };
 };
@@ -353,7 +369,23 @@ export const getAdminSettings = async () => {
     unsplashApiKey: admin?.unsplashApiKey || '',
     websiteName: admin?.websiteName || 'AIstudy',
     websiteLogo: admin?.websiteLogo || '/logo.png',
-    taxPercentage: admin?.taxPercentage || 0
+    taxPercentage: admin?.taxPercentage || 0,
+    notebookEnabled: admin?.notebookEnabled || {
+      free: false,
+      monthly: true,
+      yearly: true,
+      forever: true,
+      org_admin: true,
+      student: false
+    },
+    resumeEnabled: admin?.resumeEnabled || {
+      free: false,
+      monthly: true,
+      yearly: true,
+      forever: true,
+      org_admin: true,
+      student: false
+    }
   };
 };
 
@@ -379,6 +411,8 @@ export const updateAdminSettings = async (data) => {
   admin.websiteName = data.websiteName;
   admin.websiteLogo = data.websiteLogo;
   admin.taxPercentage = data.taxPercentage;
+  admin.notebookEnabled = data.notebookEnabled;
+  admin.resumeEnabled = data.resumeEnabled;
 
   await admin.save();
 };
