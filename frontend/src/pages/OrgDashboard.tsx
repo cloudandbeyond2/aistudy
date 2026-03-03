@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, FileText, Bell, Plus, Upload, Search, Trash2,   DollarSign,CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink } from 'lucide-react';
+import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -870,27 +870,27 @@ const OrgDashboard = () => {
                     </CardContent>
                 </Card> */}
 
- <AdminStatCard
-            title="Total Students"
-            value={stats.studentCount}
-            icon={Users}
-            description="+20% from last month"
-            className="border-l-4 border-l-emerald-500"
-          />
-          <AdminStatCard
-            title="Active Assignments"
-            value={stats.assignmentCount}
-            icon={FileText}
-            description="5 due this week"
-            className="border-l-4 border-l-blue-500"
-          />
-          <AdminStatCard
-            title="Submissions"
-            value={stats.submissionCount}
-            icon={BarChart}
-            description="Pending grading"
-            className="border-l-4 border-l-amber-500"
-          />
+                <AdminStatCard
+                    title="Total Students"
+                    value={stats.studentCount}
+                    icon={Users}
+                    description="+20% from last month"
+                    className="border-l-4 border-l-emerald-500"
+                />
+                <AdminStatCard
+                    title="Active Assignments"
+                    value={stats.assignmentCount}
+                    icon={FileText}
+                    description="5 due this week"
+                    className="border-l-4 border-l-blue-500"
+                />
+                <AdminStatCard
+                    title="Submissions"
+                    value={stats.submissionCount}
+                    icon={BarChart}
+                    description="Pending grading"
+                    className="border-l-4 border-l-amber-500"
+                />
             </div>
 
             <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })} className="w-full">
@@ -1096,7 +1096,7 @@ const OrgDashboard = () => {
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex-1">
                                                         <h3 className="font-semibold text-lg">{title}</h3>
-                                                        <p className="text-sm text-muted-foreground">{description}</p>
+                                                        <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: description }} />
                                                         <div className="flex gap-4 mt-2 text-xs font-medium text-muted-foreground">
                                                             <span>{topicCount} Topics</span>
                                                             {quizCount > 0 && <span>{quizCount} Quizzes</span>}
@@ -1171,7 +1171,7 @@ const OrgDashboard = () => {
                                             <div className="flex justify-between items-start">
                                                 <div>
                                                     <h3 className="font-semibold text-lg">{assignment.topic}</h3>
-                                                    <p className="text-sm text-muted-foreground">{assignment.description}</p>
+                                                    <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: assignment.description }} />
                                                     <div className="flex gap-4 mt-2 text-xs font-medium text-muted-foreground">
                                                         <span className="flex items-center gap-1">
                                                             Due: {new Date(assignment.dueDate).toLocaleDateString()}
@@ -1353,7 +1353,7 @@ const OrgDashboard = () => {
                                                 <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-bold uppercase tracking-wider">{p.type}</span>
                                             </div>
                                             <CardTitle className="text-base line-clamp-1">{p.title}</CardTitle>
-                                            <CardDescription className="line-clamp-2 text-xs">{p.description}</CardDescription>
+                                            <div className="line-clamp-2 text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: p.description }} />
                                         </CardHeader>
                                         <CardContent className="pt-0 text-[11px] text-muted-foreground flex justify-between">
                                             <span>Dept: {p.department || 'All'}</span>
