@@ -27,7 +27,7 @@ const PLAN_LIMITS: Record<string, { maxCourses: number; maxSubtopics: number; al
 const courseFormSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters" }),
   subtopics: z.array(z.string()),
-  topicsLimit: z.enum(["1", "4", "8"]),
+  topicsLimit: z.enum(["5", "10"]),
   courseType: z.enum(["image & text course", "video & text course"]),
   language: z.string().min(1, { message: "Please select a language" })
 });
@@ -40,7 +40,7 @@ const GenerateCourse = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [generatedTopics, setGeneratedTopics] = useState({});
-  const [selectedValue, setSelectedValue] = useState('4');
+  const [selectedValue, setSelectedValue] = useState('5');
   const [selectedType, setSelectedType] = useState('image & text course');
   const [lang, setLang] = useState('English');
   const { toast } = useToast();
@@ -115,7 +115,7 @@ const GenerateCourse = () => {
     defaultValues: {
       topic: '',
       subtopics: [],
-      topicsLimit: "1",
+      topicsLimit: "5",
       courseType: "image & text course",
       language: "English"
     }
@@ -428,7 +428,7 @@ const GenerateCourse = () => {
                             >
                               {/* Option: 5 — always available */}
                               <div className="flex items-center space-x-2 border p-3 rounded-md">
-                                <RadioGroupItem defaultChecked value="4" id="r1" />
+                                <RadioGroupItem defaultChecked value="5" id="r1" />
                                 <FormLabel htmlFor="r1" className="mb-0">5</FormLabel>
                               </div>
 
@@ -437,7 +437,7 @@ const GenerateCourse = () => {
                                 onClick={() => { if (maxSubtopics < 10) showUpgradeToast('10 subtopics per topic'); }}
                                 className={`flex items-center space-x-2 border p-3 rounded-md ${maxSubtopics < 10 ? 'opacity-50 cursor-not-allowed' : ''}`}
                               >
-                                <RadioGroupItem disabled={maxSubtopics < 10} value="8" id="r2" />
+                                <RadioGroupItem disabled={maxSubtopics < 10} value="10" id="r2" />
                                 <FormLabel htmlFor="r2" className="mb-0 flex items-center gap-2">
                                   10
                                   {maxSubtopics < 10 && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
