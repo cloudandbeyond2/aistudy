@@ -39,6 +39,12 @@ const Dashboard = () => {
   const { toast } = useToast();
   const userRole = sessionStorage.getItem('role');
   const isOrgAdmin = userRole === 'org_admin' || sessionStorage.getItem('isOrganization') === 'true';
+  const orgId = sessionStorage.getItem('orgId');
+  const [orgStats, setOrgStats] = useState({
+    totalCourses: 0,
+    completedCourses: 0,
+    inProgressCourses: 0
+  });
 
   function redirectCreate() {
     navigate("/dashboard/generate-course");
@@ -118,6 +124,21 @@ const Dashboard = () => {
       console.error('fetchData error:', error);
     } finally {
       setIsLoading(false);
+    }
+
+    if (isOrgAdmin && orgId) {
+      try {
+        const statsRes = await axios.get(`${serverURL}/api/org/dashboard/stats?organizationId=${orgId}`);
+        if (statsRes.data.success) {
+          setOrgStats({
+            totalCourses: statsRes.data.totalCoursesCount,
+            completedCourses: statsRes.data.completedCoursesCount,
+            inProgressCourses: statsRes.data.inProgressCoursesCount
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching org stats:', error);
+      }
     }
   }
 
@@ -370,27 +391,27 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Cards Section */}
-        {!isLoading && courses.length > 0 && (
+        {!isLoading && (courses.length > 0 || isOrgAdmin) && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
             <StatsCard
               title="Total Courses"
-              value={courses.length}
+              value={isOrgAdmin ? orgStats.totalCourses : courses.length}
               icon={BookOpen}
-              description="Courses in your library"
+              description={isOrgAdmin ? "Total organization courses" : "Courses in your library"}
               gradient="from-blue-500 to-indigo-600"
             />
             <StatsCard
               title="Completed"
-              value={courses.filter(c => c.completed === true).length}
+              value={isOrgAdmin ? orgStats.completedCourses : courses.filter(c => c.completed === true).length}
               icon={CheckCircle}
-              description="Finished courses"
+              description={isOrgAdmin ? "Student completions" : "Finished courses"}
               gradient="from-green-500 to-emerald-600"
             />
             <StatsCard
               title="In Progress"
-              value={courses.filter(c => c.completed !== true).length}
+              value={isOrgAdmin ? orgStats.inProgressCourses : courses.filter(c => c.completed !== true).length}
               icon={Clock}
-              description="Currently learning"
+              description={isOrgAdmin ? "Current student learnings" : "Currently learning"}
               gradient="from-purple-500 to-pink-600"
             />
           </div>

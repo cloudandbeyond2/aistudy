@@ -342,8 +342,36 @@ export const getDashboardStats = async (req, res) => {
         const assignmentIds = assignments.map(a => a._id);
         const submissionCount = await Submission.countDocuments({ assignmentId: { $in: assignmentIds } });
 
-        res.json({ success: true, studentCount, assignmentCount, submissionCount });
+        // Course Stats Aggregation
+        const orgCoursesCount = await OrgCourse.countDocuments({ organizationId });
+        const aiCoursesCount = await Course.countDocuments({ organizationId });
+        const totalCoursesCount = orgCoursesCount + aiCoursesCount;
+
+        // Get student IDs to filter progress
+        const students = await User.find({ organization: organizationId, role: 'student' }).select('_id');
+        const studentIds = students.map(s => s._id);
+
+        const completedCoursesCount = await StudentProgress.countDocuments({
+            userId: { $in: studentIds },
+            percentage: 100
+        });
+
+        const inProgressCoursesCount = await StudentProgress.countDocuments({
+            userId: { $in: studentIds },
+            percentage: { $lt: 100, $gt: 0 }
+        });
+
+        res.json({
+            success: true,
+            studentCount,
+            assignmentCount,
+            submissionCount,
+            totalCoursesCount,
+            completedCoursesCount,
+            inProgressCoursesCount
+        });
     } catch (error) {
+        console.error('getDashboardStats error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };
