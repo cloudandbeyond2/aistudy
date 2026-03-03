@@ -7,7 +7,6 @@ import Course from '../models/Course.js';
 import IssuedCertificate from '../models/IssuedCertificate.js';
 import Contact from '../models/Contact.js';
 import AccountDeleteRequest from '../models/AccountDeleteRequest.js';
-import AccountDeleteRequest from '../models/AccountDeleteRequest.js';
 
 
 /**

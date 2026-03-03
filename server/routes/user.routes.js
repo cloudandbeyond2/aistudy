@@ -7,10 +7,7 @@ import {
   updateSettings,
   requestAccountDeletion,
   getDeletionRequests,
-  updateDeletionRequestStatus,
-  requestCancellation,
-  getCancellationRequests,
-  updateCancellationRequestStatus
+  updateDeletionRequestStatus
 } from '../controllers/user.controller.js';
 
 const router = express.Router();
