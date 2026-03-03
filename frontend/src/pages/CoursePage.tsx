@@ -868,63 +868,63 @@ const CoursePage = () => {
     }
   }
 
- async function htmlDownload() {
-  try {
-    setExporting(true);
+  async function htmlDownload() {
+    try {
+      setExporting(true);
 
-    const topics =
-      jsonData?.course_topics ||
-      jsonData?.[mainTopic?.toLowerCase()];
+      const topics =
+        jsonData?.course_topics ||
+        jsonData?.[mainTopic?.toLowerCase()];
 
-    if (!topics || !Array.isArray(topics)) {
+      if (!topics || !Array.isArray(topics)) {
+        toast({
+          title: "Export Failed",
+          description: "Course topics not found",
+        });
+        setExporting(false);
+        return;
+      }
+
+      const combinedHtml = await getCombinedHtml(mainTopic, topics);
+
+      const tempDiv = document.createElement("div");
+      tempDiv.style.width = "100%";
+      tempDiv.innerHTML = combinedHtml;
+      document.body.appendChild(tempDiv);
+
+      const options = {
+        filename: `${mainTopic}.pdf`,
+        image: { type: "jpeg", quality: 1 },
+        margin: [15, 15, 15, 15],
+        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+        },
+        jsPDF: { unit: "pt", format: "a4", orientation: "portrait" },
+      };
+
+      await html2pdf().from(tempDiv).set(options).save();
+
+      document.body.removeChild(tempDiv);
+    } catch (error) {
+      console.error("PDF Export Error:", error);
       toast({
         title: "Export Failed",
-        description: "Course topics not found",
+        description: "Something went wrong while exporting PDF.",
       });
+    } finally {
       setExporting(false);
-      return;
     }
-
-    const combinedHtml = await getCombinedHtml(mainTopic, topics);
-
-    const tempDiv = document.createElement("div");
-    tempDiv.style.width = "100%";
-    tempDiv.innerHTML = combinedHtml;
-    document.body.appendChild(tempDiv);
-
-    const options = {
-      filename: `${mainTopic}.pdf`,
-      image: { type: "jpeg", quality: 1 },
-      margin: [15, 15, 15, 15],
-      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-      },
-      jsPDF: { unit: "pt", format: "a4", orientation: "portrait" },
-    };
-
-    await html2pdf().from(tempDiv).set(options).save();
-
-    document.body.removeChild(tempDiv);
-  } catch (error) {
-    console.error("PDF Export Error:", error);
-    toast({
-      title: "Export Failed",
-      description: "Something went wrong while exporting PDF.",
-    });
-  } finally {
-    setExporting(false);
   }
-}
 
   async function getCombinedHtml(mainTopic, topics) {
 
-  // ✅ ADD THIS BLOCK HERE
-  if (!topics || !Array.isArray(topics)) {
-    console.error("Invalid topics passed to getCombinedHtml:", topics);
-    return "<p>No topics available</p>";
-  }
+    // ✅ ADD THIS BLOCK HERE
+    if (!topics || !Array.isArray(topics)) {
+      console.error("Invalid topics passed to getCombinedHtml:", topics);
+      return "<p>No topics available</p>";
+    }
     async function toDataUrl(url) {
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -1388,31 +1388,33 @@ const CoursePage = () => {
           </Drawer>
 
           <div className="flex items-center gap-2">
-            <div className="relative w-8 h-8">
-              <svg className="w-8 h-8" viewBox="0 0 36 36">
-                <circle cx="18" cy="18" r="16" fill="none" className="stroke-muted-foreground/20" strokeWidth="2" />
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="16"
-                  fill="none"
-                  className="stroke-primary"
-                  strokeWidth="2"
-                  strokeDasharray="100"
-                  strokeDashoffset={100 - percentage}
-                  transform="rotate(-90 18 18)"
-                />
-                <text
-                  x="18"
-                  y="18"
-                  dominantBaseline="middle"
-                  textAnchor="middle"
-                  className="fill-foreground text-[10px] font-medium"
-                >
-                  {percentage}%
-                </text>
-              </svg>
-            </div>
+            {!isOrgAdmin && (
+              <div className="relative w-8 h-8">
+                <svg className="w-8 h-8" viewBox="0 0 36 36">
+                  <circle cx="18" cy="18" r="16" fill="none" className="stroke-muted-foreground/20" strokeWidth="2" />
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="16"
+                    fill="none"
+                    className="stroke-primary"
+                    strokeWidth="2"
+                    strokeDasharray="100"
+                    strokeDashoffset={100 - percentage}
+                    transform="rotate(-90 18 18)"
+                  />
+                  <text
+                    x="18"
+                    y="18"
+                    dominantBaseline="middle"
+                    textAnchor="middle"
+                    className="fill-foreground text-[10px] font-medium"
+                  >
+                    {percentage}%
+                  </text>
+                </svg>
+              </div>
+            )}
             <h1 className="text-xl font-bold">{mainTopic}</h1>
           </div>
         </div>

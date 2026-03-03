@@ -37,7 +37,9 @@ const Dashboard = () => {
   const [modules, setTotalModules] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const uid = sessionStorage.getItem('uid');
+  const userRole = sessionStorage.getItem('role');
+  const isOrgAdmin = userRole === 'org_admin' || sessionStorage.getItem('isOrganization') === 'true';
+
   function redirectCreate() {
     navigate("/dashboard/generate-course");
   }
@@ -481,15 +483,17 @@ const Dashboard = () => {
                       <CardDescription className="line-clamp-2 capitalize">{course.type}</CardDescription>
                     </CardHeader>
                     <CardContent className="pb-2">
-                      <div className="mb-3">
-                        <div className="h-2 bg-secondary rounded-full">
-                          <div
-                            className="h-2 bg-gradient-to-r from-primary to-indigo-500 rounded-full"
-                            style={{ width: `${courseProgress[course._id] || 0}%` }}
-                          ></div>
+                      {!isOrgAdmin && (
+                        <div className="mb-3">
+                          <div className="h-2 bg-secondary rounded-full">
+                            <div
+                              className="h-2 bg-gradient-to-r from-primary to-indigo-500 rounded-full"
+                              style={{ width: `${courseProgress[course._id] || 0}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">{courseProgress[course._id] || 0}% complete</p>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">{courseProgress[course._id] || 0}% complete</p>
-                      </div>
+                      )}
                       <div className="flex items-center justify-between text-sm text-muted-foreground">
                         <div className="flex items-center">
                           <BookOpen className="mr-1 h-4 w-4" />
