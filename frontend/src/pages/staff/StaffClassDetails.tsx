@@ -1,43 +1,84 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Users, Clock, MapPin, Calendar, BookOpen, FileText, MoreVertical } from 'lucide-react';
 
+interface ClassItem {
+  _id: string;
+  name: string;
+  section: string;
+  students: number;
+  time: string;
+  room: string;
+  description?: string;
+}
+
 export default function StaffClassDetails() {
   const { id } = useParams();
-  
-  // Mock data - in a real app, fetch based on ID
-  const classInfo = {
-    id: id,
-    name: 'Computer Science 101',
-    section: 'Section A',
-    students: 45,
-    time: 'Mon, Wed 10:00 AM',
-    room: '304',
-    description: 'Introduction to computer science concepts, algorithms, and programming principles.',
-    nextClass: 'Wednesday, March 4 at 10:00 AM'
+  const [classInfo, setClassInfo] = useState<ClassItem | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // ✅ Fetch Class By ID
+  useEffect(() => {
+    fetchClassById();
+  }, [id]);
+
+  const fetchClassById = async () => {
+    try {
+      const response = await fetch(`http://localhost:5001/api/classes/${id}`);
+      const result = await response.json();
+
+      if (result.success) {
+        setClassInfo(result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching class:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const recentActivity = [
+  if (loading) {
+    return <div className="text-center py-10">Loading class details...</div>;
+  }
+
+  if (!classInfo) {
+    return <div className="text-center py-10 text-red-500">Class not found</div>;
+  }
+
+
+    const recentActivity = [
     { id: 1, type: 'assignment', title: 'Algorithm Analysis Report', date: '2 hours ago', status: 'Posted' },
     { id: 2, type: 'announcement', title: 'Midterm Schedule Update', date: 'Yesterday', status: 'Sent' },
     { id: 3, type: 'material', title: 'Lecture 5 Slides.pdf', date: '2 days ago', status: 'Uploaded' },
   ];
-
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Link to="/dashboard/staff/classes" className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
+        <Link 
+          to="/dashboard/staff/classes" 
+          className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+        >
           <ArrowLeft size={20} />
         </Link>
+
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             {classInfo.name}
-            <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-md">{classInfo.section}</span>
+            <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
+              {classInfo.section}
+            </span>
           </h1>
+
           <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
-            <span className="flex items-center gap-1"><Clock size={14} /> {classInfo.time}</span>
-            <span className="flex items-center gap-1"><MapPin size={14} /> Room {classInfo.room}</span>
+            <span className="flex items-center gap-1">
+              <Clock size={14} /> {classInfo.time}
+            </span>
+
+            <span className="flex items-center gap-1">
+              <MapPin size={14} /> {classInfo.room}
+            </span>
           </div>
         </div>
         <div className="ml-auto flex gap-2">
@@ -120,8 +161,8 @@ export default function StaffClassDetails() {
               </div>
               <div>
                 <p className="font-medium text-slate-900">Lecture 12: Data Structures</p>
-                <p className="text-sm text-gray-500 mt-1">{classInfo.nextClass}</p>
-                <p className="text-xs text-gray-400 mt-1">Room {classInfo.room}</p>
+                <p className="text-sm text-gray-500 mt-1"></p>
+                <p className="text-xs text-gray-400 mt-1">{classInfo.room}</p>
               </div>
             </div>
             <button className="w-full py-2 px-4 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors">
