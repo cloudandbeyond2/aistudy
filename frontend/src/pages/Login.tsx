@@ -494,6 +494,8 @@ const Login = () => {
             navigate("/dashboard/org");
           } else if (response.data.userData.role === 'student') {
             navigate("/dashboard/student");
+          } else if (response.data.userData.role === 'dept_admin') {
+            navigate("/dashboard/staff");
           } else {
             redirectHome();
           }

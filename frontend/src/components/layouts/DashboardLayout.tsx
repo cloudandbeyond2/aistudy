@@ -17,7 +17,31 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Home, User, DollarSign, LogOut, Sparkles, Menu, Settings2Icon, Building2, BookOpen, Bell, Newspaper, LayoutDashboard, Briefcase, Video, Users, FileText, Download, BrainCircuit } from 'lucide-react';
+import {
+  Home,
+  User,
+  DollarSign,
+  LogOut,
+  Sparkles,
+  Menu,
+  Settings2Icon,
+  Building2,
+  BookOpen,
+  Bell,
+  Newspaper,
+  LayoutDashboard,
+  Briefcase,
+  Video,
+  Users,
+  FileText,
+  Download,
+  BrainCircuit,
+  MessageSquare,
+  Calendar,
+  Megaphone,
+  Folder,
+  LifeBuoy
+} from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -28,7 +52,10 @@ import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import NotificationBell from '../NotificationBell';
 import { useTheme } from '@/contexts/ThemeContext';
-import { MessageSquare } from "lucide-react";
+
+
+
+
 
 const DashboardLayout = () => {
   const { appName, appLogo } = useBranding();
@@ -129,7 +156,7 @@ const DashboardLayout = () => {
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {sessionStorage.getItem('role') !== 'student' && (
+                  {sessionStorage.getItem('role') !== 'student' && sessionStorage.getItem('role') !== 'dept_admin' && (
                     <>
                       <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Home" isActive={isActive('/dashboard')}>
@@ -452,6 +479,94 @@ const DashboardLayout = () => {
                     </>
                   )}
                 </SidebarMenu>
+
+
+
+
+                {/* Staff Dashboard - Visible only to Department Admins */}
+                {sessionStorage.getItem('role') === 'dept_admin' && (
+                  <>
+                    {/* Dashboard */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Dashboard" isActive={isActive('/dashboard/staff')}>
+                        <Link to="/dashboard/staff">
+                          <LayoutDashboard />
+                          <span>Dashboard</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    {/* Classes */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Classes" isActive={isActive('/dashboard/staff/classes')}>
+                        <Link to="/dashboard/staff/classes">
+                          <BookOpen />
+                          <span>Classes</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    {/* Students */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Students" isActive={isActive('/dashboard/staff/students')}>
+                        <Link to="/dashboard/staff/students">
+                          <Users />
+                          <span>Students</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    {/* Grading */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Grading" isActive={isActive('/dashboard/staff/grading')}>
+                        <Link to="/dashboard/staff/grading">
+                          <FileText />
+                          <span>Grading</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    {/* Schedule */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Schedule" isActive={isActive('/dashboard/staff/schedule')}>
+                        <Link to="/dashboard/staff/schedule">
+                          <Calendar />
+                          <span>Schedule</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    {/* Announcements */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Announcements" isActive={isActive('/dashboard/staff/announcements')}>
+                        <Link to="/dashboard/staff/announcements">
+                          <Megaphone />
+                          <span>Announcements</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    {/* Resources */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Resources" isActive={isActive('/dashboard/staff/resources')}>
+                        <Link to="/dashboard/staff/resources">
+                          <Folder />
+                          <span>Resources</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    {/* Support */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Support" isActive={isActive('/dashboard/staff/support')}>
+                        <Link to="/dashboard/staff/support">
+                          <LifeBuoy />
+                          <span>Support</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </>
+                )}
               </SidebarGroupContent>
             </SidebarGroup>
 

@@ -21,8 +21,9 @@ const userSchema = new mongoose.Schema({
   mName: String,
   password: String,
   type: { type: String, default: 'free' }, // free | monthly | yearly | forever
-  role: { type: String, enum: ['user', 'student', 'org_admin'], default: 'user' },
+  role: { type: String, enum: ['user', 'student', 'org_admin', 'dept_admin'], default: 'user' },
   organization: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization' },
+  department: { type: mongoose.Schema.Types.ObjectId, ref: 'Department', default: null },
   phone: { type: String, default: null },
   dob: { type: Date, default: null },
   gender: { type: String, default: null },

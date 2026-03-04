@@ -33,7 +33,14 @@ import {
     createMaterial,
     getMaterials,
     deleteMaterial,
-    uploadImage
+    uploadImage,
+    createDepartment,
+    getDepartments,
+    updateDepartment,
+    deleteDepartment,
+    addDeptAdmin,
+    getDeptAdmins,
+    deleteDeptAdmin
 } from '../controllers/org.controller.js';
 import Organization from '../models/Organization.js';
 import { uploadAssignment, uploadCourseImage, uploadMaterial } from '../config/upload.config.js';
@@ -107,5 +114,16 @@ router.delete('/org/material/:id', deleteMaterial);
 
 // File Uploads
 router.post('/org/upload/image', uploadCourseImage.single('image'), uploadImage);
+
+// Departments
+router.post('/org/department/create', createDepartment);
+router.get('/org/departments', getDepartments);
+router.put('/org/department/:id', updateDepartment);
+router.delete('/org/department/:id', deleteDepartment);
+
+// Department Admins
+router.post('/org/dept-admin/add', addDeptAdmin);
+router.get('/org/dept-admins', getDeptAdmins);
+router.delete('/org/dept-admin/:id', deleteDeptAdmin);
 
 export default router;

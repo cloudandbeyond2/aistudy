@@ -88,6 +88,20 @@ import ResumeView from "./pages/ResumeView";
 import AINotebook from "./pages/AINotebook";
 import StudentSupportTickets from "./pages/StudentSupportTickets";
 import OrgStudentTickets from "./pages/OrgStudentTickets";
+import DeptDashboard from "./pages/DeptDashboard";
+import StaffDashboard from './pages/StaffDashboard';
+ 
+// Staff Pages
+import StaffClasses from './pages/staff/StaffClasses';
+import StaffClassDetails from './pages/staff/StaffClassDetails';
+import StaffClassAttendance from './pages/staff/StaffClassAttendance';
+import StaffStudents from './pages/staff/StaffStudents';
+import StaffGrading from './pages/staff/StaffGrading';
+import StaffSchedule from './pages/staff/StaffSchedule';
+import StaffAnnouncements from './pages/staff/StaffAnnouncements';
+import StaffResources from './pages/staff/StaffResources';
+import StaffSupport from './pages/staff/StaffSupport';
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -133,6 +147,7 @@ const App = () => (
                     <Route path="student/support-tickets" element={<StudentSupportTickets />} />
 
                     <Route path="org/student-tickets" element={<OrgStudentTickets />} />
+                    <Route path="dept" element={<DeptDashboard />} />
                   </Route>
 
                   {/* Course Routes */}
@@ -196,6 +211,22 @@ const App = () => (
 
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
+
+
+                  {/* Staff Routes */}
+        <Route path="/dashboard/staff" element={<DashboardLayout  />}>
+          <Route index element={<StaffDashboard />} />
+          <Route path="classes" element={<StaffClasses />} />
+          <Route path="classes/:id" element={<StaffClassDetails />} />
+          <Route path="classes/:id/attendance" element={<StaffClassAttendance />} />
+          <Route path="students" element={<StaffStudents />} />
+          <Route path="grading" element={<StaffGrading />} />
+          <Route path="schedule" element={<StaffSchedule />} />
+          <Route path="announcements" element={<StaffAnnouncements />} />
+          <Route path="resources" element={<StaffResources />} />
+          <Route path="support" element={<StaffSupport />} />
+          <Route path="*" element={<StaffDashboard />} /> {/* Fallback for demo */}
+        </Route>
                 </Routes>
                 <CookiePopup />
                 <Toaster />

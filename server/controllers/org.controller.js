@@ -9,6 +9,7 @@ import bcrypt from 'bcrypt';
 import Meeting from '../models/Meeting.js';
 import Project from '../models/Project.js';
 import Material from '../models/Material.js';
+import Department from '../models/Department.js';
 import StudentProgress from '../models/StudentProgress.js';
 import { createNotification } from './notification.controller.js';
 import { sendMail } from '../services/mail.service.js';
@@ -538,10 +539,10 @@ export const submitAssignment = async (req, res) => {
  * CREATE NOTICE
  */
 export const createNotice = async (req, res) => {
-    const { organizationId, title, content, audience } = req.body;
+    const { organizationId, title, content, audience, department } = req.body;
 
     try {
-        const notice = new Notice({ organizationId, title, content, audience });
+        const notice = new Notice({ organizationId, title, content, audience, department });
         await notice.save();
         res.json({ success: true, message: 'Notice created' });
     } catch (error) {
@@ -1014,6 +1015,111 @@ export const deleteMaterial = async (req, res) => {
     try {
         await Material.findByIdAndDelete(req.params.id);
         res.json({ success: true, message: 'Material deleted' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * DEPARTMENTS
+ */
+export const createDepartment = async (req, res) => {
+    const { organizationId, name, description } = req.body;
+    try {
+        const department = new Department({ organizationId, name, description });
+        await department.save();
+        res.json({ success: true, message: 'Department created', department });
+    } catch (error) {
+        console.error('Create Department Error:', error);
+        res.status(500).json({ success: false, message: error.message || 'Server error' });
+    }
+};
+
+export const getDepartments = async (req, res) => {
+    const { organizationId } = req.query;
+    try {
+        const departments = await Department.find({ organizationId }).sort({ name: 1 });
+        res.json({ success: true, departments });
+    } catch (error) {
+        console.error('Get Departments Error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+export const updateDepartment = async (req, res) => {
+    const { id } = req.params;
+    const { name, description } = req.body;
+    try {
+        const department = await Department.findByIdAndUpdate(id, { name, description, updatedAt: Date.now() }, { new: true });
+        res.json({ success: true, message: 'Department updated', department });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+export const deleteDepartment = async (req, res) => {
+    try {
+        await Department.findByIdAndDelete(req.params.id);
+        // Also unset department from users
+        await User.updateMany({ department: req.params.id }, { $set: { department: null } });
+        res.json({ success: true, message: 'Department deleted' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * DEPARTMENT ADMINS
+ */
+export const addDeptAdmin = async (req, res) => {
+    const { organizationId, departmentId, name, email, password, phone } = req.body;
+    try {
+        let user = await User.findOne({ email });
+        if (user) {
+            return res.json({ success: false, message: 'User with this email already exists' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user = new User({
+            email,
+            mName: name,
+            phone,
+            password: hashedPassword,
+            role: 'dept_admin',
+            organization: organizationId,
+            department: departmentId,
+            isEmailVerified: true,
+            isOrganization: false
+        });
+
+        await user.save();
+        res.json({ success: true, message: 'Department Admin added successfully' });
+    } catch (error) {
+        console.error('Add Dept Admin Error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+export const getDeptAdmins = async (req, res) => {
+    const { organizationId, departmentId } = req.query;
+    try {
+        let query = { organization: organizationId, role: 'dept_admin' };
+        if (departmentId) query.department = departmentId;
+
+        const admins = await User.find(query)
+            .populate('department', 'name')
+            .select('-password')
+            .sort({ createdAt: -1 });
+        res.json({ success: true, admins });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+export const deleteDeptAdmin = async (req, res) => {
+    try {
+        await User.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Department Admin deleted successfully' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error' });
     }

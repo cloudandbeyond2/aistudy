@@ -18,7 +18,7 @@ import RichTextEditor from '@/components/RichTextEditor';
 import AdminStatCard from "@/components/admin/AdminStatCard";
 
 
-const CourseForm = ({ course, setCourse, onSave, isEdit = false }: any) => {
+const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [] }: any) => {
     if (!course) return null;
     const [expandedTopic, setExpandedTopic] = useState<number | null>(null);
 
@@ -89,7 +89,16 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false }: any) => {
                 </div>
                 <div className="grid gap-2">
                     <Label>Assign to Department (Optional)</Label>
-                    <Input value={course.department} onChange={(e) => setCourse({ ...course, department: e.target.value })} placeholder="e.g., Computer Science" />
+                    <select
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={course.department}
+                        onChange={(e) => setCourse({ ...course, department: e.target.value })}
+                    >
+                        <option value="">All Students (Default)</option>
+                        {departments.map((d: any) => (
+                            <option key={d._id} value={d.name}>{d.name}</option>
+                        ))}
+                    </select>
                 </div>
                 <div className="grid gap-2">
                     <Label>Course Type</Label>
@@ -250,7 +259,7 @@ const OrgDashboard = () => {
     const [newStudent, setNewStudent] = useState({ name: '', email: '', password: '', department: '', section: '', rollNo: '' });
     const [editStudent, setEditStudent] = useState<any>(null);
     const [newAssignment, setNewAssignment] = useState({ topic: '', description: '', dueDate: '', department: '' });
-    const [newNotice, setNewNotice] = useState({ title: '', content: '', audience: 'all' });
+    const [newNotice, setNewNotice] = useState({ title: '', content: '', audience: 'all', department: '' });
     const [newCourse, setNewCourse] = useState<any>({ title: '', description: '', department: '', topics: [], quizzes: [] });
     const [editCourse, setEditCourse] = useState<any>(null);
     const [editAICourse, setEditAICourse] = useState<any>(null);
@@ -266,6 +275,12 @@ const OrgDashboard = () => {
     const [materials, setMaterials] = useState<any[]>([]);
     const [newMeeting, setNewMeeting] = useState({ title: '', link: '', platform: 'google-meet', date: '', time: '', department: '' });
     const [newProject, setNewProject] = useState({ title: '', description: '', type: 'Project', department: '', dueDate: '' });
+
+    // Departments & Dept Admins
+    const [departmentsList, setDepartmentsList] = useState<any[]>([]);
+    const [deptAdmins, setDeptAdmins] = useState<any[]>([]);
+    const [newDept, setNewDept] = useState({ name: '', description: '' });
+    const [newDeptAdmin, setNewDeptAdmin] = useState({ name: '', email: '', password: '', phone: '', departmentId: '' });
     // const [newMaterial, setNewMaterial] = useState({ title: '', description: '', fileUrl: '', type: 'PDF', department: '' });
     const [newMaterial, setNewMaterial] = useState({
         title: '',
@@ -296,7 +311,79 @@ const OrgDashboard = () => {
         fetchMeetings();
         fetchProjects();
         fetchMaterials();
+        fetchOrgDepartments();
+        fetchOrgDeptAdmins();
     }, [orgId, toast]);
+
+    const fetchOrgDepartments = async () => {
+        try {
+            const res = await axios.get(`${serverURL}/api/org/departments?organizationId=${orgId}`);
+            if (res.data.success) setDepartmentsList(res.data.departments);
+        } catch (e) {
+            console.error("Failed to fetch departments", e);
+        }
+    };
+
+    const fetchOrgDeptAdmins = async () => {
+        try {
+            const res = await axios.get(`${serverURL}/api/org/dept-admins?organizationId=${orgId}`);
+            if (res.data.success) setDeptAdmins(res.data.admins);
+        } catch (e) {
+            console.error("Failed to fetch dept admins", e);
+        }
+    };
+
+    const handleCreateDepartment = async () => {
+        try {
+            const res = await axios.post(`${serverURL}/api/org/department/create`, { ...newDept, organizationId: orgId });
+            if (res.data.success) {
+                toast({ title: "Success", description: "Department created" });
+                setNewDept({ name: '', description: '' });
+                fetchOrgDepartments();
+            }
+        } catch (e: any) {
+            toast({ title: "Error", description: e.response?.data?.message || "Failed to create department" });
+        }
+    };
+
+    const handleDeleteDepartment = async (id: string) => {
+        if (!confirm('Delete this department?')) return;
+        try {
+            const res = await axios.delete(`${serverURL}/api/org/department/${id}`);
+            if (res.data.success) {
+                toast({ title: "Success", description: "Department deleted" });
+                fetchOrgDepartments();
+            }
+        } catch (e) {
+            toast({ title: "Error", description: "Failed to delete department" });
+        }
+    };
+
+    const handleAddDeptAdmin = async () => {
+        try {
+            const res = await axios.post(`${serverURL}/api/org/dept-admin/add`, { ...newDeptAdmin, organizationId: orgId });
+            if (res.data.success) {
+                toast({ title: "Success", description: "Department Admin added" });
+                setNewDeptAdmin({ name: '', email: '', password: '', phone: '', departmentId: '' });
+                fetchOrgDeptAdmins();
+            }
+        } catch (e: any) {
+            toast({ title: "Error", description: e.response?.data?.message || "Failed to add dept admin" });
+        }
+    };
+
+    const handleDeleteDeptAdmin = async (id: string) => {
+        if (!confirm('Delete this department admin?')) return;
+        try {
+            const res = await axios.delete(`${serverURL}/api/org/dept-admin/${id}`);
+            if (res.data.success) {
+                toast({ title: "Success", description: "Dept Admin deleted" });
+                fetchOrgDeptAdmins();
+            }
+        } catch (e) {
+            toast({ title: "Error", description: "Failed to delete dept admin" });
+        }
+    };
 
     const fetchMeetings = async () => {
         try {
@@ -678,7 +765,7 @@ const OrgDashboard = () => {
             const res = await axios.post(`${serverURL}/api/org/notice/create`, { ...newNotice, organizationId: orgId });
             if (res.data.success) {
                 toast({ title: "Success", description: "Notice posted" });
-                setNewNotice({ title: '', content: '', audience: 'all' });
+                setNewNotice({ title: '', content: '', audience: 'all', department: '' });
             }
         } catch (e) {
             toast({ title: "Error", description: "Request failed" });
@@ -895,6 +982,7 @@ const OrgDashboard = () => {
 
             <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })} className="w-full">
                 <TabsList className="flex flex-wrap h-auto w-full gap-1 p-1 bg-muted rounded-xl mb-6">
+                    <TabsTrigger value="departments" className="flex-1 min-w-[120px]">Departments</TabsTrigger>
                     <TabsTrigger value="students" className="flex-1 min-w-[120px]">Students</TabsTrigger>
                     <TabsTrigger value="courses" className="flex-1 min-w-[120px]">Courses</TabsTrigger>
                     <TabsTrigger value="assignments" className="flex-1 min-w-[120px]">Assignments</TabsTrigger>
@@ -902,7 +990,129 @@ const OrgDashboard = () => {
                     <TabsTrigger value="projects" className="flex-1 min-w-[120px]">Projects/Research</TabsTrigger>
                     <TabsTrigger value="materials" className="flex-1 min-w-[120px]">Materials</TabsTrigger>
                     <TabsTrigger value="notices" className="flex-1 min-w-[120px]">Notices</TabsTrigger>
+
                 </TabsList>
+
+                {/* DEPARTMENTS TAB */}
+                <TabsContent value="departments" className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Departments Management */}
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <div>
+                                    <CardTitle>Departments</CardTitle>
+                                    <CardDescription>Create and manage organizational departments.</CardDescription>
+                                </div>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button size="sm"><Plus className="w-4 h-4 mr-2" /> Add Dept</Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Add New Department</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="grid gap-4 py-4">
+                                            <div className="grid gap-2">
+                                                <Label>Department Name</Label>
+                                                <Input value={newDept.name} onChange={(e) => setNewDept({ ...newDept, name: e.target.value })} placeholder="e.g., Computer Science" />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label>Description</Label>
+                                                <Textarea value={newDept.description} onChange={(e) => setNewDept({ ...newDept, description: e.target.value })} placeholder="Brief description..." />
+                                            </div>
+                                            <Button onClick={handleCreateDepartment}>Create Department</Button>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-3">
+                                    {departmentsList.length > 0 ? departmentsList.map((dept: any) => (
+                                        <div key={dept._id} className="p-3 border rounded-lg flex justify-between items-center bg-muted/20">
+                                            <div>
+                                                <p className="font-semibold text-sm">{dept.name}</p>
+                                                <p className="text-xs text-muted-foreground">{dept.description}</p>
+                                            </div>
+                                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDeleteDepartment(dept._id)}>
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    )) : (
+                                        <p className="text-center text-sm text-muted-foreground py-4">No departments created yet.</p>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Dept Admins Management */}
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <div>
+                                    <CardTitle>Department Admins</CardTitle>
+                                    <CardDescription>Assign admins to specific departments.</CardDescription>
+                                </div>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button size="sm"><Plus className="w-4 h-4 mr-2" /> Add Admin</Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Add Department Admin</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="grid gap-4 py-4">
+                                            <div className="grid gap-2">
+                                                <Label>Full Name</Label>
+                                                <Input value={newDeptAdmin.name} onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, name: e.target.value })} />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label>Email</Label>
+                                                <Input value={newDeptAdmin.email} onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, email: e.target.value })} />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label>Password</Label>
+                                                <Input type="password" value={newDeptAdmin.password} onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, password: e.target.value })} />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label>Department</Label>
+                                                <select
+                                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    value={newDeptAdmin.departmentId}
+                                                    onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, departmentId: e.target.value })}
+                                                >
+                                                    <option value="">Select Department</option>
+                                                    {departmentsList.map((d: any) => (
+                                                        <option key={d._id} value={d._id}>{d.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <Button onClick={handleAddDeptAdmin}>Add Admin</Button>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-3">
+                                    {deptAdmins.length > 0 ? deptAdmins.map((admin: any) => (
+                                        <div key={admin._id} className="p-3 border rounded-lg flex justify-between items-center bg-muted/20">
+                                            <div>
+                                                <p className="font-semibold text-sm">{admin.mName}</p>
+                                                <div className="flex gap-2 items-center">
+                                                    <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-bold uppercase tracking-wider">{admin.department?.name || 'No Dept'}</span>
+                                                    <p className="text-xs text-muted-foreground">{admin.email}</p>
+                                                </div>
+                                            </div>
+                                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDeleteDeptAdmin(admin._id)}>
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    )) : (
+                                        <p className="text-center text-sm text-muted-foreground py-4">No department admins assigned yet.</p>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </TabsContent>
 
                 {/* STUDENTS TAB */}
                 <TabsContent value="students" className="space-y-4">
@@ -942,7 +1152,16 @@ const OrgDashboard = () => {
                                             </div>
                                             <div className="grid grid-cols-4 items-center gap-4">
                                                 <Label className="text-right">Department</Label>
-                                                <Input className="col-span-3" value={newStudent.department} onChange={(e) => setNewStudent({ ...newStudent, department: e.target.value })} />
+                                                <select
+                                                    className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    value={newStudent.department}
+                                                    onChange={(e) => setNewStudent({ ...newStudent, department: e.target.value })}
+                                                >
+                                                    <option value="">Select Department</option>
+                                                    {departmentsList.map((d: any) => (
+                                                        <option key={d._id} value={d.name}>{d.name}</option>
+                                                    ))}
+                                                </select>
                                             </div>
                                             <div className="grid grid-cols-4 items-center gap-4">
                                                 <Label className="text-right">Section</Label>
@@ -1000,7 +1219,16 @@ const OrgDashboard = () => {
                                                                 </div>
                                                                 <div className="grid grid-cols-4 items-center gap-4">
                                                                     <Label className="text-right">Department</Label>
-                                                                    <Input className="col-span-3" value={editStudent.studentDetails?.department || ''} onChange={(e) => setEditStudent({ ...editStudent, studentDetails: { ...editStudent.studentDetails, department: e.target.value } })} />
+                                                                    <select
+                                                                        className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                        value={editStudent.studentDetails?.department || ''}
+                                                                        onChange={(e) => setEditStudent({ ...editStudent, studentDetails: { ...editStudent.studentDetails, department: e.target.value } })}
+                                                                    >
+                                                                        <option value="">Select Department</option>
+                                                                        {departmentsList.map((d: any) => (
+                                                                            <option key={d._id} value={d.name}>{d.name}</option>
+                                                                        ))}
+                                                                    </select>
                                                                 </div>
                                                                 <div className="grid grid-cols-4 items-center gap-4">
                                                                     <Label className="text-right">Section</Label>
@@ -1059,7 +1287,7 @@ const OrgDashboard = () => {
                                             </DialogTrigger>
                                             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                                                 <DialogHeader><DialogTitle>Create New Course</DialogTitle></DialogHeader>
-                                                <CourseForm course={newCourse} setCourse={setNewCourse} onSave={() => handleCreateCourse(newCourse)} />
+                                                <CourseForm course={newCourse} setCourse={setNewCourse} onSave={() => handleCreateCourse(newCourse)} departments={departmentsList} />
                                             </DialogContent>
                                         </Dialog>
                                     )}
@@ -1158,7 +1386,16 @@ const OrgDashboard = () => {
                                             <Label>Due Date</Label>
                                             <Input type="date" value={newAssignment.dueDate} onChange={(e) => setNewAssignment({ ...newAssignment, dueDate: e.target.value })} />
                                             <Label>Department (Optional)</Label>
-                                            <Input placeholder="e.g., Computer Science" value={newAssignment.department} onChange={(e) => setNewAssignment({ ...newAssignment, department: e.target.value })} />
+                                            <select
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                value={newAssignment.department}
+                                                onChange={(e) => setNewAssignment({ ...newAssignment, department: e.target.value })}
+                                            >
+                                                <option value="">All Students</option>
+                                                {departmentsList.map((d: any) => (
+                                                    <option key={d._id} value={d.name}>{d.name}</option>
+                                                ))}
+                                            </select>
                                         </div>
                                         <Button onClick={handleCreateAssignment}>Create</Button>
                                     </DialogContent>
@@ -1244,7 +1481,16 @@ const OrgDashboard = () => {
                                         </div>
                                         <div className="grid gap-2">
                                             <Label>Department (Optional)</Label>
-                                            <Input value={newMeeting.department} onChange={(e) => setNewMeeting({ ...newMeeting, department: e.target.value })} placeholder="e.g., CS" />
+                                            <select
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                value={newMeeting.department}
+                                                onChange={(e) => setNewMeeting({ ...newMeeting, department: e.target.value })}
+                                            >
+                                                <option value="">All Students</option>
+                                                {departmentsList.map((d: any) => (
+                                                    <option key={d._id} value={d.name}>{d.name}</option>
+                                                ))}
+                                            </select>
                                         </div>
                                         <Button onClick={handleCreateMeeting}>Schedule Meeting</Button>
                                     </div>
@@ -1332,8 +1578,17 @@ const OrgDashboard = () => {
                                                 <Input type="date" value={newProject.dueDate} onChange={(e) => setNewProject({ ...newProject, dueDate: e.target.value })} />
                                             </div>
                                             <div className="grid gap-2">
-                                                <Label>Department</Label>
-                                                <Input value={newProject.department} onChange={(e) => setNewProject({ ...newProject, department: e.target.value })} placeholder="e.g., CS" />
+                                                <Label>Department (Optional)</Label>
+                                                <select
+                                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    value={newProject.department}
+                                                    onChange={(e) => setNewProject({ ...newProject, department: e.target.value })}
+                                                >
+                                                    <option value="">All Students</option>
+                                                    {departmentsList.map((d: any) => (
+                                                        <option key={d._id} value={d.name}>{d.name}</option>
+                                                    ))}
+                                                </select>
                                             </div>
                                         </div>
                                         <Button onClick={handleCreateProject}>Add Project</Button>
@@ -1429,8 +1684,17 @@ const OrgDashboard = () => {
                                             </select>
                                         </div>
                                         <div className="grid gap-2">
-                                            <Label>Department</Label>
-                                            <Input value={newMaterial.department} onChange={(e) => setNewMaterial({ ...newMaterial, department: e.target.value })} placeholder="e.g., CS" />
+                                            <Label>Department (Optional)</Label>
+                                            <select
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                value={newMaterial.department}
+                                                onChange={(e) => setNewMaterial({ ...newMaterial, department: e.target.value })}
+                                            >
+                                                <option value="">All Students</option>
+                                                {departmentsList.map((d: any) => (
+                                                    <option key={d._id} value={d.name}>{d.name}</option>
+                                                ))}
+                                            </select>
                                         </div>
                                         <Button onClick={handleCreateMaterial}>Add Material</Button>
                                     </div>
@@ -1490,6 +1754,19 @@ const OrgDashboard = () => {
                                         className="min-h-[200px]"
                                     />
                                 </div>
+                                <div className="grid gap-2">
+                                    <Label>Department (Optional)</Label>
+                                    <select
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={newNotice.department || ''}
+                                        onChange={(e) => setNewNotice({ ...newNotice, department: e.target.value })}
+                                    >
+                                        <option value="">All Students</option>
+                                        {departmentsList.map((d: any) => (
+                                            <option key={d._id} value={d.name}>{d.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
                                 <Button onClick={handleCreateNotice}><Bell className="w-4 h-4 mr-2" /> Post Notice</Button>
                             </div>
                         </CardContent>
@@ -1509,6 +1786,7 @@ const OrgDashboard = () => {
                             setCourse={setEditCourse}
                             onSave={handleUpdateCourse}
                             isEdit
+                            departments={departmentsList}
                         />
                     )}
                 </DialogContent>
@@ -1534,12 +1812,17 @@ const OrgDashboard = () => {
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="department">Department (Optional)</Label>
-                                <Input
+                                <select
                                     id="department"
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                     value={editAICourse.department || ''}
                                     onChange={(e) => setEditAICourse({ ...editAICourse, department: e.target.value })}
-                                    placeholder="e.g., Computer Science, Mathematics"
-                                />
+                                >
+                                    <option value="">All Students</option>
+                                    {departmentsList.map((d: any) => (
+                                        <option key={d._id} value={d.name}>{d.name}</option>
+                                    ))}
+                                </select>
                                 <p className="text-xs text-muted-foreground">
                                     Assign to a specific department or leave empty for all students
                                 </p>

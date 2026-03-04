@@ -5,6 +5,7 @@ const noticeSchema = new mongoose.Schema({
     title: { type: String, required: true },
     content: { type: String, required: true },
     audience: { type: String, default: 'all' }, // 'all', 'grade-10', etc.
+    department: { type: mongoose.Schema.Types.ObjectId, ref: 'Department' },
     createdAt: { type: Date, default: Date.now }
 });
 
