@@ -77,6 +77,7 @@ export default function StaffStudents() {
   const [newStudent, setNewStudent] = useState({
     name: '',
     email: '',
+    password: '',
     section: '',
     rollNo: ''
   });
@@ -95,6 +96,7 @@ export default function StaffStudents() {
     setNewStudent({
       name: student.mName,
       email: student.email,
+      password: '',
       section: student.studentDetails?.section || '',
       rollNo: student.studentDetails?.rollNo || ''
     });
@@ -164,7 +166,7 @@ export default function StaffStudents() {
     setIsModalOpen(false);
     setIsEditing(false);
     setSelectedStudent(null);
-    setNewStudent({ name: '', email: '', section: '', rollNo: '' });
+    setNewStudent({ name: '', email: '', password: '', section: '', rollNo: '' });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -324,8 +326,8 @@ export default function StaffStudents() {
                   <button
                     onClick={() => setActiveTab('manual')}
                     className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'manual'
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
                       }`}
                   >
                     Manual Entry
@@ -333,8 +335,8 @@ export default function StaffStudents() {
                   <button
                     onClick={() => setActiveTab('bulk')}
                     className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'bulk'
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
                       }`}
                   >
                     Bulk Upload
@@ -368,6 +370,20 @@ export default function StaffStudents() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     />
                   </div>
+                  {!isEditing && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                      <input
+                        type="password"
+                        name="password"
+                        required
+                        value={newStudent.password}
+                        onChange={handleInputChange}
+                        placeholder="••••••••"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      />
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
