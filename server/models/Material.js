@@ -22,8 +22,8 @@ const materialSchema = new mongoose.Schema({
         default: 'PDF'
     },
     department: {
-        type: String,
-        default: 'all'
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Department'
     },
     createdAt: {
         type: Date,

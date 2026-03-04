@@ -6,7 +6,7 @@ const assignmentSchema = new mongoose.Schema({
     topic: { type: String, required: true },
     description: String,
     dueDate: Date,
-    department: String,
+    department: { type: mongoose.Schema.Types.ObjectId, ref: 'Department' },
     assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     generatedByAI: { type: Boolean, default: false },
     questions: [{

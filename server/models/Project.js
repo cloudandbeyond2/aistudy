@@ -19,8 +19,8 @@ const projectSchema = new mongoose.Schema({
         required: true
     },
     department: {
-        type: String,
-        default: 'all'
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Department'
     },
     dueDate: {
         type: Date

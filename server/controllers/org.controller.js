@@ -439,14 +439,21 @@ export const getAssignments = async (req, res) => {
         if (studentId) {
             const student = await User.findById(studentId);
             if (student) {
-                const department = student.studentDetails?.department;
+                const department = student.department || student.studentDetails?.department;
                 query.$or = [
                     { assignedTo: studentId },
                     { department: department },
                     {
                         $and: [
                             { assignedTo: { $size: 0 } },
-                            { $or: [{ department: { $exists: false } }, { department: '' }, { department: 'all' }] }
+                            {
+                                $or: [
+                                    { department: { $exists: false } },
+                                    { department: null },
+                                    { department: '' },
+                                    { department: 'all' }
+                                ]
+                            }
                         ]
                     }
                 ];
@@ -570,10 +577,11 @@ export const getNotices = async (req, res) => {
             if (student) {
                 const department = student.studentDetails?.department;
                 query.$or = [
-                    { audience: department },
-                    { audience: 'all' },
-                    { audience: { $exists: false } },
-                    { audience: '' }
+                    { department: department },
+                    { department: { $exists: false } },
+                    { department: null },
+                    { department: '' },
+                    { department: 'all' }
                 ];
             }
         }
@@ -913,7 +921,13 @@ export const getProjects = async (req, res) => {
             const student = await User.findById(studentId);
             if (student) {
                 const department = student.studentDetails?.department;
-                query.$or = [{ department: department }, { department: 'all' }, { department: '' }];
+                query.$or = [
+                    { department: department },
+                    { department: { $exists: false } },
+                    { department: null },
+                    { department: '' },
+                    { department: 'all' }
+                ];
             }
         }
         const projects = await Project.find(query).sort({ createdAt: -1 });
@@ -1008,7 +1022,13 @@ export const getMaterials = async (req, res) => {
             const student = await User.findById(studentId);
             if (student) {
                 const department = student.studentDetails?.department;
-                query.$or = [{ department: department }, { department: 'all' }, { department: '' }];
+                query.$or = [
+                    { department: department },
+                    { department: { $exists: false } },
+                    { department: null },
+                    { department: '' },
+                    { department: 'all' }
+                ];
             }
         }
         const materials = await Material.find(query).sort({ createdAt: -1 });
