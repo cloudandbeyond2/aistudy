@@ -153,14 +153,17 @@ export const addStudent = async (req, res) => {
             return res.json({ success: false, message: 'User with this email already exists' });
         }
 
+        const hashedPassword = await bcrypt.hash(password || '123456', 10);
+
         user = new User({
             email,
             mName: name,
             phone,
-            password,
+            password: hashedPassword,
             role: 'student',
             organization: organizationId,
-            studentDetails: { department, section, rollNo },
+            department: department && department !== 'all' ? department : null,
+            studentDetails: { section, rollNo },
             isVerified: true
         });
 
@@ -247,7 +250,7 @@ export const updateStudent = async (req, res) => {
         const updates = {
             mName: name,
             email,
-            'studentDetails.department': department,
+            department: department && department !== 'all' ? department : null,
             'studentDetails.section': section,
             'studentDetails.rollNo': rollNo,
             updatedAt: Date.now()
@@ -311,13 +314,17 @@ export const bulkUploadStudents = async (req, res) => {
                 continue;
             }
 
+            const hashedPassword = await bcrypt.hash(password || '123456', 10);
+
             await new User({
                 email,
                 mName: name || 'Student',
-                password,
+                password: hashedPassword,
                 role: 'student',
                 organization: organizationId,
-                studentDetails: { department, section, rollNo }
+                department: department && department !== 'all' ? department : null,
+                studentDetails: { section, rollNo },
+                isVerified: true
             }).save();
 
             addedCount++;

@@ -1159,7 +1159,7 @@ const OrgDashboard = () => {
                                                 >
                                                     <option value="">Select Department</option>
                                                     {departmentsList.map((d: any) => (
-                                                        <option key={d._id} value={d.name}>{d.name}</option>
+                                                        <option key={d._id} value={d._id}>{d.name}</option>
                                                     ))}
                                                 </select>
                                             </div>
@@ -1226,7 +1226,7 @@ const OrgDashboard = () => {
                                                                     >
                                                                         <option value="">Select Department</option>
                                                                         {departmentsList.map((d: any) => (
-                                                                            <option key={d._id} value={d.name}>{d.name}</option>
+                                                                            <option key={d._id} value={d._id}>{d.name}</option>
                                                                         ))}
                                                                     </select>
                                                                 </div>
@@ -1393,7 +1393,7 @@ const OrgDashboard = () => {
                                             >
                                                 <option value="">All Students</option>
                                                 {departmentsList.map((d: any) => (
-                                                    <option key={d._id} value={d.name}>{d.name}</option>
+                                                    <option key={d._id} value={d._id}>{d.name}</option>
                                                 ))}
                                             </select>
                                         </div>

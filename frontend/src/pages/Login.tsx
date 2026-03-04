@@ -480,6 +480,10 @@ const Login = () => {
           sessionStorage.setItem('orgId', organizationId);
         }
 
+        if (response.data.userData.department) {
+          sessionStorage.setItem('deptId', response.data.userData.department);
+        }
+
         if (response.data.userData.organization) {
           sessionStorage.setItem('orgId', response.data.userData.organization);
         }

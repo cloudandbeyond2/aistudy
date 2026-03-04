@@ -4,10 +4,14 @@ import Submission from '../models/Submission.js';
 import OrgCourse from '../models/OrgCourse.js';
 import Course from '../models/Course.js';
 import StudentProgress from '../models/StudentProgress.js';
+import Department from '../models/Department.js';
 
 export const getDeptDashboardStats = async (req, res) => {
     const { departmentId } = req.query;
     try {
+        const department = await Department.findById(departmentId).select('name');
+        const deptName = department ? department.name : 'Unknown Department';
+
         const studentCount = await User.countDocuments({ department: departmentId, role: 'student' });
 
         // Count assignments for this department
@@ -33,6 +37,7 @@ export const getDeptDashboardStats = async (req, res) => {
 
         res.json({
             success: true,
+            deptName,
             studentCount,
             assignmentCount,
             submissionCount,
