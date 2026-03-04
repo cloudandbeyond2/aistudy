@@ -16,6 +16,8 @@ import SEO from '@/components/SEO';
 import * as XLSX from 'xlsx';
 import RichTextEditor from '@/components/RichTextEditor';
 import AdminStatCard from "@/components/admin/AdminStatCard";
+import { Badge } from "@/components/ui/badge";
+
 
 
 const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [] }: any) => {
@@ -1407,7 +1409,17 @@ const OrgDashboard = () => {
                                         <div key={assignment._id} className="p-4 border rounded-lg bg-card">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <h3 className="font-semibold text-lg">{assignment.topic}</h3>
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="font-semibold text-lg">{assignment.topic}</h3>
+                                                        {(() => {
+                                                            const isExpired = new Date(assignment.dueDate) < new Date(new Date().setHours(0, 0, 0, 0));
+                                                            return (
+                                                                <Badge variant={isExpired ? "destructive" : "secondary"} className={isExpired ? "" : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20"}>
+                                                                    {isExpired ? "Expired" : "Active"}
+                                                                </Badge>
+                                                            );
+                                                        })()}
+                                                    </div>
                                                     <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: assignment.description }} />
                                                     <div className="flex gap-4 mt-2 text-xs font-medium text-muted-foreground">
                                                         <span className="flex items-center gap-1">
