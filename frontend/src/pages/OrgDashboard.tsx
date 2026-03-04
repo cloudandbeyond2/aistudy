@@ -258,7 +258,7 @@ const OrgDashboard = () => {
     const [assignments, setAssignments] = useState([]);
     const [notices, setNotices] = useState([]);
     const [courses, setCourses] = useState([]);
-    const [newStudent, setNewStudent] = useState({ name: '', email: '', password: '', department: '', section: '', rollNo: '' });
+    const [newStudent, setNewStudent] = useState({ name: '', email: '', password: '', department: '', section: '', studentClass: '', rollNo: '' });
     const [editStudent, setEditStudent] = useState<any>(null);
     const [newAssignment, setNewAssignment] = useState({ topic: '', description: '', dueDate: '', department: '' });
     const [newNotice, setNewNotice] = useState({ title: '', content: '', audience: 'all', department: '' });
@@ -593,7 +593,7 @@ const OrgDashboard = () => {
             const res = await axios.post(`${serverURL}/api/org/student/add`, { ...newStudent, organizationId: orgId });
             if (res.data.success) {
                 toast({ title: "Success", description: "Student added successfully" });
-                setNewStudent({ name: '', email: '', password: '', department: '', section: '', rollNo: '' });
+                setNewStudent({ name: '', email: '', password: '', department: '', section: '', studentClass: '', rollNo: '' });
                 fetchStudents(); // Refresh the student list
                 fetchStats(); // Refresh stats
             } else {
@@ -717,7 +717,8 @@ const OrgDashboard = () => {
                 email: editStudent.email,
                 department: editStudent.studentDetails?.department,
                 section: editStudent.studentDetails?.section,
-                rollNo: editStudent.studentDetails?.rollNo
+                rollNo: editStudent.studentDetails?.rollNo,
+                studentClass: editStudent.studentDetails?.studentClass,
             });
             if (res.data.success) {
                 toast({ title: "Success", description: "Student updated successfully" });
@@ -1166,6 +1167,10 @@ const OrgDashboard = () => {
                                                 </select>
                                             </div>
                                             <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label className="text-right">Class</Label>
+                                                <Input className="col-span-3" value={newStudent.studentClass} onChange={(e) => setNewStudent({ ...newStudent, studentClass: e.target.value })} placeholder="e.g. 10th" />
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
                                                 <Label className="text-right">Section</Label>
                                                 <Input className="col-span-3" value={newStudent.section} onChange={(e) => setNewStudent({ ...newStudent, section: e.target.value })} />
                                             </div>
@@ -1191,7 +1196,7 @@ const OrgDashboard = () => {
                                                 <div>
                                                     <p className="font-medium">{student.mName || student.email}</p>
                                                     <p className="text-sm text-muted-foreground">
-                                                        {student.studentDetails?.department && `Dept: ${student.studentDetails.department}`}
+                                                        {student.studentDetails?.class && ` • Class ${student.studentDetails.class}`}
                                                         {student.studentDetails?.section && ` • Section ${student.studentDetails.section}`}
                                                         {student.studentDetails?.rollNo && ` • Roll ${student.studentDetails.rollNo}`}
                                                     </p>
@@ -1231,6 +1236,10 @@ const OrgDashboard = () => {
                                                                             <option key={d._id} value={d._id}>{d.name}</option>
                                                                         ))}
                                                                     </select>
+                                                                </div>
+                                                                <div className="grid grid-cols-4 items-center gap-4">
+                                                                    <Label className="text-right">Class</Label>
+                                                                    <Input className="col-span-3" value={editStudent.studentDetails?.studentClass || ''} onChange={(e) => setEditStudent({ ...editStudent, studentDetails: { ...editStudent.studentDetails, studentClass: e.target.value } })} />
                                                                 </div>
                                                                 <div className="grid grid-cols-4 items-center gap-4">
                                                                     <Label className="text-right">Section</Label>

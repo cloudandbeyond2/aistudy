@@ -78,6 +78,7 @@ export default function StaffStudents() {
     name: '',
     email: '',
     password: '',
+    studentClass: '',
     section: '',
     rollNo: ''
   });
@@ -97,6 +98,7 @@ export default function StaffStudents() {
       name: student.mName,
       email: student.email,
       password: '',
+      studentClass: student.studentDetails?.studentClass || '',
       section: student.studentDetails?.section || '',
       rollNo: student.studentDetails?.rollNo || ''
     });
@@ -166,7 +168,7 @@ export default function StaffStudents() {
     setIsModalOpen(false);
     setIsEditing(false);
     setSelectedStudent(null);
-    setNewStudent({ name: '', email: '', password: '', section: '', rollNo: '' });
+    setNewStudent({ name: '', email: '', password: '', studentClass: '', section: '', rollNo: '' });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -235,6 +237,7 @@ export default function StaffStudents() {
               <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-500">
                 <tr>
                   <th className="px-6 py-4">Student Name</th>
+                  <th className="px-6 py-4">Class</th>
                   <th className="px-6 py-4">Section</th>
                   <th className="px-6 py-4">Roll No</th>
                   <th className="px-6 py-4">Joined Date</th>
@@ -254,6 +257,11 @@ export default function StaffStudents() {
                           <div className="text-xs text-gray-400">{student.email}</div>
                         </div>
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs font-medium">
+                        {student.studentDetails?.studentClass || 'N/A'}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium">
@@ -386,6 +394,18 @@ export default function StaffStudents() {
                   )}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+                      <input
+                        type="text"
+                        name="studentClass"
+                        required
+                        value={newStudent.studentClass}
+                        onChange={handleInputChange}
+                        placeholder="e.g. 10th"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
                       <input
                         type="text"
@@ -397,17 +417,17 @@ export default function StaffStudents() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Roll Number</label>
-                      <input
-                        type="text"
-                        name="rollNo"
-                        value={newStudent.rollNo}
-                        onChange={handleInputChange}
-                        placeholder="e.g. 101"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                      />
-                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Roll Number</label>
+                    <input
+                      type="text"
+                      name="rollNo"
+                      value={newStudent.rollNo}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 101"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
                   </div>
                   <button
                     type="submit"

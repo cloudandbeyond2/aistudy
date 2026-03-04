@@ -38,6 +38,7 @@ const userSchema = new mongoose.Schema({
   studentDetails: {
     department: String,
     section: String,
+    studentClass: String,
     rollNo: String
   },
   subscriptionStart: { type: Date, default: null },

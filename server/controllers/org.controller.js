@@ -145,7 +145,7 @@ export const orgSignin = async (req, res) => {
  * ADD STUDENT (Single)
  */
 export const addStudent = async (req, res) => {
-    const { email, name, phone, password, department, section, rollNo, organizationId } = req.body;
+    const { email, name, phone, password, department, section, rollNo, studentClass, organizationId } = req.body;
 
     try {
         let user = await User.findOne({ email });
@@ -163,7 +163,7 @@ export const addStudent = async (req, res) => {
             role: 'student',
             organization: organizationId,
             department: department && department !== 'all' ? department : null,
-            studentDetails: { section, rollNo },
+            studentDetails: { section, rollNo, studentClass },
             isVerified: true
         });
 
@@ -244,7 +244,7 @@ export const getStudents = async (req, res) => {
  */
 export const updateStudent = async (req, res) => {
     const { studentId } = req.params;
-    const { name, email, department, section, rollNo } = req.body;
+    const { name, email, department, section, rollNo, studentClass, class: className } = req.body;
 
     try {
         const updates = {
@@ -253,6 +253,7 @@ export const updateStudent = async (req, res) => {
             department: department && department !== 'all' ? department : null,
             'studentDetails.section': section,
             'studentDetails.rollNo': rollNo,
+            'studentDetails.studentClass': studentClass || className,
             updatedAt: Date.now()
         };
 
@@ -297,7 +298,7 @@ export const bulkUploadStudents = async (req, res) => {
         const errors = [];
 
         for (const student of students) {
-            const { email, name, password, department, section, rollNo } = student;
+            const { email, name, password, department, section, rollNo, studentClass } = student;
 
             // Simple validation: skip rows with no email and no name
             if (!email && !name) continue;
@@ -323,7 +324,7 @@ export const bulkUploadStudents = async (req, res) => {
                 role: 'student',
                 organization: organizationId,
                 department: department && department !== 'all' ? department : null,
-                studentDetails: { section, rollNo },
+                studentDetails: { section, rollNo, studentClass },
                 isVerified: true
             }).save();
 
