@@ -35,12 +35,19 @@ const userSchema = new mongoose.Schema({
   userType: { type: String, enum: ['individual', 'organization'], default: 'individual' },
   profession: { type: String, default: null },
   experienceLevel: { type: String, default: 'beginner' },
+  // studentDetails: {
+  //   department: String,
+  //   section: String,
+  //   studentClass: String,
+  //   rollNo: String
+  // },
   studentDetails: {
-    department: String,
-    section: String,
-    studentClass: String,
-    rollNo: String
-  },
+  department: String,
+  section: String,
+  studentClass: String,
+  rollNo: String,
+  classId: { type: mongoose.Schema.Types.ObjectId, ref: 'Class' }
+},
   subscriptionStart: { type: Date, default: null },
   subscriptionEnd: { type: Date, default: null },
   isEmailVerified: { type: Boolean, default: false },

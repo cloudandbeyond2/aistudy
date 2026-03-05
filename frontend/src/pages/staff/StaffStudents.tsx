@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   Search,
   Filter,
-  Mail,
   MoreHorizontal,
   User,
   Plus,
   X,
   Upload,
   FileSpreadsheet,
-  FileText,
   Loader2,
   Edit,
   Trash2
@@ -47,10 +45,75 @@ export default function StaffStudents() {
 
   const deptId = sessionStorage.getItem('deptId');
 
-  useEffect(() => {
-    fetchStudents();
-  }, []);
+  // star bala
+  const [classes, setClasses] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+const [filterClass, setFilterClass] = useState("");
 
+const [currentPage, setCurrentPage] = useState(1);
+const studentsPerPage = 8;
+const fetchClasses = async () => {
+  try {
+    const res = await axios.get(`${serverURL}/api/classes`);
+
+    console.log("Classes API:", res.data);
+
+    if (res.data.success) {
+      setClasses(res.data.data || []);   // ✅ FIX HERE
+    } else {
+      setClasses([]);
+    }
+
+  } catch (error) {
+    console.error("Error fetching classes", error);
+  }
+};
+
+const filteredStudents = students.filter((student) => {
+
+  const matchesSearch =
+    student.mName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.email?.toLowerCase().includes(searchTerm.toLowerCase());
+
+  const matchesClass =
+    filterClass === "" ||
+    student.studentDetails?.studentClass === filterClass;
+
+  return matchesSearch && matchesClass;
+
+});
+
+const indexOfLastStudent = currentPage * studentsPerPage;
+const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
+
+const currentStudents = filteredStudents.slice(
+  indexOfFirstStudent,
+  indexOfLastStudent
+);
+
+const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
+
+useEffect(() => {
+  fetchStudents();
+  fetchClasses();
+}, []);
+
+const handleClassChange = (e:any) => {
+
+  const classId = e.target.value;
+
+  const selectedClass = classes.find(
+    (cls:any) => cls._id === classId
+  );
+
+  setNewStudent((prev:any) => ({
+    ...prev,
+    classId: classId,   // ✅ store class id
+    studentClass: selectedClass?.name || "",
+    section: selectedClass?.section || "",
+    room: selectedClass?.room || ""
+  }));
+};
   const fetchStudents = async () => {
     if (!deptId) {
       setIsLoading(false);
@@ -58,9 +121,12 @@ export default function StaffStudents() {
     }
     try {
       const response = await axios.get(`${serverURL}/api/dept/students?departmentId=${deptId}`);
-      if (response.data.success) {
-        setStudents(response.data.students);
-      }
+   if (response.data.success) {
+  setStudents(response.data.students || []);
+} else {
+  setStudents([]);
+}
+      console.log('Fetched students:', response.data.students);
     } catch (error) {
       console.error('Error fetching students:', error);
       toast({
@@ -73,15 +139,20 @@ export default function StaffStudents() {
     }
   };
 
+
+
   // Manual Entry State
-  const [newStudent, setNewStudent] = useState({
-    name: '',
-    email: '',
-    password: '',
-    studentClass: '',
-    section: '',
-    rollNo: ''
-  });
+
+const [newStudent, setNewStudent] = useState({
+  name: '',
+  email: '',
+  password: '',
+  classId: '',
+  studentClass: '',
+  section: '',
+  room: '',
+  rollNo: ''
+});
 
   // Bulk Upload State
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -100,7 +171,9 @@ export default function StaffStudents() {
       password: '',
       studentClass: student.studentDetails?.studentClass || '',
       section: student.studentDetails?.section || '',
-      rollNo: student.studentDetails?.rollNo || ''
+      room: student.studentDetails?.room || '',
+      rollNo: student.studentDetails?.rollNo || '',
+      classId: student.studentDetails?.classId || ''  // ✅ pre-select class
     });
     setIsModalOpen(true);
   };
@@ -136,7 +209,13 @@ export default function StaffStudents() {
       if (isEditing && selectedStudent) {
         const response = await axios.put(`${serverURL}/api/org/student/${selectedStudent._id}`, {
           ...newStudent,
-          department: deptId
+      name: newStudent.name,
+  email: newStudent.email,
+  rollNo: newStudent.rollNo,
+  section: newStudent.section,
+  studentClass: newStudent.studentClass,
+  classId: newStudent.classId,  // ✅ send classId
+  department: deptId
         });
         if (response.data.success) {
           toast({ title: "Success", description: "Student updated successfully" });
@@ -148,8 +227,17 @@ export default function StaffStudents() {
       } else {
         const response = await axios.post(`${serverURL}/api/org/student/add`, {
           ...newStudent,
-          organizationId: orgId,
-          department: deptId
+          // organizationId: orgId,
+          // department: deptId
+           name: newStudent.name,
+  email: newStudent.email,
+  password: newStudent.password,
+  rollNo: newStudent.rollNo,
+  section: newStudent.section,
+  studentClass: newStudent.studentClass,
+  classId: newStudent.classId, // ✅ send classId
+  organizationId: orgId,
+  department: deptId
         });
         if (response.data.success) {
           toast({ title: "Success", description: "Student added successfully" });
@@ -168,7 +256,7 @@ export default function StaffStudents() {
     setIsModalOpen(false);
     setIsEditing(false);
     setSelectedStudent(null);
-    setNewStudent({ name: '', email: '', password: '', studentClass: '', section: '', rollNo: '' });
+    setNewStudent({ name: '', email: '', password: '', studentClass: '', section: '', room: '', classId: '', rollNo: '' });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -194,30 +282,62 @@ export default function StaffStudents() {
           <h1 className="text-2xl font-bold text-slate-900">Department Students</h1>
           <p className="text-slate-500">View and manage students within your department.</p>
         </div>
-        <div className="flex gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm">
-            <Filter size={16} />
-            Filter
-          </button>
-          <button
-            onClick={() => { setIsEditing(false); setIsModalOpen(true); }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-sm"
-          >
-            <Plus size={16} />
-            Add Student
-          </button>
-        </div>
+       <div className="flex gap-2">
+  {/* Filter */}
+  <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm">
+    <Filter size={16} className="text-gray-500" />
+
+    <select
+      value={filterClass}
+      onChange={(e) => {
+        setFilterClass(e.target.value);
+        setCurrentPage(1);
+      }}
+      className="bg-transparent text-sm font-medium text-gray-700 outline-none"
+    >
+      <option value="">All Classes</option>
+
+      {classes.map((cls) => (
+        <option key={cls._id} value={cls.name}>
+          {cls.name}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  {/* Add Student */}
+  <button
+    onClick={() => {
+      setIsEditing(false);
+      setIsModalOpen(true);
+    }}
+    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-sm"
+  >
+    <Plus size={16} />
+    Add Student
+  </button>
+</div>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-gray-200 flex gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input
+            {/* <input
               type="text"
               placeholder="Search by name or email..."
               className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-            />
+            /> */}
+            <input
+  type="text"
+  placeholder="Search by name or email..."
+  value={searchTerm}
+  onChange={(e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  }}
+  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg"
+/>
           </div>
         </div>
 
@@ -245,7 +365,7 @@ export default function StaffStudents() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {students.map((student) => (
+               {currentStudents.map((student) => (
                   <tr key={student._id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -298,18 +418,61 @@ export default function StaffStudents() {
                   </tr>
                 ))}
               </tbody>
+              
             </table>
           )}
         </div>
 
         {!isLoading && students.length > 0 && (
-          <div className="p-4 border-t border-gray-200 flex items-center justify-between text-sm text-gray-500">
-            <span>Showing {students.length} students</span>
-            <div className="flex gap-2">
-              <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50" disabled>Previous</button>
-              <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50" disabled>Next</button>
-            </div>
-          </div>
+       <div className="p-4 border-t border-gray-200 flex items-center justify-between text-sm text-gray-600">
+
+  {/* Page Info */}
+  <span>
+    Page {currentPage} of {totalPages}
+  </span>
+
+  {/* Pagination */}
+  <div className="flex items-center gap-2">
+
+    {/* Previous */}
+    <button
+      onClick={() => setCurrentPage((prev) => prev - 1)}
+      disabled={currentPage === 1}
+      className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50"
+    >
+      Previous
+    </button>
+
+    {/* Page Numbers */}
+    {[...Array(totalPages)].map((_, index) => {
+      const page = index + 1;
+
+      return (
+        <button
+          key={page}
+          onClick={() => setCurrentPage(page)}
+          className={`px-3 py-1 border rounded ${
+            currentPage === page
+              ? "bg-blue-600 text-white border-blue-600"
+              : "border-gray-200 hover:bg-gray-50"
+          }`}
+        >
+          {page}
+        </button>
+      );
+    })}
+
+    {/* Next */}
+    <button
+      onClick={() => setCurrentPage((prev) => prev + 1)}
+      disabled={currentPage === totalPages}
+      className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50"
+    >
+      Next
+    </button>
+
+  </div>
+</div>
         )}
       </div>
 
@@ -393,31 +556,70 @@ export default function StaffStudents() {
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
-                      <input
-                        type="text"
-                        name="studentClass"
-                        required
-                        value={newStudent.studentClass}
-                        onChange={handleInputChange}
-                        placeholder="e.g. 10th"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
-                      <input
-                        type="text"
-                        name="section"
-                        required
-                        value={newStudent.section}
-                        onChange={handleInputChange}
-                        placeholder="e.g. A"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                      />
-                    </div>
-                  </div>
+
+  {/* Class */}
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+
+
+<select
+  name="classId"
+  value={newStudent.classId}
+  onChange={handleClassChange}
+  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+  required
+>
+  <option value="" disabled>
+    Select Class
+  </option>
+
+  {classes.map((cls) => (
+    <option key={cls._id} value={cls._id}>
+      {cls.name}
+    </option>
+  ))}
+</select>
+  </div>
+
+  {/* Section */}
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
+   <select
+  name="section"
+  value={newStudent.section}
+  onChange={handleInputChange}
+  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+>
+  <option value="">Select Section</option>
+
+  {classes.map((cls:any) => (
+    <option key={cls._id} value={cls.section}>
+      {cls.section}
+    </option>
+  ))}
+
+</select>
+  </div>
+
+</div>
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">Room</label>
+ <select
+  name="room"
+  value={newStudent.room}
+  onChange={handleInputChange}
+  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+>
+  <option value="">Select Room</option>
+
+  {classes.map((cls:any) => (
+    <option key={cls._id} value={cls.room}>
+      {cls.room}
+    </option>
+  ))}
+
+</select>
+</div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Roll Number</label>
                     <input
