@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Users, Clock, MapPin, Calendar, BookOpen, FileText, MoreVertical } from 'lucide-react';
-
+import { serverURL } from '@/constants';
 interface ClassItem {
   _id: string;
   name: string;
@@ -24,7 +24,7 @@ export default function StaffClassDetails() {
 
   const fetchClassById = async () => {
     try {
-      const response = await fetch(`http://localhost:5001/api/classes/${id}`);
+      const response = await fetch(`${serverURL}/api/classes/${id}`);
       const result = await response.json();
 
       if (result.success) {

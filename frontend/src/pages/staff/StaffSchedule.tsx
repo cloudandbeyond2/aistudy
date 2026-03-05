@@ -11,8 +11,7 @@ import {
   Trash2,
   Edit
 } from "lucide-react";
-
-const serverURL = "http://localhost:5001";
+import { serverURL } from '@/constants';
 
 interface ScheduleItem {
   _id?: string;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Clock, MoreVertical, Calendar, BookOpen, X } from 'lucide-react';
-
+import { serverURL } from '@/constants';
 interface ClassItem {
   _id: string; // ✅ MongoDB ID
   name: string;
@@ -31,7 +31,7 @@ export default function StaffClasses() {
   const fetchClasses = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5001/api/classes');
+      const response = await fetch(`${serverURL}/api/classes`);
       const result = await response.json();
 
       if (result.success) {
@@ -55,7 +55,7 @@ export default function StaffClasses() {
     e.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:5001/api/classes', {
+      const response = await fetch(`${serverURL}/api/classes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newClass),

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Megaphone, Plus, Calendar, User, Pin, X } from "lucide-react";
 import Swal from "sweetalert2";
 import axios from "axios";
-
-const API = "http://localhost:5001/api/announcements";
+import { serverURL } from '@/constants';
+const API = `${serverURL}/api/announcements`;
 
 interface Announcement {
   _id: string;
