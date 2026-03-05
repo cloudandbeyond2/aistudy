@@ -40,7 +40,8 @@ import {
     deleteDepartment,
     addDeptAdmin,
     getDeptAdmins,
-    deleteDeptAdmin
+    deleteDeptAdmin,
+    deleteNotice
 } from '../controllers/org.controller.js';
 import Organization from '../models/Organization.js';
 import { uploadAssignment, uploadCourseImage, uploadMaterial } from '../config/upload.config.js';
@@ -73,6 +74,7 @@ router.post('/student/assignment/submit', uploadAssignment.single('file'), submi
 // Notices
 router.post('/org/notice/create', createNotice);
 router.get('/org/notices', getNotices);
+router.delete('/org/notice/:id', deleteNotice);
 router.get('/org/details/:orgId', async (req, res) => {
     try {
         const org = await Organization.findById(req.params.orgId);

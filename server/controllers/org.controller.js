@@ -391,12 +391,13 @@ export const getDashboardStats = async (req, res) => {
 export const createAssignment = async (req, res) => {
     const { organizationId, topic, description, dueDate, department, questions } = req.body;
     try {
+        const parsedDepartment = department && department !== 'all' ? department : undefined;
         const assignment = new Assignment({
             organizationId,
             topic,
             description,
             dueDate,
-            department,
+            department: parsedDepartment,
             questions
         });
         await assignment.save();
@@ -557,7 +558,8 @@ export const createNotice = async (req, res) => {
     const { organizationId, title, content, audience, department } = req.body;
 
     try {
-        const notice = new Notice({ organizationId, title, content, audience, department });
+        const parsedDepartment = department && department !== 'all' ? department : undefined;
+        const notice = new Notice({ organizationId, title, content, audience, department: parsedDepartment });
         await notice.save();
         res.json({ success: true, message: 'Notice created' });
     } catch (error) {
@@ -596,6 +598,18 @@ export const getNotices = async (req, res) => {
 };
 
 /**
+ * DELETE NOTICE
+ */
+export const deleteNotice = async (req, res) => {
+    try {
+        await Notice.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Notice deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
  * GET ALL ORGANIZATIONS (Super Admin)
  */
 export const getAllOrganizations = async (req, res) => {
@@ -628,12 +642,13 @@ export const updateOrganization = async (req, res) => {
 export const createCourse = async (req, res) => {
     const { organizationId, title, description, type, department, topics, quizzes, assignedTo, createdBy } = req.body;
     try {
+        const parsedDepartment = department && department !== 'all' ? department : undefined;
         const course = new OrgCourse({
             organizationId,
             title,
             description,
             type: type || 'video & text course',
-            department,
+            department: parsedDepartment,
             topics: topics || [],
             quizzes: quizzes || [],
             assignedTo: assignedTo || [], // Specific students or empty for all
@@ -862,7 +877,8 @@ export const getAssignmentCertificate = async (req, res) => {
 export const createMeeting = async (req, res) => {
     const { organizationId, title, link, platform, date, time, department } = req.body;
     try {
-        const meeting = new Meeting({ organizationId, title, link, platform, date, time, department });
+        const parsedDepartment = department && department !== 'all' ? department : undefined;
+        const meeting = new Meeting({ organizationId, title, link, platform, date, time, department: parsedDepartment });
         await meeting.save();
         res.json({ success: true, message: 'Meeting created', meeting });
     } catch (error) {
@@ -905,7 +921,8 @@ export const deleteMeeting = async (req, res) => {
 export const createProject = async (req, res) => {
     const { organizationId, title, description, type, department, dueDate } = req.body;
     try {
-        const project = new Project({ organizationId, title, description, type, department, dueDate });
+        const parsedDepartment = department && department !== 'all' ? department : undefined;
+        const project = new Project({ organizationId, title, description, type, department: parsedDepartment, dueDate });
         await project.save();
         res.json({ success: true, message: 'Project created', project });
     } catch (error) {
@@ -989,13 +1006,15 @@ export const createMaterial = async (req, res) => {
             });
         }
 
+        const parsedDepartment = department && department !== 'all' ? department : undefined;
+
         const material = new Material({
             organizationId,
             title,
             description,
             fileUrl: finalFileUrl,
             type,
-            department
+            department: parsedDepartment
         });
 
         await material.save();

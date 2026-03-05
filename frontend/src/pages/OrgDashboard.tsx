@@ -316,6 +316,7 @@ const OrgDashboard = () => {
         fetchMaterials();
         fetchOrgDepartments();
         fetchOrgDeptAdmins();
+        fetchNotices();
     }, [orgId, toast]);
 
     const fetchOrgDepartments = async () => {
@@ -589,6 +590,17 @@ const OrgDashboard = () => {
         }
     }
 
+    const fetchNotices = async () => {
+        try {
+            const res = await axios.get(`${serverURL}/api/org/notices?organizationId=${orgId}`);
+            if (res.data.success) {
+                setNotices(res.data.notices);
+            }
+        } catch (e) {
+            console.error('Failed to fetch notices:', e);
+        }
+    }
+
     const handleAddStudent = async () => {
         try {
             const res = await axios.post(`${serverURL}/api/org/student/add`, { ...newStudent, organizationId: orgId });
@@ -770,9 +782,23 @@ const OrgDashboard = () => {
             if (res.data.success) {
                 toast({ title: "Success", description: "Notice posted" });
                 setNewNotice({ title: '', content: '', audience: 'all', department: '' });
+                fetchNotices();
             }
         } catch (e) {
             toast({ title: "Error", description: "Request failed" });
+        }
+    };
+
+    const handleDeleteNotice = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this notice?')) return;
+        try {
+            const res = await axios.delete(`${serverURL}/api/org/notice/${id}`);
+            if (res.data.success) {
+                toast({ title: "Success", description: "Notice deleted" });
+                fetchNotices();
+            }
+        } catch (e) {
+            toast({ title: "Error", description: "Failed to delete notice" });
         }
     };
 
@@ -1796,6 +1822,42 @@ const OrgDashboard = () => {
                             </div>
                         </CardContent>
                     </Card>
+
+                    <div className="mt-8 space-y-4">
+                        <h3 className="text-lg font-medium">Recent Notices</h3>
+                        {notices.length === 0 ? (
+                            <p className="text-muted-foreground">No notices found.</p>
+                        ) : (
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {notices.map((notice: any) => (
+                                    <Card key={notice._id}>
+                                        <CardHeader className="pb-2">
+                                            <div className="flex justify-between items-start">
+                                                <CardTitle className="text-base truncate pr-2" title={notice.title}>{notice.title}</CardTitle>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500 flex-shrink-0" onClick={() => handleDeleteNotice(notice._id)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                            <CardDescription className="text-xs">
+                                                {new Date(notice.createdAt).toLocaleDateString()}
+                                                {notice.department && (
+                                                    <span className="ml-2 px-2 py-0.5 rounded-full bg-secondary text-[10px]">
+                                                        {departmentsList.find(d => d._id === notice.department)?.name || 'Dept'}
+                                                    </span>
+                                                )}
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div
+                                                className="text-sm text-muted-foreground line-clamp-3 prose prose-sm dark:prose-invert"
+                                                dangerouslySetInnerHTML={{ __html: notice.content }}
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </TabsContent>
             </Tabs>
 
