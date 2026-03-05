@@ -505,6 +505,40 @@ export const getAssignment = async (req, res) => {
 };
 
 /**
+ * UPDATE ASSIGNMENT
+ */
+export const updateAssignment = async (req, res) => {
+    const { id } = req.params;
+    const { topic, description, dueDate, department, questions } = req.body;
+    try {
+        const parsedDepartment = department && department !== 'all' ? department : undefined;
+        const assignment = await Assignment.findByIdAndUpdate(
+            id,
+            { topic, description, dueDate, department: parsedDepartment, questions },
+            { new: true }
+        );
+        if (!assignment) {
+            return res.status(404).json({ success: false, message: 'Assignment not found' });
+        }
+        res.json({ success: true, message: 'Assignment updated successfully', assignment });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * DELETE ASSIGNMENT
+ */
+export const deleteAssignment = async (req, res) => {
+    try {
+        await Assignment.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Assignment deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
  * GET ASSIGNMENT SUBMISSIONS
  */
 export const getSubmissions = async (req, res) => {

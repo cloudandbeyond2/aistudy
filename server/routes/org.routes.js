@@ -41,7 +41,9 @@ import {
     addDeptAdmin,
     getDeptAdmins,
     deleteDeptAdmin,
-    deleteNotice
+    deleteNotice,
+    updateAssignment,
+    deleteAssignment
 } from '../controllers/org.controller.js';
 import Organization from '../models/Organization.js';
 import { uploadAssignment, uploadCourseImage, uploadMaterial } from '../config/upload.config.js';
@@ -66,6 +68,8 @@ router.get('/org/dashboard/stats', getDashboardStats);
 router.post('/org/assignment/create', createAssignment);
 router.get('/org/assignments', getAssignments); // ?organizationId=...
 router.get('/org/assignment/:assignmentId', getAssignment);
+router.put('/org/assignment/:id', updateAssignment);
+router.delete('/org/assignment/:id', deleteAssignment);
 router.get('/org/assignment/:assignmentId/submissions', getSubmissions);
 router.get('/org/assignment/certificate/:submissionId', getAssignmentCertificate);
 router.post('/org/assignment/submission/:submissionId/grade', gradeSubmission);

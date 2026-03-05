@@ -261,6 +261,7 @@ const OrgDashboard = () => {
     const [newStudent, setNewStudent] = useState({ name: '', email: '', password: '', department: '', section: '', studentClass: '', rollNo: '' });
     const [editStudent, setEditStudent] = useState<any>(null);
     const [newAssignment, setNewAssignment] = useState({ topic: '', description: '', dueDate: '', department: '' });
+    const [editAssignment, setEditAssignment] = useState<any>(null); // New state for editing assignments
     const [newNotice, setNewNotice] = useState({ title: '', content: '', audience: 'all', department: '' });
     const [newCourse, setNewCourse] = useState<any>({ title: '', description: '', department: '', topics: [], quizzes: [] });
     const [editCourse, setEditCourse] = useState<any>(null);
@@ -618,6 +619,53 @@ const OrgDashboard = () => {
         }
     };
 
+    const handleCreateAssignment = async () => {
+        try {
+            const assignmentData = {
+                ...newAssignment,
+                organizationId: orgId,
+            };
+            const res = await axios.post(`${serverURL}/api/org/assignment/create`, assignmentData);
+            if (res.data.success) {
+                toast({ title: 'Success', description: 'Assignment created successfully' });
+                setNewAssignment({ topic: '', description: '', dueDate: '', department: '' });
+                fetchAssignments();
+            }
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to create assignment' });
+        }
+    };
+
+    const handleUpdateAssignment = async () => {
+        try {
+            const assignmentData = {
+                ...editAssignment,
+                organizationId: orgId,
+            };
+            const res = await axios.put(`${serverURL}/api/org/assignment/${editAssignment._id}`, assignmentData);
+            if (res.data.success) {
+                toast({ title: 'Success', description: 'Assignment updated successfully' });
+                setEditAssignment(null);
+                fetchAssignments();
+            }
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to update assignment' });
+        }
+    };
+
+    const handleDeleteAssignment = async (id: string) => {
+        if (!window.confirm('Are you sure you want to delete this assignment?')) return;
+        try {
+            const res = await axios.delete(`${serverURL}/api/org/assignment/${id}`);
+            if (res.data.success) {
+                toast({ title: 'Success', description: 'Assignment deleted successfully' });
+                fetchAssignments();
+            }
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete assignment' });
+        }
+    };
+
     const handleCreateCourse = async (courseData: any) => {
         try {
             const res = await axios.post(`${serverURL}/api/org/course/create`, {
@@ -760,19 +808,6 @@ const OrgDashboard = () => {
         } catch (e: any) {
             console.error(e);
             toast({ title: "Error", description: e.response?.data?.message || "Request failed" });
-        }
-    };
-
-    const handleCreateAssignment = async () => {
-        try {
-            const res = await axios.post(`${serverURL}/api/org/assignment/create`, { ...newAssignment, organizationId: orgId });
-            if (res.data.success) {
-                toast({ title: "Success", description: "Assignment created" });
-                setNewAssignment({ topic: '', description: '', dueDate: '', department: '' });
-                fetchAssignments();
-            }
-        } catch (e) {
-            toast({ title: "Error", description: "Request failed" });
         }
     };
 
@@ -1467,9 +1502,54 @@ const OrgDashboard = () => {
                                                         <span>{assignment.questions?.length || 0} Questions</span>
                                                     </div>
                                                 </div>
-                                                <Button variant="outline" size="sm" onClick={() => handleViewSubmissions(assignment)}>
-                                                    View Submissions
-                                                </Button>
+                                                <div className="flex gap-2">
+                                                    <Button variant="outline" size="sm" onClick={() => handleViewSubmissions(assignment)}>
+                                                        View Submissions
+                                                    </Button>
+                                                    <Dialog>
+                                                        <DialogTrigger asChild>
+                                                            <Button variant="ghost" size="sm" onClick={() => setEditAssignment({
+                                                                ...assignment,
+                                                                dueDate: assignment.dueDate ? new Date(assignment.dueDate).toISOString().split('T')[0] : ''
+                                                            })}>
+                                                                Edit
+                                                            </Button>
+                                                        </DialogTrigger>
+                                                        {editAssignment && editAssignment._id === assignment._id && (
+                                                            <DialogContent>
+                                                                <DialogHeader><DialogTitle>Edit Assignment</DialogTitle></DialogHeader>
+                                                                <div className="grid gap-4 py-4">
+                                                                    <Label>Topic</Label>
+                                                                    <Input value={editAssignment.topic} onChange={(e) => setEditAssignment({ ...editAssignment, topic: e.target.value })} />
+                                                                    <Label>Description</Label>
+                                                                    <RichTextEditor
+                                                                        value={editAssignment.description || ''}
+                                                                        onChange={(content) => setEditAssignment({ ...editAssignment, description: content })}
+                                                                        placeholder="Assignment instructions..."
+                                                                        className="min-h-[150px]"
+                                                                    />
+                                                                    <Label>Due Date</Label>
+                                                                    <Input type="date" value={editAssignment.dueDate} onChange={(e) => setEditAssignment({ ...editAssignment, dueDate: e.target.value })} />
+                                                                    <Label>Department (Optional)</Label>
+                                                                    <select
+                                                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                        value={editAssignment.department || ''}
+                                                                        onChange={(e) => setEditAssignment({ ...editAssignment, department: e.target.value })}
+                                                                    >
+                                                                        <option value="">All Students</option>
+                                                                        {departmentsList.map((d: any) => (
+                                                                            <option key={d._id} value={d._id}>{d.name}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
+                                                                <Button onClick={handleUpdateAssignment}>Update</Button>
+                                                            </DialogContent>
+                                                        )}
+                                                    </Dialog>
+                                                    <Button variant="ghost" size="sm" onClick={() => handleDeleteAssignment(assignment._id)}>
+                                                        <Trash2 className="w-4 h-4 text-destructive" />
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))
