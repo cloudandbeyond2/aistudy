@@ -52,6 +52,7 @@ import deptRoutes from './routes/dept.routes.js';
 import { startCronJobs } from './services/cron.service.js';
 import notebookRoutes from './routes/notebook.routes.js';
 import classRoutes from './routes/class.routes.js';
+import announcementRoutes from "./routes/announcementRoutes.js";
 // -------------------- INIT --------------------
 connectDB();
 const app = express();
@@ -124,7 +125,7 @@ app.use('/api', deptRoutes);
 app.use('/api/notebook', notebookRoutes);
 app.use("/api", studentTicketRoutes);
 app.use("/api", classRoutes);
-
+app.use("/api/announcements", announcementRoutes);
 
 // -------------------- ERROR HANDLER --------------------
 app.use((err, req, res, next) => {
