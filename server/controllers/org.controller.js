@@ -1048,23 +1048,32 @@ export const createProject = async (req, res) => {
 export const getProjects = async (req, res) => {
     const { organizationId, studentId } = req.query;
     try {
-        let query = { organizationId };
+        let query = {
+            organizationId,
+            type: { $ne: 'Showcase' } // Exclude student-created showcase projects
+        };
         if (studentId) {
             const student = await User.findById(studentId);
             if (student) {
-                const department = student.department || student.studentDetails?.department;
-                query.$or = [
-                    { department: department },
+                const conditions = [
                     { department: { $exists: false } },
-                    { department: null },
-                    { department: '' },
-                    { department: 'all' }
+                    { department: null }
                 ];
+
+                const isValidObjectId = (id) => /^[0-9a-fA-F]{24}$/.test(String(id));
+                const dept1 = student.department;
+                const dept2 = student.studentDetails?.department;
+
+                if (dept1 && isValidObjectId(dept1)) conditions.push({ department: dept1 });
+                if (dept2 && isValidObjectId(dept2)) conditions.push({ department: dept2 });
+
+                query.$or = conditions;
             }
         }
         const projects = await Project.find(query).sort({ createdAt: -1 });
         res.json({ success: true, projects });
     } catch (error) {
+        console.error('getProjects Error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };
