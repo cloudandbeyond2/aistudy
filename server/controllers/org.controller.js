@@ -415,7 +415,8 @@ export const createAssignment = async (req, res) => {
                 createNotification({
                     user: student._id,
                     message: `New assignment created: ${topic}`,
-                    type: 'info'
+                    type: 'info',
+                    link: '/dashboard/student/assignments'
                 })
             );
             await Promise.all(notificationPromises);
@@ -561,6 +562,25 @@ export const createNotice = async (req, res) => {
         const parsedDepartment = department && department !== 'all' ? department : undefined;
         const notice = new Notice({ organizationId, title, content, audience, department: parsedDepartment });
         await notice.save();
+
+        try {
+            let studentQuery = { organization: organizationId, role: 'student' };
+            if (parsedDepartment) studentQuery['studentDetails.department'] = parsedDepartment;
+
+            const students = await User.find(studentQuery).select('_id');
+            const notificationPromises = students.map(student =>
+                createNotification({
+                    user: student._id,
+                    message: `New notice posted: ${title}`,
+                    type: 'info',
+                    link: '/dashboard/student/notices'
+                })
+            );
+            await Promise.all(notificationPromises);
+        } catch (notifError) {
+            console.error("Failed to send notice notifications:", notifError);
+        }
+
         res.json({ success: true, message: 'Notice created' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error' });
@@ -880,6 +900,25 @@ export const createMeeting = async (req, res) => {
         const parsedDepartment = department && department !== 'all' ? department : undefined;
         const meeting = new Meeting({ organizationId, title, link, platform, date, time, department: parsedDepartment });
         await meeting.save();
+
+        try {
+            let studentQuery = { organization: organizationId, role: 'student' };
+            if (parsedDepartment) studentQuery['studentDetails.department'] = parsedDepartment;
+
+            const students = await User.find(studentQuery).select('_id');
+            const notificationPromises = students.map(student =>
+                createNotification({
+                    user: student._id,
+                    message: `New meeting scheduled: ${title}`,
+                    type: 'primary',
+                    link: '/dashboard/student/meetings'
+                })
+            );
+            await Promise.all(notificationPromises);
+        } catch (notifError) {
+            console.error("Failed to send meeting notifications:", notifError);
+        }
+
         res.json({ success: true, message: 'Meeting created', meeting });
     } catch (error) {
         console.error('Create Meeting Error:', error);
@@ -924,6 +963,25 @@ export const createProject = async (req, res) => {
         const parsedDepartment = department && department !== 'all' ? department : undefined;
         const project = new Project({ organizationId, title, description, type, department: parsedDepartment, dueDate });
         await project.save();
+
+        try {
+            let studentQuery = { organization: organizationId, role: 'student' };
+            if (parsedDepartment) studentQuery['studentDetails.department'] = parsedDepartment;
+
+            const students = await User.find(studentQuery).select('_id');
+            const notificationPromises = students.map(student =>
+                createNotification({
+                    user: student._id,
+                    message: `New project created: ${title}`,
+                    type: 'success',
+                    link: '/dashboard/student/projects'
+                })
+            );
+            await Promise.all(notificationPromises);
+        } catch (notifError) {
+            console.error("Failed to send project notifications:", notifError);
+        }
+
         res.json({ success: true, message: 'Project created', project });
     } catch (error) {
         console.error('Create Project Error:', error);
@@ -1018,6 +1076,24 @@ export const createMaterial = async (req, res) => {
         });
 
         await material.save();
+
+        try {
+            let studentQuery = { organization: organizationId, role: 'student' };
+            if (parsedDepartment) studentQuery['studentDetails.department'] = parsedDepartment;
+
+            const students = await User.find(studentQuery).select('_id');
+            const notificationPromises = students.map(student =>
+                createNotification({
+                    user: student._id,
+                    message: `New material posted: ${title}`,
+                    type: 'warning',
+                    link: '/dashboard/student/materials'
+                })
+            );
+            await Promise.all(notificationPromises);
+        } catch (notifError) {
+            console.error("Failed to send material notifications:", notifError);
+        }
 
         res.json({
             success: true,

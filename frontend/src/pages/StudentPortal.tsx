@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen, FileText } from 'lucide-react';
+import { BookOpen, FileText, X } from 'lucide-react';
 import SEO from '@/components/SEO';
 import axios from 'axios';
 import { serverURL } from '@/constants';
+import { useNavigate } from 'react-router-dom';
 
 const StudentPortal = () => {
     const [courses, setCourses] = useState([]);
     const [studentInfo, setStudentInfo] = useState<any>(null);
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const navigate = useNavigate();
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -19,8 +22,30 @@ const StudentPortal = () => {
         if (orgId && studentId) {
             fetchStudentInfo();
             fetchCourses();
+            fetchNotifications();
         }
     }, [orgId, studentId]);
+
+    const fetchNotifications = async () => {
+        try {
+            const res = await axios.post(`${serverURL}/api/notifications/get`, { userId: studentId });
+            // API returns the array directly, filter for unread
+            const unread = res.data.filter((n: any) => !n.isRead);
+            setNotifications(unread);
+        } catch (error) {
+            console.error('Failed to fetch notifications:', error);
+        }
+    };
+
+    const dismissNotification = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent redirect if clicking X
+        try {
+            await axios.post(`${serverURL}/api/notifications/read`, { id });
+            setNotifications(prev => prev.filter(n => n._id !== id));
+        } catch (error) {
+            console.error('Failed to dismiss notification:', error);
+        }
+    };
 
     const fetchStudentInfo = async () => {
         try {
@@ -62,6 +87,41 @@ const StudentPortal = () => {
                     </p>
                 </div>
             </div>
+
+            {/* Notifications Section */}
+            {notifications.length > 0 && (
+                <div className="space-y-3 mt-4 mb-6">
+                    {notifications.map((notif) => {
+                        let alertColor = "bg-blue-100 text-blue-800 border-blue-200"; // default primary
+                        if (notif.type === 'success') alertColor = "bg-green-100 text-green-800 border-green-200";
+                        if (notif.type === 'warning') alertColor = "bg-yellow-100 text-yellow-800 border-yellow-200";
+                        if (notif.type === 'error' || notif.type === 'danger') alertColor = "bg-red-100 text-red-800 border-red-200";
+                        if (notif.type === 'info') alertColor = "bg-cyan-100 text-cyan-800 border-cyan-200";
+
+                        return (
+                            <div
+                                key={notif._id}
+                                className={`flex items-center justify-between p-4 rounded-md border shadow-sm cursor-pointer transition-colors ${alertColor}`}
+                                onClick={() => {
+                                    if (notif.link) {
+                                        navigate(notif.link);
+                                    }
+                                }}
+                            >
+                                <div className="font-medium">
+                                    {notif.message}
+                                </div>
+                                <button
+                                    onClick={(e) => dismissNotification(notif._id, e)}
+                                    className="p-1 hover:bg-black/10 rounded-full transition-colors flex-shrink-0"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {courses.length > 0 ? courses.map((course: any) => {
