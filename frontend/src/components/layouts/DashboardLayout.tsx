@@ -290,7 +290,7 @@ const DashboardLayout = () => {
                         <SidebarMenuButton asChild tooltip="Notices" isActive={isActive('/dashboard/student/notices')}>
                           <Link to="/dashboard/student/notices" className={cn(isActive('/dashboard/student/notices') && "text-primary")}>
                             <Bell />
-                            <span>Notices</span>
+                            <span>Noticeboard</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -456,7 +456,7 @@ const DashboardLayout = () => {
                         <SidebarMenuButton asChild tooltip="Notices" isActive={location.search === '?tab=notices'}>
                           <Link to="/dashboard/org?tab=notices" className={cn(location.search === '?tab=notices' && "text-primary")}>
                             <Bell className="ml-4" />
-                            <span>Notices</span>
+                            <span>Noticeboard</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>

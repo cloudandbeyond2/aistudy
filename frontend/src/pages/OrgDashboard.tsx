@@ -1019,7 +1019,7 @@ const OrgDashboard = () => {
                     <TabsTrigger value="meetings" className="flex-1 min-w-[120px]">Meetings</TabsTrigger>
                     <TabsTrigger value="projects" className="flex-1 min-w-[120px]">Projects/Research</TabsTrigger>
                     <TabsTrigger value="materials" className="flex-1 min-w-[120px]">Materials</TabsTrigger>
-                    <TabsTrigger value="notices" className="flex-1 min-w-[120px]">Notices</TabsTrigger>
+                    <TabsTrigger value="notices" className="flex-1 min-w-[120px]">Noticeboard</TabsTrigger>
 
                 </TabsList>
 
