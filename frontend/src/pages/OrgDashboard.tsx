@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye } from 'lucide-react';
+import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -1055,6 +1055,7 @@ const OrgDashboard = () => {
                     <TabsTrigger value="projects" className="flex-1 min-w-[120px]">Projects/Research</TabsTrigger>
                     <TabsTrigger value="materials" className="flex-1 min-w-[120px]">Materials</TabsTrigger>
                     <TabsTrigger value="notices" className="flex-1 min-w-[120px]">Noticeboard</TabsTrigger>
+                    <TabsTrigger value="career" className="flex-1 min-w-[120px]"><Briefcase className="w-3.5 h-3.5 mr-1" />Career & Placement</TabsTrigger>
 
                 </TabsList>
 
@@ -1938,6 +1939,43 @@ const OrgDashboard = () => {
                             </div>
                         )}
                     </div>
+                </TabsContent>
+
+                {/* CAREER TAB */}
+                <TabsContent value="career" className="space-y-6">
+                    <Card className="border-l-4 border-l-blue-600">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Briefcase className="w-5 h-5 text-blue-600" />
+                                Career & Placement Module
+                            </CardTitle>
+                            <CardDescription>
+                                Track student placement readiness scores, verify student projects, and view issued certificates.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="p-4 rounded-xl bg-blue-50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-900/20">
+                                    <h4 className="text-sm font-semibold mb-1">Students Tracked</h4>
+                                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.studentCount || 0}</p>
+                                </div>
+                                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-900/20">
+                                    <h4 className="text-sm font-semibold mb-1">Verified Projects</h4>
+                                    <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{projects.length || 0}</p>
+                                </div>
+                                <div className="p-4 rounded-xl bg-amber-50 border border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/20">
+                                    <h4 className="text-sm font-semibold mb-1">Avg. Readiness Score</h4>
+                                    <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">0%</p>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-center pt-4">
+                                <Button size="lg" onClick={() => navigate('/dashboard/org/career')} className="px-8 rounded-full shadow-lg shadow-blue-500/20">
+                                    Open Full Career Dashboard <ExternalLink className="ml-2 w-4 h-4" />
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </TabsContent>
             </Tabs>
 

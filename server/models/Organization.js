@@ -11,6 +11,7 @@ const organizationSchema = new mongoose.Schema({
     allowAICreation: { type: Boolean, default: true },
     allowManualCreation: { type: Boolean, default: true },
     isBlocked: { type: Boolean, default: false },
+    allowCareerPlacement: { type: Boolean, default: true },
     createdAt: { type: Date, default: Date.now }
 });
 

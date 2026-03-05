@@ -31,6 +31,14 @@ const AdminSettings = () => {
         org_admin: true,
         student: false
     });
+    const [careerEnabled, setCareerEnabled] = useState({
+        free: false,
+        monthly: true,
+        yearly: true,
+        forever: true,
+        org_admin: true,
+        student: false
+    });
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -53,6 +61,9 @@ const AdminSettings = () => {
             }
             if (res.data.resumeEnabled) {
                 setResumeEnabled(res.data.resumeEnabled);
+            }
+            if (res.data.careerEnabled) {
+                setCareerEnabled(res.data.careerEnabled);
             }
         } catch (error) {
             console.error('Failed to fetch settings:', error);
@@ -132,7 +143,8 @@ const AdminSettings = () => {
                 websiteLogo,
                 taxPercentage: Number(taxPercentage),
                 notebookEnabled,
-                resumeEnabled
+                resumeEnabled,
+                careerEnabled
             });
             if (res.data.success) {
                 toast({
@@ -163,6 +175,13 @@ const AdminSettings = () => {
 
     const handleResumeToggle = (role: keyof typeof resumeEnabled) => {
         setResumeEnabled(prev => ({
+            ...prev,
+            [role]: !prev[role]
+        }));
+    };
+
+    const handleCareerToggle = (role: keyof typeof careerEnabled) => {
+        setCareerEnabled(prev => ({
             ...prev,
             [role]: !prev[role]
         }));
@@ -519,6 +538,76 @@ const AdminSettings = () => {
                                             id="rb-student"
                                             checked={resumeEnabled.student}
                                             onChange={() => handleResumeToggle('student')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between border-b pb-4 border-border/30 pt-4">
+                                    <div>
+                                        <Label className="text-base font-semibold">Career & Placement Visibility</Label>
+                                        <p className="text-sm text-muted-foreground">Control which users can see the Career & Placement section in their sidemenu.</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="cp-free" className="cursor-pointer font-medium">Free Users</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="cp-free"
+                                            checked={careerEnabled.free}
+                                            onChange={() => handleCareerToggle('free')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="cp-monthly" className="cursor-pointer font-medium">Monthly Paid</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="cp-monthly"
+                                            checked={careerEnabled.monthly}
+                                            onChange={() => handleCareerToggle('monthly')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="cp-yearly" className="cursor-pointer font-medium">Yearly Paid</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="cp-yearly"
+                                            checked={careerEnabled.yearly}
+                                            onChange={() => handleCareerToggle('yearly')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="cp-forever" className="cursor-pointer font-medium">Lifetime Access</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="cp-forever"
+                                            checked={careerEnabled.forever}
+                                            onChange={() => handleCareerToggle('forever')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="cp-org" className="cursor-pointer font-medium">Organization Admins</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="cp-org"
+                                            checked={careerEnabled.org_admin}
+                                            onChange={() => handleCareerToggle('org_admin')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="cp-student" className="cursor-pointer font-medium">Organization Students</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="cp-student"
+                                            checked={careerEnabled.student}
+                                            onChange={() => handleCareerToggle('student')}
                                             className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
                                         />
                                     </div>

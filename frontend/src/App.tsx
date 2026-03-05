@@ -40,6 +40,9 @@ import OrgAssignmentSubmissions from "./pages/OrgAssignmentSubmissions";
 import StudentPortal from "./pages/StudentPortal";
 import StudentAssignments from "./pages/StudentAssignments";
 import OrgAssignmentCertificate from "./pages/OrgAssignmentCertificate";
+import OrgCareerPlacement from "./pages/OrgCareerPlacement";
+import StudentCareer from "./pages/StudentCareer";
+import StudentPublicPortfolio from "./pages/StudentPublicPortfolio";
 import StudentNotices from "./pages/StudentNotices";
 import StudentBlogs from "./pages/StudentBlogs";
 import StudentNews from "./pages/StudentNews";
@@ -90,7 +93,7 @@ import StudentSupportTickets from "./pages/StudentSupportTickets";
 import OrgStudentTickets from "./pages/OrgStudentTickets";
 import DeptDashboard from "./pages/DeptDashboard";
 import StaffDashboard from './pages/StaffDashboard';
- 
+
 // Staff Pages
 import StaffClasses from './pages/staff/StaffClasses';
 import StaffClassDetails from './pages/staff/StaffClassDetails';
@@ -128,8 +131,10 @@ const App = () => (
                     <Route path="payment/:planId" element={<PaymentDetails />} />
                     <Route path="profile" element={<Profile />} />
                     <Route path="org" element={<OrgDashboard />} />
+                    <Route path="org/career" element={<OrgCareerPlacement />} />
                     <Route path="org/assignment/:assignmentId/submissions" element={<OrgAssignmentSubmissions />} />
                     <Route path="student" element={<StudentPortal />} />
+                    <Route path="student/career" element={<StudentCareer />} />
                     <Route path="student/assignments" element={<StudentAssignments />} />
                     <Route path="student/assignment/certificate/:submissionId" element={<OrgAssignmentCertificate />} />
                     <Route path="student/notices" element={<StudentNotices />} />
@@ -174,6 +179,7 @@ const App = () => (
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:id" element={<BlogPost />} />
                   <Route path="/resume/:userId" element={<ResumeView />} />
+                  <Route path="/portfolio/:studentId" element={<StudentPublicPortfolio />} />
 
                   {/* Admin Routes */}
                   <Route path="/admin" element={<AdminLayout />}>
@@ -214,19 +220,19 @@ const App = () => (
 
 
                   {/* Staff Routes */}
-        <Route path="/dashboard/staff" element={<DashboardLayout  />}>
-          <Route index element={<StaffDashboard />} />
-          <Route path="classes" element={<StaffClasses />} />
-          <Route path="classes/:id" element={<StaffClassDetails />} />
-          <Route path="classes/:id/attendance" element={<StaffClassAttendance />} />
-          <Route path="students" element={<StaffStudents />} />
-          <Route path="grading" element={<StaffGrading />} />
-          <Route path="schedule" element={<StaffSchedule />} />
-          <Route path="announcements" element={<StaffAnnouncements />} />
-          <Route path="resources" element={<StaffResources />} />
-          <Route path="support" element={<StaffSupport />} />
-          <Route path="*" element={<StaffDashboard />} /> {/* Fallback for demo */}
-        </Route>
+                  <Route path="/dashboard/staff" element={<DashboardLayout />}>
+                    <Route index element={<StaffDashboard />} />
+                    <Route path="classes" element={<StaffClasses />} />
+                    <Route path="classes/:id" element={<StaffClassDetails />} />
+                    <Route path="classes/:id/attendance" element={<StaffClassAttendance />} />
+                    <Route path="students" element={<StaffStudents />} />
+                    <Route path="grading" element={<StaffGrading />} />
+                    <Route path="schedule" element={<StaffSchedule />} />
+                    <Route path="announcements" element={<StaffAnnouncements />} />
+                    <Route path="resources" element={<StaffResources />} />
+                    <Route path="support" element={<StaffSupport />} />
+                    <Route path="*" element={<StaffDashboard />} /> {/* Fallback for demo */}
+                  </Route>
                 </Routes>
                 <CookiePopup />
                 <Toaster />

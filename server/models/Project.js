@@ -6,6 +6,12 @@ const projectSchema = new mongoose.Schema({
         ref: 'Organization',
         required: true
     },
+    // Optional: student who submitted this project (for showcase)
+    studentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
     title: {
         type: String,
         required: true
@@ -15,7 +21,7 @@ const projectSchema = new mongoose.Schema({
         required: true
     },
     type: {
-        type: String, // Project, Practical, Research
+        type: String, // Project, Practical, Research, Showcase
         required: true
     },
     department: {
@@ -25,6 +31,13 @@ const projectSchema = new mongoose.Schema({
     dueDate: {
         type: Date
     },
+    // Student showcase fields
+    githubUrl: { type: String, default: '' },
+    liveUrl: { type: String, default: '' },
+    techStack: { type: [String], default: [] },
+    image: { type: String, default: '' },
+    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'approved' },
+    isPublic: { type: Boolean, default: true },
     createdAt: {
         type: Date,
         default: Date.now

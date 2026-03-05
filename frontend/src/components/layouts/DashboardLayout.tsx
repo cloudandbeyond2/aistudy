@@ -40,7 +40,8 @@ import {
   Calendar,
   Megaphone,
   Folder,
-  LifeBuoy
+  LifeBuoy,
+  Award
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -83,6 +84,14 @@ const DashboardLayout = () => {
     org_admin: true,
     student: false
   });
+  const [careerEnabled, setCareerEnabled] = useState({
+    free: false,
+    monthly: true,
+    yearly: true,
+    forever: true,
+    org_admin: true,
+    student: false
+  });
 
   useEffect(() => {
     if (sessionStorage.getItem('uid') === null) {
@@ -100,6 +109,9 @@ const DashboardLayout = () => {
       }
       if (response.data.admin.resumeEnabled) {
         setResumeEnabled(response.data.admin.resumeEnabled);
+      }
+      if (response.data.admin.careerEnabled) {
+        setCareerEnabled(response.data.admin.careerEnabled);
       }
     }
     if (sessionStorage.getItem('adminEmail')) {
@@ -277,6 +289,18 @@ const DashboardLayout = () => {
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       )}
+
+                      {careerEnabled.student && (
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild tooltip="Career Hub" isActive={isActive('/dashboard/student/career')}>
+                            <Link to="/dashboard/student/career" className={cn(isActive('/dashboard/student/career') && "text-primary")}>
+                              <Award />
+                              <span>Career Hub</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
+
                       <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Assignments" isActive={isActive('/dashboard/student/assignments')}>
                           <Link to="/dashboard/student/assignments" className={cn(isActive('/dashboard/student/assignments') && "text-primary")}>
@@ -460,6 +484,18 @@ const DashboardLayout = () => {
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+
+                      {/* Career & Placement */}
+                      {careerEnabled.org_admin && (
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild tooltip="Career & Placement" isActive={isActive('/dashboard/org/career') || location.search === '?tab=career'}>
+                            <Link to="/dashboard/org/career" className={cn((isActive('/dashboard/org/career') || location.search === '?tab=career') && "text-primary")}>
+                              <Award className="ml-4" />
+                              <span>Career & Placement</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
                       {/* ✅ Student Tickets (NEW CLEAN ROUTE) */}
                       <SidebarMenuItem>
                         <SidebarMenuButton

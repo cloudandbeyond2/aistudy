@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen, FileText, X } from 'lucide-react';
+import { BookOpen, FileText, X, Briefcase, Sparkles, ClipboardCheck } from 'lucide-react';
 import SEO from '@/components/SEO';
 import axios from 'axios';
 import { serverURL } from '@/constants';
@@ -180,6 +180,37 @@ const StudentPortal = () => {
                         <p className="text-muted-foreground mt-2">Your organization hasn't assigned any courses yet.</p>
                     </div>
                 )}
+            </div>
+
+            <div className="mt-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden group">
+                <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl group-hover:bg-white/20 transition-all duration-500" />
+                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="space-y-4 text-center md:text-left">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold uppercase tracking-wider">
+                            <Sparkles className="w-3.5 h-3.5" /> Career Module
+                        </div>
+                        <h2 className="text-3xl font-bold tracking-tight">Your Career Growth Hub</h2>
+                        <p className="text-blue-100 text-lg max-w-xl">
+                            Build your professional portfolio, track placement readiness, and showcase your projects to the world.
+                        </p>
+                        <div className="flex flex-wrap items-center gap-4 justify-center md:justify-start">
+                            <div className="flex items-center gap-1.5 text-sm bg-black/10 px-3 py-1.5 rounded-lg border border-white/10">
+                                <ClipboardCheck className="w-4 h-4" /> AI Resume Builder
+                            </div>
+                            <div className="flex items-center gap-1.5 text-sm bg-black/10 px-3 py-1.5 rounded-lg border border-white/10">
+                                <Briefcase className="w-4 h-4" /> Placement Score
+                            </div>
+                        </div>
+                    </div>
+                    <Button
+                        size="lg"
+                        variant="secondary"
+                        className="rounded-full px-8 py-6 h-auto text-lg font-bold shadow-lg hover:shadow-white/10 transition-all group-hover:scale-105"
+                        onClick={() => navigate('/dashboard/student/career')}
+                    >
+                        Go to Career Hub
+                    </Button>
+                </div>
             </div>
         </div>
     );

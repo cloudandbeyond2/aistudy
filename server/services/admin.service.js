@@ -247,6 +247,14 @@ export const getDashboardStatsWithOrgs = async () => {
         forever: true,
         org_admin: true,
         student: false
+      },
+      careerEnabled: admin?.careerEnabled || {
+        free: false,
+        monthly: true,
+        yearly: true,
+        forever: true,
+        org_admin: true,
+        student: true
       }
     }
   };
@@ -385,6 +393,14 @@ export const getAdminSettings = async () => {
       forever: true,
       org_admin: true,
       student: false
+    },
+    careerEnabled: admin?.careerEnabled || {
+      free: false,
+      monthly: true,
+      yearly: true,
+      forever: true,
+      org_admin: true,
+      student: true
     }
   };
 };
@@ -413,6 +429,7 @@ export const updateAdminSettings = async (data) => {
   admin.taxPercentage = data.taxPercentage;
   admin.notebookEnabled = data.notebookEnabled;
   admin.resumeEnabled = data.resumeEnabled;
+  admin.careerEnabled = data.careerEnabled;
 
   await admin.save();
 };

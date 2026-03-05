@@ -26,7 +26,8 @@ const AdminOrganizationDetails = () => {
         address: '',
         planDetails: '',
         logo: '',
-        documents: ['', ''] // 2 document slots
+        documents: ['', ''], // 2 document slots
+        allowCareerPlacement: true
     });
 
     useEffect(() => {
@@ -35,16 +36,6 @@ const AdminOrganizationDetails = () => {
 
     const fetchOrgDetails = async () => {
         try {
-            // In a real app we might have a specific endpoint for single org, 
-            // but here we can filter from list or add a new endpoint. 
-            // For now let's assume we can get it or we filter.
-            // Actually, let's just fetch all and find (optimizable later)
-            // Or better, standard GET /organization/:id
-            // Since I didn't make GET /organization/:id, I'll use the list for now or quickly add it?
-            // Wait, I didn't add GET /organization/:id in backend. 
-            // I'll assume we can use the list endpoint and filter client side for quickness, 
-            // OR I can just use the update endpoint to GET? No.
-            // Let's implement efficient fetch later, for now let's use the list endpoint which is standard in this codebase so far.
             const response = await axios.get(`${serverURL}/api/organizations`);
             const org = response.data.find(o => o._id === id);
 
@@ -60,7 +51,8 @@ const AdminOrganizationDetails = () => {
                     documents: [
                         org.organizationDetails.documents?.[0] || '',
                         org.organizationDetails.documents?.[1] || ''
-                    ]
+                    ],
+                    allowCareerPlacement: org.allowCareerPlacement ?? true
                 });
             }
         } catch (error) {
@@ -219,6 +211,30 @@ const AdminOrganizationDetails = () => {
                                 <Button variant="outline" size="icon">
                                     <Upload className="h-4 w-4" />
                                 </Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Feature Access</CardTitle>
+                        <CardDescription>Enable or disable specific modules for this organization.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
+                            <div className="space-y-0.5">
+                                <Label className="text-base font-semibold">Career & Placement Module</Label>
+                                <p className="text-sm text-muted-foreground">Allow students to build portfolios and track placement readiness.</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    checked={formData.allowCareerPlacement}
+                                    onChange={(e) => handleChange('allowCareerPlacement', e.target.checked)}
+                                />
+                                <span className="text-sm font-medium">{formData.allowCareerPlacement ? 'Enabled' : 'Disabled'}</span>
                             </div>
                         </div>
                     </CardContent>
