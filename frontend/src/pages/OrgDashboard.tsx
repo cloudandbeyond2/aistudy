@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink } from 'lucide-react';
+import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -265,6 +265,7 @@ const OrgDashboard = () => {
     const [newCourse, setNewCourse] = useState<any>({ title: '', description: '', department: '', topics: [], quizzes: [] });
     const [editCourse, setEditCourse] = useState<any>(null);
     const [editAICourse, setEditAICourse] = useState<any>(null);
+    const [previewCourse, setPreviewCourse] = useState<any>(null);
     const [orgSettings, setOrgSettings] = useState<any>(null);
     const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -1345,6 +1346,9 @@ const OrgDashboard = () => {
                                                         </div>
                                                     </div>
                                                     <div className="flex gap-2">
+                                                        <Button variant="ghost" size="sm" onClick={() => setPreviewCourse({ ...course })}>
+                                                            <Eye className="w-4 h-4" />
+                                                        </Button>
                                                         {course.topics ? (
                                                             <Button variant="ghost" size="sm" onClick={() => setEditCourse({ ...course })}>Edit</Button>
                                                         ) : course.content ? (
@@ -1810,6 +1814,98 @@ const OrgDashboard = () => {
                             departments={departmentsList}
                         />
                     )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Course Preview Dialog */}
+            <Dialog open={!!previewCourse} onOpenChange={(open) => !open && setPreviewCourse(null)}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>{previewCourse?.title || previewCourse?.mainTopic || 'Course Preview'}</DialogTitle>
+                        <DialogDescription>
+                            {previewCourse?.department ? `Assigned to: ${previewCourse.department}` : 'Assigned to all students'}
+                        </DialogDescription>
+                    </DialogHeader>
+                    {previewCourse && (() => {
+                        let parsedContent = null;
+                        if (previewCourse.content) {
+                            try {
+                                parsedContent = JSON.parse(previewCourse.content);
+                            } catch (e) {
+                                console.error('Error parsing course content', e);
+                            }
+                        }
+
+                        const description = previewCourse.description || parsedContent?.course_description || '';
+                        const topics = previewCourse.topics || parsedContent?.course_topics || [];
+                        const quizzes = previewCourse.quizzes || parsedContent?.quizzes || [];
+
+                        return (
+                            <div className="py-4 space-y-6">
+                                {description && (
+                                    <div>
+                                        <h4 className="font-semibold mb-2">Description</h4>
+                                        <div className="text-sm text-muted-foreground p-4 bg-muted/50 rounded-lg"
+                                            dangerouslySetInnerHTML={{ __html: description }} />
+                                    </div>
+                                )}
+
+                                <div>
+                                    <h4 className="font-semibold mb-3">Course Content</h4>
+                                    <div className="space-y-4">
+                                        {topics.length > 0 ? topics.map((topic: any, idx: number) => (
+                                            <div key={idx} className="border rounded-lg overflow-hidden">
+                                                <div className="bg-muted/50 p-3 font-medium flex gap-3">
+                                                    <span className="text-xs bg-muted px-2 py-1 rounded font-bold">{idx + 1}</span>
+                                                    {topic.title || topic.topic}
+                                                </div>
+                                                <div className="p-4 space-y-3 bg-card">
+                                                    {topic.subtopics && topic.subtopics.length > 0 ? (
+                                                        topic.subtopics.map((sub: any, sIdx: number) => (
+                                                            <div key={sIdx} className="pl-4 border-l-2 border-primary/20">
+                                                                <h5 className="font-medium text-sm mb-1">{sub.title || sub.subtopic}</h5>
+                                                                {sub.videoUrl && (
+                                                                    <a href={sub.videoUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-500 flex items-center gap-1 mb-2">
+                                                                        <Video className="w-3 h-3" /> External Video Link
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <p className="text-xs text-muted-foreground pl-4">No subtopics defined.</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )) : (
+                                            <div className="p-4 border border-dashed rounded-lg text-sm text-muted-foreground text-center">
+                                                No topics available for this course.
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {quizzes.length > 0 && (
+                                    <div>
+                                        <h4 className="font-semibold mb-3">Quizzes</h4>
+                                        <div className="space-y-3">
+                                            {quizzes.map((quiz: any, qIdx: number) => (
+                                                <div key={qIdx} className="p-4 border rounded-lg bg-card text-sm">
+                                                    <p className="font-medium mb-2">{qIdx + 1}. {quiz.question}</p>
+                                                    <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                                                        {quiz.options && quiz.options.map((opt: string, oIdx: number) => (
+                                                            <li key={oIdx} className={opt === quiz.answer ? "text-primary font-medium" : ""}>
+                                                                {opt}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })()}
                 </DialogContent>
             </Dialog>
 
