@@ -461,23 +461,22 @@ export const getAssignments = async (req, res) => {
             const student = await User.findById(studentId);
             if (student) {
                 const department = student.department || student.studentDetails?.department;
-                query.$or = [
-                    { assignedTo: studentId },
-                    { department: department },
-                    {
-                        $and: [
-                            { assignedTo: { $size: 0 } },
-                            {
-                                $or: [
-                                    { department: { $exists: false } },
-                                    { department: null },
-                                    { department: '' },
-                                    { department: 'all' }
-                                ]
-                            }
-                        ]
-                    }
-                ];
+                if (department && department !== '' && department !== 'all') {
+                    // Valid department ObjectId
+                    query.$or = [
+                        { assignedTo: studentId },
+                        { department: department },
+                        { department: { $exists: false } },
+                        { department: null }
+                    ];
+                } else {
+                    // No valid department, allow global ones
+                    query.$or = [
+                        { assignedTo: studentId },
+                        { department: { $exists: false } },
+                        { department: null }
+                    ];
+                }
             }
         }
 
@@ -651,13 +650,18 @@ export const getNotices = async (req, res) => {
             const student = await User.findById(studentId);
             if (student) {
                 const department = student.department || student.studentDetails?.department;
-                query.$or = [
-                    { department: department },
-                    { department: { $exists: false } },
-                    { department: null },
-                    { department: '' },
-                    { department: 'all' }
-                ];
+                if (department && department !== '' && department !== 'all') {
+                    query.$or = [
+                        { department: department },
+                        { department: { $exists: false } },
+                        { department: null }
+                    ];
+                } else {
+                    query.$or = [
+                        { department: { $exists: false } },
+                        { department: null }
+                    ];
+                }
             }
         }
 
