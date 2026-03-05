@@ -164,13 +164,13 @@ export const addStudent = async (req, res) => {
             role: 'student',
             organization: organizationId,
             department: department && department !== 'all' ? department : null,
-       
-            studentDetails: { 
-   section,
-   rollNo,
-   studentClass,
-   classId
-},
+
+            studentDetails: {
+                section,
+                rollNo,
+                studentClass,
+                classId
+            },
             isVerified: true
         });
 
@@ -265,15 +265,15 @@ export const updateStudent = async (req, res) => {
         //     updatedAt: Date.now()
         // };
         const updates = {
-  mName: name,
-  email,
-  department: department && department !== 'all' ? department : null,
-  'studentDetails.section': section,
-  'studentDetails.rollNo': rollNo,
-  'studentDetails.studentClass': studentClass,
-  'studentDetails.classId': classId, // ✅ add this
-  updatedAt: Date.now()
-};
+            mName: name,
+            email,
+            department: department && department !== 'all' ? department : null,
+            'studentDetails.section': section,
+            'studentDetails.rollNo': rollNo,
+            'studentDetails.studentClass': studentClass,
+            'studentDetails.classId': classId, // ✅ add this
+            updatedAt: Date.now()
+        };
 
         const student = await User.findByIdAndUpdate(studentId, updates, { new: true });
         if (!student) {
@@ -424,7 +424,7 @@ export const createAssignment = async (req, res) => {
         try {
             let studentQuery = { organization: organizationId, role: 'student' };
             if (department && department !== 'all') {
-                studentQuery['studentDetails.department'] = department;
+                studentQuery['department'] = department;
             }
 
             const students = await User.find(studentQuery).select('_id');
@@ -617,7 +617,7 @@ export const createNotice = async (req, res) => {
 
         try {
             let studentQuery = { organization: organizationId, role: 'student' };
-            if (parsedDepartment) studentQuery['studentDetails.department'] = parsedDepartment;
+            if (parsedDepartment) studentQuery['department'] = parsedDepartment;
 
             const students = await User.find(studentQuery).select('_id');
             const notificationPromises = students.map(student =>
@@ -650,7 +650,7 @@ export const getNotices = async (req, res) => {
         if (studentId) {
             const student = await User.findById(studentId);
             if (student) {
-                const department = student.studentDetails?.department;
+                const department = student.department || student.studentDetails?.department;
                 query.$or = [
                     { department: department },
                     { department: { $exists: false } },
@@ -955,7 +955,7 @@ export const createMeeting = async (req, res) => {
 
         try {
             let studentQuery = { organization: organizationId, role: 'student' };
-            if (parsedDepartment) studentQuery['studentDetails.department'] = parsedDepartment;
+            if (parsedDepartment) studentQuery['department'] = parsedDepartment;
 
             const students = await User.find(studentQuery).select('_id');
             const notificationPromises = students.map(student =>
@@ -985,7 +985,7 @@ export const getMeetings = async (req, res) => {
         if (studentId) {
             const student = await User.findById(studentId);
             if (student) {
-                const department = student.studentDetails?.department;
+                const department = student.department || student.studentDetails?.department;
                 query.$or = [{ department: department }, { department: 'all' }, { department: '' }];
             }
         }
@@ -1018,7 +1018,7 @@ export const createProject = async (req, res) => {
 
         try {
             let studentQuery = { organization: organizationId, role: 'student' };
-            if (parsedDepartment) studentQuery['studentDetails.department'] = parsedDepartment;
+            if (parsedDepartment) studentQuery['department'] = parsedDepartment;
 
             const students = await User.find(studentQuery).select('_id');
             const notificationPromises = students.map(student =>
@@ -1048,7 +1048,7 @@ export const getProjects = async (req, res) => {
         if (studentId) {
             const student = await User.findById(studentId);
             if (student) {
-                const department = student.studentDetails?.department;
+                const department = student.department || student.studentDetails?.department;
                 query.$or = [
                     { department: department },
                     { department: { $exists: false } },
@@ -1131,7 +1131,7 @@ export const createMaterial = async (req, res) => {
 
         try {
             let studentQuery = { organization: organizationId, role: 'student' };
-            if (parsedDepartment) studentQuery['studentDetails.department'] = parsedDepartment;
+            if (parsedDepartment) studentQuery['department'] = parsedDepartment;
 
             const students = await User.find(studentQuery).select('_id');
             const notificationPromises = students.map(student =>
