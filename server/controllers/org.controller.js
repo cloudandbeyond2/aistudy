@@ -145,7 +145,8 @@ export const orgSignin = async (req, res) => {
  * ADD STUDENT (Single)
  */
 export const addStudent = async (req, res) => {
-    const { email, name, phone, password, department, section, rollNo, studentClass, organizationId } = req.body;
+    // const { email, name, phone, password, department, section, rollNo, studentClass, organizationId } = req.body;
+    const { email, name, phone, password, department, section, rollNo, studentClass, classId, organizationId } = req.body;
 
     try {
         let user = await User.findOne({ email });
@@ -163,7 +164,13 @@ export const addStudent = async (req, res) => {
             role: 'student',
             organization: organizationId,
             department: department && department !== 'all' ? department : null,
-            studentDetails: { section, rollNo, studentClass },
+       
+            studentDetails: { 
+   section,
+   rollNo,
+   studentClass,
+   classId
+},
             isVerified: true
         });
 
@@ -244,18 +251,29 @@ export const getStudents = async (req, res) => {
  */
 export const updateStudent = async (req, res) => {
     const { studentId } = req.params;
-    const { name, email, department, section, rollNo, studentClass, class: className } = req.body;
+    // const { name, email, department, section, rollNo, studentClass, class: className } = req.body;
+    const { name, email, department, section, rollNo, studentClass, classId } = req.body;
 
     try {
+        // const updates = {
+        //     mName: name,
+        //     email,
+        //     department: department && department !== 'all' ? department : null,
+        //     'studentDetails.section': section,
+        //     'studentDetails.rollNo': rollNo,
+        //     'studentDetails.studentClass': studentClass || className,
+        //     updatedAt: Date.now()
+        // };
         const updates = {
-            mName: name,
-            email,
-            department: department && department !== 'all' ? department : null,
-            'studentDetails.section': section,
-            'studentDetails.rollNo': rollNo,
-            'studentDetails.studentClass': studentClass || className,
-            updatedAt: Date.now()
-        };
+  mName: name,
+  email,
+  department: department && department !== 'all' ? department : null,
+  'studentDetails.section': section,
+  'studentDetails.rollNo': rollNo,
+  'studentDetails.studentClass': studentClass,
+  'studentDetails.classId': classId, // ✅ add this
+  updatedAt: Date.now()
+};
 
         const student = await User.findByIdAndUpdate(studentId, updates, { new: true });
         if (!student) {
