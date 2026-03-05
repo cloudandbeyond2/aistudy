@@ -54,6 +54,7 @@ import notebookRoutes from './routes/notebook.routes.js';
 import classRoutes from './routes/class.routes.js';
 import announcementRoutes from "./routes/announcementRoutes.js";
 import careerRoutes from './routes/career.routes.js';
+import scheduleRoutes from "./routes/scheduleRoutes.js";
 // -------------------- INIT --------------------
 connectDB();
 const app = express();
@@ -128,6 +129,7 @@ app.use("/api", studentTicketRoutes);
 app.use("/api", classRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use('/api', careerRoutes);
+app.use("/api/schedule", scheduleRoutes);
 
 // -------------------- ERROR HANDLER --------------------
 app.use((err, req, res, next) => {
