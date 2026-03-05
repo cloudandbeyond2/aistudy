@@ -40,7 +40,10 @@ import {
     deleteDepartment,
     addDeptAdmin,
     getDeptAdmins,
-    deleteDeptAdmin
+    deleteDeptAdmin,
+    deleteNotice,
+    updateAssignment,
+    deleteAssignment
 } from '../controllers/org.controller.js';
 import Organization from '../models/Organization.js';
 import { uploadAssignment, uploadCourseImage, uploadMaterial } from '../config/upload.config.js';
@@ -65,6 +68,8 @@ router.get('/org/dashboard/stats', getDashboardStats);
 router.post('/org/assignment/create', createAssignment);
 router.get('/org/assignments', getAssignments); // ?organizationId=...
 router.get('/org/assignment/:assignmentId', getAssignment);
+router.put('/org/assignment/:id', updateAssignment);
+router.delete('/org/assignment/:id', deleteAssignment);
 router.get('/org/assignment/:assignmentId/submissions', getSubmissions);
 router.get('/org/assignment/certificate/:submissionId', getAssignmentCertificate);
 router.post('/org/assignment/submission/:submissionId/grade', gradeSubmission);
@@ -73,6 +78,7 @@ router.post('/student/assignment/submit', uploadAssignment.single('file'), submi
 // Notices
 router.post('/org/notice/create', createNotice);
 router.get('/org/notices', getNotices);
+router.delete('/org/notice/:id', deleteNotice);
 router.get('/org/details/:orgId', async (req, res) => {
     try {
         const org = await Organization.findById(req.params.orgId);

@@ -261,6 +261,7 @@ const OrgDashboard = () => {
     const [newStudent, setNewStudent] = useState({ name: '', email: '', password: '', department: '', section: '', studentClass: '', rollNo: '' });
     const [editStudent, setEditStudent] = useState<any>(null);
     const [newAssignment, setNewAssignment] = useState({ topic: '', description: '', dueDate: '', department: '' });
+    const [editAssignment, setEditAssignment] = useState<any>(null); // New state for editing assignments
     const [newNotice, setNewNotice] = useState({ title: '', content: '', audience: 'all', department: '' });
     const [newCourse, setNewCourse] = useState<any>({ title: '', description: '', department: '', topics: [], quizzes: [] });
     const [editCourse, setEditCourse] = useState<any>(null);
@@ -316,6 +317,7 @@ const OrgDashboard = () => {
         fetchMaterials();
         fetchOrgDepartments();
         fetchOrgDeptAdmins();
+        fetchNotices();
     }, [orgId, toast]);
 
     const fetchOrgDepartments = async () => {
@@ -589,6 +591,17 @@ const OrgDashboard = () => {
         }
     }
 
+    const fetchNotices = async () => {
+        try {
+            const res = await axios.get(`${serverURL}/api/org/notices?organizationId=${orgId}`);
+            if (res.data.success) {
+                setNotices(res.data.notices);
+            }
+        } catch (e) {
+            console.error('Failed to fetch notices:', e);
+        }
+    }
+
     const handleAddStudent = async () => {
         try {
             const res = await axios.post(`${serverURL}/api/org/student/add`, { ...newStudent, organizationId: orgId });
@@ -603,6 +616,53 @@ const OrgDashboard = () => {
         } catch (e: any) {
             console.error(e);
             toast({ title: "Error", description: e.response?.data?.message || "Request failed" });
+        }
+    };
+
+    const handleCreateAssignment = async () => {
+        try {
+            const assignmentData = {
+                ...newAssignment,
+                organizationId: orgId,
+            };
+            const res = await axios.post(`${serverURL}/api/org/assignment/create`, assignmentData);
+            if (res.data.success) {
+                toast({ title: 'Success', description: 'Assignment created successfully' });
+                setNewAssignment({ topic: '', description: '', dueDate: '', department: '' });
+                fetchAssignments();
+            }
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to create assignment' });
+        }
+    };
+
+    const handleUpdateAssignment = async () => {
+        try {
+            const assignmentData = {
+                ...editAssignment,
+                organizationId: orgId,
+            };
+            const res = await axios.put(`${serverURL}/api/org/assignment/${editAssignment._id}`, assignmentData);
+            if (res.data.success) {
+                toast({ title: 'Success', description: 'Assignment updated successfully' });
+                setEditAssignment(null);
+                fetchAssignments();
+            }
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to update assignment' });
+        }
+    };
+
+    const handleDeleteAssignment = async (id: string) => {
+        if (!window.confirm('Are you sure you want to delete this assignment?')) return;
+        try {
+            const res = await axios.delete(`${serverURL}/api/org/assignment/${id}`);
+            if (res.data.success) {
+                toast({ title: 'Success', description: 'Assignment deleted successfully' });
+                fetchAssignments();
+            }
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete assignment' });
         }
     };
 
@@ -751,28 +811,29 @@ const OrgDashboard = () => {
         }
     };
 
-    const handleCreateAssignment = async () => {
-        try {
-            const res = await axios.post(`${serverURL}/api/org/assignment/create`, { ...newAssignment, organizationId: orgId });
-            if (res.data.success) {
-                toast({ title: "Success", description: "Assignment created" });
-                setNewAssignment({ topic: '', description: '', dueDate: '', department: '' });
-                fetchAssignments();
-            }
-        } catch (e) {
-            toast({ title: "Error", description: "Request failed" });
-        }
-    };
-
     const handleCreateNotice = async () => {
         try {
             const res = await axios.post(`${serverURL}/api/org/notice/create`, { ...newNotice, organizationId: orgId });
             if (res.data.success) {
                 toast({ title: "Success", description: "Notice posted" });
                 setNewNotice({ title: '', content: '', audience: 'all', department: '' });
+                fetchNotices();
             }
         } catch (e) {
             toast({ title: "Error", description: "Request failed" });
+        }
+    };
+
+    const handleDeleteNotice = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this notice?')) return;
+        try {
+            const res = await axios.delete(`${serverURL}/api/org/notice/${id}`);
+            if (res.data.success) {
+                toast({ title: "Success", description: "Notice deleted" });
+                fetchNotices();
+            }
+        } catch (e) {
+            toast({ title: "Error", description: "Failed to delete notice" });
         }
     };
 
@@ -993,7 +1054,7 @@ const OrgDashboard = () => {
                     <TabsTrigger value="meetings" className="flex-1 min-w-[120px]">Meetings</TabsTrigger>
                     <TabsTrigger value="projects" className="flex-1 min-w-[120px]">Projects/Research</TabsTrigger>
                     <TabsTrigger value="materials" className="flex-1 min-w-[120px]">Materials</TabsTrigger>
-                    <TabsTrigger value="notices" className="flex-1 min-w-[120px]">Notices</TabsTrigger>
+                    <TabsTrigger value="notices" className="flex-1 min-w-[120px]">Noticeboard</TabsTrigger>
 
                 </TabsList>
 
@@ -1441,9 +1502,54 @@ const OrgDashboard = () => {
                                                         <span>{assignment.questions?.length || 0} Questions</span>
                                                     </div>
                                                 </div>
-                                                <Button variant="outline" size="sm" onClick={() => handleViewSubmissions(assignment)}>
-                                                    View Submissions
-                                                </Button>
+                                                <div className="flex gap-2">
+                                                    <Button variant="outline" size="sm" onClick={() => handleViewSubmissions(assignment)}>
+                                                        View Submissions
+                                                    </Button>
+                                                    <Dialog>
+                                                        <DialogTrigger asChild>
+                                                            <Button variant="ghost" size="sm" onClick={() => setEditAssignment({
+                                                                ...assignment,
+                                                                dueDate: assignment.dueDate ? new Date(assignment.dueDate).toISOString().split('T')[0] : ''
+                                                            })}>
+                                                                Edit
+                                                            </Button>
+                                                        </DialogTrigger>
+                                                        {editAssignment && editAssignment._id === assignment._id && (
+                                                            <DialogContent>
+                                                                <DialogHeader><DialogTitle>Edit Assignment</DialogTitle></DialogHeader>
+                                                                <div className="grid gap-4 py-4">
+                                                                    <Label>Topic</Label>
+                                                                    <Input value={editAssignment.topic} onChange={(e) => setEditAssignment({ ...editAssignment, topic: e.target.value })} />
+                                                                    <Label>Description</Label>
+                                                                    <RichTextEditor
+                                                                        value={editAssignment.description || ''}
+                                                                        onChange={(content) => setEditAssignment({ ...editAssignment, description: content })}
+                                                                        placeholder="Assignment instructions..."
+                                                                        className="min-h-[150px]"
+                                                                    />
+                                                                    <Label>Due Date</Label>
+                                                                    <Input type="date" value={editAssignment.dueDate} onChange={(e) => setEditAssignment({ ...editAssignment, dueDate: e.target.value })} />
+                                                                    <Label>Department (Optional)</Label>
+                                                                    <select
+                                                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                        value={editAssignment.department || ''}
+                                                                        onChange={(e) => setEditAssignment({ ...editAssignment, department: e.target.value })}
+                                                                    >
+                                                                        <option value="">All Students</option>
+                                                                        {departmentsList.map((d: any) => (
+                                                                            <option key={d._id} value={d._id}>{d.name}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
+                                                                <Button onClick={handleUpdateAssignment}>Update</Button>
+                                                            </DialogContent>
+                                                        )}
+                                                    </Dialog>
+                                                    <Button variant="ghost" size="sm" onClick={() => handleDeleteAssignment(assignment._id)}>
+                                                        <Trash2 className="w-4 h-4 text-destructive" />
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))
@@ -1796,6 +1902,42 @@ const OrgDashboard = () => {
                             </div>
                         </CardContent>
                     </Card>
+
+                    <div className="mt-8 space-y-4">
+                        <h3 className="text-lg font-medium">Recent Notices</h3>
+                        {notices.length === 0 ? (
+                            <p className="text-muted-foreground">No notices found.</p>
+                        ) : (
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {notices.map((notice: any) => (
+                                    <Card key={notice._id}>
+                                        <CardHeader className="pb-2">
+                                            <div className="flex justify-between items-start">
+                                                <CardTitle className="text-base truncate pr-2" title={notice.title}>{notice.title}</CardTitle>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500 flex-shrink-0" onClick={() => handleDeleteNotice(notice._id)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                            <CardDescription className="text-xs">
+                                                {new Date(notice.createdAt).toLocaleDateString()}
+                                                {notice.department && (
+                                                    <span className="ml-2 px-2 py-0.5 rounded-full bg-secondary text-[10px]">
+                                                        {departmentsList.find(d => d._id === notice.department)?.name || 'Dept'}
+                                                    </span>
+                                                )}
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div
+                                                className="text-sm text-muted-foreground line-clamp-3 prose prose-sm dark:prose-invert"
+                                                dangerouslySetInnerHTML={{ __html: notice.content }}
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </TabsContent>
             </Tabs>
 

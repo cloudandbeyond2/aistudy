@@ -24,6 +24,6 @@ export const markAsRead = async (req, res) => {
 };
 
 /* CREATE (Internal use mostly) */
-export const createNotification = async ({ user, message, type }) => {
-    await Notification.create({ user, message, type });
+export const createNotification = async ({ user, message, type, link }) => {
+    await Notification.create({ user, message, type, link });
 };

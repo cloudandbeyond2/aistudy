@@ -4,7 +4,8 @@ import mongoose from 'mongoose';
 const notificationSchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     message: { type: String, required: true },
-    type: { type: String, enum: ['info', 'success', 'warning', 'error'], default: 'info' },
+    type: { type: String, enum: ['info', 'success', 'warning', 'error', 'primary'], default: 'info' },
+    link: { type: String, default: '' },
     isRead: { type: Boolean, default: false },
     date: { type: Date, default: Date.now }
 });

@@ -391,12 +391,13 @@ export const getDashboardStats = async (req, res) => {
 export const createAssignment = async (req, res) => {
     const { organizationId, topic, description, dueDate, department, questions } = req.body;
     try {
+        const parsedDepartment = department && department !== 'all' ? department : undefined;
         const assignment = new Assignment({
             organizationId,
             topic,
             description,
             dueDate,
-            department,
+            department: parsedDepartment,
             questions
         });
         await assignment.save();
@@ -414,7 +415,8 @@ export const createAssignment = async (req, res) => {
                 createNotification({
                     user: student._id,
                     message: `New assignment created: ${topic}`,
-                    type: 'info'
+                    type: 'info',
+                    link: '/dashboard/student/assignments'
                 })
             );
             await Promise.all(notificationPromises);
@@ -503,6 +505,40 @@ export const getAssignment = async (req, res) => {
 };
 
 /**
+ * UPDATE ASSIGNMENT
+ */
+export const updateAssignment = async (req, res) => {
+    const { id } = req.params;
+    const { topic, description, dueDate, department, questions } = req.body;
+    try {
+        const parsedDepartment = department && department !== 'all' ? department : undefined;
+        const assignment = await Assignment.findByIdAndUpdate(
+            id,
+            { topic, description, dueDate, department: parsedDepartment, questions },
+            { new: true }
+        );
+        if (!assignment) {
+            return res.status(404).json({ success: false, message: 'Assignment not found' });
+        }
+        res.json({ success: true, message: 'Assignment updated successfully', assignment });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * DELETE ASSIGNMENT
+ */
+export const deleteAssignment = async (req, res) => {
+    try {
+        await Assignment.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Assignment deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
  * GET ASSIGNMENT SUBMISSIONS
  */
 export const getSubmissions = async (req, res) => {
@@ -557,8 +593,28 @@ export const createNotice = async (req, res) => {
     const { organizationId, title, content, audience, department } = req.body;
 
     try {
-        const notice = new Notice({ organizationId, title, content, audience, department });
+        const parsedDepartment = department && department !== 'all' ? department : undefined;
+        const notice = new Notice({ organizationId, title, content, audience, department: parsedDepartment });
         await notice.save();
+
+        try {
+            let studentQuery = { organization: organizationId, role: 'student' };
+            if (parsedDepartment) studentQuery['studentDetails.department'] = parsedDepartment;
+
+            const students = await User.find(studentQuery).select('_id');
+            const notificationPromises = students.map(student =>
+                createNotification({
+                    user: student._id,
+                    message: `New notice posted: ${title}`,
+                    type: 'info',
+                    link: '/dashboard/student/notices'
+                })
+            );
+            await Promise.all(notificationPromises);
+        } catch (notifError) {
+            console.error("Failed to send notice notifications:", notifError);
+        }
+
         res.json({ success: true, message: 'Notice created' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error' });
@@ -596,6 +652,18 @@ export const getNotices = async (req, res) => {
 };
 
 /**
+ * DELETE NOTICE
+ */
+export const deleteNotice = async (req, res) => {
+    try {
+        await Notice.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Notice deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
  * GET ALL ORGANIZATIONS (Super Admin)
  */
 export const getAllOrganizations = async (req, res) => {
@@ -628,12 +696,13 @@ export const updateOrganization = async (req, res) => {
 export const createCourse = async (req, res) => {
     const { organizationId, title, description, type, department, topics, quizzes, assignedTo, createdBy } = req.body;
     try {
+        const parsedDepartment = department && department !== 'all' ? department : undefined;
         const course = new OrgCourse({
             organizationId,
             title,
             description,
             type: type || 'video & text course',
-            department,
+            department: parsedDepartment,
             topics: topics || [],
             quizzes: quizzes || [],
             assignedTo: assignedTo || [], // Specific students or empty for all
@@ -862,8 +931,28 @@ export const getAssignmentCertificate = async (req, res) => {
 export const createMeeting = async (req, res) => {
     const { organizationId, title, link, platform, date, time, department } = req.body;
     try {
-        const meeting = new Meeting({ organizationId, title, link, platform, date, time, department });
+        const parsedDepartment = department && department !== 'all' ? department : undefined;
+        const meeting = new Meeting({ organizationId, title, link, platform, date, time, department: parsedDepartment });
         await meeting.save();
+
+        try {
+            let studentQuery = { organization: organizationId, role: 'student' };
+            if (parsedDepartment) studentQuery['studentDetails.department'] = parsedDepartment;
+
+            const students = await User.find(studentQuery).select('_id');
+            const notificationPromises = students.map(student =>
+                createNotification({
+                    user: student._id,
+                    message: `New meeting scheduled: ${title}`,
+                    type: 'primary',
+                    link: '/dashboard/student/meetings'
+                })
+            );
+            await Promise.all(notificationPromises);
+        } catch (notifError) {
+            console.error("Failed to send meeting notifications:", notifError);
+        }
+
         res.json({ success: true, message: 'Meeting created', meeting });
     } catch (error) {
         console.error('Create Meeting Error:', error);
@@ -905,8 +994,28 @@ export const deleteMeeting = async (req, res) => {
 export const createProject = async (req, res) => {
     const { organizationId, title, description, type, department, dueDate } = req.body;
     try {
-        const project = new Project({ organizationId, title, description, type, department, dueDate });
+        const parsedDepartment = department && department !== 'all' ? department : undefined;
+        const project = new Project({ organizationId, title, description, type, department: parsedDepartment, dueDate });
         await project.save();
+
+        try {
+            let studentQuery = { organization: organizationId, role: 'student' };
+            if (parsedDepartment) studentQuery['studentDetails.department'] = parsedDepartment;
+
+            const students = await User.find(studentQuery).select('_id');
+            const notificationPromises = students.map(student =>
+                createNotification({
+                    user: student._id,
+                    message: `New project created: ${title}`,
+                    type: 'success',
+                    link: '/dashboard/student/projects'
+                })
+            );
+            await Promise.all(notificationPromises);
+        } catch (notifError) {
+            console.error("Failed to send project notifications:", notifError);
+        }
+
         res.json({ success: true, message: 'Project created', project });
     } catch (error) {
         console.error('Create Project Error:', error);
@@ -989,16 +1098,36 @@ export const createMaterial = async (req, res) => {
             });
         }
 
+        const parsedDepartment = department && department !== 'all' ? department : undefined;
+
         const material = new Material({
             organizationId,
             title,
             description,
             fileUrl: finalFileUrl,
             type,
-            department
+            department: parsedDepartment
         });
 
         await material.save();
+
+        try {
+            let studentQuery = { organization: organizationId, role: 'student' };
+            if (parsedDepartment) studentQuery['studentDetails.department'] = parsedDepartment;
+
+            const students = await User.find(studentQuery).select('_id');
+            const notificationPromises = students.map(student =>
+                createNotification({
+                    user: student._id,
+                    message: `New material posted: ${title}`,
+                    type: 'warning',
+                    link: '/dashboard/student/materials'
+                })
+            );
+            await Promise.all(notificationPromises);
+        } catch (notifError) {
+            console.error("Failed to send material notifications:", notifError);
+        }
 
         res.json({
             success: true,
