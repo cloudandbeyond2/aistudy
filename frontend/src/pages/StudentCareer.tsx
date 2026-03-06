@@ -99,6 +99,18 @@ const StudentCareer = () => {
                 axios.get(`${serverURL}/api/settings`).catch(() => null)
             ]);
 
+            if (settingsRes?.data?.careerEnabled) {
+                if (!settingsRes.data.careerEnabled.student) {
+                    toast({
+                        title: "Access Restricted",
+                        description: "Career Hub feature is currently disabled by the administrator.",
+                        variant: "destructive",
+                    });
+                    navigate('/dashboard/student');
+                    return;
+                }
+            }
+
             if (settingsRes?.data?.resumeEnabled) {
                 setResumeEnabled(settingsRes.data.resumeEnabled.student);
             }

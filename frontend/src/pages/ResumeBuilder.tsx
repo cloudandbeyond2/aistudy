@@ -226,12 +226,36 @@ const ResumeBuilder = () => {
         );
     }
 
-    // Fetch resume data
+    // Fetch resume data and check access
     useEffect(() => {
         if (!uid) { setLoading(false); return; }
-        setUserName(sessionStorage.getItem('mName') || '');
-        axios.get(`${serverURL}/api/resume/my/${uid}`, { headers: { 'x-user-id': uid } })
-            .then(res => {
+
+        const checkAccessAndFetch = async () => {
+            try {
+                // Check Access
+                const settingsRes = await axios.get(`${serverURL}/api/admin/settings`);
+                if (settingsRes.data && settingsRes.data.resumeEnabled) {
+                    const enabledSettings = settingsRes.data.resumeEnabled;
+                    let isEnabled = false;
+
+                    if (userRole === 'org_admin') isEnabled = enabledSettings.org_admin;
+                    else if (userRole === 'student') isEnabled = enabledSettings.student;
+                    else isEnabled = enabledSettings[userType] || false;
+
+                    if (!isEnabled) {
+                        toast({
+                            title: "Access Restricted",
+                            description: "Resume Builder is currently disabled by the administrator.",
+                            variant: "destructive",
+                        });
+                        navigate('/dashboard');
+                        return;
+                    }
+                }
+
+                // Fetch Data
+                setUserName(sessionStorage.getItem('mName') || '');
+                const res = await axios.get(`${serverURL}/api/resume/my/${uid}`, { headers: { 'x-user-id': uid } });
                 if (res.data.success) {
                     setUserName(res.data.userName || sessionStorage.getItem('mName') || '');
                     setAllCerts(res.data.allCertifications || []);
@@ -252,10 +276,15 @@ const ResumeBuilder = () => {
                         selectedCertificateIds: r.selectedCertificateIds || [],
                     }));
                 }
-            })
-            .catch(console.error)
-            .finally(() => setLoading(false));
-    }, [uid]);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        checkAccessAndFetch();
+    }, [uid, userRole, userType, navigate]);
 
     // ── handlers ──────────────────────────────────────────────
     const setField = (field: keyof ResumeData, value: any) =>

@@ -34,20 +34,50 @@ export const getOrgPlacementStats = async (req, res) => {
         const students = await User.find({ organization: organizationId, role: 'student' })
             .select('mName email studentDetails department');
 
-        const profiles = await PlacementProfile.find({ organizationId });
+        const studentIds = students.map(s => s._id);
+        const [profiles, resumes] = await Promise.all([
+            PlacementProfile.find({ organizationId }),
+            Resume.find({ userId: { $in: studentIds } }).select('userId summary experience education')
+        ]);
+
         const profileMap = {};
         profiles.forEach(p => { profileMap[p.studentId.toString()] = p; });
 
+        const resumeMap = {};
+        resumes.forEach(r => {
+            resumeMap[r.userId.toString()] = !!(
+                r.summary ||
+                (r.experience && r.experience.length > 0) ||
+                (r.education && r.education.length > 0)
+            );
+        });
+
         const data = students.map(s => {
             const profile = profileMap[s._id.toString()] || null;
+            const liveResumeComplete = resumeMap[s._id.toString()] || false;
+
+            const finalResumeComplete = liveResumeComplete || profile?.resumeComplete || false;
+            let finalScore = profile?.placementScore || 0;
+
+            // Recalculate score if resume newly completed but not yet in profile
+            if (finalResumeComplete && !profile?.resumeComplete) {
+                finalScore = computeScore({
+                    resumeComplete: true,
+                    projectsCount: profile?.projectsCount || 0,
+                    certificatesCount: profile?.certificatesCount || 0,
+                    githubUrl: profile?.githubUrl || '',
+                    linkedinUrl: profile?.linkedinUrl || ''
+                });
+            }
+
             return {
                 studentId: s._id,
                 name: s.mName,
                 email: s.email,
                 department: s.department,
                 rollNo: s.studentDetails?.rollNo,
-                placementScore: profile?.placementScore || 0,
-                resumeComplete: profile?.resumeComplete || false,
+                placementScore: finalScore,
+                resumeComplete: finalResumeComplete,
                 projectsCount: profile?.projectsCount || 0,
                 certificatesCount: profile?.certificatesCount || 0,
                 githubUrl: profile?.githubUrl || '',

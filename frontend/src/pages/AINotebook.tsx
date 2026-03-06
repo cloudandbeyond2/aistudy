@@ -51,10 +51,38 @@ const AINotebook = () => {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        const userType = sessionStorage.getItem('type');
-        if (!['monthly', 'yearly', 'forever'].includes(userType)) {
-            navigate('/dashboard/pricing');
-        }
+        const checkAccess = async () => {
+            const userType = sessionStorage.getItem('type');
+            const userRole = sessionStorage.getItem('role');
+
+            try {
+                const res = await axios.get(`${serverURL}/api/admin/settings`);
+                if (res.data && res.data.notebookEnabled) {
+                    const enabledSettings = res.data.notebookEnabled;
+                    let isEnabled = false;
+
+                    if (userRole === 'org_admin') isEnabled = enabledSettings.org_admin;
+                    else if (userRole === 'student') isEnabled = enabledSettings.student;
+                    else isEnabled = enabledSettings[userType] || false;
+
+                    if (!isEnabled) {
+                        // Also check plan restriction as existing logic
+                        if (!['monthly', 'yearly', 'forever'].includes(userType)) {
+                            navigate('/dashboard/pricing');
+                            return;
+                        }
+
+                        // If it's a paid user but feature is disabled globally
+                        // we can redirect to dashboard
+                        navigate('/dashboard');
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking notebook access:', error);
+            }
+        };
+
+        checkAccess();
     }, [navigate]);
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {

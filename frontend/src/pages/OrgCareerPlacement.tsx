@@ -44,8 +44,27 @@ const OrgCareerPlacement = () => {
     const [projectSearch, setProjectSearch] = useState('');
 
     useEffect(() => {
+        checkAccess();
         fetchAll();
     }, [orgId]);
+
+    const checkAccess = async () => {
+        try {
+            const res = await axios.get(`${serverURL}/api/admin/settings`);
+            if (res.data && res.data.careerEnabled) {
+                if (!res.data.careerEnabled.org_admin) {
+                    toast({
+                        title: "Access Restricted",
+                        description: "Career & Placement feature is currently disabled by the administrator.",
+                        variant: "destructive",
+                    });
+                    navigate('/dashboard/org');
+                }
+            }
+        } catch (error) {
+            console.error('Error checking access:', error);
+        }
+    };
 
     const fetchAll = async () => {
         setLoading(true);
@@ -241,9 +260,19 @@ const OrgCareerPlacement = () => {
                                                         <Progress value={s.placementScore} className="h-2" />
                                                     </td>
                                                     <td className="px-4 py-3 text-center">
-                                                        {s.resumeComplete
-                                                            ? <CheckCircle className="w-4 h-4 text-emerald-500 mx-auto" />
-                                                            : <span className="text-muted-foreground text-xs">—</span>}
+                                                        {s.resumeComplete ? (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-7 px-2 text-primary hover:text-primary hover:bg-primary/10 gap-1"
+                                                                onClick={() => window.open(`/resume/${s.studentId}`, '_blank')}
+                                                            >
+                                                                <FileText className="w-3.5 h-3.5" />
+                                                                <span className="text-xs font-medium">View</span>
+                                                            </Button>
+                                                        ) : (
+                                                            <span className="text-muted-foreground text-xs">—</span>
+                                                        )}
                                                     </td>
                                                     <td className="px-4 py-3 text-center font-semibold">{s.projectsCount}</td>
                                                     <td className="px-4 py-3 text-center font-semibold">{s.certificatesCount}</td>
