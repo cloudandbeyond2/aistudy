@@ -48,12 +48,16 @@ export const getMyResume = async (req, res) => {
         }
 
         // Subscription check
-        const user = await User.findById(userId).select('type role mName email phone country city profession');
+        const user = await User.findById(userId).select('type role mName email phone country city profession organization organizationId');
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-        if (!PAID_TYPES.includes(user.type)) {
-            return res.status(403).json({ success: false, message: 'Resume Builder is available for paid users only.' });
+
+        const isPaid = PAID_TYPES.includes(user.type);
+        const isOrgUser = !!user.organization || !!user.organizationId;
+
+        if (!isPaid && !isOrgUser) {
+            return res.status(403).json({ success: false, message: 'Resume Builder is available for paid users and organization members only.' });
         }
-        if (user.role === 'student') {
+        if (user.role === 'student' && !isOrgUser) {
             return res.status(403).json({ success: false, message: 'Resume Builder is not available for students.' });
         }
 
@@ -119,12 +123,16 @@ export const saveResume = async (req, res) => {
         }
 
         // Subscription check
-        const user = await User.findById(userId).select('type role');
+        const user = await User.findById(userId).select('type role organization organizationId');
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-        if (!PAID_TYPES.includes(user.type)) {
-            return res.status(403).json({ success: false, message: 'Resume Builder is available for paid users only.' });
+
+        const isPaid = PAID_TYPES.includes(user.type);
+        const isOrgUser = !!user.organization || !!user.organizationId;
+
+        if (!isPaid && !isOrgUser) {
+            return res.status(403).json({ success: false, message: 'Resume Builder is available for paid users and organization members only.' });
         }
-        if (user.role === 'student') {
+        if (user.role === 'student' && !isOrgUser) {
             return res.status(403).json({ success: false, message: 'Resume Builder is not available for students.' });
         }
 
