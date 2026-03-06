@@ -9,7 +9,7 @@ const placementProfileSchema = new mongoose.Schema({
     organizationId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Organization',
-        required: true
+        default: null
     },
     // Profile links
     githubUrl: { type: String, default: '' },

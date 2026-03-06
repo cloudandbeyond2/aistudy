@@ -166,7 +166,7 @@ const StudentPortal = () => {
                                     </div>
                                     <div className="flex justify-end pt-2">
                                         <Button size="sm" variant="outline" className="group-hover:bg-primary group-hover:text-primary-foreground">
-                                            {course.progressPercentage > 0 ? 'Continue Learning' : 'Start Learning'}
+                                            {course.progressPercentage >= 100 ? 'View Course' : course.progressPercentage > 0 ? 'Continue Learning' : 'Start Learning'}
                                         </Button>
                                     </div>
                                 </div>

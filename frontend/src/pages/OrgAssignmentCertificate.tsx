@@ -102,19 +102,19 @@ const OrgAssignmentCertificate = () => {
                 <div className="relative z-10 flex flex-col items-center h-full w-full pt-20 text-slate-800 font-serif">
 
                     {/* "This is to certify that" */}
-                    <div className="absolute top-[32%] w-full text-center">
+                    <div className="absolute top-[38%] w-full text-center">
                         <p className="text-lg md:text-xl italic text-slate-500">This is to certify that</p>
                     </div>
 
                     {/* Student Name */}
-                    <div className="absolute top-[38%] w-full text-center px-8">
+                    <div className="absolute top-[44%] w-full text-center px-8">
                         <h1 className="text-3xl md:text-5xl font-bold text-slate-900 tracking-wide uppercase" style={{ fontFamily: 'Times New Roman, serif' }}>
                             {certificateData.studentName}
                         </h1>
                     </div>
 
                     {/* "has successfully..." */}
-                    <div className="absolute top-[52%] w-full text-center px-12">
+                    <div className="absolute top-[55%] w-full text-center px-12">
                         <p className="text-md md:text-lg text-slate-600 leading-relaxed">
                             has successfully demonstrated proficient comprehension<br />
                             in the course of
@@ -122,31 +122,31 @@ const OrgAssignmentCertificate = () => {
                     </div>
 
                     {/* Course/Assignment Topic */}
-                    <div className="absolute top-[62%] w-full text-center px-10">
+                    <div className="absolute top-[63%] w-full text-center px-10">
                         <h2 className="text-2xl md:text-3xl font-bold text-slate-800 uppercase tracking-wider">
                             "{certificateData.assignmentTopic}"
                         </h2>
                     </div>
 
                     {/* "And is therefore awarded..." */}
-                    <div className="absolute top-[72%] w-full text-center px-12">
+                    <div className="absolute top-[71%] w-full text-center px-12">
                         <p className="text-sm md:text-md text-slate-500 italic">
                             And is therefore awarded this qualification with distinction
                         </p>
                     </div>
 
                     {/* Signature Section (Static Placeholder) */}
-                    <div className="absolute bottom-[10%] left-[20%] text-center">
-                        <div className="w-40 border-t border-slate-400 mb-2"></div>
+                    <div className="absolute bottom-[18%] left-[20%] text-center">
+                        <div className="w-48 border-t border-slate-400 mb-2 mx-auto"></div>
                         <p className="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-widest">Director of Studies</p>
                     </div>
 
                     {/* Date Section */}
-                    <div className="absolute bottom-[10%] right-[20%] text-center">
+                    <div className="absolute bottom-[18%] right-[20%] text-center">
                         <p className="text-lg md:text-xl font-medium text-slate-700 mb-1" style={{ fontFamily: 'Times New Roman, serif' }}>
                             {new Date(certificateData.date).toLocaleDateString()}
                         </p>
-                        <div className="w-40 border-t border-slate-400 mb-2"></div>
+                        <div className="w-48 border-t border-slate-400 mb-2 mx-auto"></div>
                         <p className="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-widest">Date</p>
                     </div>
 
