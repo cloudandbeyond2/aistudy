@@ -10,11 +10,15 @@ interface ClassItem {
   time: string;
   room: string;
 }
+import axios from "axios";
 
 export default function StaffClasses() {
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+ const [isLoadingStudents, setIsLoadingStudents] = useState(true);
+  const [students, setStudents] = useState<any[]>([]);
+  const deptId = sessionStorage.getItem("deptId");
 
   const [newClass, setNewClass] = useState({
     name: '',
@@ -24,25 +28,72 @@ export default function StaffClasses() {
   });
 
   // ✅ Fetch Classes from Backend
-  useEffect(() => {
+ useEffect(() => {
     fetchClasses();
+    fetchStudents();
   }, []);
 
-  const fetchClasses = async () => {
+const fetchClasses = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${serverURL}/api/classes`);
-      const result = await response.json();
 
-      if (result.success) {
-        setClasses(result.data);
+      const res = await axios.get(`${serverURL}/api/classes`);
+
+      if (res.data.success) {
+        setClasses(res.data.data || []);
+      } else {
+        setClasses([]);
       }
+
     } catch (error) {
-      console.error('Error fetching classes:', error);
+      console.error("Error fetching classes:", error);
+      setClasses([]);
     } finally {
       setLoading(false);
     }
   };
+
+  const fetchStudents = async () => {
+
+    if (!deptId) {
+      setIsLoadingStudents(false);
+      return;
+    }
+
+    try {
+
+      const response = await axios.get(
+        `${serverURL}/api/dept/students?departmentId=${deptId}`
+      );
+
+      if (response.data.success) {
+        setStudents(response.data.students || []);
+      } else {
+        setStudents([]);
+      }
+
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      setStudents([]);
+    } finally {
+      setIsLoadingStudents(false);
+    }
+  };
+
+  // ================================
+  // Get Students Count per Class
+  // ================================
+
+  const getStudentCount = (className: string, section: string) => {
+
+    return students.filter(
+      (student) =>
+        student.studentDetails?.studentClass === className &&
+        student.studentDetails?.section === section
+    ).length;
+
+  };
+
 
   // ✅ Handle Input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,7 +174,9 @@ export default function StaffClasses() {
               <div className="space-y-2 pt-4 border-t border-gray-100">
                 <div className="flex items-center text-sm text-gray-600">
                   <Users size={16} className="mr-2 text-gray-400" />
-                  {cls.students} Students Enrolled
+                   {isLoadingStudents
+                    ? "Loading..."
+                    : `${getStudentCount(cls.name, cls.section)} Students Enrolled`}
                 </div>
 
                 <div className="flex items-center text-sm text-gray-600">

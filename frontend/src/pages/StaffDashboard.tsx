@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Users, 
   Clock, 
@@ -26,7 +26,8 @@ import {
   Legend
 } from 'recharts';
 import SmallCalendar from '../components/ui/SmallCalendar';
-
+import { serverURL } from "@/constants";
+import axios from "axios";
 const attendanceData = [
   { name: 'Mon', attendance: 92 },
   { name: 'Tue', attendance: 95 },
@@ -49,12 +50,71 @@ const performanceData = [
 ];
 
 export default function StaffDashboard() {
-  const classes = [
-    { id: 1, name: 'Computer Science 101', section: 'Section A', students: 45, nextClass: '10:00 AM Today' },
-    { id: 2, name: 'Data Structures', section: 'Section B', students: 38, nextClass: '2:00 PM Today' },
-    { id: 3, name: 'Web Development', section: 'Section A', students: 42, nextClass: '11:00 AM Tomorrow' },
-  ];
+const [classes, setClasses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    async function fetchClasses() {
+      try {
+        const res = await axios.get(`${serverURL}/api/classes`);
+
+        console.log("Classes API Response:", res.data);
+
+        if (Array.isArray(res.data)) {
+          setClasses(res.data);
+        } else if (Array.isArray(res.data.classes)) {
+          setClasses(res.data.classes);
+        } else if (Array.isArray(res.data.data)) {
+          setClasses(res.data.data);
+        } else {
+          setClasses([]);
+        }
+
+      } catch (error) {
+        console.error("Error fetching classes:", error);
+        setClasses([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchClasses();
+  }, []);
+
+
+    const [students, setStudents] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const deptId = sessionStorage.getItem("deptId"); // same as StaffStudents
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = async () => {
+    if (!deptId) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `${serverURL}/api/dept/students?departmentId=${deptId}`
+      );
+
+      if (response.data.success) {
+        setStudents(response.data.students || []);
+      } else {
+        setStudents([]);
+      }
+
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      setStudents([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       {/* Welcome Section */}
@@ -78,7 +138,7 @@ export default function StaffDashboard() {
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Total Students</p>
-            <h3 className="text-2xl font-bold text-slate-900">125</h3>
+            <h3 className="text-2xl font-bold text-slate-900"> {isLoading ? "Loading..." : students.length}</h3>
           </div>
         </div>
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
@@ -96,7 +156,7 @@ export default function StaffDashboard() {
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Classes Today</p>
-            <h3 className="text-2xl font-bold text-slate-900">3</h3>
+            <h3 className="text-2xl font-bold text-slate-900">  {loading ? "..." : classes.length}</h3>
           </div>
         </div>
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
@@ -204,7 +264,7 @@ export default function StaffDashboard() {
 
             <div className="grid gap-4">
               {classes.map((cls) => (
-                <div key={cls.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
+                <div key={cls._id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
                   <div className="flex justify-between items-start">
                     <div className="flex gap-4">
                       <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
@@ -227,12 +287,13 @@ export default function StaffDashboard() {
                     </div>
                     <div className="flex items-center gap-2">
                       <CalendarIcon size={16} className="text-gray-400" />
-                      Next: {cls.nextClass}
+                      {cls.time}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
+            
           </div>
         </div>
 
