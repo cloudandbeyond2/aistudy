@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Users, Clock, MapPin, Calendar, BookOpen, FileText, MoreVertical } from 'lucide-react';
 import { serverURL } from '@/constants';
+import axios from "axios";
+
 interface ClassItem {
   _id: string;
   name: string;
@@ -15,26 +17,80 @@ interface ClassItem {
 export default function StaffClassDetails() {
   const { id } = useParams();
   const [classInfo, setClassInfo] = useState<ClassItem | null>(null);
+   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingStudents, setLoadingStudents] = useState(true);
 
-  // ✅ Fetch Class By ID
+  const deptId = sessionStorage.getItem("deptId");
+
   useEffect(() => {
     fetchClassById();
+    fetchStudents();
   }, [id]);
+
+  // =========================
+  // Fetch Class
+  // =========================
 
   const fetchClassById = async () => {
     try {
+
       const response = await fetch(`${serverURL}/api/classes/${id}`);
       const result = await response.json();
 
       if (result.success) {
         setClassInfo(result.data);
       }
+
     } catch (error) {
-      console.error('Error fetching class:', error);
+      console.error("Error fetching class:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  // =========================
+  // Fetch Students
+  // =========================
+
+  const fetchStudents = async () => {
+
+    if (!deptId) {
+      setLoadingStudents(false);
+      return;
+    }
+
+    try {
+
+      const res = await axios.get(
+        `${serverURL}/api/dept/students?departmentId=${deptId}`
+      );
+
+      if (res.data.success) {
+        setStudents(res.data.students || []);
+      }
+
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      setStudents([]);
+    } finally {
+      setLoadingStudents(false);
+    }
+  };
+
+  // =========================
+  // Student Count
+  // =========================
+
+  const getStudentCount = () => {
+
+    if (!classInfo) return 0;
+
+    return students.filter(
+      (student) =>
+        student.studentDetails?.studentClass === classInfo.name &&
+        student.studentDetails?.section === classInfo.section
+    ).length;
   };
 
   if (loading) {
@@ -44,6 +100,7 @@ export default function StaffClassDetails() {
   if (!classInfo) {
     return <div className="text-center py-10 text-red-500">Class not found</div>;
   }
+
 
 
     const recentActivity = [
@@ -104,7 +161,9 @@ export default function StaffClassDetails() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
                 <div className="text-blue-600 mb-1"><Users size={20} /></div>
-                <div className="text-2xl font-bold text-slate-900">{classInfo.students}</div>
+                <div className="text-2xl font-bold text-slate-900">{loadingStudents
+                ? "..."
+                : getStudentCount()}</div>
                 <div className="text-xs text-blue-600 font-medium">Total Students</div>
               </div>
               <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">

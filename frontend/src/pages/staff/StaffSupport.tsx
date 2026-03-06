@@ -315,7 +315,7 @@ export default function StaffSupport() {
                 <Phone size={18} />
                 <div>
                   <p className="text-xs">Help Desk</p>
-                  <p className="font-semibold">ext. 4040</p>
+                  <p className="font-semibold">ext. +91 96392 05100</p>
                 </div>
               </div>
 
@@ -324,7 +324,7 @@ export default function StaffSupport() {
                 <div>
                   <p className="text-xs">Email</p>
                   <p className="font-semibold">
-                    support@university.edu
+                    supportaistudy@gmail.com
                   </p>
                 </div>
               </div>
@@ -334,7 +334,7 @@ export default function StaffSupport() {
                 <div>
                   <p className="text-xs">Office Hours</p>
                   <p className="font-semibold">
-                    Mon-Fri 8AM - 5PM
+                    Mon-Fri 9AM - 6PM
                   </p>
                 </div>
               </div>
