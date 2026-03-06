@@ -83,8 +83,16 @@ export const getOrgPlacementStats = async (req, res) => {
  */
 export const getStudentPlacementProfile = async (req, res) => {
     const { studentId } = req.params;
-    const { organizationId } = req.query;
+    let { organizationId } = req.query;
     try {
+        const user = await User.findById(studentId).select('organization');
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        // Use user's organization if not provided in query
+        if (!organizationId && user.organization) {
+            organizationId = user.organization;
+        }
+
         // Compute live metrics
         const [resume, projects, certs] = await Promise.all([
             Resume.findOne({ userId: studentId }),
@@ -94,7 +102,7 @@ export const getStudentPlacementProfile = async (req, res) => {
 
         const resumeComplete = !!(
             resume &&
-            (resume.summary || resume.experience?.length > 0 || resume.education?.length > 0)
+            (resume.summary || (resume.experience && resume.experience.length > 0) || (resume.education && resume.education.length > 0))
         );
         const projectsCount = projects.length;
         const certificatesCount = certs.length;
@@ -105,12 +113,13 @@ export const getStudentPlacementProfile = async (req, res) => {
             // Create a default profile
             profile = new PlacementProfile({
                 studentId,
-                organizationId,
+                organizationId: organizationId || null, // Allow null if truly independent
                 resumeComplete,
                 projectsCount,
                 certificatesCount,
                 placementScore: computeScore({ resumeComplete, projectsCount, certificatesCount, githubUrl: '', linkedinUrl: '' })
             });
+            // Only save if we have an organization or we decide to allow global
             await profile.save();
         } else {
             // Update computed fields
@@ -145,7 +154,7 @@ export const getStudentPlacementProfile = async (req, res) => {
  * Student creates/updates their placement profile (links, skills, preferences)
  */
 export const upsertPlacementProfile = async (req, res) => {
-    const {
+    let {
         studentId,
         organizationId,
         githubUrl,
@@ -157,6 +166,13 @@ export const upsertPlacementProfile = async (req, res) => {
     } = req.body;
 
     try {
+        const user = await User.findById(studentId).select('organization');
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        if (!organizationId && user.organization) {
+            organizationId = user.organization;
+        }
+
         // Gather metrics
         const [resume, projects, certs] = await Promise.all([
             Resume.findOne({ userId: studentId }),
@@ -206,11 +222,18 @@ export const upsertPlacementProfile = async (req, res) => {
  * Student submits a showcase project
  */
 export const submitStudentProject = async (req, res) => {
-    const { studentId, organizationId, title, description, githubUrl, liveUrl, techStack, image } = req.body;
+    let { studentId, organizationId, title, description, githubUrl, liveUrl, techStack, image } = req.body;
     try {
+        const user = await User.findById(studentId).select('organization');
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        if (!organizationId && user.organization) {
+            organizationId = user.organization;
+        }
+
         const project = await Project.create({
             studentId,
-            organizationId,
+            organizationId: organizationId || null,
             title,
             description,
             type: 'Showcase',
