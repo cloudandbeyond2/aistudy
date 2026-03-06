@@ -178,6 +178,7 @@ const ResumeBuilder = () => {
     const uid = sessionStorage.getItem('uid');
     const userType = sessionStorage.getItem('type');
     const userRole = sessionStorage.getItem('role');
+    const orgId = sessionStorage.getItem('orgId');
     const PAID = ['monthly', 'yearly', 'forever'];
 
     const [step, setStep] = useState(1);
@@ -207,7 +208,10 @@ const ResumeBuilder = () => {
     });
 
     // Access guard
-    if (!PAID.includes(userType) || userRole === 'student') {
+    const isPaid = PAID.includes(userType);
+    const isOrgUser = !!orgId;
+
+    if (!isPaid && !isOrgUser) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center gap-6 px-4">
                 <div className="text-6xl">🔒</div>

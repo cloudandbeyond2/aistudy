@@ -138,7 +138,7 @@ const OrgAssignmentCertificate = () => {
                     {/* Signature Section (Static Placeholder) */}
                     <div className="absolute bottom-[18%] left-[20%] text-center">
                         <div className="w-48 border-t border-slate-400 mb-2 mx-auto"></div>
-                        <p className="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-widest">Director of Studies</p>
+                        {/* <p className="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-widest">Director of Studies</p> */}
                     </div>
 
                     {/* Date Section */}
@@ -147,7 +147,7 @@ const OrgAssignmentCertificate = () => {
                             {new Date(certificateData.date).toLocaleDateString()}
                         </p>
                         <div className="w-48 border-t border-slate-400 mb-2 mx-auto"></div>
-                        <p className="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-widest">Date</p>
+                        {/* <p className="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-widest">Date</p> */}
                     </div>
 
                 </div>
