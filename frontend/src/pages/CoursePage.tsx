@@ -1435,10 +1435,18 @@ const CoursePage = () => {
               </Link>
             </Button>
             {(plan !== "free" || isOrgAdmin || userRole === 'student') && isQuizPassed && (
-              <Button onClick={certificateCheck} variant="default" size="sm" asChild className="bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 shadow-none">
-                <span className="cursor-pointer">
-                  <Award className="h-4 w-4 mr-1" /> Download Certificate
-                </span>
+              <Button
+                onClick={certificateCheck}
+                variant="default"
+                size="sm"
+                className={cn(
+                  "shadow-none",
+                  (userRole === 'student' || !!sessionStorage.getItem('orgId'))
+                    ? "bg-yellow-600 hover:bg-yellow-700 text-white border-none"
+                    : "bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
+                )}
+              >
+                <Award className="h-4 w-4 mr-1" /> Download Certificate
               </Button>
             )}
 
@@ -1525,10 +1533,16 @@ const CoursePage = () => {
           </Link>
         </Button>
         {(plan !== "free" || isOrgAdmin || userRole === 'student') && isQuizPassed && (
-          <Button onClick={certificateCheck} variant="ghost" size="sm" asChild className="text-primary font-bold">
-            <span>
-              <Award className="h-5 w-5" />
-            </span>
+          <Button
+            onClick={certificateCheck}
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "font-bold",
+              (userRole === 'student' || !!sessionStorage.getItem('orgId')) ? "text-yellow-600" : "text-primary"
+            )}
+          >
+            <Award className="h-5 w-5" />
           </Button>
         )}
         <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm">

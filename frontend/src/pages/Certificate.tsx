@@ -1,447 +1,326 @@
-// import React, { useRef, useState, useEffect } from 'react';
-// import { useLocation, useNavigate, useParams } from 'react-router-dom';
-// import { Button } from '@/components/ui/button';
-// import { Card, CardContent } from '@/components/ui/card';
-// import { Award, Download, ArrowLeft } from 'lucide-react';
-// import { useToast } from '@/hooks/use-toast';
-// import { cn } from '@/lib/utils';
-// import SEO from '@/components/SEO';
-// import certificate from '../res/certificate.png';
-// import logo from '../res/logo.svg';
-// import { toPng } from 'html-to-image';
-// import { appName, serverURL, websiteURL } from '@/constants';
-// import { QRCodeSVG } from 'qrcode.react';
-// import axios from 'axios';
-
-// const Certificate = () => {
-
-//   const navigate = useNavigate();
-//   const { toast } = useToast();
-//   const [processing, setProcessing] = useState(false);
-//   const [certificateId, setCertificateId] = useState('');
-//   const [loading, setLoading] = useState(true);
-//   const userName = sessionStorage.getItem('mName');
-//   const { state } = useLocation();
-//   const { courseId } = useParams();
-//   const { courseTitle, end } = state || {};
-
-//   const pdfRef = useRef(null);
-
-//   const handleDownload = async () => {
-//     setProcessing(true);
-//     try {
-//       const dataUrl = await toPng(pdfRef.current, { cacheBust: false, useCORS: true } as any);
-//       const link = document.createElement("a");
-//       link.download = "certificate.png";
-//       link.href = dataUrl;
-//       link.click();
-//       toast({
-//         title: "Certificate Downloaded",
-//         description: "Your certificate has been downloaded successfully.",
-//       });
-//       setProcessing(false);
-//     } catch (err) {
-//       console.error('Certificate download error:', err);
-//       toast({
-//         title: "Download Failed",
-//         description: "Unable to download certificate. Please try again or contact support.",
-//         variant: "destructive"
-//       });
-//       setProcessing(false);
-//     }
-//   };
-
-//   function isValidFormat(dateString) {
-//     // Regex to check if date is in D/M/YYYY or DD/MM/YYYY format
-//     const regex = /^([0-2]?[0-9]|3[01])\/([1-9]|1[0-2])\/\d{4}$/;
-//     return regex.test(dateString);
-//   }
-
-//   function formatDateToMDYY(dateString) {
-//     // Check if it's in DD/MM/YYYY format first
-//     if (isValidFormat(dateString)) {
-//       const parts = dateString.split('/');
-//       const day = parseInt(parts[0], 10);
-//       const month = parseInt(parts[1], 10);
-//       const year = parts[2].slice(-2); // Last two digits
-//       return `${month}/${day}/${year}`;
-//     }
-
-//     // Otherwise, parse as ISO date string
-//     const dateObj = new Date(dateString);
-
-//     // Handle invalid date scenarios
-//     if (isNaN(dateObj.getTime())) {
-//       console.error("Invalid date:", dateString);
-//       // Return current date as fallback
-//       const today = new Date();
-//       const month = today.getMonth() + 1;
-//       const day = today.getDate();
-//       const year = today.getFullYear().toString().slice(-2);
-//       return `${month}/${day}/${year}`;
-//     }
-
-//     // Format the date to M/D/YY (using local date components)
-//     const monthFormatted = dateObj.getMonth() + 1; // Months are 0-indexed
-//     const dayFormatted = dateObj.getDate();
-//     const yearFormatted = dateObj.getFullYear().toString().slice(-2); // Last two digits
-
-//     return `${monthFormatted}/${dayFormatted}/${yearFormatted}`;
-//   }
-
-//   function checkAndFormatDate(dateString) {
-//     console.log("Formatting date:", dateString);
-//     return formatDateToMDYY(dateString);
-//   }
-
-//   // Fetch certificate ID
-//   useEffect(() => {
-//     const fetchCertificateId = async () => {
-//       if (!courseId) {
-//         setLoading(false);
-//         return;
-//       }
-
-//       try {
-//         const response = await axios.post(`${serverURL}/api/getmyresult`, { courseId });
-//         if (response.data.success && response.data.certificateId) {
-//           setCertificateId(response.data.certificateId);
-//         }
-//       } catch (error) {
-//         console.error('Error fetching certificate ID:', error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchCertificateId();
-//   }, [courseId]);
-
-//   // Validate required state data
-//   if (!courseTitle || !end) {
-//     return (
-//       <>
-//         <SEO
-//           title="Certificate Not Available"
-//           description="Unable to load certificate data"
-//           keywords="certificate, error"
-//         />
-//         <div className="min-h-screen bg-background py-12 px-4 sm:px-6 flex flex-col items-center justify-center">
-//           <Card className="w-full max-w-md p-8 text-center">
-//             <Award className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-//             <h2 className="text-2xl font-bold mb-2">Certificate Not Available</h2>
-//             <p className="text-muted-foreground mb-6">
-//               Unable to load certificate data. Please return to your course and try again.
-//             </p>
-//             <div className="flex gap-4 justify-center">
-//               <Button variant="outline" onClick={() => window.history.back()}>
-//                 <ArrowLeft className="mr-2 h-4 w-4" />
-//                 Go Back
-//               </Button>
-//               <Button onClick={() => navigate('/dashboard')}>
-//                 Go to Dashboard
-//               </Button>
-//             </div>
-//           </Card>
-//         </div>
-//       </>
-//     );
-//   }
-
-//   return (
-//     <>
-//       <SEO
-//         title={`${courseTitle} Course Certificate`}
-//         description={`Congratulations on completing the ${courseTitle} course. Download your certificate of completion.`}
-//         keywords={`certificate, ${courseTitle}, course completion, online learning, achievement`}
-//       />
-//       <div className="min-h-screen bg-background py-12 px-4 sm:px-6 flex flex-col items-center justify-center">
-//         <Card className="w-full max-w-3xl shadow-lg">
-//           <CardContent className="p-0">
-//             <div className="text-center p-8 border-b relative overflow-hidden">
-//               <div className="absolute inset-0 bg-primary/5 z-0"></div>
-//               <Award className="h-16 w-16 mx-auto text-primary mb-4 relative z-10" />
-//               <h2 className="text-3xl font-bold mb-2 relative z-10">Congratulations!</h2>
-//               <p className="text-muted-foreground relative z-1 capitalize">
-//                 You've successfully completed the {courseTitle} course.
-//               </p>
-//             </div>
-
-//             <div className={cn(
-//               "border-8 border-muted m-6 relative",
-//               "bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))]",
-//               "from-background via-background/95 to-background/90",
-//               "h-full"
-//             )}>
-//               <div className='w-full'>
-//                 <div ref={pdfRef}>
-//                   <img src={certificate} className="w-full h-full" alt="logo" />
-//                   <p className='absolute text-3xl font-black italic max-lg:text-2xl max-md:text-lg' style={{ top: '47%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-//                     {sessionStorage.getItem('mName')}
-//                   </p>
-//                   <p className='absolute text-xs font-medium max-md:text-[8px]' style={{ color: '#0f4bac', top: '63.5%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-//                     on {checkAndFormatDate(end)}
-//                   </p>
-//                   <div className='absolute' style={{ top: '59%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-//                     <p className='text-base font-bold capitalize max-md:text-[8px]'>
-//                       {courseTitle}
-//                     </p>
-//                   </div>
-//                   <div className='absolute rounded-md bg-primary max-lg:h-7 max-lg:w-7 h-10 w-10 flex items-center justify-center' style={{ top: '83%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-//                     <img className='h-6 w-6 max-lg:h-4 max-lg:w-4' src={logo} />
-//                   </div>
-//                   <p style={{ top: '92%', left: '50%', transform: 'translate(-50%, -50%)' }} className='absolute text-xs justify-center self-center text-center font-semibold max-lg:text-xs max-md:text-[8px]'>
-//                     {appName}
-//                   </p>
-
-//                   {/* Certificate ID */}
-//                   {certificateId && (
-//                     <p style={{ top: '96%', left: '50%', transform: 'translate(-50%, -50%)' }} className='absolute text-[10px] justify-center self-center text-center font-mono text-gray-600 max-md:text-[6px]'>
-//                       Certificate ID: {certificateId}
-//                     </p>
-//                   )}
-
-//                   {/* QR Code for Verification */}
-//                   {certificateId && (
-//                     <div className='absolute bg-white p-2 rounded-md shadow-md max-lg:p-1' style={{ bottom: '2%', right: '2%' }}>
-//                       <QRCodeSVG
-//                         value={`${websiteURL}/verify-certificate?id=${certificateId}`}
-//                         size={80}
-//                         level="H"
-//                         className="max-lg:w-16 max-lg:h-16 max-md:w-12 max-md:h-12"
-//                       />
-//                       <p className="text-[8px] text-center mt-1 text-gray-600 max-md:text-[6px]">Verify</p>
-//                     </div>
-//                   )}
-//                 </div>
-//               </div>
-//             </div>
-
-//             <div className="p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-//               <Button
-//                 variant="outline"
-//                 onClick={() => window.history.back()}
-//               >
-//                 <ArrowLeft className="mr-2 h-4 w-4" />
-//                 Back to Course
-//               </Button>
-
-//               <Button onClick={handleDownload}>
-//                 <Download className="mr-2 h-4 w-4" />
-//                 {processing ? 'Downloading...' : 'Download Certificate'}
-//               </Button>
-//             </div>
-//           </CardContent>
-//         </Card>
-//       </div>
-//     </>
-//   );
-// };
-
-// export default Certificate;
-
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import axios from 'axios';
+import { serverURL } from '@/constants';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Award, Download, ArrowLeft } from 'lucide-react';
+import { Loader2, Download, ArrowLeft, Award } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { useToast } from '@/hooks/use-toast';
+import SEO from '@/components/SEO';
+
+import { appName, websiteURL } from '@/constants';
+import { QRCodeSVG } from 'qrcode.react';
+
 import certificate from '../res/certificate.png';
 import logo from '../res/logo.svg';
 import cloudBeyondLogo from '../res/cloud-beyond.png';
 import infilabsLogo from '../res/infilabs.png';
 import trainingLabsLogo from '../res/traininglabs.png';
 import saravananSign from '../res/saravanan-sign.png';
+import { cn } from '@/lib/utils';
 import { toPng } from 'html-to-image';
-import { appName, serverURL, websiteURL } from '@/constants';
-import { QRCodeSVG } from 'qrcode.react';
-import axios from 'axios';
+import { Card, CardContent } from '@/components/ui/card';
+
+const certificateTemplate = '/assets/images/certificate_template.jpg';
 
 const Certificate = () => {
-  const navigate = useNavigate();
   const { state } = useLocation();
   const { courseId } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const { courseTitle, end } = state || {};
   const userName = sessionStorage.getItem('mName');
 
-  const pdfRef = useRef<HTMLDivElement | null>(null);
-  const [processing, setProcessing] = useState(false);
   const [certificateId, setCertificateId] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
+  const certificateRef = useRef<HTMLDivElement>(null);
+  const orgId = sessionStorage.getItem('orgId');
+  const isOrgStudent = !!orgId;
 
-  /* ---------------- DOWNLOAD ---------------- */
-  const handleDownload = async () => {
-    if (!pdfRef.current) return;
+  useEffect(() => {
+    if (!courseTitle || !end || !userName) {
+      setLoading(false);
+      return;
+    }
+
+    // Fetch certificate ID if available
+    if (courseId) {
+      axios.post(`${serverURL}/api/getmyresult`, { courseId })
+        .then(res => {
+          if (res.data?.success && res.data.certificateId) {
+            setCertificateId(res.data.certificateId);
+          }
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [courseId, courseTitle, end, userName]);
+
+  const downloadPDF = async () => {
+    if (!certificateRef.current) return;
     setProcessing(true);
+
     try {
-      const dataUrl = await toPng(pdfRef.current, { cacheBust: true } as any);
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = 'certificate.png';
-      link.click();
+      if (isOrgStudent) {
+        const canvas = await html2canvas(certificateRef.current, {
+          scale: 2,
+          useCORS: true,
+          logging: false
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'px',
+          format: [canvas.width, canvas.height]
+        });
+
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save(`${userName || 'Student'}_Course_Certificate.pdf`);
+      } else {
+        const dataUrl = await toPng(certificateRef.current, { cacheBust: true } as any);
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = `${userName || 'Student'}_Course_Certificate.png`;
+        link.click();
+      }
+      toast({ title: "Success", description: "Certificate downloaded successfully!" });
+    } catch (e) {
+      console.error("Certificate download error:", e);
+      toast({ title: "Error", description: "Failed to download certificate", variant: "destructive" });
     } finally {
       setProcessing(false);
     }
   };
 
-  /* ---------------- DATE FORMAT ---------------- */
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '';
-    return `${date.getMonth() + 1}/${date.getDate()}/${date
-      .getFullYear()
-      .toString()
-      .slice(-2)}`;
-  };
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen"><Loader2 className="w-8 h-8 animate-spin" /></div>;
+  }
 
-  /* ---------------- FETCH CERTIFICATE ID ---------------- */
-  useEffect(() => {
-    if (!courseId) return;
-    axios
-      .post(`${serverURL}/api/getmyresult`, { courseId })
-      .then(res => {
-        if (res.data?.certificateId) setCertificateId(res.data.certificateId);
-      })
-      .catch(console.error);
-  }, [courseId]);
-
-  if (!courseTitle || !end) return null;
+  if (!courseTitle || !end || !userName) {
+    return (
+      <div className="text-center p-10 flex flex-col items-center">
+        <p className="mb-4">Certificate data missing. Please complete the course first.</p>
+        <Button onClick={() => navigate('/dashboard')}>Go to Dashboard</Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-background">
-      <Card className="w-full max-w-4xl shadow-xl">
-        <CardContent className="p-0">
+    <div className="min-h-screen bg-background py-8 flex flex-col items-center space-y-6">
+      <SEO title={`${courseTitle} Certificate`} description="Download your course completion certificate." />
 
-          {/* Header */}
-          <div className="text-center p-8 border-b">
-            <Award className="h-14 w-14 mx-auto text-primary mb-3" />
-            <h1 className="text-3xl font-bold">Certificate of Completion</h1>
-            <p className="text-muted-foreground mt-2">
-              This certifies successful course completion
-            </p>
-          </div>
+      <div className="w-full flex justify-between max-w-4xl px-4">
+        <Button variant="ghost" onClick={() => navigate(-1)}>
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back
+        </Button>
+        <Button onClick={downloadPDF} disabled={processing}>
+          <Download className="w-4 h-4 mr-2" /> {processing ? "Processing..." : isOrgStudent ? "Download PDF" : "Download Certificate"}
+        </Button>
+      </div>
 
-          {/* Certificate */}
-          <div className="p-6">
-            <div ref={pdfRef} className="relative w-full font-serif">
-              <img src={certificate} className="w-full" alt="Certificate" />
+      {isOrgStudent ? (
+        /* Organization Student UI - Simplified */
+        <div className="relative shadow-2xl rounded-lg overflow-hidden max-w-4xl w-full aspect-[1.414/1] bg-white text-center" ref={certificateRef}>
+          {/* Background Image */}
+          <img
+            src={certificateTemplate}
+            alt="Certificate Template"
+            className="absolute inset-0 w-full h-full object-cover z-0"
+          />
 
-              {/* WATERMARK */}
-              <div
-                className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                style={{
-                  transform: 'rotate(-25deg)',
-                  opacity: 0.05,
-                  fontSize: '4rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.3em',
-                }}
-              >
-                {appName}
-              </div>
+          {/* Overlay Content */}
+          <div className="relative z-10 flex flex-col items-center h-full w-full pt-20 text-slate-800 font-serif">
 
-              {/* Name */}
-              <p
-                className="absolute text-4xl font-semibold italic"
-                style={{ top: '46%', left: '50%', transform: 'translate(-50%, -50%)' }}
-              >
+            {/* "This is to certify that" */}
+            <div className="absolute top-[38%] w-full text-center">
+              <p className="text-lg md:text-xl italic text-slate-500">This is to certify that</p>
+            </div>
+
+            {/* Student Name */}
+            <div className="absolute top-[44%] w-full text-center px-8">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-wide uppercase" style={{ fontFamily: 'Times New Roman, serif' }}>
                 {userName}
+              </h1>
+            </div>
+
+            {/* "has successfully..." */}
+            <div className="absolute top-[55%] w-full text-center px-12">
+              <p className="text-md md:text-lg text-slate-600 leading-relaxed">
+                has successfully demonstrated proficient comprehension<br />
+                in the course of
               </p>
+            </div>
 
-              {/* Course */}
-              <p
-                className="absolute text-lg font-medium uppercase tracking-widest"
-                style={{ top: '58%', left: '50%', transform: 'translate(-50%, -50%)' }}
-              >
-                {courseTitle}
+            {/* Course Topic */}
+            <div className="absolute top-[63%] w-full text-center px-10">
+              <h2 className="text-xl md:text-2xl font-bold text-slate-800 uppercase tracking-wider">
+                "{courseTitle}"
+              </h2>
+            </div>
+
+            {/* "And is therefore awarded..." */}
+            <div className="absolute top-[71%] w-full text-center px-12">
+              <p className="text-sm md:text-md text-slate-500 italic">
+                And is therefore awarded this qualification with distinction
               </p>
+            </div>
 
-              {/* Date */}
-              <p
-                className="absolute text-sm"
-                style={{ top: '63.5%', left: '50%', transform: 'translate(-50%, -50%)' }}
-              >
-                Completed on {formatDate(end)}
+            {/* Signature Section */}
+            <div className="absolute bottom-[18%] left-[20%] text-center">
+              <div className="w-48 border-t border-slate-400 mb-2 mx-auto"></div>
+              {/* <p className="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-widest">Director of Studies</p> */}
+            </div>
+
+            {/* Date Section */}
+            <div className="absolute bottom-[18%] right-[20%] text-center">
+              <p className="text-lg md:text-xl font-medium text-slate-700 mb-1" style={{ fontFamily: 'Times New Roman, serif' }}>
+                {end}
               </p>
+              <div className="w-48 border-t border-slate-400 mb-2 mx-auto"></div>
+              {/* <p className="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-widest">Date</p> */}
+            </div>
 
-              {/* ISSUER + PARTNER LOGOS */}
-<div
-  className="absolute flex items-center gap-6"
-  style={{ bottom: '20%', left: '50%', transform: 'translateX(-50%)' }}
->
-  {/* Cloud & Beyond */}
-  <div className="bg-white px-3 py-2 rounded-sm">
-    <img src={cloudBeyondLogo} className="h-14 object-contain" />
-  </div>
+          </div>
+        </div>
+      ) : (
+        /* Regular User UI - Original Detailed Layout */
+        <Card className="w-full max-w-4xl shadow-xl">
+          <CardContent className="p-0">
+            {/* Header */}
+            <div className="text-center p-8 border-b">
+              <Award className="h-14 w-14 mx-auto text-primary mb-3" />
+              <h1 className="text-3xl font-bold">Certificate of Completion</h1>
+              <p className="text-muted-foreground mt-2">
+                This certifies successful course completion
+              </p>
+            </div>
 
-  {/* Infilabs */}
-  <div className="bg-white px-3 py-2 rounded-sm">
-    <img src={infilabsLogo} className="h-14 object-contain" />
-  </div>
+            {/* Certificate */}
+            <div className="p-6 overflow-hidden">
+              <div ref={certificateRef} className="relative w-full font-serif">
+                <img src={certificate} className="w-full" alt="Certificate" />
 
-  {/* TrainingLabs */}
-  <div className="bg-white px-3 py-2 rounded-sm">
-    <img src={trainingLabsLogo} className="h-14 object-contain" />
-  </div>
-</div>
-              {/* Director Signature */}
-              <div
-                className="absolute flex flex-col items-start"
-                style={{ bottom: '22%', left: '8%' }}
-              >
-                <img
-                  src={saravananSign}
-                  alt="Saravanan Signature"
-                  className="h-10 object-contain"
-                />
-                <p className="text-md font-semibold leading-tight">(Saravanan)</p>
-                <p className="text-md text-gray-600">Director</p>
-              </div>
-
-              {/* QR */}
-              {certificateId && (
+                {/* WATERMARK */}
                 <div
-                  className="absolute bg-white p-2 rounded-md shadow"
-                  style={{ bottom: '21%', right: '8%' }}
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                  style={{
+                    transform: 'rotate(-25deg)',
+                    opacity: 0.05,
+                    fontSize: '4rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.3em',
+                  }}
                 >
-                  <QRCodeSVG
-                    value={`${websiteURL}/verify-certificate?id=${certificateId}`}
-                    size={80}
+                  {appName}
+                </div>
+
+                {/* Name */}
+                <p
+                  className="absolute text-4xl font-semibold italic max-lg:text-2xl max-md:text-lg"
+                  style={{ top: '46%', left: '50%', transform: 'translate(-50%, -50%)' }}
+                >
+                  {userName}
+                </p>
+
+                {/* Course */}
+                <p
+                  className="absolute text-lg font-medium uppercase tracking-widest max-lg:text-sm max-md:text-[10px]"
+                  style={{ top: '58%', left: '50%', transform: 'translate(-50%, -50%)' }}
+                >
+                  {courseTitle}
+                </p>
+
+                {/* Date */}
+                <p
+                  className="absolute text-sm max-md:text-[8px]"
+                  style={{ top: '63.5%', left: '50%', transform: 'translate(-50%, -50%)' }}
+                >
+                  Completed on {end}
+                </p>
+
+                {/* ISSUER + PARTNER LOGOS */}
+                <div
+                  className="absolute flex items-center gap-6 max-lg:gap-3"
+                  style={{ bottom: '20%', left: '50%', transform: 'translateX(-50%)' }}
+                >
+                  {/* Cloud & Beyond */}
+                  <div className="bg-white px-3 py-2 rounded-sm max-lg:px-1 max-lg:py-1">
+                    <img src={cloudBeyondLogo} className="h-14 object-contain max-lg:h-8 max-md:h-6" />
+                  </div>
+
+                  {/* Infilabs */}
+                  <div className="bg-white px-3 py-2 rounded-sm max-lg:px-1 max-lg:py-1">
+                    <img src={infilabsLogo} className="h-14 object-contain max-lg:h-8 max-md:h-6" />
+                  </div>
+
+                  {/* TrainingLabs */}
+                  <div className="bg-white px-3 py-2 rounded-sm max-lg:px-1 max-lg:py-1">
+                    <img src={trainingLabsLogo} className="h-14 object-contain max-lg:h-8 max-md:h-6" />
+                  </div>
+                </div>
+
+                {/* Director Signature */}
+                <div
+                  className="absolute flex flex-col items-start"
+                  style={{ bottom: '22%', left: '8%' }}
+                >
+                  <img
+                    src={saravananSign}
+                    alt="Saravanan Signature"
+                    className="h-10 object-contain max-lg:h-6"
                   />
-                  <p className="text-[8px] text-center mt-1 text-gray-500">
-                    Verify
+                  <p className="text-md font-semibold leading-tight max-lg:text-xs">(Saravanan)</p>
+                  <p className="text-md text-gray-600 max-lg:text-[10px]">Director</p>
+                </div>
+
+                {/* QR */}
+                {certificateId && (
+                  <div
+                    className="absolute bg-white p-2 rounded-md shadow max-lg:p-1"
+                    style={{ bottom: '21%', right: '8%' }}
+                  >
+                    <QRCodeSVG
+                      value={`${websiteURL}/verify-certificate?id=${certificateId}`}
+                      size={80}
+                      className="max-lg:w-12 max-lg:h-12 max-md:w-8 max-md:h-8"
+                    />
+                    <p className="text-[8px] text-center mt-1 text-gray-500 max-md:text-[6px]">
+                      Verify
+                    </p>
+                  </div>
+                )}
+
+                {/* Footer */}
+                <div
+                  className="absolute w-full text-center"
+                  style={{ bottom: '10%' }}
+                >
+                  <img src={logo} className="h-8 mx-auto mb-1 max-lg:h-5" />
+                  <p className="text-sm font-semibold max-lg:text-xs">{appName}</p>
+                  <p className="text-[10px] font-mono text-gray-600 max-lg:text-[8px]">
+                    Certificate ID: {certificateId}
                   </p>
                 </div>
-              )}
-
-              {/* Footer */}
-              <div
-                className="absolute w-full text-center"
-                style={{ bottom: '10%' }}
-              >
-                <img src={logo} className="h-8 mx-auto mb-1" />
-                <p className="text-sm font-semibold">{appName}</p>
-                <p className="text-[10px] font-mono text-gray-600">
-                  Certificate ID: {certificateId}
-                </p>
               </div>
-
             </div>
-          </div>
+          </CardContent>
+        </Card>
+      )}
 
-          {/* Actions */}
-          <div className="p-6 flex justify-between items-center border-t">
-            <Button variant="outline" onClick={() => navigate(-1)}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-            <Button onClick={handleDownload} disabled={processing}>
-              <Download className="mr-2 h-4 w-4" />
-              Download Certificate
-            </Button>
-          </div>
-
-        </CardContent>
-      </Card>
+      <div className="text-center">
+        <p className="text-sm text-muted-foreground mt-4">
+          Note: This is a preview. Click "Download" to save a high-quality copy.
+        </p>
+        {certificateId && (
+          <p className="font-mono text-[10px] text-muted-foreground mt-1">Certificate ID: {certificateId}</p>
+        )}
+      </div>
     </div>
   );
 };
