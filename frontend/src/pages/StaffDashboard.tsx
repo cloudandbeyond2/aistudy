@@ -52,7 +52,6 @@ const performanceData = [
 export default function StaffDashboard() {
 const [classes, setClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     async function fetchClasses() {
       try {
@@ -115,6 +114,21 @@ const [classes, setClasses] = useState<any[]>([]);
       setIsLoading(false);
     }
   };
+
+  // ================================
+  // Get Students Count per Class
+  // ================================
+
+  const getStudentCount = (className: string, section: string) => {
+
+    return students.filter(
+      (student) =>
+        student.studentDetails?.studentClass === className &&
+        student.studentDetails?.section === section
+    ).length;
+
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       {/* Welcome Section */}
@@ -283,7 +297,9 @@ const [classes, setClasses] = useState<any[]>([]);
                   <div className="mt-4 flex items-center gap-6 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
                       <Users size={16} className="text-gray-400" />
-                      {cls.students} Students
+                         {isLoading
+  ? "Loading..."
+  : `${getStudentCount(cls.name, cls.section)} Students`}
                     </div>
                     <div className="flex items-center gap-2">
                       <CalendarIcon size={16} className="text-gray-400" />
