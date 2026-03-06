@@ -56,7 +56,10 @@ const StudentPublicPortfolio = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900">
-            <SEO title={`${user?.name || 'Student'} — Portfolio`} />
+            <SEO
+                title={`${user?.name || 'Student'} — Portfolio`}
+                description={`View the professional portfolio, projects, and skills of ${user?.name || 'this student'}.`}
+            />
 
             {/* Hero */}
             <div className="bg-gradient-to-br from-primary via-primary/90 to-blue-700 text-white">

@@ -64,6 +64,7 @@ const StudentCareer = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [addProjectOpen, setAddProjectOpen] = useState(false);
+    const [resumeEnabled, setResumeEnabled] = useState(false);
 
     const [profileForm, setProfileForm] = useState({
         githubUrl: '',
@@ -92,10 +93,15 @@ const StudentCareer = () => {
         setLoading(true);
         try {
             const params = orgId ? `?organizationId=${orgId}` : '';
-            const [profileRes, projectsRes] = await Promise.all([
+            const [profileRes, projectsRes, settingsRes] = await Promise.all([
                 axios.get(`${serverURL}/api/career/profile/${studentId}${params}`).catch(() => null),
                 axios.get(`${serverURL}/api/career/projects?studentId=${studentId}${orgId ? `&organizationId=${orgId}` : ''}`).catch(() => null),
+                axios.get(`${serverURL}/api/settings`).catch(() => null)
             ]);
+
+            if (settingsRes?.data?.resumeEnabled) {
+                setResumeEnabled(settingsRes.data.resumeEnabled.student);
+            }
 
             if (profileRes?.data?.success) {
                 const p = profileRes.data.profile;
@@ -198,7 +204,10 @@ const StudentCareer = () => {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <SEO title="Career Hub | Student Portal" />
+            <SEO
+                title="Career Hub | Student Portal"
+                description="Manage your career profile, showcase projects, and track your placement readiness."
+            />
 
             {/* Header */}
             <div>
@@ -249,23 +258,25 @@ const StudentCareer = () => {
                     </Card>
 
                     {/* AI Resume Builder */}
-                    <Card className="bg-gradient-to-br from-violet-500/10 via-fuchsia-500/5 to-transparent border-violet-200 dark:border-violet-800 cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() => navigate('/dashboard/resume-builder')}>
-                        <CardContent className="pt-5 pb-5">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center shrink-0">
-                                    <FileText className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+                    {resumeEnabled && (
+                        <Card className="bg-gradient-to-br from-violet-500/10 via-fuchsia-500/5 to-transparent border-violet-200 dark:border-violet-800 cursor-pointer hover:shadow-md transition-shadow"
+                            onClick={() => navigate('/dashboard/resume-builder')}>
+                            <CardContent className="pt-5 pb-5">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center shrink-0">
+                                        <FileText className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-sm">AI Resume Builder</p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                            {hasResume ? 'Update your resume (+30 pts)' : 'Create your resume to earn 30 pts'}
+                                        </p>
+                                    </div>
+                                    <ArrowUpRight className="w-4 h-4 text-muted-foreground shrink-0" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-semibold text-sm">AI Resume Builder</p>
-                                    <p className="text-xs text-muted-foreground mt-0.5">
-                                        {hasResume ? 'Update your resume (+30 pts)' : 'Create your resume to earn 30 pts'}
-                                    </p>
-                                </div>
-                                <ArrowUpRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                            </div>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Availability toggle */}
                     <Card>
