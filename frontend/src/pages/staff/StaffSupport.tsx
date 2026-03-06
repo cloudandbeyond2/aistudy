@@ -1,96 +1,352 @@
-import React from 'react';
-import { MessageSquare, HelpCircle, Send, ChevronDown } from 'lucide-react';
+import React, { useState } from "react";
+import {
+  MessageSquare,
+  HelpCircle,
+  Send,
+  ChevronDown,
+  ChevronUp,
+  Phone,
+  Mail,
+  Clock
+} from "lucide-react";
+import Swal from "sweetalert2";
+import axios from "axios";
+
+const serverURL = "http://localhost:5001";
 
 export default function StaffSupport() {
+
+  const [formData, setFormData] = useState({
+    subject: "",
+    category: "Technical Issue",
+    message: ""
+  });
+
+  const [loading, setLoading] = useState(false);
+
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
+  const faqs = [
+    {
+      q: "How do I update student grades?",
+      a: "Navigate to the Grading tab and select the assignment."
+    },
+    {
+      q: "Can I schedule a makeup class?",
+      a: "Go to the Schedule tab and click request room."
+    },
+    {
+      q: "How do I reset my password?",
+      a: "Go to profile settings and choose security."
+    },
+    {
+      q: "Where can I find archived courses?",
+      a: "Use the archived filter in My Classes."
+    },
+    {
+      q: "How do I upload course materials?",
+      a: "Go to the Resources tab and upload files."
+    }
+  ];
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+
+    e.preventDefault();
+
+    if (!formData.subject || !formData.message) {
+
+      Swal.fire({
+        icon: "error",
+        title: "Missing Information",
+        text: "Please fill subject and message"
+      });
+
+      return;
+    }
+
+    try {
+
+      setLoading(true);
+
+      const response = await axios.post(
+        `${serverURL}/api/support/create`,
+        formData
+      );
+
+      Swal.fire({
+        icon: "success",
+        title: "Ticket Submitted",
+        text: "Support team will contact you soon"
+      });
+
+      setFormData({
+        subject: "",
+        category: "Technical Issue",
+        message: ""
+      });
+
+    } catch (error) {
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to submit ticket"
+      });
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleFaq = (index: number) => {
+
+    setOpenFaqIndex(openFaqIndex === index ? null : index);
+
+  };
+
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
-      <div className="text-center max-w-2xl mx-auto mb-12">
-        <h1 className="text-3xl font-bold text-slate-900 mb-4">How can we help you?</h1>
+    <div className="max-w-6xl mx-auto space-y-8 p-4">
+
+      <div className="text-center max-w-2xl mx-auto mb-8">
+        <h1 className="text-3xl font-bold text-slate-900 mb-4">
+          How can we help you?
+        </h1>
+
         <p className="text-slate-600 text-lg">
-          Find answers to common questions or contact our support team directly.
+          Find answers or contact support team
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Contact Form */}
-        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-              <MessageSquare size={24} />
-            </div>
-            <h2 className="text-xl font-bold text-slate-900">Contact Support</h2>
-          </div>
-          
-          <form className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-              <input 
-                type="text" 
-                placeholder="Brief description of the issue" 
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-              <div className="relative">
-                <select className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none text-gray-600">
-                  <option>Technical Issue</option>
-                  <option>Account Access</option>
-                  <option>Grading System</option>
-                  <option>Feature Request</option>
-                  <option>Other</option>
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        {/* CONTACT FORM */}
+
+        <div className="lg:col-span-2">
+
+          <div className="bg-white p-6 rounded-2xl border shadow">
+
+            <div className="flex items-center gap-3 mb-6">
+
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <MessageSquare size={24} />
               </div>
+
+              <div>
+                <h2 className="text-xl font-bold">
+                  Contact Support
+                </h2>
+
+                <p className="text-sm text-gray-500">
+                  We respond within 24 hours
+                </p>
+              </div>
+
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
-              <textarea 
-                rows={5}
-                placeholder="Describe your issue in detail..." 
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
-              ></textarea>
-            </div>
+            <form onSubmit={handleSubmit} className="space-y-5">
 
-            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-200">
-              <Send size={18} />
-              Submit Ticket
-            </button>
-          </form>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                {/* SUBJECT */}
+
+                <div>
+
+                  <label className="text-sm font-medium">
+                    Subject
+                  </label>
+
+                  <input
+                    type="text"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleInputChange}
+                    placeholder="Issue subject"
+                    className="w-full border p-2 rounded-lg"
+                  />
+
+                </div>
+
+                {/* CATEGORY */}
+
+                <div>
+
+                  <label className="text-sm font-medium">
+                    Category
+                  </label>
+
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    className="w-full border p-2 rounded-lg"
+                  >
+
+                    <option>Technical Issue</option>
+                    <option>Account Access</option>
+                    <option>Grading System</option>
+                    <option>Feature Request</option>
+                    <option>Other</option>
+
+                  </select>
+
+                </div>
+
+              </div>
+
+              {/* MESSAGE */}
+
+              <div>
+
+                <label className="text-sm font-medium">
+                  Message
+                </label>
+
+                <textarea
+                  name="message"
+                  rows={6}
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  placeholder="Describe the issue"
+                  className="w-full border p-2 rounded-lg"
+                ></textarea>
+
+              </div>
+
+              {/* BUTTON */}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 text-white py-3 rounded-xl flex justify-center gap-2"
+              >
+
+                <Send size={18} />
+
+                {loading ? "Submitting..." : "Submit Ticket"}
+
+              </button>
+
+            </form>
+
+          </div>
+
         </div>
 
-        {/* FAQ Section */}
+        {/* SIDEBAR */}
+
         <div className="space-y-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-              <HelpCircle size={24} />
-            </div>
-            <h2 className="text-xl font-bold text-slate-900">Common Questions</h2>
-          </div>
 
-          <div className="space-y-4">
-            {[
-              { q: "How do I update student grades?", a: "Navigate to the Grading tab, select the assignment, and click 'Grade Now'. You can input grades directly or upload a CSV." },
-              { q: "Can I schedule a makeup class?", a: "Yes, go to the Schedule tab and click on an empty time slot or use the 'Request Room' feature." },
-              { q: "How do I reset my password?", a: "Go to Profile settings and select 'Security'. You'll need your current password to make changes." },
-              { q: "Where can I find archived courses?", a: "In the 'My Classes' section, use the filter dropdown to select 'Archived' or 'Past Semesters'." },
-            ].map((item, idx) => (
-              <div key={idx} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                <h3 className="font-bold text-slate-900 mb-2 text-sm">{item.q}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{item.a}</p>
+          {/* FAQ */}
+
+          <div className="bg-white rounded-2xl border shadow">
+
+            <div className="p-4 border-b">
+
+              <div className="flex items-center gap-2">
+                <HelpCircle size={20} />
+                <h2 className="font-bold">
+                  Common Questions
+                </h2>
               </div>
-            ))}
+
+            </div>
+
+            <div>
+
+              {faqs.map((item, idx) => (
+
+                <div key={idx} className="border-b">
+
+                  <button
+                    onClick={() => toggleFaq(idx)}
+                    className="w-full text-left p-4 flex justify-between"
+                  >
+
+                    {item.q}
+
+                    {openFaqIndex === idx ? (
+                      <ChevronUp size={16} />
+                    ) : (
+                      <ChevronDown size={16} />
+                    )}
+
+                  </button>
+
+                  {openFaqIndex === idx && (
+
+                    <div className="px-4 pb-4 text-sm text-gray-600">
+                      {item.a}
+                    </div>
+
+                  )}
+
+                </div>
+
+              ))}
+
+            </div>
+
           </div>
 
-          <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 text-center">
-            <p className="text-blue-800 font-medium mb-2">Need immediate assistance?</p>
-            <p className="text-blue-600 text-sm">Call the IT Help Desk at <span className="font-bold">ext. 4040</span></p>
-            <p className="text-blue-600 text-sm">Mon-Fri, 8:00 AM - 5:00 PM</p>
+          {/* CONTACT INFO */}
+
+          <div className="bg-blue-600 text-white p-6 rounded-2xl">
+
+            <h3 className="font-bold mb-4">
+              Need immediate help?
+            </h3>
+
+            <div className="space-y-4">
+
+              <div className="flex gap-3">
+                <Phone size={18} />
+                <div>
+                  <p className="text-xs">Help Desk</p>
+                  <p className="font-semibold">ext. 4040</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Mail size={18} />
+                <div>
+                  <p className="text-xs">Email</p>
+                  <p className="font-semibold">
+                    support@university.edu
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Clock size={18} />
+                <div>
+                  <p className="text-xs">Office Hours</p>
+                  <p className="font-semibold">
+                    Mon-Fri 8AM - 5PM
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
           </div>
+
         </div>
+
       </div>
+
     </div>
   );
 }

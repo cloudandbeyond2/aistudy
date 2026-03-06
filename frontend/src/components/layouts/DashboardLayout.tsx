@@ -150,6 +150,51 @@ const DashboardLayout = () => {
     });
     window.location.href = websiteURL + '/login';
   }
+// starbala
+const [userType, setUserType] = useState("");
+const [courseCount, setCourseCount] = useState(0);
+const [canGenerate, setCanGenerate] = useState(true);
+
+useEffect(() => {
+  async function checkCourseLimit() {
+    try {
+      const uid = sessionStorage.getItem("uid");
+
+      const userRes = await axios.get(`${serverURL}/api/getusers`);
+      const user = userRes.data.find(u => u._id === uid);
+
+      if (user) {
+        setUserType(user.type);
+      }
+
+      const courseRes = await axios.get(`${serverURL}/api/getcourses`);
+      const myCourses = courseRes.data.filter(c => c.user === uid);
+
+      setCourseCount(myCourses.length);
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  checkCourseLimit();
+}, []);
+
+
+const handleGenerateClick = () => {
+
+  if (userType === "free" && courseCount >= 1) {
+    window.location.href = "/dashboard/pricing";
+    return;
+  }
+
+  if (userType === "monthly" && courseCount >= 5) {
+    window.location.href = "/dashboard/pricing";
+    return;
+  }
+
+  window.location.href = "/dashboard/generate-course";
+};
 
   return (
     <SidebarProvider>
@@ -607,7 +652,7 @@ const DashboardLayout = () => {
             </SidebarGroup>
 
 
-            {sessionStorage.getItem('role') !== 'student' && (
+            {/* {sessionStorage.getItem('role') !== 'student' && (
               <SidebarGroup>
                 <SidebarGroupContent>
                   <div className="px-2">
@@ -624,7 +669,23 @@ const DashboardLayout = () => {
                   </div>
                 </SidebarGroupContent>
               </SidebarGroup>
-            )}
+            )} */}
+            {sessionStorage.getItem('role') !== 'student' && (
+  <SidebarGroup>
+    <SidebarGroupContent>
+      <div className="px-2">
+        <Button
+          onClick={handleGenerateClick}
+          className="w-full bg-gradient-to-r from-primary to-indigo-500 hover:from-indigo-500 hover:to-primary shadow-md transition-all"
+          size="sm"
+        >
+          <Sparkles className="mr-2 h-4 w-4" />
+          Generate Course
+        </Button>
+      </div>
+    </SidebarGroupContent>
+  </SidebarGroup>
+)}
           </SidebarContent>
 
           <SidebarFooter className="border-t border-border/40">
