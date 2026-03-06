@@ -150,7 +150,7 @@ const Certificate = () => {
             </div>
 
             {/* "has successfully..." */}
-            <div className="absolute top-[55%] w-full text-center px-12">
+            <div className="absolute top-[52%] w-full text-center px-12">
               <p className="text-md md:text-lg text-slate-600 leading-relaxed">
                 has successfully demonstrated proficient comprehension<br />
                 in the course of
@@ -165,7 +165,7 @@ const Certificate = () => {
             </div>
 
             {/* "And is therefore awarded..." */}
-            <div className="absolute top-[71%] w-full text-center px-12">
+            <div className="absolute top-[69%] w-full text-center px-12">
               <p className="text-sm md:text-md text-slate-500 italic">
                 And is therefore awarded this qualification with distinction
               </p>
