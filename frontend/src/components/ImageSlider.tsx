@@ -71,7 +71,7 @@ const ImageSlider = () => {
     };
 
     return (
-        <div className="relative h-[600px] md:h-[700px] lg:h-[800px] w-full overflow-hidden bg-slate-900">
+        <div className="relative h-[420px] sm:h-[500px] md:h-[600px] lg:h-[700px] xl:h-[800px] w-full overflow-hidden bg-slate-900" style={{ position: "static"}}>
             <AnimatePresence initial={false} custom={direction}>
                 <motion.div
                     key={currentSlide}
@@ -96,41 +96,26 @@ const ImageSlider = () => {
 
                     {/* Content */}
                     <div className="relative h-full max-w-7xl mx-auto px-6 md:px-10 flex flex-col justify-center">
-                        <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3, duration: 0.8 }}
-                            className="max-w-2xl"
-                        >
-                            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
-                                {slides[currentSlide].title}
-                            </h1>
-                            <p className="text-lg md:text-xl text-slate-200 mb-10 leading-relaxed max-w-lg">
-                                {slides[currentSlide].subtitle}
-                            </p>
-                            <Button
-                                onClick={() => navigate(slides[currentSlide].link)}
-                                size="lg"
-                                className="bg-primary hover:bg-primary/90 text-white font-bold h-14 px-8 rounded-full shadow-2xl shadow-primary/40 group overflow-hidden relative"
-                            >
-                                <span className="relative z-10 flex items-center gap-2">
-                                    {slides[currentSlide].cta}
-                                    <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                                </span>
-                                <motion.div
-                                    className="absolute inset-0 bg-white/10"
-                                    initial={{ x: '-100%' }}
-                                    whileHover={{ x: '100%' }}
-                                    transition={{ duration: 0.4 }}
-                                />
-                            </Button>
-                        </motion.div>
-                    </div>
+  <motion.div
+    initial={{ opacity: 0, y: 30 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.3, duration: 0.8 }}
+    className="max-w-xl"
+  >
+    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+      {slides[currentSlide].title}
+    </h1>
+
+    <p className="text-sm sm:text-base md:text-lg text-slate-200 mb-8 leading-relaxed max-w-md">
+      {slides[currentSlide].subtitle}
+    </p>
+  </motion.div>
+</div>
                 </motion.div>
             </AnimatePresence>
 
             {/* Navigation Arrows */}
-            <button
+            {/* <button
                 onClick={prevSlide}
                 className="absolute left-6 top-1/2 -translate-y-1/2 z-20 h-12 w-12 rounded-full border border-white/20 bg-white/10 backdrop-blur-md text-white flex items-center justify-center hover:bg-white/20 transition-all active:scale-90 hidden md:flex"
             >
@@ -141,7 +126,7 @@ const ImageSlider = () => {
                 className="absolute right-6 top-1/2 -translate-y-1/2 z-20 h-12 w-12 rounded-full border border-white/20 bg-white/10 backdrop-blur-md text-white flex items-center justify-center hover:bg-white/20 transition-all active:scale-90 hidden md:flex"
             >
                 <ChevronRight className="h-6 w-6" />
-            </button>
+            </button> */}
 
             {/* Pagination Dots */}
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex gap-3">
