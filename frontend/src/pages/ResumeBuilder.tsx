@@ -15,6 +15,8 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { useNavigate } from 'react-router-dom';
+
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Experience {
@@ -191,6 +193,8 @@ const ResumeBuilder = () => {
     const [generatingSummary, setGeneratingSummary] = useState(false);
     const [skillInput, setSkillInput] = useState('');
     const printRef = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
+
 
     const [resume, setResume] = useState<ResumeData>({
         profession: sessionStorage.getItem('profession') || '',
