@@ -96,8 +96,8 @@ const OrgCareerPlacement = () => {
                 let studentsData = res.data.students;
                 let statsData = res.data.stats;
 
-                if (role === 'dept_admin' && userDeptName) {
-                    studentsData = studentsData.filter((s: any) => s.department === userDeptName);
+                if (role === 'dept_admin') {
+                    studentsData = studentsData.filter((s: any) => userDeptName && s.department === userDeptName);
                     // Recalculate stats for department
                     const readyCount = studentsData.filter((s: any) => s.placementScore >= 60).length;
                     const avgScore = studentsData.length > 0
@@ -121,8 +121,8 @@ const OrgCareerPlacement = () => {
             const res = await axios.get(`${serverURL}/api/career/projects?organizationId=${orgId}`);
             if (res.data.success) {
                 let projectsData = res.data.projects;
-                if (role === 'dept_admin' && userDeptName) {
-                    projectsData = projectsData.filter((p: any) => p.department === userDeptName);
+                if (role === 'dept_admin') {
+                    projectsData = projectsData.filter((p: any) => userDeptName && p.department === userDeptName);
                 }
                 setProjects(projectsData);
             }
@@ -134,8 +134,8 @@ const OrgCareerPlacement = () => {
             const res = await axios.get(`${serverURL}/api/org/certificates?organizationId=${orgId}`);
             if (res.data.success) {
                 let certsData = res.data.certificates;
-                if (role === 'dept_admin' && userDeptName) {
-                    certsData = certsData.filter((c: any) => c.department === userDeptName);
+                if (role === 'dept_admin') {
+                    certsData = certsData.filter((c: any) => userDeptName && c.department === userDeptName);
                 }
                 setCertificates(certsData);
             }

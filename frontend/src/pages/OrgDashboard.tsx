@@ -303,11 +303,6 @@ const OrgDashboard = () => {
     useEffect(() => {
         if (!orgId) {
             console.warn('No organization ID found. Please log out and log back in.');
-            toast({
-                title: "Warning",
-                description: "Organization ID not found. Please log out and log back in.",
-                variant: "destructive"
-            });
             return;
         }
         fetchStats();
@@ -321,7 +316,21 @@ const OrgDashboard = () => {
         fetchOrgDepartments();
         fetchOrgDeptAdmins();
         fetchNotices();
-    }, [orgId, toast]);
+    }, [orgId]);
+
+    // Re-fetch when department name is resolved for staff
+    useEffect(() => {
+        if (role === 'dept_admin' && userDeptName) {
+            fetchStats();
+            fetchStudents();
+            fetchCourses();
+            fetchAssignments();
+            fetchMeetings();
+            fetchProjects();
+            fetchMaterials();
+            fetchNotices();
+        }
+    }, [userDeptName, role]);
 
     useEffect(() => {
         if (role === 'dept_admin' && deptId && departmentsList.length > 0) {
@@ -414,9 +423,11 @@ const OrgDashboard = () => {
             const res = await axios.get(`${serverURL}/api/org/meetings?organizationId=${orgId}`);
             if (res.data.success) {
                 let meetingsData = res.data.meetings;
-                if (role === 'dept_admin' && userDeptName) {
+                if (role === 'dept_admin') {
                     meetingsData = meetingsData.filter((m: any) =>
-                        m.department === userDeptName || m.department === deptId
+                        (userDeptName && m.department === userDeptName) ||
+                        (deptId && m.departmentId === deptId) ||
+                        (deptId && m.department === deptId)
                     );
                 }
                 setMeetings(meetingsData);
@@ -431,9 +442,11 @@ const OrgDashboard = () => {
             const res = await axios.get(`${serverURL}/api/org/projects?organizationId=${orgId}`);
             if (res.data.success) {
                 let projectsData = res.data.projects;
-                if (role === 'dept_admin' && userDeptName) {
+                if (role === 'dept_admin') {
                     projectsData = projectsData.filter((p: any) =>
-                        p.department === userDeptName || p.department === deptId
+                        (userDeptName && p.department === userDeptName) ||
+                        (deptId && p.departmentId === deptId) ||
+                        (deptId && p.department === deptId)
                     );
                 }
                 setProjects(projectsData);
@@ -448,9 +461,11 @@ const OrgDashboard = () => {
             const res = await axios.get(`${serverURL}/api/org/materials?organizationId=${orgId}`);
             if (res.data.success) {
                 let materialsData = res.data.materials;
-                if (role === 'dept_admin' && userDeptName) {
+                if (role === 'dept_admin') {
                     materialsData = materialsData.filter((m: any) =>
-                        m.department === userDeptName || m.department === deptId
+                        (userDeptName && m.department === userDeptName) ||
+                        (deptId && m.departmentId === deptId) ||
+                        (deptId && m.department === deptId)
                     );
                 }
                 setMaterials(materialsData);
@@ -576,9 +591,11 @@ const OrgDashboard = () => {
             const res = await axios.get(`${serverURL}/api/org/assignments?organizationId=${orgId}`);
             if (res.data.success) {
                 let assignmentsData = res.data.assignments;
-                if (role === 'dept_admin' && userDeptName) {
+                if (role === 'dept_admin') {
                     assignmentsData = assignmentsData.filter((a: any) =>
-                        a.department === userDeptName || a.department === deptId
+                        (userDeptName && a.department === userDeptName) ||
+                        (deptId && a.departmentId === deptId) ||
+                        (deptId && a.department === deptId)
                     );
                 }
                 setAssignments(assignmentsData);
@@ -621,9 +638,10 @@ const OrgDashboard = () => {
             console.log('Students response:', res.data);
             if (res.data.success) {
                 let studentsData = res.data.students;
-                if (role === 'dept_admin' && userDeptName) {
+                if (role === 'dept_admin') {
                     studentsData = studentsData.filter((s: any) =>
-                        s.department === userDeptName || s.department === deptId
+                        (userDeptName && s.department === userDeptName) ||
+                        (deptId && (s.departmentId === deptId || s.department === deptId))
                     );
                 }
                 setStudents(studentsData);
@@ -640,9 +658,10 @@ const OrgDashboard = () => {
             const res = await axios.get(`${serverURL}/api/org/courses?organizationId=${orgId}`);
             if (res.data.success) {
                 let coursesData = res.data.courses;
-                if (role === 'dept_admin' && userDeptName) {
+                if (role === 'dept_admin') {
                     coursesData = coursesData.filter((c: any) =>
-                        c.department === userDeptName || c.department === deptId || c.department === userDeptName // redundant but safe
+                        (userDeptName && c.department === userDeptName) ||
+                        (deptId && (c.departmentId === deptId || c.department === deptId))
                     );
                 }
                 setCourses(coursesData);
@@ -657,9 +676,10 @@ const OrgDashboard = () => {
             const res = await axios.get(`${serverURL}/api/org/notices?organizationId=${orgId}`);
             if (res.data.success) {
                 let noticesData = res.data.notices;
-                if (role === 'dept_admin' && userDeptName) {
+                if (role === 'dept_admin') {
                     noticesData = noticesData.filter((n: any) =>
-                        n.department === userDeptName || n.department === deptId
+                        (userDeptName && n.department === userDeptName) ||
+                        (deptId && (n.departmentId === deptId || n.department === deptId))
                     );
                 }
                 setNotices(noticesData);
