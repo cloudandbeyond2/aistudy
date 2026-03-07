@@ -800,6 +800,9 @@ export const verifyEmail = async (req, res) => {
 
     // Send account creation/welcome email
     try {
+      const baseUrl = process.env.WEBSITE_URL.endsWith("/")
+        ? process.env.WEBSITE_URL.slice(0, -1)
+        : process.env.WEBSITE_URL;
       await transporter.sendMail({
         from: process.env.EMAIL,
         to: user.email,
@@ -823,7 +826,7 @@ export const verifyEmail = async (req, res) => {
 <p>Your email has been verified successfully. Your account is now fully active.</p>
 <p>You can now log in to access all the features of <strong>${process.env.COMPANY || "Traininglabs Ai Solutions"}</strong>.</p>
 <div style="text-align:center;margin:35px 0;">
-<a href="${process.env.WEBSITE_URL}/login" style="background:#1a73e8;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:bold;display:inline-block;font-size:15px;">Login to Your Account</a>
+<a href="${baseUrl}/login" style="background:#1a73e8;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:bold;display:inline-block;font-size:15px;">Login to Your Account</a>
 </div>
 <hr style="border:none;border-top:1px solid #cfcfcf;margin:30px 0;">
 <p style="text-align:center;font-size:12px;color:#666;margin-bottom:0;">
@@ -903,6 +906,9 @@ export const socialLogin = async (req, res) => {
 
     // Send welcome email for social login
     try {
+      const baseUrl = process.env.WEBSITE_URL.endsWith("/")
+        ? process.env.WEBSITE_URL.slice(0, -1)
+        : process.env.WEBSITE_URL;
       await transporter.sendMail({
         from: process.env.EMAIL,
         to: user.email,
@@ -926,7 +932,7 @@ export const socialLogin = async (req, res) => {
 <p>Thank you for joining <strong>${process.env.COMPANY || "Traininglabs Ai Solutions"}</strong> via social login.</p>
 <p>Your account is now ready. You can explore all our courses and features immediately.</p>
 <div style="text-align:center;margin:35px 0;">
-<a href="${process.env.WEBSITE_URL}/dashboard" style="background:#1a73e8;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:bold;display:inline-block;font-size:15px;">Go to Your Dashboard</a>
+<a href="${baseUrl}/dashboard" style="background:#1a73e8;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:bold;display:inline-block;font-size:15px;">Go to Your Dashboard</a>
 </div>
 <hr style="border:none;border-top:1px solid #cfcfcf;margin:30px 0;">
 <p style="text-align:center;font-size:12px;color:#666;margin-bottom:0;">
@@ -989,7 +995,10 @@ export const forgotPassword = async (req, res) => {
     user.resetPasswordExpires = Date.now() + 60 * 60 * 1000; // 1 hour
     await user.save();
 
-    const resetLink = `${process.env.WEBSITE_URL}/reset-password/${token}`;
+    const baseUrl = process.env.WEBSITE_URL.endsWith("/")
+      ? process.env.WEBSITE_URL.slice(0, -1)
+      : process.env.WEBSITE_URL;
+    const resetLink = `${baseUrl}/reset-password/${token}`;
 
     const mailOptions = {
       from: process.env.EMAIL,
