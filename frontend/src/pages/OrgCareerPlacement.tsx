@@ -43,10 +43,20 @@ const OrgCareerPlacement = () => {
     const [certSearch, setCertSearch] = useState('');
     const [projectSearch, setProjectSearch] = useState('');
 
+    const role = sessionStorage.getItem('role');
+    const deptId = sessionStorage.getItem('deptId');
+    const [userDeptName, setUserDeptName] = useState('');
+
     useEffect(() => {
         checkAccess();
-        fetchAll();
-    }, [orgId]);
+        const init = async () => {
+            if (role === 'dept_admin' && !userDeptName) {
+                await fetchUserDept();
+            }
+            fetchAll();
+        };
+        init();
+    }, [orgId, userDeptName]);
 
     const checkAccess = async () => {
         try {
@@ -83,8 +93,28 @@ const OrgCareerPlacement = () => {
         try {
             const res = await axios.get(`${serverURL}/api/org/placement-stats?organizationId=${orgId}`);
             if (res.data.success) {
-                setStudents(res.data.students);
-                setStats(res.data.stats);
+                let studentsData = res.data.students;
+                let statsData = res.data.stats;
+
+                if (role === 'dept_admin') {
+                    studentsData = studentsData.filter((s: any) =>
+                        (userDeptName && s.department === userDeptName) ||
+                        (deptId && (s.departmentId === deptId || s.department === deptId))
+                    );
+                    // Recalculate stats for department
+                    const readyCount = studentsData.filter((s: any) => s.placementScore >= 60).length;
+                    const avgScore = studentsData.length > 0
+                        ? Math.round(studentsData.reduce((acc: number, s: any) => acc + (s.placementScore || 0), 0) / studentsData.length)
+                        : 0;
+                    statsData = {
+                        totalStudents: studentsData.length,
+                        readyCount: readyCount,
+                        avgScore: avgScore
+                    };
+                }
+
+                setStudents(studentsData);
+                setStats(statsData);
             }
         } catch (e) { console.error(e); }
     };
@@ -92,14 +122,43 @@ const OrgCareerPlacement = () => {
     const fetchProjects = async () => {
         try {
             const res = await axios.get(`${serverURL}/api/career/projects?organizationId=${orgId}`);
-            if (res.data.success) setProjects(res.data.projects);
+            if (res.data.success) {
+                let projectsData = res.data.projects;
+                if (role === 'dept_admin') {
+                    projectsData = projectsData.filter((p: any) =>
+                        (userDeptName && p.department === userDeptName) ||
+                        (deptId && (p.departmentId === deptId || p.department === deptId))
+                    );
+                }
+                setProjects(projectsData);
+            }
         } catch (e) { console.error(e); }
     };
 
     const fetchCertificates = async () => {
         try {
             const res = await axios.get(`${serverURL}/api/org/certificates?organizationId=${orgId}`);
-            if (res.data.success) setCertificates(res.data.certificates);
+            if (res.data.success) {
+                let certsData = res.data.certificates;
+                if (role === 'dept_admin') {
+                    certsData = certsData.filter((c: any) =>
+                        (userDeptName && c.department === userDeptName) ||
+                        (deptId && (c.departmentId === deptId || c.department === deptId))
+                    );
+                }
+                setCertificates(certsData);
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    const fetchUserDept = async () => {
+        if (role !== 'dept_admin' || !deptId) return;
+        try {
+            const res = await axios.get(`${serverURL}/api/org/departments?organizationId=${orgId}`);
+            if (res.data.success) {
+                const dept = res.data.departments.find((d: any) => d._id === deptId);
+                if (dept) setUserDeptName(dept.name);
+            }
         } catch (e) { console.error(e); }
     };
 

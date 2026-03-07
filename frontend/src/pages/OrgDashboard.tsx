@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 
 
 
-const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [] }: any) => {
+const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [], role }: any) => {
     if (!course) return null;
     const [expandedTopic, setExpandedTopic] = useState<number | null>(null);
 
@@ -96,7 +96,7 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
                         value={course.department}
                         onChange={(e) => setCourse({ ...course, department: e.target.value })}
                     >
-                        <option value="">All Students (Default)</option>
+                        {role !== 'dept_admin' && <option value="">All Students (Default)</option>}
                         {departments.map((d: any) => (
                             <option key={d._id} value={d.name}>{d.name}</option>
                         ))}
@@ -251,7 +251,9 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
 const OrgDashboard = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
-    const activeTab = searchParams.get('tab') || 'students';
+    const role = sessionStorage.getItem('role');
+    const deptId = sessionStorage.getItem('deptId');
+    const activeTab = searchParams.get('tab') || (role === 'dept_admin' ? 'courses' : 'students');
     const { toast } = useToast();
     const [stats, setStats] = useState({ studentCount: 0, assignmentCount: 0, submissionCount: 0 });
     const [students, setStudents] = useState([]); // Simplified for now
@@ -296,15 +298,12 @@ const OrgDashboard = () => {
     });
 
     const orgId = sessionStorage.getItem('orgId') || sessionStorage.getItem('uid');
+    const [userDeptName, setUserDeptName] = useState('');
+    const [userDeptId, setUserDeptId] = useState(deptId || '');
 
     useEffect(() => {
         if (!orgId) {
             console.warn('No organization ID found. Please log out and log back in.');
-            toast({
-                title: "Warning",
-                description: "Organization ID not found. Please log out and log back in.",
-                variant: "destructive"
-            });
             return;
         }
         fetchStats();
@@ -318,7 +317,44 @@ const OrgDashboard = () => {
         fetchOrgDepartments();
         fetchOrgDeptAdmins();
         fetchNotices();
-    }, [orgId, toast]);
+    }, [orgId]);
+
+    useEffect(() => {
+        if (role === 'dept_admin' && (userDeptName || deptId)) {
+            fetchStats();
+            fetchStudents();
+            fetchCourses();
+            fetchAssignments();
+            fetchMeetings();
+            fetchProjects();
+            fetchMaterials();
+            fetchNotices();
+        }
+    }, [userDeptName, deptId, role]);
+
+    useEffect(() => {
+        // Find department name if missing but ID exists
+        if (role === 'dept_admin' && deptId && departmentsList.length > 0 && !userDeptName) {
+            const myDept = departmentsList.find((d: any) => d._id === deptId);
+            if (myDept) {
+                setUserDeptName(myDept.name);
+                setUserDeptId(myDept._id);
+            }
+        }
+    }, [departmentsList, deptId, role, userDeptName]);
+
+    useEffect(() => {
+        if (role === 'dept_admin' && (userDeptId || deptId)) {
+            const targetId = userDeptId || deptId;
+            setNewAssignment(prev => ({ ...prev, department: targetId }));
+            setNewMeeting(prev => ({ ...prev, department: targetId }));
+            setNewProject(prev => ({ ...prev, department: targetId }));
+            setNewMaterial(prev => ({ ...prev, department: targetId }));
+            setNewNotice(prev => ({ ...prev, department: targetId }));
+            setNewCourse(prev => ({ ...prev, department: targetId }));
+            setNewStudent(prev => ({ ...prev, department: targetId }));
+        }
+    }, [userDeptId, deptId, role]);
 
     const fetchOrgDepartments = async () => {
         try {
@@ -393,7 +429,17 @@ const OrgDashboard = () => {
     const fetchMeetings = async () => {
         try {
             const res = await axios.get(`${serverURL}/api/org/meetings?organizationId=${orgId}`);
-            if (res.data.success) setMeetings(res.data.meetings);
+            if (res.data.success) {
+                let meetingsData = res.data.meetings;
+                if (role === 'dept_admin') {
+                    meetingsData = meetingsData.filter((m: any) =>
+                        (userDeptName && m.department === userDeptName) ||
+                        (deptId && m.departmentId === deptId) ||
+                        (deptId && m.department === deptId)
+                    );
+                }
+                setMeetings(meetingsData);
+            }
         } catch (e) {
             console.error("Failed to fetch meetings", e);
         }
@@ -402,7 +448,17 @@ const OrgDashboard = () => {
     const fetchProjects = async () => {
         try {
             const res = await axios.get(`${serverURL}/api/org/projects?organizationId=${orgId}`);
-            if (res.data.success) setProjects(res.data.projects);
+            if (res.data.success) {
+                let projectsData = res.data.projects;
+                if (role === 'dept_admin') {
+                    projectsData = projectsData.filter((p: any) =>
+                        (userDeptName && p.department === userDeptName) ||
+                        (deptId && p.departmentId === deptId) ||
+                        (deptId && p.department === deptId)
+                    );
+                }
+                setProjects(projectsData);
+            }
         } catch (e) {
             console.error("Failed to fetch projects", e);
         }
@@ -411,7 +467,17 @@ const OrgDashboard = () => {
     const fetchMaterials = async () => {
         try {
             const res = await axios.get(`${serverURL}/api/org/materials?organizationId=${orgId}`);
-            if (res.data.success) setMaterials(res.data.materials);
+            if (res.data.success) {
+                let materialsData = res.data.materials;
+                if (role === 'dept_admin') {
+                    materialsData = materialsData.filter((m: any) =>
+                        (userDeptName && m.department === userDeptName) ||
+                        (deptId && m.departmentId === deptId) ||
+                        (deptId && m.department === deptId)
+                    );
+                }
+                setMaterials(materialsData);
+            }
         } catch (e) {
             console.error("Failed to fetch materials", e);
         }
@@ -532,7 +598,15 @@ const OrgDashboard = () => {
         try {
             const res = await axios.get(`${serverURL}/api/org/assignments?organizationId=${orgId}`);
             if (res.data.success) {
-                setAssignments(res.data.assignments);
+                let assignmentsData = res.data.assignments;
+                if (role === 'dept_admin') {
+                    assignmentsData = assignmentsData.filter((a: any) =>
+                        (userDeptName && a.department === userDeptName) ||
+                        (deptId && a.departmentId === deptId) ||
+                        (deptId && a.department === deptId)
+                    );
+                }
+                setAssignments(assignmentsData);
             }
         } catch (e) {
             console.error("Failed to fetch assignments", e);
@@ -571,7 +645,14 @@ const OrgDashboard = () => {
             const res = await axios.get(`${serverURL}/api/org/students?organizationId=${orgId}`);
             console.log('Students response:', res.data);
             if (res.data.success) {
-                setStudents(res.data.students);
+                let studentsData = res.data.students;
+                if (role === 'dept_admin') {
+                    studentsData = studentsData.filter((s: any) =>
+                        (userDeptName && s.department === userDeptName) ||
+                        (deptId && (s.departmentId === deptId || s.department === deptId))
+                    );
+                }
+                setStudents(studentsData);
             } else {
                 console.error('Failed to fetch students:', res.data.message);
             }
@@ -584,7 +665,14 @@ const OrgDashboard = () => {
         try {
             const res = await axios.get(`${serverURL}/api/org/courses?organizationId=${orgId}`);
             if (res.data.success) {
-                setCourses(res.data.courses);
+                let coursesData = res.data.courses;
+                if (role === 'dept_admin') {
+                    coursesData = coursesData.filter((c: any) =>
+                        (userDeptName && c.department === userDeptName) ||
+                        (deptId && (c.departmentId === deptId || c.department === deptId))
+                    );
+                }
+                setCourses(coursesData);
             }
         } catch (e) {
             console.error(e);
@@ -595,7 +683,14 @@ const OrgDashboard = () => {
         try {
             const res = await axios.get(`${serverURL}/api/org/notices?organizationId=${orgId}`);
             if (res.data.success) {
-                setNotices(res.data.notices);
+                let noticesData = res.data.notices;
+                if (role === 'dept_admin') {
+                    noticesData = noticesData.filter((n: any) =>
+                        (userDeptName && n.department === userDeptName) ||
+                        (deptId && (n.departmentId === deptId || n.department === deptId))
+                    );
+                }
+                setNotices(noticesData);
             }
         } catch (e) {
             console.error('Failed to fetch notices:', e);
@@ -1024,31 +1119,37 @@ const OrgDashboard = () => {
 
                 <AdminStatCard
                     title="Total Students"
-                    value={stats.studentCount}
+                    value={role === 'dept_admin' ? students.length : stats.studentCount}
                     icon={Users}
                     description="+20% from last month"
                     className="border-l-4 border-l-emerald-500"
                 />
                 <AdminStatCard
                     title="Active Assignments"
-                    value={stats.assignmentCount}
+                    value={role === 'dept_admin' ? assignments.length : stats.assignmentCount}
                     icon={FileText}
                     description="5 due this week"
                     className="border-l-4 border-l-blue-500"
                 />
-                <AdminStatCard
-                    title="Submissions"
-                    value={stats.submissionCount}
-                    icon={BarChart}
-                    description="Pending grading"
-                    className="border-l-4 border-l-amber-500"
-                />
+                {role !== 'dept_admin' && (
+                    <AdminStatCard
+                        title="Submissions"
+                        value={stats.submissionCount}
+                        icon={BarChart}
+                        description="Pending grading"
+                        className="border-l-4 border-l-amber-500"
+                    />
+                )}
             </div>
 
             <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })} className="w-full">
                 <TabsList className="flex flex-wrap h-auto w-full gap-1 p-1 bg-muted rounded-xl mb-6">
-                    <TabsTrigger value="departments" className="flex-1 min-w-[120px]">Departments</TabsTrigger>
-                    <TabsTrigger value="students" className="flex-1 min-w-[120px]">Students</TabsTrigger>
+                    {role !== 'dept_admin' && (
+                        <>
+                            <TabsTrigger value="departments" className="flex-1 min-w-[120px]">Departments</TabsTrigger>
+                            <TabsTrigger value="students" className="flex-1 min-w-[120px]">Students</TabsTrigger>
+                        </>
+                    )}
                     <TabsTrigger value="courses" className="flex-1 min-w-[120px]">Courses</TabsTrigger>
                     <TabsTrigger value="assignments" className="flex-1 min-w-[120px]">Assignments</TabsTrigger>
                     <TabsTrigger value="meetings" className="flex-1 min-w-[120px]">Meetings</TabsTrigger>
@@ -1361,7 +1462,7 @@ const OrgDashboard = () => {
                                             </DialogTrigger>
                                             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                                                 <DialogHeader><DialogTitle>Create New Course</DialogTitle></DialogHeader>
-                                                <CourseForm course={newCourse} setCourse={setNewCourse} onSave={() => handleCreateCourse(newCourse)} departments={departmentsList} />
+                                                <CourseForm course={newCourse} setCourse={setNewCourse} onSave={() => handleCreateCourse(newCourse)} departments={departmentsList} role={role} />
                                             </DialogContent>
                                         </Dialog>
                                     )}
@@ -1403,7 +1504,7 @@ const OrgDashboard = () => {
                                                             <span>{topicCount} Topics</span>
                                                             {quizCount > 0 && <span>{quizCount} Quizzes</span>}
                                                             <span className="bg-primary/10 text-primary px-2 py-0.5 rounded">
-                                                                {course.department ? `Dept: ${course.department}` : (course.content ? 'AI Generated' : 'All students')}
+                                                                {course.department ? `Dept: ${departmentsList.find(d => d._id === course.department || d.name === course.department)?.name || course.department}` : (course.content ? 'AI Generated' : 'All students')}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -1467,8 +1568,9 @@ const OrgDashboard = () => {
                                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                                 value={newAssignment.department}
                                                 onChange={(e) => setNewAssignment({ ...newAssignment, department: e.target.value })}
+                                                disabled={role === 'dept_admin'}
                                             >
-                                                <option value="">All Students</option>
+                                                {role !== 'dept_admin' && <option value="">All Students</option>}
                                                 {departmentsList.map((d: any) => (
                                                     <option key={d._id} value={d._id}>{d.name}</option>
                                                 ))}
@@ -1536,8 +1638,9 @@ const OrgDashboard = () => {
                                                                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                                                         value={editAssignment.department || ''}
                                                                         onChange={(e) => setEditAssignment({ ...editAssignment, department: e.target.value })}
+                                                                        disabled={role === 'dept_admin'}
                                                                     >
-                                                                        <option value="">All Students</option>
+                                                                        {role !== 'dept_admin' && <option value="">All Students</option>}
                                                                         {departmentsList.map((d: any) => (
                                                                             <option key={d._id} value={d._id}>{d.name}</option>
                                                                         ))}
@@ -1617,10 +1720,11 @@ const OrgDashboard = () => {
                                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                                 value={newMeeting.department}
                                                 onChange={(e) => setNewMeeting({ ...newMeeting, department: e.target.value })}
+                                                disabled={role === 'dept_admin'}
                                             >
-                                                <option value="">All Students</option>
+                                                {role !== 'dept_admin' && <option value="">All Students</option>}
                                                 {departmentsList.map((d: any) => (
-                                                    <option key={d._id} value={d.name}>{d.name}</option>
+                                                    <option key={d._id} value={d._id}>{d.name}</option>
                                                 ))}
                                             </select>
                                         </div>
@@ -1642,7 +1746,7 @@ const OrgDashboard = () => {
                                                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
                                                     <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(m.date).toLocaleDateString()} at {m.time}</span>
                                                     <span className="capitalize">{m.platform.replace('-', ' ')}</span>
-                                                    {m.department && m.department !== 'all' && <span className="text-primary font-medium">Dept: {m.department}</span>}
+                                                    {m.department && m.department !== 'all' && <span className="text-primary font-medium">Dept: {departmentsList.find(d => d._id === m.department || d.name === m.department)?.name || m.department}</span>}
                                                 </div>
                                                 <a href={m.link} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline mt-2 flex items-center gap-1">
                                                     {m.link.substring(0, 40)}... <ExternalLink className="w-3 h-3" />
@@ -1715,8 +1819,9 @@ const OrgDashboard = () => {
                                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                                     value={newProject.department}
                                                     onChange={(e) => setNewProject({ ...newProject, department: e.target.value })}
+                                                    disabled={role === 'dept_admin'}
                                                 >
-                                                    <option value="">All Students</option>
+                                                    {role !== 'dept_admin' && <option value="">All Students</option>}
                                                     {departmentsList.map((d: any) => (
                                                         <option key={d._id} value={d._id}>{d.name}</option>
                                                     ))}
@@ -1743,7 +1848,7 @@ const OrgDashboard = () => {
                                             <div className="line-clamp-2 text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: p.description }} />
                                         </CardHeader>
                                         <CardContent className="pt-0 text-[11px] text-muted-foreground flex justify-between">
-                                            <span>Dept: {p.department || 'All'}</span>
+                                            <span>Dept: {p.department ? (departmentsList.find(d => d._id === p.department || d.name === p.department)?.name || p.department) : 'All'}</span>
                                             {p.dueDate && <span>Due: {new Date(p.dueDate).toLocaleDateString()}</span>}
                                         </CardContent>
                                     </Card>
@@ -1821,8 +1926,9 @@ const OrgDashboard = () => {
                                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                                 value={newMaterial.department}
                                                 onChange={(e) => setNewMaterial({ ...newMaterial, department: e.target.value })}
+                                                disabled={role === 'dept_admin'}
                                             >
-                                                <option value="">All Students</option>
+                                                {role !== 'dept_admin' && <option value="">All Students</option>}
                                                 {departmentsList.map((d: any) => (
                                                     <option key={d._id} value={d._id}>{d.name}</option>
                                                 ))}
@@ -1844,7 +1950,7 @@ const OrgDashboard = () => {
                                             </div>
                                             <div>
                                                 <p className="font-medium text-sm">{m.title}</p>
-                                                <p className="text-[10px] text-muted-foreground">{m.type} • {m.department || 'All'}</p>
+                                                <p className="text-[10px] text-muted-foreground">{m.type} • {m.department ? (departmentsList.find(d => d._id === m.department || d.name === m.department)?.name || m.department) : 'All'}</p>
                                             </div>
                                         </div>
                                         <div className="flex gap-1">
@@ -1892,8 +1998,9 @@ const OrgDashboard = () => {
                                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                         value={newNotice.department || ''}
                                         onChange={(e) => setNewNotice({ ...newNotice, department: e.target.value })}
+                                        disabled={role === 'dept_admin'}
                                     >
-                                        <option value="">All Students</option>
+                                        {role !== 'dept_admin' && <option value="">All Students</option>}
                                         {departmentsList.map((d: any) => (
                                             <option key={d._id} value={d._id}>{d.name}</option>
                                         ))}
@@ -1957,7 +2064,7 @@ const OrgDashboard = () => {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="p-4 rounded-xl bg-blue-50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-900/20">
                                     <h4 className="text-sm font-semibold mb-1">Students Tracked</h4>
-                                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.studentCount || 0}</p>
+                                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{role === 'dept_admin' ? students.length : (stats.studentCount || 0)}</p>
                                 </div>
                                 <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-900/20">
                                     <h4 className="text-sm font-semibold mb-1">Verified Projects</h4>
@@ -1992,6 +2099,7 @@ const OrgDashboard = () => {
                             onSave={handleUpdateCourse}
                             isEdit
                             departments={departmentsList}
+                            role={role}
                         />
                     )}
                 </DialogContent>
@@ -2114,8 +2222,9 @@ const OrgDashboard = () => {
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                     value={editAICourse.department || ''}
                                     onChange={(e) => setEditAICourse({ ...editAICourse, department: e.target.value })}
+                                    disabled={role === 'dept_admin'}
                                 >
-                                    <option value="">All Students</option>
+                                    {role !== 'dept_admin' && <option value="">All Students</option>}
                                     {departmentsList.map((d: any) => (
                                         <option key={d._id} value={d.name}>{d.name}</option>
                                     ))}

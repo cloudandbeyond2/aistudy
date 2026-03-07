@@ -635,6 +635,69 @@ const DashboardLayout = () => {
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
+
+                    <div className="h-px bg-border/40 my-2 mx-4" />
+                    <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Management</div>
+
+                    {/* Courses */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Courses" isActive={location.search === '?tab=courses'}>
+                        <Link to="/dashboard/org?tab=courses" className={cn(location.search === '?tab=courses' && "text-primary")}>
+                          <BookOpen />
+                          <span>Courses</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    {/* Assignments */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Assignments" isActive={location.search === '?tab=assignments'}>
+                        <Link to="/dashboard/org?tab=assignments" className={cn(location.search === '?tab=assignments' && "text-primary")}>
+                          <FileText />
+                          <span>Assignments</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    {/* Meetings */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Meetings" isActive={location.search === '?tab=meetings'}>
+                        <Link to="/dashboard/org?tab=meetings" className={cn(location.search === '?tab=meetings' && "text-primary")}>
+                          <Video />
+                          <span>Meetings</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    {/* Projects */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Projects" isActive={location.search === '?tab=projects'}>
+                        <Link to="/dashboard/org?tab=projects" className={cn(location.search === '?tab=projects' && "text-primary")}>
+                          <Briefcase />
+                          <span>Projects/Research</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    {/* Materials */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Materials" isActive={location.search === '?tab=materials'}>
+                        <Link to="/dashboard/org?tab=materials" className={cn(location.search === '?tab=materials' && "text-primary")}>
+                          <Download />
+                          <span>Materials</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    {/* Noticeboard */}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Noticeboard" isActive={location.search === '?tab=notices'}>
+                        <Link to="/dashboard/org?tab=notices" className={cn(location.search === '?tab=notices' && "text-primary")}>
+                          <Bell />
+                          <span>Noticeboard</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
                   </>
                 )}
               </SidebarGroupContent>
