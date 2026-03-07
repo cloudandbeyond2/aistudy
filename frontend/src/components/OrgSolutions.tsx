@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, easeOut } from 'framer-motion';
 import { Briefcase, FileText, CheckCircle, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
+import verify from '../assets/images/verify.jpg';
 const solutions = [
     {
         title: "Placement Readiness",
@@ -30,7 +30,7 @@ const solutions = [
         description: "Blockchain-secured digital credentials distributed across the organization with built-in instant verification.",
         icon: <CheckCircle className="h-6 w-6" />,
         color: "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
-        image: "https://images.unsplash.com/photo-1589330694653-efa6475306e1?q=80&w=2070&auto=format&fit=crop"
+        image: verify
     }
 ];
 
