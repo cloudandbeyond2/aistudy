@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 
 
 
-const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [] }: any) => {
+const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [], role }: any) => {
     if (!course) return null;
     const [expandedTopic, setExpandedTopic] = useState<number | null>(null);
 
@@ -299,6 +299,7 @@ const OrgDashboard = () => {
 
     const orgId = sessionStorage.getItem('orgId') || sessionStorage.getItem('uid');
     const [userDeptName, setUserDeptName] = useState('');
+    const [userDeptId, setUserDeptId] = useState(deptId || '');
 
     useEffect(() => {
         if (!orgId) {
@@ -318,9 +319,8 @@ const OrgDashboard = () => {
         fetchNotices();
     }, [orgId]);
 
-    // Re-fetch when department name is resolved for staff
     useEffect(() => {
-        if (role === 'dept_admin' && userDeptName) {
+        if (role === 'dept_admin' && (userDeptName || deptId)) {
             fetchStats();
             fetchStudents();
             fetchCourses();
@@ -330,23 +330,31 @@ const OrgDashboard = () => {
             fetchMaterials();
             fetchNotices();
         }
-    }, [userDeptName, role]);
+    }, [userDeptName, deptId, role]);
 
     useEffect(() => {
-        if (role === 'dept_admin' && deptId && departmentsList.length > 0) {
-            const dept = departmentsList.find(d => d._id === deptId);
-            if (dept) {
-                setUserDeptName(dept.name);
-                // Also update the states if they are currently empty
-                setNewCourse(prev => ({ ...prev, department: prev.department || dept.name }));
-                setNewAssignment(prev => ({ ...prev, department: prev.department || dept.name }));
-                setNewMeeting(prev => ({ ...prev, department: prev.department || dept.name }));
-                setNewProject(prev => ({ ...prev, department: prev.department || dept.name }));
-                setNewNotice(prev => ({ ...prev, department: prev.department || dept.name }));
-                setNewMaterial(prev => ({ ...prev, department: prev.department || dept.name }));
+        // Find department name if missing but ID exists
+        if (role === 'dept_admin' && deptId && departmentsList.length > 0 && !userDeptName) {
+            const myDept = departmentsList.find((d: any) => d._id === deptId);
+            if (myDept) {
+                setUserDeptName(myDept.name);
+                setUserDeptId(myDept._id);
             }
         }
-    }, [departmentsList, deptId, role]);
+    }, [departmentsList, deptId, role, userDeptName]);
+
+    useEffect(() => {
+        if (role === 'dept_admin' && (userDeptId || deptId)) {
+            const targetId = userDeptId || deptId;
+            setNewAssignment(prev => ({ ...prev, department: targetId }));
+            setNewMeeting(prev => ({ ...prev, department: targetId }));
+            setNewProject(prev => ({ ...prev, department: targetId }));
+            setNewMaterial(prev => ({ ...prev, department: targetId }));
+            setNewNotice(prev => ({ ...prev, department: targetId }));
+            setNewCourse(prev => ({ ...prev, department: targetId }));
+            setNewStudent(prev => ({ ...prev, department: targetId }));
+        }
+    }, [userDeptId, deptId, role]);
 
     const fetchOrgDepartments = async () => {
         try {
@@ -1454,7 +1462,7 @@ const OrgDashboard = () => {
                                             </DialogTrigger>
                                             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                                                 <DialogHeader><DialogTitle>Create New Course</DialogTitle></DialogHeader>
-                                                <CourseForm course={newCourse} setCourse={setNewCourse} onSave={() => handleCreateCourse(newCourse)} departments={departmentsList} />
+                                                <CourseForm course={newCourse} setCourse={setNewCourse} onSave={() => handleCreateCourse(newCourse)} departments={departmentsList} role={role} />
                                             </DialogContent>
                                         </Dialog>
                                     )}
@@ -1496,7 +1504,7 @@ const OrgDashboard = () => {
                                                             <span>{topicCount} Topics</span>
                                                             {quizCount > 0 && <span>{quizCount} Quizzes</span>}
                                                             <span className="bg-primary/10 text-primary px-2 py-0.5 rounded">
-                                                                {course.department ? `Dept: ${course.department}` : (course.content ? 'AI Generated' : 'All students')}
+                                                                {course.department ? `Dept: ${departmentsList.find(d => d._id === course.department || d.name === course.department)?.name || course.department}` : (course.content ? 'AI Generated' : 'All students')}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -1716,7 +1724,7 @@ const OrgDashboard = () => {
                                             >
                                                 {role !== 'dept_admin' && <option value="">All Students</option>}
                                                 {departmentsList.map((d: any) => (
-                                                    <option key={d._id} value={d.name}>{d.name}</option>
+                                                    <option key={d._id} value={d._id}>{d.name}</option>
                                                 ))}
                                             </select>
                                         </div>
@@ -1738,7 +1746,7 @@ const OrgDashboard = () => {
                                                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
                                                     <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(m.date).toLocaleDateString()} at {m.time}</span>
                                                     <span className="capitalize">{m.platform.replace('-', ' ')}</span>
-                                                    {m.department && m.department !== 'all' && <span className="text-primary font-medium">Dept: {m.department}</span>}
+                                                    {m.department && m.department !== 'all' && <span className="text-primary font-medium">Dept: {departmentsList.find(d => d._id === m.department || d.name === m.department)?.name || m.department}</span>}
                                                 </div>
                                                 <a href={m.link} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline mt-2 flex items-center gap-1">
                                                     {m.link.substring(0, 40)}... <ExternalLink className="w-3 h-3" />
@@ -1840,7 +1848,7 @@ const OrgDashboard = () => {
                                             <div className="line-clamp-2 text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: p.description }} />
                                         </CardHeader>
                                         <CardContent className="pt-0 text-[11px] text-muted-foreground flex justify-between">
-                                            <span>Dept: {p.department || 'All'}</span>
+                                            <span>Dept: {p.department ? (departmentsList.find(d => d._id === p.department || d.name === p.department)?.name || p.department) : 'All'}</span>
                                             {p.dueDate && <span>Due: {new Date(p.dueDate).toLocaleDateString()}</span>}
                                         </CardContent>
                                     </Card>
@@ -1942,7 +1950,7 @@ const OrgDashboard = () => {
                                             </div>
                                             <div>
                                                 <p className="font-medium text-sm">{m.title}</p>
-                                                <p className="text-[10px] text-muted-foreground">{m.type} • {m.department || 'All'}</p>
+                                                <p className="text-[10px] text-muted-foreground">{m.type} • {m.department ? (departmentsList.find(d => d._id === m.department || d.name === m.department)?.name || m.department) : 'All'}</p>
                                             </div>
                                         </div>
                                         <div className="flex gap-1">
@@ -2091,6 +2099,7 @@ const OrgDashboard = () => {
                             onSave={handleUpdateCourse}
                             isEdit
                             departments={departmentsList}
+                            role={role}
                         />
                     )}
                 </DialogContent>

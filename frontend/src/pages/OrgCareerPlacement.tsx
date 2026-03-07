@@ -97,7 +97,10 @@ const OrgCareerPlacement = () => {
                 let statsData = res.data.stats;
 
                 if (role === 'dept_admin') {
-                    studentsData = studentsData.filter((s: any) => userDeptName && s.department === userDeptName);
+                    studentsData = studentsData.filter((s: any) =>
+                        (userDeptName && s.department === userDeptName) ||
+                        (deptId && (s.departmentId === deptId || s.department === deptId))
+                    );
                     // Recalculate stats for department
                     const readyCount = studentsData.filter((s: any) => s.placementScore >= 60).length;
                     const avgScore = studentsData.length > 0
@@ -122,7 +125,10 @@ const OrgCareerPlacement = () => {
             if (res.data.success) {
                 let projectsData = res.data.projects;
                 if (role === 'dept_admin') {
-                    projectsData = projectsData.filter((p: any) => userDeptName && p.department === userDeptName);
+                    projectsData = projectsData.filter((p: any) =>
+                        (userDeptName && p.department === userDeptName) ||
+                        (deptId && (p.departmentId === deptId || p.department === deptId))
+                    );
                 }
                 setProjects(projectsData);
             }
@@ -135,7 +141,10 @@ const OrgCareerPlacement = () => {
             if (res.data.success) {
                 let certsData = res.data.certificates;
                 if (role === 'dept_admin') {
-                    certsData = certsData.filter((c: any) => userDeptName && c.department === userDeptName);
+                    certsData = certsData.filter((c: any) =>
+                        (userDeptName && c.department === userDeptName) ||
+                        (deptId && (c.departmentId === deptId || c.department === deptId))
+                    );
                 }
                 setCertificates(certsData);
             }
