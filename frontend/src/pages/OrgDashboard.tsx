@@ -1029,7 +1029,7 @@ const OrgDashboard = () => {
                         Welcome back, {sessionStorage.getItem('mName') || 'Admin'}! <Sparkles className="h-6 w-6 text-yellow-500 animate-pulse" />
                     </h2>
                     <p className="text-muted-foreground mt-2 text-lg">
-                        Manage your organization's growth and student success with ease.
+                        {role === 'dept_admin' && userDeptName ? `Managing the ${userDeptName} department's growth and student success.` : "Manage your organization's growth and student success with ease."}
                     </p>
                 </div>
             </div>
@@ -1037,7 +1037,7 @@ const OrgDashboard = () => {
             <div className="flex flex-col md:flex-row justify-between items-center">
                 <div>
                     <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-                        Organization Dashboard
+                        {role === 'dept_admin' && userDeptName ? `${userDeptName} Department Dashboard` : 'Organization Dashboard'}
                     </h1>
                     <p className="text-muted-foreground mt-2">Manage students, assignments, and announcements</p>
                 </div>

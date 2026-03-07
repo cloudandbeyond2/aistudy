@@ -1,28 +1,43 @@
 import React, { useState } from 'react';
-import { Zap, Book, Layers, BarChart, PenLine, RotateCw, Briefcase, Award, Users, FileText } from 'lucide-react';
+import { Zap, Book, Layers, BarChart, PenLine, RotateCw, Briefcase, Award, Users, FileText, Calendar, Video, Laptop } from 'lucide-react';
 import { motion, easeOut, AnimatePresence } from 'framer-motion';
 
 const featuresData = {
   students: [
     {
       icon: <Zap className="h-6 w-6" />,
-      title: "AI Generation",
-      description: "Advanced AI algorithms analyze your inputs to generate comprehensive courses instantly."
-    },
-    {
-      icon: <Book className="h-6 w-6" />,
-      title: "Course Formats",
-      description: "Choose between interactive Image + Theory or Video + Theory formats for personalized learning."
-    },
-    {
-      icon: <PenLine className="h-6 w-6" />,
-      title: "Smart Quizzes",
-      description: "Auto-generated relevant quizzes and assessments to reinforce learning outcomes."
+      title: "AI Course Generation",
+      description: "Advanced AI algorithms analyze your inputs to auto-generate comprehensive courses instantly."
     },
     {
       icon: <Layers className="h-6 w-6" />,
-      title: "Multilanguage",
-      description: "Learn in your native tongue with 23+ supported languages for all AI-generated content."
+      title: "Interactive AI Notebook",
+      description: "Engage with an intelligent AI notebook that helps you document, summarize, and understand complex topics."
+    },
+    {
+      icon: <FileText className="h-6 w-6" />,
+      title: "Skill-Based Resume Builder",
+      description: "Build a professional, skill-highlighted resume tailored to your specific career goals and achievements."
+    },
+    {
+      icon: <Laptop className="h-6 w-6" />,
+      title: "Portfolio & Projects",
+      description: "Create stunning public portfolios and submit your work to the career hub project submission portal."
+    },
+    {
+      icon: <Award className="h-6 w-6" />,
+      title: "Certificate Download",
+      description: "Instantly download verified certificates upon completing your courses to showcase your new skills."
+    },
+    {
+      icon: <Book className="h-6 w-6" />,
+      title: "Online & Offline Courses",
+      description: "Access a wide variety of interactive courses online or download materials for seamless offline learning."
+    },
+    {
+      icon: <PenLine className="h-6 w-6" />,
+      title: "Smart Assignments",
+      description: "Tackle auto-generated quizzes, assignments, and dynamic assessments to reinforce your learning."
     },
     {
       icon: <RotateCw className="h-6 w-6" />,
@@ -32,29 +47,44 @@ const featuresData = {
   ],
   organizations: [
     {
+      icon: <Users className="h-6 w-6" />,
+      title: "Student Management",
+      description: "Easily onboard, track, and manage student cohorts, their learning progress, and overall performance."
+    },
+    {
+      icon: <BarChart className="h-6 w-6" />,
+      title: "Staff Management",
+      description: "Manage faculty and staff roles, administrative permissions, and department assignments seamlessly."
+    },
+    {
+      icon: <Calendar className="h-6 w-6" />,
+      title: "Schedule Management",
+      description: "Organize classes, academic events, and comprehensive learning schedules efficiently across the organization."
+    },
+    {
+      icon: <Video className="h-6 w-6" />,
+      title: "Online Meetings",
+      description: "Integrated online meeting tools for virtual classrooms, remote faculty syncs, and direct student support."
+    },
+    {
+      icon: <PenLine className="h-6 w-6" />,
+      title: "Assignment Tracking",
+      description: "Create, distribute, and track assignments across different departments and individual classes."
+    },
+    {
       icon: <Briefcase className="h-6 w-6" />,
       title: "Placement Readiness",
-      description: "Track and improve student employability with AI-driven scoring and analytics."
+      description: "Track and improve student employability with AI-driven scoring and detailed placement analytics."
     },
     {
-      icon: <FileText className="h-6 w-6" />,
-      title: "Resume Builder",
-      description: "Provide students with premium tools to craft ATS-friendly, professional resumes."
-    },
-    {
-      icon: <Users className="h-6 w-6" />,
+      icon: <Laptop className="h-6 w-6" />,
       title: "Project Galleries",
-      description: "Centralized showcases for student portfolios to present to hiring partners."
+      description: "Centralized showcases for student portfolios and career hub project submissions to present to hiring partners."
     },
     {
       icon: <Award className="h-6 w-6" />,
       title: "Verified Credentials",
-      description: "Issue blockchain-secured certificates that employers can verify instantly."
-    },
-    {
-      icon: <BarChart className="h-6 w-6" />,
-      title: "Scalable Management",
-      description: "Collaborate with departments, manage teams, and track progress at enterprise scale."
+      description: "Issue blockchain-secured certificates that employers and partners can verify instantly."
     }
   ]
 };
