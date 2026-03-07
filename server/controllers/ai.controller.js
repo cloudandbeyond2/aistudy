@@ -9,6 +9,7 @@ import showdown from 'showdown';
 import gis from 'g-i-s';
 import youtubesearchapi from 'youtube-search-api';
 import { YoutubeTranscript } from 'youtube-transcript';
+import { getUnsplashApi } from '../config/unsplash.js';
 
 
 
@@ -312,7 +313,7 @@ export const generateHtml = async (req, res) => {
 };
 
 /**
- * GET IMAGE FROM GOOGLE SEARCH
+ * GET IMAGE FROM UNSPLASH (WITH GOOGLE FALLBACK)
  */
 export const generateImage = async (req, res) => {
   const { prompt } = req.body;
@@ -324,20 +325,50 @@ export const generateImage = async (req, res) => {
     });
   }
 
-  gis(prompt, (error, results) => {
-    if (error || !results || results.length === 0) {
-      console.log('Image search error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Image search failed'
+  try {
+    const unsplash = await getUnsplashApi();
+    if (unsplash) {
+      const result = await unsplash.search.getPhotos({
+        query: prompt,
+        perPage: 1,
       });
+
+      if (result.response && result.response.results.length > 0) {
+        return res.status(200).json({
+          success: true,
+          url: result.response.results[0].urls.regular
+        });
+      }
     }
 
-    res.status(200).json({
-      success: true,
-      url: results[0].url
+    // Fallback to GIS with unsplash.com constraint if API fails or no results
+    gis(`${prompt} site:unsplash.com`, (error, results) => {
+      if (error || !results || results.length === 0) {
+        // Ultimate fallback: broad search
+        gis(prompt, (err2, res2) => {
+          if (err2 || !res2 || res2.length === 0) {
+            return res.status(500).json({ success: false, message: 'Image search failed' });
+          }
+          res.status(200).json({ success: true, url: res2[0].url });
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        url: results[0].url
+      });
     });
-  });
+  } catch (error) {
+    console.error('Unsplash search error:', error);
+    // Final fallback
+    gis(prompt, (err, results) => {
+      if (err || !results || results.length === 0) {
+        return res.status(500).json({ success: false, message: 'Image search failed' });
+      }
+      res.status(200).json({ success: true, url: results[0].url });
+    });
+  }
 };
 
 /**
