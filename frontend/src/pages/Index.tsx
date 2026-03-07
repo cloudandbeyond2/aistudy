@@ -15,30 +15,30 @@
 //     const handleHashLinkClick = (e: MouseEvent) => {
 //       const target = e.target as HTMLElement;
 //       const anchor = target.closest('a');
-      
+
 //       if (!anchor) return;
-      
+
 //       const href = anchor.getAttribute('href');
 //       if (!href || !href.startsWith('#')) return;
-      
+
 //       const destinationId = href.substring(1);
 //       const destinationElement = document.getElementById(destinationId);
-      
+
 //       if (destinationElement) {
 //         e.preventDefault();
-        
+
 //         window.scrollTo({
 //           top: destinationElement.offsetTop - 80, // Adjust for header height
 //           behavior: 'smooth',
 //         });
-        
+
 //         // Update URL without scrolling
 //         window.history.pushState(null, '', href);
 //       }
 //     };
-    
+
 //     document.addEventListener('click', handleHashLinkClick);
-    
+
 //     return () => {
 //       document.removeEventListener('click', handleHashLinkClick);
 //     };
@@ -71,6 +71,7 @@ import Testimonials from '@/components/Testimonials';
 import Pricing from '@/components/Pricing';
 import CTA from '@/components/CTA';
 import Footer from '@/components/Footer';
+import OrgSolutions from '@/components/OrgSolutions';
 
 const Index = () => {
   // Smooth scroll to anchor links
@@ -78,30 +79,30 @@ const Index = () => {
     const handleHashLinkClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const anchor = target.closest('a');
-      
+
       if (!anchor) return;
-      
+
       const href = anchor.getAttribute('href');
       if (!href || !href.startsWith('#')) return;
-      
+
       const destinationId = href.substring(1);
       const destinationElement = document.getElementById(destinationId);
-      
+
       if (destinationElement) {
         e.preventDefault();
-        
+
         window.scrollTo({
           top: destinationElement.offsetTop - 80, // Adjust for header height
           behavior: 'smooth',
         });
-        
+
         // Update URL without scrolling
         window.history.pushState(null, '', href);
       }
     };
-    
+
     document.addEventListener('click', handleHashLinkClick);
-    
+
     return () => {
       document.removeEventListener('click', handleHashLinkClick);
     };
@@ -114,6 +115,7 @@ const Index = () => {
         <Hero />
         <Features />
         <HowItWorks />
+        <OrgSolutions />
         <Testimonials />
         <Pricing />
         <CTA />
