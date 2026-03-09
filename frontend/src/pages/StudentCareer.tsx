@@ -89,6 +89,8 @@ const StudentCareer = () => {
         else if (studentId) fetchCareerData();
     }, [studentId, orgId]);
 
+    const toBoolean = (value: any) => value === true || value === 'true' || value === 1;
+
     const fetchCareerData = async () => {
         setLoading(true);
         try {
@@ -126,7 +128,7 @@ const StudentCareer = () => {
                     portfolioUrl: p?.portfolioUrl || '',
                     jobPreferences: p?.jobPreferences || '',
                     skills: (p?.skills || []).join(', '),
-                    isAvailableForPlacement: p?.isAvailableForPlacement || false
+                    isAvailableForPlacement: toBoolean(p?.isAvailableForPlacement)
                 });
             }
             if (projectsRes?.data?.success) {

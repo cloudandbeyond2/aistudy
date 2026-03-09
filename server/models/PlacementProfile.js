@@ -31,9 +31,8 @@ const placementProfileSchema = new mongoose.Schema({
 
 placementProfileSchema.index({ studentId: 1, organizationId: 1 }, { unique: true });
 
-placementProfileSchema.pre('save', function (next) {
-    this.updatedAt = Date.now();
-    next();
+placementProfileSchema.pre('save', function () {
+    this.updatedAt = new Date();
 });
 
 export default mongoose.model('PlacementProfile', placementProfileSchema);
