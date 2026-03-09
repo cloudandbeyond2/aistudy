@@ -285,6 +285,15 @@ const DashboardLayout = () => {
                         </SidebarMenuItem>
                       )}
 
+                      <SidebarMenuItem>
+  <SidebarMenuButton asChild>
+    <Link to="/dashboard/news">
+      <Megaphone className="h-5 w-5" />
+      <span>Global News</span>
+    </Link>
+  </SidebarMenuButton>
+</SidebarMenuItem>
+
 
                       {/* <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Pricing" isActive={isActive('/dashboard/pricing')}>
@@ -370,14 +379,21 @@ const DashboardLayout = () => {
                         </SidebarMenuButton>
                       </SidebarMenuItem>
 
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="News" isActive={isActive('/dashboard/student/news')}>
-                          <Link to="/dashboard/student/news" className={cn(isActive('/dashboard/student/news') && "text-primary")}>
-                            <Newspaper />
-                            <span>News</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
+                     <SidebarMenuItem>
+  <SidebarMenuButton 
+    asChild 
+    tooltip="Global News" 
+    isActive={isActive('/dashboard/student/news')}
+  >
+    <Link 
+      to="/dashboard/student/news" 
+      className={cn(isActive('/dashboard/student/news') && "text-primary")}
+    >
+      <Megaphone />
+      <span>Global News</span>
+    </Link>
+  </SidebarMenuButton>
+</SidebarMenuItem>
 
                       <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Meetings" isActive={isActive('/dashboard/student/meetings')}>
@@ -614,15 +630,19 @@ const DashboardLayout = () => {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
 
-                    {/* Announcements */}
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip="Announcements" isActive={isActive('/dashboard/staff/announcements')}>
-                        <Link to="/dashboard/staff/announcements">
-                          <Megaphone />
-                          <span>Announcements</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+               {/* Global News */}
+<SidebarMenuItem>
+  <SidebarMenuButton
+    asChild
+    tooltip="Global News"
+    isActive={isActive('/dashboard/news')}
+  >
+    <Link to="/dashboard/news">
+      <Megaphone />
+      <span>Global News</span>
+    </Link>
+  </SidebarMenuButton>
+</SidebarMenuItem>
 
                     {/* Resources */}
                     <SidebarMenuItem>

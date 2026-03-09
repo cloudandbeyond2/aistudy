@@ -36,7 +36,8 @@ import {
   ClipboardList,
   Globe,
   Building2,
-  Mail
+  Mail,
+  Megaphone
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -256,6 +257,22 @@ const AdminLayout = () => {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              <SidebarMenuItem>
+  <SidebarMenuButton 
+    asChild 
+    tooltip="Global News" 
+    isActive={isActive('/admin/global-news')}
+  >
+    <Link 
+      to="/admin/global-news" 
+      className={cn(isActive('/admin/global-news') && "text-primary")}
+    >
+      <Megaphone className="h-5 w-5" />
+      <span>Global News</span>
+    </Link>
+  </SidebarMenuButton>
+</SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Terms" isActive={isActive('/admin/terms')}>

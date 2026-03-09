@@ -56,6 +56,7 @@ import announcementRoutes from "./routes/announcementRoutes.js";
 import careerRoutes from './routes/career.routes.js';
 import scheduleRoutes from "./routes/scheduleRoutes.js";
 import supportRoutes from "./routes/supportRoutes.js";
+import globalNewsRoutes from "./routes/globalNews.routes.js";
 // -------------------- INIT --------------------
 connectDB();
 const app = express();
@@ -132,6 +133,7 @@ app.use("/api/announcements", announcementRoutes);
 app.use('/api', careerRoutes);
 app.use("/api/schedule", scheduleRoutes);
 app.use("/api/support", supportRoutes);
+app.use("/api/global-news", globalNewsRoutes);
 // -------------------- ERROR HANDLER --------------------
 app.use((err, req, res, next) => {
   console.error('SERVER ERROR:', err);
