@@ -1,16 +1,23 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { serverURL } from "@/constants";
 
 const AdminGlobalNews = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [news, setNews] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const API = "http://localhost:5001/api/global-news";
+  const API = `${serverURL}/api/global-news`;
 
   const fetchNews = async () => {
-    const res = await axios.get(API);
-    setNews(res.data);
+    try {
+      const res = await axios.get(API);
+      setNews(res.data);
+    } catch (e: any) {
+      setError(e?.response?.data?.message || "Failed to load global news");
+    }
   };
 
   useEffect(() => {
@@ -19,21 +26,29 @@ const AdminGlobalNews = () => {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    setError("");
+    setSubmitting(true);
 
-    await axios.post(API, {
-      title,
-      content
-    });
-
-    setTitle("");
-    setContent("");
-    fetchNews();
+    try {
+      await axios.post(API, {
+        title,
+        content
+      });
+      setTitle("");
+      setContent("");
+      fetchNews();
+    } catch (e: any) {
+      setError(e?.response?.data?.message || "Unable to post news");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className="p-6">
 
       <h1 className="text-3xl font-bold mb-6">Global News</h1>
+      {error && <p className="text-red-600 mb-4 text-sm">{error}</p>}
 
       {/* Create News */}
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow mb-8">
@@ -55,8 +70,11 @@ const AdminGlobalNews = () => {
           required
         />
 
-        <button className="bg-blue-600 text-white px-4 py-2 rounded">
-          Post News
+        <button
+          className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-60"
+          disabled={submitting}
+        >
+          {submitting ? "Posting..." : "Post News"}
         </button>
 
       </form>
