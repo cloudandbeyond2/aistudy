@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, isSameMonth, isSameDay } from 'date-fns';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  addDays,
+  addMonths,
+  subMonths,
+  isSameMonth,
+  isSameDay
+} from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function SmallCalendar() {
@@ -12,14 +23,22 @@ export default function SmallCalendar() {
   const renderHeader = () => {
     return (
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-bold text-gray-900">
+        <h2 className="text-sm font-bold text-gray-900 dark:text-white">
           {format(currentMonth, 'MMMM yyyy')}
         </h2>
+
         <div className="flex gap-1">
-          <button onClick={prevMonth} className="p-1 hover:bg-gray-100 rounded-full text-gray-500">
+          <button
+            onClick={prevMonth}
+            className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full text-gray-500 dark:text-gray-400"
+          >
             <ChevronLeft size={16} />
           </button>
-          <button onClick={nextMonth} className="p-1 hover:bg-gray-100 rounded-full text-gray-500">
+
+          <button
+            onClick={nextMonth}
+            className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full text-gray-500 dark:text-gray-400"
+          >
             <ChevronRight size={16} />
           </button>
         </div>
@@ -34,7 +53,10 @@ export default function SmallCalendar() {
 
     for (let i = 0; i < 7; i++) {
       days.push(
-        <div className="text-xs font-medium text-gray-400 text-center py-1" key={i}>
+        <div
+          className="text-xs font-medium text-gray-400 dark:text-gray-500 text-center py-1"
+          key={i}
+        >
           {format(addDays(startDate, i), dateFormat)}
         </div>
       );
@@ -59,7 +81,7 @@ export default function SmallCalendar() {
       for (let i = 0; i < 7; i++) {
         formattedDate = format(day, dateFormat);
         const cloneDay = day;
-        
+
         const isSelected = isSameDay(day, selectedDate);
         const isCurrentMonth = isSameMonth(day, monthStart);
         const isToday = isSameDay(day, new Date());
@@ -68,34 +90,41 @@ export default function SmallCalendar() {
           <div
             className={`
               relative p-1 cursor-pointer flex items-center justify-center text-xs rounded-full w-8 h-8 mx-auto transition-colors
-              ${!isCurrentMonth ? "text-gray-300" : "text-gray-700"}
-              ${isSelected ? "bg-blue-600 text-white font-bold" : "hover:bg-gray-100"}
-              ${isToday && !isSelected ? "text-blue-600 font-bold bg-blue-50" : ""}
+              ${!isCurrentMonth ? "text-gray-300 dark:text-gray-600" : "text-gray-700 dark:text-gray-300"}
+              ${isSelected ? "bg-blue-600 text-white font-bold" : "hover:bg-gray-100 dark:hover:bg-slate-800"}
+              ${isToday && !isSelected ? "text-blue-600 font-bold bg-blue-50 dark:bg-blue-900/40" : ""}
             `}
             key={day.toString()}
             onClick={() => setSelectedDate(cloneDay)}
           >
             {formattedDate}
-            {/* Dot indicator for events (mock) */}
-            {isCurrentMonth && (parseInt(formattedDate) % 5 === 0) && !isSelected && (
-               <div className="absolute bottom-1 w-1 h-1 bg-blue-400 rounded-full"></div>
-            )}
+
+            {/* Event Dot */}
+            {isCurrentMonth &&
+              parseInt(formattedDate) % 5 === 0 &&
+              !isSelected && (
+                <div className="absolute bottom-1 w-1 h-1 bg-blue-400 rounded-full"></div>
+              )}
           </div>
         );
+
         day = addDays(day, 1);
       }
+
       rows.push(
         <div className="grid grid-cols-7 gap-y-1" key={day.toString()}>
           {days}
         </div>
       );
+
       days = [];
     }
+
     return <div>{rows}</div>;
   };
 
   return (
-    <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+    <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
       {renderHeader()}
       {renderDays()}
       {renderCells()}

@@ -16,6 +16,7 @@ const Header = () => {
   const [userName, setUserName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userType, setUserType] = useState<string>('free');
+  const [userRole, setUserRole] = useState<string>('');
   const [open, setOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -34,8 +35,18 @@ const Header = () => {
       setIsAuth(true);
       setUserName(name);
       setUserType(sessionStorage.getItem('type') || 'free');
+      setUserRole(sessionStorage.getItem('role') || '');
     }
   }, []);
+
+  const dashboardPath =
+    userRole === 'org_admin'
+      ? '/dashboard/org'
+      : userRole === 'dept_admin'
+      ? '/dashboard/staff'
+      : userRole === 'student'
+      ? '/dashboard/student'
+      : '/dashboard';
 
   useEffect(() => {
     async function checkAdmin() {
@@ -181,20 +192,22 @@ const Header = () => {
                     className="absolute right-0 mt-3 w-52 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl shadow-2xl p-2 z-50"
                   >
                     <Link
-                      to="/dashboard"
+                      to={dashboardPath}
                       onClick={() => setOpen(false)}
                       className="block px-4 py-3 text-sm font-bold rounded-2xl hover:bg-primary/5 dark:hover:bg-white/10 transition"
                     >
                       Dashboard
                     </Link>
 
-                    <Link
-                      to="/dashboard/profile"
-                      onClick={() => setOpen(false)}
-                      className="block px-4 py-3 text-sm font-bold rounded-2xl hover:bg-primary/5 dark:hover:bg-white/10 transition"
-                    >
-                      Profile
-                    </Link>
+                    {userRole !== 'student' && (
+                      <Link
+                        to="/dashboard/profile"
+                        onClick={() => setOpen(false)}
+                        className="block px-4 py-3 text-sm font-bold rounded-2xl hover:bg-primary/5 dark:hover:bg-white/10 transition"
+                      >
+                        Profile
+                      </Link>
+                    )}
 
                     {['monthly', 'yearly', 'forever'].includes(userType) && (
                       <Link
@@ -305,7 +318,7 @@ const Header = () => {
               <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
                 {isAuth ? (
                   <>
-                    <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link to={dashboardPath} onClick={() => setIsMobileMenuOpen(false)}>
                       <Button className="w-full h-14 rounded-2xl font-bold text-lg" variant="outline">
                         Dashboard
                       </Button>

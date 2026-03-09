@@ -89,6 +89,8 @@ const StudentCareer = () => {
         else if (studentId) fetchCareerData();
     }, [studentId, orgId]);
 
+    const toBoolean = (value: any) => value === true || value === 'true' || value === 1;
+
     const fetchCareerData = async () => {
         setLoading(true);
         try {
@@ -126,7 +128,7 @@ const StudentCareer = () => {
                     portfolioUrl: p?.portfolioUrl || '',
                     jobPreferences: p?.jobPreferences || '',
                     skills: (p?.skills || []).join(', '),
-                    isAvailableForPlacement: p?.isAvailableForPlacement || false
+                    isAvailableForPlacement: toBoolean(p?.isAvailableForPlacement)
                 });
             }
             if (projectsRes?.data?.success) {
@@ -191,6 +193,32 @@ const StudentCareer = () => {
             fetchCareerData();
         } catch {
             toast({ title: 'Error', description: 'Failed to delete project', variant: 'destructive' });
+        }
+    };
+
+    const handleAvailabilityToggle = async () => {
+        if (!studentId) return;
+        const nextAvailability = !profileForm.isAvailableForPlacement;
+        const updatedForm = { ...profileForm, isAvailableForPlacement: nextAvailability };
+
+        setProfileForm(updatedForm);
+        setProfile((prev: any) => prev ? { ...prev, isAvailableForPlacement: nextAvailability } : prev);
+
+        try {
+            await axios.post(`${serverURL}/api/career/profile`, {
+                studentId,
+                organizationId: orgId,
+                ...updatedForm,
+                skills: updatedForm.skills.split(',').map(s => s.trim()).filter(Boolean)
+            });
+        } catch (e: any) {
+            setProfileForm(profileForm);
+            setProfile((prev: any) => prev ? { ...prev, isAvailableForPlacement: profileForm.isAvailableForPlacement } : prev);
+            toast({
+                title: 'Error',
+                description: e?.response?.data?.message || 'Failed to update availability',
+                variant: 'destructive'
+            });
         }
     };
 
@@ -302,7 +330,7 @@ const StudentCareer = () => {
                                     <p className="text-xs text-muted-foreground">Signal to employers you're open</p>
                                 </div>
                                 <button
-                                    onClick={() => setProfileForm(f => ({ ...f, isAvailableForPlacement: !f.isAvailableForPlacement }))}
+                                    onClick={handleAvailabilityToggle}
                                     className={`relative w-11 h-6 rounded-full transition-colors ${profileForm.isAvailableForPlacement ? 'bg-emerald-500' : 'bg-muted'}`}
                                 >
                                     <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${profileForm.isAvailableForPlacement ? 'translate-x-5' : ''}`} />

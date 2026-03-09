@@ -370,193 +370,279 @@ export default function StaffResources() {
     }
   };
 
-  return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Course Resources</h1>
-          <p className="text-slate-500">Manage and share learning materials.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="relative hidden md:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Search files..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
-            />
-          </div>
-          <button 
-            onClick={handleUploadFile}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-sm transition-colors"
-          >
-            <Upload size={18} />
-            Upload New File
-          </button>
-        </div>
+return (
+  <div className="max-w-7xl mx-auto space-y-6">
+
+    {/* Header */}
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Course Resources
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400">
+          Manage and share learning materials.
+        </p>
       </div>
 
-      {/* Mobile Search (visible only on small screens) */}
-      <div className="md:hidden relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-        <input 
-          type="text" 
-          placeholder="Search files..." 
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+      <div className="flex items-center gap-3">
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Sidebar: Categories */}
-        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm h-fit">
-          <div className="flex items-center justify-between mb-4 px-2">
-            <h3 className="font-bold text-slate-900">Categories</h3>
-            <button 
-              onClick={handleAddCategory}
-              className="p-1 hover:bg-gray-100 rounded-full text-blue-600 transition-colors"
-              title="Add Category"
-            >
-              <Plus size={18} />
-            </button>
-          </div>
-          <nav className="space-y-1">
-            {categories.map((category) => (
-              <div key={category.id} className="group flex items-center gap-2">
-                <button 
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`flex-1 flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    selectedCategory === category.id 
-                      ? 'bg-blue-50 text-blue-700' 
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <Folder 
-                    size={18} 
-                    className={selectedCategory === category.id ? 'text-blue-500 fill-blue-500/20' : 'text-gray-400'} 
-                  />
-                  <span className="truncate">{category.name}</span>
-                </button>
-                {category.id !== 'all' && (
-                  <button 
-                    onClick={() => handleDeleteCategory(category.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-all"
-                    title="Delete Category"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
-              </div>
-            ))}
-          </nav>
+        {/* Desktop Search */}
+        <div className="relative hidden md:block">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500"
+            size={18}
+          />
+          <input
+            type="text"
+            placeholder="Search files..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-4 py-2 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+          />
         </div>
 
-        {/* Main Content: File List */}
-        <div className="md:col-span-3 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
-          {filteredResources.length > 0 ? (
-            <>
-              <div className="overflow-x-auto flex-1">
-                <table className="w-full text-left text-sm text-gray-600">
-                  <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-500 border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-4">File Name</th>
-                      <th className="px-6 py-4">Course</th>
-                      <th className="px-6 py-4">Date Added</th>
-                      <th className="px-6 py-4">Size</th>
-                      <th className="px-6 py-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {currentResources.map((file) => (
-                      <tr key={file.id} className="hover:bg-gray-50/50 transition-colors group">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${
-                              file.type === 'PDF' ? 'bg-red-50 text-red-600' :
-                              file.type === 'PPT' ? 'bg-orange-50 text-orange-600' :
-                              file.type === 'DOC' ? 'bg-blue-50 text-blue-600' :
-                              'bg-gray-100 text-gray-500'
-                            }`}>
-                              <FileText size={20} />
-                            </div>
-                            <div>
-                              <span className="font-medium text-slate-900 block">{file.name}</span>
-                              <span className="text-xs text-gray-400 md:hidden">{file.size} • {file.date}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="px-2 py-1 bg-gray-100 rounded text-xs font-medium text-gray-600">{file.course}</span>
-                        </td>
-                        <td className="px-6 py-4 text-gray-500 hidden md:table-cell">{file.date}</td>
-                        <td className="px-6 py-4 text-gray-500 hidden md:table-cell">{file.size}</td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button 
-                              onClick={() => handleDownload(file)}
-                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" 
-                              title="Download"
-                            >
-                              <Download size={18} />
-                            </button>
-                            <button 
-                              onClick={() => handleDeleteResource(file.id)}
-                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Delete"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              {/* Pagination Footer */}
-              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between bg-gray-50/50">
-                <span className="text-sm text-gray-500">
-                  Showing <span className="font-medium text-gray-900">{startIndex + 1}</span> to <span className="font-medium text-gray-900">{endIndex}</span> of <span className="font-medium text-gray-900">{filteredResources.length}</span> results
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white"
-                    title="Previous Page"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <span className="text-sm font-medium text-gray-700 px-2">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white"
-                    title="Next Page"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-12">
-              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                <Folder size={32} className="text-gray-300" />
-              </div>
-              <p className="text-lg font-medium text-gray-500">No files found</p>
-              <p className="text-sm">Try adjusting your search or category filter.</p>
-            </div>
-          )}
-        </div>
+        <button
+          onClick={handleUploadFile}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-sm transition-colors"
+        >
+          <Upload size={18} />
+          Upload New File
+        </button>
+
       </div>
     </div>
-  );
+
+    {/* Mobile Search */}
+    <div className="md:hidden relative">
+      <Search
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500"
+        size={18}
+      />
+      <input
+        type="text"
+        placeholder="Search files..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+      />
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+
+      {/* Sidebar */}
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm h-fit">
+
+        <div className="flex items-center justify-between mb-4 px-2">
+          <h3 className="font-bold text-slate-900 dark:text-white">
+            Categories
+          </h3>
+
+          <button
+            onClick={handleAddCategory}
+            className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full text-blue-600 transition-colors"
+            title="Add Category"
+          >
+            <Plus size={18} />
+          </button>
+        </div>
+
+        <nav className="space-y-1">
+
+          {categories.map((category) => (
+            <div key={category.id} className="group flex items-center gap-2">
+
+              <button
+                onClick={() => setSelectedCategory(category.id)}
+                className={`flex-1 flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                ${
+                  selectedCategory === category.id
+                    ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                    : "text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800"
+                }`}
+              >
+                <Folder
+                  size={18}
+                  className={
+                    selectedCategory === category.id
+                      ? "text-blue-500"
+                      : "text-gray-400"
+                  }
+                />
+                <span className="truncate">{category.name}</span>
+              </button>
+
+              {category.id !== "all" && (
+                <button
+                  onClick={() => handleDeleteCategory(category.id)}
+                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-all"
+                  title="Delete Category"
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
+
+            </div>
+          ))}
+
+        </nav>
+      </div>
+
+      {/* File Table */}
+      <div className="md:col-span-3 bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
+
+        {filteredResources.length > 0 ? (
+          <>
+
+            <div className="overflow-x-auto flex-1">
+
+              <table className="w-full text-left text-sm text-gray-600 dark:text-slate-300">
+
+                <thead className="bg-gray-50 dark:bg-slate-800 text-xs uppercase font-semibold text-gray-500 dark:text-slate-400 border-b border-gray-200 dark:border-slate-700">
+                  <tr>
+                    <th className="px-6 py-4">File Name</th>
+                    <th className="px-6 py-4">Course</th>
+                    <th className="px-6 py-4">Date Added</th>
+                    <th className="px-6 py-4">Size</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+
+                  {currentResources.map((file) => (
+                    <tr
+                      key={file.id}
+                      className="hover:bg-gray-50/50 dark:hover:bg-slate-800 transition-colors group"
+                    >
+
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+
+                          <div
+                            className={`p-2 rounded-lg
+                            ${
+                              file.type === "PDF"
+                                ? "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                                : file.type === "PPT"
+                                ? "bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
+                                : file.type === "DOC"
+                                ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                                : "bg-gray-100 dark:bg-slate-800 text-gray-500"
+                            }`}
+                          >
+                            <FileText size={20} />
+                          </div>
+
+                          <div>
+                            <span className="font-medium text-slate-900 dark:text-white block">
+                              {file.name}
+                            </span>
+                            <span className="text-xs text-gray-400 md:hidden">
+                              {file.size} • {file.date}
+                            </span>
+                          </div>
+
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <span className="px-2 py-1 bg-gray-100 dark:bg-slate-800 rounded text-xs font-medium text-gray-600 dark:text-slate-300">
+                          {file.course}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-4 text-gray-500 dark:text-slate-400 hidden md:table-cell">
+                        {file.date}
+                      </td>
+
+                      <td className="px-6 py-4 text-gray-500 dark:text-slate-400 hidden md:table-cell">
+                        {file.size}
+                      </td>
+
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+
+                          <button
+                            onClick={() => handleDownload(file)}
+                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                            title="Download"
+                          >
+                            <Download size={18} />
+                          </button>
+
+                          <button
+                            onClick={() => handleDeleteResource(file.id)}
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+
+                        </div>
+                      </td>
+
+                    </tr>
+                  ))}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+            {/* Pagination */}
+
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-slate-700 flex items-center justify-between bg-gray-50/50 dark:bg-slate-800">
+
+              <span className="text-sm text-gray-500 dark:text-slate-400">
+                Showing <span className="font-medium text-gray-900 dark:text-white">{startIndex + 1}</span> to <span className="font-medium text-gray-900 dark:text-white">{endIndex}</span> of <span className="font-medium text-gray-900 dark:text-white">{filteredResources.length}</span> results
+              </span>
+
+              <div className="flex items-center gap-2">
+
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="p-2 border border-gray-300 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 bg-white dark:bg-slate-900"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+
+                <span className="text-sm font-medium text-gray-700 dark:text-slate-300 px-2">
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="p-2 border border-gray-300 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 bg-white dark:bg-slate-900"
+                >
+                  <ChevronRight size={16} />
+                </button>
+
+              </div>
+
+            </div>
+
+          </>
+        ) : (
+
+          <div className="flex-1 flex flex-col items-center justify-center text-gray-400 dark:text-slate-500 p-12">
+            <div className="w-16 h-16 bg-gray-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+              <Folder size={32} className="text-gray-300 dark:text-slate-600" />
+            </div>
+            <p className="text-lg font-medium text-gray-500 dark:text-slate-300">
+              No files found
+            </p>
+            <p className="text-sm">
+              Try adjusting your search or category filter.
+            </p>
+          </div>
+
+        )}
+
+      </div>
+    </div>
+  </div>
+);
 }

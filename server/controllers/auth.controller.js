@@ -982,6 +982,10 @@ export const socialLogin = async (req, res) => {
 export const forgotPassword = async (req, res) => {
   const { email, name, company, logo } = req.body;
 
+  // Fallbacks for email template variables
+  const appName = name || process.env.COMPANY || "AIstudy";
+  const orgCompany = company || process.env.COMPANY || "Traininglabs Ai Solutions";
+
   try {
     const user = await User.findOne({ email });
 
@@ -995,34 +999,53 @@ export const forgotPassword = async (req, res) => {
     user.resetPasswordExpires = Date.now() + 60 * 60 * 1000; // 1 hour
     await user.save();
 
-    const baseUrl = process.env.WEBSITE_URL.endsWith("/")
+    const baseUrl = process.env.WEBSITE_URL && process.env.WEBSITE_URL.endsWith("/")
       ? process.env.WEBSITE_URL.slice(0, -1)
-      : process.env.WEBSITE_URL;
+      : (process.env.WEBSITE_URL || "http://localhost:5173");
+    
     const resetLink = `${baseUrl}/reset-password/${token}`;
 
     const mailOptions = {
       from: process.env.EMAIL,
       to: user.email,
-      subject: `${name} Password Reset`,
+      subject: `${appName} Password Reset`,
       html: `
-        <h2>Password Reset</h2>
-        <p>Click the button below to reset the password for ${email}</p>
-        <a href="${resetLink}" target="_blank"
-           style="padding:10px 16px;background:#007BFF;color:#fff;border-radius:4px;text-decoration:none">
-           Reset Password
-        </a>
-        <p><strong>${company}</strong></p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 10px; background-color: #f9f9f9;">
+          <h2 style="color: #333; text-align: center;">Password Reset</h2>
+          <p style="color: #555; line-height: 1.6;">Hello,</p>
+          <p style="color: #555; line-height: 1.6;">We received a request to reset the password for your account associated with <strong>${email}</strong>. Click the button below to proceed:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetLink}" target="_blank"
+               style="padding: 12px 24px; background-color: #007BFF; color: #fff; border-radius: 5px; text-decoration: none; font-weight: bold; display: inline-block;">
+               Reset Password
+            </a>
+          </div>
+          <p style="color: #555; line-height: 1.6;">If you didn't request this, you can safely ignore this email. The link will expire in 1 hour.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="text-align: center; color: #888; font-size: 12px;">
+            <strong>${orgCompany}</strong>
+          </p>
+        </div>
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (mailErr) {
+      console.error("Forgot password mail send error:", mailErr);
+      return res.json({
+        success: false,
+        message: "Failed to send reset email. Please contact support.",
+        mailError: true
+      });
+    }
 
     res.json({
       success: true,
       message: "Password reset link sent to your email",
     });
   } catch (error) {
-    console.log("Forgot password error:", error);
+    console.error("Forgot password controller error:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",

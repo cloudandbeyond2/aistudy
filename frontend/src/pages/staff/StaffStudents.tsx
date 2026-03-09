@@ -278,416 +278,505 @@ const [newStudent, setNewStudent] = useState({
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 relative">
+    <div className="max-w-7xl mx-auto space-y-6 relative text-gray-900 dark:text-gray-100">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Department Students</h1>
-          <p className="text-slate-500">View and manage students within your department.</p>
-        </div>
-       <div className="flex gap-2">
-  {/* Filter */}
-  <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm">
-    <Filter size={16} className="text-gray-500" />
-
-    <select
-      value={filterClass}
-      onChange={(e) => {
-        setFilterClass(e.target.value);
-        setCurrentPage(1);
-      }}
-      className="bg-transparent text-sm font-medium text-gray-700 outline-none"
-    >
-      <option value="">All Classes</option>
-
-      {classes.map((cls) => (
-        <option key={cls._id} value={cls.name}>
-          {cls.name}
-        </option>
-      ))}
-    </select>
+  
+  {/* Title Section */}
+  <div>
+    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+      Department Students
+    </h1>
+    <p className="text-slate-500 dark:text-slate-400">
+      View and manage students within your department.
+    </p>
   </div>
 
-  {/* Add Student */}
-  <button
-    onClick={() => {
-      setIsEditing(false);
-      setIsModalOpen(true);
-    }}
-    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-sm"
-  >
-    <Plus size={16} />
-    Add Student
-  </button>
+  {/* Right Side Actions */}
+  <div className="flex gap-2">
+
+    {/* Filter */}
+    <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm">
+
+      <Filter size={16} className="text-gray-500 dark:text-gray-400" />
+
+      <select
+        value={filterClass}
+        onChange={(e) => {
+          setFilterClass(e.target.value);
+          setCurrentPage(1);
+        }}
+        className="bg-transparent text-sm font-medium text-gray-700 dark:text-gray-200 outline-none"
+      >
+        <option value="">All Classes</option>
+
+        {classes.map((cls) => (
+          <option
+            key={cls._id}
+            value={cls.name}
+            className="bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200"
+          >
+            {cls.name}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    {/* Add Student Button */}
+    <button
+      onClick={() => {
+        setIsEditing(false);
+        setIsModalOpen(true);
+      }}
+      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-500 shadow-sm transition"
+    >
+      <Plus size={16} />
+      Add Student
+    </button>
+
+  </div>
 </div>
+
+   <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
+
+  {/* Search */}
+  <div className="p-4 border-b border-gray-200 dark:border-slate-700 flex gap-4">
+    <div className="relative flex-1 max-w-md">
+      <Search
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+        size={18}
+      />
+
+      <input
+        type="text"
+        placeholder="Search by name or email..."
+        value={searchTerm}
+        onChange={(e) => {
+          setSearchTerm(e.target.value);
+          setCurrentPage(1);
+        }}
+        className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+      />
+    </div>
+  </div>
+
+  {/* Table */}
+  <div className="overflow-x-auto">
+    {isLoading ? (
+      <div className="flex items-center justify-center p-12 text-gray-500 dark:text-gray-400 gap-2">
+        <Loader2 className="animate-spin" size={20} />
+        Loading students...
       </div>
+    ) : students.length === 0 ? (
+      <div className="text-center py-20 text-gray-500 dark:text-gray-400">
+        <User size={48} className="mx-auto mb-4 opacity-20" />
+        <p>No students found in this department.</p>
+      </div>
+    ) : (
+      <table className="w-full text-left text-sm text-gray-600 dark:text-gray-300">
+        
+        {/* Table Head */}
+        <thead className="bg-gray-50 dark:bg-slate-800 text-xs uppercase font-semibold text-gray-500 dark:text-gray-400">
+          <tr>
+            <th className="px-6 py-4">Student Name</th>
+            <th className="px-6 py-4">Class</th>
+            <th className="px-6 py-4">Section</th>
+            <th className="px-6 py-4">Roll No</th>
+            <th className="px-6 py-4">Joined Date</th>
+            <th className="px-6 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-gray-200 flex gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            {/* <input
-              type="text"
-              placeholder="Search by name or email..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-            /> */}
-            <input
-  type="text"
-  placeholder="Search by name or email..."
-  value={searchTerm}
-  onChange={(e) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1);
-  }}
-  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg"
-/>
-          </div>
-        </div>
+        {/* Table Body */}
+        <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+          {currentStudents.map((student) => (
+            <tr
+              key={student._id}
+              className="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+            >
+              <td className="px-6 py-4">
+                <div className="flex items-center gap-3">
 
-        <div className="overflow-x-auto">
-          {isLoading ? (
-            <div className="flex items-center justify-center p-12 text-gray-500 gap-2">
-              <Loader2 className="animate-spin" size={20} />
-              Loading students...
-            </div>
-          ) : students.length === 0 ? (
-            <div className="text-center py-20 text-gray-500">
-              <User size={48} className="mx-auto mb-4 opacity-20" />
-              <p>No students found in this department.</p>
-            </div>
-          ) : (
-            <table className="w-full text-left text-sm text-gray-600">
-              <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-500">
-                <tr>
-                  <th className="px-6 py-4">Student Name</th>
-                  <th className="px-6 py-4">Class</th>
-                  <th className="px-6 py-4">Section</th>
-                  <th className="px-6 py-4">Roll No</th>
-                  <th className="px-6 py-4">Joined Date</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-               {currentStudents.map((student) => (
-                  <tr key={student._id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
-                          {(student.mName || 'S').charAt(0)}
-                        </div>
-                        <div>
-                          <div className="font-medium text-slate-900">{student.mName}</div>
-                          <div className="text-xs text-gray-400">{student.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs font-medium">
-                        {student.studentDetails?.studentClass || 'N/A'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium">
-                        {student.studentDetails?.section || 'N/A'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-xs font-medium">{student.studentDetails?.rollNo || 'N/A'}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-xs text-gray-400">
-                        {new Date(student.date).toLocaleDateString()}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                            <MoreHorizontal size={18} />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-32">
-                          <DropdownMenuItem onClick={() => handleEdit(student)} className="cursor-pointer gap-2">
-                            <Edit size={14} />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDeleteConfirm(student)} className="cursor-pointer gap-2 text-red-600 focus:text-red-600">
-                            <Trash2 size={14} />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              
-            </table>
-          )}
-        </div>
+                  {/* Avatar */}
+                  <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 flex items-center justify-center font-bold text-xs">
+                    {(student.mName || "S").charAt(0)}
+                  </div>
 
-        {!isLoading && students.length > 0 && (
-       <div className="p-4 border-t border-gray-200 flex items-center justify-between text-sm text-gray-600">
+                  <div>
+                    <div className="font-medium text-slate-900 dark:text-white">
+                      {student.mName}
+                    </div>
+                    <div className="text-xs text-gray-400 dark:text-gray-500">
+                      {student.email}
+                    </div>
+                  </div>
 
-  {/* Page Info */}
-  <span>
-    Page {currentPage} of {totalPages}
-  </span>
+                </div>
+              </td>
+
+              {/* Class */}
+              <td className="px-6 py-4">
+                <span className="px-2 py-1 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 rounded text-xs font-medium">
+                  {student.studentDetails?.studentClass || "N/A"}
+                </span>
+              </td>
+
+              {/* Section */}
+              <td className="px-6 py-4">
+                <span className="px-2 py-1 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 rounded text-xs font-medium">
+                  {student.studentDetails?.section || "N/A"}
+                </span>
+              </td>
+
+              {/* Roll */}
+              <td className="px-6 py-4">
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  {student.studentDetails?.rollNo || "N/A"}
+                </span>
+              </td>
+
+              {/* Date */}
+              <td className="px-6 py-4">
+                <span className="text-xs text-gray-400 dark:text-gray-500">
+                  {new Date(student.date).toLocaleDateString()}
+                </span>
+              </td>
+
+              {/* Actions */}
+              <td className="px-6 py-4 text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                      <MoreHorizontal size={18} />
+                    </button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-32 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700"
+                  >
+                    <DropdownMenuItem
+                      onClick={() => handleEdit(student)}
+                      className="cursor-pointer gap-2 text-gray-700 dark:text-gray-200"
+                    >
+                      <Edit size={14} />
+                      Edit
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() => handleDeleteConfirm(student)}
+                      className="cursor-pointer gap-2 text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 size={14} />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )}
+  </div>
 
   {/* Pagination */}
-  <div className="flex items-center gap-2">
+  {!isLoading && students.length > 0 && (
+    <div className="p-4 border-t border-gray-200 dark:border-slate-700 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
 
-    {/* Previous */}
-    <button
-      onClick={() => setCurrentPage((prev) => prev - 1)}
-      disabled={currentPage === 1}
-      className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50"
-    >
-      Previous
-    </button>
+      <span>
+        Page {currentPage} of {totalPages}
+      </span>
 
-    {/* Page Numbers */}
-    {[...Array(totalPages)].map((_, index) => {
-      const page = index + 1;
+      <div className="flex items-center gap-2">
 
-      return (
+        {/* Previous */}
         <button
-          key={page}
-          onClick={() => setCurrentPage(page)}
-          className={`px-3 py-1 border rounded ${
-            currentPage === page
-              ? "bg-blue-600 text-white border-blue-600"
-              : "border-gray-200 hover:bg-gray-50"
-          }`}
+          onClick={() => setCurrentPage((prev) => prev - 1)}
+          disabled={currentPage === 1}
+          className="px-3 py-1 border border-gray-200 dark:border-slate-700 rounded hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50"
         >
-          {page}
+          Previous
         </button>
-      );
-    })}
 
-    {/* Next */}
-    <button
-      onClick={() => setCurrentPage((prev) => prev + 1)}
-      disabled={currentPage === totalPages}
-      className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50"
-    >
-      Next
-    </button>
+        {/* Pages */}
+        {[...Array(totalPages)].map((_, index) => {
+          const page = index + 1;
 
-  </div>
-</div>
-        )}
+          return (
+            <button
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              className={`px-3 py-1 border rounded ${
+                currentPage === page
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800"
+              }`}
+            >
+              {page}
+            </button>
+          );
+        })}
+
+        {/* Next */}
+        <button
+          onClick={() => setCurrentPage((prev) => prev + 1)}
+          disabled={currentPage === totalPages}
+          className="px-3 py-1 border border-gray-200 dark:border-slate-700 rounded hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50"
+        >
+          Next
+        </button>
+
       </div>
+    </div>
+  )}
+</div>
 
       {/* Add/Edit Student Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="text-lg font-bold text-slate-900">{isEditing ? 'Edit Student' : 'Add New Student'}</h3>
-              <button
-                onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
+  {isModalOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
 
-            <div className="p-6">
-              {/* Tabs (Hidden during edit) */}
-              {!isEditing && (
-                <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-lg">
-                  <button
-                    onClick={() => setActiveTab('manual')}
-                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'manual'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                  >
-                    Manual Entry
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('bulk')}
-                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'bulk'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                  >
-                    Bulk Upload
-                  </button>
-                </div>
-              )}
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
 
-              {isEditing || activeTab === 'manual' ? (
-                <form onSubmit={handleFormSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <input
-                      type="text"
-                      name="name"
-                      required
-                      value={newStudent.name}
-                      onChange={handleInputChange}
-                      placeholder="e.g. John Doe"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                    <input
-                      type="email"
-                      name="email"
-                      required
-                      value={newStudent.email}
-                      onChange={handleInputChange}
-                      placeholder="e.g. john@example.com"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    />
-                  </div>
-                  {!isEditing && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                      <input
-                        type="password"
-                        name="password"
-                        required
-                        value={newStudent.password}
-                        onChange={handleInputChange}
-                        placeholder="••••••••"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                      />
-                    </div>
-                  )}
-                  <div className="grid grid-cols-2 gap-4">
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+          {isEditing ? "Edit Student" : "Add New Student"}
+        </h3>
 
-  {/* Class */}
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+        <button
+          onClick={closeModal}
+          className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white p-1 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+        >
+          <X size={20} />
+        </button>
+      </div>
 
+      <div className="p-6">
 
-<select
-  name="classId"
-  value={newStudent.classId}
-  onChange={handleClassChange}
-  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-  required
->
-  <option value="" disabled>
-    Select Class
-  </option>
+        {/* Tabs */}
+        {!isEditing && (
+          <div className="flex gap-2 mb-6 bg-gray-100 dark:bg-slate-800 p-1 rounded-lg">
+            <button
+              onClick={() => setActiveTab("manual")}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                activeTab === "manual"
+                  ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              Manual Entry
+            </button>
 
-  {classes.map((cls) => (
-    <option key={cls._id} value={cls._id}>
-      {cls.name}
-    </option>
-  ))}
-</select>
-  </div>
-
-  {/* Section */}
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
-   <select
-  name="section"
-  value={newStudent.section}
-  onChange={handleInputChange}
-  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
->
-  <option value="">Select Section</option>
-
-  {classes.map((cls:any) => (
-    <option key={cls._id} value={cls.section}>
-      {cls.section}
-    </option>
-  ))}
-
-</select>
-  </div>
-
-</div>
-<div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">Room</label>
- <select
-  name="room"
-  value={newStudent.room}
-  onChange={handleInputChange}
-  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
->
-  <option value="">Select Room</option>
-
-  {classes.map((cls:any) => (
-    <option key={cls._id} value={cls.room}>
-      {cls.room}
-    </option>
-  ))}
-
-</select>
-</div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Roll Number</label>
-                    <input
-                      type="text"
-                      name="rollNo"
-                      value={newStudent.rollNo}
-                      onChange={handleInputChange}
-                      placeholder="e.g. 101"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full mt-4 bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm"
-                  >
-                    {isEditing ? 'Save Changes' : 'Add Student'}
-                  </button>
-                </form>
-              ) : (
-                <form onSubmit={handleBulkSubmit} className="space-y-6">
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors cursor-pointer relative">
-                    <input
-                      type="file"
-                      accept=".xlsx,.xls,.csv"
-                      onChange={handleFileChange}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-3">
-                      <Upload size={24} />
-                    </div>
-                    <p className="text-sm font-medium text-slate-900">
-                      {uploadFile ? uploadFile.name : 'Click to upload or drag and drop'}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">Excel or CSV (max 10MB)</p>
-                  </div>
-
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium text-gray-700">Supported Formats</p>
-                    <div className="flex gap-3">
-                      <div className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg flex-1">
-                        <FileSpreadsheet className="text-emerald-600" size={20} />
-                        <div className="text-xs">
-                          <p className="font-medium text-slate-900">Excel / CSV</p>
-                          <p className="text-gray-500">Structured data</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={!uploadFile}
-                    className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Upload and Process
-                  </button>
-                </form>
-              )}
-            </div>
+            <button
+              onClick={() => setActiveTab("bulk")}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                activeTab === "bulk"
+                  ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              Bulk Upload
+            </button>
           </div>
-        </div>
-      )}
+        )}
+
+        {isEditing || activeTab === "manual" ? (
+          <form onSubmit={handleFormSubmit} className="space-y-4">
+
+            {/* Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Full Name
+              </label>
+
+              <input
+                type="text"
+                name="name"
+                required
+                value={newStudent.name}
+                onChange={handleInputChange}
+                placeholder="e.g. John Doe"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Email Address
+              </label>
+
+              <input
+                type="email"
+                name="email"
+                required
+                value={newStudent.email}
+                onChange={handleInputChange}
+                placeholder="e.g. john@example.com"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Password */}
+            {!isEditing && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Password
+                </label>
+
+                <input
+                  type="password"
+                  name="password"
+                  required
+                  value={newStudent.password}
+                  onChange={handleInputChange}
+                  placeholder="••••••••"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
+            )}
+
+            {/* Class & Section */}
+            <div className="grid grid-cols-2 gap-4">
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Class
+                </label>
+
+                <select
+                  name="classId"
+                  value={newStudent.classId}
+                  onChange={handleClassChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg"
+                >
+                  <option value="">Select Class</option>
+
+                  {classes.map((cls) => (
+                    <option key={cls._id} value={cls._id}>
+                      {cls.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Section
+                </label>
+
+                <select
+                  name="section"
+                  value={newStudent.section}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg"
+                >
+                  <option value="">Select Section</option>
+
+                  {classes.map((cls) => (
+                    <option key={cls._id} value={cls.section}>
+                      {cls.section}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+            </div>
+
+            {/* Room */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Room
+              </label>
+
+              <select
+                name="room"
+                value={newStudent.room}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg"
+              >
+                <option value="">Select Room</option>
+
+                {classes.map((cls) => (
+                  <option key={cls._id} value={cls.room}>
+                    {cls.room}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Roll */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Roll Number
+              </label>
+
+              <input
+                type="text"
+                name="rollNo"
+                value={newStudent.rollNo}
+                onChange={handleInputChange}
+                placeholder="e.g. 101"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full mt-4 bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 dark:hover:bg-blue-500 transition-colors shadow-sm"
+            >
+              {isEditing ? "Save Changes" : "Add Student"}
+            </button>
+
+          </form>
+        ) : (
+
+          /* Bulk Upload */
+
+          <form onSubmit={handleBulkSubmit} className="space-y-6">
+
+            <div className="border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer relative">
+
+              <input
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={handleFileChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+
+              <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mb-3">
+                <Upload size={24} />
+              </div>
+
+              <p className="text-sm font-medium text-slate-900 dark:text-white">
+                {uploadFile ? uploadFile.name : "Click to upload or drag and drop"}
+              </p>
+
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Excel or CSV (max 10MB)
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={!uploadFile}
+              className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 dark:hover:bg-blue-500 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Upload and Process
+            </button>
+
+          </form>
+        )}
+
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Delete Confirmation Alert */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="dark:bg-slate-900 dark:border-slate-700">
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>

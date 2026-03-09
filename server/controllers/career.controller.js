@@ -4,6 +4,7 @@ import Resume from '../models/Resume.js';
 import IssuedCertificate from '../models/IssuedCertificate.js';
 import User from '../models/User.js';
 import Organization from '../models/Organization.js';
+import mongoose from 'mongoose';
 
 /**
  * Calculate placement score based on student activity
@@ -22,6 +23,13 @@ const computeScore = ({ resumeComplete, projectsCount, certificatesCount, github
     if (githubUrl) score += 10;
     if (linkedinUrl) score += 10;
     return Math.min(score, 100);
+};
+
+const normalizeOrganizationId = (organizationId, fallbackOrganizationId) => {
+    if (organizationId && mongoose.Types.ObjectId.isValid(organizationId)) {
+        return organizationId;
+    }
+    return fallbackOrganizationId || null;
 };
 
 /**
@@ -118,10 +126,7 @@ export const getStudentPlacementProfile = async (req, res) => {
         const user = await User.findById(studentId).select('organization');
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-        // Use user's organization if not provided in query
-        if (!organizationId && user.organization) {
-            organizationId = user.organization;
-        }
+        organizationId = normalizeOrganizationId(organizationId, user.organization);
 
         // Compute live metrics
         const [resume, projects, certs] = await Promise.all([
@@ -199,9 +204,7 @@ export const upsertPlacementProfile = async (req, res) => {
         const user = await User.findById(studentId).select('organization');
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-        if (!organizationId && user.organization) {
-            organizationId = user.organization;
-        }
+        organizationId = normalizeOrganizationId(organizationId, user.organization);
 
         // Gather metrics
         const [resume, projects, certs] = await Promise.all([
@@ -237,7 +240,7 @@ export const upsertPlacementProfile = async (req, res) => {
                     updatedAt: new Date()
                 }
             },
-            { upsert: true, new: true, runValidators: true }
+            { upsert: true, returnDocument: 'after', runValidators: true }
         );
 
         res.json({ success: true, profile });

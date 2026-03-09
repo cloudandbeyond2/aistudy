@@ -28,6 +28,7 @@ import {
 import SmallCalendar from '../components/ui/SmallCalendar';
 import { serverURL } from "@/constants";
 import axios from "axios";
+import { useTheme } from '@/contexts/ThemeContext';
 const attendanceData = [
   { name: 'Mon', attendance: 92 },
   { name: 'Tue', attendance: 95 },
@@ -52,6 +53,9 @@ const performanceData = [
 export default function StaffDashboard() {
 const [classes, setClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { theme } = useTheme();
+const isDark = theme === "dark";
+
   useEffect(() => {
     async function fetchClasses() {
       try {
@@ -134,8 +138,10 @@ const [classes, setClasses] = useState<any[]>([]);
       {/* Welcome Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Staff Dashboard</h1>
-          <p className="text-slate-500 mt-1">Overview of your classes and student performance.</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Staff Dashboard</h1>
+<p className="text-slate-500 dark:text-slate-400 mt-1">
+  Overview of your classes and student performance.
+</p>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-slate-600 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
@@ -146,213 +152,363 @@ const [classes, setClasses] = useState<any[]>([]);
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
-            <Users size={24} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">Total Students</p>
-            <h3 className="text-2xl font-bold text-slate-900"> {isLoading ? "Loading..." : students.length}</h3>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+       <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+  <div className="p-3 bg-indigo-50 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 rounded-xl">
+    <Users size={24} />
+  </div>
+  <div>
+    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+      Total Students
+    </p>
+    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+      {students.length}
+    </h3>
+  </div>
+</div>
+           <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+  <div className="p-3 bg-indigo-50 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 rounded-xl">
             <CheckCircle2 size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Avg Attendance</p>
-            <h3 className="text-2xl font-bold text-slate-900">92%</h3>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg Attendance</p>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">92%</h3>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+  <div className="p-3 bg-indigo-50 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 rounded-xl">
             <Clock size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Classes Today</p>
-            <h3 className="text-2xl font-bold text-slate-900">  {loading ? "..." : classes.length}</h3>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Classes Today</p>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">  {loading ? "..." : classes.length}</h3>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-rose-50 text-rose-600 rounded-xl">
+         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+  <div className="p-3 bg-indigo-50 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 rounded-xl">
             <AlertCircle size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Pending Grades</p>
-            <h3 className="text-2xl font-bold text-slate-900">12</h3>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pending Grades</p>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">12</h3>
           </div>
         </div>
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Weekly Attendance Chart */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm lg:col-span-2">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <TrendingUp size={20} className="text-blue-600" />
-              Weekly Attendance Trend
-            </h3>
-            <select className="text-sm border-gray-200 rounded-lg text-gray-600 focus:ring-blue-500 focus:border-blue-500">
-              <option>This Week</option>
-              <option>Last Week</option>
-            </select>
-          </div>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={attendanceData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #E5E7EB', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                  itemStyle={{ color: '#1F2937', fontWeight: 600 }}
-                />
-                <Line type="monotone" dataKey="attendance" stroke="#2563EB" strokeWidth={3} dot={{ r: 4, fill: '#2563EB', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+{/* Charts Section */}
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* Performance Distribution */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-6">Student Performance</h3>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={performanceData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {performanceData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend verticalAlign="bottom" height={36} iconType="circle" />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
+  {/* Weekly Attendance Chart */}
+  <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm lg:col-span-2">
+
+    <div className="flex items-center justify-between mb-6">
+      <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <TrendingUp size={20} className="text-blue-600" />
+        Weekly Attendance Trend
+      </h3>
+
+      <select className="text-sm border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+        <option>This Week</option>
+        <option>Last Week</option>
+      </select>
+    </div>
+
+    <div className="h-64 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={attendanceData}>
+
+          <CartesianGrid
+            strokeDasharray="3 3"
+            vertical={false}
+            stroke="#E5E7EB"
+            className="dark:stroke-slate-700"
+          />
+
+          <XAxis
+            dataKey="name"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: '#6B7280', fontSize: 12 }}
+            dy={10}
+          />
+
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: '#6B7280', fontSize: 12 }}
+          />
+
+          <Tooltip
+            contentStyle={{
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              border: '1px solid #E5E7EB'
+            }}
+          />
+
+          <Line
+            type="monotone"
+            dataKey="attendance"
+            stroke="#2563EB"
+            strokeWidth={3}
+            dot={{ r: 4 }}
+            activeDot={{ r: 6 }}
+          />
+
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  </div>
+
+  {/* Performance Distribution */}
+  <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
+
+    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">
+      Student Performance
+    </h3>
+
+    <div className="h-64 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+
+          <Pie
+            data={performanceData}
+            cx="50%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={80}
+            paddingAngle={5}
+            dataKey="value"
+          >
+            {performanceData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Pie>
+
+          <Tooltip />
+
+          <Legend
+            verticalAlign="bottom"
+            height={36}
+            iconType="circle"
+          />
+
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+
+  </div>
+</div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* My Classes & Assignments */}
         <div className="lg:col-span-2 space-y-8">
           {/* Assignment Completion Chart */}
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <h3 className="text-lg font-bold text-slate-900 mb-6">Assignment Completion Rate</h3>
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={assignmentData} barSize={40}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} />
-                  <Tooltip cursor={{fill: '#F3F4F6'}} />
-                  <Bar dataKey="submitted" name="Submitted" stackId="a" fill="#4F46E5" radius={[0, 0, 4, 4]} />
-                  <Bar dataKey="total" name="Total Students" stackId="b" fill="#E5E7EB" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+       <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
+  
+  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">
+    Assignment Completion Rate
+  </h3>
+
+  <div className="h-64 w-full">
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={assignmentData} barSize={40}>
+
+        <CartesianGrid
+          strokeDasharray="3 3"
+          vertical={false}
+          stroke={isDark ? "#334155" : "#E5E7EB"}
+        />
+
+        <XAxis
+          dataKey="name"
+          axisLine={false}
+          tickLine={false}
+          dy={10}
+          tick={{
+            fill: isDark ? "#CBD5F5" : "#6B7280",
+            fontSize: 12
+          }}
+        />
+
+        <YAxis
+          axisLine={false}
+          tickLine={false}
+          tick={{
+            fill: isDark ? "#CBD5F5" : "#6B7280",
+            fontSize: 12
+          }}
+        />
+
+        <Tooltip
+          cursor={{ fill: isDark ? "#1E293B" : "#F3F4F6" }}
+          contentStyle={{
+            backgroundColor: isDark ? "#0F172A" : "#FFFFFF",
+            border: `1px solid ${isDark ? "#334155" : "#E5E7EB"}`,
+            borderRadius: "8px"
+          }}
+        />
+
+        <Bar
+          dataKey="submitted"
+          name="Submitted"
+          stackId="a"
+          fill="#4F46E5"
+          radius={[0, 0, 4, 4]}
+        />
+
+        <Bar
+          dataKey="total"
+          name="Total Students"
+          stackId="b"
+          fill={isDark ? "#334155" : "#E5E7EB"}
+          radius={[4, 4, 0, 0]}
+        />
+
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+</div>
 
           {/* Class List */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-900">My Classes</h2>
-              <div className="flex gap-2">
-                 <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                   <Search size={18} />
-                 </button>
-                 <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                   <Filter size={18} />
-                 </button>
-              </div>
+       {/* Class List */}
+<div>
+  <div className="flex items-center justify-between mb-4">
+    <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+      My Classes
+    </h2>
+
+    <div className="flex gap-2">
+      <button className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+        <Search size={18} />
+      </button>
+
+      <button className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+        <Filter size={18} />
+      </button>
+    </div>
+  </div>
+
+  <div className="grid gap-4">
+    {classes.map((cls) => (
+      <div
+        key={cls._id}
+        className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
+      >
+        <div className="flex justify-between items-start">
+          <div className="flex gap-4">
+            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+              {cls.name.charAt(0)}
             </div>
 
-            <div className="grid gap-4">
-              {classes.map((cls) => (
-                <div key={cls._id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
-                  <div className="flex justify-between items-start">
-                    <div className="flex gap-4">
-                      <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
-                        {cls.name.charAt(0)}
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{cls.name}</h3>
-                        <p className="text-sm text-gray-500">{cls.section}</p>
-                      </div>
-                    </div>
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <MoreVertical size={20} />
-                    </button>
-                  </div>
-                  
-                  <div className="mt-4 flex items-center gap-6 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <Users size={16} className="text-gray-400" />
-                         {isLoading
-  ? "Loading..."
-  : `${getStudentCount(cls.name, cls.section)} Students`}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CalendarIcon size={16} className="text-gray-400" />
-                      {cls.time}
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                {cls.name}
+              </h3>
+
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {cls.section}
+              </p>
             </div>
-            
           </div>
+
+          <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+            <MoreVertical size={20} />
+          </button>
+        </div>
+
+        <div className="mt-4 flex items-center gap-6 text-sm text-gray-600 dark:text-gray-300">
+          <div className="flex items-center gap-2">
+            <Users size={16} className="text-gray-400 dark:text-gray-500" />
+            {isLoading
+              ? "Loading..."
+              : `${getStudentCount(cls.name, cls.section)} Students`}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <CalendarIcon size={16} className="text-gray-400 dark:text-gray-500" />
+            {cls.time}
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
         </div>
 
         {/* Schedule / Sidebar */}
         <div className="space-y-6">
-          <SmallCalendar />
+  <SmallCalendar />
 
-          <h2 className="text-lg font-bold text-slate-900">Today's Schedule</h2>
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
-             <div className="relative pl-6 border-l-2 border-gray-200 space-y-8">
-                <div className="relative">
-                   <div className="absolute -left-[29px] top-1 w-3 h-3 rounded-full bg-blue-600 ring-4 ring-white"></div>
-                   <p className="text-xs font-semibold text-blue-600 mb-1">10:00 AM - 11:30 AM</p>
-                   <h4 className="font-bold text-slate-900 text-sm">Computer Science 101</h4>
-                   <p className="text-xs text-gray-500">Room 304 • Section A</p>
-                </div>
-                <div className="relative">
-                   <div className="absolute -left-[29px] top-1 w-3 h-3 rounded-full bg-amber-500 ring-4 ring-white"></div>
-                   <p className="text-xs font-semibold text-amber-600 mb-1">12:00 PM - 1:00 PM</p>
-                   <h4 className="font-bold text-slate-900 text-sm">Lunch Break</h4>
-                   <p className="text-xs text-gray-500">Staff Cafeteria</p>
-                </div>
-                <div className="relative">
-                   <div className="absolute -left-[29px] top-1 w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-white"></div>
-                   <p className="text-xs font-semibold text-emerald-600 mb-1">2:00 PM - 3:30 PM</p>
-                   <h4 className="font-bold text-slate-900 text-sm">Data Structures</h4>
-                   <p className="text-xs text-gray-500">Lab 2 • Section B</p>
-                </div>
-             </div>
-          </div>
+  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+    Today's Schedule
+  </h2>
 
-          <div className="bg-blue-50 p-5 rounded-xl border border-blue-100">
-             <h3 className="font-bold text-blue-900 mb-2">Quick Actions</h3>
-             <div className="space-y-2">
-                <button className="w-full bg-white hover:bg-blue-100 text-blue-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors text-left border border-blue-200">
-                   Post Announcement
-                </button>
-                <button className="w-full bg-white hover:bg-blue-100 text-blue-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors text-left border border-blue-200">
-                   Upload Material
-                </button>
-             </div>
-          </div>
-        </div>
+  <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm space-y-6">
+    <div className="relative pl-6 border-l-2 border-gray-200 dark:border-slate-700 space-y-8">
+
+      {/* Class */}
+      <div className="relative">
+        <div className="absolute -left-[29px] top-1 w-3 h-3 rounded-full bg-blue-600 ring-4 ring-white dark:ring-slate-900"></div>
+        <p className="text-xs font-semibold text-blue-600 mb-1">
+          10:00 AM - 11:30 AM
+        </p>
+        <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+          Computer Science 101
+        </h4>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Room 304 • Section A
+        </p>
+      </div>
+
+      {/* Lunch */}
+      <div className="relative">
+        <div className="absolute -left-[29px] top-1 w-3 h-3 rounded-full bg-amber-500 ring-4 ring-white dark:ring-slate-900"></div>
+        <p className="text-xs font-semibold text-amber-600 mb-1">
+          12:00 PM - 1:00 PM
+        </p>
+        <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+          Lunch Break
+        </h4>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Staff Cafeteria
+        </p>
+      </div>
+
+      {/* Data Structures */}
+      <div className="relative">
+        <div className="absolute -left-[29px] top-1 w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-white dark:ring-slate-900"></div>
+        <p className="text-xs font-semibold text-emerald-600 mb-1">
+          2:00 PM - 3:30 PM
+        </p>
+        <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+          Data Structures
+        </h4>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Lab 2 • Section B
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  {/* Quick Actions */}
+  <div className="bg-blue-50 dark:bg-slate-900 p-5 rounded-xl border border-blue-100 dark:border-slate-700">
+    <h3 className="font-bold text-blue-900 dark:text-blue-400 mb-2">
+      Quick Actions
+    </h3>
+
+    <div className="space-y-2">
+      <button className="w-full bg-white dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-slate-700 text-blue-700 dark:text-blue-400 py-2 px-4 rounded-lg text-sm font-medium transition-colors text-left border border-blue-200 dark:border-slate-700">
+        Post Announcement
+      </button>
+
+      <button className="w-full bg-white dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-slate-700 text-blue-700 dark:text-blue-400 py-2 px-4 rounded-lg text-sm font-medium transition-colors text-left border border-blue-200 dark:border-slate-700">
+        Upload Material
+      </button>
+    </div>
+  </div>
+</div>
       </div>
     </div>
   );
