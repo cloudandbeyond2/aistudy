@@ -192,241 +192,246 @@ export default function StaffSchedule() {
     return "";
   };
 
-  return (
-    <div className="max-w-7xl mx-auto space-y-6">
+return (
+  <div className="max-w-7xl mx-auto space-y-6">
 
-      {/* HEADER */}
+    {/* HEADER */}
 
-      <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between">
 
-        <div>
-          <h1 className="text-2xl font-bold">Weekly Schedule</h1>
-          <p className="text-gray-500 text-sm">
-            View your classes and meetings for the week.
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Weekly Schedule
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">
+          View your classes and meetings for the week.
+        </p>
+      </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg"
-        >
-          <Plus size={18} />
-          Add Schedule
-        </button>
+      <button
+        onClick={() => setIsModalOpen(true)}
+        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 text-white px-4 py-2 rounded-lg"
+      >
+        <Plus size={18} />
+        Add Schedule
+      </button>
+
+    </div>
+
+    {/* WEEK NAVIGATION */}
+
+    <div className="flex items-center justify-end">
+
+      <div className="flex items-center gap-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow px-4 py-2 rounded-lg">
+
+        <ChevronLeft
+          className="cursor-pointer text-gray-600 dark:text-gray-300"
+          onClick={handlePrevWeek}
+        />
+
+        <CalendarIcon size={18} className="text-gray-600 dark:text-gray-300" />
+
+        <span className="font-medium text-sm text-gray-700 dark:text-gray-300">
+          Week View
+        </span>
+
+        <ChevronRight
+          className="cursor-pointer text-gray-600 dark:text-gray-300"
+          onClick={handleNextWeek}
+        />
 
       </div>
 
-      {/* WEEK NAVIGATION */}
+    </div>
 
-      <div className="flex items-center justify-end">
+    {/* DAY CARDS */}
 
-        <div className="flex items-center gap-4 bg-white shadow px-4 py-2 rounded-lg">
+    <div className="grid grid-cols-5 gap-4">
 
-          <ChevronLeft
-            className="cursor-pointer"
-            onClick={handlePrevWeek}
-          />
+      {weekDates.map((day, index) => {
 
-          <CalendarIcon size={18} />
+        const classes = getDaySchedule(day.dayName);
 
-          <span className="font-medium text-sm">
-            Week View
-          </span>
+        return (
+          <div key={index}>
 
-          <ChevronRight
-            className="cursor-pointer"
-            onClick={handleNextWeek}
-          />
+            {/* DAY HEADER */}
 
-        </div>
+            <div
+              className={`text-center p-3 rounded-xl mb-4 font-semibold
+              ${
+                day.isToday
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200"
+              }`}
+            >
+              <p className="text-sm">{day.dayName}</p>
+              <p className="text-xl">{day.date}</p>
+            </div>
 
-      </div>
+            {/* CLASSES */}
 
-      {/* DAY CARDS */}
-
-      <div className="grid grid-cols-5 gap-4">
-
-        {weekDates.map((day, index) => {
-
-          const classes = getDaySchedule(day.dayName);
-
-          return (
-            <div key={index}>
-
-              {/* DAY HEADER */}
+            {classes.map((cls) => (
 
               <div
-                className={`text-center p-3 rounded-xl mb-4 font-semibold
-                ${day.isToday
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-700"
-                  }`}
+                key={cls._id}
+                className={`p-4 mb-4 rounded-xl border-l-4 shadow-sm bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700
+                ${getTypeStyle(cls.type)}`}
               >
-                <p className="text-sm">{day.dayName}</p>
-                <p className="text-xl">{day.date}</p>
-              </div>
 
-              {/* CLASSES */}
+                <span className="text-xs px-2 py-1 rounded font-semibold bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300">
+                  {cls.type.toUpperCase()}
+                </span>
 
-              {classes.map((cls) => (
+                <h4 className="font-semibold mt-2 text-slate-900 dark:text-white">
+                  {cls.name}
+                </h4>
 
-                <div
-                  key={cls._id}
-                  className={`p-4 mb-4 rounded-xl border-l-4 shadow-sm bg-white
-                  ${getTypeStyle(cls.type)}`}
-                >
+                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <Clock size={14} />
+                  {cls.startTime} - {cls.endTime}
+                </div>
 
-                  <span
-                    className={`text-xs px-2 py-1 rounded font-semibold`}
+                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                  <MapPin size={14} />
+                  {cls.room}
+                </div>
+
+                <div className="flex gap-3 mt-3">
+
+                  <button
+                    onClick={() => handleEdit(cls)}
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700"
                   >
-                    {cls.type.toUpperCase()}
-                  </span>
+                    <Edit size={16} />
+                  </button>
 
-                  <h4 className="font-semibold mt-2">
-                    {cls.name}
-                  </h4>
-
-                  <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                    <Clock size={14} />
-                    {cls.startTime} - {cls.endTime}
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <MapPin size={14} />
-                    {cls.room}
-                  </div>
-
-                  <div className="flex gap-3 mt-3">
-
-                    <button
-                      onClick={() => handleEdit(cls)}
-                      className="text-blue-600"
-                    >
-                      <Edit size={16} />
-                    </button>
-
-                    <button
-                      onClick={() => handleDelete(cls._id!)}
-                      className="text-red-600"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-
-                  </div>
+                  <button
+                    onClick={() => handleDelete(cls._id)}
+                    className="text-red-600 dark:text-red-400 hover:text-red-700"
+                  >
+                    <Trash2 size={16} />
+                  </button>
 
                 </div>
-
-              ))}
-
-              {classes.length === 0 && (
-                <div className="text-gray-400 text-sm">
-                  No classes
-                </div>
-              )}
-
-            </div>
-          );
-        })}
-
-      </div>
-
-      {/* MODAL */}
-
-      {isModalOpen && (
-
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-
-          <div className="bg-white rounded-xl p-6 w-[400px]">
-
-            <div className="flex justify-between mb-4">
-
-              <h3 className="font-bold">
-                {editId ? "Edit Schedule" : "Add Schedule"}
-              </h3>
-
-              <button onClick={() => setIsModalOpen(false)}>
-                <X />
-              </button>
-
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-3">
-
-              <select
-                name="day"
-                value={newItem.day}
-                onChange={handleInputChange}
-                className="w-full border p-2 rounded"
-              >
-                <option>Monday</option>
-                <option>Tuesday</option>
-                <option>Wednesday</option>
-                <option>Thursday</option>
-                <option>Friday</option>
-              </select>
-
-              <input
-                name="name"
-                value={newItem.name}
-                onChange={handleInputChange}
-                placeholder="Event Name"
-                className="w-full border p-2 rounded"
-              />
-
-              <div className="grid grid-cols-2 gap-3">
-
-                <input
-                  type="time"
-                  name="startTime"
-                  value={newItem.startTime}
-                  onChange={handleInputChange}
-                  className="border p-2 rounded"
-                />
-
-                <input
-                  type="time"
-                  name="endTime"
-                  value={newItem.endTime}
-                  onChange={handleInputChange}
-                  className="border p-2 rounded"
-                />
 
               </div>
 
-              <input
-                name="room"
-                value={newItem.room}
-                onChange={handleInputChange}
-                placeholder="Room"
-                className="w-full border p-2 rounded"
-              />
+            ))}
 
-              <select
-                name="type"
-                value={newItem.type}
-                onChange={handleInputChange}
-                className="w-full border p-2 rounded"
-              >
-                <option>Lecture</option>
-                <option>Lab</option>
-                <option>Meeting</option>
-                <option>Workshop</option>
-              </select>
+            {classes.length === 0 && (
+              <div className="text-gray-400 dark:text-gray-500 text-sm">
+                No classes
+              </div>
+            )}
 
-              <button
-                type="submit"
-                className="w-full bg-blue-600 text-white py-2 rounded"
-              >
-                {editId ? "Update Schedule" : "Add Schedule"}
-              </button>
+          </div>
+        );
+      })}
 
-            </form>
+    </div>
+
+    {/* MODAL */}
+
+    {isModalOpen && (
+
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+
+        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-6 w-[400px]">
+
+          <div className="flex justify-between mb-4">
+
+            <h3 className="font-bold text-slate-900 dark:text-white">
+              {editId ? "Edit Schedule" : "Add Schedule"}
+            </h3>
+
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white"
+            >
+              <X />
+            </button>
 
           </div>
 
-        </div>
-      )}
+          <form onSubmit={handleSubmit} className="space-y-3">
 
-    </div>
-  );
+            <select
+              name="day"
+              value={newItem.day}
+              onChange={handleInputChange}
+              className="w-full border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-white p-2 rounded"
+            >
+              <option>Monday</option>
+              <option>Tuesday</option>
+              <option>Wednesday</option>
+              <option>Thursday</option>
+              <option>Friday</option>
+            </select>
+
+            <input
+              name="name"
+              value={newItem.name}
+              onChange={handleInputChange}
+              placeholder="Event Name"
+              className="w-full border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-white p-2 rounded"
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+
+              <input
+                type="time"
+                name="startTime"
+                value={newItem.startTime}
+                onChange={handleInputChange}
+                className="border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-white p-2 rounded"
+              />
+
+              <input
+                type="time"
+                name="endTime"
+                value={newItem.endTime}
+                onChange={handleInputChange}
+                className="border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-white p-2 rounded"
+              />
+
+            </div>
+
+            <input
+              name="room"
+              value={newItem.room}
+              onChange={handleInputChange}
+              placeholder="Room"
+              className="w-full border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-white p-2 rounded"
+            />
+
+            <select
+              name="type"
+              value={newItem.type}
+              onChange={handleInputChange}
+              className="w-full border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-white p-2 rounded"
+            >
+              <option>Lecture</option>
+              <option>Lab</option>
+              <option>Meeting</option>
+              <option>Workshop</option>
+            </select>
+
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 text-white py-2 rounded"
+            >
+              {editId ? "Update Schedule" : "Add Schedule"}
+            </button>
+
+          </form>
+
+        </div>
+
+      </div>
+
+    )}
+
+  </div>
+);
 }

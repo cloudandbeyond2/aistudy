@@ -155,178 +155,202 @@ export default function StaffAnnouncements() {
     });
   };
 
-  return (
-    <div className="max-w-4xl mx-auto space-y-8">
+return (
+  <div className="max-w-4xl mx-auto space-y-8">
 
-      {/* HEADER */}
+    {/* HEADER */}
 
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Announcements</h1>
-          <p className="text-gray-500">Post updates for students</p>
-        </div>
-
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg"
-        >
-          <Plus size={18} />
-          New Announcement
-        </button>
+    <div className="flex justify-between items-center">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Announcements
+        </h1>
+        <p className="text-gray-500 dark:text-slate-400">
+          Post updates for students
+        </p>
       </div>
 
-      {/* ANNOUNCEMENT LIST */}
+      <button
+        onClick={() => setIsModalOpen(true)}
+        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+      >
+        <Plus size={18} />
+        New Announcement
+      </button>
+    </div>
 
-      <div className="space-y-6">
-        {announcements.map((item) => (
+    {/* ANNOUNCEMENT LIST */}
 
-          <div
-            key={item._id}
-            className={`bg-white p-6 rounded-xl border shadow ${
-              item.pinned ? "border-blue-200" : "border-gray-200"
-            }`}
-          >
+    <div className="space-y-6">
+      {announcements.map((item) => (
 
-            <div className="flex justify-between items-start mb-4">
+        <div
+          key={item._id}
+          className={`p-6 rounded-xl border shadow transition
+          bg-white dark:bg-slate-900
+          ${item.pinned
+            ? "border-blue-200 dark:border-blue-700"
+            : "border-gray-200 dark:border-slate-700"
+          }`}
+        >
 
-              <div className="flex items-center gap-3">
+          <div className="flex justify-between items-start mb-4">
 
-                <div className="p-2 bg-gray-100 rounded-lg">
-                  {item.pinned ? (
-                    <Pin size={18} />
-                  ) : (
-                    <Megaphone size={18} />
-                  )}
-                </div>
+            <div className="flex items-center gap-3">
 
-                <div>
-                  <h3 className="font-bold text-lg">{item.title}</h3>
-                  <p className="text-xs text-gray-500">
-                    To: {item.target}
-                  </p>
-                </div>
-
+              <div className="p-2 bg-gray-100 dark:bg-slate-800 rounded-lg">
+                {item.pinned ? (
+                  <Pin size={18} className="text-blue-600" />
+                ) : (
+                  <Megaphone size={18} className="text-slate-600 dark:text-slate-300" />
+                )}
               </div>
 
-              <span className="text-sm text-gray-500 flex items-center gap-1">
-                <Calendar size={14} />
-                {new Date(item.createdAt).toLocaleDateString()}
-              </span>
-
-            </div>
-
-            <p className="text-gray-600 mb-6">{item.content}</p>
-
-            <div className="flex justify-between items-center">
-
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <User size={16} />
-                {item.author}
-              </div>
-
-              <div className="flex gap-3">
-
-                <button
-                  onClick={() => handleEditClick(item)}
-                  className="text-blue-600"
-                >
-                  Edit
-                </button>
-
-                <button
-                  onClick={() => handleDeleteClick(item._id)}
-                  className="text-red-600"
-                >
-                  Delete
-                </button>
-
+              <div>
+                <h3 className="font-bold text-lg text-slate-900 dark:text-white">
+                  {item.title}
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-slate-400">
+                  To: {item.target}
+                </p>
               </div>
 
             </div>
+
+            <span className="text-sm text-gray-500 dark:text-slate-400 flex items-center gap-1">
+              <Calendar size={14} />
+              {new Date(item.createdAt).toLocaleDateString()}
+            </span>
 
           </div>
-        ))}
-      </div>
 
-      {/* MODAL */}
+          <p className="text-gray-600 dark:text-slate-300 mb-6">
+            {item.content}
+          </p>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50">
+          <div className="flex justify-between items-center">
 
-          <div className="bg-white p-6 rounded-xl w-full max-w-lg">
+            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
+              <User size={16} />
+              {item.author}
+            </div>
 
-            <div className="flex justify-between mb-4">
+            <div className="flex gap-4">
 
-              <h3 className="text-lg font-bold">
-                {editingId ? "Edit Announcement" : "Create Announcement"}
-              </h3>
+              <button
+                onClick={() => handleEditClick(item)}
+                className="text-blue-600 hover:underline"
+              >
+                Edit
+              </button>
 
-              <button onClick={handleModalClose}>
-                <X />
+              <button
+                onClick={() => handleDeleteClick(item._id)}
+                className="text-red-600 hover:underline"
+              >
+                Delete
               </button>
 
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+          </div>
+
+        </div>
+      ))}
+    </div>
+
+    {/* MODAL */}
+
+    {isModalOpen && (
+      <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl w-full max-w-lg border border-gray-200 dark:border-slate-700">
+
+          <div className="flex justify-between mb-4">
+
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              {editingId ? "Edit Announcement" : "Create Announcement"}
+            </h3>
+
+            <button
+              onClick={handleModalClose}
+              className="text-gray-500 dark:text-slate-400 hover:text-black dark:hover:text-white"
+            >
+              <X />
+            </button>
+
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+
+            <input
+              type="text"
+              name="title"
+              required
+              value={newAnnouncement.title}
+              onChange={handleInputChange}
+              placeholder="Title"
+              className="w-full border px-3 py-2 rounded
+              bg-white dark:bg-slate-800
+              text-slate-900 dark:text-white
+              border-gray-300 dark:border-slate-700
+              focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            <select
+              name="target"
+              required
+              value={newAnnouncement.target}
+              onChange={handleInputChange}
+              className="w-full border px-3 py-2 rounded
+              bg-white dark:bg-slate-800
+              text-slate-900 dark:text-white
+              border-gray-300 dark:border-slate-700"
+            >
+              <option value="">Select Audience</option>
+              <option value="All Students">All Students</option>
+              <option value="CS 101">CS 101</option>
+              <option value="Data Structures">Data Structures</option>
+            </select>
+
+            <textarea
+              name="content"
+              required
+              rows={4}
+              value={newAnnouncement.content}
+              onChange={handleInputChange}
+              placeholder="Announcement content"
+              className="w-full border px-3 py-2 rounded
+              bg-white dark:bg-slate-800
+              text-slate-900 dark:text-white
+              border-gray-300 dark:border-slate-700"
+            />
+
+            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
 
               <input
-                type="text"
-                name="title"
-                required
-                value={newAnnouncement.title}
-                onChange={handleInputChange}
-                placeholder="Title"
-                className="w-full border px-3 py-2 rounded"
+                type="checkbox"
+                name="pinned"
+                checked={newAnnouncement.pinned}
+                onChange={handleCheckboxChange}
               />
 
-              <select
-                name="target"
-                required
-                value={newAnnouncement.target}
-                onChange={handleInputChange}
-                className="w-full border px-3 py-2 rounded"
-              >
-                <option value="">Select Audience</option>
-                <option value="All Students">All Students</option>
-                <option value="CS 101">CS 101</option>
-                <option value="Data Structures">Data Structures</option>
-              </select>
+              <label>Pin Announcement</label>
 
-              <textarea
-                name="content"
-                required
-                rows={4}
-                value={newAnnouncement.content}
-                onChange={handleInputChange}
-                placeholder="Announcement content"
-                className="w-full border px-3 py-2 rounded"
-              />
+            </div>
 
-              <div className="flex items-center gap-2">
+            <button
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition"
+            >
+              {editingId ? "Update Announcement" : "Post Announcement"}
+            </button>
 
-                <input
-                  type="checkbox"
-                  name="pinned"
-                  checked={newAnnouncement.pinned}
-                  onChange={handleCheckboxChange}
-                />
-
-                <label>Pin Announcement</label>
-
-              </div>
-
-              <button className="w-full bg-blue-600 text-white py-2 rounded">
-
-                {editingId ? "Update Announcement" : "Post Announcement"}
-
-              </button>
-
-            </form>
-
-          </div>
+          </form>
 
         </div>
-      )}
-    </div>
-  );
+
+      </div>
+    )}
+  </div>
+);
 }
