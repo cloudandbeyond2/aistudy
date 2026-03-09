@@ -35,12 +35,6 @@ const userSchema = new mongoose.Schema({
   userType: { type: String, enum: ['individual', 'organization'], default: 'individual' },
   profession: { type: String, default: null },
   experienceLevel: { type: String, default: 'beginner' },
-  // studentDetails: {
-  //   department: String,
-  //   section: String,
-  //   studentClass: String,
-  //   rollNo: String
-  // },
   studentDetails: {
   department: String,
   section: String,

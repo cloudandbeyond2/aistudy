@@ -1,8 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, CheckCircle2, XCircle, Clock, MapPin } from 'lucide-react';
 import SEO from '@/components/SEO';
+import axios from 'axios';
+import { serverURL } from '@/constants';
 
 export default function StudentAttendance() {
+
+  const [studentInfo, setStudentInfo] = useState<any>(null);
+  const [classes, setClasses] = useState<any[]>([]);
+  const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
+  const [classEnded, setClassEnded] = useState(false);
+  const [attendanceMarked, setAttendanceMarked] = useState(false);
+
+  const studentId = sessionStorage.getItem('uid');
+
   const [stats, setStats] = useState({
     present: 42,
     absent: 3,
@@ -11,115 +22,222 @@ export default function StudentAttendance() {
     percentage: 94
   });
 
-  const [recentAttendance, setRecentAttendance] = useState([
-    { id: 1, date: 'Mar 05, 2026', class: 'CS 101', status: 'Present', time: '09:00 AM' },
-    { id: 2, date: 'Mar 04, 2026', class: 'Data Structures', status: 'Present', time: '11:00 AM' },
-    { id: 3, date: 'Mar 03, 2026', class: 'Web Dev', status: 'Late', time: '02:15 PM' },
-    { id: 4, date: 'Mar 02, 2026', class: 'CS 101', status: 'Absent', time: '-' },
-    { id: 5, date: 'Feb 28, 2026', class: 'Data Structures', status: 'Present', time: '11:00 AM' },
-  ]);
-
-  const [todaysClass, setTodaysClass] = useState({
-    id: 101,
-    name: 'Advanced AI Systems',
-    time: '02:00 PM - 03:30 PM',
-    room: 'Lab 304',
-    status: 'Pending' // Pending, Present, Late
+  const [todaysClass, setTodaysClass] = useState<any>({
+    id: '',
+    name: '',
+    time: '',
+    room: '',
+    status: 'Pending'
   });
 
-  const handleAttendance = (status: 'Present' | 'Late') => {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    const dateString = now.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+  // Fetch student info and classes on load
+  useEffect(() => {
+    if (studentId) {
+      fetchStudentInfo();
+      fetchClasses();
+    }
+  }, [studentId]);
 
-    // Update Today's Class Status
-    setTodaysClass(prev => ({ ...prev, status }));
+  // Fetch classes from server
+  const fetchClasses = async () => {
+    try {
+      const res = await axios.get(`${serverURL}/api/classes`);
+      if (!res.data.success) return;
 
-    // Add to History
-    const newRecord = {
-      id: Date.now(),
-      date: dateString,
-      class: todaysClass.name,
-      status: status,
-      time: timeString
-    };
-    setRecentAttendance(prev => [newRecord, ...prev]);
+      const classList = res.data.data || [];
+      setClasses(classList);
 
-    // Update Stats
-    setStats(prev => {
-      const newStats = { ...prev };
-      if (status === 'Present') newStats.present++;
-      if (status === 'Late') newStats.late++;
-      newStats.total++;
-      newStats.percentage = Math.round(((newStats.present + (newStats.late * 0.5)) / newStats.total) * 100);
-      return newStats;
-    });
+      const now = new Date();
+      const today = now.toISOString().split("T")[0];
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+      // Find today's class in progress
+      const todays = classList.find((cls: any) => {
+        if (!cls.date) return false;
+        const classDate = cls.date.split("T")[0];
+        const [sh, sm] = cls.startTime.split(":").map(Number);
+        const [eh, em] = cls.endTime.split(":").map(Number);
+        const startMinutes = sh * 60 + sm;
+        const endMinutes = eh * 60 + em;
+        return classDate === today && currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+      });
+
+      if (todays) {
+        setTodaysClass({
+          id: todays._id,
+          name: todays.name,
+          time: `${todays.startTime} - ${todays.endTime}`,
+          room: todays.room,
+          status: "Pending"
+        });
+
+        setClassEnded(false);
+
+        // ✅ Check if already marked from server
+        checkAttendance(studentId!, todays._id);
+      } else {
+        setTodaysClass({ id: '', name: '', time: '', room: '', status: 'Pending' });
+        setClassEnded(false);
+      }
+
+      // Build recent attendance history
+      const history = classList.map((cls: any) => ({
+        id: cls._id,
+        date: cls.date ? cls.date.split("T")[0] : "",
+        class: cls.name,
+        status: cls.attendance?.find((r: any) => r.studentId === studentId)?.status || "Pending",
+        time: `${cls.startTime} - ${cls.endTime}`
+      }));
+
+      setRecentAttendance(history);
+
+    } catch (error) {
+      console.error("Error fetching classes:", error);
+    }
+  };
+
+  // Fetch student info
+  const fetchStudentInfo = async () => {
+    try {
+      const res = await axios.get(`${serverURL}/api/user/${studentId}`);
+      if (res.data.success) setStudentInfo(res.data.user);
+    } catch (error) {
+      console.error("Error fetching student:", error);
+    }
+  };
+
+  // Check if student already marked attendance
+  const checkAttendance = async (studentId: string, classId: string) => {
+    try {
+      const res = await axios.get(`${serverURL}/api/attendance/check`, {
+        params: { studentId, classId }
+      });
+
+      if (res.data.success && res.data.marked) {
+        setAttendanceMarked(true);
+        setTodaysClass((prev: any) => ({ ...prev, status: res.data.status }));
+
+        // ✅ Update Recent History
+        setRecentAttendance(prev => 
+          prev.map(record => 
+            record.id === classId ? { ...record, status: res.data.status } : record
+          )
+        );
+      }
+
+    } catch (err) {
+      console.error("Error checking attendance", err);
+    }
+  };
+
+  // Handle marking attendance
+  const handleAttendance = async () => {
+    try {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+      
+      // Get class start time
+      const startTimeStr = todaysClass.time.split(" - ")[0];
+      const [sh, sm] = startTimeStr.split(":").map(Number);
+      
+      // Create date objects for comparison
+      const classStartTime = new Date();
+      classStartTime.setHours(sh, sm, 0);
+      
+      const currentTime = new Date();
+      
+      // Calculate difference in minutes
+      const diffMinutes = (currentTime.getTime() - classStartTime.getTime()) / (1000 * 60);
+      
+      // Determine status based on time difference
+      let status: "Present" | "Late";
+      if (diffMinutes <= 15) {
+        status = "Present";
+      } else {
+        status = "Late";
+      }
+
+      const res = await axios.post(`${serverURL}/api/attendance/mark`, {
+        studentId,
+        classId: todaysClass.id,
+        status,
+        time: timeString
+      });
+
+      if (res.data.success) {
+        setAttendanceMarked(true);
+        setTodaysClass((prev: any) => ({ ...prev, status }));
+
+        // Update Recent History
+        setRecentAttendance(prev => 
+          prev.map(record => 
+            record.id === todaysClass.id ? { ...record, status } : record
+          )
+        );
+
+        // Store in localStorage that attendance is marked
+        localStorage.setItem(`attendance-marked-${studentId}-${todaysClass.id}`, 'true');
+      }
+
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Attendance failed");
+    }
+  };
+
+  // Restore attendance marked state from localStorage on reload
+  useEffect(() => {
+    if (studentId && todaysClass.id) {
+      const marked = localStorage.getItem(`attendance-marked-${studentId}-${todaysClass.id}`);
+      if (marked === 'true') {
+        setAttendanceMarked(true);
+      }
+    }
+  }, [studentId, todaysClass.id]);
+
+  // Check if class ended every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (!todaysClass.time) return;
+
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const end = todaysClass.time.split(" - ")[1];
+      if (!end) return;
+
+      const [eh, em] = end.split(":").map(Number);
+      const endMinutes = eh * 60 + em;
+
+      if (currentMinutes > endMinutes) {
+        setClassEnded(true);
+      }
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, [todaysClass]);
+
+  // Get status badge color
+  const getStatusBadge = (status: string) => {
+    switch(status) {
+      case 'Present':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'Late':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Absent':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
   };
 
   return (
     <div className="container mx-auto py-8 animate-fade-in space-y-8">
       <SEO title="My Attendance" description="Track your attendance record across all classes." />
-      
+
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gradient bg-gradient-to-r from-primary to-purple-600">My Attendance</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gradient bg-gradient-to-r from-primary to-purple-600">
+          My Attendance
+        </h1>
         <p className="text-muted-foreground mt-1">Track your attendance record across all classes.</p>
-      </div>
-
-      {/* Active Class Check-in */}
-      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">Today's Schedule</h2>
-            <span className="text-sm text-muted-foreground">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
-          </div>
-
-          {todaysClass.status === 'Pending' ? (
-            <div className="bg-primary/5 border border-primary/10 rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-1 rounded uppercase tracking-wide animate-pulse">Happening Now</span>
-                  <span className="text-muted-foreground text-sm flex items-center gap-1 font-medium"><Clock size={14} /> {todaysClass.time}</span>
-                </div>
-                <h3 className="text-xl font-bold mb-1">{todaysClass.name}</h3>
-                <p className="text-muted-foreground flex items-center gap-1"><MapPin size={16} /> {todaysClass.room}</p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => handleAttendance('Present')}
-                  className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-sm"
-                >
-                  <CheckCircle2 size={18} />
-                  Mark Present
-                </button>
-                <button
-                  onClick={() => handleAttendance('Late')}
-                  className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-sm"
-                >
-                  <Clock size={18} />
-                  Mark Late
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className={`border rounded-xl p-6 flex items-center gap-4 ${todaysClass.status === 'Present' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20'
-              }`}>
-              <div className={`p-3 rounded-full ${todaysClass.status === 'Present' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'
-                }`}>
-                {todaysClass.status === 'Present' ? <CheckCircle2 size={24} /> : <Clock size={24} />}
-              </div>
-              <div>
-                <h3 className={`text-lg font-bold ${todaysClass.status === 'Present' ? 'text-emerald-700' : 'text-amber-700'
-                  }`}>
-                  Marked as {todaysClass.status}
-                </h3>
-                <p className={`${todaysClass.status === 'Present' ? 'text-emerald-600/80' : 'text-amber-600/80'
-                  }`}>
-                  You have successfully checked in for {todaysClass.name}.
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Stats Cards */}
@@ -166,37 +284,96 @@ export default function StudentAttendance() {
         </div>
       </div>
 
-      {/* Recent Attendance List */}
+      {/* Today's Schedule */}
+      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold">Today's Schedule</h2>
+            <span className="text-sm text-muted-foreground">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </span>
+          </div>
+
+          {todaysClass.name && !classEnded ? (
+            <div className="bg-primary/5 border border-primary/10 rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-1 rounded uppercase tracking-wide animate-pulse">
+                    Happening Now
+                  </span>
+                  <span className="text-muted-foreground text-sm flex items-center gap-1 font-medium">
+                    <Clock size={14} /> {todaysClass.time}
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold mb-1">{todaysClass.name}</h3>
+                <p className="text-muted-foreground flex items-center gap-1">
+                  <MapPin size={16} /> {todaysClass.room}
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                {attendanceMarked ? (
+                  <div className={`px-4 py-2 rounded-lg border ${getStatusBadge(todaysClass.status)}`}>
+                    <span className="font-semibold">Status: {todaysClass.status}</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <div className="text-sm text-muted-foreground">
+                      {(() => {
+                        const startTimeStr = todaysClass.time.split(" - ")[0];
+                        const [sh, sm] = startTimeStr.split(":").map(Number);
+                        const classStartTime = new Date();
+                        classStartTime.setHours(sh, sm, 0);
+                        const currentTime = new Date();
+                        const diffMinutes = 15 - ((currentTime.getTime() - classStartTime.getTime()) / (1000 * 60));
+                        
+                        if (diffMinutes > 0) {
+                          return `⏱️ ${Math.ceil(diffMinutes)} minutes left to mark as Present`;
+                        } else {
+                          return "⚠️ You'll be marked as Late";
+                        }
+                      })()}
+                    </div>
+                    <button
+                      onClick={handleAttendance}
+                      className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg"
+                    >
+                      <CheckCircle2 size={18} />
+                      Mark Attendance
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="p-6 text-center text-muted-foreground">
+              {classEnded ? "Today's class finished" : "No class scheduled today"}
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* Recent History */}
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div className="p-6 border-b border-border flex items-center justify-between">
           <h2 className="text-lg font-bold">Recent History</h2>
-          <button className="text-sm text-primary hover:underline font-medium">View Full Report</button>
         </div>
         <div className="divide-y divide-border">
           {recentAttendance.map((record) => (
-            <div key={record.id} className="p-4 hover:bg-muted/50 transition-colors flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className={`p-2 rounded-full ${record.status === 'Present' ? 'bg-emerald-500/10 text-emerald-600' :
-                  record.status === 'Late' ? 'bg-amber-500/10 text-amber-600' :
-                    'bg-red-500/10 text-red-600'
-                  }`}>
-                  {record.status === 'Present' ? <CheckCircle2 size={16} /> :
-                    record.status === 'Late' ? <Clock size={16} /> :
-                      <XCircle size={16} />}
-                </div>
-                <div>
-                  <h4 className="font-medium">{record.class}</h4>
-                  <p className="text-xs text-muted-foreground">{record.date}</p>
-                </div>
+            <div
+              key={record.id}
+              className="p-4 hover:bg-muted/50 transition-colors flex items-center justify-between"
+            >
+              <div>
+                <h4 className="font-medium">{record.class}</h4>
+                <p className="text-xs text-muted-foreground">{record.date}</p>
               </div>
               <div className="text-right">
-                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-1 ${record.status === 'Present' ? 'bg-emerald-500/10 text-emerald-700' :
-                  record.status === 'Late' ? 'bg-amber-500/10 text-amber-700' :
-                    'bg-red-500/10 text-red-700'
-                  }`}>
+                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(record.status)}`}>
                   {record.status}
                 </span>
-                <p className="text-xs text-muted-foreground/60">{record.time}</p>
+                <p className="text-xs text-muted-foreground mt-1">{record.time}</p>
               </div>
             </div>
           ))}

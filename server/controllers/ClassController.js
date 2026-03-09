@@ -3,27 +3,31 @@ import Class from '../models/ClassModel.js';
 // Create
 export const createClass = async (req, res) => {
   try {
-    const { name, section, time, room } = req.body;
+
+    const { name, section, date, startTime, endTime, room } = req.body;
 
     const newClass = new Class({
       name,
       section,
-      time,
+      date,
+      startTime,
+      endTime,
       room,
-      students: 0,
+      students: 0
     });
 
     const savedClass = await newClass.save();
 
     res.status(201).json({
       success: true,
-      message: 'Class created successfully',
-      data: savedClass,
+      message: "Class created successfully",
+      data: savedClass
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message
     });
   }
 };

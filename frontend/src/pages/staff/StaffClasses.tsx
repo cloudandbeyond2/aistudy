@@ -1,33 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Users, Clock, MoreVertical, Calendar, BookOpen, X } from 'lucide-react';
-import { serverURL } from '@/constants';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Users, Clock, Calendar, BookOpen, X } from "lucide-react";
 import axios from "axios";
+import { serverURL } from "@/constants";
 
 interface ClassItem {
   _id: string;
   name: string;
   section: string;
   students: number;
-  time: string;
+  date: string;
+  startTime: string;
+  endTime: string;
   room: string;
 }
 
 export default function StaffClasses() {
 
   const [classes, setClasses] = useState<ClassItem[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const [isLoadingStudents, setIsLoadingStudents] = useState(true);
   const [students, setStudents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isLoadingStudents, setIsLoadingStudents] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   const deptId = sessionStorage.getItem("deptId");
 
   const [newClass, setNewClass] = useState({
-    name: '',
-    section: '',
-    time: '',
-    room: ''
+    name: "",
+    section: "",
+    date: "",
+    startTime: "",
+    endTime: "",
+    room: ""
   });
 
   useEffect(() => {
@@ -35,6 +41,7 @@ export default function StaffClasses() {
     fetchStudents();
   }, []);
 
+  // FETCH CLASSES
   const fetchClasses = async () => {
     try {
       setLoading(true);
@@ -55,6 +62,7 @@ export default function StaffClasses() {
     }
   };
 
+  // FETCH STUDENTS
   const fetchStudents = async () => {
 
     if (!deptId) {
@@ -82,6 +90,7 @@ export default function StaffClasses() {
     }
   };
 
+  // STUDENT COUNT
   const getStudentCount = (className: string, section: string) => {
     return students.filter(
       (student) =>
@@ -90,113 +99,172 @@ export default function StaffClasses() {
     ).length;
   };
 
+  // INPUT CHANGE
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setNewClass(prev => ({ ...prev, [name]: value }));
+    setNewClass((prev) => ({ ...prev, [name]: value }));
   };
 
+  // EDIT
+  const handleEdit = (cls: ClassItem) => {
+
+    setEditingId(cls._id);
+
+    setNewClass({
+      name: cls.name,
+      section: cls.section,
+      date: cls.date.split("T")[0],
+      startTime: cls.startTime,
+      endTime: cls.endTime,
+      room: cls.room
+    });
+
+    setIsModalOpen(true);
+  };
+
+  // SUBMIT CREATE / UPDATE
   const handleSubmit = async (e: React.FormEvent) => {
 
     e.preventDefault();
 
     try {
 
-      const response = await fetch(`${serverURL}/api/classes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newClass),
-      });
+      let response;
 
-      const result = await response.json();
+      if (editingId) {
 
-      if (result.success) {
+        response = await axios.put(
+          `${serverURL}/api/classes/${editingId}`,
+          newClass
+        );
+
+      } else {
+
+        response = await axios.post(
+          `${serverURL}/api/classes`,
+          newClass
+        );
+
+      }
+
+      if (response.data.success) {
+
         await fetchClasses();
+
         setIsModalOpen(false);
-        setNewClass({ name: '', section: '', time: '', room: '' });
+
+        setEditingId(null);
+
+        setNewClass({
+          name: "",
+          section: "",
+          date: "",
+          startTime: "",
+          endTime: "",
+          room: ""
+        });
+
       }
 
     } catch (error) {
-      console.error('Error creating class:', error);
+      console.error("Error saving class:", error);
     }
   };
 
   return (
+
     <div className="max-w-7xl mx-auto space-y-6 relative">
 
-      {/* Header */}
+      {/* HEADER */}
+
       <div className="flex justify-between items-center">
+
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
             My Classes
           </h1>
+
           <p className="text-slate-500 dark:text-gray-400">
             Manage your assigned courses and sections.
           </p>
         </div>
 
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2"
+          onClick={() => {
+            setEditingId(null);
+            setIsModalOpen(true);
+          }}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
         >
           + Create New Class
         </button>
+
       </div>
 
-      {/* Loading */}
+      {/* LOADING */}
+
       {loading && (
-        <div className="text-center text-gray-500 dark:text-gray-400 py-10">
+        <div className="text-center text-gray-500 py-10">
           Loading classes...
         </div>
       )}
 
-      {/* Classes Grid */}
+      {/* CLASSES GRID */}
+
       {!loading && (
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
           {classes.map((cls) => (
 
             <div
               key={cls._id}
-              className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow group"
+              className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm"
             >
 
               <div className="flex justify-between items-start mb-4">
 
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 text-blue-600 rounded-xl flex items-center justify-center">
                   <BookOpen size={24} />
                 </div>
 
-                <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800">
-                  <MoreVertical size={20} />
+                <button
+                  onClick={() => handleEdit(cls)}
+                  className="text-blue-600 text-sm font-medium hover:underline"
+                >
+                  Edit
                 </button>
 
               </div>
 
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                 {cls.name}
               </h3>
 
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              <p className="text-sm text-gray-500 mb-4">
                 {cls.section}
               </p>
 
-              <div className="space-y-2 pt-4 border-t border-gray-100 dark:border-slate-700">
+              <div className="space-y-2 pt-4 border-t">
 
-                <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                  <Users size={16} className="mr-2 text-gray-400 dark:text-gray-500" />
-
+                <div className="flex items-center text-sm text-gray-600">
+                  <Users size={16} className="mr-2" />
                   {isLoadingStudents
                     ? "Loading..."
-                    : `${getStudentCount(cls.name, cls.section)} Students Enrolled`}
+                    : `${getStudentCount(cls.name, cls.section)} Students`}
                 </div>
 
-                <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                  <Clock size={16} className="mr-2 text-gray-400 dark:text-gray-500" />
-                  {cls.time}
+                <div className="flex items-center text-sm text-gray-600">
+                  <Clock size={16} className="mr-2" />
+                  {cls.startTime} - {cls.endTime}
                 </div>
 
-                <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                  <Calendar size={16} className="mr-2 text-gray-400 dark:text-gray-500" />
+                <div className="flex items-center text-sm text-gray-600">
+                  <Calendar size={16} className="mr-2" />
+                  {new Date(cls.date).toLocaleDateString()}
+                </div>
+
+                <div className="text-sm text-gray-600">
                   Room {cls.room}
                 </div>
 
@@ -206,14 +274,14 @@ export default function StaffClasses() {
 
                 <Link
                   to={`/dashboard/staff/classes/${cls._id}`}
-                  className="flex-1 py-2 px-3 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors text-center"
+                  className="flex-1 py-2 px-3 bg-blue-50 text-blue-700 text-sm rounded-lg text-center"
                 >
                   View Details
                 </Link>
 
                 <Link
                   to={`/dashboard/staff/classes/${cls._id}/attendance`}
-                  className="flex-1 py-2 px-3 bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors text-center"
+                  className="flex-1 py-2 px-3 bg-gray-100 text-gray-700 text-sm rounded-lg text-center"
                 >
                   Attendance
                 </Link>
@@ -225,25 +293,24 @@ export default function StaffClasses() {
           ))}
 
         </div>
+
       )}
 
-      {/* Modal */}
+      {/* MODAL */}
+
       {isModalOpen && (
 
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md">
 
-            <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800">
+            <div className="flex justify-between items-center p-4 border-b">
 
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                Create New Class
+              <h3 className="font-bold text-lg">
+                {editingId ? "Edit Class" : "Create New Class"}
               </h3>
 
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700"
-              >
+              <button onClick={() => setIsModalOpen(false)}>
                 <X size={20} />
               </button>
 
@@ -258,7 +325,7 @@ export default function StaffClasses() {
                 value={newClass.name}
                 onChange={handleInputChange}
                 placeholder="Class Name"
-                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-lg"
               />
 
               <input
@@ -268,17 +335,34 @@ export default function StaffClasses() {
                 value={newClass.section}
                 onChange={handleInputChange}
                 placeholder="Section"
-                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-lg"
               />
 
               <input
-                type="text"
-                name="time"
+                type="date"
+                name="date"
                 required
-                value={newClass.time}
+                value={newClass.date}
                 onChange={handleInputChange}
-                placeholder="Schedule Time"
-                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-lg"
+              />
+
+              <input
+                type="time"
+                name="startTime"
+                required
+                value={newClass.startTime}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border rounded-lg"
+              />
+
+              <input
+                type="time"
+                name="endTime"
+                required
+                value={newClass.endTime}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border rounded-lg"
               />
 
               <input
@@ -288,24 +372,24 @@ export default function StaffClasses() {
                 value={newClass.room}
                 onChange={handleInputChange}
                 placeholder="Room Number"
-                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-lg"
               />
 
-              <div className="pt-4 flex gap-3">
+              <div className="flex gap-3 pt-4">
 
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800"
+                  className="flex-1 border px-4 py-2 rounded-lg"
                 >
                   Cancel
                 </button>
 
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg"
                 >
-                  Create Class
+                  {editingId ? "Update Class" : "Create Class"}
                 </button>
 
               </div>
