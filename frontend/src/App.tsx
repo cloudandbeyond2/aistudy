@@ -93,6 +93,8 @@ import StudentSupportTickets from "./pages/StudentSupportTickets";
 import OrgStudentTickets from "./pages/OrgStudentTickets";
 import DeptDashboard from "./pages/DeptDashboard";
 import StaffDashboard from './pages/StaffDashboard';
+import StudentAttendance from './pages/StudentAttendance';
+
 
 // Staff Pages
 import StaffClasses from './pages/staff/StaffClasses';
@@ -143,7 +145,9 @@ const App = () => (
                     <Route path="student/meetings" element={<StudentMeetings />} />
                     <Route path="student/projects" element={<StudentProjects />} />
                     <Route path="student/materials" element={<StudentMaterials />} />
+                    <Route path="student/attendance" element={<StudentAttendance />} />
                     <Route path="student/assignment/:assignmentId" element={<AssignmentPage />} />
+
 
                     <Route path="notebook" element={<AINotebook />} />
                     <Route path="resume-builder" element={<ResumeBuilder />} />
