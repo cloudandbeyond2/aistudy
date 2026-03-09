@@ -308,9 +308,12 @@ const OrgCareerPlacement = () => {
                                                         <p className="font-medium">{s.name}</p>
                                                         <p className="text-xs text-muted-foreground">{s.email}</p>
                                                         {s.rollNo && <p className="text-xs text-muted-foreground">Roll: {s.rollNo}</p>}
-                                                        {s.isAvailableForPlacement && (
-                                                            <Badge variant="outline" className="text-xs mt-0.5 border-emerald-400 text-emerald-600">Available</Badge>
-                                                        )}
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`text-xs mt-0.5 ${s.isAvailableForPlacement ? 'border-emerald-400 text-emerald-600' : 'border-slate-300 text-slate-500'}`}
+                                                        >
+                                                            {s.isAvailableForPlacement ? 'Available' : 'Not Available'}
+                                                        </Badge>
                                                     </td>
                                                     <td className="px-4 py-3">
                                                         <ScoreBadge score={s.placementScore} />
