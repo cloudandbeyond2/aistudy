@@ -310,7 +310,15 @@ const DashboardLayout = () => {
                         <SidebarMenuButton asChild tooltip="Dashboard" isActive={isActive('/dashboard/student')}>
                           <Link to="/dashboard/student" className={cn(isActive('/dashboard/student') && "text-primary")}>
                             <LayoutDashboard />
-                            <span>Dashboard</span>
+                             <span>Dashboard</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Attendance" isActive={isActive('/dashboard/student/attendance')}>
+                          <Link to="/dashboard/student/attendance" className={cn(isActive('/dashboard/student/attendance') && "text-primary")}>
+                            <Calendar />
+                            <span>Attendance</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
