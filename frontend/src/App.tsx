@@ -32,6 +32,7 @@ import { BrandingProvider } from "./contexts/BrandingContext";
 import PaymentPending from "./pages/PaymentPending";
 import PaymentFailed from "./pages/PaymentFailed";
 import VerifyEmail from "./pages/VerifyEmail";
+import GlobalNews from "./pages/GlobalNews";
 
 // Admin imports
 import AdminLayout from "./components/layouts/AdminLayout";
@@ -80,7 +81,6 @@ import AdminOrganizationEnquiries from "./pages/admin/AdminOrganizationEnquiries
 import AdminSubscribers from "./pages/admin/AdminSubscribers";
 import AdminTickets from "./pages/admin/AdminTickets";
 import SupportTickets from "./pages/SupportTickets";
-
 import SubscriptionBillingPolicy from "./pages/SubscriptionBillingPolicy";
 import RefundPolicy from "./pages/RefundPolicy";
 import CancellationPolicy from "./pages/CancellationPolicy";
@@ -94,7 +94,7 @@ import OrgStudentTickets from "./pages/OrgStudentTickets";
 import DeptDashboard from "./pages/DeptDashboard";
 import StaffDashboard from './pages/StaffDashboard';
 import StudentAttendance from './pages/StudentAttendance';
-
+import AdminGlobalNews from "./pages/admin/AdminGlobalNews";
 
 // Staff Pages
 import StaffClasses from './pages/staff/StaffClasses';
@@ -103,7 +103,7 @@ import StaffClassAttendance from './pages/staff/StaffClassAttendance';
 import StaffStudents from './pages/staff/StaffStudents';
 import StaffGrading from './pages/staff/StaffGrading';
 import StaffSchedule from './pages/staff/StaffSchedule';
-import StaffAnnouncements from './pages/staff/StaffAnnouncements';
+import StaffGlobalNews from "./pages/staff/StaffAnnouncements";
 import StaffResources from './pages/staff/StaffResources';
 import StaffSupport from './pages/staff/StaffSupport';
 
@@ -147,7 +147,7 @@ const App = () => (
                     <Route path="student/materials" element={<StudentMaterials />} />
                     <Route path="student/attendance" element={<StudentAttendance />} />
                     <Route path="student/assignment/:assignmentId" element={<AssignmentPage />} />
-
+ <Route path="news" element={<GlobalNews />} />
 
                     <Route path="notebook" element={<AINotebook />} />
                     <Route path="resume-builder" element={<ResumeBuilder />} />
@@ -207,7 +207,6 @@ const App = () => (
                     <Route path="certificate" element={<AdminCertificate />} />
                     <Route path="orgs" element={<AdminOrganizations />} />
                     <Route path="organization-enquiries" element={<AdminOrganizationEnquiries />} />
-
                     <Route path="testimonials" element={<AdminTestimonials />} />
                     <Route path="orders" element={<AdminOrders />} />
                     <Route path="payment-settings" element={<AdminPaymentSettings />} />
@@ -216,6 +215,7 @@ const App = () => (
                     <Route path="organization/:id" element={<AdminOrganizationDetails />} />
                     <Route path="settings" element={<AdminSettings />} />
                     <Route path="tickets" element={<AdminTickets />} />
+            <Route path="global-news" element={<AdminGlobalNews />} />
                   </Route>
                   <Route path="/verify-certificate" element={<CertificateVerification />} />
 
@@ -232,7 +232,7 @@ const App = () => (
                     <Route path="students" element={<StaffStudents />} />
                     <Route path="grading" element={<StaffGrading />} />
                     <Route path="schedule" element={<StaffSchedule />} />
-                    <Route path="announcements" element={<StaffAnnouncements />} />
+                
                     <Route path="resources" element={<StaffResources />} />
                     <Route path="support" element={<StaffSupport />} />
                     <Route path="*" element={<StaffDashboard />} /> {/* Fallback for demo */}

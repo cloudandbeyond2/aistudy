@@ -302,15 +302,21 @@ const OrgCareerPlacement = () => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {[...filteredStudents].sort((a, b) => b.placementScore - a.placementScore).map((s, i) => (
+                                            {[...filteredStudents].sort((a, b) => b.placementScore - a.placementScore).map((s, i) => {
+                                                // Support boolean/string payloads coming from older records.
+                                                const isAvailable = s.isAvailableForPlacement === true || s.isAvailableForPlacement === 'true';
+                                                return (
                                                 <tr key={s.studentId || i} className="border-b hover:bg-muted/20 transition-colors">
                                                     <td className="px-4 py-3">
                                                         <p className="font-medium">{s.name}</p>
                                                         <p className="text-xs text-muted-foreground">{s.email}</p>
                                                         {s.rollNo && <p className="text-xs text-muted-foreground">Roll: {s.rollNo}</p>}
-                                                        {s.isAvailableForPlacement && (
-                                                            <Badge variant="outline" className="text-xs mt-0.5 border-emerald-400 text-emerald-600">Available</Badge>
-                                                        )}
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`text-xs mt-0.5 ${isAvailable ? 'border-emerald-400 text-emerald-600' : 'border-slate-300 text-slate-500'}`}
+                                                        >
+                                                            {isAvailable ? 'Available' : 'Not Available'}
+                                                        </Badge>
                                                     </td>
                                                     <td className="px-4 py-3">
                                                         <ScoreBadge score={s.placementScore} />
@@ -365,7 +371,8 @@ const OrgCareerPlacement = () => {
                                                         </Button>
                                                     </td>
                                                 </tr>
-                                            ))}
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
