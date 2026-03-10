@@ -285,14 +285,16 @@ const DashboardLayout = () => {
                         </SidebarMenuItem>
                       )}
 
-                      <SidebarMenuItem>
-  <SidebarMenuButton asChild>
-    <Link to="/dashboard/news">
-      <Megaphone className="h-5 w-5" />
-      <span>Global News</span>
-    </Link>
-  </SidebarMenuButton>
-</SidebarMenuItem>
+                      {!admin && (
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild tooltip="Global News" isActive={isActive('/dashboard/news')}>
+                            <Link to="/dashboard/news" className={cn(isActive('/dashboard/news') && "text-primary")}>
+                              <Megaphone className="h-5 w-5" />
+                              <span>Global News</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
 
 
                       {/* <SidebarMenuItem>
