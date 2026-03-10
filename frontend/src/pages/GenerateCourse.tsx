@@ -43,6 +43,7 @@ const GenerateCourse = () => {
   const [selectedValue, setSelectedValue] = useState('5');
   const [selectedType, setSelectedType] = useState('image & text course');
   const [lang, setLang] = useState('English');
+  const [courseCount, setCourseCount] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -60,6 +61,10 @@ const GenerateCourse = () => {
   const canUseVideo = planLimits.allowVideo;
   const canUseMultiLang = planLimits.allowMultiLang;
   const maxSubtopics = planLimits.maxSubtopics;
+  const remainingCourses =
+    planLimits.maxCourses === Infinity
+      ? Infinity
+      : Math.max(planLimits.maxCourses - courseCount, 0);
 
   const languages = [
     { "code": "en", "name": "English" },
@@ -108,6 +113,23 @@ const GenerateCourse = () => {
       window.location.href = '/dashboard/student';
       return;
     }
+  }, []);
+
+  useEffect(() => {
+    async function fetchCourseCount() {
+      try {
+        const uid = sessionStorage.getItem('uid');
+        if (!uid) return;
+
+        const courseRes = await axios.get(`${serverURL}/api/getcourses`);
+        const myCourses = courseRes.data.filter((course: { user: string }) => course.user === uid);
+        setCourseCount(myCourses.length);
+      } catch (error) {
+        console.error('Error fetching course count:', error);
+      }
+    }
+
+    fetchCourseCount();
   }, []);
 
   const form = useForm<CourseFormValues>({
@@ -315,6 +337,22 @@ const GenerateCourse = () => {
             Also, you can enter a list of subtopics, which are the
             specifics you want to learn.
           </p>
+        </div>
+
+        <div className="flex items-center gap-2 p-3 rounded-lg border bg-muted/30 text-sm text-muted-foreground">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <span>
+            {planLimits.maxCourses === Infinity ? (
+              <>
+                You can create <strong>unlimited</strong> courses on your <strong className="capitalize">{userType}</strong> plan.
+              </>
+            ) : (
+              <>
+                You have created <strong>{courseCount}</strong> of <strong>{planLimits.maxCourses}</strong> allowed courses.
+                {' '}<strong>{remainingCourses}</strong> remaining.
+              </>
+            )}
+          </span>
         </div>
 
         {/* Plan Expiry Banner */}

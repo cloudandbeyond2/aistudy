@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, Users, BookOpen, Sparkles, ArrowRight, BookPlus, FileQuestion, Loader, MoreVertical, Share, Trash2, CheckCircle, Medal } from 'lucide-react';
+import { Clock, Users, BookOpen, Sparkles, ArrowRight, BookPlus, FileQuestion, Loader, MoreVertical, Share, Trash2, CheckCircle, Medal, Search, CalendarDays } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Link, useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
@@ -16,6 +16,8 @@ import ShareOnSocial from 'react-share-on-social';
 import StatsCard from '@/components/dashboard/StatsCard';
 import { response } from 'express';
 import NotificationBell from '@/components/NotificationBell';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const Dashboard = () => {
   const daysleftRaw = sessionStorage.getItem("daysLeft");
@@ -29,6 +31,8 @@ const Dashboard = () => {
   const plan = sessionStorage.getItem('type');
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedYear, setSelectedYear] = useState('all');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -303,6 +307,38 @@ const Dashboard = () => {
     }
   }
 
+  const availableYears = Array.from(
+    new Set(
+      courses
+        .map((course: any) => {
+          const rawDate = course.date || course.createdAt || course.updatedAt;
+          const parsedDate = rawDate ? new Date(rawDate) : null;
+          return parsedDate && !Number.isNaN(parsedDate.getTime())
+            ? String(parsedDate.getFullYear())
+            : null;
+        })
+        .filter(Boolean)
+    )
+  ).sort((a, b) => Number(b) - Number(a));
+
+  const filteredCourses = courses.filter((course: any) => {
+    const searchValue = searchTerm.trim().toLowerCase();
+    const matchesSearch =
+      searchValue === '' ||
+      course.mainTopic?.toLowerCase().includes(searchValue) ||
+      course.type?.toLowerCase().includes(searchValue);
+
+    const rawDate = course.date || course.createdAt || course.updatedAt;
+    const parsedDate = rawDate ? new Date(rawDate) : null;
+    const courseYear =
+      parsedDate && !Number.isNaN(parsedDate.getTime())
+        ? String(parsedDate.getFullYear())
+        : null;
+    const matchesYear = selectedYear === 'all' || courseYear === selectedYear;
+
+    return matchesSearch && matchesYear;
+  });
+
   return (
     <>
       <SEO
@@ -390,6 +426,43 @@ const Dashboard = () => {
           </div>
         </div>
 
+        <div className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-4 shadow-sm">
+          <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
+            <div className="flex flex-col sm:flex-row gap-3 flex-1">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search courses by topic or type"
+                  className="pl-10"
+                />
+              </div>
+              <div className="w-full sm:w-52">
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger>
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="Filter by year" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All years</SelectItem>
+                    {availableYears.map((year) => (
+                      <SelectItem key={year} value={year}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Showing {filteredCourses.length} of {courses.length} course{courses.length === 1 ? '' : 's'}
+            </p>
+          </div>
+        </div>
+
         {/* Stats Cards Section */}
         {!isLoading && (courses.length > 0 || isOrgAdmin) && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
@@ -447,7 +520,7 @@ const Dashboard = () => {
           <>
             {courses.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.map((course) => (
+                {filteredCourses.map((course) => (
                   <Card key={course._id} className="overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 group">
                     <div className="aspect-video relative overflow-hidden">
                       <img
@@ -538,22 +611,45 @@ const Dashboard = () => {
                   </Card>
                 ))}
               </div>
-            ) : (
+            ) : null}
+
+            {courses.length > 0 && filteredCourses.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="bg-muted/50 rounded-full p-8 mb-6">
-                  <FileQuestion className="h-16 w-16 text-muted-foreground/60" />
+                  <Search className="h-16 w-16 text-muted-foreground/60" />
                 </div>
-                <h2 className="text-2xl font-bold mb-2">No Courses Created Yet</h2>
+                <h2 className="text-2xl font-bold mb-2">No Matching Courses</h2>
                 <p className="text-muted-foreground max-w-md mb-6">
-                  You haven't created any courses yet. Generate your first AI-powered course to start learning.
+                  Try a different keyword or switch the year filter to view more courses.
                 </p>
-                <Button size="lg" className="shadow-lg" asChild>
-                  <Link to="/dashboard/generate-course">
-                    <BookPlus className="mr-2 h-5 w-5" />
-                    Create Your First Course
-                  </Link>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSelectedYear('all');
+                  }}
+                >
+                  Clear Filters
                 </Button>
               </div>
+            ) : (
+              courses.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="bg-muted/50 rounded-full p-8 mb-6">
+                    <FileQuestion className="h-16 w-16 text-muted-foreground/60" />
+                  </div>
+                  <h2 className="text-2xl font-bold mb-2">No Courses Created Yet</h2>
+                  <p className="text-muted-foreground max-w-md mb-6">
+                    You haven't created any courses yet. Generate your first AI-powered course to start learning.
+                  </p>
+                  <Button size="lg" className="shadow-lg" asChild>
+                    <Link to="/dashboard/generate-course">
+                      <BookPlus className="mr-2 h-5 w-5" />
+                      Create Your First Course
+                    </Link>
+                  </Button>
+                </div>
+              )
             )}
             {loadingMore && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
