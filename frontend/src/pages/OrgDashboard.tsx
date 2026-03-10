@@ -530,7 +530,13 @@ const OrgDashboard = () => {
             const res = await axios.post(`${serverURL}/api/org/project/create`, { ...newProject, organizationId: orgId });
             if (res.data.success) {
                 toast({ title: "Success", description: "Project/Practical added" });
-                setNewProject({ title: '', description: '', type: 'Project', department: '', dueDate: '' });
+                setNewProject({
+                    title: '',
+                    description: '',
+                    type: 'Project',
+                    department: getDeptScopedDepartment(),
+                    dueDate: ''
+                });
                 fetchProjects();
             }
         } catch (e: any) {
@@ -584,7 +590,7 @@ const OrgDashboard = () => {
                     fileUrl: '',
                     file: null,
                     type: 'PDF',
-                    department: ''
+                    department: getDeptScopedDepartment()
                 });
                 fetchMaterials();
             }
@@ -616,11 +622,7 @@ const OrgDashboard = () => {
             if (res.data.success) {
                 let assignmentsData = res.data.assignments;
                 if (role === 'dept_admin') {
-                    assignmentsData = assignmentsData.filter((a: any) =>
-                        (userDeptName && a.department === userDeptName) ||
-                        (deptId && a.departmentId === deptId) ||
-                        (deptId && a.department === deptId)
-                    );
+                    assignmentsData = assignmentsData.filter((a: any) => matchesCurrentDepartment(a.department, a.departmentId));
                 }
                 setAssignments(assignmentsData);
             }
@@ -701,10 +703,7 @@ const OrgDashboard = () => {
             if (res.data.success) {
                 let noticesData = res.data.notices;
                 if (role === 'dept_admin') {
-                    noticesData = noticesData.filter((n: any) =>
-                        (userDeptName && n.department === userDeptName) ||
-                        (deptId && (n.departmentId === deptId || n.department === deptId))
-                    );
+                    noticesData = noticesData.filter((n: any) => matchesCurrentDepartment(n.department, n.departmentId));
                 }
                 setNotices(noticesData);
             }
@@ -739,7 +738,12 @@ const OrgDashboard = () => {
             const res = await axios.post(`${serverURL}/api/org/assignment/create`, assignmentData);
             if (res.data.success) {
                 toast({ title: 'Success', description: 'Assignment created successfully' });
-                setNewAssignment({ topic: '', description: '', dueDate: '', department: '' });
+                setNewAssignment({
+                    topic: '',
+                    description: '',
+                    dueDate: '',
+                    department: getDeptScopedDepartment()
+                });
                 fetchAssignments();
             }
         } catch (error) {
@@ -927,7 +931,12 @@ const OrgDashboard = () => {
             const res = await axios.post(`${serverURL}/api/org/notice/create`, { ...newNotice, organizationId: orgId });
             if (res.data.success) {
                 toast({ title: "Success", description: "Notice posted" });
-                setNewNotice({ title: '', content: '', audience: 'all', department: '' });
+                setNewNotice({
+                    title: '',
+                    content: '',
+                    audience: 'all',
+                    department: getDeptScopedDepartment()
+                });
                 fetchNotices();
             }
         } catch (e) {
@@ -1864,7 +1873,7 @@ const OrgDashboard = () => {
                                             <div className="line-clamp-2 text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: p.description }} />
                                         </CardHeader>
                                         <CardContent className="pt-0 text-[11px] text-muted-foreground flex justify-between">
-                                            <span>Dept: {p.department ? (departmentsList.find(d => d._id === p.department || d.name === p.department)?.name || p.department) : 'All'}</span>
+                                            <span>Dept: {getDepartmentLabel(p.department) || 'All'}</span>
                                             {p.dueDate && <span>Due: {new Date(p.dueDate).toLocaleDateString()}</span>}
                                         </CardContent>
                                     </Card>
@@ -2044,9 +2053,9 @@ const OrgDashboard = () => {
                                             </div>
                                             <CardDescription className="text-xs">
                                                 {new Date(notice.createdAt).toLocaleDateString()}
-                                                {notice.department && (
+                                                {getDepartmentLabel(notice.department) && (
                                                     <span className="ml-2 px-2 py-0.5 rounded-full bg-secondary text-[10px]">
-                                                        {departmentsList.find(d => d._id === notice.department)?.name || 'Dept'}
+                                                        {getDepartmentLabel(notice.department)}
                                                     </span>
                                                 )}
                                             </CardDescription>
