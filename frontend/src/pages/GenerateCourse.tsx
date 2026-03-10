@@ -323,7 +323,7 @@ const GenerateCourse = () => {
             <AlertTriangle className="h-5 w-5 flex-shrink-0" />
             <div>
               <p className="font-semibold text-sm">Your subscription has expired</p>
-              <p className="text-xs mt-0.5">Please <a href="/dashboard" className="underline font-medium">renew your plan</a> to continue generating courses.</p>
+              <p className="text-xs mt-0.5">Please <a href="/dashboard/pricing" className="underline font-medium">renew your plan</a> to continue generating courses.</p>
             </div>
           </div>
         )}
