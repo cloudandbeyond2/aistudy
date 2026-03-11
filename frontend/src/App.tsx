@@ -95,7 +95,7 @@ import DeptDashboard from "./pages/DeptDashboard";
 import StaffDashboard from './pages/StaffDashboard';
 import StudentAttendance from './pages/StudentAttendance';
 import AdminGlobalNews from "./pages/admin/AdminGlobalNews";
-import InterviewPreparation from "./pages/InterviewPreparation";
+
 
 // Staff Pages
 import StaffClasses from './pages/staff/StaffClasses';
@@ -107,6 +107,7 @@ import StaffSchedule from './pages/staff/StaffSchedule';
 import StaffGlobalNews from "./pages/staff/StaffAnnouncements";
 import StaffResources from './pages/staff/StaffResources';
 import StaffSupport from './pages/staff/StaffSupport';
+import InterviewPreparation from "./pages/InterviewPreparation";
 
 const queryClient = new QueryClient();
 
@@ -148,7 +149,7 @@ const App = () => (
                     <Route path="student/materials" element={<StudentMaterials />} />
                     <Route path="student/attendance" element={<StudentAttendance />} />
                     <Route path="student/assignment/:assignmentId" element={<AssignmentPage />} />
- <Route path="news" element={<GlobalNews />} />
+                    <Route path="news" element={<GlobalNews />} />
 
                     <Route path="notebook" element={<AINotebook />} />
                     <Route path="resume-builder" element={<ResumeBuilder />} />
@@ -217,7 +218,7 @@ const App = () => (
                     <Route path="organization/:id" element={<AdminOrganizationDetails />} />
                     <Route path="settings" element={<AdminSettings />} />
                     <Route path="tickets" element={<AdminTickets />} />
-            <Route path="global-news" element={<AdminGlobalNews />} />
+                    <Route path="global-news" element={<AdminGlobalNews />} />
                   </Route>
                   <Route path="/verify-certificate" element={<CertificateVerification />} />
 
@@ -234,7 +235,7 @@ const App = () => (
                     <Route path="students" element={<StaffStudents />} />
                     <Route path="grading" element={<StaffGrading />} />
                     <Route path="schedule" element={<StaffSchedule />} />
-                
+
                     <Route path="resources" element={<StaffResources />} />
                     <Route path="support" element={<StaffSupport />} />
                     <Route path="*" element={<StaffDashboard />} /> {/* Fallback for demo */}

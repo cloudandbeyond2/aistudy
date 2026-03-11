@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { serverURL } from '@/constants';
 import axios from 'axios';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Newspaper, Target, Network, Lock, Sparkles, Brain } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -17,6 +17,7 @@ const InterviewPreparation = () => {
   // States for features
   const [currentAffairs, setCurrentAffairs] = useState([]);
   const [dailyAptitudes, setDailyAptitudes] = useState([]);
+  const [loadingAptitude, setLoadingAptitude] = useState(false);
   const [aiQuizData, setAiQuizData] = useState([]);
   const [aiCategory, setAiCategory] = useState('');
   const [generatingQuiz, setGeneratingQuiz] = useState(false);
@@ -72,6 +73,7 @@ const InterviewPreparation = () => {
   };
 
   const fetchDailyAptitude = async (uid: string) => {
+    setLoadingAptitude(true);
     try {
       console.log("Fetching daily aptitude for:", uid);
       const resp = await axios.get(`${serverURL}/api/interview-prep/daily-aptitude`, {
@@ -83,6 +85,8 @@ const InterviewPreparation = () => {
       }
     } catch (e) {
       console.error("Fetch daily aptitude error:", e);
+    } finally {
+      setLoadingAptitude(false);
     }
   };
 
@@ -178,28 +182,28 @@ const InterviewPreparation = () => {
 
           {/* Current Affairs Content */}
           <TabsContent value="news" className="space-y-4 outline-none">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Newspaper className="h-5 w-5 text-primary" /> Today's News
+              </h2>
+              <span className="text-sm text-muted-foreground font-medium">
+                {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </span>
+            </div>
             {currentAffairs.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground bg-card/50 rounded-2xl border border-dashed">
                 <Newspaper className="h-10 w-10 mx-auto text-muted-foreground/50 mb-4" />
-                <p>No current affairs available yet.</p>
+                <p>No news available for today. Check back later!</p>
               </div>
             ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {currentAffairs.map((item: any) => (
                   <Card key={item._id} className="hover:shadow-md transition-all h-full flex flex-col group border-border/50">
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-xs font-semibold px-2.5 py-1 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 rounded-full">
-                          {item.category}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(item.date).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <CardTitle className="text-xl group-hover:text-primary transition-colors line-clamp-2">{item.title}</CardTitle>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg leading-snug group-hover:text-primary transition-colors line-clamp-2">{item.title}</CardTitle>
                     </CardHeader>
-                    <CardContent className="flex-1">
-                      <p className="text-muted-foreground text-sm leading-relaxed">{item.content}</p>
+                    <CardContent className="flex-1 pt-0">
+                      <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">{item.content}</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -209,41 +213,57 @@ const InterviewPreparation = () => {
 
           {/* Daily Aptitude Content */}
           <TabsContent value="aptitude" className="space-y-4 outline-none">
-            {dailyAptitudes.length === 0 ? (
+            {loadingAptitude ? (
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+                <p className="text-sm">Generating today's aptitude questions...</p>
+              </div>
+            ) : dailyAptitudes.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground bg-card/50 rounded-2xl border border-dashed">
                 <Target className="h-10 w-10 mx-auto text-muted-foreground/50 mb-4" />
                 <p>No daily aptitude tests available today.</p>
               </div>
             ) : (
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-6">
                 {dailyAptitudes.map((test: any) => (
-                  <Card key={test._id} className="hover:shadow-md transition-all border-border/50">
-                    <CardHeader>
-                      <CardTitle className="text-xl text-primary">{test.title}</CardTitle>
-                      <CardDescription>{new Date(test.date).toLocaleDateString()}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-muted-foreground mb-4">{test.description}</p>
-                      <ul className="space-y-3">
-                        {test.questions.map((q: any, i: number) => (
-                          <li key={i} className="bg-muted/30 p-4 rounded-xl border border-border/40">
-                            <p className="font-medium text-sm mb-3"><span className="text-primary mr-1">Q{i+1}.</span> {q.question}</p>
-                            <div className="pl-5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
+                  <div key={test._id}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h2 className="text-xl font-bold flex items-center gap-2">
+                          <Brain className="h-5 w-5 text-primary" /> {test.title}
+                        </h2>
+                        <p className="text-sm text-muted-foreground mt-1">{test.description}</p>
+                      </div>
+                      <span className="text-xs font-semibold px-3 py-1.5 bg-primary/10 text-primary rounded-full">
+                        {test.questions.length} Questions
+                      </span>
+                    </div>
+                    <div className="grid gap-4">
+                      {test.questions.slice(0, 15).map((q: any, i: number) => (
+                        <Card key={i} className="border-l-4 border-l-primary/50 hover:shadow-md transition-shadow">
+                          <CardHeader className="py-4">
+                            <CardTitle className="text-base leading-snug">
+                              <span className="text-muted-foreground mr-2 font-mono">{i+1}.</span>
+                              {q.question}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="pb-4">
+                            <div className="grid sm:grid-cols-2 gap-2 mb-3">
                               {q.options.map((opt: string, j: number) => (
-                                <div key={j} className="flex items-center space-x-2">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></div>
-                                  <span>{opt}</span>
+                                <div key={j} className="p-2.5 rounded-lg bg-muted/40 border border-border/40 text-sm flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0"></div>
+                                  {opt}
                                 </div>
                               ))}
                             </div>
-                            <div className="mt-3 pl-5">
-                              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">Ans: {q.answer}</span>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
+                            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-1 rounded inline-flex items-center">
+                              <Target className="w-3 h-3 mr-1" /> Ans: {q.answer}
+                            </span>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
