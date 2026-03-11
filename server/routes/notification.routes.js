@@ -6,5 +6,6 @@ const router = express.Router();
 
 router.post('/get', notificationController.getNotifications);
 router.post('/read', notificationController.markAsRead);
+router.post('/clear', notificationController.clearNotifications);
 
 export default router;

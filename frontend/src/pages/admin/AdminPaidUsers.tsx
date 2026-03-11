@@ -49,6 +49,7 @@ const AdminPaidUsers = () => {
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editType, setEditType] = useState('monthly');
+  const [statusFilter, setStatusFilter] = useState("all");
 
   /* ====================== EXPIRY LOGIC ====================== */
   const getSubscriptionStatus = (endDate, type) => {
@@ -88,18 +89,31 @@ const AdminPaidUsers = () => {
   }, []);
 
   /* ====================== FILTER ====================== */
-  const filteredData = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
-    return data.filter(
-      (u) =>
-        u.mName?.toLowerCase().includes(q) ||
-        u.email?.toLowerCase().includes(q)
-    );
-  }, [data, searchQuery]);
+ const filteredData = useMemo(() => {
+  const q = searchQuery.toLowerCase().trim();
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+  return data.filter((u) => {
+
+    const matchesSearch =
+      u.mName?.toLowerCase().includes(q) ||
+      u.email?.toLowerCase().includes(q);
+
+    const status = getSubscriptionStatus(
+      u.subscriptionEnd,
+      u.type
+    );
+
+    const matchesStatus =
+      statusFilter === "all" || status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+
+  });
+
+}, [data, searchQuery, statusFilter]);
+useEffect(() => {
+  setCurrentPage(1);
+}, [searchQuery, statusFilter]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
@@ -184,19 +198,31 @@ const AdminPaidUsers = () => {
 
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row justify-between gap-4">
-            <CardTitle>Active Subscriptions</CardTitle>
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search users..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
+        <div className="flex gap-3 w-full sm:w-auto">
+
+  <div className="relative w-full sm:w-64">
+    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+    <Input
+      type="search"
+      placeholder="Search users..."
+      className="pl-8"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+    />
+  </div>
+
+  <Select value={statusFilter} onValueChange={setStatusFilter}>
+    <SelectTrigger className="w-36">
+      <SelectValue placeholder="Status" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="all">All</SelectItem>
+      <SelectItem value="active">Active</SelectItem>
+      <SelectItem value="expired">Expired</SelectItem>
+    </SelectContent>
+  </Select>
+
+</div>
         </CardHeader>
 
         <CardContent>

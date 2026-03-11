@@ -279,6 +279,8 @@ const OrgDashboard = () => {
     const [meetings, setMeetings] = useState<any[]>([]);
     const [projects, setProjects] = useState<any[]>([]);
     const [materials, setMaterials] = useState<any[]>([]);
+    const [openMeetingDialog, setOpenMeetingDialog] = useState(false);
+    const [openProjectDialog, setOpenProjectDialog] = useState(false);
     const [newMeeting, setNewMeeting] = useState({ title: '', link: '', platform: 'google-meet', date: '', time: '', department: '' });
     const [newProject, setNewProject] = useState({ title: '', description: '', type: 'Project', department: '', dueDate: '' });
 
@@ -487,10 +489,21 @@ const OrgDashboard = () => {
         try {
             const res = await axios.post(`${serverURL}/api/org/meeting/create`, { ...newMeeting, organizationId: orgId });
             if (res.data.success) {
-                toast({ title: "Success", description: "Meeting scheduled successfully" });
-                setNewMeeting({ title: '', link: '', platform: 'google-meet', date: '', time: '', department: '' });
-                fetchMeetings();
-            }
+    toast({ title: "Success", description: "Meeting scheduled successfully" });
+
+    setNewMeeting({
+        title: '',
+        link: '',
+        platform: 'google-meet',
+        date: '',
+        time: '',
+        department: ''
+    });
+
+    setOpenMeetingDialog(false); // close popup
+
+    fetchMeetings();
+}
         } catch (e: any) {
             toast({ title: "Error", description: e.response?.data?.message || "Failed to schedule meeting" });
         }
@@ -512,11 +525,21 @@ const OrgDashboard = () => {
     const handleCreateProject = async () => {
         try {
             const res = await axios.post(`${serverURL}/api/org/project/create`, { ...newProject, organizationId: orgId });
-            if (res.data.success) {
-                toast({ title: "Success", description: "Project/Practical added" });
-                setNewProject({ title: '', description: '', type: 'Project', department: '', dueDate: '' });
-                fetchProjects();
-            }
+           if (res.data.success) {
+  toast({ title: "Success", description: "Project/Practical added" });
+
+  setNewProject({
+    title: '',
+    description: '',
+    type: 'Project',
+    department: '',
+    dueDate: ''
+  });
+
+  setOpenProjectDialog(false); // close popup
+
+  fetchProjects();
+}
         } catch (e: any) {
             toast({ title: "Error", description: e.response?.data?.message || "Failed to add project" });
         }
@@ -1675,8 +1698,8 @@ const OrgDashboard = () => {
                                 <CardTitle>Online Meetings</CardTitle>
                                 <CardDescription>Schedule and manage Google Meet or Zoom sessions.</CardDescription>
                             </div>
-                            <Dialog>
-                                <DialogTrigger asChild>
+                        <Dialog open={openMeetingDialog} onOpenChange={setOpenMeetingDialog}>
+                               <DialogTrigger asChild onClick={() => setOpenMeetingDialog(true)}>
                                     <Button><Plus className="w-4 h-4 mr-2" /> Schedule Meeting</Button>
                                 </DialogTrigger>
                                 <DialogContent>
@@ -1744,7 +1767,7 @@ const OrgDashboard = () => {
                                             <div>
                                                 <h3 className="font-semibold text-lg">{m.title}</h3>
                                                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
-                                                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(m.date).toLocaleDateString()} at {m.time}</span>
+                                                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(m.date).toLocaleDateString()} at {m.time}</span>
                                                     <span className="capitalize">{m.platform.replace('-', ' ')}</span>
                                                     {m.department && m.department !== 'all' && <span className="text-primary font-medium">Dept: {departmentsList.find(d => d._id === m.department || d.name === m.department)?.name || m.department}</span>}
                                                 </div>
@@ -1773,8 +1796,8 @@ const OrgDashboard = () => {
                                 <CardTitle>Projects & Research</CardTitle>
                                 <CardDescription>Assign practical projects, research topics, or lab work.</CardDescription>
                             </div>
-                            <Dialog>
-                                <DialogTrigger asChild>
+                            <Dialog open={openProjectDialog} onOpenChange={setOpenProjectDialog}>
+                              <DialogTrigger asChild onClick={() => setOpenProjectDialog(true)}>
                                     <Button><Plus className="w-4 h-4 mr-2" /> Add Project</Button>
                                 </DialogTrigger>
                                 <DialogContent>

@@ -53,6 +53,22 @@ const NotificationBell = () => {
         }
     };
 
+    const clearAllNotifications = async () => {
+    try {
+
+        const userId = sessionStorage.getItem('uid');
+        if (!userId) return;
+
+        await axios.post(`${serverURL}/api/notifications/clear`, { userId });
+
+        setNotifications([]);
+        setUnreadCount(0);
+
+    } catch (error) {
+        console.error("Failed to clear notifications");
+    }
+};
+
     const handleNotificationClick = (notification) => {
         if (!notification.isRead) {
             markAsRead(notification._id);
@@ -75,7 +91,18 @@ const NotificationBell = () => {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 max-h-[80vh] overflow-y-auto">
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+             <div className="flex items-center justify-between px-3 py-2">
+    <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
+
+    {notifications.length > 0 && (
+        <button
+            onClick={clearAllNotifications}
+            className="text-xs text-red-500 hover:underline"
+        >
+            Clear All
+        </button>
+    )}
+</div>
                 <DropdownMenuSeparator />
                 {notifications.length === 0 ? (
                     <div className="p-4 text-center text-sm text-muted-foreground">
