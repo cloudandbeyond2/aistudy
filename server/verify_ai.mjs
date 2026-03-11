@@ -43,26 +43,37 @@ async function testOutline() {
     }
 }
 
-async function testBatchContent() {
-    console.log("\n--- Testing Batch Content Generation ---");
+async function testBulkContent() {
+    console.log("\n--- Testing Bulk Multi-Topic Content Generation ---");
     const systemInstruction = `Strictly in English, you are a specialized educational content writer. 
 Your goal is to provide thorough, in-depth, and "large" explanations for course subtopics.
 For each subtopic, provide a detailed explanation (approx 500-1000 words if possible) with rich examples and clear definitions.
 Use valid HTML formatting for the "theory" field (paragraphs, bold text, lists).
 Do NOT include images, external links, or additional resource suggestions.
-ONLY respond with a valid JSON object.`;
+ONLY respond with a valid JSON object matching the requested schema.`;
 
     const prompt = `Course: "Quantum Mechanics"
-Chapter: "Fundamentals"
 
-Generate comprehensive educational content for these subtopics:
-1. Wave-Particle Duality
-2. Heisenberg Uncertainty Principle
+Generate comprehensive educational content for these chapters and subtopics:
+Chapter 1: "Fundamentals"
+Subtopics:
+- Wave-Particle Duality
+- Heisenberg Uncertainty Principle
+
+Chapter 2: "Mathematical Formulation"
+Subtopics:
+- Schrödinger Equation
+- Operators and Values
 
 Response Format (JSON):
 {
-  "subtopics": [
-    { "title": "Subtopic Title", "theory": "Detailed HTML Content" }
+  "topics": [
+    {
+      "topicTitle": "Topic Title",
+      "subtopics": [
+        { "title": "Subtopic Title", "theory": "Detailed HTML Content" }
+      ]
+    }
   ]
 }`;
 
@@ -77,24 +88,26 @@ Response Format (JSON):
     const result = await model.generateContent(prompt);
     const text = await result.response.text();
     console.log("Response Length:", text.length, "chars");
-    // console.log("Response Snippet:", text.substring(0, 500) + "...");
     try {
         const parsed = JSON.parse(text);
         console.log("✅ JSON is valid");
-        if (parsed.subtopics[0].theory.length > 500) {
-            console.log("✅ Content is large (" + parsed.subtopics[0].theory.length + " chars for first subtopic)");
-        } else {
-            console.warn("⚠️ Content might be shorter than expected (" + parsed.subtopics[0].theory.length + " chars)");
+        console.log("Topics generated:", parsed.topics.length);
+        parsed.topics.forEach(t => {
+            console.log(`- ${t.topicTitle}: ${t.subtopics.length} subtopics`);
+        });
+        if (parsed.topics[0].subtopics[0].theory.length > 500) {
+            console.log("✅ Content richness verified");
         }
     } catch (e) {
         console.error("❌ JSON is invalid");
+        console.log("Raw response:", text);
     }
 }
 
 async function runTests() {
     try {
         await testOutline();
-        await testBatchContent();
+        await testBulkContent();
     } catch (error) {
         console.error("Test failed:", error);
     }

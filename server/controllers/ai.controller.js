@@ -134,15 +134,15 @@ export const generatePrompt = async (req, res) => {
 
 
 /**
- * GENERATE BATCH SUBTOPIC CONTENT (all subtopics of a topic in ONE API call)
+ * GENERATE BATCH SUBTOPIC CONTENT (multiple topics and their subtopics in ONE API call)
  */
 export const generateBatchSubtopics = async (req, res) => {
-  const { mainTopic, topicTitle, subtopics, lang, userId } = req.body;
+  const { mainTopic, topicsList, lang, userId } = req.body;
 
-  if (!mainTopic || !topicTitle || !subtopics || !subtopics.length) {
+  if (!mainTopic || !topicsList || !Array.isArray(topicsList) || !topicsList.length) {
     return res.status(400).json({
       success: false,
-      message: 'Missing required fields: mainTopic, topicTitle, subtopics'
+      message: 'Missing required fields: mainTopic, topicsList'
     });
   }
 
@@ -155,7 +155,6 @@ export const generateBatchSubtopics = async (req, res) => {
         const planType = user.type || 'free';
         const limits = getPlanLimits(planType);
 
-        // Expiry check
         if (!isPlanActive(planType, user.subscriptionEnd)) {
           return res.status(403).json({
             success: false,
@@ -164,13 +163,15 @@ export const generateBatchSubtopics = async (req, res) => {
           });
         }
 
-        // Subtopic count check
-        if (subtopics.length > limits.maxSubtopics) {
-          return res.status(403).json({
-            success: false,
-            message: `Your ${planType} plan allows a maximum of ${limits.maxSubtopics} subtopics per topic. Please upgrade your plan for more.`,
-            subtopicLimitReached: true
-          });
+        // Validate each topic's subtopic count against limits
+        for (const topic of topicsList) {
+          if (topic.subtopics && topic.subtopics.length > limits.maxSubtopics) {
+            return res.status(403).json({
+              success: false,
+              message: `Your ${planType} plan allows a maximum of ${limits.maxSubtopics} subtopics per topic.`,
+              subtopicLimitReached: true
+            });
+          }
         }
       }
     } catch (planCheckErr) {
@@ -186,25 +187,32 @@ export const generateBatchSubtopics = async (req, res) => {
     { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }
   ];
 
-  const subtopicList = subtopics.map((s, i) => `${i + 1}. ${s}`).join('\n');
+  const topicsPromptString = topicsList.map((t, i) => {
+    const subList = t.subtopics.join('\n- ');
+    return `Chapter ${i + 1}: "${t.topicTitle}"\nSubtopics:\n- ${subList}`;
+  }).join('\n\n');
 
   const systemInstruction = `Strictly in ${lang || 'English'}, you are a specialized educational content writer. 
 Your goal is to provide thorough, in-depth, and "large" explanations for course subtopics.
 For each subtopic, provide a detailed explanation (approx 500-1000 words if possible) with rich examples and clear definitions.
 Use valid HTML formatting for the "theory" field (paragraphs, bold text, lists).
 Do NOT include images, external links, or additional resource suggestions.
-ONLY respond with a valid JSON object.`;
+ONLY respond with a valid JSON object matching the requested schema.`;
 
   const prompt = `Course: "${mainTopic}"
-Chapter: "${topicTitle}"
 
-Generate comprehensive educational content for these subtopics:
-${subtopicList}
+Generate comprehensive educational content for these chapters and subtopics:
+${topicsPromptString}
 
 Response Format (JSON):
 {
-  "subtopics": [
-    { "title": "Subtopic Title", "theory": "Detailed HTML Content" }
+  "topics": [
+    {
+      "topicTitle": "Topic Title",
+      "subtopics": [
+        { "title": "Subtopic Title", "theory": "Detailed HTML Content" }
+      ]
+    }
   ]
 }`;
 
@@ -219,53 +227,57 @@ Response Format (JSON):
         responseSchema: {
           type: "object",
           properties: {
-            subtopics: {
+            topics: {
               type: "array",
               items: {
                 type: "object",
                 properties: {
-                  title: { type: "string" },
-                  theory: { type: "string" }
+                  topicTitle: { type: "string" },
+                  subtopics: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string" },
+                        theory: { type: "string" }
+                      },
+                      required: ["title", "theory"]
+                    }
+                  }
                 },
-                required: ["title", "theory"]
+                required: ["topicTitle", "subtopics"]
               }
             }
           },
-          required: ["subtopics"]
+          required: ["topics"]
         }
       }
     });
 
     const result = await retryWithBackoff(() => model.generateContent(prompt));
     const rawText = await result.response.text();
-
     const parsed = JSON.parse(rawText);
 
     res.status(200).json({
       success: true,
-      subtopics: parsed.subtopics
+      topics: parsed.topics
     });
 
   } catch (error) {
     console.log('Batch generation error:', error);
-
-    const isRateLimitError =
-      error.message?.includes('429') ||
-      error.message?.includes('Too Many Requests') ||
-      error.message?.includes('quota');
-
+    const isRateLimitError = error.message?.includes('429') || error.message?.includes('quota');
     const isMissingKey = error.status === 401;
-    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
+    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404');
 
     let status = 500;
     let message = 'Internal server error';
 
     if (isMissingKey || isInvalidKey) {
       status = isMissingKey ? 401 : 403;
-      message = error.message ? `Gemini API Error: ${error.message}` : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
+      message = 'Invalid Gemini API Key or Model unavailable.';
     } else if (isRateLimitError) {
       status = 429;
-      message = 'API rate limit or quota exceeded. Please try again later.';
+      message = 'API rate limit or quota exceeded.';
     }
 
     res.status(status).json({
@@ -275,6 +287,7 @@ Response Format (JSON):
     });
   }
 };
+
 
 
 /**

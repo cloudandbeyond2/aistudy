@@ -484,82 +484,105 @@ const CoursePage = () => {
 
 
 
-  const handleSelect = (topics, sub) => {
-    if (!isLoading) {
-      const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
-      const mTopic = topicsList.find(topic => topic.title === topics);
-      const mSubTopic = mTopic?.subtopics.find(subtopic => subtopic.title === sub);
+  const handleSelect = (topicTitle, subtopicTitle) => {
+    if (isLoading) return;
 
-      if (mSubTopic.theory === '' || mSubTopic.theory === undefined || mSubTopic.theory === null) {
-        if (!isSubtopicUnlocked(topics, sub)) {
-          toast({ title: "Locked", description: "Complete previous lessons to unlock this one." });
-          return;
-        }
-        if (type === 'video & text course') {
-          const query = `${mSubTopic.title} ${mainTopic} in english`;
-          setIsLoading(true);
-          sendVideo(query, topics, sub, mSubTopic.title);
-        } else {
-          // Batch-generate all ungenerated subtopics in this topic in ONE API call
-          const ungenerated = mTopic.subtopics
-            .filter((s: any) => !s.theory)
-            .map((s: any) => s.title);
-          setIsLoading(true);
-          sendBatchSubtopics(topics, sub, ungenerated);
-        }
+    const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+    const mTopic = topicsList.find(topic => topic.title === topicTitle);
+    const mSubTopic = mTopic?.subtopics.find(subtopic => subtopic.title === subtopicTitle);
+
+    if (!mSubTopic) return;
+
+    if (mSubTopic.theory === '' || mSubTopic.theory === undefined || mSubTopic.theory === null) {
+      if (!isSubtopicUnlocked(topicTitle, subtopicTitle)) {
+        toast({ title: "Locked", description: "Complete previous lessons to unlock this one." });
+        return;
+      }
+      setIsLoading(true);
+      if (type === 'video & text course') {
+        const query = `${mSubTopic.title} ${mainTopic} in english`;
+        sendVideo(query, topicTitle, subtopicTitle, mSubTopic.title);
       } else {
-        setSelected(mSubTopic.title)
-        setTheory(mSubTopic.theory)
-        if (type === 'video & text course') {
-          setMedia(mSubTopic.youtube);
-        } else {
-          setMedia(mSubTopic.image)
-        }
+        // Bulk-generate ALL ungenerated topics/subtopics in the entire course
+        sendBulkCourseContent(topicTitle, subtopicTitle);
+      }
+    } else {
+      setSelected(mSubTopic.title);
+      setTheory(mSubTopic.theory);
+      if (type === 'video & text course') {
+        setMedia(mSubTopic.youtube);
+      } else {
+        setMedia(mSubTopic.image);
       }
     }
   };
 
-  /* -------- BATCH TEXT COURSE (one API call per topic click) -------- */
+  /* -------- BULK TEXT COURSE (one API call for all remaining content) -------- */
 
-  async function sendBatchSubtopics(topicTitle: string, clickedSub: string, ungeneratedTitles: string[]) {
+  async function sendBulkCourseContent(clickedTopic: string, clickedSub: string) {
     try {
-      const res = await axios.post(serverURL + '/api/generate-batch', {
-        mainTopic,
-        topicTitle,
-        subtopics: ungeneratedTitles,
-        lang
-      });
+      const topicsData = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+      const topicsListForBatch = [];
 
-      if (!res.data.success || !res.data.subtopics) {
-        throw new Error(res.data.message || 'Batch generation failed');
-      }
-
-      const topicsList = jsonData?.course_topics || jsonData?.[mainTopic?.toLowerCase()];
-      const mTopic = topicsList?.find((t: any) => t.title === topicTitle);
-
-      // Fill in all the generated theories
-      res.data.subtopics.forEach((generated: any) => {
-        const target = mTopic?.subtopics?.find((s: any) => s.title === generated.title);
-        if (target) {
-          target.theory = generated.theory;
-          target.done = true;
+      topicsData.forEach(t => {
+        const ungenerated = t.subtopics.filter((s: any) => !s.theory).map((s: any) => s.title);
+        if (ungenerated.length > 0) {
+          topicsListForBatch.push({
+            topicTitle: t.title,
+            subtopics: ungenerated
+          });
         }
       });
 
-      // Now fetch image for the specific clicked subtopic
-      const clickedSubtopicData = mTopic?.subtopics?.find((s: any) => s.title === clickedSub);
+      if (topicsListForBatch.length === 0) {
+        setIsLoading(false);
+        return;
+      }
+
+      const res = await axios.post(serverURL + '/api/generate-batch', {
+        mainTopic,
+        topicsList: topicsListForBatch,
+        lang,
+        userId
+      });
+
+      if (!res.data.success || !res.data.topics) {
+        throw new Error(res.data.message || 'Bulk generation failed');
+      }
+
+      const updatedTopicsList = jsonData?.course_topics || jsonData?.[mainTopic?.toLowerCase()];
+
+      // Fill in all the generated theories across all topics
+      res.data.topics.forEach((genTopic: any) => {
+        const targetTopic = updatedTopicsList?.find((t: any) => t.title === genTopic.topicTitle);
+        if (targetTopic) {
+          genTopic.subtopics.forEach((genSub: any) => {
+            const targetSub = targetTopic.subtopics.find((s: any) => s.title === genSub.title);
+            if (targetSub) {
+              targetSub.theory = genSub.theory;
+              targetSub.done = true;
+            }
+          });
+        }
+      });
+
+      // Handle the currently clicked subtopic specifically (image fetch)
+      const clickedTopicData = updatedTopicsList?.find((t: any) => t.title === clickedTopic);
+      const clickedSubtopicData = clickedTopicData?.subtopics?.find((s: any) => s.title === clickedSub);
+
       if (clickedSubtopicData) {
         const promptImage = `Example of ${clickedSub} in ${mainTopic}`;
-        sendImageForBatch(promptImage, topicTitle, clickedSub, clickedSubtopicData.theory);
+        sendImageForBatch(promptImage, clickedTopic, clickedSub, clickedSubtopicData.theory);
       } else {
         setIsLoading(false);
         updateCourse();
       }
+
     } catch (error: any) {
       console.error(error);
       toast({
         title: 'Error',
-        description: error?.response?.data?.message || error.message || 'Content generation failed'
+        description: error?.response?.data?.message || error.message || 'Bulk generation failed'
       });
       setIsLoading(false);
     }
