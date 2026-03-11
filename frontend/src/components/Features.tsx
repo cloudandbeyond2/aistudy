@@ -43,6 +43,11 @@ const featuresData = {
       icon: <RotateCw className="h-6 w-6" />,
       title: "AI Teacher Chat",
       description: "Get immediate answers to your questions from our specialized AI tutor while learning."
+    },
+    {
+      icon: <Briefcase className="h-6 w-6" />,
+      title: "Interview Preparation",
+      description: "Premium access to daily current affairs, aptitude tests, and instantly generated AI quizzes."
     }
   ],
   organizations: [
@@ -85,6 +90,11 @@ const featuresData = {
       icon: <Award className="h-6 w-6" />,
       title: "Verified Credentials",
       description: "Issue blockchain-secured certificates that employers and partners can verify instantly."
+    },
+    {
+      icon: <Briefcase className="h-6 w-6" />,
+      title: "Interview Preparation",
+      description: "Empower students with premium access to current affairs, aptitude tests, and AI-driven mock quizzes."
     }
   ]
 };

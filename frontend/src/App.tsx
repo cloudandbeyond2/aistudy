@@ -95,6 +95,7 @@ import DeptDashboard from "./pages/DeptDashboard";
 import StaffDashboard from './pages/StaffDashboard';
 import StudentAttendance from './pages/StudentAttendance';
 import AdminGlobalNews from "./pages/admin/AdminGlobalNews";
+import InterviewPreparation from "./pages/InterviewPreparation";
 
 // Staff Pages
 import StaffClasses from './pages/staff/StaffClasses';
@@ -157,6 +158,7 @@ const App = () => (
 
                     <Route path="org/student-tickets" element={<OrgStudentTickets />} />
                     <Route path="dept" element={<DeptDashboard />} />
+                    <Route path="interview-prep" element={<InterviewPreparation />} />
                   </Route>
 
                   {/* Course Routes */}

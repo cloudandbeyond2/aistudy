@@ -266,6 +266,15 @@ const DashboardLayout = () => {
                         </SidebarMenuItem>
                       )}
 
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Interview Prep" isActive={isActive('/dashboard/interview-prep')}>
+                          <Link to="/dashboard/interview-prep" className={cn(isActive('/dashboard/interview-prep') && "text-primary")}>
+                            <Briefcase />
+                            <span>Interview Prep</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+
                       {/* Support — show only if NOT admin */}
                       {!admin && (
                         <SidebarMenuItem>
@@ -353,6 +362,15 @@ const DashboardLayout = () => {
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       )}
+
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Interview Prep" isActive={isActive('/dashboard/interview-prep')}>
+                          <Link to="/dashboard/interview-prep" className={cn(isActive('/dashboard/interview-prep') && "text-primary")}>
+                            <Briefcase />
+                            <span>Interview Prep</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
 
                       <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Assignments" isActive={isActive('/dashboard/student/assignments')}>
@@ -588,6 +606,15 @@ const DashboardLayout = () => {
                         <Link to="/dashboard/staff">
                           <LayoutDashboard />
                           <span>Dashboard</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Interview Prep" isActive={isActive('/dashboard/interview-prep')}>
+                        <Link to="/dashboard/interview-prep">
+                          <Briefcase />
+                          <span>Interview Prep</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
