@@ -1249,82 +1249,19 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
   async function handleCreateCourse() {
     if (isLoadingCourse) return;
 
-    const courseTopics = normalizeAllSubtopics();
-    const firstSubtopic = courseTopics?.[0]?.subtopics?.[0];
+    normalizeAllSubtopics();
+    const courseTopics = getCourseTopics();
 
-    if (!firstSubtopic) {
-      toast({ title: 'Error', description: 'No subtopics found.' });
+    if (!courseTopics?.length) {
+      toast({ title: 'Error', description: 'Course data is not available.' });
       return;
     }
 
     setIsLoadingCourse(true);
-
-    try {
-      if (type === 'video & text course') {
-        const query = `${firstSubtopic.title} ${courseName} in english`;
-        await sendVideo(query);
-      } else {
-        const prompt = `Strictly in ${lang}, Explain ${firstSubtopic.title} of ${courseName} with examples. Do not include images or extra resources.`;
-        const imagePrompt = `Example of ${firstSubtopic.title} in ${courseName}`;
-        await sendPrompt(prompt, imagePrompt);
-      }
-    } catch (error: any) {
-      console.error("Course Generation Error:", error);
-      toast({
-        title: "Generation Failed",
-        description: error.response?.data?.message || error.message || "An error occurred during course generation."
-      });
-      setIsLoadingCourse(false);
-    }
-  }
-
-  /* ---------------- TEXT COURSE ---------------- */
-
-  async function sendPrompt(prompt: string, imagePrompt: string) {
-    const res = await axios.post(serverURL + '/api/generate', { prompt });
-    await sendImage(res.data.generatedText, imagePrompt);
-  }
-
-  async function sendImage(theory: string, imagePrompt: string) {
-    const res = await axios.post(serverURL + '/api/image', {
-      prompt: imagePrompt
-    });
-    await saveSubtopic({ theory, image: res.data.url });
-  }
-
-  /* ---------------- VIDEO COURSE ---------------- */
-
-  async function sendVideo(query: string) {
-    const yt = await axios.post(serverURL + '/api/yt', { prompt: query });
-    await sendTranscript(yt.data.url);
-  }
-
-  async function sendTranscript(videoId: string) {
-    const res = await axios.post(serverURL + '/api/transcript', {
-      prompt: videoId
-    });
-
-    const allText = res.data.transcript
-      .map((i: any) => i.text)
-      .join(' ');
-
-    const prompt = `Strictly in ${lang}, Summarize this content clearly for learning: ${allText}`;
-    const summary = await axios.post(serverURL + '/api/generate', { prompt });
-
-    await saveSubtopic({
-      theory: summary.data.generatedText,
-      youtube: videoId
-    });
+    await saveCourse();
   }
 
   /* ---------------- SAVE ---------------- */
-
-  async function saveSubtopic(data: any) {
-    normalizeAllSubtopics();
-    const courseTopics = getCourseTopics();
-    Object.assign(courseTopics[0].subtopics[0], data);
-    await saveCourse();
-  }
 
   async function saveCourse() {
     try {

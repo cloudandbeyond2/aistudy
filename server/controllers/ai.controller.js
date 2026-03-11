@@ -62,7 +62,41 @@ export const generatePrompt = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-flash-latest'
+      model: 'gemini-2.5-flash',
+      systemInstruction: "You are an expert educational course architect. Design highly structured, coherent, and comprehensive course outlines.",
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: "object",
+          properties: {
+            course_topics: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  subtopics: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string" },
+                        theory: { type: "string" },
+                        youtube: { type: "string" },
+                        image: { type: "string" },
+                        done: { type: "boolean" }
+                      },
+                      required: ["title"]
+                    }
+                  }
+                },
+                required: ["title", "subtopics"]
+              }
+            }
+          },
+          required: ["course_topics"]
+        }
+      }
     });
 
     const result = await retryWithBackoff(() => model.generateContent(prompt));
@@ -100,15 +134,15 @@ export const generatePrompt = async (req, res) => {
 
 
 /**
- * GENERATE BATCH SUBTOPIC CONTENT (all subtopics of a topic in ONE API call)
+ * GENERATE BATCH SUBTOPIC CONTENT (multiple topics and their subtopics in ONE API call)
  */
 export const generateBatchSubtopics = async (req, res) => {
-  const { mainTopic, topicTitle, subtopics, lang, userId } = req.body;
+  const { mainTopic, topicsList, lang, userId } = req.body;
 
-  if (!mainTopic || !topicTitle || !subtopics || !subtopics.length) {
+  if (!mainTopic || !topicsList || !Array.isArray(topicsList) || !topicsList.length) {
     return res.status(400).json({
       success: false,
-      message: 'Missing required fields: mainTopic, topicTitle, subtopics'
+      message: 'Missing required fields: mainTopic, topicsList'
     });
   }
 
@@ -121,7 +155,6 @@ export const generateBatchSubtopics = async (req, res) => {
         const planType = user.type || 'free';
         const limits = getPlanLimits(planType);
 
-        // Expiry check
         if (!isPlanActive(planType, user.subscriptionEnd)) {
           return res.status(403).json({
             success: false,
@@ -130,13 +163,15 @@ export const generateBatchSubtopics = async (req, res) => {
           });
         }
 
-        // Subtopic count check
-        if (subtopics.length > limits.maxSubtopics) {
-          return res.status(403).json({
-            success: false,
-            message: `Your ${planType} plan allows a maximum of ${limits.maxSubtopics} subtopics per topic. Please upgrade your plan for more.`,
-            subtopicLimitReached: true
-          });
+        // Validate each topic's subtopic count against limits
+        for (const topic of topicsList) {
+          if (topic.subtopics && topic.subtopics.length > limits.maxSubtopics) {
+            return res.status(403).json({
+              success: false,
+              message: `Your ${planType} plan allows a maximum of ${limits.maxSubtopics} subtopics per topic.`,
+              subtopicLimitReached: true
+            });
+          }
         }
       }
     } catch (planCheckErr) {
@@ -152,73 +187,97 @@ export const generateBatchSubtopics = async (req, res) => {
     { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }
   ];
 
-  const subtopicList = subtopics.map((s, i) => `${i + 1}. ${s}`).join('\n');
+  const topicsPromptString = topicsList.map((t, i) => {
+    const subList = t.subtopics.join('\n- ');
+    return `Chapter ${i + 1}: "${t.topicTitle}"\nSubtopics:\n- ${subList}`;
+  }).join('\n\n');
 
-  const prompt = `Strictly in ${lang || 'English'}, generate educational explanations for the following subtopics of the chapter "${topicTitle}" from the course "${mainTopic}".
-
-For each subtopic, provide a thorough explanation with examples.
+  const systemInstruction = `Strictly in ${lang || 'English'}, you are a specialized educational content writer. 
+Your goal is to provide thorough, in-depth, and "large" explanations for course subtopics.
+For each subtopic, provide a detailed explanation (approx 500-1000 words if possible) with rich examples and clear definitions.
+Use valid HTML formatting for the "theory" field (paragraphs, bold text, lists).
 Do NOT include images, external links, or additional resource suggestions.
+ONLY respond with a valid JSON object matching the requested schema.`;
 
-Subtopics:
-${subtopicList}
+  const prompt = `Course: "${mainTopic}"
 
-Respond ONLY with a valid JSON object in this exact format:
+Generate comprehensive educational content for these chapters and subtopics:
+${topicsPromptString}
+
+Response Format (JSON):
 {
-  "subtopics": [
-    { "title": "Subtopic title here", "theory": "Full explanation here (HTML is fine)" }
+  "topics": [
+    {
+      "topicTitle": "Topic Title",
+      "subtopics": [
+        { "title": "Subtopic Title", "theory": "Detailed HTML Content" }
+      ]
+    }
   ]
-}
-
-Only return JSON. No markdown code blocks.`;
+}`;
 
   try {
     const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest', safetySettings });
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      safetySettings,
+      systemInstruction,
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: "object",
+          properties: {
+            topics: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  topicTitle: { type: "string" },
+                  subtopics: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string" },
+                        theory: { type: "string" }
+                      },
+                      required: ["title", "theory"]
+                    }
+                  }
+                },
+                required: ["topicTitle", "subtopics"]
+              }
+            }
+          },
+          required: ["topics"]
+        }
+      }
+    });
 
     const result = await retryWithBackoff(() => model.generateContent(prompt));
     const rawText = await result.response.text();
-
-    const cleanedText = rawText
-      .replace(/```json/g, '')
-      .replace(/```/g, '')
-      .trim();
-
-    let parsed;
-    try {
-      parsed = JSON.parse(cleanedText);
-    } catch {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to parse AI response as JSON. Please try again.',
-        raw: cleanedText
-      });
-    }
+    const parsed = JSON.parse(rawText);
 
     res.status(200).json({
       success: true,
-      subtopics: parsed.subtopics
+      topics: parsed.topics
     });
 
   } catch (error) {
     console.log('Batch generation error:', error);
-
-    const isRateLimitError =
-      error.message?.includes('429') ||
-      error.message?.includes('Too Many Requests') ||
-      error.message?.includes('quota');
-
+    const isRateLimitError = error.message?.includes('429') || error.message?.includes('quota');
     const isMissingKey = error.status === 401;
-    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
+    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404');
 
     let status = 500;
     let message = 'Internal server error';
 
     if (isMissingKey || isInvalidKey) {
       status = isMissingKey ? 401 : 403;
-      message = error.message ? `Gemini API Error: ${error.message}` : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
+      message = 'Invalid Gemini API Key or Model unavailable.';
     } else if (isRateLimitError) {
       status = 429;
-      message = 'API rate limit or quota exceeded. Please try again later.';
+      message = 'API rate limit or quota exceeded.';
     }
 
     res.status(status).json({
@@ -228,6 +287,7 @@ Only return JSON. No markdown code blocks.`;
     });
   }
 };
+
 
 
 /**
@@ -265,8 +325,9 @@ export const generateHtml = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-flash-latest',
-      safetySettings
+      model: 'gemini-2.5-flash',
+      safetySettings,
+      systemInstruction: 'You are a helpful educational assistant. Provide thorough and interesting explanations with examples. Use markdown formatting.'
     });
 
     const result = await retryWithBackoff(() =>
@@ -497,23 +558,49 @@ export const generateAIExam = async (req, res) => {
     ];
 
     const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-flash-latest',
-      safetySettings
-    });
+    const systemInstruction = `Strictly in ${lang || 'English'}, you are an academic assessor.
+Generate 10 high-quality multiple choice questions (MCQs) for the given course material.
+Ensure questions cover all provided subtopics.
+Each question must have 4 options and 1 correct answer (0-indexed).
+ONLY respond with a valid JSON array.`;
 
-    const prompt = `Strictly in ${lang || 'English'}, generate 10 multiple choice questions about ${mainTopic} covering these topics: ${subtopicsString}.
+    const prompt = `Course: "${mainTopic}"
+Topics: ${subtopicsString}
 
-Format the response strictly as a JSON array:
+Generate 10 MCQs in JSON format:
 [
   {
     "question": "Question text?",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "options": ["A", "B", "C", "D"],
     "correctAnswer": 0
   }
-]
+]`;
 
-Only return JSON.`;
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      safetySettings,
+      systemInstruction,
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              question: { type: "string" },
+              options: {
+                type: "array",
+                items: { type: "string" },
+                minItems: 4,
+                maxItems: 4
+              },
+              correctAnswer: { type: "number" }
+            },
+            required: ["question", "options", "correctAnswer"]
+          }
+        }
+      }
+    });
 
     const result = await retryWithBackoff(() =>
       model.generateContent(prompt)
@@ -522,10 +609,7 @@ Only return JSON.`;
     const response = result.response;
     const text = await response.text();
 
-    const cleanedText = text
-      .replace(/```json/g, '')
-      .replace(/```/g, '')
-      .trim();
+    const cleanedText = text.trim();
 
     res.status(200).json({
       success: true,

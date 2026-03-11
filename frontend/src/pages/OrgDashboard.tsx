@@ -302,6 +302,27 @@ const OrgDashboard = () => {
     const orgId = sessionStorage.getItem('orgId') || sessionStorage.getItem('uid');
     const [userDeptName, setUserDeptName] = useState('');
     const [userDeptId, setUserDeptId] = useState(deptId || '');
+    const getDeptScopedDepartment = () => (role === 'dept_admin' ? (userDeptId || deptId || '') : '');
+    const getDepartmentValue = (value: any) => {
+        if (!value) return '';
+        if (typeof value === 'string') return value;
+        if (typeof value === 'object') return value._id || value.name || '';
+        return '';
+    };
+    const matchesCurrentDepartment = (value: any, departmentId?: any) => {
+        const normalizedValue = getDepartmentValue(value);
+        const normalizedDepartmentId = getDepartmentValue(departmentId);
+        return Boolean(
+            (userDeptName && normalizedValue === userDeptName) ||
+            (deptId && normalizedValue === deptId) ||
+            (deptId && normalizedDepartmentId === deptId)
+        );
+    };
+    const getDepartmentLabel = (value: any) => {
+        const normalizedValue = getDepartmentValue(value);
+        if (!normalizedValue || normalizedValue === 'all') return '';
+        return departmentsList.find((d: any) => d._id === normalizedValue || d.name === normalizedValue)?.name || normalizedValue;
+    };
 
     useEffect(() => {
         if (!orgId) {
@@ -347,7 +368,7 @@ const OrgDashboard = () => {
 
     useEffect(() => {
         if (role === 'dept_admin' && (userDeptId || deptId)) {
-            const targetId = userDeptId || deptId;
+            const targetId = getDeptScopedDepartment();
             setNewAssignment(prev => ({ ...prev, department: targetId }));
             setNewMeeting(prev => ({ ...prev, department: targetId }));
             setNewProject(prev => ({ ...prev, department: targetId }));
@@ -434,11 +455,7 @@ const OrgDashboard = () => {
             if (res.data.success) {
                 let meetingsData = res.data.meetings;
                 if (role === 'dept_admin') {
-                    meetingsData = meetingsData.filter((m: any) =>
-                        (userDeptName && m.department === userDeptName) ||
-                        (deptId && m.departmentId === deptId) ||
-                        (deptId && m.department === deptId)
-                    );
+                    meetingsData = meetingsData.filter((m: any) => matchesCurrentDepartment(m.department, m.departmentId));
                 }
                 setMeetings(meetingsData);
             }
@@ -453,11 +470,7 @@ const OrgDashboard = () => {
             if (res.data.success) {
                 let projectsData = res.data.projects;
                 if (role === 'dept_admin') {
-                    projectsData = projectsData.filter((p: any) =>
-                        (userDeptName && p.department === userDeptName) ||
-                        (deptId && p.departmentId === deptId) ||
-                        (deptId && p.department === deptId)
-                    );
+                    projectsData = projectsData.filter((p: any) => matchesCurrentDepartment(p.department, p.departmentId));
                 }
                 setProjects(projectsData);
             }
@@ -472,11 +485,7 @@ const OrgDashboard = () => {
             if (res.data.success) {
                 let materialsData = res.data.materials;
                 if (role === 'dept_admin') {
-                    materialsData = materialsData.filter((m: any) =>
-                        (userDeptName && m.department === userDeptName) ||
-                        (deptId && m.departmentId === deptId) ||
-                        (deptId && m.department === deptId)
-                    );
+                    materialsData = materialsData.filter((m: any) => matchesCurrentDepartment(m.department, m.departmentId));
                 }
                 setMaterials(materialsData);
             }
@@ -591,7 +600,7 @@ const OrgDashboard = () => {
                     fileUrl: '',
                     file: null,
                     type: 'PDF',
-                    department: ''
+                    department: getDeptScopedDepartment()
                 });
                 fetchMaterials();
             }
@@ -623,11 +632,7 @@ const OrgDashboard = () => {
             if (res.data.success) {
                 let assignmentsData = res.data.assignments;
                 if (role === 'dept_admin') {
-                    assignmentsData = assignmentsData.filter((a: any) =>
-                        (userDeptName && a.department === userDeptName) ||
-                        (deptId && a.departmentId === deptId) ||
-                        (deptId && a.department === deptId)
-                    );
+                    assignmentsData = assignmentsData.filter((a: any) => matchesCurrentDepartment(a.department, a.departmentId));
                 }
                 setAssignments(assignmentsData);
             }
@@ -708,10 +713,7 @@ const OrgDashboard = () => {
             if (res.data.success) {
                 let noticesData = res.data.notices;
                 if (role === 'dept_admin') {
-                    noticesData = noticesData.filter((n: any) =>
-                        (userDeptName && n.department === userDeptName) ||
-                        (deptId && (n.departmentId === deptId || n.department === deptId))
-                    );
+                    noticesData = noticesData.filter((n: any) => matchesCurrentDepartment(n.department, n.departmentId));
                 }
                 setNotices(noticesData);
             }
@@ -746,7 +748,12 @@ const OrgDashboard = () => {
             const res = await axios.post(`${serverURL}/api/org/assignment/create`, assignmentData);
             if (res.data.success) {
                 toast({ title: 'Success', description: 'Assignment created successfully' });
-                setNewAssignment({ topic: '', description: '', dueDate: '', department: '' });
+                setNewAssignment({
+                    topic: '',
+                    description: '',
+                    dueDate: '',
+                    department: getDeptScopedDepartment()
+                });
                 fetchAssignments();
             }
         } catch (error) {
@@ -934,7 +941,12 @@ const OrgDashboard = () => {
             const res = await axios.post(`${serverURL}/api/org/notice/create`, { ...newNotice, organizationId: orgId });
             if (res.data.success) {
                 toast({ title: "Success", description: "Notice posted" });
-                setNewNotice({ title: '', content: '', audience: 'all', department: '' });
+                setNewNotice({
+                    title: '',
+                    content: '',
+                    audience: 'all',
+                    department: getDeptScopedDepartment()
+                });
                 fetchNotices();
             }
         } catch (e) {
@@ -1769,7 +1781,7 @@ const OrgDashboard = () => {
                                                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
                                                     <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(m.date).toLocaleDateString()} at {m.time}</span>
                                                     <span className="capitalize">{m.platform.replace('-', ' ')}</span>
-                                                    {m.department && m.department !== 'all' && <span className="text-primary font-medium">Dept: {departmentsList.find(d => d._id === m.department || d.name === m.department)?.name || m.department}</span>}
+                                                    {getDepartmentLabel(m.department) && <span className="text-primary font-medium">Dept: {getDepartmentLabel(m.department)}</span>}
                                                 </div>
                                                 <a href={m.link} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline mt-2 flex items-center gap-1">
                                                     {m.link.substring(0, 40)}... <ExternalLink className="w-3 h-3" />
@@ -1871,7 +1883,7 @@ const OrgDashboard = () => {
                                             <div className="line-clamp-2 text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: p.description }} />
                                         </CardHeader>
                                         <CardContent className="pt-0 text-[11px] text-muted-foreground flex justify-between">
-                                            <span>Dept: {p.department ? (departmentsList.find(d => d._id === p.department || d.name === p.department)?.name || p.department) : 'All'}</span>
+                                            <span>Dept: {getDepartmentLabel(p.department) || 'All'}</span>
                                             {p.dueDate && <span>Due: {new Date(p.dueDate).toLocaleDateString()}</span>}
                                         </CardContent>
                                     </Card>
@@ -2051,9 +2063,9 @@ const OrgDashboard = () => {
                                             </div>
                                             <CardDescription className="text-xs">
                                                 {new Date(notice.createdAt).toLocaleDateString()}
-                                                {notice.department && (
+                                                {getDepartmentLabel(notice.department) && (
                                                     <span className="ml-2 px-2 py-0.5 rounded-full bg-secondary text-[10px]">
-                                                        {departmentsList.find(d => d._id === notice.department)?.name || 'Dept'}
+                                                        {getDepartmentLabel(notice.department)}
                                                     </span>
                                                 )}
                                             </CardDescription>

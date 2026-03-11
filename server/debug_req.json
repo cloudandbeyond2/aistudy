@@ -1,6 +1,6 @@
 {
-  "courseId": "69a16cbcf73b0f044c031045",
-  "mainTopic": "ANGULAR",
-  "subtopicsString": "Introduction to Components and Decorators, Template Syntax and Data Binding, Directives: Structural and Attribute, Component Communication with @Input and @Output, Lifecycle Hooks",
+  "courseId": "69b10efb0b8fd899a0456262",
+  "mainTopic": "DIGITAL ELECTRONICS",
+  "subtopicsString": "Analog vs. Digital Signals, Number Systems (Binary, Octal, Decimal, Hexadecimal), Binary Codes (BCD, Gray, ASCII), Basic Digital Concepts and Terminology, Basic Logic Gates (AND, OR, NOT), Universal Gates (NAND, NOR), Exclusive Gates (XOR, XNOR), Boolean Algebra Postulates and Theorems, De Morgan's Theorems, Standard Forms of Boolean Expressions (SOP, POS), Karnaugh Maps (K-Maps) for Simplification, Adders (Half Adder, Full Adder, Ripple Carry Adder), Subtractors (Half Subtractor, Full Subtractor), Multiplexers (MUX) and Demultiplexers (DEMUX), Encoders and Decoders, Comparators, Latches (SR, D), Flip-Flops (SR, D, JK, T) and their operation, Edge-Triggering vs. Level-Triggering, Registers (Shift Registers, Parallel Load Registers), Counters (Asynchronous/Ripple, Synchronous), Introduction to State Machines, Memory Basics (RAM, ROM) and characteristics, Static RAM (SRAM) and Dynamic RAM (DRAM), Read-Only Memory (ROM) Types (PROM, EPROM, EEPROM, Flash), Introduction to Programmable Logic Devices (PLD), Programmable Array Logic (PAL) and Generic Array Logic (GAL), Complex Programmable Logic Devices (CPLD), Field-Programmable Gate Arrays (FPGA) Basics",
   "lang": "english"
 }
