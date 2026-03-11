@@ -24,7 +24,10 @@ const Dashboard = () => {
 
 
 
-  const daysleft = daysleftRaw === "UNLIMITED" ? null : Number(daysleftRaw);
+ const daysleft =
+  daysleftRaw === "UNLIMITED" || daysleftRaw === "EXPIRED"
+    ? null
+    : Number(daysleftRaw);
 
   const [isUnlimited, setIsUnlimited] = useState(false);
   const [data, setData] = useState([]);
@@ -117,11 +120,22 @@ const Dashboard = () => {
           setIsUnlimited(true);
         } else {
           const today = new Date();
-          const end = new Date(endDate);
-          const diffTime = end.getTime() - today.getTime();
-          const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          sessionStorage.setItem("daysLeft", daysLeft.toString());
-          setIsUnlimited(false);
+const end = new Date(endDate);
+
+if (isNaN(end.getTime())) {
+  sessionStorage.setItem("daysLeft", "EXPIRED");
+  return;
+}
+const diffTime = end.getTime() - today.getTime();
+const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+if (daysLeft <= 0) {
+  sessionStorage.setItem("daysLeft", "EXPIRED");
+} else {
+  sessionStorage.setItem("daysLeft", daysLeft.toString());
+}
+
+setIsUnlimited(false);
         }
       }
     } catch (error) {
@@ -369,34 +383,43 @@ const Dashboard = () => {
           <div className="flex items-center gap-3 flex-wrap">
 
             {/* Plan Badge */}
-            <h6
-              onClick={redirectPricing}
-              style={{
-                display: "inline-block",
-                padding: "8px 14px",
-                cursor: "pointer",
-                borderRadius: "20px",
-                backgroundColor:
-                  plan === "free"
-                    ? "#E0E7FF"
-                    : isUnlimited
-                      ? "#FEF3C7"
-                      : "#ECFDF5",
-                color:
-                  plan === "free"
-                    ? "#3730A3"
-                    : isUnlimited
-                      ? "#92400E"
-                      : "#065F46",
-                fontWeight: 600,
-                fontSize: "14px",
-              }}
-            >
-              {plan === "free"
-                ? "🧪 Free Plan"
-                : isUnlimited
-                  ? "👑 Unlimited Access"
-                  : `📅 ${daysleft} days left`}
+           <h6
+  onClick={redirectPricing}
+ style={{
+  display: "inline-block",
+  padding: "8px 14px",
+  cursor: "pointer",
+  borderRadius: "20px",
+
+  backgroundColor:
+    plan === "free"
+      ? "#E0E7FF"
+      : isUnlimited
+      ? "#FEF3C7"
+      : daysleftRaw === "EXPIRED"
+      ? "#FEE2E2"
+      : "#ECFDF5",
+
+  color:
+    plan === "free"
+      ? "#3730A3"
+      : isUnlimited
+      ? "#92400E"
+      : daysleftRaw === "EXPIRED"
+      ? "#DC2626"
+      : "#065F46",
+
+  fontWeight: 600,
+  fontSize: "14px",
+}}
+>
+             {plan === "free"
+  ? "🧪 Free Plan"
+  : isUnlimited
+    ? "👑 Unlimited Access"
+    : daysleftRaw === "EXPIRED"
+      ? "Expired"
+      : `📅 ${daysleft} days left`}
             </h6>
 
             {/* View Website */}
@@ -411,7 +434,7 @@ const Dashboard = () => {
             {/* Generate */}
             <Button
               onClick={() =>
-                courses.length === 1 && plan === "free"
+           courses.length === 1 && (plan === "free" || daysleftRaw === "EXPIRED")
                   ? redirectPricing()
                   : redirectCreate()
               }
