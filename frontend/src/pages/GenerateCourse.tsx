@@ -219,24 +219,12 @@ const GenerateCourse = () => {
       console.error('Error checking course existence:', error);
     }
 
-    const prompt = `Strictly in ${language}, Generate a list of EXACTLY ${number} topics (chapters) for the course "${mainTopic}". 
-    For each topic, include relevant subtopics.
-    The output must take the form of a JSON object with a "course_topics" array containing EXACTLY ${number} items.
-    
-    Structure:
-    {
-      "course_topics": [
-        {
-          "title": "Topic 1",
-          "subtopics": [ ... ]
-        }
-      ]
-    }
+    const prompt = `Course: "${mainTopic}"
+    Language: ${language}
+    Chapters: ${number}
+    Required Subtopics: ${subtopicsList.join(', ')}
 
-    Strictly include these requested subtopics if provided: ${subtopicsList.join(', ')}.
-    Keep "theory", "youtube", "image" fields empty.
-    "done" should be false.
-    `;
+    Generate a detailed course structure in JSON with exactly ${number} chapters.`;
 
     sendPrompt(prompt);
   };

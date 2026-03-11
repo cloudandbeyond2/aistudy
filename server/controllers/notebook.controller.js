@@ -60,7 +60,7 @@ export const chat = async (req, res) => {
 
   try {
     const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     let prompt = '';
     if (context) {
@@ -100,7 +100,7 @@ export const generateAction = async (req, res) => {
 
   try {
     const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     let prompt = `Based strictly on the following context, generate a detailed ${action}.\n\nContext:\n${context}\n\n`;
 

@@ -62,7 +62,41 @@ export const generatePrompt = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-flash-latest'
+      model: 'gemini-2.5-flash',
+      systemInstruction: "You are an expert educational course architect. Design highly structured, coherent, and comprehensive course outlines.",
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: "object",
+          properties: {
+            course_topics: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  subtopics: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string" },
+                        theory: { type: "string" },
+                        youtube: { type: "string" },
+                        image: { type: "string" },
+                        done: { type: "boolean" }
+                      },
+                      required: ["title"]
+                    }
+                  }
+                },
+                required: ["title", "subtopics"]
+              }
+            }
+          },
+          required: ["course_topics"]
+        }
+      }
     });
 
     const result = await retryWithBackoff(() => model.generateContent(prompt));
@@ -154,45 +188,58 @@ export const generateBatchSubtopics = async (req, res) => {
 
   const subtopicList = subtopics.map((s, i) => `${i + 1}. ${s}`).join('\n');
 
-  const prompt = `Strictly in ${lang || 'English'}, generate educational explanations for the following subtopics of the chapter "${topicTitle}" from the course "${mainTopic}".
-
-For each subtopic, provide a thorough explanation with examples.
+  const systemInstruction = `Strictly in ${lang || 'English'}, you are a specialized educational content writer. 
+Your goal is to provide thorough, in-depth, and "large" explanations for course subtopics.
+For each subtopic, provide a detailed explanation (approx 500-1000 words if possible) with rich examples and clear definitions.
+Use valid HTML formatting for the "theory" field (paragraphs, bold text, lists).
 Do NOT include images, external links, or additional resource suggestions.
+ONLY respond with a valid JSON object.`;
 
-Subtopics:
+  const prompt = `Course: "${mainTopic}"
+Chapter: "${topicTitle}"
+
+Generate comprehensive educational content for these subtopics:
 ${subtopicList}
 
-Respond ONLY with a valid JSON object in this exact format:
+Response Format (JSON):
 {
   "subtopics": [
-    { "title": "Subtopic title here", "theory": "Full explanation here (HTML is fine)" }
+    { "title": "Subtopic Title", "theory": "Detailed HTML Content" }
   ]
-}
-
-Only return JSON. No markdown code blocks.`;
+}`;
 
   try {
     const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest', safetySettings });
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      safetySettings,
+      systemInstruction,
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: "object",
+          properties: {
+            subtopics: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  theory: { type: "string" }
+                },
+                required: ["title", "theory"]
+              }
+            }
+          },
+          required: ["subtopics"]
+        }
+      }
+    });
 
     const result = await retryWithBackoff(() => model.generateContent(prompt));
     const rawText = await result.response.text();
 
-    const cleanedText = rawText
-      .replace(/```json/g, '')
-      .replace(/```/g, '')
-      .trim();
-
-    let parsed;
-    try {
-      parsed = JSON.parse(cleanedText);
-    } catch {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to parse AI response as JSON. Please try again.',
-        raw: cleanedText
-      });
-    }
+    const parsed = JSON.parse(rawText);
 
     res.status(200).json({
       success: true,
@@ -265,8 +312,9 @@ export const generateHtml = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-flash-latest',
-      safetySettings
+      model: 'gemini-2.5-flash',
+      safetySettings,
+      systemInstruction: 'You are a helpful educational assistant. Provide thorough and interesting explanations with examples. Use markdown formatting.'
     });
 
     const result = await retryWithBackoff(() =>
@@ -497,23 +545,49 @@ export const generateAIExam = async (req, res) => {
     ];
 
     const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-flash-latest',
-      safetySettings
-    });
+    const systemInstruction = `Strictly in ${lang || 'English'}, you are an academic assessor.
+Generate 10 high-quality multiple choice questions (MCQs) for the given course material.
+Ensure questions cover all provided subtopics.
+Each question must have 4 options and 1 correct answer (0-indexed).
+ONLY respond with a valid JSON array.`;
 
-    const prompt = `Strictly in ${lang || 'English'}, generate 10 multiple choice questions about ${mainTopic} covering these topics: ${subtopicsString}.
+    const prompt = `Course: "${mainTopic}"
+Topics: ${subtopicsString}
 
-Format the response strictly as a JSON array:
+Generate 10 MCQs in JSON format:
 [
   {
     "question": "Question text?",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "options": ["A", "B", "C", "D"],
     "correctAnswer": 0
   }
-]
+]`;
 
-Only return JSON.`;
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      safetySettings,
+      systemInstruction,
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              question: { type: "string" },
+              options: {
+                type: "array",
+                items: { type: "string" },
+                minItems: 4,
+                maxItems: 4
+              },
+              correctAnswer: { type: "number" }
+            },
+            required: ["question", "options", "correctAnswer"]
+          }
+        }
+      }
+    });
 
     const result = await retryWithBackoff(() =>
       model.generateContent(prompt)
@@ -522,10 +596,7 @@ Only return JSON.`;
     const response = result.response;
     const text = await response.text();
 
-    const cleanedText = text
-      .replace(/```json/g, '')
-      .replace(/```/g, '')
-      .trim();
+    const cleanedText = text.trim();
 
     res.status(200).json({
       success: true,
