@@ -5,36 +5,88 @@ import retryWithBackoff from '../utils/retryWithBackoff.js';
 import { getGenAI } from '../config/gemini.js';
 import { HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import axios from 'axios';
+import mongoose from "mongoose";
 
 // Middleware to check if user is paid
+// export const checkPaidUser = async (req, res, next) => {
+//   try {
+//     // const userId = req.body.userId || req.query.userId || req.headers['user-id'];
+//     const user = await User.findById(userId);
+//     console.log(`[checkPaidUser] Attempt for userId: ${userId}`);
+//     console.log(`[checkPaidUser] Headers:`, JSON.stringify(req.headers));
+    
+//     if (!userId) {
+//       console.warn(`[checkPaidUser] Missing User ID`);
+//       return res.status(401).json({ success: false, message: 'User ID is required' });
+//     }
+
+//     // const user = await User.findById(userId);
+//     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+//     const PAID_TYPES = ['monthly', 'yearly', 'forever'];
+//     const isPaid = PAID_TYPES.includes(user.type);
+//     const isOrgUser = !!user.organizationId || user.isOrganization;
+
+//     if (!isPaid && !isOrgUser) {
+//       return res.status(403).json({ success: false, message: 'This feature is only available to paid users.' });
+//     }
+
+//     next();
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
 export const checkPaidUser = async (req, res, next) => {
   try {
-    const userId = req.body.userId || req.query.userId || req.headers['user-id'];
-    console.log(`[checkPaidUser] Attempt for userId: ${userId}`);
-    console.log(`[checkPaidUser] Headers:`, JSON.stringify(req.headers));
-    
+    const userId =
+      req?.body?.userId ||
+      req?.query?.userId ||
+      req?.headers?.["user-id"];
+
     if (!userId) {
-      console.warn(`[checkPaidUser] Missing User ID`);
-      return res.status(401).json({ success: false, message: 'User ID is required' });
+      return res.status(401).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID",
+      });
     }
 
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-    const PAID_TYPES = ['monthly', 'yearly', 'forever'];
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const PAID_TYPES = ["monthly", "yearly", "forever"];
     const isPaid = PAID_TYPES.includes(user.type);
     const isOrgUser = !!user.organizationId || user.isOrganization;
 
     if (!isPaid && !isOrgUser) {
-      return res.status(403).json({ success: false, message: 'This feature is only available to paid users.' });
+      return res.status(403).json({
+        success: false,
+        message: "This feature is only available to paid users.",
+      });
     }
 
     next();
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("checkPaidUser error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
-
 // ---------------- CURRENT AFFAIRS ----------------
 export const createCurrentAffair = async (req, res) => {
   try {
@@ -186,7 +238,7 @@ export const getDailyAptitudes = async (req, res) => {
       { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
       { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }
     ];
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro', safetySettings });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', safetySettings });
 
     const prompt = `Generate exactly 15 multiple choice aptitude questions on the concept "${concept}". 
     These should be suitable for competitive exam and interview preparation. Mix easy, medium, and hard difficulty.
