@@ -18,7 +18,7 @@ const genAI = new GoogleGenerativeAI(key);
 async function testOutline() {
     console.log("--- Testing Course Outline Generation ---");
     const model = genAI.getGenerativeModel({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         systemInstruction: "You are an expert educational course architect. Your goal is to design highly structured, coherent, and comprehensive course outlines. Always respond in valid JSON format. Provide EXACTLY the number of topics requested. Ensure subtopics are logical and detailed.",
         generationConfig: {
             responseMimeType: 'application/json'
@@ -78,7 +78,7 @@ Response Format (JSON):
 }`;
 
     const model = genAI.getGenerativeModel({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         systemInstruction,
         generationConfig: {
             responseMimeType: 'application/json'

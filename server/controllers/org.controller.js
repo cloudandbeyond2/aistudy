@@ -394,6 +394,13 @@ export const getDashboardStats = async (req, res) => {
             percentage: { $lt: 100, $gt: 0 }
         });
 
+        // Placement Stats
+        const placedCount = await User.countDocuments({
+            organization: organizationId,
+            role: 'student',
+            'studentDetails.isPlacementClosed': true
+        });
+
         res.json({
             success: true,
             studentCount,
@@ -401,7 +408,8 @@ export const getDashboardStats = async (req, res) => {
             submissionCount,
             totalCoursesCount,
             completedCoursesCount,
-            inProgressCoursesCount
+            inProgressCoursesCount,
+            placedCount
         });
     } catch (error) {
         console.error('getDashboardStats error:', error);

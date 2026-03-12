@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { Sparkles, Plus, Lock, AlertTriangle } from 'lucide-react';
+import { Sparkles, Plus, Lock, AlertTriangle, BookOpen, Layers, Type, Globe, CheckCircle2, Info, Lightbulb, Award, CheckCircle } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import CoursePreview from '@/components/CoursePreview';
@@ -317,262 +317,385 @@ const GenerateCourse = () => {
         description="Create a customized AI-generated course"
         keywords="course generation, AI learning, custom education"
       />
-      <div className="space-y-8 animate-fade-in max-w-3xl mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-gradient bg-gradient-to-r from-primary to-indigo-500 mb-4">Generate Course</h1>
-          <p className="text-muted-foreground max-w-lg mx-auto">
-            Type the topic on which you want to Generate course.
-            Also, you can enter a list of subtopics, which are the
-            specifics you want to learn.
+      <div className="animate-fade-in max-w-[1400px] mx-auto px-4 py-8 md:py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gradient bg-gradient-to-r from-primary via-indigo-500 to-purple-600 mb-4 pb-2">
+            AI Course Generator
+          </h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+            Harness the power of AI to create structured, comprehensive learning paths in seconds.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 p-3 rounded-lg border bg-muted/30 text-sm text-muted-foreground">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <span>
-            {planLimits.maxCourses === Infinity ? (
-              <>
-                You can create <strong>unlimited</strong> courses on your <strong className="capitalize">{userType}</strong> plan.
-              </>
-            ) : (
-              <>
-                You have created <strong>{courseCount}</strong> of <strong>{planLimits.maxCourses}</strong> allowed courses.
-                {' '}<strong>{remainingCourses}</strong> remaining.
-              </>
-            )}
-          </span>
-        </div>
-
-        {/* Plan Expiry Banner */}
-        {isPlanExpired && (
-          <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/50 bg-destructive/10 text-destructive">
-            <AlertTriangle className="h-5 w-5 flex-shrink-0" />
-            <div>
-              <p className="font-semibold text-sm">Your subscription has expired</p>
-              <p className="text-xs mt-0.5">Please <a href="/dashboard/pricing" className="underline font-medium">renew your plan</a> to continue generating courses.</p>
-            </div>
-          </div>
-        )}
-
-        {/* Plan Info Badge */}
-        {!isPlanExpired && (
-          <div className="flex items-center gap-2 p-3 rounded-lg border bg-muted/30 text-sm text-muted-foreground">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span>
-              <strong className="capitalize">{userType} Plan</strong> — up to{' '}
-              <strong>{planLimits.maxCourses === Infinity ? 'unlimited' : planLimits.maxCourses}</strong> course{planLimits.maxCourses === 1 ? '' : 's'},{' '}
-              <strong>{maxSubtopics}</strong> subtopics per course
-              {subscriptionEndStr && userType !== 'forever' && (
-                <> · Expires <strong>{new Date(subscriptionEndStr).toLocaleDateString()}</strong></>
-              )}
-            </span>
-          </div>
-        )}
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="topic"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Topic</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter main topic" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="space-y-2">
-                    <FormLabel>Sub Topic (Optional) <span className="text-muted-foreground font-normal">— max {maxSubtopics}</span></FormLabel>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Enter subtopic"
-                        value={subtopicInput}
-                        onChange={(e) => setSubtopicInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            addSubtopic();
-                          }
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        onClick={addSubtopic}
-                        className="bg-black text-white hover:bg-gray-800"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Sub-Topic
-                      </Button>
-                    </div>
-
-                    {subtopics.length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        {subtopics.map((topic, index) => (
-                          <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded-md">
-                            <span className="text-sm">{topic}</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="ml-auto h-7 w-7 p-0"
-                              onClick={() => {
-                                const newSubtopics = subtopics.filter((_, i) => i !== index);
-                                setSubtopics(newSubtopics);
-                                form.setValue('subtopics', newSubtopics);
-                              }}
-                            >
-                              ×
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column: Instructions */}
+          <div className="lg:col-span-5 space-y-6">
+            <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden border-l-4 border-primary">
+              <CardContent className="p-6 space-y-4">
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  <Info className="w-5 h-5 text-primary" /> General Instructions
+                </h3>
+                <div className="space-y-4 text-sm leading-relaxed text-muted-foreground">
+                  <div className="flex gap-3">
+                    <div className="mt-1 bg-primary/10 p-1.5 rounded-full h-fit"><Lightbulb className="w-4 h-4 text-primary" /></div>
+                    <p><strong>Topic Precision:</strong> Be specific! Instead of just "Python", try "Advanced Asynchronous Programming in Python" for better results.</p>
                   </div>
-
-                  {/* Number of Sub-Topics */}
-                  <div>
-                    <FormLabel>Select Number Of Sub Topic</FormLabel>
-                    <FormField
-                      control={form.control}
-                      name="topicsLimit"
-                      render={({ field }) => (
-                        <FormItem className="mt-2">
-                          <FormControl>
-                            <RadioGroup
-                              value={selectedValue}
-                              onValueChange={(val) => {
-                                setSelectedValue(val);
-                                field.onChange(val);
-                              }}
-                              className="space-y-2"
-                            >
-                              {/* Option: 5 — always available */}
-                              <div className="flex items-center space-x-2 border p-3 rounded-md">
-                                <RadioGroupItem defaultChecked value="5" id="r1" />
-                                <FormLabel htmlFor="r1" className="mb-0">5</FormLabel>
-                              </div>
-
-                              {/* Option: 10 — monthly/yearly/forever only */}
-                              <div
-                                onClick={() => { if (maxSubtopics < 10) showUpgradeToast('10 subtopics per topic'); }}
-                                className={`flex items-center space-x-2 border p-3 rounded-md ${maxSubtopics < 10 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              >
-                                <RadioGroupItem disabled={maxSubtopics < 10} value="10" id="r2" />
-                                <FormLabel htmlFor="r2" className="mb-0 flex items-center gap-2">
-                                  10
-                                  {maxSubtopics < 10 && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
-                                </FormLabel>
-                              </div>
-                            </RadioGroup>
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
+                  <div className="flex gap-3">
+                    <div className="mt-1 bg-primary/10 p-1.5 rounded-full h-fit"><Layers className="w-4 h-4 text-primary" /></div>
+                    <p><strong>Custom Subtopics:</strong> Guide the AI. Use the "Add Sub-topic" field to ensure the course covers the specific niche areas you care about.</p>
                   </div>
-
-                  {/* Course Type */}
-                  <div>
-                    <FormLabel>Select Course Type</FormLabel>
-                    <FormField
-                      control={form.control}
-                      name="courseType"
-                      render={({ field }) => (
-                        <FormItem className="mt-2">
-                          <FormControl>
-                            <RadioGroup
-                              value={selectedType}
-                              onValueChange={(val) => {
-                                setSelectedType(val);
-                                field.onChange(val);
-                              }}
-                              className="space-y-2"
-                            >
-                              {/* Theory & Image — always available */}
-                              <div className="flex items-center space-x-2 border p-3 rounded-md">
-                                <RadioGroupItem defaultChecked value="image & text course" id="ct1" />
-                                <FormLabel htmlFor="ct1" className="mb-0">Theory &amp; Image Course</FormLabel>
-                              </div>
-
-                              {/* Video & Theory — monthly/yearly/forever only */}
-                              <div
-                                onClick={() => { if (!canUseVideo) showUpgradeToast('Video & Theory courses'); }}
-                                className={`flex items-center space-x-2 border p-3 rounded-md ${!canUseVideo ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              >
-                                <RadioGroupItem disabled={!canUseVideo} value="video & text course" id="ct2" />
-                                <FormLabel htmlFor="ct2" className="mb-0 flex items-center gap-2">
-                                  Video &amp; Theory Course
-                                  {!canUseVideo && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
-                                </FormLabel>
-                              </div>
-                            </RadioGroup>
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
+                  <div className="flex gap-3">
+                    <div className="mt-1 bg-primary/10 p-1.5 rounded-full h-fit"><Type className="w-4 h-4 text-primary" /></div>
+                    <p><strong>Module Depth:</strong> Choose <strong>5 Modules</strong> for a high-level crash course, or <strong>10 Modules</strong> for a deep dive into the subject matter.</p>
                   </div>
-
-                  {/* Language */}
-                  <FormField
-                    control={form.control}
-                    name="language"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          Course Language
-                          {!canUseMultiLang && <span className="text-xs text-muted-foreground font-normal">(Yearly plan for 23+ languages)</span>}
-                        </FormLabel>
-                        <Select
-                          onValueChange={(val) => {
-                            if (!canUseMultiLang && val !== 'English') {
-                              showUpgradeToast('Multi-language support (23+ languages)');
-                              return;
-                            }
-                            setLang(val);
-                            field.onChange(val);
-                          }}
-                          value={lang}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select language" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {languages.map((country) => (
-                              <SelectItem
-                                key={country.code}
-                                value={country.name}
-                                disabled={!canUseMultiLang && country.name !== 'English'}
-                              >
-                                {country.name}
-                                {!canUseMultiLang && country.name !== 'English' && ' 🔒'}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
-
-                  <Button
-                    type="submit"
-                    disabled={isPlanExpired}
-                    className="w-full bg-black text-white hover:bg-gray-800 disabled:opacity-50"
-                  >
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    {isPlanExpired ? 'Plan Expired — Renew to Generate' : 'Submit'}
-                  </Button>
                 </div>
               </CardContent>
             </Card>
-          </form>
-        </Form>
+
+            <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden border-l-4 border-emerald-500">
+              <CardContent className="p-6 space-y-4">
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  <Award className="w-5 h-5 text-emerald-500" /> Certification Path
+                </h3>
+                <div className="space-y-4 text-sm leading-relaxed text-muted-foreground text-pretty">
+                  <p>Every course generated is eligible for a <strong>Certification of Completion</strong> to validate your learning journey.</p>
+                  <ul className="space-y-2">
+                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500" /> Complete all generated modules</li>
+                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500" /> Pass the AI-crafted Final Quiz</li>
+                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500" /> Achieve a minimum score of 70%</li>
+                  </ul>
+                  <p className="pt-2 text-xs italic">Successful candidates can immediately download their verified PDF certificate from the "My Courses" section.</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Plan Info Badge */}
+            {!isPlanExpired && (
+              <div className="flex items-start gap-3 p-4 rounded-xl border bg-primary/5 text-sm text-muted-foreground shadow-sm">
+                <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                   <p className="font-semibold text-foreground capitalize">{userType} Plan Active</p>
+                   <p>
+                    <strong>{planLimits.maxCourses === Infinity ? 'Unlimited' : planLimits.maxCourses}</strong> course generation{planLimits.maxCourses === 1 ? '' : 's'}. 
+                    <strong>{maxSubtopics}</strong> custom subtopics allowed per generation.
+                   </p>
+                   {subscriptionEndStr && userType !== 'forever' && (
+                    <p className="text-xs opacity-70 italic mt-1">Plan expires on {new Date(subscriptionEndStr).toLocaleDateString()}</p>
+                   )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column: Form */}
+          <div className="lg:col-span-7 space-y-8">
+            {/* Stats Check */}
+            <div className="flex items-center justify-between gap-4 p-4 rounded-xl border bg-muted/20 text-sm">
+              <div className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-indigo-500" />
+                <span className="font-medium">Courses Created: <span className="text-foreground">{courseCount}</span></span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-amber-500" />
+                <span className="font-medium">Remaining: <span className="text-foreground">{planLimits.maxCourses === Infinity ? '∞' : remainingCourses}</span></span>
+              </div>
+            </div>
+
+            {/* Plan Expiry Banner */}
+            {isPlanExpired && (
+              <div className="flex items-center gap-3 p-5 rounded-xl border-2 border-destructive/30 bg-destructive/5 text-destructive animate-pulse">
+                <AlertTriangle className="h-6 w-6 flex-shrink-0" />
+                <div>
+                  <p className="font-bold">Your subscription has expired</p>
+                  <p className="text-sm mt-0.5 font-medium">Please <a href="/dashboard/pricing" className="underline font-bold hover:text-destructive/80 transition-colors">renew your plan</a> to continue using the AI generator.</p>
+                </div>
+              </div>
+            )}
+
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden">
+                  <div className="bg-primary/5 p-4 md:p-6 border-b">
+                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                      <BookOpen className="w-5 h-5 text-primary" /> Core Information
+                    </h2>
+                    <p className="text-sm text-muted-foreground mt-1">What would you like the AI to teach you?</p>
+                  </div>
+                  <CardContent className="p-4 md:p-6 space-y-8">
+                    <div className="space-y-6">
+                      <FormField
+                        control={form.control}
+                        name="topic"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base font-medium">Course Topic</FormLabel>
+                            <FormControl>
+                              <Input className="h-12 text-base shadow-sm focus-visible:ring-primary/30" placeholder="e.g., Master the Art of Sushi Making" {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="space-y-3">
+                        <FormLabel className="text-base flex justify-between items-center group">
+                          <span>Advanced Subtopics <span className="text-muted-foreground font-normal text-sm ml-1">(Optional, max {maxSubtopics})</span></span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                            {subtopics.length}/{maxSubtopics} Added
+                          </span>
+                        </FormLabel>
+                        <div className="flex gap-2 relative">
+                          <Input
+                            className="h-12 pl-4 shadow-sm bg-background pr-[120px] focus-visible:ring-primary/30"
+                            placeholder="e.g., Data structures, React hooks..."
+                            value={subtopicInput}
+                            onChange={(e) => setSubtopicInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                addSubtopic();
+                              }
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            onClick={addSubtopic}
+                            className="absolute right-1.5 top-1.5 bottom-1.5 h-9"
+                            variant="secondary"
+                          >
+                            <Plus className="mr-1 h-4 w-4" />
+                            Add
+                          </Button>
+                        </div>
+
+                        {subtopics.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-3 animate-in fade-in slide-in-from-top-2">
+                            {subtopics.map((topic, index) => (
+                              <div key={index} className="flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-primary/10 border border-primary/20 text-primary rounded-full text-sm font-medium">
+                                <span>{topic}</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-5 w-5 p-0 rounded-full hover:bg-primary/20 hover:text-primary transition-colors"
+                                  onClick={() => {
+                                    const newSubtopics = subtopics.filter((_, i) => i !== index);
+                                    setSubtopics(newSubtopics);
+                                    form.setValue('subtopics', newSubtopics);
+                                  }}
+                                >
+                                  ×
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden">
+                  <div className="bg-primary/5 p-4 md:p-6 border-b flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-semibold flex items-center gap-2">
+                        <Layers className="w-5 h-5 text-indigo-500" /> Structure & Format
+                      </h2>
+                      <p className="text-sm text-muted-foreground mt-1">Configure depth and media preferences.</p>
+                    </div>
+                  </div>
+                  <CardContent className="p-4 md:p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {/* Number of Modules */}
+                      <div className="space-y-3">
+                        <FormLabel className="text-base font-medium flex items-center gap-2">
+                          Number of Modules
+                        </FormLabel>
+                        <FormField
+                          control={form.control}
+                          name="topicsLimit"
+                          render={({ field }) => (
+                            <FormItem className="mt-2">
+                              <FormControl>
+                                <div className="space-y-2">
+                                  <div 
+                                    className={`relative flex items-center p-4 border rounded-xl cursor-pointer transition-all duration-200 ${field.value === "5" ? 'bg-primary/5 border-primary shadow-sm' : 'hover:border-primary/40 bg-background'} ${maxSubtopics < 5 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    onClick={() => { if (maxSubtopics >= 5) { setSelectedValue("5"); field.onChange("5"); } }}
+                                  >
+                                    <div className="flex-1 flex items-center justify-between pointer-events-none">
+                                      <div className="space-y-1">
+                                        <div className="font-semibold text-base text-foreground">5 Modules</div>
+                                        <p className="text-xs text-muted-foreground">Quick overview</p>
+                                      </div>
+                                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${field.value === "5" ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/30'}`}>
+                                        {field.value === "5" && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div
+                                    onClick={() => { 
+                                      if (maxSubtopics < 10) showUpgradeToast('10 topics per course'); 
+                                      else { setSelectedValue("10"); field.onChange("10"); } 
+                                    }}
+                                    className={`relative flex items-center p-4 border rounded-xl cursor-pointer transition-all duration-200 ${field.value === "10" ? 'bg-indigo-50/50 border-indigo-500 shadow-sm' : 'hover:border-indigo-500/40 bg-background'} ${maxSubtopics < 10 ? 'opacity-50 hover:border-border cursor-not-allowed' : ''}`}
+                                  >
+                                    <div className="flex-1 flex items-center justify-between pointer-events-none">
+                                      <div className="space-y-1">
+                                        <div className="font-semibold text-base text-foreground flex items-center gap-1.5">
+                                          10 Modules
+                                          {maxSubtopics < 10 && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">In-depth guide</p>
+                                      </div>
+                                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${field.value === "10" ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-muted-foreground/30'}`}>
+                                        {field.value === "10" && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Content Format */}
+                      <div className="space-y-3">
+                        <FormLabel className="text-base font-medium flex items-center gap-2">
+                           Content Format
+                        </FormLabel>
+                        <FormField
+                          control={form.control}
+                          name="courseType"
+                          render={({ field }) => (
+                            <FormItem className="mt-2">
+                              <FormControl>
+                                <div className="space-y-2">
+                                  <div 
+                                    className={`relative flex items-center p-4 border rounded-xl cursor-pointer transition-all duration-200 ${field.value === "image & text course" ? 'bg-primary/5 border-primary shadow-sm' : 'hover:border-primary/40 bg-background'}`}
+                                    onClick={() => { setSelectedType("image & text course"); field.onChange("image & text course"); }}
+                                  >
+                                    <div className="flex-1 flex items-center justify-between pointer-events-none">
+                                      <div className="space-y-1">
+                                        <div className="font-semibold text-base text-foreground">Text & Images</div>
+                                        <p className="text-xs text-muted-foreground">Articles + Illustrations</p>
+                                      </div>
+                                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${field.value === "image & text course" ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/30'}`}>
+                                        {field.value === "image & text course" && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div
+                                    onClick={() => { 
+                                      if (!canUseVideo) showUpgradeToast('Video & Theory courses'); 
+                                      else { setSelectedType("video & text course"); field.onChange("video & text course"); }
+                                    }}
+                                    className={`relative flex items-center p-4 border rounded-xl cursor-pointer transition-all duration-200 ${field.value === "video & text course" ? 'bg-indigo-50/50 border-indigo-500 shadow-sm' : 'hover:border-indigo-500/40 bg-background'} ${!canUseVideo ? 'opacity-50 hover:border-border cursor-not-allowed' : ''}`}
+                                  >
+                                    <div className="flex-1 flex items-center justify-between pointer-events-none">
+                                      <div className="space-y-1">
+                                        <div className="font-semibold text-base text-foreground flex items-center gap-1.5">
+                                          Video & Text
+                                          {!canUseVideo && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">Video lessons + Theory</p>
+                                      </div>
+                                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${field.value === "video & text course" ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-muted-foreground/30'}`}>
+                                        {field.value === "video & text course" && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden">
+                  <div className="bg-primary/5 p-4 md:p-6 border-b flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-semibold flex items-center gap-2">
+                        <Globe className="w-5 h-5 text-emerald-500" /> Localization
+                      </h2>
+                      <p className="text-sm text-muted-foreground mt-1">Select the course language.</p>
+                    </div>
+                  </div>
+                  <CardContent className="p-4 md:p-6 text-pretty">
+                    <div className="max-w-md">
+                      <FormField
+                        control={form.control}
+                        name="language"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2 text-base font-medium">
+                              Course Language
+                              {!canUseMultiLang && <span className="text-xs text-muted-foreground font-normal">(Multi-lang on Yearly plan)</span>}
+                            </FormLabel>
+                            <Select
+                              onValueChange={(val) => {
+                                if (!canUseMultiLang && val !== 'English') {
+                                  showUpgradeToast('Multi-language support (23+ languages)');
+                                  return;
+                                }
+                                setLang(val);
+                                field.onChange(val);
+                              }}
+                              value={lang}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="h-12 shadow-sm focus:ring-emerald-500/30">
+                                  <SelectValue placeholder="Select language" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {languages.map((country) => (
+                                  <SelectItem
+                                    key={country.code}
+                                    value={country.name}
+                                    disabled={!canUseMultiLang && country.name !== 'English'}
+                                  >
+                                    {country.name}
+                                    {!canUseMultiLang && country.name !== 'English' && ' 🔒'}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="pt-4 pb-12">
+                  <Button
+                    type="submit"
+                    disabled={isPlanExpired || isLoading}
+                    size="lg"
+                    className="w-full h-14 text-lg font-bold shadow-xl shadow-primary/20 hover:scale-[1.01] transition-all bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-600/90 text-white disabled:opacity-50"
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-3"></div>
+                        Brewing AI Magic...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-5 w-5" />
+                        {isPlanExpired ? 'Plan Expired — Renew to Generate' : 'Generate Course Now'}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        </div>
       </div>
     </>
   );

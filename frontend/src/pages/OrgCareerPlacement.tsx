@@ -182,6 +182,17 @@ const OrgCareerPlacement = () => {
         s.email?.toLowerCase().includes(search.toLowerCase())
     );
 
+    const positionBreakdown = React.useMemo(() => {
+        const counts: { [key: string]: number } = {};
+        students.forEach(s => {
+            if (s.isPlacementClosed && s.placementPosition) {
+                const pos = s.placementPosition.trim();
+                counts[pos] = (counts[pos] || 0) + 1;
+            }
+        });
+        return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    }, [students]);
+
     const filteredProjects = projects.filter(p =>
         p.title?.toLowerCase().includes(projectSearch.toLowerCase()) ||
         (p.studentId?.mName || '').toLowerCase().includes(projectSearch.toLowerCase())
@@ -205,7 +216,7 @@ const OrgCareerPlacement = () => {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <SEO title="Career & Placement | Organization Dashboard" />
+            <SEO title="Career & Placement | Organization Dashboard" description="Track student placement readiness, projects, and certificates." />
 
             {/* Header */}
             <div className="flex items-center gap-4">
@@ -268,6 +279,30 @@ const OrgCareerPlacement = () => {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Position Breakdown */}
+            {positionBreakdown.length > 0 && (
+                <div className="grid grid-cols-1 gap-4">
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4 text-primary" /> Placement Position Breakdown
+                            </CardTitle>
+                            <CardDescription>Numbers of students placed in different roles.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-wrap gap-3">
+                                {positionBreakdown.map(([pos, count]) => (
+                                    <div key={pos} className="flex items-center gap-2 bg-muted/40 border rounded-full px-4 py-1.5 hover:bg-muted/60 transition-colors">
+                                        <span className="font-semibold text-sm">{pos}</span>
+                                        <Badge variant="secondary" className="h-5 px-1.5 min-w-[20px] justify-center bg-primary/10 text-primary border-primary/20">{count}</Badge>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
 
             {/* Tabs */}
             <Tabs defaultValue="readiness">

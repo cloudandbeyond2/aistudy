@@ -72,125 +72,173 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
 
 
     return (
-        <div className="grid gap-6 py-4">
-            <div className="grid gap-4 p-4 border rounded-lg bg-muted/30">
-                <div className="grid gap-2">
-                    <Label>Course Title</Label>
-                    <Input value={course.title} onChange={(e) => setCourse({ ...course, title: e.target.value })} placeholder="e.g., Python for Beginners" />
+        <div className="space-y-8 py-4 px-1 max-w-4xl mx-auto">
+            {/* Basic Information */}
+            <div className="space-y-4">
+                <div className="border-b pb-2">
+                    <h3 className="text-lg font-semibold flex items-center gap-2"><FileText className="w-5 h-5 text-primary" /> Basic Information</h3>
+                    <p className="text-sm text-muted-foreground">Essential details about your course.</p>
                 </div>
-                <div className="grid gap-2">
-                    <Label>Description</Label>
-                    <RichTextEditor
-                        value={course.description || ''}
-                        onChange={(content) => setCourse({ ...course, description: content })}
-                        placeholder="Course overview..."
-                        className="min-h-[150px]"
-                    />
-                </div>
-                <div className="grid gap-2">
-                    <Label>Assign to Department (Optional)</Label>
-                    <select
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        value={course.department}
-                        onChange={(e) => setCourse({ ...course, department: e.target.value })}
-                    >
-                        {role !== 'dept_admin' && <option value="">All Students (Default)</option>}
-                        {departments.map((d: any) => (
-                            <option key={d._id} value={d.name}>{d.name}</option>
-                        ))}
-                    </select>
-                </div>
-                <div className="grid gap-2">
-                    <Label>Course Type</Label>
-                    <select
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        value={course.type || 'video & text course'}
-                        onChange={(e) => setCourse({ ...course, type: e.target.value })}
-                    >
-                        <option value="video & text course">Video & Text Course</option>
-                        <option value="image & text course">Image & Text Course</option>
-                    </select>
+                <div className="grid gap-6 p-5 border rounded-xl bg-card shadow-sm">
+                    <div className="grid gap-3">
+                        <Label className="text-sm font-medium">Course Title <span className="text-destructive">*</span></Label>
+                        <Input className="h-11 text-base bg-muted/50 focus:bg-background transition-colors" value={course.title} onChange={(e) => setCourse({ ...course, title: e.target.value })} placeholder="e.g., Complete Python Developer in 2024" />
+                    </div>
+                    <div className="grid gap-3">
+                        <Label className="text-sm font-medium">Course Overview</Label>
+                        <RichTextEditor
+                            value={course.description || ''}
+                            onChange={(content) => setCourse({ ...course, description: content })}
+                            placeholder="Write a compelling description..."
+                            className="min-h-[160px] border-muted/60"
+                        />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid gap-3">
+                            <Label className="text-sm font-medium">Assign to Department</Label>
+                            <select
+                                className="flex h-11 w-full rounded-md border border-input bg-muted/50 focus:bg-background px-3 py-2 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                value={course.department}
+                                onChange={(e) => setCourse({ ...course, department: e.target.value })}
+                            >
+                                {role !== 'dept_admin' && <option value="">All Students (Default)</option>}
+                                {departments.map((d: any) => (
+                                    <option key={d._id} value={d.name}>{d.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="grid gap-3">
+                            <Label className="text-sm font-medium">Course Type</Label>
+                            <select
+                                className="flex h-11 w-full rounded-md border border-input bg-muted/50 focus:bg-background px-3 py-2 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                value={course.type || 'video & text course'}
+                                onChange={(e) => setCourse({ ...course, type: e.target.value })}
+                            >
+                                <option value="video & text course">Video & Text Course</option>
+                                <option value="image & text course">Image & Text Course</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            {/* Curriculum */}
             <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                    <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Lessons & Content</h4>
-                    <Button type="button" variant="outline" size="sm" onClick={() => {
+                <div className="border-b pb-2 flex justify-between items-end">
+                    <div>
+                        <h3 className="text-lg font-semibold flex items-center gap-2"><Video className="w-5 h-5 text-blue-500" /> Curriculum Setup</h3>
+                        <p className="text-sm text-muted-foreground">Structure your course into lessons and topics.</p>
+                    </div>
+                    <Button type="button" size="sm" onClick={() => {
                         const topic = { title: '', subtopics: [], order: course.topics.length };
                         setCourse({ ...course, topics: [...course.topics, topic] });
+                        setExpandedTopic(course.topics.length);
                     }}>
                         <Plus className="w-4 h-4 mr-2" /> Add Lesson
                     </Button>
                 </div>
 
-                {course.topics.map((topic: any, tIdx: number) => (
-                    <div key={tIdx} className="border rounded-lg overflow-hidden">
-                        <div className="bg-muted/50 p-3 flex justify-between items-center">
-                            <div className="flex items-center gap-3 flex-1">
-                                <span className="text-xs font-bold bg-muted p-1 px-2 rounded">{tIdx + 1}</span>
-                                <Input
-                                    className="h-8 py-0 bg-transparent border-none focus-visible:ring-0 font-medium"
-                                    value={topic.title}
-                                    onChange={(e) => updateTopic(tIdx, 'title', e.target.value)}
-                                    placeholder="Lesson Title"
-                                />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button size="sm" variant="ghost" onClick={() => setExpandedTopic(expandedTopic === tIdx ? null : tIdx)}>
-                                    {expandedTopic === tIdx ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                                </Button>
-                                <Button size="sm" variant="ghost" onClick={() => removeTopic(tIdx)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                            </div>
+                <div className="space-y-4">
+                    {course.topics.length === 0 && (
+                        <div className="text-center py-8 border-2 border-dashed rounded-xl text-muted-foreground bg-muted/10">
+                            <Video className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                            <p>No lessons added yet.</p>
                         </div>
-
-                        {expandedTopic === tIdx && (
-                            <div className="p-4 space-y-4 bg-card">
-                                {topic.subtopics.map((sub: any, sIdx: number) => (
-                                    <div key={sIdx} className="pl-6 border-l-2 border-primary/20 space-y-3 relative">
-                                        <div className="flex justify-between items-center">
-                                            <Input
-                                                className="font-medium h-8"
-                                                value={sub.title}
-                                                onChange={(e) => updateSubtopic(tIdx, sIdx, 'title', e.target.value)}
-                                                placeholder="Subtopic/Topic Title"
-                                            />
-                                            <Button size="sm" variant="ghost" onClick={() => removeSubtopic(tIdx, sIdx)}><X className="w-3 h-3" /></Button>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Video className="w-4 h-4 text-muted-foreground" />
-                                            <Input
-                                                className="h-8 text-xs bg-muted/20"
-                                                value={sub.videoUrl || ''}
-                                                onChange={(e) => updateSubtopic(tIdx, sIdx, 'videoUrl', e.target.value)}
-                                                placeholder="YouTube Video URL (Optional)"
-                                            />
-                                        </div>
-                                        <RichTextEditor
-                                            value={sub.content || ''}
-                                            onChange={(content) => updateSubtopic(tIdx, sIdx, 'content', content)}
-                                            placeholder="Content for this subtopic..."
-                                            className="min-h-[200px]"
-                                        />
+                    )}
+                    {course.topics.map((topic: any, tIdx: number) => (
+                        <div key={tIdx} className="border rounded-xl bg-card shadow-sm overflow-hidden transition-all duration-200">
+                            <div 
+                                className={`flex justify-between items-center p-4 cursor-pointer transition-colors ${expandedTopic === tIdx ? 'bg-primary/5 border-b' : 'hover:bg-muted/50'}`}
+                                onClick={() => setExpandedTopic(expandedTopic === tIdx ? null : tIdx)}
+                            >
+                                <div className="flex items-center gap-3 flex-1">
+                                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                                        {tIdx + 1}
                                     </div>
-                                ))}
-                                <Button type="button" variant="ghost" size="sm" className="w-full border-dashed border-2" onClick={() => {
-                                    const updated = [...course.topics];
-                                    updated[tIdx].subtopics.push({ title: '', content: '', videoUrl: '', order: 0 });
-                                    setCourse({ ...course, topics: updated });
-                                }}>
-                                    <Plus className="w-4 h-4 mr-2" /> Add Subtopic
-                                </Button>
+                                    <Input
+                                        className="h-9 max-w-md bg-transparent border-transparent hover:border-input focus:bg-background focus:border-input font-semibold text-base transition-all"
+                                        value={topic.title}
+                                        onChange={(e) => updateTopic(tIdx, 'title', e.target.value)}
+                                        placeholder="Lesson Title"
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Badge variant="secondary" className="mr-2">{topic.subtopics.length} items</Badge>
+                                    <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={(e) => { e.stopPropagation(); setExpandedTopic(expandedTopic === tIdx ? null : tIdx); }}>
+                                        {expandedTopic === tIdx ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                    </Button>
+                                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); removeTopic(tIdx); }}><Trash2 className="w-4 h-4" /></Button>
+                                </div>
                             </div>
-                        )}
-                    </div>
-                ))}
+
+                            {expandedTopic === tIdx && (
+                                <div className="p-5 space-y-6 bg-muted/10">
+                                    {topic.subtopics.length === 0 && (
+                                        <p className="text-sm text-center text-muted-foreground py-2 tracking-wide uppercase font-medium">No contents in this lesson</p>
+                                    )}
+                                    {topic.subtopics.map((sub: any, sIdx: number) => (
+                                        <div key={sIdx} className="relative pl-8 before:absolute before:left-[11px] before:top-2 before:bottom-0 before:w-0.5 before:bg-border last:before:bottom-auto last:before:h-2">
+                                            <div className="absolute left-1.5 top-2 w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-background z-10"></div>
+                                            <div className="bg-card border rounded-lg p-4 shadow-sm hover:border-primary/30 transition-colors space-y-4">
+                                                <div className="flex justify-between items-start gap-4">
+                                                    <div className="flex-1 space-y-1">
+                                                        <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Subtopic Title</Label>
+                                                        <Input
+                                                            className="font-medium h-9 focus-visible:ring-1"
+                                                            value={sub.title}
+                                                            onChange={(e) => updateSubtopic(tIdx, sIdx, 'title', e.target.value)}
+                                                            placeholder="What will students learn?"
+                                                        />
+                                                    </div>
+                                                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:bg-destructive/10 shrink-0 mt-5" onClick={() => removeSubtopic(tIdx, sIdx)}><Trash2 className="w-4 h-4" /></Button>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Video Link (Optional)</Label>
+                                                    <div className="flex items-center relative">
+                                                        <Video className="w-4 h-4 absolute left-3" style={{ color: '#ff0000' }} />
+                                                        <Input
+                                                            className="h-9 pl-9"
+                                                            value={sub.videoUrl || ''}
+                                                            onChange={(e) => updateSubtopic(tIdx, sIdx, 'videoUrl', e.target.value)}
+                                                            placeholder="YouTube Video URL"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Learning Material</Label>
+                                                    <RichTextEditor
+                                                        value={sub.content || ''}
+                                                        onChange={(content) => updateSubtopic(tIdx, sIdx, 'content', content)}
+                                                        placeholder="Add comprehensive text, code blocks, or images here..."
+                                                        className="min-h-[200px]"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <Button type="button" variant="outline" className="w-full border-dashed" onClick={() => {
+                                        const updated = [...course.topics];
+                                        updated[tIdx].subtopics.push({ title: '', content: '', videoUrl: '', order: 0 });
+                                        setCourse({ ...course, topics: updated });
+                                    }}>
+                                        <Plus className="w-4 h-4 mr-2 text-primary" /> Add Subtopic Item
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
             </div>
 
-            <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                    <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Quizzes</h4>
-                    <Button type="button" variant="outline" size="sm" onClick={() => {
+            {/* Quizzes */}
+            <div className="space-y-4 pt-4 border-t">
+                 <div className="border-b pb-2 flex justify-between items-end">
+                    <div>
+                        <h3 className="text-lg font-semibold flex items-center gap-2"><CheckCircle className="w-5 h-5 text-emerald-500" /> Assessment Quizzes</h3>
+                        <p className="text-sm text-muted-foreground">Add multiple choice questions to test knowledge.</p>
+                    </div>
+                    <Button type="button" size="sm" variant="secondary" onClick={() => {
                         const quiz = { question: '', options: ['', '', '', ''], answer: '', explanation: '' };
                         setCourse({ ...course, quizzes: [...course.quizzes, quiz] });
                     }}>
@@ -198,50 +246,78 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
                     </Button>
                 </div>
 
-                {course.quizzes.map((quiz: any, qIdx: number) => (
-                    <div key={qIdx} className="p-4 border rounded-lg space-y-3 bg-muted/10">
-                        <div className="flex justify-between items-start gap-3">
-                            <Textarea
-                                className="font-medium h-20"
-                                value={quiz.question}
-                                onChange={(e) => updateQuiz(qIdx, 'question', e.target.value)}
-                                placeholder="Quiz Question"
-                            />
-                            <Button size="sm" variant="ghost" onClick={() => removeQuiz(qIdx)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                <div className="grid gap-4">
+                    {course.quizzes.length === 0 && (
+                        <div className="text-center py-8 border-2 border-dashed rounded-xl text-muted-foreground bg-muted/10">
+                            <CheckCircle className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                            <p>No quiz questions added yet.</p>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                            {quiz.options.map((opt: string, oIdx: number) => (
-                                <div key={oIdx} className="flex items-center gap-2">
-                                    <Input
-                                        className={`h-8 ${quiz.answer === opt && opt !== '' ? 'border-primary bg-primary/5' : ''}`}
-                                        value={opt}
-                                        onChange={(e) => updateQuiz(qIdx, 'option', { optIndex: oIdx, text: e.target.value })}
-                                        placeholder={`Option ${oIdx + 1}`}
+                    )}
+                    {course.quizzes.map((quiz: any, qIdx: number) => (
+                        <div key={qIdx} className="p-5 border rounded-xl shadow-sm bg-card hover:border-emerald-500/30 transition-colors">
+                            <div className="flex justify-between items-start gap-4 mb-4">
+                                <div className="flex-1 space-y-1.5">
+                                    <Label className="text-sm text-muted-foreground font-semibold flex items-center gap-2">
+                                        <span className="bg-muted px-2 py-0.5 rounded text-xs text-foreground">Q{qIdx + 1}</span> 
+                                        Question Text
+                                    </Label>
+                                    <Textarea
+                                        className="font-medium text-base resize-y min-h-[80px] focus-visible:ring-emerald-500/50"
+                                        value={quiz.question}
+                                        onChange={(e) => updateQuiz(qIdx, 'question', e.target.value)}
+                                        placeholder="What is..."
                                     />
-                                    <Button
-                                        size="sm"
-                                        variant={quiz.answer === opt && opt !== '' ? 'default' : 'ghost'}
-                                        className="h-8 w-8 p-0"
-                                        onClick={() => updateQuiz(qIdx, 'answer', opt)}
-                                    >
-                                        <Check className="w-4 h-4" />
-                                    </Button>
                                 </div>
-                            ))}
+                                <Button size="icon" variant="ghost" className="text-destructive hover:bg-destructive/10 shrink-0" onClick={() => removeQuiz(qIdx)}>
+                                    <Trash2 className="w-4 h-4" />
+                                </Button>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                                {quiz.options.map((opt: string, oIdx: number) => {
+                                    const isCorrect = quiz.answer === opt && opt !== '';
+                                    return (
+                                        <div key={oIdx} className={`flex items-center gap-2 p-2 px-3 border rounded-lg transition-colors ${isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-muted/30 border-transparent hover:border-input'}`}>
+                                            <Button
+                                                size="icon"
+                                                variant={isCorrect ? 'default' : 'outline'}
+                                                className={`h-7 w-7 rounded-full shrink-0 ${isCorrect ? 'bg-emerald-500 hover:bg-emerald-600' : ''}`}
+                                                onClick={() => updateQuiz(qIdx, 'answer', opt)}
+                                                disabled={!opt.trim()}
+                                                title="Mark as correct answer"
+                                            >
+                                                <Check className={`w-3.5 h-3.5 ${isCorrect ? 'text-white' : 'opacity-30'}`} />
+                                            </Button>
+                                            <Input
+                                                className={`h-9 border-none shadow-none focus-visible:ring-0 ${isCorrect ? 'bg-transparent text-emerald-900 font-medium' : 'bg-transparent'}`}
+                                                value={opt}
+                                                onChange={(e) => updateQuiz(qIdx, 'option', { optIndex: oIdx, text: e.target.value })}
+                                                placeholder={`Option ${oIdx + 1}`}
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            
+                            <div className="space-y-1.5 bg-muted/30 p-3 rounded-lg border border-dashed">
+                                <Label className="text-xs text-muted-foreground uppercase font-semibold flex items-center gap-1"><Sparkles className="w-3 h-3" /> Explanation (Optional)</Label>
+                                <Input
+                                    value={quiz.explanation}
+                                    onChange={(e) => updateQuiz(qIdx, 'explanation', e.target.value)}
+                                    placeholder="Explain why the answer is correct..."
+                                    className="h-9 bg-background/50 border-transparent focus:border-input focus:bg-background"
+                                />
+                            </div>
                         </div>
-                        <Input
-                            value={quiz.explanation}
-                            onChange={(e) => updateQuiz(qIdx, 'explanation', e.target.value)}
-                            placeholder="Explanation (Optional)"
-                            className="h-8 text-xs"
-                        />
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
 
-            <Button className="w-full h-12 text-lg font-bold shadow-lg" onClick={onSave}>
-                {isEdit ? 'Update Course' : 'Create Course'}
-            </Button>
+            <div className="pt-6 border-t pb-8">
+                <Button className="w-full h-14 text-lg font-bold shadow-lg shadow-primary/20" size="lg" onClick={onSave}>
+                    {isEdit ? 'Save Changes' : 'Publish Course'} <ExternalLink className="w-5 h-5 ml-2" />
+                </Button>
+            </div>
         </div>
     );
 };
@@ -259,7 +335,7 @@ const OrgDashboard = () => {
     const deptId = sessionStorage.getItem('deptId');
     const activeTab = searchParams.get('tab') || (role === 'dept_admin' ? 'courses' : 'students');
     const { toast } = useToast();
-    const [stats, setStats] = useState({ studentCount: 0, assignmentCount: 0, submissionCount: 0 });
+    const [stats, setStats] = useState<{ studentCount: number; assignmentCount: number; submissionCount: number; placedCount: number }>({ studentCount: 0, assignmentCount: 0, submissionCount: 0, placedCount: 0 });
     const [students, setStudents] = useState([]); // Simplified for now
     const [assignments, setAssignments] = useState([]);
     const [notices, setNotices] = useState([]);
@@ -1181,7 +1257,7 @@ const OrgDashboard = () => {
             </div>
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               
                 <AdminStatCard
                     title="Total Students"
@@ -1196,6 +1272,13 @@ const OrgDashboard = () => {
                     icon={FileText}
                     description="5 due this week"
                     className="border-l-4 border-l-blue-500"
+                />
+                <AdminStatCard
+                    title="Students Placed"
+                    value={role === 'dept_admin' ? students.filter((s: any) => s.studentDetails?.isPlacementClosed).length : (stats.placedCount || 0)}
+                    icon={Briefcase}
+                    description="Career success"
+                    className="border-l-4 border-l-indigo-500"
                 />
                 {role !== 'dept_admin' && (
                     <AdminStatCard
@@ -2212,10 +2295,16 @@ const OrgDashboard = () => {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div className="p-4 rounded-xl bg-blue-50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-900/20">
                                     <h4 className="text-sm font-semibold mb-1">Students Tracked</h4>
                                     <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{role === 'dept_admin' ? students.length : (stats.studentCount || 0)}</p>
+                                </div>
+                                <div className="p-4 rounded-xl bg-violet-50 border border-violet-100 dark:bg-violet-900/10 dark:border-violet-900/20">
+                                    <h4 className="text-sm font-semibold mb-1">Students Placed</h4>
+                                    <p className="text-2xl font-bold text-violet-700 dark:text-violet-400">
+                                        {role === 'dept_admin' ? students.filter((s: any) => s.studentDetails?.isPlacementClosed).length : (stats.placedCount || 0)}
+                                    </p>
                                 </div>
                                 <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-900/20">
                                     <h4 className="text-sm font-semibold mb-1">Verified Projects</h4>
