@@ -42,6 +42,7 @@ import StudentPortal from "./pages/StudentPortal";
 import StudentAssignments from "./pages/StudentAssignments";
 import OrgAssignmentCertificate from "./pages/OrgAssignmentCertificate";
 import OrgCareerPlacement from "./pages/OrgCareerPlacement";
+import OrgKpiReports from "./pages/OrgKpiReports";
 import StudentCareer from "./pages/StudentCareer";
 import StudentPublicPortfolio from "./pages/StudentPublicPortfolio";
 import StudentNotices from "./pages/StudentNotices";
@@ -95,6 +96,7 @@ import DeptDashboard from "./pages/DeptDashboard";
 import StaffDashboard from './pages/StaffDashboard';
 import StudentAttendance from './pages/StudentAttendance';
 import AdminGlobalNews from "./pages/admin/AdminGlobalNews";
+import AdminKpiReports from "./pages/admin/AdminKpiReports";
 
 
 // Staff Pages
@@ -136,6 +138,7 @@ const App = () => (
                     <Route path="profile" element={<Profile />} />
                     <Route path="org" element={<OrgDashboard />} />
                     <Route path="org/career" element={<OrgCareerPlacement />} />
+                    <Route path="org/reports" element={<OrgKpiReports />} />
                     <Route path="org/assignment/:assignmentId/submissions" element={<OrgAssignmentSubmissions />} />
                     <Route path="student" element={<StudentPortal />} />
                     <Route path="student/career" element={<StudentCareer />} />
@@ -219,6 +222,7 @@ const App = () => (
                     <Route path="settings" element={<AdminSettings />} />
                     <Route path="tickets" element={<AdminTickets />} />
                     <Route path="global-news" element={<AdminGlobalNews />} />
+                    <Route path="kpi-reports" element={<AdminKpiReports />} />
                   </Route>
                   <Route path="/verify-certificate" element={<CertificateVerification />} />
 

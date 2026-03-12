@@ -260,8 +260,9 @@ const OrgDashboard = () => {
     const [assignments, setAssignments] = useState([]);
     const [notices, setNotices] = useState([]);
     const [courses, setCourses] = useState([]);
-    const [newStudent, setNewStudent] = useState({ name: '', email: '', password: '', department: '', section: '', studentClass: '', rollNo: '' });
+    const [newStudent, setNewStudent] = useState({ name: '', email: '', password: '', department: '', section: '', studentClass: '', rollNo: '', academicYear: '' });
     const [editStudent, setEditStudent] = useState<any>(null);
+    const [placementStudent, setPlacementStudent] = useState<any>(null);
     const [newAssignment, setNewAssignment] = useState({ topic: '', description: '', dueDate: '', department: '' });
     const [editAssignment, setEditAssignment] = useState<any>(null); // New state for editing assignments
     const [newNotice, setNewNotice] = useState({ title: '', content: '', audience: 'all', department: '' });
@@ -727,7 +728,7 @@ const OrgDashboard = () => {
             const res = await axios.post(`${serverURL}/api/org/student/add`, { ...newStudent, organizationId: orgId });
             if (res.data.success) {
                 toast({ title: "Success", description: "Student added successfully" });
-                setNewStudent({ name: '', email: '', password: '', department: '', section: '', studentClass: '', rollNo: '' });
+                setNewStudent({ name: '', email: '', password: '', department: '', section: '', studentClass: '', rollNo: '', academicYear: '' });
                 fetchStudents(); // Refresh the student list
                 fetchStats(); // Refresh stats
             } else {
@@ -905,10 +906,32 @@ const OrgDashboard = () => {
                 section: editStudent.studentDetails?.section,
                 rollNo: editStudent.studentDetails?.rollNo,
                 studentClass: editStudent.studentDetails?.studentClass,
+                academicYear: editStudent.studentDetails?.academicYear,
             });
             if (res.data.success) {
                 toast({ title: "Success", description: "Student updated successfully" });
                 setEditStudent(null);
+                fetchStudents();
+            } else {
+                toast({ title: "Error", description: res.data.message });
+            }
+        } catch (e: any) {
+            console.error(e);
+            toast({ title: "Error", description: e.response?.data?.message || "Request failed" });
+        }
+    };
+
+    const handleUpdatePlacement = async () => {
+        if (!placementStudent) return;
+        try {
+            const res = await axios.put(`${serverURL}/api/org/student/${placementStudent._id}`, {
+                placementCompany: placementStudent.studentDetails?.placementCompany,
+                placementPosition: placementStudent.studentDetails?.placementPosition,
+                isPlacementClosed: placementStudent.studentDetails?.isPlacementClosed,
+            });
+            if (res.data.success) {
+                toast({ title: "Success", description: "Placement details updated" });
+                setPlacementStudent(null);
                 fetchStudents();
             } else {
                 toast({ title: "Error", description: res.data.message });
@@ -996,7 +1019,8 @@ const OrgDashboard = () => {
                         password: row.Password || row.password || 'Student@123', // Default password if empty
                         department: row.Department || row.department || '',
                         section: row.Section || row.section || '',
-                        rollNo: row.RollNo || row['Roll No'] || row.rollno || ''
+                        rollNo: row.RollNo || row['Roll No'] || row.rollno || '',
+                        academicYear: row['Academic Year'] || row.AcademicYear || row.academicYear || ''
                     }))
                     .filter(student => student.name.trim() !== '' || student.email.trim() !== '');
 
@@ -1045,7 +1069,7 @@ const OrgDashboard = () => {
 
     const downloadTemplate = () => {
         const template = [
-            { Name: 'John Doe', Email: 'john@example.com', Password: 'Password123', Department: 'CS', Section: 'A', 'Roll No': '101' }
+            { Name: 'John Doe', Email: 'john@example.com', Password: 'Password123', Department: 'CS', Section: 'A', 'Roll No': '101', 'Academic Year': '2024-2025' }
         ];
         const ws = XLSX.utils.json_to_sheet(template);
         const wb = XLSX.utils.book_new();
@@ -1373,6 +1397,10 @@ const OrgDashboard = () => {
                                                 <Label className="text-right">Section</Label>
                                                 <Input className="col-span-3" value={newStudent.section} onChange={(e) => setNewStudent({ ...newStudent, section: e.target.value })} />
                                             </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label className="text-right">Academic Year</Label>
+                                                <Input className="col-span-3" value={newStudent.academicYear} onChange={(e) => setNewStudent({ ...newStudent, academicYear: e.target.value })} placeholder="e.g. 2023-2024" />
+                                            </div>
                                         </div>
                                         <Button onClick={handleAddStudent}>Save Student</Button>
                                     </DialogContent>
@@ -1395,11 +1423,17 @@ const OrgDashboard = () => {
                                                 <div>
                                                     <p className="font-medium">{student.mName || student.email}</p>
                                                     <p className="text-sm text-muted-foreground">
-                                                        {student.studentDetails?.class && ` • Class ${student.studentDetails.class}`}
+                                                        {student.studentDetails?.studentClass && ` • Class ${student.studentDetails.studentClass}`}
                                                         {student.studentDetails?.section && ` • Section ${student.studentDetails.section}`}
                                                         {student.studentDetails?.rollNo && ` • Roll ${student.studentDetails.rollNo}`}
+                                                        {student.studentDetails?.academicYear && ` • Year ${student.studentDetails.academicYear}`}
                                                     </p>
-                                                    <p className="text-xs text-muted-foreground">
+                                                    {(student.studentDetails?.placementCompany || student.studentDetails?.isPlacementClosed) && (
+                                                        <p className="text-xs font-semibold text-emerald-600 mt-1">
+                                                            {student.studentDetails?.isPlacementClosed ? 'Placed' : 'Placement Info'}: {student.studentDetails?.placementPosition ? student.studentDetails?.placementPosition + ' @' : ''} {student.studentDetails?.placementCompany}
+                                                        </p>
+                                                    )}
+                                                    <p className="text-xs text-muted-foreground mt-1">
                                                         Created: {new Date(student.date).toLocaleDateString()}
                                                     </p>
                                                 </div>
@@ -1448,7 +1482,48 @@ const OrgDashboard = () => {
                                                                     <Label className="text-right">Roll No</Label>
                                                                     <Input className="col-span-3" value={editStudent.studentDetails?.rollNo || ''} onChange={(e) => setEditStudent({ ...editStudent, studentDetails: { ...editStudent.studentDetails, rollNo: e.target.value } })} />
                                                                 </div>
+                                                                <div className="grid grid-cols-4 items-center gap-4">
+                                                                    <Label className="text-right">Academic Year</Label>
+                                                                    <Input className="col-span-3" value={editStudent.studentDetails?.academicYear || ''} onChange={(e) => setEditStudent({ ...editStudent, studentDetails: { ...editStudent.studentDetails, academicYear: e.target.value } })} placeholder="e.g. 2023-2024" />
+                                                                </div>
                                                                 <Button onClick={handleUpdateStudent}>Update Student</Button>
+                                                            </div>
+                                                        )}
+                                                    </DialogContent>
+                                                </Dialog>
+                                                <Dialog>
+                                                    <DialogTrigger asChild>
+                                                        <Button variant="outline" size="sm" onClick={() => setPlacementStudent(student)}>
+                                                            <Briefcase className="w-4 h-4 mr-2" /> Placement
+                                                        </Button>
+                                                    </DialogTrigger>
+                                                    <DialogContent>
+                                                        <DialogHeader>
+                                                            <DialogTitle>Update Placement Details</DialogTitle>
+                                                        </DialogHeader>
+                                                        {placementStudent && (
+                                                            <div className="grid gap-4 py-4">
+                                                                <div className="grid grid-cols-4 items-center gap-4">
+                                                                    <Label className="text-right">Company</Label>
+                                                                    <Input className="col-span-3" value={placementStudent.studentDetails?.placementCompany || ''} onChange={(e) => setPlacementStudent({ ...placementStudent, studentDetails: { ...placementStudent.studentDetails, placementCompany: e.target.value } })} />
+                                                                </div>
+                                                                <div className="grid grid-cols-4 items-center gap-4">
+                                                                    <Label className="text-right">Position</Label>
+                                                                    <Input className="col-span-3" value={placementStudent.studentDetails?.placementPosition || ''} onChange={(e) => setPlacementStudent({ ...placementStudent, studentDetails: { ...placementStudent.studentDetails, placementPosition: e.target.value } })} />
+                                                                </div>
+                                                                <div className="grid grid-cols-4 items-center gap-4">
+                                                                    <Label className="text-right">Status</Label>
+                                                                    <div className="col-span-3 flex items-center">
+                                                                        <input 
+                                                                            type="checkbox" 
+                                                                            className="w-4 h-4 mr-2" 
+                                                                            checked={placementStudent.studentDetails?.isPlacementClosed || false} 
+                                                                            onChange={(e) => setPlacementStudent({ ...placementStudent, studentDetails: { ...placementStudent.studentDetails, isPlacementClosed: e.target.checked } })} 
+                                                                        />
+                                                                        <Label>Placement Closed</Label>
+                                                                    </div>
+                                                                </div>
+                                                                <Button onClick={handleUpdatePlacement}>Save Placement</Button>
                                                             </div>
                                                         )}
                                                     </DialogContent>

@@ -153,7 +153,8 @@ const [newStudent, setNewStudent] = useState({
   studentClass: '',
   section: '',
   room: '',
-  rollNo: ''
+  rollNo: '',
+  academicYear: ''
 });
 
   // Bulk Upload State
@@ -175,7 +176,8 @@ const [newStudent, setNewStudent] = useState({
       section: student.studentDetails?.section || '',
       room: student.studentDetails?.room || '',
       rollNo: student.studentDetails?.rollNo || '',
-      classId: student.studentDetails?.classId || ''  // ✅ pre-select class
+      classId: student.studentDetails?.classId || '',  // ✅ pre-select class
+      academicYear: student.studentDetails?.academicYear || ''
     });
     setIsModalOpen(true);
   };
@@ -217,6 +219,7 @@ const [newStudent, setNewStudent] = useState({
   section: newStudent.section,
   studentClass: newStudent.studentClass,
   classId: newStudent.classId,  // ✅ send classId
+  academicYear: newStudent.academicYear,
   department: deptId
         });
         if (response.data.success) {
@@ -238,6 +241,7 @@ const [newStudent, setNewStudent] = useState({
   section: newStudent.section,
   studentClass: newStudent.studentClass,
   classId: newStudent.classId, // ✅ send classId
+  academicYear: newStudent.academicYear,
   organizationId: orgId,
   department: deptId
         });
@@ -258,7 +262,7 @@ const [newStudent, setNewStudent] = useState({
     setIsModalOpen(false);
     setIsEditing(false);
     setSelectedStudent(null);
-    setNewStudent({ name: '', email: '', password: '', studentClass: '', section: '', room: '', classId: '', rollNo: '' });
+    setNewStudent({ name: '', email: '', password: '', studentClass: '', section: '', room: '', classId: '', rollNo: '', academicYear: '' });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -718,6 +722,22 @@ const [newStudent, setNewStudent] = useState({
                 value={newStudent.rollNo}
                 onChange={handleInputChange}
                 placeholder="e.g. 101"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Academic Year */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Academic Year
+              </label>
+
+              <input
+                type="text"
+                name="academicYear"
+                value={newStudent.academicYear}
+                onChange={handleInputChange}
+                placeholder="e.g. 2023-2024"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
             </div>

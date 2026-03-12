@@ -146,7 +146,7 @@ export const orgSignin = async (req, res) => {
  */
 export const addStudent = async (req, res) => {
     // const { email, name, phone, password, department, section, rollNo, studentClass, organizationId } = req.body;
-    const { email, name, phone, password, department, section, rollNo, studentClass, classId, organizationId } = req.body;
+    const { email, name, phone, password, department, section, rollNo, studentClass, classId, organizationId, academicYear } = req.body;
 
     try {
         let user = await User.findOne({ email });
@@ -169,7 +169,8 @@ export const addStudent = async (req, res) => {
                 section,
                 rollNo,
                 studentClass,
-                classId
+                classId,
+                academicYear
             },
             isVerified: true
         });
@@ -252,7 +253,7 @@ export const getStudents = async (req, res) => {
 export const updateStudent = async (req, res) => {
     const { studentId } = req.params;
     // const { name, email, department, section, rollNo, studentClass, class: className } = req.body;
-    const { name, email, department, section, rollNo, studentClass, classId } = req.body;
+    const { name, email, department, section, rollNo, studentClass, classId, academicYear, placementCompany, placementPosition, isPlacementClosed } = req.body;
 
     try {
         // const updates = {
@@ -272,8 +273,13 @@ export const updateStudent = async (req, res) => {
             'studentDetails.rollNo': rollNo,
             'studentDetails.studentClass': studentClass,
             'studentDetails.classId': classId, // ✅ add this
+            'studentDetails.academicYear': academicYear,
             updatedAt: Date.now()
         };
+
+        if (placementCompany !== undefined) updates['studentDetails.placementCompany'] = placementCompany;
+        if (placementPosition !== undefined) updates['studentDetails.placementPosition'] = placementPosition;
+        if (isPlacementClosed !== undefined) updates['studentDetails.isPlacementClosed'] = isPlacementClosed;
 
         const student = await User.findByIdAndUpdate(studentId, updates, { new: true });
         if (!student) {
@@ -316,7 +322,7 @@ export const bulkUploadStudents = async (req, res) => {
         const errors = [];
 
         for (const student of students) {
-            const { email, name, password, department, section, rollNo, studentClass } = student;
+            const { email, name, password, department, section, rollNo, studentClass, academicYear } = student;
 
             // Simple validation: skip rows with no email and no name
             if (!email && !name) continue;
@@ -342,7 +348,7 @@ export const bulkUploadStudents = async (req, res) => {
                 role: 'student',
                 organization: organizationId,
                 department: department && department !== 'all' ? department : null,
-                studentDetails: { section, rollNo, studentClass },
+                studentDetails: { section, rollNo, studentClass, academicYear },
                 isVerified: true
             }).save();
 

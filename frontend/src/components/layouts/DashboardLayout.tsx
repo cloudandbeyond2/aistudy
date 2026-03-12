@@ -41,7 +41,8 @@ import {
   Megaphone,
   Folder,
   LifeBuoy,
-  Award
+  Award,
+  BarChart3
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -587,6 +588,16 @@ const DashboardLayout = () => {
                           >
                             <MessageSquare className="ml-4" />
                             <span>Student Tickets</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+
+                      {/* KPI Reports */}
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="KPI Reports" isActive={isActive('/dashboard/org/reports')}>
+                          <Link to="/dashboard/org/reports" className={cn(isActive('/dashboard/org/reports') && "text-primary")}>
+                            <BarChart3 className="ml-4" />
+                            <span>KPI Reports</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>

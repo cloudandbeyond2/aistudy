@@ -59,6 +59,7 @@ import supportRoutes from "./routes/supportRoutes.js";
 import globalNewsRoutes from "./routes/globalNews.routes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
 import interviewPrepRoutes from "./routes/interviewPrep.routes.js";
+import reportRoutes from "./routes/report.routes.js";
 // -------------------- INIT --------------------
 connectDB();
 const app = express();
@@ -137,6 +138,7 @@ app.use("/api/schedule", scheduleRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/global-news", globalNewsRoutes);
 app.use("/api/attendance", attendanceRoutes);
+app.use("/api", reportRoutes);
 app.use("/api", interviewPrepRoutes);
 // -------------------- ERROR HANDLER --------------------
 app.use((err, req, res, next) => {

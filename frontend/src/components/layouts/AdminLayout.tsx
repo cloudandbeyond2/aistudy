@@ -37,7 +37,8 @@ import {
   Globe,
   Building2,
   Mail,
-  Megaphone
+  Megaphone,
+  BarChart3
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -149,6 +150,15 @@ const AdminLayout = () => {
                   <Link to="/admin/orgs" className={cn(isActive('/admin/orgs') && "text-primary")}>
                     <Building2 />
                     <span>Organizations</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="KPI Reports" isActive={isActive('/admin/kpi-reports')}>
+                  <Link to="/admin/kpi-reports" className={cn(isActive('/admin/kpi-reports') && "text-primary")}>
+                    <BarChart3 />
+                    <span>KPI Reports</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

@@ -93,13 +93,17 @@ export const getOrgPlacementStats = async (req, res) => {
                 portfolioUrl: profile?.portfolioUrl || '',
                 isAvailableForPlacement: profile?.isAvailableForPlacement || false,
                 skills: profile?.skills || [],
-                jobPreferences: profile?.jobPreferences || ''
+                jobPreferences: profile?.jobPreferences || '',
+                placementCompany: s.studentDetails?.placementCompany || '',
+                placementPosition: s.studentDetails?.placementPosition || '',
+                isPlacementClosed: s.studentDetails?.isPlacementClosed || false,
             };
         });
 
         // Stats summary
         const totalStudents = data.length;
         const readyCount = data.filter(d => d.placementScore >= 60).length;
+        const placedCount = data.filter(d => d.isPlacementClosed).length;
         const avgScore = totalStudents > 0
             ? Math.round(data.reduce((sum, d) => sum + d.placementScore, 0) / totalStudents)
             : 0;
@@ -107,7 +111,7 @@ export const getOrgPlacementStats = async (req, res) => {
         res.json({
             success: true,
             students: data,
-            stats: { totalStudents, readyCount, avgScore }
+            stats: { totalStudents, readyCount, placedCount, avgScore }
         });
     } catch (error) {
         console.error('getOrgPlacementStats error:', error);

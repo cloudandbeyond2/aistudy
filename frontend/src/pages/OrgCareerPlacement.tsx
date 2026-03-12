@@ -35,7 +35,7 @@ const OrgCareerPlacement = () => {
     const orgId = sessionStorage.getItem('orgId') || sessionStorage.getItem('uid');
 
     const [students, setStudents] = useState<any[]>([]);
-    const [stats, setStats] = useState({ totalStudents: 0, readyCount: 0, avgScore: 0 });
+    const [stats, setStats] = useState({ totalStudents: 0, readyCount: 0, avgScore: 0, placedCount: 0 });
     const [projects, setProjects] = useState<any[]>([]);
     const [certificates, setCertificates] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -103,13 +103,15 @@ const OrgCareerPlacement = () => {
                     );
                     // Recalculate stats for department
                     const readyCount = studentsData.filter((s: any) => s.placementScore >= 60).length;
+                    const placedCount = studentsData.filter((s: any) => s.isPlacementClosed).length;
                     const avgScore = studentsData.length > 0
                         ? Math.round(studentsData.reduce((acc: number, s: any) => acc + (s.placementScore || 0), 0) / studentsData.length)
                         : 0;
                     statsData = {
                         totalStudents: studentsData.length,
                         readyCount: readyCount,
-                        avgScore: avgScore
+                        avgScore: avgScore,
+                        placedCount: placedCount
                     };
                 }
 
@@ -219,7 +221,7 @@ const OrgCareerPlacement = () => {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <Card className="border-l-4 border-l-primary">
                     <CardContent className="pt-5 pb-4">
                         <div className="flex items-center justify-between">
@@ -243,11 +245,22 @@ const OrgCareerPlacement = () => {
                         </div>
                     </CardContent>
                 </Card>
+                <Card className="border-l-4 border-l-violet-500">
+                    <CardContent className="pt-5 pb-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-muted-foreground">Students Placed</p>
+                                <p className="text-3xl font-bold text-violet-600">{stats.placedCount || 0}</p>
+                            </div>
+                            <Briefcase className="w-8 h-8 text-violet-500 opacity-80" />
+                        </div>
+                    </CardContent>
+                </Card>
                 <Card className="border-l-4 border-l-blue-500">
                     <CardContent className="pt-5 pb-4">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-muted-foreground">Avg. Readiness Score</p>
+                                <p className="text-sm text-muted-foreground">Avg. Readiness</p>
                                 <p className="text-3xl font-bold text-blue-600">{stats.avgScore}%</p>
                             </div>
                             <TrendingUp className="w-8 h-8 text-blue-500 opacity-80" />
@@ -311,6 +324,11 @@ const OrgCareerPlacement = () => {
                                                         <p className="font-medium">{s.name}</p>
                                                         <p className="text-xs text-muted-foreground">{s.email}</p>
                                                         {s.rollNo && <p className="text-xs text-muted-foreground">Roll: {s.rollNo}</p>}
+                                                        {(s.isPlacementClosed || s.placementCompany) && (
+                                                            <p className="text-xs font-semibold text-emerald-600 mt-0.5">
+                                                                {s.isPlacementClosed ? 'Placed' : 'Placement Info'}: {s.placementPosition ? s.placementPosition + ' @' : ''} {s.placementCompany}
+                                                            </p>
+                                                        )}
                                                         <Badge
                                                             variant="outline"
                                                             className={`text-xs mt-0.5 ${isAvailable ? 'border-emerald-400 text-emerald-600' : 'border-slate-300 text-slate-500'}`}

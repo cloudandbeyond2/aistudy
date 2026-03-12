@@ -36,12 +36,16 @@ const userSchema = new mongoose.Schema({
   profession: { type: String, default: null },
   experienceLevel: { type: String, default: 'beginner' },
   studentDetails: {
-  department: String,
-  section: String,
-  studentClass: String,
-  rollNo: String,
-  classId: { type: mongoose.Schema.Types.ObjectId, ref: 'Class' }
-},
+    department: String,
+    section: String,
+    studentClass: String,
+    rollNo: String,
+    academicYear: String,
+    classId: { type: mongoose.Schema.Types.ObjectId, ref: 'Class' },
+    placementCompany: { type: String, default: null },
+    placementPosition: { type: String, default: null },
+    isPlacementClosed: { type: Boolean, default: false }
+  },
   subscriptionStart: { type: Date, default: null },
   subscriptionEnd: { type: Date, default: null },
   isEmailVerified: { type: Boolean, default: false },
