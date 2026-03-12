@@ -321,6 +321,29 @@ setIsUnlimited(false);
     }
   }
 
+  const getCourseThumbnail = (course: any) => {
+    try {
+      const jsonData = JSON.parse(course.content);
+      const topicsData = jsonData?.course_topics || jsonData?.[course.mainTopic?.toLowerCase()] || [];
+
+      for (const topic of topicsData) {
+        for (const subtopic of topic?.subtopics || []) {
+          if (course.type?.toLowerCase() === 'video & text course' && subtopic?.youtube) {
+            return `https://img.youtube.com/vi/${subtopic.youtube}/hqdefault.jpg`;
+          }
+
+          if (subtopic?.image) {
+            return subtopic.image;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to resolve course thumbnail:', error);
+    }
+
+    return course.photo || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
+  };
+
   const availableYears = Array.from(
     new Set(
       courses
@@ -547,7 +570,7 @@ setIsUnlimited(false);
                   <Card key={course._id} className="overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 group">
                     <div className="aspect-video relative overflow-hidden">
                       <img
-                        src={course.photo}
+                        src={getCourseThumbnail(course)}
                         alt={course.mainTopic}
                         className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
                       />
