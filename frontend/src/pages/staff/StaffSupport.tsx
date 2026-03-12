@@ -315,7 +315,7 @@ export default function StaffSupport() {
               <Phone size={18} />
               <div>
                 <p className="text-xs">Help Desk</p>
-                <p className="font-semibold">+91 96392 05100</p>
+                <p className="font-semibold">+91 82200 02535</p>
               </div>
             </div>
 
