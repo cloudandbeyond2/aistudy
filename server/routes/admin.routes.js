@@ -22,6 +22,7 @@ router.post('/removeadmin', adminController.removeAdmin);
 router.post('/saveadmin', adminController.saveAdmin);
 
 router.get('/orders', adminController.getOrders);
+router.put('/orders/:id', adminController.updateOrder);
 router.get('/payment-settings', adminController.getPaymentSettings);
 router.post('/payment-settings', adminController.updatePaymentSetting);
 

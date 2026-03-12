@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -17,8 +16,6 @@ import * as XLSX from 'xlsx';
 import RichTextEditor from '@/components/RichTextEditor';
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import { Badge } from "@/components/ui/badge";
-
-
 
 const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [], role }: any) => {
     if (!course) return null;
@@ -72,6 +69,7 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
         const updatedQuizzes = course.quizzes.filter((_: any, i: number) => i !== index);
         setCourse({ ...course, quizzes: updatedQuizzes });
     };
+
 
     return (
         <div className="grid gap-6 py-4">
@@ -249,6 +247,12 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
 };
 
 const OrgDashboard = () => {
+    const [openDeptDialog, setOpenDeptDialog] = useState(false);
+    const [openDeptAdminDialog, setOpenDeptAdminDialog] = useState(false);
+    const [openStudentDialog, setOpenStudentDialog] = useState(false);
+    const [openCourseDialog, setOpenCourseDialog] = useState(false);
+    const [openAssignmentDialog, setOpenAssignmentDialog] = useState(false);
+    const [openMaterialDialog, setOpenMaterialDialog] = useState(false);
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
     const role = sessionStorage.getItem('role');
@@ -398,18 +402,26 @@ const OrgDashboard = () => {
         }
     };
 
-    const handleCreateDepartment = async () => {
-        try {
-            const res = await axios.post(`${serverURL}/api/org/department/create`, { ...newDept, organizationId: orgId });
-            if (res.data.success) {
-                toast({ title: "Success", description: "Department created" });
-                setNewDept({ name: '', description: '' });
-                fetchOrgDepartments();
-            }
-        } catch (e: any) {
-            toast({ title: "Error", description: e.response?.data?.message || "Failed to create department" });
+  const handleCreateDepartment = async () => {
+    try {
+        const res = await axios.post(`${serverURL}/api/org/department/create`, {
+            ...newDept,
+            organizationId: orgId
+        });
+
+        if (res.data.success) {
+            toast({ title: "Success", description: "Department created" });
+
+            setNewDept({ name: '', description: '' });
+
+            setOpenDeptDialog(false);   // ⭐ CLOSE POPUP
+
+            fetchOrgDepartments();
         }
-    };
+    } catch (e) {
+        toast({ title: "Error", description: "Failed to create department" });
+    }
+};
 
     const handleDeleteDepartment = async (id: string) => {
         if (!confirm('Delete this department?')) return;
@@ -424,19 +436,32 @@ const OrgDashboard = () => {
         }
     };
 
-    const handleAddDeptAdmin = async () => {
-        try {
-            const res = await axios.post(`${serverURL}/api/org/dept-admin/add`, { ...newDeptAdmin, organizationId: orgId });
-            if (res.data.success) {
-                toast({ title: "Success", description: "Department Admin added" });
-                setNewDeptAdmin({ name: '', email: '', password: '', phone: '', departmentId: '' });
-                fetchOrgDeptAdmins();
-            }
-        } catch (e: any) {
-            toast({ title: "Error", description: e.response?.data?.message || "Failed to add dept admin" });
-        }
-    };
+   const handleAddDeptAdmin = async () => {
+    try {
+        const res = await axios.post(`${serverURL}/api/org/dept-admin/add`, {
+            ...newDeptAdmin,
+            organizationId: orgId
+        });
 
+        if (res.data.success) {
+            toast({ title: "Success", description: "Department Admin added" });
+
+            setNewDeptAdmin({
+                name: '',
+                email: '',
+                password: '',
+                phone: '',
+                departmentId: ''
+            });
+
+            setOpenDeptAdminDialog(false);   // ⭐ CLOSE POPUP
+
+            fetchOrgDeptAdmins();
+        }
+    } catch (e) {
+        toast({ title: "Error", description: "Failed to add dept admin" });
+    }
+};
     const handleDeleteDeptAdmin = async (id: string) => {
         if (!confirm('Delete this department admin?')) return;
         try {
@@ -568,51 +593,52 @@ const OrgDashboard = () => {
         }
     };
 
-    const handleCreateMaterial = async () => {
-        try {
-            let res;
+  const handleCreateMaterial = async () => {
+    try {
+        let res;
 
-            if (newMaterial.type === 'PDF' && newMaterial.file) {
-                const formData = new FormData();
-                formData.append('title', newMaterial.title);
-                formData.append('description', newMaterial.description);
-                formData.append('type', newMaterial.type);
-                formData.append('department', newMaterial.department);
-                formData.append('organizationId', orgId);
-                formData.append('file', newMaterial.file);
+        if (newMaterial.type === 'PDF' && newMaterial.file) {
+            const formData = new FormData();
+            formData.append('title', newMaterial.title);
+            formData.append('description', newMaterial.description);
+            formData.append('type', newMaterial.type);
+            formData.append('department', newMaterial.department);
+            formData.append('organizationId', orgId);
+            formData.append('file', newMaterial.file);
 
-                res = await axios.post(
-                    `${serverURL}/api/org/material/create`,
-                    formData,
-                    { headers: { 'Content-Type': 'multipart/form-data' } }
-                );
-            } else {
-                res = await axios.post(`${serverURL}/api/org/material/create`, {
-                    ...newMaterial,
-                    organizationId: orgId,
-                });
-            }
-
-            if (res.data.success) {
-                toast({ title: "Success", description: "Material added successfully" });
-                setNewMaterial({
-                    title: '',
-                    description: '',
-                    fileUrl: '',
-                    file: null,
-                    type: 'PDF',
-                    department: getDeptScopedDepartment()
-                });
-                fetchMaterials();
-            }
-
-        } catch (e: any) {
-            toast({
-                title: "Error",
-                description: e.response?.data?.message || "Failed to add material"
+            res = await axios.post(
+                `${serverURL}/api/org/material/create`,
+                formData,
+                { headers: { 'Content-Type': 'multipart/form-data' } }
+            );
+        } else {
+            res = await axios.post(`${serverURL}/api/org/material/create`, {
+                ...newMaterial,
+                organizationId: orgId,
             });
         }
-    };
+
+        if (res.data.success) {
+            toast({ title: "Success", description: "Material added successfully" });
+
+            setNewMaterial({
+                title: '',
+                description: '',
+                fileUrl: '',
+                file: null,
+                type: 'PDF',
+                department: getDeptScopedDepartment()
+            });
+
+            setOpenMaterialDialog(false);   // ⭐ CLOSE POPUP
+
+            fetchMaterials();
+        }
+
+    } catch (e) {
+        toast({ title: "Error", description: "Failed to add material" });
+    }
+};
 
     const handleDeleteMaterial = async (id: string) => {
         if (!confirm('Delete this material?')) return;
@@ -792,22 +818,33 @@ const OrgDashboard = () => {
         }
     };
 
-    const handleCreateCourse = async (courseData: any) => {
-        try {
-            const res = await axios.post(`${serverURL}/api/org/course/create`, {
-                ...courseData,
-                organizationId: orgId,
-                createdBy: sessionStorage.getItem('uid')
+  const handleCreateCourse = async (courseData) => {
+    try {
+        const res = await axios.post(`${serverURL}/api/org/course/create`, {
+            ...courseData,
+            organizationId: orgId,
+            createdBy: sessionStorage.getItem('uid')
+        });
+
+        if (res.data.success) {
+            toast({ title: "Success", description: "Course created successfully" });
+
+            setNewCourse({
+                title: '',
+                description: '',
+                department: '',
+                topics: [],
+                quizzes: []
             });
-            if (res.data.success) {
-                toast({ title: "Success", description: "Course created successfully" });
-                setNewCourse({ title: '', description: '', department: '', topics: [], quizzes: [] });
-                fetchCourses();
-            }
-        } catch (e) {
-            toast({ title: "Error", description: "Failed to create course" });
+
+            setOpenCourseDialog(false);   // ⭐ CLOSE POPUP
+
+            fetchCourses();
         }
-    };
+    } catch (e) {
+        toast({ title: "Error", description: "Failed to create course" });
+    }
+};
 
     const handleUpdateCourse = async () => {
         if (!editCourse) return;
@@ -1145,37 +1182,7 @@ const OrgDashboard = () => {
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* <Card className="hover:shadow-lg transition-all">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.studentCount || 0}</div>
-                        <p className="text-xs text-muted-foreground">+20% from last month</p>
-                    </CardContent>
-                </Card>
-                <Card className="hover:shadow-lg transition-all">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Assignments</CardTitle>
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.assignmentCount || 0}</div>
-                        <p className="text-xs text-muted-foreground">5 due this week</p>
-                    </CardContent>
-                </Card>
-                <Card className="hover:shadow-lg transition-all">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Submissions</CardTitle>
-                        <BarChart className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.submissionCount || 0}</div>
-                        <p className="text-xs text-muted-foreground">Pending grading</p>
-                    </CardContent>
-                </Card> */}
-
+              
                 <AdminStatCard
                     title="Total Students"
                     value={role === 'dept_admin' ? students.length : stats.studentCount}
@@ -1229,27 +1236,45 @@ const OrgDashboard = () => {
                                     <CardTitle>Departments</CardTitle>
                                     <CardDescription>Create and manage organizational departments.</CardDescription>
                                 </div>
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button size="sm"><Plus className="w-4 h-4 mr-2" /> Add Dept</Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>Add New Department</DialogTitle>
-                                        </DialogHeader>
-                                        <div className="grid gap-4 py-4">
-                                            <div className="grid gap-2">
-                                                <Label>Department Name</Label>
-                                                <Input value={newDept.name} onChange={(e) => setNewDept({ ...newDept, name: e.target.value })} placeholder="e.g., Computer Science" />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label>Description</Label>
-                                                <Textarea value={newDept.description} onChange={(e) => setNewDept({ ...newDept, description: e.target.value })} placeholder="Brief description..." />
-                                            </div>
-                                            <Button onClick={handleCreateDepartment}>Create Department</Button>
-                                        </div>
-                                    </DialogContent>
-                                </Dialog>
+                            <Dialog open={openDeptDialog} onOpenChange={setOpenDeptDialog}>
+    <DialogTrigger asChild onClick={() => setOpenDeptDialog(true)}>
+        <Button size="sm">
+            <Plus className="w-4 h-4 mr-2" /> Add Dept
+        </Button>
+    </DialogTrigger>
+
+    <DialogContent>
+        <DialogHeader>
+            <DialogTitle>Add New Department</DialogTitle>
+        </DialogHeader>
+
+        <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+                <Label>Department Name</Label>
+                <Input
+                    value={newDept.name}
+                    onChange={(e) =>
+                        setNewDept({ ...newDept, name: e.target.value })
+                    }
+                />
+            </div>
+
+            <div className="grid gap-2">
+                <Label>Description</Label>
+                <Textarea
+                    value={newDept.description}
+                    onChange={(e) =>
+                        setNewDept({ ...newDept, description: e.target.value })
+                    }
+                />
+            </div>
+
+            <Button onClick={handleCreateDepartment}>
+                Create Department
+            </Button>
+        </div>
+    </DialogContent>
+</Dialog>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-3">
@@ -1277,10 +1302,12 @@ const OrgDashboard = () => {
                                     <CardTitle>Department Admins</CardTitle>
                                     <CardDescription>Assign admins to specific departments.</CardDescription>
                                 </div>
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button size="sm"><Plus className="w-4 h-4 mr-2" /> Add Admin</Button>
-                                    </DialogTrigger>
+                              <Dialog open={openDeptAdminDialog} onOpenChange={setOpenDeptAdminDialog}>
+  <DialogTrigger asChild onClick={() => setOpenDeptAdminDialog(true)}>
+    <Button size="sm">
+      <Plus className="w-4 h-4 mr-2" /> Add Admin
+    </Button>
+  </DialogTrigger>
                                     <DialogContent>
                                         <DialogHeader>
                                             <DialogTitle>Add Department Admin</DialogTitle>
@@ -1355,10 +1382,12 @@ const OrgDashboard = () => {
                                     value={studentSearch}
                                     onChange={(e) => setStudentSearch(e.target.value)}
                                 />
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button><Plus className="w-4 h-4 mr-2" /> Add Student</Button>
-                                    </DialogTrigger>
+                             <Dialog open={openStudentDialog} onOpenChange={setOpenStudentDialog}>
+  <DialogTrigger asChild onClick={() => setOpenStudentDialog(true)}>
+      <Button>
+          <Plus className="w-4 h-4 mr-2" /> Add Student
+      </Button>
+  </DialogTrigger>
                                     <DialogContent>
                                         <DialogHeader>
                                             <DialogTitle>Add New Student</DialogTitle>
@@ -1566,15 +1595,27 @@ const OrgDashboard = () => {
                                         </Button>
                                     )}
                                     {(orgSettings?.allowManualCreation !== false) && (
-                                        <Dialog>
-                                            <DialogTrigger asChild>
-                                                <Button><Plus className="w-4 h-4 mr-2" /> Create Course</Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                                                <DialogHeader><DialogTitle>Create New Course</DialogTitle></DialogHeader>
-                                                <CourseForm course={newCourse} setCourse={setNewCourse} onSave={() => handleCreateCourse(newCourse)} departments={departmentsList} role={role} />
-                                            </DialogContent>
-                                        </Dialog>
+                                     <Dialog open={openCourseDialog} onOpenChange={setOpenCourseDialog}>
+  <DialogTrigger asChild onClick={() => setOpenCourseDialog(true)}>
+      <Button>
+          <Plus className="w-4 h-4 mr-2" /> Create Course
+      </Button>
+  </DialogTrigger>
+
+  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+          <DialogTitle>Create New Course</DialogTitle>
+      </DialogHeader>
+
+      <CourseForm
+          course={newCourse}
+          setCourse={setNewCourse}
+          onSave={() => handleCreateCourse(newCourse)}
+          departments={departmentsList}
+          role={role}
+      />
+  </DialogContent>
+</Dialog>
                                     )}
                                 </div>
                             </div>
@@ -1655,8 +1696,8 @@ const OrgDashboard = () => {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex justify-end">
-                                <Dialog>
-                                    <DialogTrigger asChild>
+                              <Dialog open={openAssignmentDialog} onOpenChange={setOpenAssignmentDialog}>
+                                  <DialogTrigger asChild onClick={() => setOpenAssignmentDialog(true)}>
                                         <Button><Plus className="w-4 h-4 mr-2" /> New Assignment</Button>
                                     </DialogTrigger>
                                     <DialogContent>
@@ -1980,8 +2021,8 @@ const OrgDashboard = () => {
                                 <CardTitle>Study Materials & Notes</CardTitle>
                                 <CardDescription>Share documents, PDF notes, and useful links with students.</CardDescription>
                             </div>
-                            <Dialog>
-                                <DialogTrigger asChild>
+                          <Dialog open={openMaterialDialog} onOpenChange={setOpenMaterialDialog}>
+                         <DialogTrigger asChild onClick={() => setOpenMaterialDialog(true)}>
                                     <Button><Plus className="w-4 h-4 mr-2" /> Add Material</Button>
                                 </DialogTrigger>
                                 <DialogContent>

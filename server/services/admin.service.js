@@ -189,6 +189,25 @@ export const getAllOrders = async () => {
   return Order.find().sort({ date: -1 });
 };
 
+export const updateOrder = async (id, updateData) => {
+  try {
+    // findByIdAndUpdate will update the fields provided in the payload
+    const order = await Order.findByIdAndUpdate(
+      id, 
+      { $set: updateData }, 
+      { new: true } // returns the updated document
+    );
+    
+    if (!order) {
+      throw new Error('Order not found');
+    }
+    
+    return order;
+  } catch (error) {
+    throw error;
+  }
+};
+
 /* ---------------- PAYMENT SETTINGS ---------------- */
 import PaymentSetting from '../models/PaymentSetting.js';
 

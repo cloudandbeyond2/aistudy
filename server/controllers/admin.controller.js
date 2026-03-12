@@ -73,6 +73,24 @@ export const getOrders = async (req, res) => {
   }
 };
 
+export const updateOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedOrder = await adminService.updateOrder(id, req.body);
+    
+    res.json({ 
+      success: true, 
+      message: 'Order updated successfully',
+      order: updatedOrder 
+    });
+  } catch (error) {
+    console.error('Update Order Error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Internal Server Error' 
+    });
+  }
+};
 /* PAYMENT SETTINGS */
 export const getPaymentSettings = async (req, res) => {
   try {
@@ -91,9 +109,10 @@ export const updatePaymentSetting = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
-    res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+
+
 export const getDashboardWithOrgs = async (req, res) => {
   try {
     const data = await adminService.getDashboardStatsWithOrgs();
