@@ -14,10 +14,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from '@/hooks/use-toast';
 import ShareOnSocial from 'react-share-on-social';
 import StatsCard from '@/components/dashboard/StatsCard';
-import { response } from 'express';
 import NotificationBell from '@/components/NotificationBell';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, Legend, CartesianGrid
+} from 'recharts';
+import { Lock } from 'lucide-react';
 
 const Dashboard = () => {
   const daysleftRaw = sessionStorage.getItem("daysLeft");
@@ -32,6 +36,7 @@ const Dashboard = () => {
   const [isUnlimited, setIsUnlimited] = useState(false);
   const [data, setData] = useState([]);
   const plan = sessionStorage.getItem('type');
+  const isPaid = ['monthly', 'yearly', 'forever'].includes(plan) || sessionStorage.getItem('daysLeft') === 'UNLIMITED';
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -725,6 +730,103 @@ setIsUnlimited(false);
             )}
           </>
         }
+
+        {/* Advanced Analytics Section */}
+        <div className="mt-12 space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold tracking-tight text-gradient bg-gradient-to-r from-primary to-indigo-500">Advanced Analytics</h2>
+            {!isPaid && (
+              <Badge variant="secondary" className="gap-1 px-3 py-1">
+                <Lock className="h-3 w-3" /> Premium Feature
+              </Badge>
+            )}
+          </div>
+
+          <div className="relative">
+            {!isPaid && (
+              <div className="absolute inset-0 z-20 backdrop-blur-[6px] bg-background/40 flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-primary/20 p-8 text-center">
+                <div className="bg-primary/10 p-4 rounded-full mb-4">
+                  <Sparkles className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Unlock Advanced Insights</h3>
+                <p className="text-muted-foreground max-w-sm mb-6">
+                  Get detailed visualizations of your learning patterns, topic distribution, and progress tracking with our premium analytics.
+                </p>
+                <Button onClick={redirectPricing} className="rounded-full px-8 shadow-lg shadow-primary/20">
+                  Upgrade to Paid Plan
+                </Button>
+              </div>
+            )}
+
+            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 ${!isPaid ? 'opacity-40 grayscale-[0.5] pointer-events-none select-none' : ''}`}>
+              <Card className="rounded-3xl border-border/50 shadow-sm overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-lg">Topic Distribution</CardTitle>
+                  <CardDescription>Courses categorized by subject matter</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={(() => {
+                          const counts = {};
+                          courses.forEach(c => {
+                            const topic = c.mainTopic?.split(' ')[0] || 'Genie';
+                            counts[topic] = (counts[topic] || 0) + 1;
+                          });
+                          return Object.entries(counts).map(([name, value]) => ({ name, value }));
+                        })()}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {[0, 1, 2, 3, 4].map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'][index % 5]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl border-border/50 shadow-sm overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-lg">Learning Progress</CardTitle>
+                  <CardDescription>Completion status across all courses</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={[
+                        { name: 'Completed', value: courses.filter(c => c.completed).length },
+                        { name: 'In Progress', value: courses.filter(c => !c.completed).length },
+                      ]}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                      <YAxis axisLine={false} tickLine={false} />
+                      <Tooltip 
+                         cursor={{fill: 'transparent'}}
+                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      />
+                      <Bar dataKey="value" radius={[10, 10, 0, 0]}>
+                        <Cell fill="#10B981" />
+                        <Cell fill="#4F46E5" />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
 
       </div>
     </>

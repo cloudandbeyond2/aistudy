@@ -56,7 +56,7 @@ const AINotebook = () => {
             const userRole = sessionStorage.getItem('role');
 
             try {
-                const res = await axios.get(`${serverURL}/api/admin/settings`);
+                const res = await axios.get(`${serverURL}/api/settings`);
                 if (res.data && res.data.notebookEnabled) {
                     const enabledSettings = res.data.notebookEnabled;
                     let isEnabled = false;

@@ -10,12 +10,13 @@ import axios from 'axios';
 import { serverURL, websiteURL } from '@/constants';
 import {
     Plus, Trash2, Download, Share2, ChevronRight, ChevronLeft,
-    FileText, Briefcase, GraduationCap, Award, Eye, CheckCircle, Loader2, User, Link2, Sparkles
+    FileText, Briefcase, GraduationCap, Award, Eye, CheckCircle, Loader2, User, Link2, Sparkles, Search, Target, AlertCircle
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useNavigate } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
 
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -58,7 +59,8 @@ const STEPS = [
     { id: 3, label: 'Experience', icon: Briefcase },
     { id: 4, label: 'Education', icon: GraduationCap },
     { id: 5, label: 'Certifications', icon: Award },
-    { id: 6, label: 'Preview', icon: Eye },
+    { id: 6, label: 'ATS Scanner', icon: Search },
+    { id: 7, label: 'Preview', icon: Eye },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -195,6 +197,15 @@ const ResumeBuilder = () => {
     const printRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
 
+    const [jobDescription, setJobDescription] = useState('');
+    const [isScanning, setIsScanning] = useState(false);
+    const [atsResult, setAtsResult] = useState<{
+        score: number,
+        missingKeywords: string[],
+        matchLevel: string,
+        suggestions: string[]
+    } | null>(null);
+
 
     const [resume, setResume] = useState<ResumeData>({
         profession: sessionStorage.getItem('profession') || '',
@@ -237,7 +248,7 @@ const ResumeBuilder = () => {
         const checkAccessAndFetch = async () => {
             try {
                 // Check Access
-                const settingsRes = await axios.get(`${serverURL}/api/admin/settings`);
+                const settingsRes = await axios.get(`${serverURL}/api/settings`);
                 if (settingsRes.data && settingsRes.data.resumeEnabled) {
                     const enabledSettings = settingsRes.data.resumeEnabled;
                     let isEnabled = false;
@@ -341,6 +352,56 @@ const ResumeBuilder = () => {
         }
     };
 
+    // ── ATS Scan ───────────────────────────────────────────
+    const handleATSScan = async () => {
+        if (!jobDescription) {
+            toast({ title: 'Input Required', description: 'Please paste a Job Description to scan against.', variant: 'destructive' });
+            return;
+        }
+        setIsScanning(true);
+        try {
+            const resumeText = `
+                Name: ${userName}
+                Profession: ${resume.profession}
+                Summary: ${resume.summary}
+                Skills: ${resume.skills.join(', ')}
+                Experience: ${resume.experience.map(e => `${e.title} at ${e.company}: ${e.description}`).join('; ')}
+                Education: ${resume.education.map(e => `${e.degree} from ${e.institution}`).join('; ')}
+            `;
+
+            const prompt = `
+                Analyze the following resume against the provided Job Description for an ATS (Applicant Tracking System) check.
+
+                Resume:
+                ${resumeText}
+
+                Job Description:
+                ${jobDescription}
+
+                Provide a JSON response with exactly these fields:
+                {
+                  "score": number (0-100),
+                  "missingKeywords": ["string"],
+                  "matchLevel": "Low" | "Medium" | "High",
+                  "suggestions": ["string"]
+                }
+                Return ONLY the JSON.
+            `;
+
+            const res = await axios.post(`${serverURL}/api/prompt`, { prompt });
+            if (res.data && res.data.generatedText) {
+                const cleaned = res.data.generatedText.replace(/```json/g, '').replace(/```/g, '').trim();
+                setAtsResult(JSON.parse(cleaned));
+                toast({ title: 'Scan Complete', description: 'Your resume has been analyzed.' });
+            }
+        } catch (err: any) {
+            console.error(err);
+            toast({ title: 'Scan Error', description: 'Could not complete ATS scan. Please try again.', variant: 'destructive' });
+        } finally {
+            setIsScanning(false);
+        }
+    };
+
     // ── Save ─────────────────────────────────────────────────
     const handleSave = async () => {
         setSaving(true);
@@ -431,7 +492,7 @@ const ResumeBuilder = () => {
                     </h1>
                     <p className="text-muted-foreground mt-1">Build your professional resume in minutes</p>
                 </div>
-                {step === 6 && (
+                {step === 7 && (
                     <div className="flex gap-3">
                         <Button variant="outline" className="gap-2 rounded-full" onClick={handleShare}>
                             <Share2 className="h-4 w-4" /> Share
@@ -696,8 +757,82 @@ const ResumeBuilder = () => {
                     </div>
                 )}
 
-                {/* Step 6: Preview */}
+                {/* Step 6: ATS Scanner */}
                 {step === 6 && (
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-bold flex items-center gap-2"><Target className="text-primary" /> ATS Analysis</h2>
+                            <Badge variant="outline" className="text-xs">AI Powered</Badge>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <Label>Job Description</Label>
+                            <Textarea 
+                                value={jobDescription} 
+                                onChange={(e) => setJobDescription(e.target.value)}
+                                placeholder="Paste the job description here to analyze how well your resume matches..."
+                                className="min-h-[200px] rounded-2xl resize-none border-primary/20 focus:border-primary shadow-inner"
+                            />
+                            <Button 
+                                onClick={handleATSScan} 
+                                disabled={isScanning || !jobDescription}
+                                className="w-full rounded-2xl h-12 text-lg font-bold gap-2 shadow-lg shadow-primary/20"
+                            >
+                                {isScanning ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
+                                {isScanning ? 'Analyzing Resume...' : 'Analyze Match Score'}
+                            </Button>
+                        </div>
+
+                        {atsResult && (
+                            <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="bg-primary/5 rounded-3xl p-6 flex flex-col items-center justify-center border border-primary/10">
+                                        <div className="text-sm font-semibold text-muted-foreground mb-2">ATS Score</div>
+                                        <div className={`text-5xl font-black ${atsResult.score > 70 ? 'text-green-500' : atsResult.score > 40 ? 'text-amber-500' : 'text-red-500'}`}>
+                                            {atsResult.score}%
+                                        </div>
+                                        <Badge className="mt-2" variant={atsResult.matchLevel === 'High' ? 'default' : atsResult.matchLevel === 'Medium' ? 'secondary' : 'destructive'}>
+                                            {atsResult.matchLevel} Match
+                                        </Badge>
+                                    </div>
+
+                                    <div className="md:col-span-2 space-y-4">
+                                        <div className="bg-card border border-border/60 rounded-3xl p-6">
+                                            <h3 className="font-bold flex items-center gap-2 mb-3">
+                                                <AlertCircle className="h-4 w-4 text-amber-500" /> Missing Keywords
+                                            </h3>
+                                            <div className="flex flex-wrap gap-2">
+                                                {atsResult.missingKeywords.map(kw => (
+                                                    <span key={kw} className="bg-muted text-xs px-3 py-1 rounded-full border border-border/40">
+                                                        {kw}
+                                                    </span>
+                                                ))}
+                                                {atsResult.missingKeywords.length === 0 && <p className="text-sm text-muted-foreground italic">None found. Great job!</p>}
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-card border border-border/60 rounded-3xl p-6">
+                                            <h3 className="font-bold flex items-center gap-2 mb-3">
+                                                <Sparkles className="h-4 w-4 text-primary" /> Improvement Suggestions
+                                            </h3>
+                                            <ul className="text-sm space-y-2 text-muted-foreground">
+                                                {atsResult.suggestions.map((s, i) => (
+                                                    <li key={i} className="flex gap-2">
+                                                        <span className="text-primary font-bold">•</span>
+                                                        {s}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Step 7: Preview */}
+                {step === 7 && (
                     <div className="space-y-6">
                         <h2 className="text-xl font-bold flex items-center gap-2"><Eye className="text-primary" /> Resume Preview</h2>
 
