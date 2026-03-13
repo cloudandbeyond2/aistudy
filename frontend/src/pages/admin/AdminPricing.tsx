@@ -436,7 +436,7 @@ const CURRENCIES = [
 ];
 
 const PLAN_CONFIGS = {
-  free: { name: 'Free Plan', period: 'Lifetime' },
+  free: { name: 'Free Plan', period: '7 days' },
   monthly: { name: 'Monthly Plan', period: 'Month' },
   yearly: { name: 'Yearly Plan', period: 'Year' },
 };
