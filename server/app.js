@@ -70,7 +70,7 @@ if (!process.env.VERCEL) {
   app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 }
 app.use('/uploads', express.static('uploads'));
-
+mongoose.set('returnDocument', 'after');
 // -------------------- MIDDLEWARES --------------------
 app.use(cors(corsOptions));
 app.use(compressionConfig);
