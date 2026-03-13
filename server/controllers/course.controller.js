@@ -101,7 +101,8 @@ export const createCourse = async (req, res) => {
           query: mainTopic,
           page: 1,
           perPage: 1,
-          orientation: 'landscape'
+          orientation: 'landscape',
+          contentFilter: 'high' // Add this to get better quality
         });
 
         const photos = result.response?.results;
@@ -226,7 +227,7 @@ export const updateCourse = async (req, res) => {
     const result = await Course.findOneAndUpdate(
       { _id: courseId },
       { $set: { content } },
-      { new: true }
+      { returnDocument: 'after' } // Changed from 'new: true'
     );
 
     if (!result) {
