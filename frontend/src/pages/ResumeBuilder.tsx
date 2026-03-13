@@ -391,7 +391,13 @@ const ResumeBuilder = () => {
             const res = await axios.post(`${serverURL}/api/prompt`, { prompt });
             if (res.data && res.data.generatedText) {
                 const cleaned = res.data.generatedText.replace(/```json/g, '').replace(/```/g, '').trim();
-                setAtsResult(JSON.parse(cleaned));
+                const parsed = JSON.parse(cleaned);
+                setAtsResult({
+                    score: parsed.score ?? 0,
+                    missingKeywords: Array.isArray(parsed.missingKeywords) ? parsed.missingKeywords : [],
+                    matchLevel: parsed.matchLevel || 'Low',
+                    suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
+                });
                 toast({ title: 'Scan Complete', description: 'Your resume has been analyzed.' });
             }
         } catch (err: any) {
@@ -802,12 +808,12 @@ const ResumeBuilder = () => {
                                                 <AlertCircle className="h-4 w-4 text-amber-500" /> Missing Keywords
                                             </h3>
                                             <div className="flex flex-wrap gap-2">
-                                                {atsResult.missingKeywords.map(kw => (
+                                                {(atsResult.missingKeywords || []).map(kw => (
                                                     <span key={kw} className="bg-muted text-xs px-3 py-1 rounded-full border border-border/40">
                                                         {kw}
                                                     </span>
                                                 ))}
-                                                {atsResult.missingKeywords.length === 0 && <p className="text-sm text-muted-foreground italic">None found. Great job!</p>}
+                                                {(atsResult.missingKeywords || []).length === 0 && <p className="text-sm text-muted-foreground italic">None found. Great job!</p>}
                                             </div>
                                         </div>
 
@@ -816,7 +822,7 @@ const ResumeBuilder = () => {
                                                 <Sparkles className="h-4 w-4 text-primary" /> Improvement Suggestions
                                             </h3>
                                             <ul className="text-sm space-y-2 text-muted-foreground">
-                                                {atsResult.suggestions.map((s, i) => (
+                                                {(atsResult.suggestions || []).map((s, i) => (
                                                     <li key={i} className="flex gap-2">
                                                         <span className="text-primary font-bold">•</span>
                                                         {s}
