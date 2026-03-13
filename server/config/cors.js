@@ -18,9 +18,10 @@ const corsOptions = {
 
     if (
       allowedOrigins.includes(origin) ||
-      origin.endsWith('.vercel.app') ||
       origin.includes('google.com') ||
-      origin.includes('facebook.com')
+      origin.includes('facebook.com') ||
+      origin.includes('googleapis.com') ||
+      origin.endsWith('.vercel.app')
     ) {
       return callback(null, true);
     }
