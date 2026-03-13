@@ -18,7 +18,9 @@ const corsOptions = {
 
     if (
       allowedOrigins.includes(origin) ||
-      origin === 'https://aistudy-infilabs.vercel.app'
+      origin.endsWith('.vercel.app') ||
+      origin.includes('google.com') ||
+      origin.includes('facebook.com')
     ) {
       return callback(null, true);
     }
