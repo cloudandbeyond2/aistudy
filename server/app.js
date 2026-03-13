@@ -18,21 +18,6 @@ import corsOptions from './config/cors.js';
 import compressionConfig from './config/compression.js';
 import { __dirname } from './config/env.js';
 
-import helmet from 'helmet';
-import mongoSanitize from 'express-mongo-sanitize';
-import rateLimit from 'express-rate-limit';
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Increased for debugging dashboard load
-  message: {
-    success: false,
-    message: 'Too many requests from this IP, please try again after 15 minutes'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 // 🧭 Routes
 import authRoutes from './routes/auth.routes.js';
 import courseRoutes from './routes/course.routes.js';
@@ -87,19 +72,15 @@ if (!process.env.VERCEL) {
 app.use('/uploads', express.static('uploads'));
 
 // -------------------- MIDDLEWARES --------------------
-app.use(helmet({
-  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
-  crossOriginEmbedderPolicy: { policy: "unsafe-none" },
-}));
-app.use(mongoSanitize());
-app.use(limiter);
 app.use(cors(corsOptions));
 app.use(compressionConfig);
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(express.json({ limit: '50mb' }));
 
-// Permissions Policy (keep as it was requested specifically)
+// OAuth-safe security headers
 app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
   res.setHeader('Permissions-Policy', 'unload=()');
   next();
 });
