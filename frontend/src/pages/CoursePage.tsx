@@ -1,6 +1,5742 @@
+// // // // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// // // // @ts-nocheck
+// // // import React, { useEffect, useState, useRef, useCallback } from 'react';
+// // // import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+// // // import {
+// // //   Accordion,
+// // //   AccordionContent,
+// // //   AccordionItem,
+// // //   AccordionTrigger
+// // // } from '@/components/ui/accordion';
+// // // import { Content } from '@tiptap/react'
+// // // import { MinimalTiptapEditor } from '../minimal-tiptap'
+// // // import YouTube from 'react-youtube';
+// // // import { Button } from '@/components/ui/button';
+// // // import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2 } from 'lucide-react';
+// // // import { cn } from '@/lib/utils';
+// // // import { ScrollArea } from '@/components/ui/scroll-area';
+// // // import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
+// // // import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+// // // import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+// // // import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+// // // import { Textarea } from '@/components/ui/textarea';
+// // // import { Input } from '@/components/ui/input';
+// // // import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
+// // // import { useToast } from '@/hooks/use-toast';
+// // // import { useForm } from 'react-hook-form';
+// // // import { ThemeToggle } from '@/components/ThemeToggle';
+// // // import { Skeleton } from '@/components/ui/skeleton';
+// // // import { useIsMobile } from '@/hooks/use-mobile';
+// // // import { appLogo, companyName, serverURL, websiteURL } from '@/constants';
+// // // import axios from 'axios';
+// // // import ShareOnSocial from 'react-share-on-social';
+// // // import StyledText from '@/components/styledText';
+// // // import html2pdf from 'html2pdf.js';
+
+// // // const CoursePage = () => {
+// // //   //ADDED FROM v4.0
+// // //   const { state } = useLocation();
+// // //   const { courseId: paramCourseId } = useParams();
+// // //   const activeCourseId = state?.courseId || paramCourseId;
+// // //   const plan = sessionStorage.getItem('type');
+// // //   const [courseData, setCourseData] = useState(state || null);
+// // //   const [jsonData, setJsonData] = useState(() => {
+// // //     try {
+// // //       return JSON.parse(sessionStorage.getItem('jsonData'));
+// // //     } catch (e) {
+// // //       return null;
+// // //     }
+// // //   });
+
+// // //   const mainTopic = courseData?.mainTopic;
+// // //   const type = courseData?.type;
+// // //   const courseId = courseData?.courseId || activeCourseId;
+// // //   const end = courseData?.end;
+// // //   const pass = courseData?.pass;
+// // //   const lang = courseData?.lang || 'English';
+
+// // //   const [selected, setSelected] = useState('');
+// // //   const [theory, setTheory] = useState('');
+// // //   const [media, setMedia] = useState('');
+// // //   const [percentage, setPercentage] = useState(0);
+// // //   const [isComplete, setIsCompleted] = useState(false);
+// // //   const [isQuizPassed, setIsQuizPassed] = useState(pass);
+// // //   const navigate = useNavigate();
+// // //   const [messages, setMessages] = useState([]);
+// // //   const [newMessage, setNewMessage] = useState('');
+// // //   const [isChatLoading, setIsChatLoading] = useState(false);
+// // //   const [exporting, setExporting] = useState(false);
+// // //   const [saving, setSaving] = useState(false);
+// // //   const defaultMessage = `<p>Hey there! I'm your AI teacher. If you have any questions about your ${mainTopic || 'current'} course, whether it's about videos, images, or theory, just ask me. I'm here to clear your doubts.</p>`;
+// // //   const defaultPrompt = `I have a doubt about this topic :- ${mainTopic}. Please clarify my doubt in very short :- `;
+
+// // //   const [isMenuOpen, setIsMenuOpen] = useState(true);
+// // //   const [isChatOpen, setIsChatOpen] = useState(false);
+// // //   const [isNotesOpen, setIsNotesOpen] = useState(false);
+// // //   const [isLoading, setIsLoading] = useState(true);
+// // //   const { toast } = useToast();
+// // //   const isMobile = useIsMobile();
+// // //   const mainContentRef = useRef<HTMLDivElement>(null);
+// // //   const [value, setValue] = useState<Content>('')
+// // //   const [completedSubtopics, setCompletedSubtopics] = useState([]);
+// // //   const [progressLoading, setProgressLoading] = useState(true);
+// // //   const userId = sessionStorage.getItem('uid');
+// // //   const userRole = sessionStorage.getItem('role');
+// // //   const isOrgAdmin = userRole === 'org_admin' || sessionStorage.getItem('isOrganization') === 'true';
+
+// // //   // Optimization states
+// // //   const [preloadedNextContent, setPreloadedNextContent] = useState(null);
+  
+// // //   // Simple cache for API responses
+// // //   const apiCache = useRef(new Map());
+
+// // //   // Image preloader
+// // //   const preloadImage = (url) => {
+// // //     if (!url) return;
+// // //     const img = new Image();
+// // //     img.src = url;
+// // //   };
+
+// // //   // Preload next subtopic
+// // //   const preloadNextSubtopic = useCallback(async () => {
+// // //     if (!jsonData || !selected || !mainTopic || !lang || !userId) return;
+    
+// // //     const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+// // //     if (!topicsList) return;
+    
+// // //     const allSubtopics = [];
+// // //     topicsList.forEach(t => {
+// // //       t.subtopics.forEach(s => {
+// // //         allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title, subtopic: s });
+// // //       });
+// // //     });
+
+// // //     const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
+// // //     if (currentIndex < allSubtopics.length - 1) {
+// // //       const next = allSubtopics[currentIndex + 1];
+      
+// // //       // If next subtopic doesn't have content, pre-generate it
+// // //       if (!next.subtopic.theory) {
+// // //         try {
+// // //           const res = await axios.post(serverURL + '/api/generate-batch', {
+// // //             mainTopic,
+// // //             topicsList: [{
+// // //               topicTitle: next.topicTitle,
+// // //               subtopics: [next.subtopicTitle]
+// // //             }],
+// // //             lang,
+// // //             userId
+// // //           });
+          
+// // //           if (res.data.success && res.data.topics[0]) {
+// // //             setPreloadedNextContent({
+// // //               topicTitle: next.topicTitle,
+// // //               subtopicTitle: next.subtopicTitle,
+// // //               theory: res.data.topics[0].subtopics[0].theory
+// // //             });
+// // //           }
+// // //         } catch (error) {
+// // //           console.error("Preload failed:", error);
+// // //         }
+// // //       }
+// // //     }
+// // //   }, [jsonData, selected, mainTopic, lang, userId]);
+
+// // //   // Batch update content
+// // //   const updateContent = useCallback((newContent) => {
+// // //     setSelected(newContent.title);
+// // //     setTheory(newContent.theory);
+// // //     if (type === 'video & text course') {
+// // //       setMedia(newContent.youtube);
+// // //     } else {
+// // //       setMedia(newContent.image);
+// // //     }
+// // //   }, [type]);
+
+// // //   // Cached API call
+// // //   const cachedApiCall = async (url, data, cacheKey) => {
+// // //     if (apiCache.current.has(cacheKey)) {
+// // //       return apiCache.current.get(cacheKey);
+// // //     }
+    
+// // //     const response = await axios.post(url, data);
+// // //     apiCache.current.set(cacheKey, response);
+// // //     return response;
+// // //   };
+
+// // //   // Preload when selected changes
+// // //   useEffect(() => {
+// // //     if (selected && jsonData) {
+// // //       preloadNextSubtopic();
+// // //     }
+// // //   }, [selected, jsonData, preloadNextSubtopic]);
+
+// // //   // Preload current media
+// // //   useEffect(() => {
+// // //     if (media) {
+// // //       preloadImage(media);
+// // //     }
+// // //   }, [media]);
+
+// // //   useEffect(() => {
+// // //     const fetchCourseData = async () => {
+// // //       if (!courseData && activeCourseId) {
+// // //         setIsLoading(true);
+// // //         try {
+// // //           const response = await axios.get(`${serverURL}/api/shareable?id=${activeCourseId}`);
+// // //           if (response.data && response.data.length > 0) {
+// // //             const course = response.data[0];
+// // //             const content = JSON.parse(course.content);
+
+// // //             // Fallback: if mainTopic is missing, try to extract from content
+// // //             let mainTopicValue = course.mainTopic;
+// // //             if (!mainTopicValue) {
+// // //               // Try to get from course_topics or first topic
+// // //               if (content && content['course_topics'] && content['course_topics'].length > 0) {
+// // //                 mainTopicValue = content['course_topics'][0].title;
+// // //               } else {
+// // //                 // Find first key that has topics array
+// // //                 for (const key in content) {
+// // //                   if (Array.isArray(content[key]) && content[key].length > 0) {
+// // //                     mainTopicValue = content[key][0].title;
+// // //                     break;
+// // //                   }
+// // //                 }
+// // //               }
+// // //             }
+
+// // //             const newCourseData = {
+// // //               mainTopic: mainTopicValue,
+// // //               type: course.type,
+// // //               courseId: course._id,
+// // //               end: course.end,
+// // //               pass: course.completed,
+// // //               lang: 'English'
+// // //             };
+
+// // //             setJsonData(content);
+// // //             sessionStorage.setItem('jsonData', JSON.stringify(content));
+// // //             setCourseData(newCourseData);
+
+// // //             if (content) {
+// // //               const mainTopicData = (content['course_topics'] || content[(mainTopicValue || '').toLowerCase()])?.[0];
+// // //               if (mainTopicData && mainTopicData.subtopics && mainTopicData.subtopics.length > 0) {
+// // //                 const firstSubtopic = mainTopicData.subtopics[0];
+// // //                 setSelected(firstSubtopic.title);
+// // //                 setTheory(firstSubtopic.theory);
+// // //                 if (course.type === 'video & text course') {
+// // //                   setMedia(firstSubtopic.youtube);
+// // //                 } else {
+// // //                   setMedia(firstSubtopic.image);
+// // //                 }
+// // //               }
+// // //             }
+// // //           }
+// // //         } catch (error) {
+// // //           console.error("Failed to fetch course data:", error);
+// // //         } finally {
+// // //           setIsLoading(false);
+// // //         }
+// // //       } else if (courseData) {
+// // //         setIsLoading(false);
+// // //       }
+// // //     };
+// // //     fetchCourseData();
+// // //   }, [activeCourseId, courseData]);
+
+// // //   useEffect(() => {
+// // //     const fetchProgress = async () => {
+// // //       if (courseId && userId) {
+// // //         try {
+// // //           const res = await axios.get(`${serverURL}/api/progress?userId=${userId}&courseId=${courseId}`);
+// // //           if (res.data.success) {
+// // //             setCompletedSubtopics(res.data.progress.completedSubtopics || []);
+// // //             // Set percentage from backend initially
+// // //             setPercentage(res.data.progress.percentage || 0);
+// // //           }
+// // //         } catch (error) {
+// // //           console.error("Failed to fetch progress:", error);
+// // //         } finally {
+// // //           setProgressLoading(false);
+// // //         }
+// // //       } else {
+// // //         setProgressLoading(false);
+// // //       }
+// // //     };
+// // //     fetchProgress();
+// // //   }, [courseId, userId]);
+
+// // //   async function getNotes() {
+// // //     try {
+// // //       const postURL = serverURL + '/api/getnotes';
+// // //       const response = await axios.post(postURL, { course: courseId });
+// // //       if (response.data.success) {
+// // //         setValue(response.data.message);
+// // //       }
+// // //     } catch (error) {
+// // //       console.error(error)
+// // //     }
+// // //   }
+
+// // //   const handleSaveNote = async () => {
+// // //     setSaving(true);
+// // //     const postURL = serverURL + '/api/savenotes';
+// // //     const response = await axios.post(postURL, { course: courseId, notes: value });
+// // //     if (response.data.success) {
+// // //       toast({
+// // //         title: "Note saved",
+// // //         description: "Your note has been saved successfully.",
+// // //       });
+// // //     } else {
+// // //       toast({
+// // //         title: "Error",
+// // //         description: "Internal Server Error",
+// // //       });
+// // //     }
+// // //     setSaving(false);
+// // //   };
+
+// // //   // Loading skeleton for course content
+// // //   const CourseContentSkeleton = () => (
+// // //     <div className="space-y-6 animate-pulse">
+// // //       <Skeleton className="h-8 w-3/4 mb-8" />
+// // //       <div className="space-y-6">
+// // //         <div>
+// // //           <Skeleton className="h-7 w-1/2 mb-4" />
+// // //           <Skeleton className="h-5 w-full mb-2" />
+// // //           <Skeleton className="h-5 w-full mb-2" />
+// // //           <Skeleton className="h-5 w-3/4" />
+// // //         </div>
+// // //         <div>
+// // //           <Skeleton className="h-7 w-1/3 mb-4" />
+// // //           <Skeleton className="h-5 w-full mb-2" />
+// // //           <Skeleton className="h-5 w-full mb-2" />
+// // //           <Skeleton className="h-5 w-5/6" />
+// // //         </div>
+// // //         <div>
+// // //           <Skeleton className="h-7 w-2/5 mb-4" />
+// // //           <Skeleton className="h-5 w-full mb-2" />
+// // //           <Skeleton className="h-5 w-full mb-2" />
+// // //           <Skeleton className="h-36 w-full rounded-md bg-muted/30" />
+// // //         </div>
+// // //       </div>
+// // //     </div>
+// // //   );
+
+// // //   //FROM v4.0
+// // //   const opts = {
+// // //     height: '390',
+// // //     width: '640',
+// // //   };
+
+// // //   const optsMobile = {
+// // //     height: '250px',
+// // //     width: '100%',
+// // //   };
+
+// // //   useEffect(() => {
+// // //     // Only run if we have data
+// // //     if (!courseData || !jsonData) return;
+
+// // //     const updateQuizStatus = async () => {
+// // //       try {
+// // //         const response = await axios.post(serverURL + '/api/getmyresult', { courseId, userId });
+// // //         if (response.data.success) {
+// // //           // If already marked completed in courseData, keep it true even if quiz isn't found
+// // //           setIsQuizPassed(response.data.message || (courseData?.pass === true));
+// // //         }
+// // //       } catch (error) {
+// // //         console.error('Error fetching quiz status:', error);
+// // //       }
+// // //     };
+
+// // //     updateQuizStatus();
+// // //     loadMessages();
+// // //     getNotes();
+    
+// // //     // Ensure the page starts at the top when loaded
+// // //     if (mainContentRef.current) {
+// // //       mainContentRef.current.scrollTop = 0;
+// // //     }
+
+// // //     // Ensure window also scrolls to top
+// // //     window.scrollTo(0, 0);
+
+// // //     if (!mainTopic) {
+// // //       // Only redirect if explicitly missing after load attempt
+// // //       if (!isLoading && !courseData) {
+// // //         navigate("/create");
+// // //       }
+// // //     } else {
+// // //       const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+// // //       if (topicsList && topicsList.length > 0) {
+// // //         const mainTopicData = topicsList[0];
+// // //         const firstSubtopic = mainTopicData.subtopics[0];
+
+// // //         // If nothing selected yet, select first
+// // //         if (!selected) {
+// // //           setSelected(firstSubtopic.title);
+// // //           setTheory(firstSubtopic.theory);
+// // //           if (type === 'video & text course') {
+// // //             setMedia(firstSubtopic.youtube);
+// // //           } else {
+// // //             setMedia(firstSubtopic.image);
+// // //           }
+// // //         }
+// // //       }
+
+// // //       setIsLoading(false);
+// // //       sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+// // //       CountDoneTopics(isQuizPassed);
+// // //     }
+// // //   }, [courseData, jsonData, completedSubtopics, isOrgAdmin, isQuizPassed]);
+
+// // //   const isSubtopicUnlocked = (topicTitle, subtopicTitle) => {
+// // //     if (isOrgAdmin) return true;
+// // //     if (!jsonData) return false;
+
+// // //     const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+// // //     if (!topicsList) return false;
+
+// // //     // Flatten all subtopics to check order
+// // //     const allSubtopics = [];
+// // //     topicsList.forEach(t => {
+// // //       t.subtopics.forEach(s => {
+// // //         allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
+// // //       });
+// // //     });
+
+// // //     const index = allSubtopics.findIndex(s => s.topicTitle === topicTitle && s.subtopicTitle === subtopicTitle);
+// // //     if (index === 0) return true; // First subtopic always unlocked
+
+// // //     const prevSubtopic = allSubtopics[index - 1];
+// // //     return completedSubtopics.some(s => s.topicTitle === prevSubtopic.topicTitle && s.subtopicTitle === prevSubtopic.subtopicTitle);
+// // //   };
+
+// // //   const handleMarkAsComplete = async () => {
+// // //     if (!userId || !courseId || !selected) return;
+
+// // //     // Find current topic title
+// // //     const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+// // //     let currentTopicTitle = '';
+// // //     topicsList.forEach(t => {
+// // //       if (t.subtopics.some(s => s.title === selected)) {
+// // //         currentTopicTitle = t.title;
+// // //       }
+// // //     });
+
+// // //     // Count total subtopics
+// // //     let total = 0;
+// // //     topicsList.forEach(t => total += t.subtopics.length);
+
+// // //     try {
+// // //       const res = await axios.post(`${serverURL}/api/progress/update`, {
+// // //         userId,
+// // //         courseId,
+// // //         topicTitle: currentTopicTitle,
+// // //         subtopicTitle: selected,
+// // //         totalSubtopics: total
+// // //       });
+
+// // //       if (res.data.success) {
+// // //         setCompletedSubtopics(res.data.progress.completedSubtopics);
+// // //         setPercentage(res.data.progress.percentage);
+
+// // //         // Find next subtopic
+// // //         const allSubtopics = [];
+// // //         topicsList.forEach(t => {
+// // //           t.subtopics.forEach(s => {
+// // //             allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
+// // //           });
+// // //         });
+
+// // //         const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
+// // //         if (currentIndex < allSubtopics.length - 1) {
+// // //           const next = allSubtopics[currentIndex + 1];
+          
+// // //           // Use preloaded content if available
+// // //           if (preloadedNextContent && 
+// // //               preloadedNextContent.subtopicTitle === next.subtopicTitle) {
+// // //             // Update the actual data with preloaded content
+// // //             const nextTopic = topicsList.find(t => t.title === next.topicTitle);
+// // //             const nextSubtopic = nextTopic.subtopics.find(s => s.title === next.subtopicTitle);
+// // //             nextSubtopic.theory = preloadedNextContent.theory;
+// // //             nextSubtopic.done = true;
+// // //             sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+// // //           }
+          
+// // //           handleSelect(next.topicTitle, next.subtopicTitle);
+// // //           setPreloadedNextContent(null); // Clear preloaded content
+// // //         } else {
+// // //           toast({
+// // //             title: "Course Completed!",
+// // //             description: "You've finished all lessons. You can now take the quiz.",
+// // //           });
+// // //         }
+// // //       }
+// // //     } catch (error) {
+// // //       console.error("Failed to update progress:", error);
+// // //       toast({ title: "Error", description: "Failed to save progress" });
+// // //     }
+// // //   };
+
+// // //   const loadMessages = async () => {
+// // //     try {
+// // //       const jsonValue = sessionStorage.getItem(mainTopic);
+// // //       if (jsonValue !== null) {
+// // //         // Ensure all historical messages have an id if they don't already
+// // //         const savedMessages = JSON.parse(jsonValue).map((msg, index) => ({
+// // //           ...msg,
+// // //           id: msg.id || `msg-${Date.now()}-${index}`
+// // //         }));
+// // //         setMessages(savedMessages);
+// // //       } else {
+// // //         const initialMessages = [{ id: `msg-${Date.now()}`, text: defaultMessage, sender: 'bot' }];
+// // //         setMessages(initialMessages);
+// // //         await storeLocal(initialMessages);
+// // //       }
+// // //     } catch (error) {
+// // //       console.error(error);
+// // //     }
+// // //   };
+
+// // //   async function storeLocal(messages) {
+// // //     try {
+// // //       sessionStorage.setItem(mainTopic, JSON.stringify(messages));
+// // //     } catch (error) {
+// // //       console.error(error);
+// // //     }
+// // //   }
+
+// // //   const sendMessage = async () => {
+// // //     if (newMessage.trim() === '' || isChatLoading) return;
+
+// // //     const userMessage = { id: `msg-${Date.now()}`, text: newMessage, sender: 'user' };
+// // //     const updatedMessages = [...messages, userMessage];
+// // //     setMessages(updatedMessages);
+// // //     await storeLocal(updatedMessages);
+// // //     setNewMessage('');
+// // //     setIsChatLoading(true);
+
+// // //     const mainPrompt = defaultPrompt + newMessage;
+// // //     const dataToSend = { prompt: mainPrompt };
+// // //     const url = serverURL + '/api/chat';
+
+// // //     try {
+// // //       const response = await axios.post(url, dataToSend);
+// // //       if (response.data.success === false) {
+// // //         toast({
+// // //           title: "Assistant Error",
+// // //           description: response.data.message || "Failed to get a response.",
+// // //         });
+// // //       } else {
+// // //         const botMessage = { id: `bot-${Date.now()}`, text: response.data.text, sender: 'bot' };
+// // //         const updatedMessagesWithBot = [...updatedMessages, botMessage];
+// // //         setMessages(updatedMessagesWithBot);
+// // //         await storeLocal(updatedMessagesWithBot);
+// // //       }
+// // //     } catch (error) {
+// // //       toast({
+// // //         title: "Assistant Error",
+// // //         description: "Communication failure with AI assistant.",
+// // //       });
+// // //       console.error(error);
+// // //     } finally {
+// // //       setIsChatLoading(false);
+// // //     }
+// // //   };
+
+// // //   useEffect(() => {
+// // //     if (mainTopic) {
+// // //       CountDoneTopics();
+// // //     }
+// // //   }, [isQuizPassed, completedSubtopics, jsonData, isOrgAdmin]);
+
+// // //   const CountDoneTopics = (passed = isQuizPassed) => {
+// // //     if (isOrgAdmin || passed) {
+// // //       setPercentage(100);
+// // //       setIsCompleted(true);
+// // //       return;
+// // //     }
+
+// // //     if (!jsonData) return;
+
+// // //     let doneCount = 0;
+// // //     let totalTopics = 0;
+
+// // //     const topicsData = jsonData['course_topics'] || (mainTopic ? jsonData[mainTopic.toLowerCase()] : []);
+// // //     if (!topicsData) return;
+
+// // //     topicsData.forEach((topic) => {
+// // //       topic.subtopics.forEach((subtopic) => {
+// // //         const isDone = completedSubtopics.some(
+// // //           s => s.topicTitle === topic.title && s.subtopicTitle === subtopic.title
+// // //         );
+// // //         if (isDone) {
+// // //           doneCount++;
+// // //         }
+// // //         totalTopics++;
+// // //       });
+// // //     });
+
+// // //     // Subtopic-only percentage (matches server logic)
+// // //     const completionPercentage = totalTopics > 0 ? Math.round((doneCount / totalTopics) * 100) : 0;
+// // //     const finalPercentage = Math.min(completionPercentage, 99);
+// // //     setPercentage(finalPercentage);
+// // //     if (finalPercentage >= 100) {
+// // //       setIsCompleted(true);
+// // //     }
+// // //   }
+
+// // //   const handleSelect = (topicTitle, subtopicTitle) => {
+// // //     if (isLoading) return;
+
+// // //     const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+// // //     const mTopic = topicsList.find(topic => topic.title === topicTitle);
+// // //     const mSubTopic = mTopic?.subtopics.find(subtopic => subtopic.title === subtopicTitle);
+
+// // //     if (!mSubTopic) return;
+
+// // //     // If content exists, show immediately
+// // //     if (mSubTopic.theory) {
+// // //       setSelected(mSubTopic.title);
+// // //       setTheory(mSubTopic.theory);
+// // //       if (type === 'video & text course') {
+// // //         setMedia(mSubTopic.youtube);
+// // //       } else {
+// // //         setMedia(mSubTopic.image);
+// // //       }
+// // //       return;
+// // //     }
+
+// // //     // Check if unlocked
+// // //     if (!isSubtopicUnlocked(topicTitle, subtopicTitle)) {
+// // //       toast({ title: "Locked", description: "Complete previous lessons to unlock this one." });
+// // //       return;
+// // //     }
+
+// // //     // Show loading only for new content
+// // //     setIsLoading(true);
+// // //     if (type === 'video & text course') {
+// // //       const query = `${mSubTopic.title} ${mainTopic} in english`;
+// // //       sendVideo(query, topicTitle, subtopicTitle, mSubTopic.title);
+// // //     } else {
+// // //       // Check if we have preloaded this specific content
+// // //       if (preloadedNextContent && preloadedNextContent.subtopicTitle === subtopicTitle) {
+// // //         // Use preloaded content
+// // //         mSubTopic.theory = preloadedNextContent.theory;
+// // //         mSubTopic.done = true;
+        
+// // //         // Set the theory immediately
+// // //         setSelected(mSubTopic.title);
+// // //         setTheory(preloadedNextContent.theory);
+        
+// // //         // Fetch image for this subtopic
+// // //         const promptImage = `Example of ${subtopicTitle} in ${mainTopic}`;
+// // //         sendImageForBatch(promptImage, topicTitle, subtopicTitle, preloadedNextContent.theory);
+        
+// // //         setPreloadedNextContent(null);
+// // //       } else {
+// // //         // Generate new content
+// // //         sendBulkCourseContent(topicTitle, subtopicTitle);
+// // //       }
+// // //     }
+// // //   };
+
+// // //   async function sendBulkCourseContent(clickedTopic: string, clickedSub: string) {
+// // //     try {
+// // //       const topicsData = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+      
+// // //       // Only generate the clicked subtopic, not all
+// // //       const res = await axios.post(serverURL + '/api/generate-batch', {
+// // //         mainTopic,
+// // //         topicsList: [{
+// // //           topicTitle: clickedTopic,
+// // //           subtopics: [clickedSub]
+// // //         }],
+// // //         lang,
+// // //         userId
+// // //       });
+
+// // //       if (!res.data.success || !res.data.topics) {
+// // //         throw new Error(res.data.message || 'Generation failed');
+// // //       }
+
+// // //       const updatedTopicsList = jsonData?.course_topics || jsonData?.[mainTopic?.toLowerCase()];
+      
+// // //       // Update only the clicked subtopic
+// // //       res.data.topics.forEach((genTopic: any) => {
+// // //         const targetTopic = updatedTopicsList?.find((t: any) => t.title === genTopic.topicTitle);
+// // //         if (targetTopic) {
+// // //           genTopic.subtopics.forEach((genSub: any) => {
+// // //             const targetSub = targetTopic.subtopics.find((s: any) => s.title === genSub.title);
+// // //             if (targetSub) {
+// // //               targetSub.theory = genSub.theory;
+// // //               targetSub.done = true;
+// // //             }
+// // //           });
+// // //         }
+// // //       });
+
+// // //       // Save theory to sessionStorage first
+// // //       sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+      
+// // //       // Set theory immediately
+// // //       setSelected(clickedSub);
+// // //       setTheory(res.data.topics[0].subtopics[0].theory);
+      
+// // //       // Handle image fetch
+// // //       const promptImage = `Example of ${clickedSub} in ${mainTopic}`;
+// // //       sendImageForBatch(promptImage, clickedTopic, clickedSub, 
+// // //         res.data.topics[0].subtopics[0].theory);
+
+// // //     } catch (error: any) {
+// // //       console.error(error);
+// // //       toast({
+// // //         title: 'Error',
+// // //         description: error?.response?.data?.message || error.message || 'Generation failed'
+// // //       });
+// // //       setIsLoading(false);
+// // //     }
+// // //   }
+  
+// // //   async function sendImageForBatch(promptImage: string, topics: string, sub: string, theory: string) {
+// // //     try {
+// // //       const postURL = serverURL + '/api/image';
+// // //       const res = await axios.post(postURL, { prompt: promptImage });
+// // //       const imageUrl = res.data.url || '';
+      
+// // //       // Find the subtopic and update its image
+// // //       const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+// // //       const mTopic = topicsList.find(t => t.title === topics);
+// // //       const mSubTopic = mTopic?.subtopics.find(s => s.title === sub);
+      
+// // //       if (mSubTopic) {
+// // //         mSubTopic.image = imageUrl;
+// // //         mSubTopic.done = true;
+        
+// // //         // Update the media state to show the image
+// // //         setMedia(imageUrl);
+        
+// // //         // Save to sessionStorage and update course
+// // //         sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+// // //         updateCourse();
+// // //       }
+      
+// // //       setIsLoading(false);
+// // //     } catch (error) {
+// // //       console.error(error);
+// // //       // Even if image fails, still show the content with a placeholder or no image
+// // //       setMedia(''); // or set a placeholder image URL
+// // //       setIsLoading(false);
+// // //     }
+// // //   }
+
+// // //   async function sendPrompt(prompt, promptImage, topics, sub) {
+// // //     const dataToSend = {
+// // //       prompt: prompt,
+// // //     };
+// // //     try {
+// // //       const postURL = serverURL + '/api/generate';
+// // //       const res = await axios.post(postURL, dataToSend);
+// // //       const generatedText = res.data.text;
+// // //       const htmlContent = generatedText;
+// // //       try {
+// // //         const parsedJson = htmlContent;
+// // //         sendImage(parsedJson, promptImage, topics, sub);
+// // //       } catch (error) {
+// // //         console.error(error);
+// // //         toast({
+// // //           title: "Error",
+// // //           description: "Internal Server Error",
+// // //         });
+// // //         setIsLoading(false);
+// // //       }
+
+// // //     } catch (error) {
+// // //       console.error(error);
+// // //       toast({
+// // //         title: "Error",
+// // //         description: "Internal Server Error",
+// // //       });
+// // //       setIsLoading(false);
+// // //     }
+// // //   }
+
+// // //   async function sendImage(parsedJson, promptImage, topics, sub) {
+// // //     const dataToSend = {
+// // //       prompt: promptImage,
+// // //     };
+// // //     try {
+// // //       const postURL = serverURL + '/api/image';
+// // //       const res = await axios.post(postURL, dataToSend);
+// // //       try {
+// // //         const generatedText = res.data.url;
+// // //         sendData(generatedText, parsedJson, topics, sub);
+// // //       } catch (error) {
+// // //         console.error(error);
+// // //         toast({
+// // //           title: "Error",
+// // //           description: "Internal Server Error",
+// // //         });
+// // //         setIsLoading(false);
+// // //       }
+
+// // //     } catch (error) {
+// // //       console.error(error);
+// // //       toast({
+// // //         title: "Error",
+// // //         description: "Internal Server Error",
+// // //       });
+// // //       setIsLoading(false);
+// // //     }
+// // //   }
+
+// // //   async function sendData(image, theory, topics, sub) {
+// // //     const topicsList =
+// // //       jsonData?.course_topics ||
+// // //       jsonData?.[mainTopic?.toLowerCase()];
+
+// // //     if (!topicsList) {
+// // //       console.error('Topics list not found', jsonData);
+// // //       setIsLoading(false);
+// // //       return;
+// // //     }
+
+// // //     const mTopic = topicsList.find(topic => topic.title === topics);
+
+// // //     if (!mTopic) {
+// // //       console.error('Main topic not found:', topics);
+// // //       setIsLoading(false);
+// // //       return;
+// // //     }
+
+// // //     const mSubTopic = mTopic.subtopics?.find(
+// // //       subtopic => subtopic.title === sub
+// // //     );
+
+// // //     if (!mSubTopic) {
+// // //       console.error('Subtopic not found:', sub);
+// // //       setIsLoading(false);
+// // //       return;
+// // //     }
+
+// // //     // ✅ SAFE TO MUTATE NOW
+// // //     mSubTopic.theory = theory;
+// // //     mSubTopic.image = image;
+// // //     mSubTopic.done = true;
+
+// // //     // Batch update all states at once
+// // //     setSelected(mSubTopic.title);
+// // //     setTheory(theory);
+// // //     setMedia(image); // Always set media here
+
+// // //     setIsLoading(false);
+    
+// // //     // Save to sessionStorage and update course
+// // //     sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+// // //     updateCourse();
+// // //   }
+
+// // //   async function sendDataVideo(image, theory, topics, sub) {
+// // //     const topicsList =
+// // //       jsonData?.course_topics ||
+// // //       jsonData?.[mainTopic?.toLowerCase()];
+
+// // //     if (!topicsList) {
+// // //       setIsLoading(false);
+// // //       return;
+// // //     }
+
+// // //     const mTopic = topicsList.find(topic => topic.title === topics);
+// // //     if (!mTopic) {
+// // //       setIsLoading(false);
+// // //       return;
+// // //     }
+
+// // //     const mSubTopic = mTopic.subtopics?.find(
+// // //       subtopic => subtopic.title === sub
+// // //     );
+
+// // //     if (!mSubTopic) {
+// // //       setIsLoading(false);
+// // //       return;
+// // //     }
+
+// // //     mSubTopic.theory = theory;
+// // //     mSubTopic.youtube = image;
+// // //     mSubTopic.done = true;
+
+// // //     setSelected(mSubTopic.title);
+// // //     setTheory(theory);
+// // //     setMedia(image);
+
+// // //     setIsLoading(false);
+// // //     updateCourse();
+// // //   }
+
+// // //   async function updateCourse() {
+// // //     CountDoneTopics();
+// // //     sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+// // //     const dataToSend = {
+// // //       content: JSON.stringify(jsonData),
+// // //       courseId: courseId
+// // //     };
+// // //     try {
+// // //       const postURL = serverURL + '/api/update';
+// // //       await axios.post(postURL, dataToSend);
+// // //     } catch (error) {
+// // //       console.error(error);
+// // //       toast({
+// // //         title: "Error",
+// // //         description: "Internal Server Error",
+// // //       });
+// // //       setIsLoading(false);
+// // //     }
+// // //   }
+
+// // //   async function sendVideo(query, mTopic, mSubTopic, subtop) {
+// // //     const dataToSend = {
+// // //       prompt: query,
+// // //     };
+// // //     try {
+// // //       const postURL = serverURL + '/api/yt';
+// // //       const res = await axios.post(postURL, dataToSend);
+
+// // //       try {
+// // //         const generatedText = res.data.url;
+// // //         sendTranscript(generatedText, mTopic, mSubTopic, subtop);
+// // //       } catch (error) {
+// // //         console.error(error);
+// // //         toast({
+// // //           title: "Error",
+// // //           description: "Internal Server Error",
+// // //         });
+// // //         setIsLoading(false);
+// // //       }
+
+// // //     } catch (error) {
+// // //       console.error(error);
+// // //       toast({
+// // //         title: "Error",
+// // //         description: "Internal Server Error",
+// // //       });
+// // //       setIsLoading(false);
+// // //     }
+// // //   }
+
+// // //   async function sendTranscript(url, mTopic, mSubTopic, subtop) {
+// // //     const dataToSend = {
+// // //       prompt: url,
+// // //     };
+// // //     try {
+// // //       const postURL = serverURL + '/api/transcript';
+// // //       const res = await axios.post(postURL, dataToSend);
+
+// // //       try {
+// // //         const generatedText = res.data.url;
+// // //         const allText = generatedText.map(item => item.text);
+// // //         const concatenatedText = allText.join(' ');
+// // //         const prompt = `Strictly in ${lang}, Summarize this theory in a teaching way :- ${concatenatedText}.`;
+// // //         sendSummery(prompt, url, mTopic, mSubTopic);
+// // //       } catch (error) {
+// // //         console.error(error)
+// // //         const prompt = `Strictly in ${lang}, Explain me about this subtopic of ${mainTopic} with examples :- ${subtop}. Please Strictly Don't Give Additional Resources And Images.`;
+// // //         sendSummery(prompt, url, mTopic, mSubTopic);
+// // //       }
+
+// // //     } catch (error) {
+// // //       console.error(error)
+// // //       const prompt = `Strictly in ${lang}, Explain me about this subtopic of ${mainTopic} with examples :- ${subtop}.  Please Strictly Don't Give Additional Resources And Images.`;
+// // //       sendSummery(prompt, url, mTopic, mSubTopic);
+// // //     }
+// // //   }
+
+// // //   async function sendSummery(prompt, url, mTopic, mSubTopic) {
+// // //     const dataToSend = {
+// // //       prompt: prompt,
+// // //     };
+// // //     try {
+// // //       const postURL = serverURL + '/api/generate';
+// // //       const res = await axios.post(postURL, dataToSend);
+// // //       const generatedText = res.data.text;
+// // //       const htmlContent = generatedText;
+// // //       try {
+// // //         const parsedJson = htmlContent;
+// // //         sendDataVideo(url, parsedJson, mTopic, mSubTopic);
+// // //       } catch (error) {
+// // //         console.error(error);
+// // //         toast({
+// // //           title: "Error",
+// // //           description: "Internal Server Error",
+// // //         });
+// // //         setIsLoading(false);
+// // //       }
+
+// // //     } catch (error) {
+// // //       console.error(error);
+// // //       toast({
+// // //         title: "Error",
+// // //         description: "Internal Server Error",
+// // //       });
+// // //       setIsLoading(false);
+// // //     }
+// // //   }
+
+// // //   async function htmlDownload() {
+// // //     try {
+// // //       setExporting(true);
+
+// // //       const topics =
+// // //         jsonData?.course_topics ||
+// // //         jsonData?.[mainTopic?.toLowerCase()];
+
+// // //       if (!topics || !Array.isArray(topics)) {
+// // //         toast({
+// // //           title: "Export Failed",
+// // //           description: "Course topics not found",
+// // //         });
+// // //         setExporting(false);
+// // //         return;
+// // //       }
+
+// // //       const combinedHtml = await getCombinedHtml(mainTopic, topics);
+
+// // //       const tempDiv = document.createElement("div");
+// // //       tempDiv.style.width = "100%";
+// // //       tempDiv.innerHTML = combinedHtml;
+// // //       document.body.appendChild(tempDiv);
+
+// // //       const options = {
+// // //         filename: `${mainTopic}.pdf`,
+// // //         image: { type: "jpeg", quality: 1 },
+// // //         margin: [15, 15, 15, 15],
+// // //         pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+// // //         html2canvas: {
+// // //           scale: 2,
+// // //           useCORS: true,
+// // //         },
+// // //         jsPDF: { unit: "pt", format: "a4", orientation: "portrait" },
+// // //       };
+
+// // //       await html2pdf().from(tempDiv).set(options).save();
+
+// // //       document.body.removeChild(tempDiv);
+// // //     } catch (error) {
+// // //       console.error("PDF Export Error:", error);
+// // //       toast({
+// // //         title: "Export Failed",
+// // //         description: "Something went wrong while exporting PDF.",
+// // //       });
+// // //     } finally {
+// // //       setExporting(false);
+// // //     }
+// // //   }
+
+// // //   async function getCombinedHtml(mainTopic, topics) {
+
+// // //     // ✅ ADD THIS BLOCK HERE
+// // //     if (!topics || !Array.isArray(topics)) {
+// // //       console.error("Invalid topics passed to getCombinedHtml:", topics);
+// // //       return "<p>No topics available</p>";
+// // //     }
+// // //     async function toDataUrl(url) {
+// // //       return new Promise((resolve, reject) => {
+// // //         const xhr = new XMLHttpRequest();
+
+// // //         xhr.onload = function () {
+// // //           const reader = new FileReader();
+// // //           reader.onloadend = function () {
+// // //             resolve(reader.result);
+// // //           };
+// // //           reader.readAsDataURL(xhr.response);
+// // //         };
+
+// // //         xhr.onerror = function () {
+// // //           reject({
+// // //             status: xhr.status,
+// // //             statusText: xhr.statusText,
+// // //           });
+// // //         };
+
+// // //         xhr.open("GET", url);
+// // //         xhr.responseType = "blob";
+// // //         xhr.send();
+// // //       }).catch(error => {
+// // //         console.error(`Failed to fetch image at ${url}:`, error);
+// // //         return ''; // Fallback or placeholder
+// // //       });
+// // //     }
+
+// // //     const topicsHtml = topics.map(topic => `
+// // //         <h3 style="font-size: 18pt; font-weight: bold; margin: 0; margin-top: 15px;">${topic.title}</h3>
+// // //         ${topic.subtopics.map(subtopic => `
+// // //             <p style="font-size: 16pt; margin-top: 10px;">${subtopic.title}</p>
+// // //         `).join('')}
+// // //     `).join('');
+
+// // //     const theoryPromises = topics.map(async topic => {
+// // //       const subtopicPromises = topic.subtopics.map(async (subtopic, index, array) => {
+// // //         const imageUrl = type === 'text & image course' ? await toDataUrl(subtopic.image) : ``;
+// // //         return `
+// // //             <div>
+// // //                 <p style="font-size: 16pt; margin-top: 20px; font-weight: bold;">
+// // //                     ${subtopic.title}
+// // //                 </p>
+// // //                 <div style="font-size: 12pt; margin-top: 15px;">
+// // //                     ${subtopic.done
+// // //             ? `
+// // //                             ${type === 'text & image course'
+// // //               ? (imageUrl ? `<img style="margin-top: 10px;" src="${imageUrl}" alt="${subtopic.title} image">` : `<a style="color: #0000FF;" href="${subtopic.image}" target="_blank">View example image</a>`)
+// // //               : `<a style="color: #0000FF;" href="https://www.youtube.com/watch?v=${subtopic.youtube}" target="_blank" rel="noopener noreferrer">Watch the YouTube video on ${subtopic.title}</a>`
+// // //             }
+// // //                             <div style="margin-top: 10px;">${subtopic.theory}</div>
+// // //                         `
+// // //             : `<div style="margin-top: 10px;">Please visit ${subtopic.title} topic to export as PDF. Only topics that are completed will be added to the PDF.</div>`
+// // //           }
+// // //                 </div>
+// // //             </div>
+// // //         `;
+// // //       });
+// // //       const subtopicHtml = await Promise.all(subtopicPromises);
+// // //       return `
+// // //             <div style="margin-top: 30px;">
+// // //                 <h3 style="font-size: 18pt; text-align: center; font-weight: bold; margin: 0;">
+// // //                     ${topic.title}
+// // //                 </h3>
+// // //                 ${subtopicHtml.join('')}
+// // //             </div>
+// // //         `;
+// // //     });
+// // //     const theoryHtml = await Promise.all(theoryPromises);
+
+// // //     return `
+// // //     <div class="html2pdf__page-break" 
+// // //          style="display: flex; align-items: center; justify-content: center; text-align: center; margin: 0 auto; max-width: 100%; height: 11in;">
+// // //         <h1 style="font-size: 30pt; font-weight: bold; margin: 0;">
+// // //             ${mainTopic}
+// // //         </h1>
+// // //     </div>
+// // //     <div class="html2pdf__page-break" style="text-align: start; margin-top: 30px; margin-right: 16px; margin-left: 16px;">
+// // //         <h2 style="font-size: 24pt; font-weight: bold; margin: 0;">Index</h2>
+// // //         <br>
+// // //         <hr>
+// // //         ${topicsHtml}
+// // //     </div>
+// // //     <div style="text-align: start; margin-right: 16px; margin-left: 16px;">
+// // //         ${theoryHtml.join('')}
+// // //     </div>
+// // //     `;
+// // //   }
+
+// // //   const normalize = (s: string) =>
+// // //     s.toLowerCase().replace(/\s+/g, ' ').trim();
+
+// // //   async function redirectExam() {
+// // //     if (isLoading) return;
+
+// // //     // Check if all subtopics are completed
+// // //     if (!isOrgAdmin && jsonData) {
+// // //       const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+// // //       if (topicsList) {
+// // //         let allDone = true;
+// // //         topicsList.forEach(t => {
+// // //           t.subtopics.forEach(s => {
+// // //             if (!completedSubtopics.some(cs => cs.topicTitle === t.title && cs.subtopicTitle === s.title)) {
+// // //               allDone = false;
+// // //             }
+// // //           });
+// // //         });
+
+// // //         if (!allDone) {
+// // //           toast({
+// // //             title: "Quiz Locked",
+// // //             description: "Please complete all lessons before taking the quiz.",
+// // //           });
+// // //           return;
+// // //         }
+// // //       }
+// // //     }
+
+// // //     // Check for manual quizzes first
+// // //     if (jsonData?.quizzes && Array.isArray(jsonData.quizzes) && jsonData.quizzes.length > 0) {
+// // //       const manualQuizzes = jsonData.quizzes.map((q, index) => ({
+// // //         id: index + 1,
+// // //         question: q.question,
+// // //         options: q.options.map((opt, i) => ({
+// // //           id: String.fromCharCode(97 + i), // 'a', 'b', 'c', ...
+// // //           text: opt
+// // //         })),
+// // //         correctAnswer: q.answer, // Assuming 'answer' stores the correct option text or ID. QuizPage logic handles both.
+// // //         answer: q.answer // Pass original answer for QuizPage flexible matching
+// // //       }));
+
+// // //       navigate(`/course/${courseId}/quiz`, {
+// // //         state: {
+// // //           topic: mainTopic,
+// // //           courseId,
+// // //           questions: manualQuizzes,
+// // //         },
+// // //       });
+// // //       return;
+// // //     }
+
+// // //     if (!jsonData?.course_topics || !Array.isArray(jsonData.course_topics)) {
+// // //       console.error('Invalid course_topics:', jsonData);
+// // //       toast({
+// // //         title: "Error",
+// // //         description: "Course data not loaded",
+// // //       });
+// // //       return;
+// // //     }
+
+// // //     if (!mainTopic) {
+// // //       console.error('mainTopic missing');
+// // //       toast({
+// // //         title: "Error",
+// // //         description: "Main topic not selected",
+// // //       });
+// // //       return;
+// // //     }
+
+// // //     // ✅ Collect ALL subtopics from ALL chapters
+// // //     const allSubtopics = jsonData.course_topics.flatMap((topic: any) =>
+// // //       Array.isArray(topic.subtopics) ? topic.subtopics : []
+// // //     );
+
+// // //     if (!allSubtopics.length) {
+// // //       console.error('No subtopics found:', jsonData.course_topics);
+// // //       toast({
+// // //         title: "Error",
+// // //         description: "No subtopics available for exam",
+// // //       });
+// // //       return;
+// // //     }
+
+// // //     // ✅ Build subtopics string
+// // //     const subtopicsString = allSubtopics
+// // //       .map((sub: any) => sub.title)
+// // //       .join(', ');
+
+// // //     setIsLoading(true);
+
+// // //     try {
+// // //       const response = await axios.post(
+// // //         `${serverURL}/api/aiexam`,
+// // //         {
+// // //           courseId,
+// // //           mainTopic,          // "REACT"
+// // //           subtopicsString,    // all React subtopics
+// // //           lang,
+// // //         }
+// // //       );
+
+// // //       if (!response.data?.success) {
+// // //         throw new Error('API failed');
+// // //       }
+
+// // //       const questions = JSON.parse(response.data.message);
+
+// // //       navigate(`/course/${courseId}/quiz`, {
+// // //         state: {
+// // //           topic: mainTopic,
+// // //           courseId,
+// // //           questions,
+// // //         },
+// // //       });
+// // //     } catch (error) {
+// // //       console.error('redirectExam error:', error);
+// // //       toast({
+// // //         title: "Error",
+// // //         description: "Failed to generate exam",
+// // //       });
+// // //     } finally {
+// // //       setIsLoading(false);
+// // //     }
+// // //   }
+
+// // //   const renderTopicsList = (topics) => {
+// // //     if (!topics || !Array.isArray(topics)) return null;
+// // //     return (
+// // //       <Accordion
+// // //         type="single"
+// // //         collapsible
+// // //         className="w-full"
+// // //         defaultValue={topics[0]?.title}
+// // //       >
+// // //         {topics.map((topic) => (
+// // //           <AccordionItem key={topic.title} value={topic.title} className="border-none">
+// // //             <AccordionTrigger className="py-2 text-left px-3 hover:bg-accent/50 rounded-md w-full">
+// // //               {topic.title}
+// // //             </AccordionTrigger>
+// // //             <AccordionContent className="pl-2">
+// // //               {topic.subtopics.map((subtopic) => (
+// // //                 <div
+// // //                   onClick={() => {
+// // //                     if (isSubtopicUnlocked(topic.title, subtopic.title)) {
+// // //                       handleSelect(topic.title, subtopic.title);
+// // //                     } else {
+// // //                       toast({ title: "Locked", description: "Complete previous lessons to unlock this one." });
+// // //                     }
+// // //                   }}
+// // //                   key={subtopic.title}
+// // //                   className={cn(
+// // //                     "flex items-center px-4 py-2 rounded-md transition-colors",
+// // //                     isSubtopicUnlocked(topic.title, subtopic.title) ? "cursor-pointer hover:bg-accent/50" : "opacity-50 cursor-not-allowed",
+// // //                     selected === subtopic.title && "bg-accent/50 font-medium text-primary"
+// // //                   )}
+// // //                 >
+// // //                   {completedSubtopics.some(s => s.topicTitle === topic.title && s.subtopicTitle === subtopic.title) ? (
+// // //                     <span className="mr-2 text-primary">✓</span>
+// // //                   ) : !isSubtopicUnlocked(topic.title, subtopic.title) && (
+// // //                     <Lock className="w-3 h-3 mr-2 opacity-50" />
+// // //                   )}
+// // //                   <span className="text-sm">{subtopic.title}</span>
+// // //                 </div>
+// // //               ))}
+// // //             </AccordionContent>
+// // //           </AccordionItem>
+// // //         ))}
+// // //       </Accordion>
+// // //     );
+// // //   }
+
+// // //   function certificateCheck() {
+// // //     if (isComplete) {
+// // //       finish();
+// // //     } else {
+// // //       toast({
+// // //         title: "Completion Certificate",
+// // //         description: "Complete course to get certificate",
+// // //       });
+// // //     }
+// // //   }
+
+// // //   async function finish() {
+// // //     if (sessionStorage.getItem('first') === 'true') {
+// // //       if (!end) {
+// // //         const today = new Date();
+// // //         const formattedDate = today.toLocaleDateString('en-GB');
+// // //         navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: formattedDate } });
+// // //       } else {
+// // //         navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: end } });
+// // //       }
+
+// // //     } else {
+// // //       const dataToSend = {
+// // //         courseId: courseId
+// // //       };
+// // //       try {
+// // //         const postURL = serverURL + '/api/finish';
+// // //         const response = await axios.post(postURL, dataToSend);
+// // //         if (response.data.success) {
+// // //           const today = new Date();
+// // //           const formattedDate = today.toLocaleDateString('en-GB');
+// // //           sessionStorage.setItem('first', 'true');
+// // //           sendEmail(formattedDate);
+// // //         }
+// // //       } catch (error) {
+// // //         console.error(error);
+// // //       }
+// // //     }
+// // //   }
+
+// // //   async function sendEmail(formattedDate) {
+// // //     const userName = sessionStorage.getItem('mName');
+// // //     const email = sessionStorage.getItem('email');
+// // //     const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+// // //                 <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
+// // //                 <html lang="en">
+                
+// // //                   <head></head>
+// // //                  <div id="__react-email-preview" style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0;">Certificate<div> ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿</div>
+// // //                  </div>
+                
+// // //                   <body style="padding:20px; margin-left:auto;margin-right:auto;margin-top:auto;margin-bottom:auto;background-color:#f6f9fc;font-family:ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, Arial, &quot;Noto Sans&quot;, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;, &quot;Noto Color Emoji&quot;">
+// // //                     <table align="center" role="presentation" cellSpacing="0" cellPadding="0" border="0" height="80%" width="100%" style="max-width:37.5em;max-height:80%; margin-left:auto;margin-right:auto;margin-top:80px;margin-bottom:80px;width:465px;border-radius:0.25rem;border-width:1px;background-color:#fff;padding:20px">
+// // //                       <tr style="width:100%">
+// // //                         <td>
+// // //                           <table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%" style="margin-top:32px">
+// // //                             <tbody>
+// // //                               <tr>
+// // //                                 <td><img alt="Vercel" src="${appLogo}" width="40" height="37" style="display:block;outline:none;border:none;text-decoration:none;margin-left:auto;margin-right:auto;margin-top:0px;margin-bottom:0px" /></td>
+// // //                               </tr>
+// // //                             </tbody>
+// // //                           </table>
+// // //                           <h1 style="margin-left:0px;margin-right:0px;margin-top:30px;margin-bottom:30px;padding:0px;text-align:center;font-size:24px;font-weight:400;color:rgb(0,0,0)">Completion Certificate </h1>
+// // //                           <p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Hello <strong>${userName}</strong>,</p>
+// // //                           <p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">We are pleased to inform you that you have successfully completed the ${mainTopic} and are now eligible for your course completion certificate. Congratulations on your hard work and dedication throughout the course!</p>
+// // //                           <table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%" style="margin-bottom:32px;margin-top:32px;text-align:center">
+// // //                             <tbody>
+// // //                               <tr>
+// // //                                 <td><a href="${websiteURL}" target="_blank" style="p-x:20px;p-y:12px;line-height:100%;text-decoration:none;display:inline-block;max-width:100%;padding:12px 20px;border-radius:0.25rem;background-color: #007BFF;text-align:center;font-size:12px;font-weight:600;color:rgb(255,255,255);text-decoration-line:none"><span></span><span style="p-x:20px;p-y:12px;max-width:100%;display:inline-block;line-height:120%;text-decoration:none;text-transform:none;mso-padding-alt:0px;mso-text-raise:9px"><span>Get Certificate</span></a></td>
+// // //                               </tr>
+// // //                             </tbody>
+// // //                           </table>
+// // //                           <p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Best,<p target="_blank" style="color:rgb(0,0,0);text-decoration:none;text-decoration-line:none">The <strong>${companyName}</strong> Team</p></p>
+// // //                           </td>
+// // //                       </tr>
+// // //                     </table>
+// // //                   </body>
+                
+// // //                 </html>`;
+
+// // //     try {
+// // //       const postURL = serverURL + '/api/sendcertificate';
+// // //       await axios.post(postURL, { html, email }).then(res => {
+// // //         navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: formattedDate } });
+// // //       }).catch(error => {
+// // //         console.error(error);
+// // //         navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: formattedDate } });
+// // //       });
+
+// // //     } catch (error) {
+// // //       console.error(error);
+// // //       navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: formattedDate } });
+// // //     }
+// // //   }
+
+// // //   return (
+// // //     <div className="flex flex-col h-screen bg-background overflow-hidden">
+// // //       <header className="border-b border-border/40 py-2 px-4 flex justify-between items-center sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
+// // //         <div className="flex items-center gap-4">
+// // //           <Drawer>
+// // //             <DrawerTrigger asChild>
+// // //               <Button
+// // //                 variant="ghost"
+// // //                 size="icon"
+// // //                 className="md:hidden"
+// // //               >
+// // //                 <Menu className="h-5 w-5" />
+// // //               </Button>
+// // //             </DrawerTrigger>
+// // //             <DrawerContent className="max-h-[80vh]">
+// // //               <div className="p-4">
+// // //                 <h2 className="text-xl font-bold mb-4">Course Content</h2>
+// // //                 <ScrollArea className="h-[60vh]">
+// // //                   <div className="pr-4">
+// // //                     {jsonData && renderTopicsList(jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()])}
+// // //                     <p onClick={redirectExam} className='py-2 text-left px-3 hover:bg-accent/50 rounded-md cursor-pointer'>{pass === true ? <span className="mr-2 text-primary">✓</span> : <></>}{mainTopic} Quiz</p>
+// // //                   </div>
+// // //                 </ScrollArea>
+// // //               </div>
+// // //             </DrawerContent>
+// // //           </Drawer>
+
+// // //           <div className="flex items-center gap-2">
+// // //             {!isOrgAdmin && (
+// // //               <div className="relative w-8 h-8">
+// // //                 <svg className="w-8 h-8" viewBox="0 0 36 36">
+// // //                   <circle cx="18" cy="18" r="16" fill="none" className="stroke-muted-foreground/20" strokeWidth="2" />
+// // //                   <circle
+// // //                     cx="18"
+// // //                     cy="18"
+// // //                     r="16"
+// // //                     fill="none"
+// // //                     className="stroke-primary"
+// // //                     strokeWidth="2"
+// // //                     strokeDasharray="100"
+// // //                     strokeDashoffset={100 - percentage}
+// // //                     transform="rotate(-90 18 18)"
+// // //                   />
+// // //                   <text
+// // //                     x="18"
+// // //                     y="18"
+// // //                     dominantBaseline="middle"
+// // //                     textAnchor="middle"
+// // //                     className="fill-foreground text-[10px] font-medium"
+// // //                   >
+// // //                     {percentage}%
+// // //                   </text>
+// // //                 </svg>
+// // //               </div>
+// // //             )}
+// // //             <h1 className="text-xl font-bold">{mainTopic}</h1>
+// // //           </div>
+// // //         </div>
+
+// // //         <div className="flex items-center gap-2">
+// // //           <Button
+// // //             variant="ghost"
+// // //             size="icon"
+// // //             onClick={() => setIsMenuOpen(!isMenuOpen)}
+// // //             className="hidden md:flex"
+// // //           >
+// // //             <Menu className="h-5 w-5" />
+// // //           </Button>
+// // //           <ToggleGroup type="single" className="hidden sm:flex">
+// // //             <Button variant="ghost" size="sm" asChild>
+// // //               <Link to='/dashboard'>
+// // //                 <Home className="h-4 w-4 mr-1" /> Home
+// // //               </Link>
+// // //             </Button>
+// // //             {(plan !== "free" || isOrgAdmin || userRole === 'student') && isQuizPassed && (
+// // //               <Button
+// // //                 onClick={certificateCheck}
+// // //                 variant="default"
+// // //                 size="sm"
+// // //                 className={cn(
+// // //                   "shadow-none",
+// // //                   (userRole === 'student' || !!sessionStorage.getItem('orgId'))
+// // //                     ? "bg-yellow-600 hover:bg-yellow-700 text-white border-none"
+// // //                     : "bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
+// // //                 )}
+// // //               >
+// // //                 <Award className="h-4 w-4 mr-1" /> Download Certificate
+// // //               </Button>
+// // //             )}
+
+// // //             <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm" asChild>
+// // //               <span className='cursor-pointer'><Download className="h-4 w-4 mr-1" />{exporting ? 'Exporting...' : 'Export'}</span>
+// // //             </Button>
+// // //             <ShareOnSocial
+// // //               textToShare={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+// // //               link={websiteURL + '/shareable?id=' + courseId}
+// // //               linkTitle={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+// // //               linkMetaDesc={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+// // //               linkFavicon={appLogo}
+// // //               noReferer
+// // //             >
+// // //               <Button variant="ghost" size="sm" asChild>
+// // //                 <span className='cursor-pointer'><Share className="h-4 w-4 mr-1" /> Share</span>
+// // //               </Button>
+// // //             </ShareOnSocial>
+// // //           </ToggleGroup>
+// // //           <ThemeToggle />
+// // //         </div>
+// // //       </header>
+
+// // //       <div className="flex flex-1 overflow-hidden">
+// // //         <div className={cn(
+// // //           "bg-sidebar border-r border-border/40 transition-all duration-300 overflow-hidden hidden md:block",
+// // //           isMenuOpen ? "w-64" : "w-0"
+// // //         )}>
+// // //           <ScrollArea className="h-full">
+// // //             <div className="p-4">
+// // //               {jsonData && renderTopicsList(jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()])}
+// // //               <p onClick={redirectExam} className='py-2 text-left px-3 hover:bg-accent/50 rounded-md cursor-pointer'>{pass === true ? <span className="mr-2 text-primary">✓</span> : <></>}{mainTopic} Quiz</p>
+// // //             </div>
+// // //           </ScrollArea>
+// // //         </div>
+
+// // //         <div className="flex-1 overflow-hidden">
+// // //           <ScrollArea className="h-full" viewportRef={mainContentRef}>
+// // //             <main className="p-6 max-w-5xl mx-auto">
+// // //               {isLoading ? (
+// // //                 <CourseContentSkeleton />
+// // //               ) : (
+// // //                 <>
+// // //                   <h1 className="text-3xl font-bold mb-6">{selected}</h1>
+// // //                   <div className="space-y-4">
+// // //                     {type === 'video & text course' ? (
+// // //                       media ? (
+// // //                         <div>
+// // //                           <YouTube key={media} className='mb-5' videoId={media} opts={opts} />
+// // //                         </div>
+// // //                       ) : (
+// // //                         <div className="h-96 bg-muted flex items-center justify-center rounded-lg">
+// // //                           <p className="text-muted-foreground">Loading video...</p>
+// // //                         </div>
+// // //                       )
+// // //                     ) : (
+// // //                       media ? (
+// // //                         <div>
+// // //                           <img 
+// // //                             className='overflow-hidden h-96 max-md:h-64 rounded-lg object-cover' 
+// // //                             src={media} 
+// // //                             alt={selected}
+// // //                             onError={(e) => {
+// // //                               e.target.onerror = null;
+// // //                               e.target.src = ''; // or a placeholder image
+// // //                             }}
+// // //                           />
+// // //                         </div>
+// // //                       ) : (
+// // //                         <div className="h-96 bg-muted flex items-center justify-center rounded-lg">
+// // //                           <p className="text-muted-foreground">Loading image...</p>
+// // //                         </div>
+// // //                       )
+// // //                     )}
+// // //                     {theory && <StyledText text={theory} />}
+
+// // //                     {!isOrgAdmin && (
+// // //                       <div className="pt-8 border-t border-border mt-8 flex justify-center">
+// // //                         <Button
+// // //                           onClick={handleMarkAsComplete}
+// // //                           className="px-8 py-6 text-lg gap-2"
+// // //                         >
+// // //                           {completedSubtopics.some(s => s.subtopicTitle === selected) ? (
+// // //                             <>Next Lesson <CheckCircle2 className="w-5 h-5" /></>
+// // //                           ) : (
+// // //                             <>Mark as Complete & Next <CheckCircle2 className="w-5 h-5" /></>
+// // //                           )}
+// // //                         </Button>
+// // //                       </div>
+// // //                     )}
+// // //                   </div>
+// // //                 </>
+// // //               )}
+// // //             </main>
+// // //           </ScrollArea>
+// // //         </div>
+// // //       </div>
+
+// // //       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border p-2 flex justify-around items-center">
+// // //         <Button variant="ghost" size="sm">
+// // //           <Link to='/dashboard'>
+// // //             <Home className="h-5 w-5" />
+// // //           </Link>
+// // //         </Button>
+// // //         {(plan !== "free" || isOrgAdmin || userRole === 'student') && isQuizPassed && (
+// // //           <Button
+// // //             onClick={certificateCheck}
+// // //             variant="ghost"
+// // //             size="sm"
+// // //             className={cn(
+// // //               "font-bold",
+// // //               (userRole === 'student' || !!sessionStorage.getItem('orgId')) ? "text-yellow-600" : "text-primary"
+// // //             )}
+// // //           >
+// // //             <Award className="h-5 w-5" />
+// // //           </Button>
+// // //         )}
+// // //         <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm">
+// // //           <Download className="h-5 w-5" />
+// // //         </Button>
+// // //         <ShareOnSocial
+// // //           textToShare={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+// // //           link={websiteURL + '/shareable?id=' + courseId}
+// // //           linkTitle={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+// // //           linkMetaDesc={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+// // //           linkFavicon={appLogo}
+// // //           noReferer
+// // //         >
+// // //           <Button variant="ghost" size="sm">
+// // //             <Share className="h-5 w-5" />
+// // //           </Button>
+// // //         </ShareOnSocial>
+// // //       </div>
+
+// // //       <div className="fixed bottom-16 right-6 flex flex-col gap-3 md:bottom-6">
+// // //         <Button
+// // //           size="icon"
+// // //           className="rounded-full bg-primary shadow-lg hover:shadow-xl"
+// // //           onClick={() => setIsChatOpen(true)}
+// // //         >
+// // //           <MessageCircle className="h-5 w-5" />
+// // //         </Button>
+// // //         <Button
+// // //           size="icon"
+// // //           className="rounded-full bg-primary shadow-lg hover:shadow-xl"
+// // //           onClick={() => setIsNotesOpen(true)}
+// // //         >
+// // //           <ClipboardCheck className="h-5 w-5" />
+// // //         </Button>
+// // //       </div>
+
+// // //       {isMobile ? (
+// // //         <Sheet open={isChatOpen} onOpenChange={setIsChatOpen}>
+// // //           <SheetContent side="bottom" className="h-[90vh] sm:max-w-full p-0">
+// // //             <div className="flex flex-col h-full p-4">
+// // //               <div className="py-2 px-4 border-b border-border mb-2">
+// // //                 <h2 className="text-lg font-semibold">Course Assistant</h2>
+// // //               </div>
+// // //               <ScrollArea className="flex-1 pr-4 mb-4">
+// // //                 <div className="space-y-4 pt-2 px-4">
+// // //                   {messages.map((message) => (
+// // //                     <div
+// // //                       key={message.id}
+// // //                       className={cn(
+// // //                         "flex w-max max-w-[80%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
+// // //                         message.sender === "user"
+// // //                           ? "ml-auto bg-primary text-primary-foreground"
+// // //                           : "bg-muted"
+// // //                       )}
+// // //                     >
+// // //                       <StyledText text={message.text} />
+// // //                     </div>
+// // //                   ))}
+// // //                 </div>
+// // //               </ScrollArea>
+
+// // //               <div className="flex items-center gap-2 p-4 border-t border-border">
+// // //                 <Input
+// // //                   placeholder={isChatLoading ? "Assistant is thinking..." : "Type your message..."}
+// // //                   value={newMessage}
+// // //                   onChange={(e) => setNewMessage(e.target.value)}
+// // //                   disabled={isChatLoading}
+// // //                   onKeyDown={(e) => {
+// // //                     if (e.key === "Enter") {
+// // //                       sendMessage();
+// // //                     }
+// // //                   }}
+// // //                   className="flex-1"
+// // //                 />
+// // //                 <Button onClick={sendMessage} disabled={isChatLoading}>
+// // //                   {isChatLoading ? "..." : "Send"}
+// // //                 </Button>
+// // //               </div>
+// // //             </div>
+// // //           </SheetContent>
+// // //         </Sheet>
+// // //       ) : (
+// // //         <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
+// // //           <DialogContent className="sm:max-w-md">
+// // //             <DialogTitle>Course Assistant</DialogTitle>
+// // //             <div className="flex flex-col h-[60vh]">
+// // //               <ScrollArea className="flex-1 pr-4 mb-4">
+// // //                 <div className="space-y-4 pt-2">
+// // //                   {messages.map((message) => (
+// // //                     <div
+// // //                       key={message.id}
+// // //                       className={cn(
+// // //                         "flex w-2/4 max-w-[80%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
+// // //                         message.sender === "user"
+// // //                           ? "ml-auto bg-primary text-primary-foreground"
+// // //                           : "bg-muted"
+// // //                       )}
+// // //                     >
+// // //                       <StyledText text={message.text} />
+// // //                     </div>
+// // //                   ))}
+// // //                 </div>
+// // //               </ScrollArea>
+
+// // //               <div className="flex items-center gap-2">
+// // //                 <Input
+// // //                   placeholder={isChatLoading ? "Assistant is thinking..." : "Type your message..."}
+// // //                   value={newMessage}
+// // //                   onChange={(e) => setNewMessage(e.target.value)}
+// // //                   disabled={isChatLoading}
+// // //                   onKeyDown={(e) => {
+// // //                     if (e.key === "Enter") {
+// // //                       sendMessage();
+// // //                     }
+// // //                   }}
+// // //                   className="flex-1"
+// // //                 />
+// // //                 <Button onClick={sendMessage} disabled={isChatLoading}>
+// // //                   {isChatLoading ? "..." : "Send"}
+// // //                 </Button>
+// // //               </div>
+// // //             </div>
+// // //           </DialogContent>
+// // //         </Dialog>
+// // //       )}
+
+// // //       {isMobile ? (
+// // //         <Sheet open={isNotesOpen} onOpenChange={setIsNotesOpen}>
+// // //           <SheetContent side="bottom" className="h-[90vh] sm:max-w-full p-0">
+// // //             <div className="flex flex-col h-full p-4">
+// // //               <div className="py-2 px-4 border-b border-border mb-2">
+// // //                 <h2 className="text-lg font-semibold">Course Notes</h2>
+// // //               </div>
+// // //               <ScrollArea className="flex-1 pr-4 mb-4">
+// // //                 <div className="space-y-4 pt-2 px-4">
+// // //                   <MinimalTiptapEditor
+// // //                     value={value}
+// // //                     onChange={setValue}
+// // //                     className="w-full"
+// // //                     editorContentClassName="p-5"
+// // //                     output="html"
+// // //                     placeholder="No notes yet. Start taking notes for this course."
+// // //                     autofocus={true}
+// // //                     editable={true}
+// // //                     editorClassName="focus:outline-none"
+// // //                   />
+// // //                 </div>
+// // //               </ScrollArea>
+
+// // //               <div className="p-4 border-t border-border">
+// // //                 <div className="flex justify-end">
+// // //                   <Button disabled={saving} onClick={handleSaveNote}>{saving ? 'Saving...' : 'Save Note'}</Button>
+// // //                 </div>
+// // //               </div>
+// // //             </div>
+// // //           </SheetContent>
+// // //         </Sheet>
+// // //       ) : (
+// // //         <Dialog open={isNotesOpen} onOpenChange={setIsNotesOpen}>
+// // //           <DialogContent className="sm:max-w-lg">
+// // //             <DialogTitle>Course Notes</DialogTitle>
+// // //             <div className="flex flex-col h-[60vh]">
+// // //               <ScrollArea className="flex-1 pr-4 mb-4">
+// // //                 <div className="space-y-4 pt-2">
+// // //                   <MinimalTiptapEditor
+// // //                     value={value}
+// // //                     onChange={setValue}
+// // //                     className="w-full"
+// // //                     editorContentClassName="p-5"
+// // //                     output="html"
+// // //                     placeholder="No notes yet. Start taking notes for this course."
+// // //                     autofocus={true}
+// // //                     editable={true}
+// // //                     editorClassName="focus:outline-none"
+// // //                   />
+// // //                 </div>
+// // //               </ScrollArea>
+
+// // //               <div>
+// // //                 <div className="flex justify-end">
+// // //                   <Button disabled={saving} onClick={handleSaveNote}>{saving ? 'Saving...' : 'Save Note'}</Button>
+// // //                 </div>
+// // //               </div>
+// // //             </div>
+// // //           </DialogContent>
+// // //         </Dialog>
+// // //       )}
+// // //     </div>
+// // //   );
+// // // };
+
+// // // export default CoursePage;
+
+
+
+
+// // // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// // // @ts-nocheck
+// // import React, { useEffect, useState, useRef, useCallback } from 'react';
+// // import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+// // import {
+// //   Accordion,
+// //   AccordionContent,
+// //   AccordionItem,
+// //   AccordionTrigger
+// // } from '@/components/ui/accordion';
+// // import { Content } from '@tiptap/react'
+// // import { MinimalTiptapEditor } from '../minimal-tiptap'
+// // import YouTube from 'react-youtube';
+// // import { Button } from '@/components/ui/button';
+// // import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2 } from 'lucide-react';
+// // import { cn } from '@/lib/utils';
+// // import { ScrollArea } from '@/components/ui/scroll-area';
+// // import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
+// // import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+// // import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+// // import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+// // import { Textarea } from '@/components/ui/textarea';
+// // import { Input } from '@/components/ui/input';
+// // import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
+// // import { useToast } from '@/hooks/use-toast';
+// // import { useForm } from 'react-hook-form';
+// // import { ThemeToggle } from '@/components/ThemeToggle';
+// // import { Skeleton } from '@/components/ui/skeleton';
+// // import { useIsMobile } from '@/hooks/use-mobile';
+// // import { appLogo, companyName, serverURL, websiteURL } from '@/constants';
+// // import axios from 'axios';
+// // import ShareOnSocial from 'react-share-on-social';
+// // import StyledText from '@/components/styledText';
+// // import html2pdf from 'html2pdf.js';
+
+// // const CoursePage = () => {
+// //   //ADDED FROM v4.0
+// //   const { state } = useLocation();
+// //   const { courseId: paramCourseId } = useParams();
+// //   const activeCourseId = state?.courseId || paramCourseId;
+// //   const plan = sessionStorage.getItem('type');
+// //   const [courseData, setCourseData] = useState(state || null);
+// //   const [jsonData, setJsonData] = useState(() => {
+// //     try {
+// //       return JSON.parse(sessionStorage.getItem('jsonData'));
+// //     } catch (e) {
+// //       return null;
+// //     }
+// //   });
+
+// //   // OPTIMIZATION: Image cache and preloading
+// //   const imageCache = useRef(new Set());
+// //   const [preloadedImages, setPreloadedImages] = useState(new Map());
+// //   const [imageLoading, setImageLoading] = useState(new Map());
+
+// //   const mainTopic = courseData?.mainTopic;
+// //   const type = courseData?.type;
+// //   const courseId = courseData?.courseId || activeCourseId;
+// //   const end = courseData?.end;
+// //   const pass = courseData?.pass;
+// //   const lang = courseData?.lang || 'English';
+
+// //   const [selected, setSelected] = useState('');
+// //   const [theory, setTheory] = useState('');
+// //   const [media, setMedia] = useState('');
+// //   const [percentage, setPercentage] = useState(0);
+// //   const [isComplete, setIsCompleted] = useState(false);
+// //   const [isQuizPassed, setIsQuizPassed] = useState(pass);
+// //   const navigate = useNavigate();
+// //   const [messages, setMessages] = useState([]);
+// //   const [newMessage, setNewMessage] = useState('');
+// //   const [isChatLoading, setIsChatLoading] = useState(false);
+// //   const [exporting, setExporting] = useState(false);
+// //   const [saving, setSaving] = useState(false);
+// //   const defaultMessage = `<p>Hey there! I'm your AI teacher. If you have any questions about your ${mainTopic || 'current'} course, whether it's about videos, images, or theory, just ask me. I'm here to clear your doubts.</p>`;
+// //   const defaultPrompt = `I have a doubt about this topic :- ${mainTopic}. Please clarify my doubt in very short :- `;
+
+// //   const [isMenuOpen, setIsMenuOpen] = useState(true);
+// //   const [isChatOpen, setIsChatOpen] = useState(false);
+// //   const [isNotesOpen, setIsNotesOpen] = useState(false);
+// //   const [isLoading, setIsLoading] = useState(true);
+// //   const { toast } = useToast();
+// //   const isMobile = useIsMobile();
+// //   const mainContentRef = useRef<HTMLDivElement>(null);
+// //   const [value, setValue] = useState<Content>('')
+// //   const [completedSubtopics, setCompletedSubtopics] = useState([]);
+// //   const [progressLoading, setProgressLoading] = useState(true);
+// //   const userId = sessionStorage.getItem('uid');
+// //   const userRole = sessionStorage.getItem('role');
+// //   const isOrgAdmin = userRole === 'org_admin' || sessionStorage.getItem('isOrganization') === 'true';
+
+// //   // Optimization states
+// //   const [preloadedNextContent, setPreloadedNextContent] = useState(null);
+  
+// //   // Simple cache for API responses
+// //   const apiCache = useRef(new Map());
+
+// //   // OPTIMIZATION: Enhanced image preloader with queue and cache
+// //   const preloadImageWithCache = useCallback((url, subtopicTitle) => {
+// //     if (!url || imageCache.current.has(url)) return;
+    
+// //     imageCache.current.add(url);
+// //     setImageLoading(prev => new Map(prev).set(subtopicTitle, true));
+    
+// //     const img = new Image();
+// //     img.onload = () => {
+// //       setPreloadedImages(prev => new Map(prev).set(subtopicTitle, url));
+// //       setImageLoading(prev => {
+// //         const newMap = new Map(prev);
+// //         newMap.delete(subtopicTitle);
+// //         return newMap;
+// //       });
+// //     };
+// //     img.onerror = () => {
+// //       setImageLoading(prev => {
+// //         const newMap = new Map(prev);
+// //         newMap.delete(subtopicTitle);
+// //         return newMap;
+// //       });
+// //     };
+// //     img.src = url;
+// //   }, []);
+
+// //   // OPTIMIZATION: Preload all images for current and next topics
+// //   const preloadAllImages = useCallback(() => {
+// //     if (!jsonData || !mainTopic || !selected) return;
+    
+// //     const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+// //     if (!topicsList) return;
+    
+// //     // Flatten all subtopics
+// //     const allSubtopics = [];
+// //     topicsList.forEach(t => {
+// //       t.subtopics.forEach(s => {
+// //         allSubtopics.push({ 
+// //           topicTitle: t.title, 
+// //           subtopicTitle: s.title,
+// //           image: s.image,
+// //           theory: s.theory
+// //         });
+// //       });
+// //     });
+
+// //     // Find current index
+// //     const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
+    
+// //     // Preload next 3 subtopics images
+// //     for (let i = 1; i <= 3; i++) {
+// //       const nextIndex = currentIndex + i;
+// //       if (nextIndex < allSubtopics.length) {
+// //         const next = allSubtopics[nextIndex];
+// //         if (next.image && !imageCache.current.has(next.image)) {
+// //           preloadImageWithCache(next.image, next.subtopicTitle);
+// //         }
+// //       }
+// //     }
+// //   }, [jsonData, mainTopic, selected, preloadImageWithCache]);
+
+// //   // Preload next subtopic content
+// //   const preloadNextSubtopic = useCallback(async () => {
+// //     if (!jsonData || !selected || !mainTopic || !lang || !userId) return;
+    
+// //     const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+// //     if (!topicsList) return;
+    
+// //     const allSubtopics = [];
+// //     topicsList.forEach(t => {
+// //       t.subtopics.forEach(s => {
+// //         allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title, subtopic: s });
+// //       });
+// //     });
+
+// //     const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
+// //     if (currentIndex < allSubtopics.length - 1) {
+// //       const next = allSubtopics[currentIndex + 1];
+      
+// //       // If next subtopic doesn't have content, pre-generate it
+// //       if (!next.subtopic.theory) {
+// //         try {
+// //           const res = await axios.post(serverURL + '/api/generate-batch', {
+// //             mainTopic,
+// //             topicsList: [{
+// //               topicTitle: next.topicTitle,
+// //               subtopics: [next.subtopicTitle]
+// //             }],
+// //             lang,
+// //             userId
+// //           });
+          
+// //           if (res.data.success && res.data.topics[0]) {
+// //             setPreloadedNextContent({
+// //               topicTitle: next.topicTitle,
+// //               subtopicTitle: next.subtopicTitle,
+// //               theory: res.data.topics[0].subtopics[0].theory
+// //             });
+            
+// //             // Also preload image if available
+// //             if (res.data.topics[0].subtopics[0].image) {
+// //               preloadImageWithCache(res.data.topics[0].subtopics[0].image, next.subtopicTitle);
+// //             }
+// //           }
+// //         } catch (error) {
+// //           console.error("Preload failed:", error);
+// //         }
+// //       } else if (next.subtopic.image) {
+// //         // Preload image if content exists
+// //         preloadImageWithCache(next.subtopic.image, next.subtopicTitle);
+// //       }
+// //     }
+// //   }, [jsonData, selected, mainTopic, lang, userId, preloadImageWithCache]);
+
+// //   // Cached API call
+// //   const cachedApiCall = async (url, data, cacheKey) => {
+// //     if (apiCache.current.has(cacheKey)) {
+// //       return apiCache.current.get(cacheKey);
+// //     }
+    
+// //     const response = await axios.post(url, data);
+// //     apiCache.current.set(cacheKey, response);
+// //     return response;
+// //   };
+
+// //   // OPTIMIZATION: Preload when selected changes
+// //   useEffect(() => {
+// //     if (selected && jsonData) {
+// //       preloadNextSubtopic();
+// //       preloadAllImages();
+// //     }
+// //   }, [selected, jsonData, preloadNextSubtopic, preloadAllImages]);
+
+// //   // OPTIMIZATION: Preload current media if not loaded
+// //   useEffect(() => {
+// //     if (media && !imageCache.current.has(media) && type !== 'video & text course') {
+// //       preloadImageWithCache(media, selected);
+// //     }
+// //   }, [media, selected, preloadImageWithCache, type]);
+
+// //   useEffect(() => {
+// //     const fetchCourseData = async () => {
+// //       if (!courseData && activeCourseId) {
+// //         setIsLoading(true);
+// //         try {
+// //           const response = await axios.get(`${serverURL}/api/shareable?id=${activeCourseId}`);
+// //           if (response.data && response.data.length > 0) {
+// //             const course = response.data[0];
+// //             const content = JSON.parse(course.content);
+
+// //             // Fallback: if mainTopic is missing, try to extract from content
+// //             let mainTopicValue = course.mainTopic;
+// //             if (!mainTopicValue) {
+// //               // Try to get from course_topics or first topic
+// //               if (content && content['course_topics'] && content['course_topics'].length > 0) {
+// //                 mainTopicValue = content['course_topics'][0].title;
+// //               } else {
+// //                 // Find first key that has topics array
+// //                 for (const key in content) {
+// //                   if (Array.isArray(content[key]) && content[key].length > 0) {
+// //                     mainTopicValue = content[key][0].title;
+// //                     break;
+// //                   }
+// //                 }
+// //               }
+// //             }
+
+// //             const newCourseData = {
+// //               mainTopic: mainTopicValue,
+// //               type: course.type,
+// //               courseId: course._id,
+// //               end: course.end,
+// //               pass: course.completed,
+// //               lang: 'English'
+// //             };
+
+// //             setJsonData(content);
+// //             sessionStorage.setItem('jsonData', JSON.stringify(content));
+// //             setCourseData(newCourseData);
+
+// //             if (content) {
+// //               const mainTopicData = (content['course_topics'] || content[(mainTopicValue || '').toLowerCase()])?.[0];
+// //               if (mainTopicData && mainTopicData.subtopics && mainTopicData.subtopics.length > 0) {
+// //                 const firstSubtopic = mainTopicData.subtopics[0];
+// //                 setSelected(firstSubtopic.title);
+// //                 setTheory(firstSubtopic.theory);
+// //                 if (course.type === 'video & text course') {
+// //                   setMedia(firstSubtopic.youtube);
+// //                 } else {
+// //                   setMedia(firstSubtopic.image);
+// //                   // Preload first image
+// //                   if (firstSubtopic.image) {
+// //                     preloadImageWithCache(firstSubtopic.image, firstSubtopic.title);
+// //                   }
+// //                 }
+// //               }
+// //             }
+// //           }
+// //         } catch (error) {
+// //           console.error("Failed to fetch course data:", error);
+// //         } finally {
+// //           setIsLoading(false);
+// //         }
+// //       } else if (courseData) {
+// //         setIsLoading(false);
+// //       }
+// //     };
+// //     fetchCourseData();
+// //   }, [activeCourseId, courseData, preloadImageWithCache]);
+
+// //   useEffect(() => {
+// //     const fetchProgress = async () => {
+// //       if (courseId && userId) {
+// //         try {
+// //           const res = await axios.get(`${serverURL}/api/progress?userId=${userId}&courseId=${courseId}`);
+// //           if (res.data.success) {
+// //             setCompletedSubtopics(res.data.progress.completedSubtopics || []);
+// //             // Set percentage from backend initially
+// //             setPercentage(res.data.progress.percentage || 0);
+// //           }
+// //         } catch (error) {
+// //           console.error("Failed to fetch progress:", error);
+// //         } finally {
+// //           setProgressLoading(false);
+// //         }
+// //       } else {
+// //         setProgressLoading(false);
+// //       }
+// //     };
+// //     fetchProgress();
+// //   }, [courseId, userId]);
+
+// //   async function getNotes() {
+// //     try {
+// //       const postURL = serverURL + '/api/getnotes';
+// //       const response = await axios.post(postURL, { course: courseId });
+// //       if (response.data.success) {
+// //         setValue(response.data.message);
+// //       }
+// //     } catch (error) {
+// //       console.error(error)
+// //     }
+// //   }
+
+// //   const handleSaveNote = async () => {
+// //     setSaving(true);
+// //     const postURL = serverURL + '/api/savenotes';
+// //     const response = await axios.post(postURL, { course: courseId, notes: value });
+// //     if (response.data.success) {
+// //       toast({
+// //         title: "Note saved",
+// //         description: "Your note has been saved successfully.",
+// //       });
+// //     } else {
+// //       toast({
+// //         title: "Error",
+// //         description: "Internal Server Error",
+// //       });
+// //     }
+// //     setSaving(false);
+// //   };
+
+// //   // Loading skeleton for course content
+// //   const CourseContentSkeleton = () => (
+// //     <div className="space-y-6 animate-pulse">
+// //       <Skeleton className="h-8 w-3/4 mb-8" />
+// //       <div className="space-y-6">
+// //         <div>
+// //           <Skeleton className="h-7 w-1/2 mb-4" />
+// //           <Skeleton className="h-5 w-full mb-2" />
+// //           <Skeleton className="h-5 w-full mb-2" />
+// //           <Skeleton className="h-5 w-3/4" />
+// //         </div>
+// //         <div>
+// //           <Skeleton className="h-7 w-1/3 mb-4" />
+// //           <Skeleton className="h-5 w-full mb-2" />
+// //           <Skeleton className="h-5 w-full mb-2" />
+// //           <Skeleton className="h-5 w-5/6" />
+// //         </div>
+// //         <div>
+// //           <Skeleton className="h-7 w-2/5 mb-4" />
+// //           <Skeleton className="h-5 w-full mb-2" />
+// //           <Skeleton className="h-5 w-full mb-2" />
+// //           <Skeleton className="h-36 w-full rounded-md bg-muted/30" />
+// //         </div>
+// //       </div>
+// //     </div>
+// //   );
+
+// //   //FROM v4.0
+// //   const opts = {
+// //     height: '390',
+// //     width: '640',
+// //   };
+
+// //   const optsMobile = {
+// //     height: '250px',
+// //     width: '100%',
+// //   };
+
+// //   const isSubtopicUnlocked = (topicTitle, subtopicTitle) => {
+// //     if (isOrgAdmin) return true;
+// //     if (!jsonData) return false;
+
+// //     const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+// //     if (!topicsList) return false;
+
+// //     // Flatten all subtopics to check order
+// //     const allSubtopics = [];
+// //     topicsList.forEach(t => {
+// //       t.subtopics.forEach(s => {
+// //         allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
+// //       });
+// //     });
+
+// //     const index = allSubtopics.findIndex(s => s.topicTitle === topicTitle && s.subtopicTitle === subtopicTitle);
+// //     if (index === 0) return true; // First subtopic always unlocked
+
+// //     const prevSubtopic = allSubtopics[index - 1];
+// //     return completedSubtopics.some(s => s.topicTitle === prevSubtopic.topicTitle && s.subtopicTitle === prevSubtopic.subtopicTitle);
+// //   };
+
+// // const handleMarkAsComplete = async () => {
+// //   if (!userId || !courseId || !selected) return;
+
+// //   const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+// //   let currentTopicTitle = '';
+// //   topicsList.forEach(t => {
+// //     if (t.subtopics.some(s => s.title === selected)) {
+// //       currentTopicTitle = t.title;
+// //     }
+// //   });
+
+// //   let total = 0;
+// //   topicsList.forEach(t => total += t.subtopics.length);
+
+// //   try {
+// //     const res = await axios.post(`${serverURL}/api/progress/update`, {
+// //       userId,
+// //       courseId,
+// //       topicTitle: currentTopicTitle,
+// //       subtopicTitle: selected,
+// //       totalSubtopics: total
+// //     });
+
+// //     if (res.data.success) {
+// //       setCompletedSubtopics(res.data.progress.completedSubtopics);
+// //       setPercentage(res.data.progress.percentage);
+
+// //       // --- LOGIC TO MOVE TO NEXT SUBTOPIC ---
+// //       const allSubtopics = [];
+// //       topicsList.forEach(t => {
+// //         t.subtopics.forEach(s => {
+// //           allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
+// //         });
+// //       });
+
+// //       const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
+      
+// //       if (currentIndex < allSubtopics.length - 1) {
+// //         const next = allSubtopics[currentIndex + 1];
+// //         // Move to next subtopic immediately
+// //         handleSelect(next.topicTitle, next.subtopicTitle);
+        
+// //         // Scroll to top for the new lesson
+// //         if (mainContentRef.current) {
+// //           mainContentRef.current.scrollTop = 0;
+// //         }
+// //       } else {
+// //         toast({
+// //           title: "Course Completed!",
+// //           description: "You've finished all lessons. You can now take the quiz.",
+// //         });
+// //       }
+// //     }
+// //   } catch (error) {
+// //     console.error("Failed to update progress:", error);
+// //   }
+// // };
+
+// //   const loadMessages = async () => {
+// //     try {
+// //       const jsonValue = sessionStorage.getItem(mainTopic);
+// //       if (jsonValue !== null) {
+// //         // Ensure all historical messages have an id if they don't already
+// //         const savedMessages = JSON.parse(jsonValue).map((msg, index) => ({
+// //           ...msg,
+// //           id: msg.id || `msg-${Date.now()}-${index}`
+// //         }));
+// //         setMessages(savedMessages);
+// //       } else {
+// //         const initialMessages = [{ id: `msg-${Date.now()}`, text: defaultMessage, sender: 'bot' }];
+// //         setMessages(initialMessages);
+// //         await storeLocal(initialMessages);
+// //       }
+// //     } catch (error) {
+// //       console.error(error);
+// //     }
+// //   };
+
+// //   async function storeLocal(messages) {
+// //     try {
+// //       sessionStorage.setItem(mainTopic, JSON.stringify(messages));
+// //     } catch (error) {
+// //       console.error(error);
+// //     }
+// //   }
+
+// //   const sendMessage = async () => {
+// //     if (newMessage.trim() === '' || isChatLoading) return;
+
+// //     const userMessage = { id: `msg-${Date.now()}`, text: newMessage, sender: 'user' };
+// //     const updatedMessages = [...messages, userMessage];
+// //     setMessages(updatedMessages);
+// //     await storeLocal(updatedMessages);
+// //     setNewMessage('');
+// //     setIsChatLoading(true);
+
+// //     const mainPrompt = defaultPrompt + newMessage;
+// //     const dataToSend = { prompt: mainPrompt };
+// //     const url = serverURL + '/api/chat';
+
+// //     try {
+// //       const response = await axios.post(url, dataToSend);
+// //       if (response.data.success === false) {
+// //         toast({
+// //           title: "Assistant Error",
+// //           description: response.data.message || "Failed to get a response.",
+// //         });
+// //       } else {
+// //         const botMessage = { id: `bot-${Date.now()}`, text: response.data.text, sender: 'bot' };
+// //         const updatedMessagesWithBot = [...updatedMessages, botMessage];
+// //         setMessages(updatedMessagesWithBot);
+// //         await storeLocal(updatedMessagesWithBot);
+// //       }
+// //     } catch (error) {
+// //       toast({
+// //         title: "Assistant Error",
+// //         description: "Communication failure with AI assistant.",
+// //       });
+// //       console.error(error);
+// //     } finally {
+// //       setIsChatLoading(false);
+// //     }
+// //   };
+
+// //   useEffect(() => {
+// //     if (mainTopic) {
+// //       CountDoneTopics();
+// //     }
+// //   }, [isQuizPassed, completedSubtopics, jsonData, isOrgAdmin]);
+
+// //   const CountDoneTopics = (passed = isQuizPassed) => {
+// //     if (isOrgAdmin || passed) {
+// //       setPercentage(100);
+// //       setIsCompleted(true);
+// //       return;
+// //     }
+
+// //     if (!jsonData) return;
+
+// //     let doneCount = 0;
+// //     let totalTopics = 0;
+
+// //     const topicsData = jsonData['course_topics'] || (mainTopic ? jsonData[mainTopic.toLowerCase()] : []);
+// //     if (!topicsData) return;
+
+// //     topicsData.forEach((topic) => {
+// //       topic.subtopics.forEach((subtopic) => {
+// //         const isDone = completedSubtopics.some(
+// //           s => s.topicTitle === topic.title && s.subtopicTitle === subtopic.title
+// //         );
+// //         if (isDone) {
+// //           doneCount++;
+// //         }
+// //         totalTopics++;
+// //       });
+// //     });
+
+// //     // Subtopic-only percentage (matches server logic)
+// //     const completionPercentage = totalTopics > 0 ? Math.round((doneCount / totalTopics) * 100) : 0;
+// //     const finalPercentage = Math.min(completionPercentage, 99);
+// //     setPercentage(finalPercentage);
+// //     if (finalPercentage >= 100) {
+// //       setIsCompleted(true);
+// //     }
+// //   }
+
+
+
+// //   // In the useEffect that sets initial subtopic
+// // useEffect(() => {
+// //   // Only run if we have data
+// //   if (!courseData || !jsonData) return;
+
+// //   const updateQuizStatus = async () => {
+// //     try {
+// //       const response = await axios.post(serverURL + '/api/getmyresult', { courseId, userId });
+// //       if (response.data.success) {
+// //         setIsQuizPassed(response.data.message || (courseData?.pass === true));
+// //       }
+// //     } catch (error) {
+// //       console.error('Error fetching quiz status:', error);
+// //     }
+// //   };
+
+// //   updateQuizStatus();
+// //   loadMessages();
+// //   getNotes();
+  
+// //   // Ensure the page starts at the top when loaded
+// //   if (mainContentRef.current) {
+// //     mainContentRef.current.scrollTop = 0;
+// //   }
+// //   window.scrollTo(0, 0);
+
+// //   if (!mainTopic) {
+// //     if (!isLoading && !courseData) {
+// //       navigate("/create");
+// //     }
+// //   } else {
+// //     const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+// //     if (topicsList && topicsList.length > 0) {
+// //       const mainTopicData = topicsList[0];
+// //       const firstSubtopic = mainTopicData.subtopics[0];
+
+// //       // If nothing selected yet, select first
+// //       if (!selected) {
+// //         setSelected(firstSubtopic.title);
+        
+// //         // FIX 1: Immediately show theory if it exists, otherwise show a default message
+// //         if (firstSubtopic.theory) {
+// //           setTheory(firstSubtopic.theory);
+// //         } else {
+// //           // Show a loading message or placeholder
+// //           setTheory(`<p>Loading content for ${firstSubtopic.title}...</p>`);
+          
+// //           // Trigger content generation in the background
+// //           setTimeout(() => {
+// //             if (type === 'video & text course') {
+// //               const query = `${firstSubtopic.title} ${mainTopic} in english`;
+// //               sendVideo(query, mainTopicData.title, firstSubtopic.title, firstSubtopic.title);
+// //             } else {
+// //               sendBulkCourseContent(mainTopicData.title, firstSubtopic.title);
+// //             }
+// //           }, 100);
+// //         }
+        
+// //         // FIX 2: Immediately show image if it exists
+// //         if (type === 'video & text course') {
+// //           if (firstSubtopic.youtube) {
+// //             setMedia(firstSubtopic.youtube);
+// //           }
+// //         } else {
+// //           if (firstSubtopic.image) {
+// //             setMedia(firstSubtopic.image);
+// //             // Preload immediately
+// //             preloadImageWithCache(firstSubtopic.image, firstSubtopic.title);
+// //           } else {
+// //             // Generate image in background
+// //             setTimeout(() => {
+// //               const promptImage = `Example of ${firstSubtopic.title} in ${mainTopic}`;
+// //               sendImageForBatch(promptImage, mainTopicData.title, firstSubtopic.title, firstSubtopic.theory || '');
+// //             }, 200);
+// //           }
+// //         }
+// //       }
+// //     }
+// //   }
+
+// //   setIsLoading(false);
+// //   sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+// //   CountDoneTopics(isQuizPassed);
+// // }, [courseData, jsonData, completedSubtopics, isOrgAdmin, isQuizPassed, preloadImageWithCache]);
+
+
+// // // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// // // @ts-nocheck
+
+// // // Add this helper function outside CoursePage or inside as a useCallback
+// // const updateLocalCache = (clickedTopic, clickedSub, updates) => {
+// //   const updatedData = { ...jsonData };
+// //   const topicsList = updatedData['course_topics'] || updatedData[mainTopic?.toLowerCase()];
+// //   const targetSub = topicsList?.find(t => t.title === clickedTopic)?.subtopics.find(s => s.title === clickedSub);
+  
+// //   if (targetSub) {
+// //     Object.assign(targetSub, updates);
+// //     setJsonData(updatedData);
+// //     sessionStorage.setItem('jsonData', JSON.stringify(updatedData));
+// //   }
+// // };
+
+// // async function sendBulkCourseContent(clickedTopic, clickedSub) {
+// //   // 1. Instant UI Feedback
+// //   setSelected(clickedSub);
+// //   setTheory(`<p>Loading content for <strong>${clickedSub}</strong>...</p>`);
+// //   setMedia(''); 
+  
+// //   // 2. REQUIRED: Construct the data payload correctly to avoid 400 error
+// //   const theoryPayload = {
+// //     mainTopic,
+// //     topicsList: [{ topicTitle: clickedTopic, subtopics: [clickedSub] }],
+// //     lang,
+// //     userId
+// //   };
+
+// //   // 3. Fire requests in parallel
+// //   const theoryPromise = axios.post(serverURL + '/api/generate-batch', theoryPayload);
+// // // Inside sendBulkCourseContent
+// // const imagePromise = axios.post(serverURL + '/api/image', { 
+// //   // Added "8k resolution" and "high quality" to force better results
+// //   prompt: `High resolution professional 8k photography of ${clickedSub} for ${mainTopic}, educational, detailed, clear lighting` 
+// // });
+
+
+// //   // 4. Image Track (Parallel & Fast)
+// //   imagePromise.then(res => {
+// //     if (res.data.url) {
+// //       setMedia(res.data.url);
+// //       updateLocalCache(clickedTopic, clickedSub, { image: res.data.url, done: true });
+// //     } else {
+// //       setMedia('https://images.unsplash.com/photo-1581094794329-c8112a4e5190?w=800');
+// //     }
+// //   }).catch(() => {
+// //     // Graceful fallback for the 400 error shown in your console
+// //     setMedia('https://images.unsplash.com/photo-1581094794329-c8112a4e5190?w=800');
+// //   });
+
+// //   // 5. Theory Track
+// //   try {
+// //     const theoryRes = await theoryPromise;
+// //     if (theoryRes.data.success && theoryRes.data.topics?.[0]) {
+// //       const newTheory = theoryRes.data.topics[0].subtopics[0].theory;
+// //       setTheory(newTheory);
+// //       updateLocalCache(clickedTopic, clickedSub, { theory: newTheory, done: true });
+// //       updateCourse(); // Sync to server
+// //     }
+// //   } catch (error) {
+// //     console.error("Theory generation failed:", error);
+// //     setTheory(`<p>Sorry, there was an error generating content for ${clickedSub}. Please try again.</p>`);
+// //   }
+// // }
+
+
+// // const handleSelect = useCallback((topicTitle, subtopicTitle) => {
+// //   if (!jsonData) return;
+
+// //   const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+// //   const mTopic = topicsList.find(topic => topic.title === topicTitle);
+// //   const mSubTopic = mTopic?.subtopics.find(subtopic => subtopic.title === subtopicTitle);
+
+// //   if (!mSubTopic) return;
+
+// //   if (!isSubtopicUnlocked(topicTitle, subtopicTitle)) {
+// //     toast({ title: "Lesson Locked", description: "Please complete previous chapters first." });
+// //     return;
+// //   }
+
+// //   // INSTANT: Change the title and check cache
+// //   setSelected(subtopicTitle);
+
+// //   if (mSubTopic.theory) {
+// //     // CACHE HIT: Show immediately
+// //     setTheory(mSubTopic.theory);
+// //     setMedia(type === 'video & text course' ? mSubTopic.youtube : mSubTopic.image);
+// //   } else {
+// //     // CACHE MISS: Start parallel high-speed generation
+// //     if (type === 'video & text course') {
+// //       sendVideo(`${subtopicTitle} ${mainTopic}`, topicTitle, subtopicTitle, subtopicTitle);
+// //     } else {
+// //       sendBulkCourseContent(topicTitle, subtopicTitle);
+// //     }
+// //   }
+// // }, [jsonData, mainTopic, isSubtopicUnlocked, type]);
+
+// //   async function sendImageForBatch(promptImage: string, topics: string, sub: string, theory: string) {
+// //     try {
+// //       // Show theory immediately
+// //       setSelected(sub);
+// //       setTheory(theory);
+      
+// //       const postURL = serverURL + '/api/image';
+// //       const res = await axios.post(postURL, { prompt: promptImage });
+// //       const imageUrl = res.data.url || '';
+      
+// //       // Update image in cache immediately
+// //       if (imageUrl) {
+// //         preloadImageWithCache(imageUrl, sub);
+// //         setMedia(imageUrl);
+// //       }
+      
+// //       // Find the subtopic and update its image
+// //       const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+// //       const mTopic = topicsList.find(t => t.title === topics);
+// //       const mSubTopic = mTopic?.subtopics.find(s => s.title === sub);
+      
+// //       if (mSubTopic) {
+// //         mSubTopic.image = imageUrl;
+// //         mSubTopic.done = true;
+        
+// //         // Save to sessionStorage and update course
+// //         sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+// //         updateCourse();
+// //       }
+      
+// //       setIsLoading(false);
+// //     } catch (error) {
+// //       console.error(error);
+// //       setMedia(''); // or set a placeholder
+// //       setIsLoading(false);
+// //     }
+// //   }
+
+// //   async function sendPrompt(prompt, promptImage, topics, sub) {
+// //     const dataToSend = {
+// //       prompt: prompt,
+// //     };
+// //     try {
+// //       const postURL = serverURL + '/api/generate';
+// //       const res = await axios.post(postURL, dataToSend);
+// //       const generatedText = res.data.text;
+// //       const htmlContent = generatedText;
+// //       try {
+// //         const parsedJson = htmlContent;
+// //         sendImage(parsedJson, promptImage, topics, sub);
+// //       } catch (error) {
+// //         console.error(error);
+// //         toast({
+// //           title: "Error",
+// //           description: "Internal Server Error",
+// //         });
+// //         setIsLoading(false);
+// //       }
+
+// //     } catch (error) {
+// //       console.error(error);
+// //       toast({
+// //         title: "Error",
+// //         description: "Internal Server Error",
+// //       });
+// //       setIsLoading(false);
+// //     }
+// //   }
+
+// //   async function sendImage(parsedJson, promptImage, topics, sub) {
+// //     const dataToSend = {
+// //       prompt: promptImage,
+// //     };
+// //     try {
+// //       const postURL = serverURL + '/api/image';
+// //       const res = await axios.post(postURL, dataToSend);
+// //       try {
+// //         const generatedText = res.data.url;
+// //         sendData(generatedText, parsedJson, topics, sub);
+// //       } catch (error) {
+// //         console.error(error);
+// //         toast({
+// //           title: "Error",
+// //           description: "Internal Server Error",
+// //         });
+// //         setIsLoading(false);
+// //       }
+
+// //     } catch (error) {
+// //       console.error(error);
+// //       toast({
+// //         title: "Error",
+// //         description: "Internal Server Error",
+// //       });
+// //       setIsLoading(false);
+// //     }
+// //   }
+
+// //   async function sendData(image, theory, topics, sub) {
+// //     const topicsList =
+// //       jsonData?.course_topics ||
+// //       jsonData?.[mainTopic?.toLowerCase()];
+
+// //     if (!topicsList) {
+// //       console.error('Topics list not found', jsonData);
+// //       setIsLoading(false);
+// //       return;
+// //     }
+
+// //     const mTopic = topicsList.find(topic => topic.title === topics);
+
+// //     if (!mTopic) {
+// //       console.error('Main topic not found:', topics);
+// //       setIsLoading(false);
+// //       return;
+// //     }
+
+// //     const mSubTopic = mTopic.subtopics?.find(
+// //       subtopic => subtopic.title === sub
+// //     );
+
+// //     if (!mSubTopic) {
+// //       console.error('Subtopic not found:', sub);
+// //       setIsLoading(false);
+// //       return;
+// //     }
+
+// //     // ✅ SAFE TO MUTATE NOW
+// //     mSubTopic.theory = theory;
+// //     mSubTopic.image = image;
+// //     mSubTopic.done = true;
+
+// //     // Batch update all states at once
+// //     setSelected(mSubTopic.title);
+// //     setTheory(theory);
+// //     setMedia(image); // Always set media here
+
+// //     setIsLoading(false);
+    
+// //     // Save to sessionStorage and update course
+// //     sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+// //     updateCourse();
+// //   }
+
+// //   async function sendDataVideo(image, theory, topics, sub) {
+// //     const topicsList =
+// //       jsonData?.course_topics ||
+// //       jsonData?.[mainTopic?.toLowerCase()];
+
+// //     if (!topicsList) {
+// //       setIsLoading(false);
+// //       return;
+// //     }
+
+// //     const mTopic = topicsList.find(topic => topic.title === topics);
+// //     if (!mTopic) {
+// //       setIsLoading(false);
+// //       return;
+// //     }
+
+// //     const mSubTopic = mTopic.subtopics?.find(
+// //       subtopic => subtopic.title === sub
+// //     );
+
+// //     if (!mSubTopic) {
+// //       setIsLoading(false);
+// //       return;
+// //     }
+
+// //     mSubTopic.theory = theory;
+// //     mSubTopic.youtube = image;
+// //     mSubTopic.done = true;
+
+// //     setSelected(mSubTopic.title);
+// //     setTheory(theory);
+// //     setMedia(image);
+
+// //     setIsLoading(false);
+// //     updateCourse();
+// //   }
+
+// //   async function updateCourse() {
+// //     CountDoneTopics();
+// //     sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+// //     const dataToSend = {
+// //       content: JSON.stringify(jsonData),
+// //       courseId: courseId
+// //     };
+// //     try {
+// //       const postURL = serverURL + '/api/update';
+// //       await axios.post(postURL, dataToSend);
+// //     } catch (error) {
+// //       console.error(error);
+// //       toast({
+// //         title: "Error",
+// //         description: "Internal Server Error",
+// //       });
+// //       setIsLoading(false);
+// //     }
+// //   }
+
+// //   async function sendVideo(query, mTopic, mSubTopic, subtop) {
+// //     const dataToSend = {
+// //       prompt: query,
+// //     };
+// //     try {
+// //       const postURL = serverURL + '/api/yt';
+// //       const res = await axios.post(postURL, dataToSend);
+
+// //       try {
+// //         const generatedText = res.data.url;
+// //         sendTranscript(generatedText, mTopic, mSubTopic, subtop);
+// //       } catch (error) {
+// //         console.error(error);
+// //         toast({
+// //           title: "Error",
+// //           description: "Internal Server Error",
+// //         });
+// //         setIsLoading(false);
+// //       }
+
+// //     } catch (error) {
+// //       console.error(error);
+// //       toast({
+// //         title: "Error",
+// //         description: "Internal Server Error",
+// //       });
+// //       setIsLoading(false);
+// //     }
+// //   }
+
+// //   async function sendTranscript(url, mTopic, mSubTopic, subtop) {
+// //     const dataToSend = {
+// //       prompt: url,
+// //     };
+// //     try {
+// //       const postURL = serverURL + '/api/transcript';
+// //       const res = await axios.post(postURL, dataToSend);
+
+// //       try {
+// //         const generatedText = res.data.url;
+// //         const allText = generatedText.map(item => item.text);
+// //         const concatenatedText = allText.join(' ');
+// //         const prompt = `Strictly in ${lang}, Summarize this theory in a teaching way :- ${concatenatedText}.`;
+// //         sendSummery(prompt, url, mTopic, mSubTopic);
+// //       } catch (error) {
+// //         console.error(error)
+// //         const prompt = `Strictly in ${lang}, Explain me about this subtopic of ${mainTopic} with examples :- ${subtop}. Please Strictly Don't Give Additional Resources And Images.`;
+// //         sendSummery(prompt, url, mTopic, mSubTopic);
+// //       }
+
+// //     } catch (error) {
+// //       console.error(error)
+// //       const prompt = `Strictly in ${lang}, Explain me about this subtopic of ${mainTopic} with examples :- ${subtop}.  Please Strictly Don't Give Additional Resources And Images.`;
+// //       sendSummery(prompt, url, mTopic, mSubTopic);
+// //     }
+// //   }
+
+// //   async function sendSummery(prompt, url, mTopic, mSubTopic) {
+// //     const dataToSend = {
+// //       prompt: prompt,
+// //     };
+// //     try {
+// //       const postURL = serverURL + '/api/generate';
+// //       const res = await axios.post(postURL, dataToSend);
+// //       const generatedText = res.data.text;
+// //       const htmlContent = generatedText;
+// //       try {
+// //         const parsedJson = htmlContent;
+// //         sendDataVideo(url, parsedJson, mTopic, mSubTopic);
+// //       } catch (error) {
+// //         console.error(error);
+// //         toast({
+// //           title: "Error",
+// //           description: "Internal Server Error",
+// //         });
+// //         setIsLoading(false);
+// //       }
+
+// //     } catch (error) {
+// //       console.error(error);
+// //       toast({
+// //         title: "Error",
+// //         description: "Internal Server Error",
+// //       });
+// //       setIsLoading(false);
+// //     }
+// //   }
+
+// //   async function htmlDownload() {
+// //     try {
+// //       setExporting(true);
+
+// //       const topics =
+// //         jsonData?.course_topics ||
+// //         jsonData?.[mainTopic?.toLowerCase()];
+
+// //       if (!topics || !Array.isArray(topics)) {
+// //         toast({
+// //           title: "Export Failed",
+// //           description: "Course topics not found",
+// //         });
+// //         setExporting(false);
+// //         return;
+// //       }
+
+// //       const combinedHtml = await getCombinedHtml(mainTopic, topics);
+
+// //       const tempDiv = document.createElement("div");
+// //       tempDiv.style.width = "100%";
+// //       tempDiv.innerHTML = combinedHtml;
+// //       document.body.appendChild(tempDiv);
+
+// //       const options = {
+// //         filename: `${mainTopic}.pdf`,
+// //         image: { type: "jpeg", quality: 1 },
+// //         margin: [15, 15, 15, 15],
+// //         pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+// //         html2canvas: {
+// //           scale: 2,
+// //           useCORS: true,
+// //         },
+// //         jsPDF: { unit: "pt", format: "a4", orientation: "portrait" },
+// //       };
+
+// //       await html2pdf().from(tempDiv).set(options).save();
+
+// //       document.body.removeChild(tempDiv);
+// //     } catch (error) {
+// //       console.error("PDF Export Error:", error);
+// //       toast({
+// //         title: "Export Failed",
+// //         description: "Something went wrong while exporting PDF.",
+// //       });
+// //     } finally {
+// //       setExporting(false);
+// //     }
+// //   }
+
+// //   async function getCombinedHtml(mainTopic, topics) {
+
+// //     // ✅ ADD THIS BLOCK HERE
+// //     if (!topics || !Array.isArray(topics)) {
+// //       console.error("Invalid topics passed to getCombinedHtml:", topics);
+// //       return "<p>No topics available</p>";
+// //     }
+// //     async function toDataUrl(url) {
+// //       return new Promise((resolve, reject) => {
+// //         const xhr = new XMLHttpRequest();
+
+// //         xhr.onload = function () {
+// //           const reader = new FileReader();
+// //           reader.onloadend = function () {
+// //             resolve(reader.result);
+// //           };
+// //           reader.readAsDataURL(xhr.response);
+// //         };
+
+// //         xhr.onerror = function () {
+// //           reject({
+// //             status: xhr.status,
+// //             statusText: xhr.statusText,
+// //           });
+// //         };
+
+// //         xhr.open("GET", url);
+// //         xhr.responseType = "blob";
+// //         xhr.send();
+// //       }).catch(error => {
+// //         console.error(`Failed to fetch image at ${url}:`, error);
+// //         return ''; // Fallback or placeholder
+// //       });
+// //     }
+
+// //     const topicsHtml = topics.map(topic => `
+// //         <h3 style="font-size: 18pt; font-weight: bold; margin: 0; margin-top: 15px;">${topic.title}</h3>
+// //         ${topic.subtopics.map(subtopic => `
+// //             <p style="font-size: 16pt; margin-top: 10px;">${subtopic.title}</p>
+// //         `).join('')}
+// //     `).join('');
+
+// //     const theoryPromises = topics.map(async topic => {
+// //       const subtopicPromises = topic.subtopics.map(async (subtopic, index, array) => {
+// //         const imageUrl = type === 'text & image course' ? await toDataUrl(subtopic.image) : ``;
+// //         return `
+// //             <div>
+// //                 <p style="font-size: 16pt; margin-top: 20px; font-weight: bold;">
+// //                     ${subtopic.title}
+// //                 </p>
+// //                 <div style="font-size: 12pt; margin-top: 15px;">
+// //                     ${subtopic.done
+// //             ? `
+// //                             ${type === 'text & image course'
+// //               ? (imageUrl ? `<img style="margin-top: 10px;" src="${imageUrl}" alt="${subtopic.title} image">` : `<a style="color: #0000FF;" href="${subtopic.image}" target="_blank">View example image</a>`)
+// //               : `<a style="color: #0000FF;" href="https://www.youtube.com/watch?v=${subtopic.youtube}" target="_blank" rel="noopener noreferrer">Watch the YouTube video on ${subtopic.title}</a>`
+// //             }
+// //                             <div style="margin-top: 10px;">${subtopic.theory}</div>
+// //                         `
+// //             : `<div style="margin-top: 10px;">Please visit ${subtopic.title} topic to export as PDF. Only topics that are completed will be added to the PDF.</div>`
+// //           }
+// //                 </div>
+// //             </div>
+// //         `;
+// //       });
+// //       const subtopicHtml = await Promise.all(subtopicPromises);
+// //       return `
+// //             <div style="margin-top: 30px;">
+// //                 <h3 style="font-size: 18pt; text-align: center; font-weight: bold; margin: 0;">
+// //                     ${topic.title}
+// //                 </h3>
+// //                 ${subtopicHtml.join('')}
+// //             </div>
+// //         `;
+// //     });
+// //     const theoryHtml = await Promise.all(theoryPromises);
+
+// //     return `
+// //     <div class="html2pdf__page-break" 
+// //          style="display: flex; align-items: center; justify-content: center; text-align: center; margin: 0 auto; max-width: 100%; height: 11in;">
+// //         <h1 style="font-size: 30pt; font-weight: bold; margin: 0;">
+// //             ${mainTopic}
+// //         </h1>
+// //     </div>
+// //     <div class="html2pdf__page-break" style="text-align: start; margin-top: 30px; margin-right: 16px; margin-left: 16px;">
+// //         <h2 style="font-size: 24pt; font-weight: bold; margin: 0;">Index</h2>
+// //         <br>
+// //         <hr>
+// //         ${topicsHtml}
+// //     </div>
+// //     <div style="text-align: start; margin-right: 16px; margin-left: 16px;">
+// //         ${theoryHtml.join('')}
+// //     </div>
+// //     `;
+// //   }
+
+// //   const normalize = (s: string) =>
+// //     s.toLowerCase().replace(/\s+/g, ' ').trim();
+
+// //   async function redirectExam() {
+// //     if (isLoading) return;
+
+// //     // Check if all subtopics are completed
+// //     if (!isOrgAdmin && jsonData) {
+// //       const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+// //       if (topicsList) {
+// //         let allDone = true;
+// //         topicsList.forEach(t => {
+// //           t.subtopics.forEach(s => {
+// //             if (!completedSubtopics.some(cs => cs.topicTitle === t.title && cs.subtopicTitle === s.title)) {
+// //               allDone = false;
+// //             }
+// //           });
+// //         });
+
+// //         if (!allDone) {
+// //           toast({
+// //             title: "Quiz Locked",
+// //             description: "Please complete all lessons before taking the quiz.",
+// //           });
+// //           return;
+// //         }
+// //       }
+// //     }
+
+// //     // Check for manual quizzes first
+// //     if (jsonData?.quizzes && Array.isArray(jsonData.quizzes) && jsonData.quizzes.length > 0) {
+// //       const manualQuizzes = jsonData.quizzes.map((q, index) => ({
+// //         id: index + 1,
+// //         question: q.question,
+// //         options: q.options.map((opt, i) => ({
+// //           id: String.fromCharCode(97 + i), // 'a', 'b', 'c', ...
+// //           text: opt
+// //         })),
+// //         correctAnswer: q.answer, // Assuming 'answer' stores the correct option text or ID. QuizPage logic handles both.
+// //         answer: q.answer // Pass original answer for QuizPage flexible matching
+// //       }));
+
+// //       navigate(`/course/${courseId}/quiz`, {
+// //         state: {
+// //           topic: mainTopic,
+// //           courseId,
+// //           questions: manualQuizzes,
+// //         },
+// //       });
+// //       return;
+// //     }
+
+// //     if (!jsonData?.course_topics || !Array.isArray(jsonData.course_topics)) {
+// //       console.error('Invalid course_topics:', jsonData);
+// //       toast({
+// //         title: "Error",
+// //         description: "Course data not loaded",
+// //       });
+// //       return;
+// //     }
+
+// //     if (!mainTopic) {
+// //       console.error('mainTopic missing');
+// //       toast({
+// //         title: "Error",
+// //         description: "Main topic not selected",
+// //       });
+// //       return;
+// //     }
+
+// //     // ✅ Collect ALL subtopics from ALL chapters
+// //     const allSubtopics = jsonData.course_topics.flatMap((topic: any) =>
+// //       Array.isArray(topic.subtopics) ? topic.subtopics : []
+// //     );
+
+// //     if (!allSubtopics.length) {
+// //       console.error('No subtopics found:', jsonData.course_topics);
+// //       toast({
+// //         title: "Error",
+// //         description: "No subtopics available for exam",
+// //       });
+// //       return;
+// //     }
+
+// //     // ✅ Build subtopics string
+// //     const subtopicsString = allSubtopics
+// //       .map((sub: any) => sub.title)
+// //       .join(', ');
+
+// //     setIsLoading(true);
+
+// //     try {
+// //       const response = await axios.post(
+// //         `${serverURL}/api/aiexam`,
+// //         {
+// //           courseId,
+// //           mainTopic,          // "REACT"
+// //           subtopicsString,    // all React subtopics
+// //           lang,
+// //         }
+// //       );
+
+// //       if (!response.data?.success) {
+// //         throw new Error('API failed');
+// //       }
+
+// //       const questions = JSON.parse(response.data.message);
+
+// //       navigate(`/course/${courseId}/quiz`, {
+// //         state: {
+// //           topic: mainTopic,
+// //           courseId,
+// //           questions,
+// //         },
+// //       });
+// //     } catch (error) {
+// //       console.error('redirectExam error:', error);
+// //       toast({
+// //         title: "Error",
+// //         description: "Failed to generate exam",
+// //       });
+// //     } finally {
+// //       setIsLoading(false);
+// //     }
+// //   }
+
+// //   const renderTopicsList = (topics) => {
+// //     if (!topics || !Array.isArray(topics)) return null;
+// //     return (
+// //       <Accordion
+// //         type="single"
+// //         collapsible
+// //         className="w-full"
+// //         defaultValue={topics[0]?.title}
+// //       >
+// //         {topics.map((topic) => (
+// //           <AccordionItem key={topic.title} value={topic.title} className="border-none">
+// //             <AccordionTrigger className="py-2 text-left px-3 hover:bg-accent/50 rounded-md w-full">
+// //               {topic.title}
+// //             </AccordionTrigger>
+// //             <AccordionContent className="pl-2">
+// //               {topic.subtopics.map((subtopic) => (
+// //                 <div
+// //                   onClick={() => {
+// //                     if (isSubtopicUnlocked(topic.title, subtopic.title)) {
+// //                       handleSelect(topic.title, subtopic.title);
+// //                     } else {
+// //                       toast({ title: "Locked", description: "Complete previous lessons to unlock this one." });
+// //                     }
+// //                   }}
+// //                   key={subtopic.title}
+// //                   className={cn(
+// //                     "flex items-center px-4 py-2 rounded-md transition-colors",
+// //                     isSubtopicUnlocked(topic.title, subtopic.title) ? "cursor-pointer hover:bg-accent/50" : "opacity-50 cursor-not-allowed",
+// //                     selected === subtopic.title && "bg-accent/50 font-medium text-primary"
+// //                   )}
+// //                 >
+// //                   {completedSubtopics.some(s => s.topicTitle === topic.title && s.subtopicTitle === subtopic.title) ? (
+// //                     <span className="mr-2 text-primary">✓</span>
+// //                   ) : !isSubtopicUnlocked(topic.title, subtopic.title) && (
+// //                     <Lock className="w-3 h-3 mr-2 opacity-50" />
+// //                   )}
+// //                   <span className="text-sm">{subtopic.title}</span>
+// //                 </div>
+// //               ))}
+// //             </AccordionContent>
+// //           </AccordionItem>
+// //         ))}
+// //       </Accordion>
+// //     );
+// //   }
+
+// //   function certificateCheck() {
+// //     if (isComplete) {
+// //       finish();
+// //     } else {
+// //       toast({
+// //         title: "Completion Certificate",
+// //         description: "Complete course to get certificate",
+// //       });
+// //     }
+// //   }
+
+// //   async function finish() {
+// //     if (sessionStorage.getItem('first') === 'true') {
+// //       if (!end) {
+// //         const today = new Date();
+// //         const formattedDate = today.toLocaleDateString('en-GB');
+// //         navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: formattedDate } });
+// //       } else {
+// //         navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: end } });
+// //       }
+
+// //     } else {
+// //       const dataToSend = {
+// //         courseId: courseId
+// //       };
+// //       try {
+// //         const postURL = serverURL + '/api/finish';
+// //         const response = await axios.post(postURL, dataToSend);
+// //         if (response.data.success) {
+// //           const today = new Date();
+// //           const formattedDate = today.toLocaleDateString('en-GB');
+// //           sessionStorage.setItem('first', 'true');
+// //           sendEmail(formattedDate);
+// //         }
+// //       } catch (error) {
+// //         console.error(error);
+// //       }
+// //     }
+// //   }
+
+// //   async function sendEmail(formattedDate) {
+// //     const userName = sessionStorage.getItem('mName');
+// //     const email = sessionStorage.getItem('email');
+// //     const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+// //                 <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
+// //                 <html lang="en">
+                
+// //                   <head></head>
+// //                  <div id="__react-email-preview" style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0;">Certificate<div> ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿</div>
+// //                  </div>
+                
+// //                   <body style="padding:20px; margin-left:auto;margin-right:auto;margin-top:auto;margin-bottom:auto;background-color:#f6f9fc;font-family:ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, Arial, &quot;Noto Sans&quot;, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;, &quot;Noto Color Emoji&quot;">
+// //                     <table align="center" role="presentation" cellSpacing="0" cellPadding="0" border="0" height="80%" width="100%" style="max-width:37.5em;max-height:80%; margin-left:auto;margin-right:auto;margin-top:80px;margin-bottom:80px;width:465px;border-radius:0.25rem;border-width:1px;background-color:#fff;padding:20px">
+// //                       <tr style="width:100%">
+// //                         <td>
+// //                           <table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%" style="margin-top:32px">
+// //                             <tbody>
+// //                               <tr>
+// //                                 <td><img alt="Vercel" src="${appLogo}" width="40" height="37" style="display:block;outline:none;border:none;text-decoration:none;margin-left:auto;margin-right:auto;margin-top:0px;margin-bottom:0px" /></td>
+// //                               </tr>
+// //                             </tbody>
+// //                           </table>
+// //                           <h1 style="margin-left:0px;margin-right:0px;margin-top:30px;margin-bottom:30px;padding:0px;text-align:center;font-size:24px;font-weight:400;color:rgb(0,0,0)">Completion Certificate </h1>
+// //                           <p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Hello <strong>${userName}</strong>,</p>
+// //                           <p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">We are pleased to inform you that you have successfully completed the ${mainTopic} and are now eligible for your course completion certificate. Congratulations on your hard work and dedication throughout the course!</p>
+// //                           <table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%" style="margin-bottom:32px;margin-top:32px;text-align:center">
+// //                             <tbody>
+// //                               <tr>
+// //                                 <td><a href="${websiteURL}" target="_blank" style="p-x:20px;p-y:12px;line-height:100%;text-decoration:none;display:inline-block;max-width:100%;padding:12px 20px;border-radius:0.25rem;background-color: #007BFF;text-align:center;font-size:12px;font-weight:600;color:rgb(255,255,255);text-decoration-line:none"><span></span><span style="p-x:20px;p-y:12px;max-width:100%;display:inline-block;line-height:120%;text-decoration:none;text-transform:none;mso-padding-alt:0px;mso-text-raise:9px"><span>Get Certificate</span></a></td>
+// //                               </tr>
+// //                             </tbody>
+// //                           </table>
+// //                           <p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Best,<p target="_blank" style="color:rgb(0,0,0);text-decoration:none;text-decoration-line:none">The <strong>${companyName}</strong> Team</p></p>
+// //                           </td>
+// //                       </tr>
+// //                     </table>
+// //                   </body>
+                
+// //                 </html>`;
+
+// //     try {
+// //       const postURL = serverURL + '/api/sendcertificate';
+// //       await axios.post(postURL, { html, email }).then(res => {
+// //         navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: formattedDate } });
+// //       }).catch(error => {
+// //         console.error(error);
+// //         navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: formattedDate } });
+// //       });
+
+// //     } catch (error) {
+// //       console.error(error);
+// //       navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: formattedDate } });
+// //     }
+// //   }
+
+// //   return (
+// //     <div className="flex flex-col h-screen bg-background overflow-hidden">
+// //       <header className="border-b border-border/40 py-2 px-4 flex justify-between items-center sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
+// //         <div className="flex items-center gap-4">
+// //           <Drawer>
+// //             <DrawerTrigger asChild>
+// //               <Button
+// //                 variant="ghost"
+// //                 size="icon"
+// //                 className="md:hidden"
+// //               >
+// //                 <Menu className="h-5 w-5" />
+// //               </Button>
+// //             </DrawerTrigger>
+// //             <DrawerContent className="max-h-[80vh]">
+// //               <div className="p-4">
+// //                 <h2 className="text-xl font-bold mb-4">Course Content</h2>
+// //                 <ScrollArea className="h-[60vh]">
+// //                   <div className="pr-4">
+// //                     {jsonData && renderTopicsList(jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()])}
+// //                     <p onClick={redirectExam} className='py-2 text-left px-3 hover:bg-accent/50 rounded-md cursor-pointer'>{pass === true ? <span className="mr-2 text-primary">✓</span> : <></>}{mainTopic} Quiz</p>
+// //                   </div>
+// //                 </ScrollArea>
+// //               </div>
+// //             </DrawerContent>
+// //           </Drawer>
+
+// //           <div className="flex items-center gap-2">
+// //             {!isOrgAdmin && (
+// //               <div className="relative w-8 h-8">
+// //                 <svg className="w-8 h-8" viewBox="0 0 36 36">
+// //                   <circle cx="18" cy="18" r="16" fill="none" className="stroke-muted-foreground/20" strokeWidth="2" />
+// //                   <circle
+// //                     cx="18"
+// //                     cy="18"
+// //                     r="16"
+// //                     fill="none"
+// //                     className="stroke-primary"
+// //                     strokeWidth="2"
+// //                     strokeDasharray="100"
+// //                     strokeDashoffset={100 - percentage}
+// //                     transform="rotate(-90 18 18)"
+// //                   />
+// //                   <text
+// //                     x="18"
+// //                     y="18"
+// //                     dominantBaseline="middle"
+// //                     textAnchor="middle"
+// //                     className="fill-foreground text-[10px] font-medium"
+// //                   >
+// //                     {percentage}%
+// //                   </text>
+// //                 </svg>
+// //               </div>
+// //             )}
+// //             <h1 className="text-xl font-bold">{mainTopic}</h1>
+// //           </div>
+// //         </div>
+
+// //         <div className="flex items-center gap-2">
+// //           <Button
+// //             variant="ghost"
+// //             size="icon"
+// //             onClick={() => setIsMenuOpen(!isMenuOpen)}
+// //             className="hidden md:flex"
+// //           >
+// //             <Menu className="h-5 w-5" />
+// //           </Button>
+// //           <ToggleGroup type="single" className="hidden sm:flex">
+// //             <Button variant="ghost" size="sm" asChild>
+// //               <Link to='/dashboard'>
+// //                 <Home className="h-4 w-4 mr-1" /> Home
+// //               </Link>
+// //             </Button>
+// //             {(plan !== "free" || isOrgAdmin || userRole === 'student') && isQuizPassed && (
+// //               <Button
+// //                 onClick={certificateCheck}
+// //                 variant="default"
+// //                 size="sm"
+// //                 className={cn(
+// //                   "shadow-none",
+// //                   (userRole === 'student' || !!sessionStorage.getItem('orgId'))
+// //                     ? "bg-yellow-600 hover:bg-yellow-700 text-white border-none"
+// //                     : "bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
+// //                 )}
+// //               >
+// //                 <Award className="h-4 w-4 mr-1" /> Download Certificate
+// //               </Button>
+// //             )}
+
+// //             <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm" asChild>
+// //               <span className='cursor-pointer'><Download className="h-4 w-4 mr-1" />{exporting ? 'Exporting...' : 'Export'}</span>
+// //             </Button>
+// //             <ShareOnSocial
+// //               textToShare={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+// //               link={websiteURL + '/shareable?id=' + courseId}
+// //               linkTitle={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+// //               linkMetaDesc={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+// //               linkFavicon={appLogo}
+// //               noReferer
+// //             >
+// //               <Button variant="ghost" size="sm" asChild>
+// //                 <span className='cursor-pointer'><Share className="h-4 w-4 mr-1" /> Share</span>
+// //               </Button>
+// //             </ShareOnSocial>
+// //           </ToggleGroup>
+// //           <ThemeToggle />
+// //         </div>
+// //       </header>
+
+// //       <div className="flex flex-1 overflow-hidden">
+// //         <div className={cn(
+// //           "bg-sidebar border-r border-border/40 transition-all duration-300 overflow-hidden hidden md:block",
+// //           isMenuOpen ? "w-64" : "w-0"
+// //         )}>
+// //           <ScrollArea className="h-full">
+// //             <div className="p-4">
+// //               {jsonData && renderTopicsList(jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()])}
+// //               <p onClick={redirectExam} className='py-2 text-left px-3 hover:bg-accent/50 rounded-md cursor-pointer'>{pass === true ? <span className="mr-2 text-primary">✓</span> : <></>}{mainTopic} Quiz</p>
+// //             </div>
+// //           </ScrollArea>
+// //         </div>
+
+// //         <div className="flex-1 overflow-hidden">
+// //           <ScrollArea className="h-full" viewportRef={mainContentRef}>
+// //             <main className="p-6 max-w-5xl mx-auto">
+// //               {isLoading ? (
+// //                 <CourseContentSkeleton />
+// //               ) : (
+// //                 <>
+// //                   <h1 className="text-3xl font-bold mb-6">{selected}</h1>
+// //                   <div className="space-y-4">
+// //                     {type === 'video & text course' ? (
+// //                       media ? (
+// //                         <div>
+// //                           <YouTube key={media} className='mb-5' videoId={media} opts={opts} />
+// //                         </div>
+// //                       ) : (
+// //                         <div className="h-96 bg-muted flex items-center justify-center rounded-lg">
+// //                           <p className="text-muted-foreground">Loading video...</p>
+// //                         </div>
+// //                       )
+// //                     ) : (
+// //                       <div className="relative min-h-[24rem] max-md:min-h-[16rem]">
+// //                         {/* Show placeholder while image loads */}
+// //                         {media && imageLoading.has(selected) && (
+// //                           <div className="absolute inset-0 bg-muted animate-pulse rounded-lg" />
+// //                         )}
+// //                       <div className="relative w-full h-96 max-md:h-64 overflow-hidden rounded-lg bg-muted">
+// //   {media ? (
+// //     <img 
+// //       key={media}
+// //       src={media}
+// //       fetchpriority="high"
+// //       className={cn(
+// //         "w-full h-full object-cover transition-opacity duration-500",
+// //         imageLoading.has(selected) ? "opacity-0" : "opacity-100"
+// //       )}
+// //       alt={selected}
+// //       onLoad={() => {
+// //         setImageLoading(prev => {
+// //           const newMap = new Map(prev);
+// //           newMap.delete(selected);
+// //           return newMap;
+// //         });
+// //       }}
+// //       onError={(e) => {
+// //         e.target.onerror = null; 
+// //         e.target.src = `https://images.unsplash.com/photo-1581094794329-c8112a4e5190?w=1000`;
+// //       }}
+// //     />
+// //   ) : (
+// //     <div className="absolute inset-0 flex flex-col items-center justify-center space-y-3">
+// //       <Skeleton className="w-full h-full absolute inset-0" />
+// //       <div className="z-10 flex flex-col items-center">
+// //         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+// //         <span className="text-xs font-medium mt-2">Fetching Visuals...</span>
+// //       </div>
+// //     </div>
+// //   )}
+// // </div>
+// //                       </div>
+// //                     )}
+// //                     {theory && <StyledText text={theory} />}
+
+// //                     {!isOrgAdmin && (
+// //                       <div className="pt-8 border-t border-border mt-8 flex justify-center">
+// //                         <Button
+// //                           onClick={handleMarkAsComplete}
+// //                           className="px-8 py-6 text-lg gap-2"
+// //                         >
+// //                           {completedSubtopics.some(s => s.subtopicTitle === selected) ? (
+// //                             <>Next Lesson <CheckCircle2 className="w-5 h-5" /></>
+// //                           ) : (
+// //                             <>Mark as Complete & Next <CheckCircle2 className="w-5 h-5" /></>
+// //                           )}
+// //                         </Button>
+// //                       </div>
+// //                     )}
+// //                   </div>
+// //                 </>
+// //               )}
+// //             </main>
+// //           </ScrollArea>
+// //         </div>
+// //       </div>
+
+// //       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border p-2 flex justify-around items-center">
+// //         <Button variant="ghost" size="sm">
+// //           <Link to='/dashboard'>
+// //             <Home className="h-5 w-5" />
+// //           </Link>
+// //         </Button>
+// //         {(plan !== "free" || isOrgAdmin || userRole === 'student') && isQuizPassed && (
+// //           <Button
+// //             onClick={certificateCheck}
+// //             variant="ghost"
+// //             size="sm"
+// //             className={cn(
+// //               "font-bold",
+// //               (userRole === 'student' || !!sessionStorage.getItem('orgId')) ? "text-yellow-600" : "text-primary"
+// //             )}
+// //           >
+// //             <Award className="h-5 w-5" />
+// //           </Button>
+// //         )}
+// //         <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm">
+// //           <Download className="h-5 w-5" />
+// //         </Button>
+// //         <ShareOnSocial
+// //           textToShare={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+// //           link={websiteURL + '/shareable?id=' + courseId}
+// //           linkTitle={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+// //           linkMetaDesc={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+// //           linkFavicon={appLogo}
+// //           noReferer
+// //         >
+// //           <Button variant="ghost" size="sm">
+// //             <Share className="h-5 w-5" />
+// //           </Button>
+// //         </ShareOnSocial>
+// //       </div>
+
+// //       <div className="fixed bottom-16 right-6 flex flex-col gap-3 md:bottom-6">
+// //         <Button
+// //           size="icon"
+// //           className="rounded-full bg-primary shadow-lg hover:shadow-xl"
+// //           onClick={() => setIsChatOpen(true)}
+// //         >
+// //           <MessageCircle className="h-5 w-5" />
+// //         </Button>
+// //         <Button
+// //           size="icon"
+// //           className="rounded-full bg-primary shadow-lg hover:shadow-xl"
+// //           onClick={() => setIsNotesOpen(true)}
+// //         >
+// //           <ClipboardCheck className="h-5 w-5" />
+// //         </Button>
+// //       </div>
+
+// //       {isMobile ? (
+// //         <Sheet open={isChatOpen} onOpenChange={setIsChatOpen}>
+// //           <SheetContent side="bottom" className="h-[90vh] sm:max-w-full p-0">
+// //             <div className="flex flex-col h-full p-4">
+// //               <div className="py-2 px-4 border-b border-border mb-2">
+// //                 <h2 className="text-lg font-semibold">Course Assistant</h2>
+// //               </div>
+// //               <ScrollArea className="flex-1 pr-4 mb-4">
+// //                 <div className="space-y-4 pt-2 px-4">
+// //                   {messages.map((message) => (
+// //                     <div
+// //                       key={message.id}
+// //                       className={cn(
+// //                         "flex w-max max-w-[80%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
+// //                         message.sender === "user"
+// //                           ? "ml-auto bg-primary text-primary-foreground"
+// //                           : "bg-muted"
+// //                       )}
+// //                     >
+// //                       <StyledText text={message.text} />
+// //                     </div>
+// //                   ))}
+// //                 </div>
+// //               </ScrollArea>
+
+// //               <div className="flex items-center gap-2 p-4 border-t border-border">
+// //                 <Input
+// //                   placeholder={isChatLoading ? "Assistant is thinking..." : "Type your message..."}
+// //                   value={newMessage}
+// //                   onChange={(e) => setNewMessage(e.target.value)}
+// //                   disabled={isChatLoading}
+// //                   onKeyDown={(e) => {
+// //                     if (e.key === "Enter") {
+// //                       sendMessage();
+// //                     }
+// //                   }}
+// //                   className="flex-1"
+// //                 />
+// //                 <Button onClick={sendMessage} disabled={isChatLoading}>
+// //                   {isChatLoading ? "..." : "Send"}
+// //                 </Button>
+// //               </div>
+// //             </div>
+// //           </SheetContent>
+// //         </Sheet>
+// //       ) : (
+// //         <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
+// //           <DialogContent className="sm:max-w-md">
+// //             <DialogTitle>Course Assistant</DialogTitle>
+// //             <div className="flex flex-col h-[60vh]">
+// //               <ScrollArea className="flex-1 pr-4 mb-4">
+// //                 <div className="space-y-4 pt-2">
+// //                   {messages.map((message) => (
+// //                     <div
+// //                       key={message.id}
+// //                       className={cn(
+// //                         "flex w-2/4 max-w-[80%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
+// //                         message.sender === "user"
+// //                           ? "ml-auto bg-primary text-primary-foreground"
+// //                           : "bg-muted"
+// //                       )}
+// //                     >
+// //                       <StyledText text={message.text} />
+// //                     </div>
+// //                   ))}
+// //                 </div>
+// //               </ScrollArea>
+
+// //               <div className="flex items-center gap-2">
+// //                 <Input
+// //                   placeholder={isChatLoading ? "Assistant is thinking..." : "Type your message..."}
+// //                   value={newMessage}
+// //                   onChange={(e) => setNewMessage(e.target.value)}
+// //                   disabled={isChatLoading}
+// //                   onKeyDown={(e) => {
+// //                     if (e.key === "Enter") {
+// //                       sendMessage();
+// //                     }
+// //                   }}
+// //                   className="flex-1"
+// //                 />
+// //                 <Button onClick={sendMessage} disabled={isChatLoading}>
+// //                   {isChatLoading ? "..." : "Send"}
+// //                 </Button>
+// //               </div>
+// //             </div>
+// //           </DialogContent>
+// //         </Dialog>
+// //       )}
+
+// //       {isMobile ? (
+// //         <Sheet open={isNotesOpen} onOpenChange={setIsNotesOpen}>
+// //           <SheetContent side="bottom" className="h-[90vh] sm:max-w-full p-0">
+// //             <div className="flex flex-col h-full p-4">
+// //               <div className="py-2 px-4 border-b border-border mb-2">
+// //                 <h2 className="text-lg font-semibold">Course Notes</h2>
+// //               </div>
+// //               <ScrollArea className="flex-1 pr-4 mb-4">
+// //                 <div className="space-y-4 pt-2 px-4">
+// //                   <MinimalTiptapEditor
+// //                     value={value}
+// //                     onChange={setValue}
+// //                     className="w-full"
+// //                     editorContentClassName="p-5"
+// //                     output="html"
+// //                     placeholder="No notes yet. Start taking notes for this course."
+// //                     autofocus={true}
+// //                     editable={true}
+// //                     editorClassName="focus:outline-none"
+// //                   />
+// //                 </div>
+// //               </ScrollArea>
+
+// //               <div className="p-4 border-t border-border">
+// //                 <div className="flex justify-end">
+// //                   <Button disabled={saving} onClick={handleSaveNote}>{saving ? 'Saving...' : 'Save Note'}</Button>
+// //                 </div>
+// //               </div>
+// //             </div>
+// //           </SheetContent>
+// //         </Sheet>
+// //       ) : (
+// //         <Dialog open={isNotesOpen} onOpenChange={setIsNotesOpen}>
+// //           <DialogContent className="sm:max-w-lg">
+// //             <DialogTitle>Course Notes</DialogTitle>
+// //             <div className="flex flex-col h-[60vh]">
+// //               <ScrollArea className="flex-1 pr-4 mb-4">
+// //                 <div className="space-y-4 pt-2">
+// //                   <MinimalTiptapEditor
+// //                     value={value}
+// //                     onChange={setValue}
+// //                     className="w-full"
+// //                     editorContentClassName="p-5"
+// //                     output="html"
+// //                     placeholder="No notes yet. Start taking notes for this course."
+// //                     autofocus={true}
+// //                     editable={true}
+// //                     editorClassName="focus:outline-none"
+// //                   />
+// //                 </div>
+// //               </ScrollArea>
+
+// //               <div>
+// //                 <div className="flex justify-end">
+// //                   <Button disabled={saving} onClick={handleSaveNote}>{saving ? 'Saving...' : 'Save Note'}</Button>
+// //                 </div>
+// //               </div>
+// //             </div>
+// //           </DialogContent>
+// //         </Dialog>
+// //       )}
+// //     </div>
+// //   );
+// // };
+
+// // export default CoursePage;
+
+
+// // eslint-disable-next-line @script-eslint/ban-ts-comment
+// // @ts-nocheck
+// import React, { useEffect, useState, useRef, useCallback } from 'react';
+// import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+// import {
+//   Accordion,
+//   AccordionContent,
+//   AccordionItem,
+//   AccordionTrigger
+// } from '@/components/ui/accordion';
+// import { Content } from '@tiptap/react'
+// import { MinimalTiptapEditor } from '../minimal-tiptap'
+// import YouTube from 'react-youtube';
+// import { Button } from '@/components/ui/button';
+// import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2, Loader2, Sparkles, BookOpen, Image as ImageIcon, Brain } from 'lucide-react';
+// import { cn } from '@/lib/utils';
+// import { ScrollArea } from '@/components/ui/scroll-area';
+// import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
+// import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+// import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+// import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+// import { Textarea } from '@/components/ui/textarea';
+// import { Input } from '@/components/ui/input';
+// import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
+// import { useToast } from '@/hooks/use-toast';
+// import { useForm } from 'react-hook-form';
+// import { ThemeToggle } from '@/components/ThemeToggle';
+// import { Skeleton } from '@/components/ui/skeleton';
+// import { useIsMobile } from '@/hooks/use-mobile';
+// import { appLogo, companyName, serverURL, websiteURL } from '@/constants';
+// import axios from 'axios';
+// import ShareOnSocial from 'react-share-on-social';
+// import StyledText from '@/components/styledText';
+// import html2pdf from 'html2pdf.js';
+
+// // Loading Popup Component
+// const LoadingPopup = ({ isOpen, stage, subtopic, progress = 0 }) => {
+//   const getStageContent = () => {
+//     switch(stage) {
+//       case 'theory':
+//         return {
+//           icon: <BookOpen className="w-8 h-8 text-blue-500 animate-pulse" />,
+//           title: 'Generating Course Content',
+//           message: `AI is creating comprehensive learning material for "${subtopic}"`,
+//           details: 'This may take 15-20 seconds...',
+//           color: 'blue'
+//         };
+//       case 'image':
+//         return {
+//           icon: <ImageIcon className="w-8 h-8 text-green-500 animate-bounce" />,
+//           title: 'Fetching Visuals',
+//           message: `Finding the perfect image for "${subtopic}"`,
+//           details: 'Almost there...',
+//           color: 'green'
+//         };
+//       case 'complete':
+//         return {
+//           icon: <Sparkles className="w-8 h-8 text-yellow-500 animate-spin" />,
+//           title: 'Finalizing',
+//           message: 'Polishing the content for best learning experience',
+//           details: 'Just a moment...',
+//           color: 'yellow'
+//         };
+//       default:
+//         return {
+//           icon: <Brain className="w-8 h-8 text-purple-500 animate-pulse" />,
+//           title: 'AI is Thinking',
+//           message: `Preparing your personalized course on "${subtopic}"`,
+//           details: 'This may take a few seconds...',
+//           color: 'purple'
+//         };
+//     }
+//   };
+
+//   const content = getStageContent();
+
+//   if (!isOpen) return null;
+
+//   return (
+//     <Dialog open={isOpen} onOpenChange={() => {}}>
+//       <DialogContent className="sm:max-w-md" hideClose>
+//         <div className="flex flex-col items-center py-8 px-4">
+//           {/* Animated Icon */}
+//           <div className={`relative mb-6`}>
+//             <div className={`absolute inset-0 rounded-full bg-${content.color}-500/20 animate-ping`}></div>
+//             <div className={`relative z-10 p-4 rounded-full bg-${content.color}-500/10`}>
+//               {content.icon}
+//             </div>
+//           </div>
+
+//           {/* Title */}
+//           <h2 className="text-2xl font-bold text-center mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+//             {content.title}
+//           </h2>
+
+//           {/* Message */}
+//           <p className="text-center text-muted-foreground mb-4">
+//             {content.message}
+//           </p>
+
+//           {/* Progress Bar */}
+//           <div className="w-full h-2 bg-muted rounded-full overflow-hidden mb-3">
+//             <div 
+//               className={`h-full bg-${content.color}-500 transition-all duration-300 rounded-full`}
+//               style={{ width: `${progress}%` }}
+//             />
+//           </div>
+
+//           {/* Progress Percentage */}
+//           <p className="text-sm font-medium text-muted-foreground mb-2">
+//             {progress}% Complete
+//           </p>
+
+//           {/* Loading Details with Skeleton */}
+//           <div className="w-full space-y-3 mt-4">
+//             <div className="flex items-center gap-3">
+//               <Loader2 className="w-4 h-4 animate-spin text-primary" />
+//               <span className="text-sm">{content.details}</span>
+//             </div>
+            
+//             {/* Skeleton Previews */}
+//             <div className="grid grid-cols-2 gap-2 mt-4">
+//               <Skeleton className="h-12 rounded-lg" />
+//               <Skeleton className="h-12 rounded-lg" />
+//               <Skeleton className="h-12 rounded-lg" />
+//               <Skeleton className="h-12 rounded-lg" />
+//             </div>
+//           </div>
+
+//           {/* Fun Fact or Tip */}
+//           <p className="text-xs text-muted-foreground/60 mt-6 italic">
+//             ✨ AI is crafting personalized content just for you
+//           </p>
+//         </div>
+//       </DialogContent>
+//     </Dialog>
+//   );
+// };
+
+// const CoursePage = () => {
+//   //ADDED FROM v4.0
+//   const { state } = useLocation();
+//   const { courseId: paramCourseId } = useParams();
+//   const activeCourseId = state?.courseId || paramCourseId;
+//   const plan = sessionStorage.getItem('type');
+//   const [courseData, setCourseData] = useState(state || null);
+//   const [jsonData, setJsonData] = useState(() => {
+//     try {
+//       return JSON.parse(sessionStorage.getItem('jsonData'));
+//     } catch (e) {
+//       return null;
+//     }
+//   });
+
+//   // Loading Popup States
+//   const [showLoadingPopup, setShowLoadingPopup] = useState(false);
+//   const [loadingStage, setLoadingStage] = useState('theory');
+//   const [loadingProgress, setLoadingProgress] = useState(0);
+//   const [loadingSubtopic, setLoadingSubtopic] = useState('');
+
+//   // OPTIMIZATION: Image cache and preloading
+//   const imageCache = useRef(new Set());
+//   const [preloadedImages, setPreloadedImages] = useState(new Map());
+//   const [imageLoading, setImageLoading] = useState(new Map());
+
+//   const mainTopic = courseData?.mainTopic;
+//   const type = courseData?.type;
+//   const courseId = courseData?.courseId || activeCourseId;
+//   const end = courseData?.end;
+//   const pass = courseData?.pass;
+//   const lang = courseData?.lang || 'English';
+
+//   const [selected, setSelected] = useState('');
+//   const [theory, setTheory] = useState('');
+//   const [media, setMedia] = useState('');
+//   const [percentage, setPercentage] = useState(0);
+//   const [isComplete, setIsCompleted] = useState(false);
+//   const [isQuizPassed, setIsQuizPassed] = useState(pass);
+//   const navigate = useNavigate();
+//   const [messages, setMessages] = useState([]);
+//   const [newMessage, setNewMessage] = useState('');
+//   const [isChatLoading, setIsChatLoading] = useState(false);
+//   const [exporting, setExporting] = useState(false);
+//   const [saving, setSaving] = useState(false);
+//   const defaultMessage = `<p>Hey there! I'm your AI teacher. If you have any questions about your ${mainTopic || 'current'} course, whether it's about videos, images, or theory, just ask me. I'm here to clear your doubts.</p>`;
+//   const defaultPrompt = `I have a doubt about this topic :- ${mainTopic}. Please clarify my doubt in very short :- `;
+
+//   const [isMenuOpen, setIsMenuOpen] = useState(true);
+//   const [isChatOpen, setIsChatOpen] = useState(false);
+//   const [isNotesOpen, setIsNotesOpen] = useState(false);
+//   const [isLoading, setIsLoading] = useState(true);
+//   const { toast } = useToast();
+//   const isMobile = useIsMobile();
+//   const mainContentRef = useRef<HTMLDivElement>(null);
+//   const [value, setValue] = useState<Content>('')
+//   const [completedSubtopics, setCompletedSubtopics] = useState([]);
+//   const [progressLoading, setProgressLoading] = useState(true);
+//   const userId = sessionStorage.getItem('uid');
+//   const userRole = sessionStorage.getItem('role');
+//   const isOrgAdmin = userRole === 'org_admin' || sessionStorage.getItem('isOrganization') === 'true';
+
+//   // Optimization states
+//   const [preloadedNextContent, setPreloadedNextContent] = useState(null);
+  
+//   // Simple cache for API responses
+//   const apiCache = useRef(new Map());
+
+//   // Progress simulation function
+//   const simulateProgress = useCallback((stage) => {
+//     setLoadingStage(stage);
+//     setLoadingProgress(0);
+    
+//     const interval = setInterval(() => {
+//       setLoadingProgress(prev => {
+//         if (prev >= 90) {
+//           clearInterval(interval);
+//           return 90;
+//         }
+//         return prev + 10;
+//       });
+//     }, 800);
+
+//     return () => clearInterval(interval);
+//   }, []);
+
+//   // OPTIMIZATION: Enhanced image preloader with queue and cache
+//   const preloadImageWithCache = useCallback((url, subtopicTitle) => {
+//     if (!url || imageCache.current.has(url)) return;
+    
+//     imageCache.current.add(url);
+//     setImageLoading(prev => new Map(prev).set(subtopicTitle, true));
+    
+//     const img = new Image();
+//     img.onload = () => {
+//       setPreloadedImages(prev => new Map(prev).set(subtopicTitle, url));
+//       setImageLoading(prev => {
+//         const newMap = new Map(prev);
+//         newMap.delete(subtopicTitle);
+//         return newMap;
+//       });
+//     };
+//     img.onerror = () => {
+//       setImageLoading(prev => {
+//         const newMap = new Map(prev);
+//         newMap.delete(subtopicTitle);
+//         return newMap;
+//       });
+//     };
+//     img.src = url;
+//   }, []);
+
+//   // OPTIMIZATION: Preload all images for current and next topics
+//   const preloadAllImages = useCallback(() => {
+//     if (!jsonData || !mainTopic || !selected) return;
+    
+//     const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+//     if (!topicsList) return;
+    
+//     // Flatten all subtopics
+//     const allSubtopics = [];
+//     topicsList.forEach(t => {
+//       t.subtopics.forEach(s => {
+//         allSubtopics.push({ 
+//           topicTitle: t.title, 
+//           subtopicTitle: s.title,
+//           image: s.image,
+//           theory: s.theory
+//         });
+//       });
+//     });
+
+//     // Find current index
+//     const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
+    
+//     // Preload next 3 subtopics images
+//     for (let i = 1; i <= 3; i++) {
+//       const nextIndex = currentIndex + i;
+//       if (nextIndex < allSubtopics.length) {
+//         const next = allSubtopics[nextIndex];
+//         if (next.image && !imageCache.current.has(next.image)) {
+//           preloadImageWithCache(next.image, next.subtopicTitle);
+//         }
+//       }
+//     }
+//   }, [jsonData, mainTopic, selected, preloadImageWithCache]);
+
+//   // Preload next subtopic content
+//   const preloadNextSubtopic = useCallback(async () => {
+//     if (!jsonData || !selected || !mainTopic || !lang || !userId) return;
+    
+//     const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+//     if (!topicsList) return;
+    
+//     const allSubtopics = [];
+//     topicsList.forEach(t => {
+//       t.subtopics.forEach(s => {
+//         allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title, subtopic: s });
+//       });
+//     });
+
+//     const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
+//     if (currentIndex < allSubtopics.length - 1) {
+//       const next = allSubtopics[currentIndex + 1];
+      
+//       // If next subtopic doesn't have content, pre-generate it
+//       if (!next.subtopic.theory) {
+//         try {
+//           const res = await axios.post(serverURL + '/api/generate-batch', {
+//             mainTopic,
+//             topicsList: [{
+//               topicTitle: next.topicTitle,
+//               subtopics: [next.subtopicTitle]
+//             }],
+//             lang,
+//             userId
+//           });
+          
+//           if (res.data.success && res.data.topics[0]) {
+//             setPreloadedNextContent({
+//               topicTitle: next.topicTitle,
+//               subtopicTitle: next.subtopicTitle,
+//               theory: res.data.topics[0].subtopics[0].theory
+//             });
+            
+//             // Also preload image if available
+//             if (res.data.topics[0].subtopics[0].image) {
+//               preloadImageWithCache(res.data.topics[0].subtopics[0].image, next.subtopicTitle);
+//             }
+//           }
+//         } catch (error) {
+//           console.error("Preload failed:", error);
+//         }
+//       } else if (next.subtopic.image) {
+//         // Preload image if content exists
+//         preloadImageWithCache(next.subtopic.image, next.subtopicTitle);
+//       }
+//     }
+//   }, [jsonData, selected, mainTopic, lang, userId, preloadImageWithCache]);
+
+//   // Cached API call
+//   const cachedApiCall = async (url, data, cacheKey) => {
+//     if (apiCache.current.has(cacheKey)) {
+//       return apiCache.current.get(cacheKey);
+//     }
+    
+//     const response = await axios.post(url, data);
+//     apiCache.current.set(cacheKey, response);
+//     return response;
+//   };
+
+//   // OPTIMIZATION: Preload when selected changes
+//   useEffect(() => {
+//     if (selected && jsonData) {
+//       preloadNextSubtopic();
+//       preloadAllImages();
+//     }
+//   }, [selected, jsonData, preloadNextSubtopic, preloadAllImages]);
+
+//   // OPTIMIZATION: Preload current media if not loaded
+//   useEffect(() => {
+//     if (media && !imageCache.current.has(media) && type !== 'video & text course') {
+//       preloadImageWithCache(media, selected);
+//     }
+//   }, [media, selected, preloadImageWithCache, type]);
+
+//   useEffect(() => {
+//     const fetchCourseData = async () => {
+//       if (!courseData && activeCourseId) {
+//         setIsLoading(true);
+//         try {
+//           const response = await axios.get(`${serverURL}/api/shareable?id=${activeCourseId}`);
+//           if (response.data && response.data.length > 0) {
+//             const course = response.data[0];
+//             const content = JSON.parse(course.content);
+
+//             // Fallback: if mainTopic is missing, try to extract from content
+//             let mainTopicValue = course.mainTopic;
+//             if (!mainTopicValue) {
+//               // Try to get from course_topics or first topic
+//               if (content && content['course_topics'] && content['course_topics'].length > 0) {
+//                 mainTopicValue = content['course_topics'][0].title;
+//               } else {
+//                 // Find first key that has topics array
+//                 for (const key in content) {
+//                   if (Array.isArray(content[key]) && content[key].length > 0) {
+//                     mainTopicValue = content[key][0].title;
+//                     break;
+//                   }
+//                 }
+//               }
+//             }
+
+//             const newCourseData = {
+//               mainTopic: mainTopicValue,
+//               type: course.type,
+//               courseId: course._id,
+//               end: course.end,
+//               pass: course.completed,
+//               lang: 'English'
+//             };
+
+//             setJsonData(content);
+//             sessionStorage.setItem('jsonData', JSON.stringify(content));
+//             setCourseData(newCourseData);
+
+//             if (content) {
+//               const mainTopicData = (content['course_topics'] || content[(mainTopicValue || '').toLowerCase()])?.[0];
+//               if (mainTopicData && mainTopicData.subtopics && mainTopicData.subtopics.length > 0) {
+//                 const firstSubtopic = mainTopicData.subtopics[0];
+//                 setSelected(firstSubtopic.title);
+//                 setTheory(firstSubtopic.theory);
+//                 if (course.type === 'video & text course') {
+//                   setMedia(firstSubtopic.youtube);
+//                 } else {
+//                   setMedia(firstSubtopic.image);
+//                   // Preload first image
+//                   if (firstSubtopic.image) {
+//                     preloadImageWithCache(firstSubtopic.image, firstSubtopic.title);
+//                   }
+//                 }
+//               }
+//             }
+//           }
+//         } catch (error) {
+//           console.error("Failed to fetch course data:", error);
+//         } finally {
+//           setIsLoading(false);
+//         }
+//       } else if (courseData) {
+//         setIsLoading(false);
+//       }
+//     };
+//     fetchCourseData();
+//   }, [activeCourseId, courseData, preloadImageWithCache]);
+
+//   useEffect(() => {
+//     const fetchProgress = async () => {
+//       if (courseId && userId) {
+//         try {
+//           const res = await axios.get(`${serverURL}/api/progress?userId=${userId}&courseId=${courseId}`);
+//           if (res.data.success) {
+//             setCompletedSubtopics(res.data.progress.completedSubtopics || []);
+//             // Set percentage from backend initially
+//             setPercentage(res.data.progress.percentage || 0);
+//           }
+//         } catch (error) {
+//           console.error("Failed to fetch progress:", error);
+//         } finally {
+//           setProgressLoading(false);
+//         }
+//       } else {
+//         setProgressLoading(false);
+//       }
+//     };
+//     fetchProgress();
+//   }, [courseId, userId]);
+
+//   async function getNotes() {
+//     try {
+//       const postURL = serverURL + '/api/getnotes';
+//       const response = await axios.post(postURL, { course: courseId });
+//       if (response.data.success) {
+//         setValue(response.data.message);
+//       }
+//     } catch (error) {
+//       console.error(error)
+//     }
+//   }
+
+//   const handleSaveNote = async () => {
+//     setSaving(true);
+//     const postURL = serverURL + '/api/savenotes';
+//     const response = await axios.post(postURL, { course: courseId, notes: value });
+//     if (response.data.success) {
+//       toast({
+//         title: "Note saved",
+//         description: "Your note has been saved successfully.",
+//       });
+//     } else {
+//       toast({
+//         title: "Error",
+//         description: "Internal Server Error",
+//       });
+//     }
+//     setSaving(false);
+//   };
+
+//   // Loading skeleton for course content
+//   const CourseContentSkeleton = () => (
+//     <div className="space-y-6 animate-pulse">
+//       <Skeleton className="h-8 w-3/4 mb-8" />
+//       <div className="space-y-6">
+//         <div>
+//           <Skeleton className="h-7 w-1/2 mb-4" />
+//           <Skeleton className="h-5 w-full mb-2" />
+//           <Skeleton className="h-5 w-full mb-2" />
+//           <Skeleton className="h-5 w-3/4" />
+//         </div>
+//         <div>
+//           <Skeleton className="h-7 w-1/3 mb-4" />
+//           <Skeleton className="h-5 w-full mb-2" />
+//           <Skeleton className="h-5 w-full mb-2" />
+//           <Skeleton className="h-5 w-5/6" />
+//         </div>
+//         <div>
+//           <Skeleton className="h-7 w-2/5 mb-4" />
+//           <Skeleton className="h-5 w-full mb-2" />
+//           <Skeleton className="h-5 w-full mb-2" />
+//           <Skeleton className="h-36 w-full rounded-md bg-muted/30" />
+//         </div>
+//       </div>
+//     </div>
+//   );
+
+//   //FROM v4.0
+//   const opts = {
+//     height: '390',
+//     width: '640',
+//   };
+
+//   const optsMobile = {
+//     height: '250px',
+//     width: '100%',
+//   };
+
+//   const isSubtopicUnlocked = (topicTitle, subtopicTitle) => {
+//     if (isOrgAdmin) return true;
+//     if (!jsonData) return false;
+
+//     const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+//     if (!topicsList) return false;
+
+//     // Flatten all subtopics to check order
+//     const allSubtopics = [];
+//     topicsList.forEach(t => {
+//       t.subtopics.forEach(s => {
+//         allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
+//       });
+//     });
+
+//     const index = allSubtopics.findIndex(s => s.topicTitle === topicTitle && s.subtopicTitle === subtopicTitle);
+//     if (index === 0) return true; // First subtopic always unlocked
+
+//     const prevSubtopic = allSubtopics[index - 1];
+//     return completedSubtopics.some(s => s.topicTitle === prevSubtopic.topicTitle && s.subtopicTitle === prevSubtopic.subtopicTitle);
+//   };
+
+// const handleMarkAsComplete = async () => {
+//   if (!userId || !courseId || !selected) return;
+
+//   const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+//   let currentTopicTitle = '';
+//   topicsList.forEach(t => {
+//     if (t.subtopics.some(s => s.title === selected)) {
+//       currentTopicTitle = t.title;
+//     }
+//   });
+
+//   let total = 0;
+//   topicsList.forEach(t => total += t.subtopics.length);
+
+//   try {
+//     const res = await axios.post(`${serverURL}/api/progress/update`, {
+//       userId,
+//       courseId,
+//       topicTitle: currentTopicTitle,
+//       subtopicTitle: selected,
+//       totalSubtopics: total
+//     });
+
+//     if (res.data.success) {
+//       setCompletedSubtopics(res.data.progress.completedSubtopics);
+//       setPercentage(res.data.progress.percentage);
+
+//       // --- LOGIC TO MOVE TO NEXT SUBTOPIC ---
+//       const allSubtopics = [];
+//       topicsList.forEach(t => {
+//         t.subtopics.forEach(s => {
+//           allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
+//         });
+//       });
+
+//       const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
+      
+//       if (currentIndex < allSubtopics.length - 1) {
+//         const next = allSubtopics[currentIndex + 1];
+//         // Move to next subtopic immediately
+//         handleSelect(next.topicTitle, next.subtopicTitle);
+        
+//         // Scroll to top for the new lesson
+//         if (mainContentRef.current) {
+//           mainContentRef.current.scrollTop = 0;
+//         }
+//       } else {
+//         toast({
+//           title: "Course Completed!",
+//           description: "You've finished all lessons. You can now take the quiz.",
+//         });
+//       }
+//     }
+//   } catch (error) {
+//     console.error("Failed to update progress:", error);
+//   }
+// };
+
+//   const loadMessages = async () => {
+//     try {
+//       const jsonValue = sessionStorage.getItem(mainTopic);
+//       if (jsonValue !== null) {
+//         // Ensure all historical messages have an id if they don't already
+//         const savedMessages = JSON.parse(jsonValue).map((msg, index) => ({
+//           ...msg,
+//           id: msg.id || `msg-${Date.now()}-${index}`
+//         }));
+//         setMessages(savedMessages);
+//       } else {
+//         const initialMessages = [{ id: `msg-${Date.now()}`, text: defaultMessage, sender: 'bot' }];
+//         setMessages(initialMessages);
+//         await storeLocal(initialMessages);
+//       }
+//     } catch (error) {
+//       console.error(error);
+//     }
+//   };
+
+//   async function storeLocal(messages) {
+//     try {
+//       sessionStorage.setItem(mainTopic, JSON.stringify(messages));
+//     } catch (error) {
+//       console.error(error);
+//     }
+//   }
+
+//   const sendMessage = async () => {
+//     if (newMessage.trim() === '' || isChatLoading) return;
+
+//     const userMessage = { id: `msg-${Date.now()}`, text: newMessage, sender: 'user' };
+//     const updatedMessages = [...messages, userMessage];
+//     setMessages(updatedMessages);
+//     await storeLocal(updatedMessages);
+//     setNewMessage('');
+//     setIsChatLoading(true);
+
+//     const mainPrompt = defaultPrompt + newMessage;
+//     const dataToSend = { prompt: mainPrompt };
+//     const url = serverURL + '/api/chat';
+
+//     try {
+//       const response = await axios.post(url, dataToSend);
+//       if (response.data.success === false) {
+//         toast({
+//           title: "Assistant Error",
+//           description: response.data.message || "Failed to get a response.",
+//         });
+//       } else {
+//         const botMessage = { id: `bot-${Date.now()}`, text: response.data.text, sender: 'bot' };
+//         const updatedMessagesWithBot = [...updatedMessages, botMessage];
+//         setMessages(updatedMessagesWithBot);
+//         await storeLocal(updatedMessagesWithBot);
+//       }
+//     } catch (error) {
+//       toast({
+//         title: "Assistant Error",
+//         description: "Communication failure with AI assistant.",
+//       });
+//       console.error(error);
+//     } finally {
+//       setIsChatLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     if (mainTopic) {
+//       CountDoneTopics();
+//     }
+//   }, [isQuizPassed, completedSubtopics, jsonData, isOrgAdmin]);
+
+//   const CountDoneTopics = (passed = isQuizPassed) => {
+//     if (isOrgAdmin || passed) {
+//       setPercentage(100);
+//       setIsCompleted(true);
+//       return;
+//     }
+
+//     if (!jsonData) return;
+
+//     let doneCount = 0;
+//     let totalTopics = 0;
+
+//     const topicsData = jsonData['course_topics'] || (mainTopic ? jsonData[mainTopic.toLowerCase()] : []);
+//     if (!topicsData) return;
+
+//     topicsData.forEach((topic) => {
+//       topic.subtopics.forEach((subtopic) => {
+//         const isDone = completedSubtopics.some(
+//           s => s.topicTitle === topic.title && s.subtopicTitle === subtopic.title
+//         );
+//         if (isDone) {
+//           doneCount++;
+//         }
+//         totalTopics++;
+//       });
+//     });
+
+//     // Subtopic-only percentage (matches server logic)
+//     const completionPercentage = totalTopics > 0 ? Math.round((doneCount / totalTopics) * 100) : 0;
+//     const finalPercentage = Math.min(completionPercentage, 99);
+//     setPercentage(finalPercentage);
+//     if (finalPercentage >= 100) {
+//       setIsCompleted(true);
+//     }
+//   }
+
+//   // Add this helper function outside CoursePage or inside as a useCallback
+//   const updateLocalCache = (clickedTopic, clickedSub, updates) => {
+//     const updatedData = { ...jsonData };
+//     const topicsList = updatedData['course_topics'] || updatedData[mainTopic?.toLowerCase()];
+//     const targetSub = topicsList?.find(t => t.title === clickedTopic)?.subtopics.find(s => s.title === clickedSub);
+    
+//     if (targetSub) {
+//       Object.assign(targetSub, updates);
+//       setJsonData(updatedData);
+//       sessionStorage.setItem('jsonData', JSON.stringify(updatedData));
+//     }
+//   };
+
+//   async function sendBulkCourseContent(clickedTopic, clickedSub) {
+//     // Show loading popup
+//     setShowLoadingPopup(true);
+//     setLoadingSubtopic(clickedSub);
+    
+//     // Start theory generation progress
+//     const clearTheoryProgress = simulateProgress('theory');
+    
+//     // 1. Instant UI Feedback
+//     setSelected(clickedSub);
+//     setTheory(`<p>Loading content for <strong>${clickedSub}</strong>...</p>`);
+//     setMedia(''); 
+    
+//     // 2. REQUIRED: Construct the data payload correctly to avoid 400 error
+//     const theoryPayload = {
+//       mainTopic,
+//       topicsList: [{ topicTitle: clickedTopic, subtopics: [clickedSub] }],
+//       lang,
+//       userId
+//     };
+
+//     // 3. Fire requests in parallel
+//     const theoryPromise = axios.post(serverURL + '/api/generate-batch', theoryPayload);
+    
+//     // Inside sendBulkCourseContent
+//     const imagePromise = axios.post(serverURL + '/api/image', { 
+//       prompt: `High resolution professional 8k photography of ${clickedSub} for ${mainTopic}, educational, detailed, clear lighting` 
+//     });
+
+//     // 4. Image Track (Parallel & Fast)
+//     imagePromise.then(res => {
+//       if (res.data.url) {
+//         setMedia(res.data.url);
+//         updateLocalCache(clickedTopic, clickedSub, { image: res.data.url, done: true });
+//       } else {
+//         setMedia(`https://source.unsplash.com/featured/?${encodeURIComponent(clickedSub)},${encodeURIComponent(mainTopic)}`);
+//       }
+//     }).catch(() => {
+//       // Graceful fallback for the 400 error shown in your console
+//       setMedia(`https://source.unsplash.com/featured/?${encodeURIComponent(clickedSub)},${encodeURIComponent(mainTopic)}`);
+//     });
+
+//     // 5. Theory Track
+//     try {
+//       // Switch to image loading stage
+//       clearTheoryProgress();
+//       simulateProgress('image');
+      
+//       const theoryRes = await theoryPromise;
+//       if (theoryRes.data.success && theoryRes.data.topics?.[0]) {
+//         const newTheory = theoryRes.data.topics[0].subtopics[0].theory;
+//         setTheory(newTheory);
+//         updateLocalCache(clickedTopic, clickedSub, { theory: newTheory, done: true });
+//         updateCourse(); // Sync to server
+//       }
+      
+//       // Final stage
+//       simulateProgress('complete');
+      
+//       // Hide popup after completion
+//       setTimeout(() => {
+//         setShowLoadingPopup(false);
+//         setLoadingProgress(100);
+//       }, 1500);
+      
+//     } catch (error) {
+//       console.error("Theory generation failed:", error);
+//       setTheory(`<p>Sorry, there was an error generating content for ${clickedSub}. Please try again.</p>`);
+//       setShowLoadingPopup(false);
+//     }
+//   }
+
+// const handleSelect = useCallback((topicTitle, subtopicTitle) => {
+//   if (!jsonData) return;
+
+//   const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+//   const mTopic = topicsList.find(topic => topic.title === topicTitle);
+//   const mSubTopic = mTopic?.subtopics.find(subtopic => subtopic.title === subtopicTitle);
+
+//   if (!mSubTopic) return;
+
+//   if (!isSubtopicUnlocked(topicTitle, subtopicTitle)) {
+//     toast({ title: "Lesson Locked", description: "Complete previous lessons to unlock this one." });
+//     return;
+//   }
+
+//   // INSTANT: Change the title and check cache
+//   setSelected(subtopicTitle);
+
+//   if (mSubTopic.theory) {
+//     // CACHE HIT: Show immediately
+//     setTheory(mSubTopic.theory);
+//     setMedia(type === 'video & text course' ? mSubTopic.youtube : mSubTopic.image);
+//   } else {
+//     // CACHE MISS: Show loading popup and start generation
+//     setShowLoadingPopup(true);
+//     setLoadingSubtopic(subtopicTitle);
+//     simulateProgress('theory');
+    
+//     if (type === 'video & text course') {
+//       sendVideo(`${subtopicTitle} ${mainTopic}`, topicTitle, subtopicTitle, subtopicTitle);
+//     } else {
+//       sendBulkCourseContent(topicTitle, subtopicTitle);
+//     }
+//   }
+// }, [jsonData, mainTopic, isSubtopicUnlocked, type, simulateProgress]);
+
+//   async function sendImageForBatch(promptImage: string, topics: string, sub: string, theory: string) {
+//     try {
+//       // Show theory immediately
+//       setSelected(sub);
+//       setTheory(theory);
+      
+//       setImageLoading(prev => new Map(prev).set(sub, true));
+      
+//       const postURL = serverURL + '/api/image';
+//       const res = await axios.post(postURL, { prompt: promptImage });
+//       const imageUrl = res.data.url || '';
+      
+//       // Update image in cache immediately
+//       if (imageUrl) {
+//         preloadImageWithCache(imageUrl, sub);
+//         setMedia(imageUrl);
+//       }
+      
+//       // Find the subtopic and update its image
+//       const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+//       const mTopic = topicsList.find(t => t.title === topics);
+//       const mSubTopic = mTopic?.subtopics.find(s => s.title === sub);
+      
+//       if (mSubTopic) {
+//         mSubTopic.image = imageUrl;
+//         mSubTopic.done = true;
+        
+//         // Save to sessionStorage and update course
+//         sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+//         updateCourse();
+//       }
+      
+//       setImageLoading(prev => {
+//         const newMap = new Map(prev);
+//         newMap.delete(sub);
+//         return newMap;
+//       });
+      
+//       setIsLoading(false);
+//     } catch (error) {
+//       console.error(error);
+//       setMedia(''); // or set a placeholder
+//       setIsLoading(false);
+//     }
+//   }
+
+//   async function sendPrompt(prompt, promptImage, topics, sub) {
+//     const dataToSend = {
+//       prompt: prompt,
+//     };
+//     try {
+//       const postURL = serverURL + '/api/generate';
+//       const res = await axios.post(postURL, dataToSend);
+//       const generatedText = res.data.text;
+//       const htmlContent = generatedText;
+//       try {
+//         const parsedJson = htmlContent;
+//         sendImage(parsedJson, promptImage, topics, sub);
+//       } catch (error) {
+//         console.error(error);
+//         toast({
+//           title: "Error",
+//           description: "Internal Server Error",
+//         });
+//         setIsLoading(false);
+//       }
+
+//     } catch (error) {
+//       console.error(error);
+//       toast({
+//         title: "Error",
+//         description: "Internal Server Error",
+//       });
+//       setIsLoading(false);
+//     }
+//   }
+
+//   async function sendImage(parsedJson, promptImage, topics, sub) {
+//     const dataToSend = {
+//       prompt: promptImage,
+//     };
+//     try {
+//       const postURL = serverURL + '/api/image';
+//       const res = await axios.post(postURL, dataToSend);
+//       try {
+//         const generatedText = res.data.url;
+//         sendData(generatedText, parsedJson, topics, sub);
+//       } catch (error) {
+//         console.error(error);
+//         toast({
+//           title: "Error",
+//           description: "Internal Server Error",
+//         });
+//         setIsLoading(false);
+//       }
+
+//     } catch (error) {
+//       console.error(error);
+//       toast({
+//         title: "Error",
+//         description: "Internal Server Error",
+//       });
+//       setIsLoading(false);
+//     }
+//   }
+
+//   async function sendData(image, theory, topics, sub) {
+//     const topicsList =
+//       jsonData?.course_topics ||
+//       jsonData?.[mainTopic?.toLowerCase()];
+
+//     if (!topicsList) {
+//       console.error('Topics list not found', jsonData);
+//       setIsLoading(false);
+//       return;
+//     }
+
+//     const mTopic = topicsList.find(topic => topic.title === topics);
+
+//     if (!mTopic) {
+//       console.error('Main topic not found:', topics);
+//       setIsLoading(false);
+//       return;
+//     }
+
+//     const mSubTopic = mTopic.subtopics?.find(
+//       subtopic => subtopic.title === sub
+//     );
+
+//     if (!mSubTopic) {
+//       console.error('Subtopic not found:', sub);
+//       setIsLoading(false);
+//       return;
+//     }
+
+//     // ✅ SAFE TO MUTATE NOW
+//     mSubTopic.theory = theory;
+//     mSubTopic.image = image;
+//     mSubTopic.done = true;
+
+//     // Batch update all states at once
+//     setSelected(mSubTopic.title);
+//     setTheory(theory);
+//     setMedia(image); // Always set media here
+
+//     setIsLoading(false);
+    
+//     // Save to sessionStorage and update course
+//     sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+//     updateCourse();
+//   }
+
+//   async function sendDataVideo(image, theory, topics, sub) {
+//     const topicsList =
+//       jsonData?.course_topics ||
+//       jsonData?.[mainTopic?.toLowerCase()];
+
+//     if (!topicsList) {
+//       setIsLoading(false);
+//       return;
+//     }
+
+//     const mTopic = topicsList.find(topic => topic.title === topics);
+//     if (!mTopic) {
+//       setIsLoading(false);
+//       return;
+//     }
+
+//     const mSubTopic = mTopic.subtopics?.find(
+//       subtopic => subtopic.title === sub
+//     );
+
+//     if (!mSubTopic) {
+//       setIsLoading(false);
+//       return;
+//     }
+
+//     mSubTopic.theory = theory;
+//     mSubTopic.youtube = image;
+//     mSubTopic.done = true;
+
+//     setSelected(mSubTopic.title);
+//     setTheory(theory);
+//     setMedia(image);
+
+//     setIsLoading(false);
+//     updateCourse();
+//   }
+
+//   async function updateCourse() {
+//     CountDoneTopics();
+//     sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+//     const dataToSend = {
+//       content: JSON.stringify(jsonData),
+//       courseId: courseId
+//     };
+//     try {
+//       const postURL = serverURL + '/api/update';
+//       await axios.post(postURL, dataToSend);
+//     } catch (error) {
+//       console.error(error);
+//       toast({
+//         title: "Error",
+//         description: "Internal Server Error",
+//       });
+//       setIsLoading(false);
+//     }
+//   }
+
+//   async function sendVideo(query, mTopic, mSubTopic, subtop) {
+//     const dataToSend = {
+//       prompt: query,
+//     };
+//     try {
+//       const postURL = serverURL + '/api/yt';
+//       const res = await axios.post(postURL, dataToSend);
+
+//       try {
+//         const generatedText = res.data.url;
+//         sendTranscript(generatedText, mTopic, mSubTopic, subtop);
+//       } catch (error) {
+//         console.error(error);
+//         toast({
+//           title: "Error",
+//           description: "Internal Server Error",
+//         });
+//         setIsLoading(false);
+//       }
+
+//     } catch (error) {
+//       console.error(error);
+//       toast({
+//         title: "Error",
+//         description: "Internal Server Error",
+//       });
+//       setIsLoading(false);
+//     }
+//   }
+
+//   async function sendTranscript(url, mTopic, mSubTopic, subtop) {
+//     const dataToSend = {
+//       prompt: url,
+//     };
+//     try {
+//       const postURL = serverURL + '/api/transcript';
+//       const res = await axios.post(postURL, dataToSend);
+
+//       try {
+//         const generatedText = res.data.url;
+//         const allText = generatedText.map(item => item.text);
+//         const concatenatedText = allText.join(' ');
+//         const prompt = `Strictly in ${lang}, Summarize this theory in a teaching way :- ${concatenatedText}.`;
+//         sendSummery(prompt, url, mTopic, mSubTopic);
+//       } catch (error) {
+//         console.error(error)
+//         const prompt = `Strictly in ${lang}, Explain me about this subtopic of ${mainTopic} with examples :- ${subtop}. Please Strictly Don't Give Additional Resources And Images.`;
+//         sendSummery(prompt, url, mTopic, mSubTopic);
+//       }
+
+//     } catch (error) {
+//       console.error(error)
+//       const prompt = `Strictly in ${lang}, Explain me about this subtopic of ${mainTopic} with examples :- ${subtop}.  Please Strictly Don't Give Additional Resources And Images.`;
+//       sendSummery(prompt, url, mTopic, mSubTopic);
+//     }
+//   }
+
+//   async function sendSummery(prompt, url, mTopic, mSubTopic) {
+//     const dataToSend = {
+//       prompt: prompt,
+//     };
+//     try {
+//       const postURL = serverURL + '/api/generate';
+//       const res = await axios.post(postURL, dataToSend);
+//       const generatedText = res.data.text;
+//       const htmlContent = generatedText;
+//       try {
+//         const parsedJson = htmlContent;
+//         sendDataVideo(url, parsedJson, mTopic, mSubTopic);
+//       } catch (error) {
+//         console.error(error);
+//         toast({
+//           title: "Error",
+//           description: "Internal Server Error",
+//         });
+//         setIsLoading(false);
+//       }
+
+//     } catch (error) {
+//       console.error(error);
+//       toast({
+//         title: "Error",
+//         description: "Internal Server Error",
+//       });
+//       setIsLoading(false);
+//     }
+//   }
+
+//   async function htmlDownload() {
+//     try {
+//       setExporting(true);
+
+//       const topics =
+//         jsonData?.course_topics ||
+//         jsonData?.[mainTopic?.toLowerCase()];
+
+//       if (!topics || !Array.isArray(topics)) {
+//         toast({
+//           title: "Export Failed",
+//           description: "Course topics not found",
+//         });
+//         setExporting(false);
+//         return;
+//       }
+
+//       const combinedHtml = await getCombinedHtml(mainTopic, topics);
+
+//       const tempDiv = document.createElement("div");
+//       tempDiv.style.width = "100%";
+//       tempDiv.innerHTML = combinedHtml;
+//       document.body.appendChild(tempDiv);
+
+//       const options = {
+//         filename: `${mainTopic}.pdf`,
+//         image: { type: "jpeg", quality: 1 },
+//         margin: [15, 15, 15, 15],
+//         pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+//         html2canvas: {
+//           scale: 2,
+//           useCORS: true,
+//         },
+//         jsPDF: { unit: "pt", format: "a4", orientation: "portrait" },
+//       };
+
+//       await html2pdf().from(tempDiv).set(options).save();
+
+//       document.body.removeChild(tempDiv);
+//     } catch (error) {
+//       console.error("PDF Export Error:", error);
+//       toast({
+//         title: "Export Failed",
+//         description: "Something went wrong while exporting PDF.",
+//       });
+//     } finally {
+//       setExporting(false);
+//     }
+//   }
+
+//   async function getCombinedHtml(mainTopic, topics) {
+
+//     // ✅ ADD THIS BLOCK HERE
+//     if (!topics || !Array.isArray(topics)) {
+//       console.error("Invalid topics passed to getCombinedHtml:", topics);
+//       return "<p>No topics available</p>";
+//     }
+//     async function toDataUrl(url) {
+//       return new Promise((resolve, reject) => {
+//         const xhr = new XMLHttpRequest();
+
+//         xhr.onload = function () {
+//           const reader = new FileReader();
+//           reader.onloadend = function () {
+//             resolve(reader.result);
+//           };
+//           reader.readAsDataURL(xhr.response);
+//         };
+
+//         xhr.onerror = function () {
+//           reject({
+//             status: xhr.status,
+//             statusText: xhr.statusText,
+//           });
+//         };
+
+//         xhr.open("GET", url);
+//         xhr.responseType = "blob";
+//         xhr.send();
+//       }).catch(error => {
+//         console.error(`Failed to fetch image at ${url}:`, error);
+//         return ''; // Fallback or placeholder
+//       });
+//     }
+
+//     const topicsHtml = topics.map(topic => `
+//         <h3 style="font-size: 18pt; font-weight: bold; margin: 0; margin-top: 15px;">${topic.title}</h3>
+//         ${topic.subtopics.map(subtopic => `
+//             <p style="font-size: 16pt; margin-top: 10px;">${subtopic.title}</p>
+//         `).join('')}
+//     `).join('');
+
+//     const theoryPromises = topics.map(async topic => {
+//       const subtopicPromises = topic.subtopics.map(async (subtopic, index, array) => {
+//         const imageUrl = type === 'text & image course' ? await toDataUrl(subtopic.image) : ``;
+//         return `
+//             <div>
+//                 <p style="font-size: 16pt; margin-top: 20px; font-weight: bold;">
+//                     ${subtopic.title}
+//                 </p>
+//                 <div style="font-size: 12pt; margin-top: 15px;">
+//                     ${subtopic.done
+//             ? `
+//                             ${type === 'text & image course'
+//               ? (imageUrl ? `<img style="margin-top: 10px;" src="${imageUrl}" alt="${subtopic.title} image">` : `<a style="color: #0000FF;" href="${subtopic.image}" target="_blank">View example image</a>`)
+//               : `<a style="color: #0000FF;" href="https://www.youtube.com/watch?v=${subtopic.youtube}" target="_blank" rel="noopener noreferrer">Watch the YouTube video on ${subtopic.title}</a>`
+//             }
+//                             <div style="margin-top: 10px;">${subtopic.theory}</div>
+//                         `
+//             : `<div style="margin-top: 10px;">Please visit ${subtopic.title} topic to export as PDF. Only topics that are completed will be added to the PDF.</div>`
+//           }
+//                 </div>
+//             </div>
+//         `;
+//       });
+//       const subtopicHtml = await Promise.all(subtopicPromises);
+//       return `
+//             <div style="margin-top: 30px;">
+//                 <h3 style="font-size: 18pt; text-align: center; font-weight: bold; margin: 0;">
+//                     ${topic.title}
+//                 </h3>
+//                 ${subtopicHtml.join('')}
+//             </div>
+//         `;
+//     });
+//     const theoryHtml = await Promise.all(theoryPromises);
+
+//     return `
+//     <div class="html2pdf__page-break" 
+//          style="display: flex; align-items: center; justify-content: center; text-align: center; margin: 0 auto; max-width: 100%; height: 11in;">
+//         <h1 style="font-size: 30pt; font-weight: bold; margin: 0;">
+//             ${mainTopic}
+//         </h1>
+//     </div>
+//     <div class="html2pdf__page-break" style="text-align: start; margin-top: 30px; margin-right: 16px; margin-left: 16px;">
+//         <h2 style="font-size: 24pt; font-weight: bold; margin: 0;">Index</h2>
+//         <br>
+//         <hr>
+//         ${topicsHtml}
+//     </div>
+//     <div style="text-align: start; margin-right: 16px; margin-left: 16px;">
+//         ${theoryHtml.join('')}
+//     </div>
+//     `;
+//   }
+
+//   const normalize = (s: string) =>
+//     s.toLowerCase().replace(/\s+/g, ' ').trim();
+
+//   async function redirectExam() {
+//     if (isLoading) return;
+
+//     // Check if all subtopics are completed
+//     if (!isOrgAdmin && jsonData) {
+//       const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+//       if (topicsList) {
+//         let allDone = true;
+//         topicsList.forEach(t => {
+//           t.subtopics.forEach(s => {
+//             if (!completedSubtopics.some(cs => cs.topicTitle === t.title && cs.subtopicTitle === s.title)) {
+//               allDone = false;
+//             }
+//           });
+//         });
+
+//         if (!allDone) {
+//           toast({
+//             title: "Quiz Locked",
+//             description: "Please complete all lessons before taking the quiz.",
+//           });
+//           return;
+//         }
+//       }
+//     }
+
+//     // Check for manual quizzes first
+//     if (jsonData?.quizzes && Array.isArray(jsonData.quizzes) && jsonData.quizzes.length > 0) {
+//       const manualQuizzes = jsonData.quizzes.map((q, index) => ({
+//         id: index + 1,
+//         question: q.question,
+//         options: q.options.map((opt, i) => ({
+//           id: String.fromCharCode(97 + i), // 'a', 'b', 'c', ...
+//           text: opt
+//         })),
+//         correctAnswer: q.answer, // Assuming 'answer' stores the correct option text or ID. QuizPage logic handles both.
+//         answer: q.answer // Pass original answer for QuizPage flexible matching
+//       }));
+
+//       navigate(`/course/${courseId}/quiz`, {
+//         state: {
+//           topic: mainTopic,
+//           courseId,
+//           questions: manualQuizzes,
+//         },
+//       });
+//       return;
+//     }
+
+//     if (!jsonData?.course_topics || !Array.isArray(jsonData.course_topics)) {
+//       console.error('Invalid course_topics:', jsonData);
+//       toast({
+//         title: "Error",
+//         description: "Course data not loaded",
+//       });
+//       return;
+//     }
+
+//     if (!mainTopic) {
+//       console.error('mainTopic missing');
+//       toast({
+//         title: "Error",
+//         description: "Main topic not selected",
+//       });
+//       return;
+//     }
+
+//     // ✅ Collect ALL subtopics from ALL chapters
+//     const allSubtopics = jsonData.course_topics.flatMap((topic: any) =>
+//       Array.isArray(topic.subtopics) ? topic.subtopics : []
+//     );
+
+//     if (!allSubtopics.length) {
+//       console.error('No subtopics found:', jsonData.course_topics);
+//       toast({
+//         title: "Error",
+//         description: "No subtopics available for exam",
+//       });
+//       return;
+//     }
+
+//     // ✅ Build subtopics string
+//     const subtopicsString = allSubtopics
+//       .map((sub: any) => sub.title)
+//       .join(', ');
+
+//     setIsLoading(true);
+
+//     try {
+//       const response = await axios.post(
+//         `${serverURL}/api/aiexam`,
+//         {
+//           courseId,
+//           mainTopic,          // "REACT"
+//           subtopicsString,    // all React subtopics
+//           lang,
+//         }
+//       );
+
+//       if (!response.data?.success) {
+//         throw new Error('API failed');
+//       }
+
+//       const questions = JSON.parse(response.data.message);
+
+//       navigate(`/course/${courseId}/quiz`, {
+//         state: {
+//           topic: mainTopic,
+//           courseId,
+//           questions,
+//         },
+//       });
+//     } catch (error) {
+//       console.error('redirectExam error:', error);
+//       toast({
+//         title: "Error",
+//         description: "Failed to generate exam",
+//       });
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   }
+
+//   const renderTopicsList = (topics) => {
+//     if (!topics || !Array.isArray(topics)) return null;
+//     return (
+//       <Accordion
+//         type="single"
+//         collapsible
+//         className="w-full"
+//         defaultValue={topics[0]?.title}
+//       >
+//         {topics.map((topic) => (
+//           <AccordionItem key={topic.title} value={topic.title} className="border-none">
+//             <AccordionTrigger className="py-2 text-left px-3 hover:bg-accent/50 rounded-md w-full">
+//               {topic.title}
+//             </AccordionTrigger>
+//             <AccordionContent className="pl-2">
+//               {topic.subtopics.map((subtopic) => (
+//                 <div
+//                   onClick={() => {
+//                     if (isSubtopicUnlocked(topic.title, subtopic.title)) {
+//                       handleSelect(topic.title, subtopic.title);
+//                     } else {
+//                       toast({ title: "Locked", description: "Complete previous lessons to unlock this one." });
+//                     }
+//                   }}
+//                   key={subtopic.title}
+//                   className={cn(
+//                     "flex items-center px-4 py-2 rounded-md transition-colors",
+//                     isSubtopicUnlocked(topic.title, subtopic.title) ? "cursor-pointer hover:bg-accent/50" : "opacity-50 cursor-not-allowed",
+//                     selected === subtopic.title && "bg-accent/50 font-medium text-primary"
+//                   )}
+//                 >
+//                   {completedSubtopics.some(s => s.topicTitle === topic.title && s.subtopicTitle === subtopic.title) ? (
+//                     <span className="mr-2 text-primary">✓</span>
+//                   ) : !isSubtopicUnlocked(topic.title, subtopic.title) && (
+//                     <Lock className="w-3 h-3 mr-2 opacity-50" />
+//                   )}
+//                   <span className="text-sm">{subtopic.title}</span>
+//                 </div>
+//               ))}
+//             </AccordionContent>
+//           </AccordionItem>
+//         ))}
+//       </Accordion>
+//     );
+//   }
+
+//   function certificateCheck() {
+//     if (isComplete) {
+//       finish();
+//     } else {
+//       toast({
+//         title: "Completion Certificate",
+//         description: "Complete course to get certificate",
+//       });
+//     }
+//   }
+
+//   async function finish() {
+//     if (sessionStorage.getItem('first') === 'true') {
+//       if (!end) {
+//         const today = new Date();
+//         const formattedDate = today.toLocaleDateString('en-GB');
+//         navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: formattedDate } });
+//       } else {
+//         navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: end } });
+//       }
+
+//     } else {
+//       const dataToSend = {
+//         courseId: courseId
+//       };
+//       try {
+//         const postURL = serverURL + '/api/finish';
+//         const response = await axios.post(postURL, dataToSend);
+//         if (response.data.success) {
+//           const today = new Date();
+//           const formattedDate = today.toLocaleDateString('en-GB');
+//           sessionStorage.setItem('first', 'true');
+//           sendEmail(formattedDate);
+//         }
+//       } catch (error) {
+//         console.error(error);
+//       }
+//     }
+//   }
+
+//   async function sendEmail(formattedDate) {
+//     const userName = sessionStorage.getItem('mName');
+//     const email = sessionStorage.getItem('email');
+//     const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+//                 <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
+//                 <html lang="en">
+                
+//                   <head></head>
+//                  <div id="__react-email-preview" style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0;">Certificate<div> ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿</div>
+//                  </div>
+                
+//                   <body style="padding:20px; margin-left:auto;margin-right:auto;margin-top:auto;margin-bottom:auto;background-color:#f6f9fc;font-family:ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, Arial, &quot;Noto Sans&quot;, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;, &quot;Noto Color Emoji&quot;">
+//                     <table align="center" role="presentation" cellSpacing="0" cellPadding="0" border="0" height="80%" width="100%" style="max-width:37.5em;max-height:80%; margin-left:auto;margin-right:auto;margin-top:80px;margin-bottom:80px;width:465px;border-radius:0.25rem;border-width:1px;background-color:#fff;padding:20px">
+//                       <tr style="width:100%">
+//                         <td>
+//                           <table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%" style="margin-top:32px">
+//                             <tbody>
+//                               <tr>
+//                                 <td><img alt="Vercel" src="${appLogo}" width="40" height="37" style="display:block;outline:none;border:none;text-decoration:none;margin-left:auto;margin-right:auto;margin-top:0px;margin-bottom:0px" /></td>
+//                               </tr>
+//                             </tbody>
+//                           </table>
+//                           <h1 style="margin-left:0px;margin-right:0px;margin-top:30px;margin-bottom:30px;padding:0px;text-align:center;font-size:24px;font-weight:400;color:rgb(0,0,0)">Completion Certificate </h1>
+//                           <p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Hello <strong>${userName}</strong>,</p>
+//                           <p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">We are pleased to inform you that you have successfully completed the ${mainTopic} and are now eligible for your course completion certificate. Congratulations on your hard work and dedication throughout the course!</p>
+//                           <table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%" style="margin-bottom:32px;margin-top:32px;text-align:center">
+//                             <tbody>
+//                               <tr>
+//                                 <td><a href="${websiteURL}" target="_blank" style="p-x:20px;p-y:12px;line-height:100%;text-decoration:none;display:inline-block;max-width:100%;padding:12px 20px;border-radius:0.25rem;background-color: #007BFF;text-align:center;font-size:12px;font-weight:600;color:rgb(255,255,255);text-decoration-line:none"><span></span><span style="p-x:20px;p-y:12px;max-width:100%;display:inline-block;line-height:120%;text-decoration:none;text-transform:none;mso-padding-alt:0px;mso-text-raise:9px"><span>Get Certificate</span></a></td>
+//                               </tr>
+//                             </tbody>
+//                           </table>
+//                           <p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Best,<p target="_blank" style="color:rgb(0,0,0);text-decoration:none;text-decoration-line:none">The <strong>${companyName}</strong> Team</p></p>
+//                           </td>
+//                       </tr>
+//                     </table>
+//                   </body>
+                
+//                 </html>`;
+
+//     try {
+//       const postURL = serverURL + '/api/sendcertificate';
+//       await axios.post(postURL, { html, email }).then(res => {
+//         navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: formattedDate } });
+//       }).catch(error => {
+//         console.error(error);
+//         navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: formattedDate } });
+//       });
+
+//     } catch (error) {
+//       console.error(error);
+//       navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: formattedDate } });
+//     }
+//   }
+
+//   // In the useEffect that sets initial subtopic
+// useEffect(() => {
+//   // Only run if we have data
+//   if (!courseData || !jsonData) return;
+
+//   const updateQuizStatus = async () => {
+//     try {
+//       const response = await axios.post(serverURL + '/api/getmyresult', { courseId, userId });
+//       if (response.data.success) {
+//         setIsQuizPassed(response.data.message || (courseData?.pass === true));
+//       }
+//     } catch (error) {
+//       console.error('Error fetching quiz status:', error);
+//     }
+//   };
+
+//   updateQuizStatus();
+//   loadMessages();
+//   getNotes();
+  
+//   // Ensure the page starts at the top when loaded
+//   if (mainContentRef.current) {
+//     mainContentRef.current.scrollTop = 0;
+//   }
+//   window.scrollTo(0, 0);
+
+//   if (!mainTopic) {
+//     if (!isLoading && !courseData) {
+//       navigate("/create");
+//     }
+//   } else {
+//     const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+//     if (topicsList && topicsList.length > 0) {
+//       const mainTopicData = topicsList[0];
+//       const firstSubtopic = mainTopicData.subtopics[0];
+
+//       // If nothing selected yet, select first
+//       if (!selected) {
+//         setSelected(firstSubtopic.title);
+        
+//         // FIX 1: Immediately show theory if it exists, otherwise show a default message
+//         if (firstSubtopic.theory) {
+//           setTheory(firstSubtopic.theory);
+//         } else {
+//           // Show a loading message or placeholder
+//           setTheory(`<p>Loading content for ${firstSubtopic.title}...</p>`);
+          
+//           // Trigger content generation in the background
+//           setTimeout(() => {
+//             if (type === 'video & text course') {
+//               const query = `${firstSubtopic.title} ${mainTopic} in english`;
+//               sendVideo(query, mainTopicData.title, firstSubtopic.title, firstSubtopic.title);
+//             } else {
+//               sendBulkCourseContent(mainTopicData.title, firstSubtopic.title);
+//             }
+//           }, 100);
+//         }
+        
+//         // FIX 2: Immediately show image if it exists
+//         if (type === 'video & text course') {
+//           if (firstSubtopic.youtube) {
+//             setMedia(firstSubtopic.youtube);
+//           }
+//         } else {
+//           if (firstSubtopic.image) {
+//             setMedia(firstSubtopic.image);
+//             // Preload immediately
+//             preloadImageWithCache(firstSubtopic.image, firstSubtopic.title);
+//           } else {
+//             // Generate image in background
+//             setTimeout(() => {
+//               const promptImage = `Example of ${firstSubtopic.title} in ${mainTopic}`;
+//               sendImageForBatch(promptImage, mainTopicData.title, firstSubtopic.title, firstSubtopic.theory || '');
+//             }, 200);
+//           }
+//         }
+//       }
+//     }
+//   }
+
+//   setIsLoading(false);
+//   sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+//   CountDoneTopics(isQuizPassed);
+// }, [courseData, jsonData, completedSubtopics, isOrgAdmin, isQuizPassed, preloadImageWithCache]);
+
+//   return (
+//     <div className="flex flex-col h-screen bg-background overflow-hidden">
+//       {/* Loading Popup */}
+//       <LoadingPopup 
+//         isOpen={showLoadingPopup}
+//         stage={loadingStage}
+//         subtopic={loadingSubtopic}
+//         progress={loadingProgress}
+//       />
+
+//       <header className="border-b border-border/40 py-2 px-4 flex justify-between items-center sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
+//         <div className="flex items-center gap-4">
+//           <Drawer>
+//             <DrawerTrigger asChild>
+//               <Button
+//                 variant="ghost"
+//                 size="icon"
+//                 className="md:hidden"
+//               >
+//                 <Menu className="h-5 w-5" />
+//               </Button>
+//             </DrawerTrigger>
+//             <DrawerContent className="max-h-[80vh]">
+//               <div className="p-4">
+//                 <h2 className="text-xl font-bold mb-4">Course Content</h2>
+//                 <ScrollArea className="h-[60vh]">
+//                   <div className="pr-4">
+//                     {jsonData && renderTopicsList(jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()])}
+//                     <p onClick={redirectExam} className='py-2 text-left px-3 hover:bg-accent/50 rounded-md cursor-pointer'>{pass === true ? <span className="mr-2 text-primary">✓</span> : <></>}{mainTopic} Quiz</p>
+//                   </div>
+//                 </ScrollArea>
+//               </div>
+//             </DrawerContent>
+//           </Drawer>
+
+//           <div className="flex items-center gap-2">
+//             {!isOrgAdmin && (
+//               <div className="relative w-8 h-8">
+//                 <svg className="w-8 h-8" viewBox="0 0 36 36">
+//                   <circle cx="18" cy="18" r="16" fill="none" className="stroke-muted-foreground/20" strokeWidth="2" />
+//                   <circle
+//                     cx="18"
+//                     cy="18"
+//                     r="16"
+//                     fill="none"
+//                     className="stroke-primary"
+//                     strokeWidth="2"
+//                     strokeDasharray="100"
+//                     strokeDashoffset={100 - percentage}
+//                     transform="rotate(-90 18 18)"
+//                   />
+//                   <text
+//                     x="18"
+//                     y="18"
+//                     dominantBaseline="middle"
+//                     textAnchor="middle"
+//                     className="fill-foreground text-[10px] font-medium"
+//                   >
+//                     {percentage}%
+//                   </text>
+//                 </svg>
+//               </div>
+//             )}
+//             <h1 className="text-xl font-bold">{mainTopic}</h1>
+//           </div>
+//         </div>
+
+//         <div className="flex items-center gap-2">
+//           <Button
+//             variant="ghost"
+//             size="icon"
+//             onClick={() => setIsMenuOpen(!isMenuOpen)}
+//             className="hidden md:flex"
+//           >
+//             <Menu className="h-5 w-5" />
+//           </Button>
+//           <ToggleGroup type="single" className="hidden sm:flex">
+//             <Button variant="ghost" size="sm" asChild>
+//               <Link to='/dashboard'>
+//                 <Home className="h-4 w-4 mr-1" /> Home
+//               </Link>
+//             </Button>
+//             {(plan !== "free" || isOrgAdmin || userRole === 'student') && isQuizPassed && (
+//               <Button
+//                 onClick={certificateCheck}
+//                 variant="default"
+//                 size="sm"
+//                 className={cn(
+//                   "shadow-none",
+//                   (userRole === 'student' || !!sessionStorage.getItem('orgId'))
+//                     ? "bg-yellow-600 hover:bg-yellow-700 text-white border-none"
+//                     : "bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
+//                 )}
+//               >
+//                 <Award className="h-4 w-4 mr-1" /> Download Certificate
+//               </Button>
+//             )}
+
+//             <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm" asChild>
+//               <span className='cursor-pointer'><Download className="h-4 w-4 mr-1" />{exporting ? 'Exporting...' : 'Export'}</span>
+//             </Button>
+//             <ShareOnSocial
+//               textToShare={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+//               link={websiteURL + '/shareable?id=' + courseId}
+//               linkTitle={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+//               linkMetaDesc={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+//               linkFavicon={appLogo}
+//               noReferer
+//             >
+//               <Button variant="ghost" size="sm" asChild>
+//                 <span className='cursor-pointer'><Share className="h-4 w-4 mr-1" /> Share</span>
+//               </Button>
+//             </ShareOnSocial>
+//           </ToggleGroup>
+//           <ThemeToggle />
+//         </div>
+//       </header>
+
+//       <div className="flex flex-1 overflow-hidden">
+//         <div className={cn(
+//           "bg-sidebar border-r border-border/40 transition-all duration-300 overflow-hidden hidden md:block",
+//           isMenuOpen ? "w-64" : "w-0"
+//         )}>
+//           <ScrollArea className="h-full">
+//             <div className="p-4">
+//               {jsonData && renderTopicsList(jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()])}
+//               <p onClick={redirectExam} className='py-2 text-left px-3 hover:bg-accent/50 rounded-md cursor-pointer'>{pass === true ? <span className="mr-2 text-primary">✓</span> : <></>}{mainTopic} Quiz</p>
+//             </div>
+//           </ScrollArea>
+//         </div>
+
+//         <div className="flex-1 overflow-hidden">
+//           <ScrollArea className="h-full" viewportRef={mainContentRef}>
+//             <main className="p-6 max-w-5xl mx-auto">
+//               {isLoading ? (
+//                 <CourseContentSkeleton />
+//               ) : (
+//                 <>
+//                   <h1 className="text-3xl font-bold mb-6">{selected}</h1>
+//                   <div className="space-y-4">
+//                     {type === 'video & text course' ? (
+//                       media ? (
+//                         <div>
+//                           <YouTube key={media} className='mb-5' videoId={media} opts={opts} />
+//                         </div>
+//                       ) : (
+//                         <div className="h-96 bg-muted flex items-center justify-center rounded-lg">
+//                           <p className="text-muted-foreground">Loading video...</p>
+//                         </div>
+//                       )
+//                     ) : (
+//                       <div className="relative w-full h-96 max-md:h-64 overflow-hidden rounded-lg bg-muted">
+//                         {media ? (
+//                           <img 
+//                             key={media}
+//                             src={media}
+//                             fetchpriority="high"
+//                             className={cn(
+//                               "w-full h-full object-cover transition-opacity duration-500",
+//                               imageLoading.has(selected) ? "opacity-0" : "opacity-100"
+//                             )}
+//                             alt={selected}
+//                             onLoad={() => {
+//                               setImageLoading(prev => {
+//                                 const newMap = new Map(prev);
+//                                 newMap.delete(selected);
+//                                 return newMap;
+//                               });
+//                             }}
+//                             onError={(e) => {
+//                               e.target.onerror = null; 
+//                               e.target.src = `https://source.unsplash.com/featured/?${encodeURIComponent(selected)},${encodeURIComponent(mainTopic)}`;
+//                             }}
+//                           />
+//                         ) : (
+//                           <div className="absolute inset-0 flex flex-col items-center justify-center space-y-3">
+//                             <Skeleton className="w-full h-full absolute inset-0" />
+//                             <div className="z-10 flex flex-col items-center">
+//                               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+//                               <span className="text-xs font-medium mt-2">Fetching Visuals...</span>
+//                             </div>
+//                           </div>
+//                         )}
+//                       </div>
+//                     )}
+//                     {theory && <StyledText text={theory} />}
+
+//                     {!isOrgAdmin && (
+//                       <div className="pt-8 border-t border-border mt-8 flex justify-center">
+//                         <Button
+//                           onClick={handleMarkAsComplete}
+//                           className="px-8 py-6 text-lg gap-2"
+//                         >
+//                           {completedSubtopics.some(s => s.subtopicTitle === selected) ? (
+//                             <>Next Lesson <CheckCircle2 className="w-5 h-5" /></>
+//                           ) : (
+//                             <>Mark as Complete & Next <CheckCircle2 className="w-5 h-5" /></>
+//                           )}
+//                         </Button>
+//                       </div>
+//                     )}
+//                   </div>
+//                 </>
+//               )}
+//             </main>
+//           </ScrollArea>
+//         </div>
+//       </div>
+
+//       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border p-2 flex justify-around items-center">
+//         <Button variant="ghost" size="sm">
+//           <Link to='/dashboard'>
+//             <Home className="h-5 w-5" />
+//           </Link>
+//         </Button>
+//         {(plan !== "free" || isOrgAdmin || userRole === 'student') && isQuizPassed && (
+//           <Button
+//             onClick={certificateCheck}
+//             variant="ghost"
+//             size="sm"
+//             className={cn(
+//               "font-bold",
+//               (userRole === 'student' || !!sessionStorage.getItem('orgId')) ? "text-yellow-600" : "text-primary"
+//             )}
+//           >
+//             <Award className="h-5 w-5" />
+//           </Button>
+//         )}
+//         <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm">
+//           <Download className="h-5 w-5" />
+//         </Button>
+//         <ShareOnSocial
+//           textToShare={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+//           link={websiteURL + '/shareable?id=' + courseId}
+//           linkTitle={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+//           linkMetaDesc={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+//           linkFavicon={appLogo}
+//           noReferer
+//         >
+//           <Button variant="ghost" size="sm">
+//             <Share className="h-5 w-5" />
+//           </Button>
+//         </ShareOnSocial>
+//       </div>
+
+//       <div className="fixed bottom-16 right-6 flex flex-col gap-3 md:bottom-6">
+//         <Button
+//           size="icon"
+//           className="rounded-full bg-primary shadow-lg hover:shadow-xl"
+//           onClick={() => setIsChatOpen(true)}
+//         >
+//           <MessageCircle className="h-5 w-5" />
+//         </Button>
+//         <Button
+//           size="icon"
+//           className="rounded-full bg-primary shadow-lg hover:shadow-xl"
+//           onClick={() => setIsNotesOpen(true)}
+//         >
+//           <ClipboardCheck className="h-5 w-5" />
+//         </Button>
+//       </div>
+
+//       {isMobile ? (
+//         <Sheet open={isChatOpen} onOpenChange={setIsChatOpen}>
+//           <SheetContent side="bottom" className="h-[90vh] sm:max-w-full p-0">
+//             <div className="flex flex-col h-full p-4">
+//               <div className="py-2 px-4 border-b border-border mb-2">
+//                 <h2 className="text-lg font-semibold">Course Assistant</h2>
+//               </div>
+//               <ScrollArea className="flex-1 pr-4 mb-4">
+//                 <div className="space-y-4 pt-2 px-4">
+//                   {messages.map((message) => (
+//                     <div
+//                       key={message.id}
+//                       className={cn(
+//                         "flex w-max max-w-[80%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
+//                         message.sender === "user"
+//                           ? "ml-auto bg-primary text-primary-foreground"
+//                           : "bg-muted"
+//                       )}
+//                     >
+//                       <StyledText text={message.text} />
+//                     </div>
+//                   ))}
+//                 </div>
+//               </ScrollArea>
+
+//               <div className="flex items-center gap-2 p-4 border-t border-border">
+//                 <Input
+//                   placeholder={isChatLoading ? "Assistant is thinking..." : "Type your message..."}
+//                   value={newMessage}
+//                   onChange={(e) => setNewMessage(e.target.value)}
+//                   disabled={isChatLoading}
+//                   onKeyDown={(e) => {
+//                     if (e.key === "Enter") {
+//                       sendMessage();
+//                     }
+//                   }}
+//                   className="flex-1"
+//                 />
+//                 <Button onClick={sendMessage} disabled={isChatLoading}>
+//                   {isChatLoading ? "..." : "Send"}
+//                 </Button>
+//               </div>
+//             </div>
+//           </SheetContent>
+//         </Sheet>
+//       ) : (
+//         <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
+//           <DialogContent className="sm:max-w-md">
+//             <DialogTitle>Course Assistant</DialogTitle>
+//             <div className="flex flex-col h-[60vh]">
+//               <ScrollArea className="flex-1 pr-4 mb-4">
+//                 <div className="space-y-4 pt-2">
+//                   {messages.map((message) => (
+//                     <div
+//                       key={message.id}
+//                       className={cn(
+//                         "flex w-2/4 max-w-[80%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
+//                         message.sender === "user"
+//                           ? "ml-auto bg-primary text-primary-foreground"
+//                           : "bg-muted"
+//                       )}
+//                     >
+//                       <StyledText text={message.text} />
+//                     </div>
+//                   ))}
+//                 </div>
+//               </ScrollArea>
+
+//               <div className="flex items-center gap-2">
+//                 <Input
+//                   placeholder={isChatLoading ? "Assistant is thinking..." : "Type your message..."}
+//                   value={newMessage}
+//                   onChange={(e) => setNewMessage(e.target.value)}
+//                   disabled={isChatLoading}
+//                   onKeyDown={(e) => {
+//                     if (e.key === "Enter") {
+//                       sendMessage();
+//                     }
+//                   }}
+//                   className="flex-1"
+//                 />
+//                 <Button onClick={sendMessage} disabled={isChatLoading}>
+//                   {isChatLoading ? "..." : "Send"}
+//                 </Button>
+//               </div>
+//             </div>
+//           </DialogContent>
+//         </Dialog>
+//       )}
+
+//       {isMobile ? (
+//         <Sheet open={isNotesOpen} onOpenChange={setIsNotesOpen}>
+//           <SheetContent side="bottom" className="h-[90vh] sm:max-w-full p-0">
+//             <div className="flex flex-col h-full p-4">
+//               <div className="py-2 px-4 border-b border-border mb-2">
+//                 <h2 className="text-lg font-semibold">Course Notes</h2>
+//               </div>
+//               <ScrollArea className="flex-1 pr-4 mb-4">
+//                 <div className="space-y-4 pt-2 px-4">
+//                   <MinimalTiptapEditor
+//                     value={value}
+//                     onChange={setValue}
+//                     className="w-full"
+//                     editorContentClassName="p-5"
+//                     output="html"
+//                     placeholder="No notes yet. Start taking notes for this course."
+//                     autofocus={true}
+//                     editable={true}
+//                     editorClassName="focus:outline-none"
+//                   />
+//                 </div>
+//               </ScrollArea>
+
+//               <div className="p-4 border-t border-border">
+//                 <div className="flex justify-end">
+//                   <Button disabled={saving} onClick={handleSaveNote}>{saving ? 'Saving...' : 'Save Note'}</Button>
+//                 </div>
+//               </div>
+//             </div>
+//           </SheetContent>
+//         </Sheet>
+//       ) : (
+//         <Dialog open={isNotesOpen} onOpenChange={setIsNotesOpen}>
+//           <DialogContent className="sm:max-w-lg">
+//             <DialogTitle>Course Notes</DialogTitle>
+//             <div className="flex flex-col h-[60vh]">
+//               <ScrollArea className="flex-1 pr-4 mb-4">
+//                 <div className="space-y-4 pt-2">
+//                   <MinimalTiptapEditor
+//                     value={value}
+//                     onChange={setValue}
+//                     className="w-full"
+//                     editorContentClassName="p-5"
+//                     output="html"
+//                     placeholder="No notes yet. Start taking notes for this course."
+//                     autofocus={true}
+//                     editable={true}
+//                     editorClassName="focus:outline-none"
+//                   />
+//                 </div>
+//               </ScrollArea>
+
+//               <div>
+//                 <div className="flex justify-end">
+//                   <Button disabled={saving} onClick={handleSaveNote}>{saving ? 'Saving...' : 'Save Note'}</Button>
+//                 </div>
+//               </div>
+//             </div>
+//           </DialogContent>
+//         </Dialog>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default CoursePage;
+
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Accordion,
@@ -12,7 +5748,7 @@ import { Content } from '@tiptap/react'
 import { MinimalTiptapEditor } from '../minimal-tiptap'
 import YouTube from 'react-youtube';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2, Loader2, Sparkles, BookOpen, Image as ImageIcon, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
@@ -33,8 +5769,130 @@ import ShareOnSocial from 'react-share-on-social';
 import StyledText from '@/components/styledText';
 import html2pdf from 'html2pdf.js';
 
-const CoursePage = () => {
+// Fallback image utility
+const getFallbackImage = (topic: string, subtopic: string) => {
+  // Unsplash curated collections for education
+  const collections = [
+    'education',
+    'learning',
+    'study',
+    'academic',
+    'knowledge'
+  ];
+  
+  const randomCollection = collections[Math.floor(Math.random() * collections.length)];
+  return `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(subtopic)},${randomCollection}`;
+};
 
+// Loading Popup Component
+const LoadingPopup = ({ isOpen, stage, subtopic, progress = 0 }) => {
+  const getStageContent = () => {
+    switch(stage) {
+      case 'theory':
+        return {
+          icon: <BookOpen className="w-8 h-8 text-blue-500 animate-pulse" />,
+          title: 'Generating Course Content',
+          message: `AI is creating comprehensive learning material for "${subtopic}"`,
+          details: 'This may take 15-20 seconds...',
+          color: 'blue'
+        };
+      case 'image':
+        return {
+          icon: <ImageIcon className="w-8 h-8 text-green-500 animate-bounce" />,
+          title: 'Fetching Visuals',
+          message: `Finding the perfect image for "${subtopic}"`,
+          details: 'Almost there...',
+          color: 'green'
+        };
+      case 'complete':
+        return {
+          icon: <Sparkles className="w-8 h-8 text-yellow-500 animate-spin" />,
+          title: 'Finalizing',
+          message: 'Polishing the content for best learning experience',
+          details: 'Just a moment...',
+          color: 'yellow'
+        };
+      default:
+        return {
+          icon: <Brain className="w-8 h-8 text-purple-500 animate-pulse" />,
+          title: 'AI is Thinking',
+          message: `Preparing your personalized course on "${subtopic}"`,
+          details: 'This may take a few seconds...',
+          color: 'purple'
+        };
+    }
+  };
+
+  const content = getStageContent();
+
+  if (!isOpen) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={() => {}}>
+      <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
+        {/* Hidden title for accessibility */}
+        <DialogTitle className="sr-only">
+          {content.title}
+        </DialogTitle>
+        <div className="flex flex-col items-center py-8 px-4">
+          {/* Animated Icon */}
+          <div className={`relative mb-6`}>
+            <div className={`absolute inset-0 rounded-full bg-${content.color}-500/20 animate-ping`}></div>
+            <div className={`relative z-10 p-4 rounded-full bg-${content.color}-500/10`}>
+              {content.icon}
+            </div>
+          </div>
+
+          {/* Visible Title */}
+          <h2 className="text-2xl font-bold text-center mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            {content.title}
+          </h2>
+
+          {/* Message */}
+          <p className="text-center text-muted-foreground mb-4">
+            {content.message}
+          </p>
+
+          {/* Progress Bar */}
+          <div className="w-full h-2 bg-muted rounded-full overflow-hidden mb-3">
+            <div 
+              className={`h-full bg-${content.color}-500 transition-all duration-300 rounded-full`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          {/* Progress Percentage */}
+          <p className="text-sm font-medium text-muted-foreground mb-2">
+            {progress}% Complete
+          </p>
+
+          {/* Loading Details with Skeleton */}
+          <div className="w-full space-y-3 mt-4">
+            <div className="flex items-center gap-3">
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+              <span className="text-sm">{content.details}</span>
+            </div>
+            
+            {/* Skeleton Previews */}
+            <div className="grid grid-cols-2 gap-2 mt-4">
+              <Skeleton className="h-12 rounded-lg" />
+              <Skeleton className="h-12 rounded-lg" />
+              <Skeleton className="h-12 rounded-lg" />
+              <Skeleton className="h-12 rounded-lg" />
+            </div>
+          </div>
+
+          {/* Fun Fact or Tip */}
+          <p className="text-xs text-muted-foreground/60 mt-6 italic">
+            ✨ AI is crafting personalized content just for you
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const CoursePage = () => {
   //ADDED FROM v4.0
   const { state } = useLocation();
   const { courseId: paramCourseId } = useParams();
@@ -48,6 +5906,17 @@ const CoursePage = () => {
       return null;
     }
   });
+
+  // Loading Popup States
+  const [showLoadingPopup, setShowLoadingPopup] = useState(false);
+  const [loadingStage, setLoadingStage] = useState('theory');
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingSubtopic, setLoadingSubtopic] = useState('');
+
+  // OPTIMIZATION: Image cache and preloading
+  const imageCache = useRef(new Set());
+  const [preloadedImages, setPreloadedImages] = useState(new Map());
+  const [imageLoading, setImageLoading] = useState(new Map());
 
   const mainTopic = courseData?.mainTopic;
   const type = courseData?.type;
@@ -84,6 +5953,170 @@ const CoursePage = () => {
   const userId = sessionStorage.getItem('uid');
   const userRole = sessionStorage.getItem('role');
   const isOrgAdmin = userRole === 'org_admin' || sessionStorage.getItem('isOrganization') === 'true';
+
+  // Optimization states
+  const [preloadedNextContent, setPreloadedNextContent] = useState(null);
+  
+  // Simple cache for API responses
+  const apiCache = useRef(new Map());
+
+  // Progress simulation function
+  const simulateProgress = useCallback((stage) => {
+    setLoadingStage(stage);
+    setLoadingProgress(0);
+    
+    const interval = setInterval(() => {
+      setLoadingProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(interval);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 800);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // OPTIMIZATION: Enhanced image preloader with queue and cache
+  const preloadImageWithCache = useCallback((url, subtopicTitle) => {
+    if (!url || imageCache.current.has(url)) return;
+    
+    imageCache.current.add(url);
+    setImageLoading(prev => new Map(prev).set(subtopicTitle, true));
+    
+    const img = new Image();
+    img.onload = () => {
+      setPreloadedImages(prev => new Map(prev).set(subtopicTitle, url));
+      setImageLoading(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(subtopicTitle);
+        return newMap;
+      });
+    };
+    img.onerror = () => {
+      setImageLoading(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(subtopicTitle);
+        return newMap;
+      });
+    };
+    img.src = url;
+  }, []);
+
+  // OPTIMIZATION: Preload all images for current and next topics
+  const preloadAllImages = useCallback(() => {
+    if (!jsonData || !mainTopic || !selected) return;
+    
+    const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+    if (!topicsList) return;
+    
+    // Flatten all subtopics
+    const allSubtopics = [];
+    topicsList.forEach(t => {
+      t.subtopics.forEach(s => {
+        allSubtopics.push({ 
+          topicTitle: t.title, 
+          subtopicTitle: s.title,
+          image: s.image,
+          theory: s.theory
+        });
+      });
+    });
+
+    // Find current index
+    const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
+    
+    // Preload next 3 subtopics images
+    for (let i = 1; i <= 3; i++) {
+      const nextIndex = currentIndex + i;
+      if (nextIndex < allSubtopics.length) {
+        const next = allSubtopics[nextIndex];
+        if (next.image && !imageCache.current.has(next.image)) {
+          preloadImageWithCache(next.image, next.subtopicTitle);
+        }
+      }
+    }
+  }, [jsonData, mainTopic, selected, preloadImageWithCache]);
+
+  // Preload next subtopic content
+  const preloadNextSubtopic = useCallback(async () => {
+    if (!jsonData || !selected || !mainTopic || !lang || !userId) return;
+    
+    const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+    if (!topicsList) return;
+    
+    const allSubtopics = [];
+    topicsList.forEach(t => {
+      t.subtopics.forEach(s => {
+        allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title, subtopic: s });
+      });
+    });
+
+    const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
+    if (currentIndex < allSubtopics.length - 1) {
+      const next = allSubtopics[currentIndex + 1];
+      
+      // If next subtopic doesn't have content, pre-generate it
+      if (!next.subtopic.theory) {
+        try {
+          const res = await axios.post(serverURL + '/api/generate-batch', {
+            mainTopic,
+            topicsList: [{
+              topicTitle: next.topicTitle,
+              subtopics: [next.subtopicTitle]
+            }],
+            lang,
+            userId
+          });
+          
+          if (res.data.success && res.data.topics[0]) {
+            setPreloadedNextContent({
+              topicTitle: next.topicTitle,
+              subtopicTitle: next.subtopicTitle,
+              theory: res.data.topics[0].subtopics[0].theory
+            });
+            
+            // Also preload image if available
+            if (res.data.topics[0].subtopics[0].image) {
+              preloadImageWithCache(res.data.topics[0].subtopics[0].image, next.subtopicTitle);
+            }
+          }
+        } catch (error) {
+          console.error("Preload failed:", error);
+        }
+      } else if (next.subtopic.image) {
+        // Preload image if content exists
+        preloadImageWithCache(next.subtopic.image, next.subtopicTitle);
+      }
+    }
+  }, [jsonData, selected, mainTopic, lang, userId, preloadImageWithCache]);
+
+  // Cached API call
+  const cachedApiCall = async (url, data, cacheKey) => {
+    if (apiCache.current.has(cacheKey)) {
+      return apiCache.current.get(cacheKey);
+    }
+    
+    const response = await axios.post(url, data);
+    apiCache.current.set(cacheKey, response);
+    return response;
+  };
+
+  // OPTIMIZATION: Preload when selected changes
+  useEffect(() => {
+    if (selected && jsonData) {
+      preloadNextSubtopic();
+      preloadAllImages();
+    }
+  }, [selected, jsonData, preloadNextSubtopic, preloadAllImages]);
+
+  // OPTIMIZATION: Preload current media if not loaded
+  useEffect(() => {
+    if (media && !imageCache.current.has(media) && type !== 'video & text course') {
+      preloadImageWithCache(media, selected);
+    }
+  }, [media, selected, preloadImageWithCache, type]);
 
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -135,6 +6168,10 @@ const CoursePage = () => {
                   setMedia(firstSubtopic.youtube);
                 } else {
                   setMedia(firstSubtopic.image);
+                  // Preload first image
+                  if (firstSubtopic.image) {
+                    preloadImageWithCache(firstSubtopic.image, firstSubtopic.title);
+                  }
                 }
               }
             }
@@ -149,7 +6186,7 @@ const CoursePage = () => {
       }
     };
     fetchCourseData();
-  }, [activeCourseId, courseData]);
+  }, [activeCourseId, courseData, preloadImageWithCache]);
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -186,6 +6223,7 @@ const CoursePage = () => {
   }
 
   const handleSaveNote = async () => {
+    setSaving(true);
     const postURL = serverURL + '/api/savenotes';
     const response = await axios.post(postURL, { course: courseId, notes: value });
     if (response.data.success) {
@@ -199,13 +6237,13 @@ const CoursePage = () => {
         description: "Internal Server Error",
       });
     }
+    setSaving(false);
   };
 
   // Loading skeleton for course content
   const CourseContentSkeleton = () => (
     <div className="space-y-6 animate-pulse">
       <Skeleton className="h-8 w-3/4 mb-8" />
-
       <div className="space-y-6">
         <div>
           <Skeleton className="h-7 w-1/2 mb-4" />
@@ -213,14 +6251,12 @@ const CoursePage = () => {
           <Skeleton className="h-5 w-full mb-2" />
           <Skeleton className="h-5 w-3/4" />
         </div>
-
         <div>
           <Skeleton className="h-7 w-1/3 mb-4" />
           <Skeleton className="h-5 w-full mb-2" />
           <Skeleton className="h-5 w-full mb-2" />
           <Skeleton className="h-5 w-5/6" />
         </div>
-
         <div>
           <Skeleton className="h-7 w-2/5 mb-4" />
           <Skeleton className="h-5 w-full mb-2" />
@@ -241,62 +6277,6 @@ const CoursePage = () => {
     height: '250px',
     width: '100%',
   };
-  useEffect(() => {
-    // Only run if we have data
-    if (!courseData || !jsonData) return;
-
-    const updateQuizStatus = async () => {
-      try {
-        const response = await axios.post(serverURL + '/api/getmyresult', { courseId, userId });
-        if (response.data.success) {
-          // If already marked completed in courseData, keep it true even if quiz isn't found
-          setIsQuizPassed(response.data.message || (courseData?.pass === true));
-        }
-      } catch (error) {
-        console.error('Error fetching quiz status:', error);
-      }
-    };
-
-    updateQuizStatus();
-    loadMessages()
-    getNotes()
-    // Ensure the page starts at the top when loaded
-    if (mainContentRef.current) {
-      mainContentRef.current.scrollTop = 0;
-    }
-
-    // Ensure window also scrolls to top
-    window.scrollTo(0, 0);
-
-
-    if (!mainTopic) {
-      // Only redirect if explicitly missing after load attempt
-      if (!isLoading && !courseData) {
-        navigate("/create");
-      }
-    } else {
-      const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
-      if (topicsList && topicsList.length > 0) {
-        const mainTopicData = topicsList[0];
-        const firstSubtopic = mainTopicData.subtopics[0];
-
-        // If nothing selected yet, select first
-        if (!selected) {
-          setSelected(firstSubtopic.title)
-          setTheory(firstSubtopic.theory);
-          if (type === 'video & text course') {
-            setMedia(firstSubtopic.youtube);
-          } else {
-            setMedia(firstSubtopic.image)
-          }
-        }
-      }
-
-      setIsLoading(false);
-      sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
-      CountDoneTopics(isQuizPassed);
-    }
-  }, [courseData, jsonData, completedSubtopics, isOrgAdmin, isQuizPassed]); // Depend on consistency
 
   const isSubtopicUnlocked = (topicTitle, subtopicTitle) => {
     if (isOrgAdmin) return true;
@@ -320,59 +6300,63 @@ const CoursePage = () => {
     return completedSubtopics.some(s => s.topicTitle === prevSubtopic.topicTitle && s.subtopicTitle === prevSubtopic.subtopicTitle);
   };
 
-  const handleMarkAsComplete = async () => {
-    if (!userId || !courseId || !selected) return;
+const handleMarkAsComplete = async () => {
+  if (!userId || !courseId || !selected) return;
 
-    // Find current topic title
-    const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
-    let currentTopicTitle = '';
-    topicsList.forEach(t => {
-      if (t.subtopics.some(s => s.title === selected)) {
-        currentTopicTitle = t.title;
-      }
+  const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+  let currentTopicTitle = '';
+  topicsList.forEach(t => {
+    if (t.subtopics.some(s => s.title === selected)) {
+      currentTopicTitle = t.title;
+    }
+  });
+
+  let total = 0;
+  topicsList.forEach(t => total += t.subtopics.length);
+
+  try {
+    const res = await axios.post(`${serverURL}/api/progress/update`, {
+      userId,
+      courseId,
+      topicTitle: currentTopicTitle,
+      subtopicTitle: selected,
+      totalSubtopics: total
     });
 
-    // Count total subtopics
-    let total = 0;
-    topicsList.forEach(t => total += t.subtopics.length);
+    if (res.data.success) {
+      setCompletedSubtopics(res.data.progress.completedSubtopics);
+      setPercentage(res.data.progress.percentage);
 
-    try {
-      const res = await axios.post(`${serverURL}/api/progress/update`, {
-        userId,
-        courseId,
-        topicTitle: currentTopicTitle,
-        subtopicTitle: selected,
-        totalSubtopics: total
+      // --- LOGIC TO MOVE TO NEXT SUBTOPIC ---
+      const allSubtopics = [];
+      topicsList.forEach(t => {
+        t.subtopics.forEach(s => {
+          allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
+        });
       });
 
-      if (res.data.success) {
-        setCompletedSubtopics(res.data.progress.completedSubtopics);
-        setPercentage(res.data.progress.percentage);
-
-        // Find next subtopic and select it
-        const allSubtopics = [];
-        topicsList.forEach(t => {
-          t.subtopics.forEach(s => {
-            allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
-          });
-        });
-
-        const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
-        if (currentIndex < allSubtopics.length - 1) {
-          const next = allSubtopics[currentIndex + 1];
-          handleSelect(next.topicTitle, next.subtopicTitle);
-        } else {
-          toast({
-            title: "Course Completed!",
-            description: "You've finished all lessons. You can now take the quiz.",
-          });
+      const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
+      
+      if (currentIndex < allSubtopics.length - 1) {
+        const next = allSubtopics[currentIndex + 1];
+        // Move to next subtopic immediately
+        handleSelect(next.topicTitle, next.subtopicTitle);
+        
+        // Scroll to top for the new lesson
+        if (mainContentRef.current) {
+          mainContentRef.current.scrollTop = 0;
         }
+      } else {
+        toast({
+          title: "Course Completed!",
+          description: "You've finished all lessons. You can now take the quiz.",
+        });
       }
-    } catch (error) {
-      console.error("Failed to update progress:", error);
-      toast({ title: "Error", description: "Failed to save progress" });
     }
-  };
+  } catch (error) {
+    console.error("Failed to update progress:", error);
+  }
+};
 
   const loadMessages = async () => {
     try {
@@ -444,7 +6428,7 @@ const CoursePage = () => {
     if (mainTopic) {
       CountDoneTopics();
     }
-  }, [isQuizPassed]);
+  }, [isQuizPassed, completedSubtopics, jsonData, isOrgAdmin]);
 
   const CountDoneTopics = (passed = isQuizPassed) => {
     if (isOrgAdmin || passed) {
@@ -482,123 +6466,226 @@ const CoursePage = () => {
     }
   }
 
-
-
-  const handleSelect = (topicTitle, subtopicTitle) => {
-    if (isLoading) return;
-
-    const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
-    const mTopic = topicsList.find(topic => topic.title === topicTitle);
-    const mSubTopic = mTopic?.subtopics.find(subtopic => subtopic.title === subtopicTitle);
-
-    if (!mSubTopic) return;
-
-    if (mSubTopic.theory === '' || mSubTopic.theory === undefined || mSubTopic.theory === null) {
-      if (!isSubtopicUnlocked(topicTitle, subtopicTitle)) {
-        toast({ title: "Locked", description: "Complete previous lessons to unlock this one." });
-        return;
-      }
-      setIsLoading(true);
-      if (type === 'video & text course') {
-        const query = `${mSubTopic.title} ${mainTopic} in english`;
-        sendVideo(query, topicTitle, subtopicTitle, mSubTopic.title);
-      } else {
-        // Bulk-generate ALL ungenerated topics/subtopics in the entire course
-        sendBulkCourseContent(topicTitle, subtopicTitle);
-      }
-    } else {
-      setSelected(mSubTopic.title);
-      setTheory(mSubTopic.theory);
-      if (type === 'video & text course') {
-        setMedia(mSubTopic.youtube);
-      } else {
-        setMedia(mSubTopic.image);
-      }
+  // Add this helper function outside CoursePage or inside as a useCallback
+  const updateLocalCache = (clickedTopic, clickedSub, updates) => {
+    const updatedData = { ...jsonData };
+    const topicsList = updatedData['course_topics'] || updatedData[mainTopic?.toLowerCase()];
+    const targetSub = topicsList?.find(t => t.title === clickedTopic)?.subtopics.find(s => s.title === clickedSub);
+    
+    if (targetSub) {
+      Object.assign(targetSub, updates);
+      setJsonData(updatedData);
+      sessionStorage.setItem('jsonData', JSON.stringify(updatedData));
     }
   };
 
-  /* -------- BULK TEXT COURSE (one API call for all remaining content) -------- */
+  async function sendBulkCourseContent(clickedTopic, clickedSub) {
+    // Show loading popup
+    setShowLoadingPopup(true);
+    setLoadingSubtopic(clickedSub);
+    
+    // Start theory generation progress
+    const clearTheoryProgress = simulateProgress('theory');
+    
+    // 1. Instant UI Feedback
+    setSelected(clickedSub);
+    setTheory(`<p>Loading content for <strong>${clickedSub}</strong>...</p>`);
+    setMedia(''); 
+    
+    // 2. REQUIRED: Construct the data payload correctly to avoid 400 error
+    const theoryPayload = {
+      mainTopic,
+      topicsList: [{ topicTitle: clickedTopic, subtopics: [clickedSub] }],
+      lang,
+      userId
+    };
 
-  async function sendBulkCourseContent(clickedTopic: string, clickedSub: string) {
-    try {
-      const topicsData = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
-      const topicsListForBatch = [];
+    // 3. Fire requests in parallel with error handling
+    const theoryPromise = axios.post(serverURL + '/api/generate-batch', theoryPayload).catch(error => {
+      console.error("Theory generation failed:", error);
+      return { data: { success: false } };
+    });
+    
+    // 4. Image Track with better error handling
+    const imagePromise = axios.post(serverURL + '/api/image', { 
+      prompt: `High resolution professional photography of ${clickedSub} for ${mainTopic}, educational, detailed, clear lighting` 
+    }).catch(error => {
+      console.error("Image generation failed:", error);
+      return { data: { url: null } };
+    });
 
-      topicsData.forEach(t => {
-        const ungenerated = t.subtopics.filter((s: any) => !s.theory).map((s: any) => s.title);
-        if (ungenerated.length > 0) {
-          topicsListForBatch.push({
-            topicTitle: t.title,
-            subtopics: ungenerated
-          });
-        }
-      });
-
-      if (topicsListForBatch.length === 0) {
-        setIsLoading(false);
-        return;
-      }
-
-      const res = await axios.post(serverURL + '/api/generate-batch', {
-        mainTopic,
-        topicsList: topicsListForBatch,
-        lang,
-        userId
-      });
-
-      if (!res.data.success || !res.data.topics) {
-        throw new Error(res.data.message || 'Bulk generation failed');
-      }
-
-      const updatedTopicsList = jsonData?.course_topics || jsonData?.[mainTopic?.toLowerCase()];
-
-      // Fill in all the generated theories across all topics
-      res.data.topics.forEach((genTopic: any) => {
-        const targetTopic = updatedTopicsList?.find((t: any) => t.title === genTopic.topicTitle);
-        if (targetTopic) {
-          genTopic.subtopics.forEach((genSub: any) => {
-            const targetSub = targetTopic.subtopics.find((s: any) => s.title === genSub.title);
-            if (targetSub) {
-              targetSub.theory = genSub.theory;
-              targetSub.done = true;
-            }
-          });
-        }
-      });
-
-      // Handle the currently clicked subtopic specifically (image fetch)
-      const clickedTopicData = updatedTopicsList?.find((t: any) => t.title === clickedTopic);
-      const clickedSubtopicData = clickedTopicData?.subtopics?.find((s: any) => s.title === clickedSub);
-
-      if (clickedSubtopicData) {
-        const promptImage = `Example of ${clickedSub} in ${mainTopic}`;
-        sendImageForBatch(promptImage, clickedTopic, clickedSub, clickedSubtopicData.theory);
+    // 5. Handle image response
+    imagePromise.then(res => {
+      if (res.data && res.data.url) {
+        setMedia(res.data.url);
+        updateLocalCache(clickedTopic, clickedSub, { image: res.data.url, done: true });
       } else {
-        setIsLoading(false);
-        updateCourse();
+        // Use Unsplash fallback
+        const fallbackUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(clickedSub)},${encodeURIComponent(mainTopic)}`;
+        setMedia(fallbackUrl);
+        updateLocalCache(clickedTopic, clickedSub, { image: fallbackUrl, done: true });
       }
+    }).catch(() => {
+      // Final fallback
+      const fallbackUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(clickedSub)},education`;
+      setMedia(fallbackUrl);
+      updateLocalCache(clickedTopic, clickedSub, { image: fallbackUrl, done: true });
+    });
 
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        title: 'Error',
-        description: error?.response?.data?.message || error.message || 'Bulk generation failed'
-      });
-      setIsLoading(false);
+    // 6. Theory Track
+    try {
+      // Switch to image loading stage
+      clearTheoryProgress();
+      simulateProgress('image');
+      
+      const theoryRes = await theoryPromise;
+      if (theoryRes.data && theoryRes.data.success && theoryRes.data.topics?.[0]) {
+        const newTheory = theoryRes.data.topics[0].subtopics[0].theory;
+        setTheory(newTheory);
+        updateLocalCache(clickedTopic, clickedSub, { theory: newTheory, done: true });
+        updateCourse(); // Sync to server
+      } else {
+        // Fallback theory if generation fails
+        setTheory(`<div class="prose dark:prose-invert max-w-none">
+          <h2>${clickedSub}</h2>
+          <p>We're having trouble generating AI content right now. Here's what you need to know about ${clickedSub}:</p>
+          <p>${clickedSub} is an important concept in ${mainTopic}. We recommend:</p>
+          <ul>
+            <li>Checking your internet connection</li>
+            <li>Refreshing the page</li>
+            <li>Trying again in a few minutes</li>
+          </ul>
+          <p>In the meantime, you can search for "${clickedSub} in ${mainTopic}" on your favorite search engine.</p>
+        </div>`);
+      }
+      
+      // Final stage
+      simulateProgress('complete');
+      
+      // Hide popup after completion
+      setTimeout(() => {
+        setShowLoadingPopup(false);
+        setLoadingProgress(100);
+      }, 1500);
+      
+    } catch (error) {
+      console.error("Theory generation failed:", error);
+      setTheory(`<div class="prose dark:prose-invert max-w-none">
+        <h2>${clickedSub}</h2>
+        <p>Sorry, we encountered an error loading the content. Please try again.</p>
+        <p>You can also search for "${clickedSub} in ${mainTopic}" on your preferred search engine.</p>
+      </div>`);
+      setShowLoadingPopup(false);
     }
   }
 
-  // For batch flow: theory already set, only fetch image for the clicked subtopic
+const handleSelect = useCallback((topicTitle, subtopicTitle) => {
+  if (!jsonData) return;
+
+  const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+  const mTopic = topicsList.find(topic => topic.title === topicTitle);
+  const mSubTopic = mTopic?.subtopics.find(subtopic => subtopic.title === subtopicTitle);
+
+  if (!mSubTopic) return;
+
+  if (!isSubtopicUnlocked(topicTitle, subtopicTitle)) {
+    toast({ title: "Lesson Locked", description: "Complete previous lessons to unlock this one." });
+    return;
+  }
+
+  // INSTANT: Change the title and check cache
+  setSelected(subtopicTitle);
+
+  if (mSubTopic.theory) {
+    // CACHE HIT: Show immediately
+    setTheory(mSubTopic.theory);
+    setMedia(type === 'video & text course' ? mSubTopic.youtube : mSubTopic.image);
+  } else {
+    // CACHE MISS: Show loading popup and start generation
+    setShowLoadingPopup(true);
+    setLoadingSubtopic(subtopicTitle);
+    simulateProgress('theory');
+    
+    if (type === 'video & text course') {
+      sendVideo(`${subtopicTitle} ${mainTopic}`, topicTitle, subtopicTitle, subtopicTitle);
+    } else {
+      sendBulkCourseContent(topicTitle, subtopicTitle);
+    }
+  }
+}, [jsonData, mainTopic, isSubtopicUnlocked, type, simulateProgress]);
+
   async function sendImageForBatch(promptImage: string, topics: string, sub: string, theory: string) {
     try {
+      // Show theory immediately
+      setSelected(sub);
+      setTheory(theory);
+      
+      setImageLoading(prev => new Map(prev).set(sub, true));
+      
       const postURL = serverURL + '/api/image';
-      const res = await axios.post(postURL, { prompt: promptImage });
-      const imageUrl = res.data.url || '';
-      sendData(imageUrl, theory, topics, sub);
+      const res = await axios.post(postURL, { prompt: promptImage }).catch(error => {
+        console.error("Image API error:", error);
+        return { data: { url: null } };
+      });
+      
+      let imageUrl = res.data?.url || '';
+      
+      // If image generation failed, use Unsplash fallback
+      if (!imageUrl) {
+        imageUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(sub)},${encodeURIComponent(mainTopic)}`;
+      }
+      
+      // Update image in cache immediately
+      if (imageUrl) {
+        preloadImageWithCache(imageUrl, sub);
+        setMedia(imageUrl);
+      }
+      
+      // Find the subtopic and update its image
+      const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+      const mTopic = topicsList.find(t => t.title === topics);
+      const mSubTopic = mTopic?.subtopics.find(s => s.title === sub);
+      
+      if (mSubTopic) {
+        mSubTopic.image = imageUrl;
+        mSubTopic.done = true;
+        
+        // Save to sessionStorage and update course
+        sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+        updateCourse();
+      }
+      
+      setImageLoading(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(sub);
+        return newMap;
+      });
+      
+      setIsLoading(false);
     } catch (error) {
-      console.error(error);
-      // Even if image fails, still show the content
-      sendData('', theory, topics, sub);
+      console.error("Image generation error:", error);
+      // Use Unsplash fallback
+      const fallbackUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(sub)},education`;
+      setMedia(fallbackUrl);
+      
+      // Still update the cache with fallback
+      const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+      const mTopic = topicsList.find(t => t.title === topics);
+      const mSubTopic = mTopic?.subtopics.find(s => s.title === sub);
+      
+      if (mSubTopic) {
+        mSubTopic.image = fallbackUrl;
+        mSubTopic.done = true;
+        sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+      }
+      
+      setImageLoading(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(sub);
+        return newMap;
+      });
+      
+      setIsLoading(false);
     }
   }
 
@@ -662,24 +6749,6 @@ const CoursePage = () => {
     }
   }
 
-  // async function sendData(image, theory, topics, sub) {
-
-  //   const mTopic = jsonData[mainTopic.toLowerCase()].find(topic => topic.title === topics);
-  //   const mSubTopic = mTopic?.subtopics.find(subtopic => subtopic.title === sub);
-  //   mSubTopic.theory = theory
-  //   mSubTopic.image = image;
-  //   setSelected(mSubTopic.title)
-
-  //   setIsLoading(false);
-  //   setTheory(theory)
-  //   if (type === 'video & text course') {
-  //     setMedia(mSubTopic.youtube);
-  //   } else {
-  //     setMedia(image)
-  //   }
-  //   mSubTopic.done = true;
-  //   updateCourse();
-  // }
   async function sendData(image, theory, topics, sub) {
     const topicsList =
       jsonData?.course_topics ||
@@ -714,38 +6783,18 @@ const CoursePage = () => {
     mSubTopic.image = image;
     mSubTopic.done = true;
 
+    // Batch update all states at once
     setSelected(mSubTopic.title);
     setTheory(theory);
-
-    if (type === 'video & text course') {
-      setMedia(mSubTopic.youtube);
-    } else {
-      setMedia(image);
-    }
+    setMedia(image); // Always set media here
 
     setIsLoading(false);
+    
+    // Save to sessionStorage and update course
+    sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
     updateCourse();
   }
 
-  // async function sendDataVideo(image, theory, topics, sub) {
-
-  //   const mTopic = jsonData[mainTopic.toLowerCase()].find(topic => topic.title === topics);
-  //   const mSubTopic = mTopic?.subtopics.find(subtopic => subtopic.title === sub);
-  //   mSubTopic.theory = theory
-  //   mSubTopic.youtube = image;
-  //   setSelected(mSubTopic.title)
-
-  //   setIsLoading(false);
-  //   setTheory(theory)
-  //   if (type === 'video & text course') {
-  //     setMedia(image);
-  //   } else {
-  //     setMedia(mSubTopic.image)
-  //   }
-  //   mSubTopic.done = true;
-  //   updateCourse();
-
-  // }
   async function sendDataVideo(image, theory, topics, sub) {
     const topicsList =
       jsonData?.course_topics ||
@@ -1037,30 +7086,6 @@ const CoursePage = () => {
     `;
   }
 
-  // async function redirectExam() {
-  //   if (!isLoading) {
-  //     setIsLoading(true);
-  //     const mainTopicExam = jsonData[mainTopic.toLowerCase()];
-  //     let subtopicsString = '';
-  //     mainTopicExam.map((topicTemp) => {
-  //       const titleOfSubTopic = topicTemp.title;
-  //       subtopicsString = subtopicsString + ' , ' + titleOfSubTopic;
-  //     });
-  //     const postURL = serverURL + '/api/aiexam';
-  //     const response = await axios.post(postURL, { courseId, mainTopic, subtopicsString, lang });
-  //     if (response.data.success) {
-  //       setIsLoading(false);
-  //       const questions = JSON.parse(response.data.message);
-  //       navigate('/course/' + courseId + '/quiz', { state: { topic: mainTopic, courseId: courseId, questions: questions } });
-  //     } else {
-  //       setIsLoading(false);
-  //       toast({
-  //         title: "Error",
-  //         description: "Internal Server Error",
-  //       });
-  //     }
-  //   }
-  // }
   const normalize = (s: string) =>
     s.toLowerCase().replace(/\s+/g, ' ').trim();
 
@@ -1187,58 +7212,6 @@ const CoursePage = () => {
     }
   }
 
-
-
-
-  // async function redirectExam() {
-  //   if (isLoading) return;
-
-  //   setIsLoading(true);
-
-  //   const key = mainTopic?.toLowerCase();
-  //   const mainTopicExam = key ? jsonData?.[key] : undefined;
-
-  //   if (!Array.isArray(mainTopicExam)) {
-  //     setIsLoading(false);
-  //     toast({
-  //       title: "Error",
-  //       description: "Topics not available yet. Please try again.",
-  //     });
-  //     return;
-  //   }
-
-  //   let subtopicsString = '';
-  //   mainTopicExam.forEach((topicTemp) => {
-  //     subtopicsString += `, ${topicTemp.title}`;
-  //   });
-
-  //   try {
-  //     const postURL = serverURL + '/api/aiexam';
-  //     const response = await axios.post(postURL, {
-  //       courseId,
-  //       mainTopic,
-  //       subtopicsString,
-  //       lang,
-  //     });
-
-  //     if (response.data.success) {
-  //       const questions = JSON.parse(response.data.message);
-  //       navigate(`/course/${courseId}/quiz`, {
-  //         state: { topic: mainTopic, courseId, questions },
-  //       });
-  //     } else {
-  //       throw new Error("API failed");
-  //     }
-  //   } catch (err) {
-  //     toast({
-  //       title: "Error",
-  //       description: "Internal Server Error",
-  //     });
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // }
-
   const renderTopicsList = (topics) => {
     if (!topics || !Array.isArray(topics)) return null;
     return (
@@ -1333,7 +7306,7 @@ const CoursePage = () => {
                 <html lang="en">
                 
                   <head></head>
-                 <div id="__react-email-preview" style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0;">Certificate<div> ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿</div>
+                 <div id="__react-email-preview" style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0;">Certificate<div> ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿</div>
                  </div>
                 
                   <body style="padding:20px; margin-left:auto;margin-right:auto;margin-top:auto;margin-bottom:auto;background-color:#f6f9fc;font-family:ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, Arial, &quot;Noto Sans&quot;, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;, &quot;Noto Color Emoji&quot;">
@@ -1378,13 +7351,103 @@ const CoursePage = () => {
       console.error(error);
       navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: formattedDate } });
     }
-
   }
 
+  // In the useEffect that sets initial subtopic
+useEffect(() => {
+  // Only run if we have data
+  if (!courseData || !jsonData) return;
 
+  const updateQuizStatus = async () => {
+    try {
+      const response = await axios.post(serverURL + '/api/getmyresult', { courseId, userId });
+      if (response.data.success) {
+        setIsQuizPassed(response.data.message || (courseData?.pass === true));
+      }
+    } catch (error) {
+      console.error('Error fetching quiz status:', error);
+    }
+  };
+
+  updateQuizStatus();
+  loadMessages();
+  getNotes();
+  
+  // Ensure the page starts at the top when loaded
+  if (mainContentRef.current) {
+    mainContentRef.current.scrollTop = 0;
+  }
+  window.scrollTo(0, 0);
+
+  if (!mainTopic) {
+    if (!isLoading && !courseData) {
+      navigate("/create");
+    }
+  } else {
+    const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+    if (topicsList && topicsList.length > 0) {
+      const mainTopicData = topicsList[0];
+      const firstSubtopic = mainTopicData.subtopics[0];
+
+      // If nothing selected yet, select first
+      if (!selected) {
+        setSelected(firstSubtopic.title);
+        
+        // FIX 1: Immediately show theory if it exists, otherwise show a default message
+        if (firstSubtopic.theory) {
+          setTheory(firstSubtopic.theory);
+        } else {
+          // Show a loading message or placeholder
+          setTheory(`<p>Loading content for ${firstSubtopic.title}...</p>`);
+          
+          // Trigger content generation in the background
+          setTimeout(() => {
+            if (type === 'video & text course') {
+              const query = `${firstSubtopic.title} ${mainTopic} in english`;
+              sendVideo(query, mainTopicData.title, firstSubtopic.title, firstSubtopic.title);
+            } else {
+              sendBulkCourseContent(mainTopicData.title, firstSubtopic.title);
+            }
+          }, 100);
+        }
+        
+        // FIX 2: Immediately show image if it exists
+        if (type === 'video & text course') {
+          if (firstSubtopic.youtube) {
+            setMedia(firstSubtopic.youtube);
+          }
+        } else {
+          if (firstSubtopic.image) {
+            setMedia(firstSubtopic.image);
+            // Preload immediately
+            preloadImageWithCache(firstSubtopic.image, firstSubtopic.title);
+          } else {
+            // Generate image in background
+            setTimeout(() => {
+              const promptImage = `Example of ${firstSubtopic.title} in ${mainTopic}`;
+              sendImageForBatch(promptImage, mainTopicData.title, firstSubtopic.title, firstSubtopic.theory || '');
+            }, 200);
+          }
+        }
+      }
+    }
+  }
+
+  setIsLoading(false);
+  sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+  CountDoneTopics(isQuizPassed);
+}, [courseData, jsonData, completedSubtopics, isOrgAdmin, isQuizPassed, preloadImageWithCache]);
 
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
+      {/* Loading Popup */}
+      <LoadingPopup 
+        isOpen={showLoadingPopup}
+        stage={loadingStage}
+        subtopic={loadingSubtopic}
+        progress={loadingProgress}
+      />
+
       <header className="border-b border-border/40 py-2 px-4 flex justify-between items-center sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
         <div className="flex items-center gap-4">
           <Drawer>
@@ -1509,23 +7572,85 @@ const CoursePage = () => {
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full" viewportRef={mainContentRef}>
             <main className="p-6 max-w-5xl mx-auto">
-              {isLoading ?
+              {isLoading ? (
                 <CourseContentSkeleton />
-                :
+              ) : (
                 <>
                   <h1 className="text-3xl font-bold mb-6">{selected}</h1>
                   <div className="space-y-4">
-                    {media && (
-                      type === 'video & text course' ?
+                    {type === 'video & text course' ? (
+                      media ? (
                         <div>
                           <YouTube key={media} className='mb-5' videoId={media} opts={opts} />
                         </div>
-                        :
-                        <div>
-                          <img className='overflow-hidden h-96 max-md:h-64' src={media} alt="Media" />
+                      ) : (
+                        <div className="h-96 bg-muted flex items-center justify-center rounded-lg">
+                          <p className="text-muted-foreground">Loading video...</p>
                         </div>
+                      )
+                    ) : (
+                      <div className="relative w-full h-96 max-md:h-64 overflow-hidden rounded-lg bg-muted">
+                        {media ? (
+                          <img 
+                            key={media}
+                            src={media}
+                            fetchpriority="high"
+                            className={cn(
+                              "w-full h-full object-cover transition-opacity duration-500",
+                              imageLoading.has(selected) ? "opacity-0" : "opacity-100"
+                            )}
+                            alt={selected}
+                            onLoad={() => {
+                              setImageLoading(prev => {
+                                const newMap = new Map(prev);
+                                newMap.delete(selected);
+                                return newMap;
+                              });
+                            }}
+                            onError={(e) => {
+                              e.target.onerror = null; 
+                              // Try multiple fallback sources
+                              const fallbackSources = [
+                                `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(selected)},${encodeURIComponent(mainTopic)}`,
+                                `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(selected)},education`,
+                                `https://source.unsplash.com/featured/800x600/?learning,${encodeURIComponent(mainTopic)}`,
+                                `https://picsum.photos/800/600?${encodeURIComponent(selected)}`
+                              ];
+                              
+                              // Try the next fallback if this one fails
+                              const currentSrc = e.target.src;
+                              const currentIndex = fallbackSources.indexOf(currentSrc);
+                              if (currentIndex < fallbackSources.length - 1) {
+                                e.target.src = fallbackSources[currentIndex + 1];
+                              } else {
+                                // Ultimate fallback - a nice gradient
+                                e.target.style.display = 'none';
+                                const parent = e.target.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = `
+                                    <div class="flex items-center justify-center w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20">
+                                      <div class="text-center p-4">
+                                        <p class="text-lg font-semibold text-primary">${selected}</p>
+                                        <p class="text-sm text-muted-foreground">Image temporarily unavailable</p>
+                                      </div>
+                                    </div>
+                                  `;
+                                }
+                              }
+                            }}
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center space-y-3">
+                            <Skeleton className="w-full h-full absolute inset-0" />
+                            <div className="z-10 flex flex-col items-center">
+                              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                              <span className="text-xs font-medium mt-2">Fetching Visuals...</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
-                    <StyledText text={theory} />
+                    {theory && <StyledText text={theory} />}
 
                     {!isOrgAdmin && (
                       <div className="pt-8 border-t border-border mt-8 flex justify-center">
@@ -1543,7 +7668,7 @@ const CoursePage = () => {
                     )}
                   </div>
                 </>
-              }
+              )}
             </main>
           </ScrollArea>
         </div>
