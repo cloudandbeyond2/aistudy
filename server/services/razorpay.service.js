@@ -496,7 +496,7 @@ export const createRazorpaySubscription = async ({
     }
   };
 
-//  console.log('RAZORPAY PAYLOAD:', payload);
+  console.log('RAZORPAY PAYLOAD:', payload);
 
   try {
     const response = await axios.post(
