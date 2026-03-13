@@ -70,9 +70,10 @@ const plansFeartures = [
     name: FreeType,
     features: [
       "Generate 5 Sub-Topics",
-      "Lifetime access",
+      "Access valid for 7 days",
       "Theory & Image Course",
       "Ai Teacher Chat",
+      "Course Certification",
     ],
   },
   {
@@ -82,9 +83,13 @@ const plansFeartures = [
       "1 Month Access",
       "Theory & Image Course",
       "Ai Teacher Chat",
-      "Course In 23+ Languages",
-      "Create Unlimited Course",
+      "Create 20 Courses",
       "Video & Theory Course",
+      "AI Notebook",
+      "Priority Support",
+      "Advanced Analytics",
+      "Interview Preparation",
+      "Course Certification",
     ],
   },
   {
@@ -97,6 +102,11 @@ const plansFeartures = [
       "Course In 23+ Languages",
       "Create Unlimited Course",
       "Video & Theory Course",
+      "AI Notebook",
+      "Priority Support",
+      "Advanced Analytics",
+      "Interview Preparation",
+      "Course Certification",
     ],
   }
 ];
