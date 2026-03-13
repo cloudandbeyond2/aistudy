@@ -5785,6 +5785,114 @@ const getFallbackImage = (topic: string, subtopic: string) => {
 };
 
 // Loading Popup Component
+// const LoadingPopup = ({ isOpen, stage, subtopic, progress = 0 }) => {
+//   const getStageContent = () => {
+//     switch(stage) {
+//       case 'theory':
+//         return {
+//           icon: <BookOpen className="w-8 h-8 text-blue-500 animate-pulse" />,
+//           title: 'Generating Course Content',
+//           message: `AI is creating comprehensive learning material for "${subtopic}"`,
+//           details: 'This may take 15-20 seconds...',
+//           color: 'blue'
+//         };
+//       case 'image':
+//         return {
+//           icon: <ImageIcon className="w-8 h-8 text-green-500 animate-bounce" />,
+//           title: 'Fetching Visuals',
+//           message: `Finding the perfect image for "${subtopic}"`,
+//           details: 'Almost there...',
+//           color: 'green'
+//         };
+//       case 'complete':
+//         return {
+//           icon: <Sparkles className="w-8 h-8 text-yellow-500 animate-spin" />,
+//           title: 'Finalizing',
+//           message: 'Polishing the content for best learning experience',
+//           details: 'Just a moment...',
+//           color: 'yellow'
+//         };
+//       default:
+//         return {
+//           icon: <Brain className="w-8 h-8 text-purple-500 animate-pulse" />,
+//           title: 'AI is Thinking',
+//           message: `Preparing your personalized course on "${subtopic}"`,
+//           details: 'This may take a few seconds...',
+//           color: 'purple'
+//         };
+//     }
+//   };
+
+//   const content = getStageContent();
+
+//   if (!isOpen) return null;
+
+//   return (
+//     <Dialog open={isOpen} onOpenChange={() => {}}>
+//       <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
+//         {/* Hidden title for accessibility */}
+//         <DialogTitle className="sr-only">
+//           {content.title}
+//         </DialogTitle>
+//         <div className="flex flex-col items-center py-8 px-4">
+//           {/* Animated Icon */}
+//           <div className={`relative mb-6`}>
+//             <div className={`absolute inset-0 rounded-full bg-${content.color}-500/20 animate-ping`}></div>
+//             <div className={`relative z-10 p-4 rounded-full bg-${content.color}-500/10`}>
+//               {content.icon}
+//             </div>
+//           </div>
+
+//           {/* Visible Title */}
+//           <h2 className="text-2xl font-bold text-center mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+//             {content.title}
+//           </h2>
+
+//           {/* Message */}
+//           <p className="text-center text-muted-foreground mb-4">
+//             {content.message}
+//           </p>
+
+//           {/* Progress Bar */}
+//           <div className="w-full h-2 bg-muted rounded-full overflow-hidden mb-3">
+//             <div 
+//               className={`h-full bg-${content.color}-500 transition-all duration-300 rounded-full`}
+//               style={{ width: `${progress}%` }}
+//             />
+//           </div>
+
+//           {/* Progress Percentage */}
+//           <p className="text-sm font-medium text-muted-foreground mb-2">
+//             {progress}% Complete
+//           </p>
+
+//           {/* Loading Details with Skeleton */}
+//           <div className="w-full space-y-3 mt-4">
+//             <div className="flex items-center gap-3">
+//               <Loader2 className="w-4 h-4 animate-spin text-primary" />
+//               <span className="text-sm">{content.details}</span>
+//             </div>
+            
+//             {/* Skeleton Previews */}
+//             <div className="grid grid-cols-2 gap-2 mt-4">
+//               <Skeleton className="h-12 rounded-lg" />
+//               <Skeleton className="h-12 rounded-lg" />
+//               <Skeleton className="h-12 rounded-lg" />
+//               <Skeleton className="h-12 rounded-lg" />
+//             </div>
+//           </div>
+
+//           {/* Fun Fact or Tip */}
+//           <p className="text-xs text-muted-foreground/60 mt-6 italic">
+//             ✨ AI is crafting personalized content just for you
+//           </p>
+//         </div>
+//       </DialogContent>
+//     </Dialog>
+//   );
+// };
+
+// Loading Popup Component
 const LoadingPopup = ({ isOpen, stage, subtopic, progress = 0 }) => {
   const getStageContent = () => {
     switch(stage) {
@@ -5866,32 +5974,50 @@ const LoadingPopup = ({ isOpen, stage, subtopic, progress = 0 }) => {
             {progress}% Complete
           </p>
 
-          {/* Loading Details with Skeleton */}
+          {/* Loading Details */}
           <div className="w-full space-y-3 mt-4">
             <div className="flex items-center gap-3">
-              <Loader2 className="w-4 h-4 animate-spin text-primary" />
-              <span className="text-sm">{content.details}</span>
+              {progress === 100 ? (
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+              ) : (
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+              )}
+              <span className="text-sm">
+                {progress === 100 ? 'Complete! Redirecting...' : content.details}
+              </span>
             </div>
             
-            {/* Skeleton Previews */}
-            <div className="grid grid-cols-2 gap-2 mt-4">
-              <Skeleton className="h-12 rounded-lg" />
-              <Skeleton className="h-12 rounded-lg" />
-              <Skeleton className="h-12 rounded-lg" />
-              <Skeleton className="h-12 rounded-lg" />
-            </div>
+            {/* Show skeletons only when not complete */}
+            {progress < 100 && (
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                <Skeleton className="h-12 rounded-lg" />
+                <Skeleton className="h-12 rounded-lg" />
+                <Skeleton className="h-12 rounded-lg" />
+                <Skeleton className="h-12 rounded-lg" />
+              </div>
+            )}
+            
+            {/* Show success message when complete */}
+            {progress === 100 && (
+              <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <p className="text-sm text-green-600 dark:text-green-400 text-center">
+                  ✓ Content loaded successfully!
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Fun Fact or Tip */}
-          <p className="text-xs text-muted-foreground/60 mt-6 italic">
-            ✨ AI is crafting personalized content just for you
-          </p>
+          {progress < 100 && (
+            <p className="text-xs text-muted-foreground/60 mt-6 italic">
+              ✨ AI is crafting personalized content just for you
+            </p>
+          )}
         </div>
       </DialogContent>
     </Dialog>
   );
 };
-
 const CoursePage = () => {
   //ADDED FROM v4.0
   const { state } = useLocation();
@@ -5961,22 +6087,54 @@ const CoursePage = () => {
   const apiCache = useRef(new Map());
 
   // Progress simulation function
-  const simulateProgress = useCallback((stage) => {
-    setLoadingStage(stage);
-    setLoadingProgress(0);
+  // const simulateProgress = useCallback((stage) => {
+  //   setLoadingStage(stage);
+  //   setLoadingProgress(0);
     
-    const interval = setInterval(() => {
-      setLoadingProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(interval);
-          return 90;
-        }
-        return prev + 10;
-      });
-    }, 800);
+  //   const interval = setInterval(() => {
+  //     setLoadingProgress(prev => {
+  //       if (prev >= 90) {
+  //         clearInterval(interval);
+  //         return 90;
+  //       }
+  //       return prev + 10;
+  //     });
+  //   }, 800);
 
-    return () => clearInterval(interval);
-  }, []);
+  //   return () => clearInterval(interval);
+  // }, []);
+
+  // Progress simulation function
+const simulateProgress = useCallback((stage) => {
+  setLoadingStage(stage);
+  setLoadingProgress(0);
+  
+  // Clear any existing intervals
+  if (window.progressInterval) {
+    clearInterval(window.progressInterval);
+  }
+  
+  // Create new interval
+  window.progressInterval = setInterval(() => {
+    setLoadingProgress(prev => {
+      // If we're at 90% and stage is complete, let the timeout handle the jump to 100%
+      if (stage === 'complete' && prev >= 90) {
+        return prev; // Stop incrementing, will be set to 100 by timeout
+      }
+      // Normal increment up to 90%
+      if (prev < 90) {
+        return prev + 10;
+      }
+      return prev; // Stay at 90 until completion
+    });
+  }, 600);
+
+  return () => {
+    if (window.progressInterval) {
+      clearInterval(window.progressInterval);
+    }
+  };
+}, []);
 
   // OPTIMIZATION: Enhanced image preloader with queue and cache
   const preloadImageWithCache = useCallback((url, subtopicTitle) => {
@@ -6278,28 +6436,62 @@ const CoursePage = () => {
     width: '100%',
   };
 
+  // const isSubtopicUnlocked = (topicTitle, subtopicTitle) => {
+  //   if (isOrgAdmin) return true;
+  //   if (!jsonData) return false;
+
+  //   const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+  //   if (!topicsList) return false;
+
+  //   // Flatten all subtopics to check order
+  //   const allSubtopics = [];
+  //   topicsList.forEach(t => {
+  //     t.subtopics.forEach(s => {
+  //       allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
+  //     });
+  //   });
+
+  //   const index = allSubtopics.findIndex(s => s.topicTitle === topicTitle && s.subtopicTitle === subtopicTitle);
+  //   if (index === 0) return true; // First subtopic always unlocked
+
+  //   const prevSubtopic = allSubtopics[index - 1];
+  //   return completedSubtopics.some(s => s.topicTitle === prevSubtopic.topicTitle && s.subtopicTitle === prevSubtopic.subtopicTitle);
+  // };
+
+
   const isSubtopicUnlocked = (topicTitle, subtopicTitle) => {
-    if (isOrgAdmin) return true;
-    if (!jsonData) return false;
+  if (isOrgAdmin) return true;
+  if (!jsonData) return false;
 
-    const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
-    if (!topicsList) return false;
+  const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+  if (!topicsList) return false;
 
-    // Flatten all subtopics to check order
-    const allSubtopics = [];
-    topicsList.forEach(t => {
-      t.subtopics.forEach(s => {
-        allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
-      });
+  // Flatten all subtopics to check order
+  const allSubtopics = [];
+  topicsList.forEach(t => {
+    t.subtopics.forEach(s => {
+      allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
     });
+  });
 
-    const index = allSubtopics.findIndex(s => s.topicTitle === topicTitle && s.subtopicTitle === subtopicTitle);
-    if (index === 0) return true; // First subtopic always unlocked
+  const currentIndex = allSubtopics.findIndex(s => s.topicTitle === topicTitle && s.subtopicTitle === subtopicTitle);
+  
+  // First subtopic is always unlocked
+  if (currentIndex === 0) return true;
 
-    const prevSubtopic = allSubtopics[index - 1];
-    return completedSubtopics.some(s => s.topicTitle === prevSubtopic.topicTitle && s.subtopicTitle === prevSubtopic.subtopicTitle);
-  };
+  // Check if previous subtopic is completed
+  const prevSubtopic = allSubtopics[currentIndex - 1];
+  const isPrevCompleted = completedSubtopics.some(
+    s => s.topicTitle === prevSubtopic.topicTitle && s.subtopicTitle === prevSubtopic.subtopicTitle
+  );
 
+  // Also check if current subtopic is already completed (unlock completed lessons)
+  const isCurrentCompleted = completedSubtopics.some(
+    s => s.topicTitle === topicTitle && s.subtopicTitle === subtopicTitle
+  );
+
+  return isPrevCompleted || isCurrentCompleted;
+};
 const handleMarkAsComplete = async () => {
   if (!userId || !courseId || !selected) return;
 
@@ -6479,105 +6671,262 @@ const handleMarkAsComplete = async () => {
     }
   };
 
-  async function sendBulkCourseContent(clickedTopic, clickedSub) {
-    // Show loading popup
-    setShowLoadingPopup(true);
-    setLoadingSubtopic(clickedSub);
+  // async function sendBulkCourseContent(clickedTopic, clickedSub) {
+  //   // Show loading popup
+  //   setShowLoadingPopup(true);
+  //   setLoadingSubtopic(clickedSub);
     
-    // Start theory generation progress
-    const clearTheoryProgress = simulateProgress('theory');
+  //   // Start theory generation progress
+  //   const clearTheoryProgress = simulateProgress('theory');
     
-    // 1. Instant UI Feedback
-    setSelected(clickedSub);
-    setTheory(`<p>Loading content for <strong>${clickedSub}</strong>...</p>`);
-    setMedia(''); 
+  //   // 1. Instant UI Feedback
+  //   setSelected(clickedSub);
+  //   setTheory(`<p>Loading content for <strong>${clickedSub}</strong>...</p>`);
+  //   setMedia(''); 
     
-    // 2. REQUIRED: Construct the data payload correctly to avoid 400 error
+  //   // 2. REQUIRED: Construct the data payload correctly to avoid 400 error
+  //   const theoryPayload = {
+  //     mainTopic,
+  //     topicsList: [{ topicTitle: clickedTopic, subtopics: [clickedSub] }],
+  //     lang,
+  //     userId
+  //   };
+
+  //   // 3. Fire requests in parallel with error handling
+  //   const theoryPromise = axios.post(serverURL + '/api/generate-batch', theoryPayload).catch(error => {
+  //     console.error("Theory generation failed:", error);
+  //     return { data: { success: false } };
+  //   });
+    
+  //   // 4. Image Track with better error handling
+  //   const imagePromise = axios.post(serverURL + '/api/image', { 
+  //     prompt: `High resolution professional photography of ${clickedSub} for ${mainTopic}, educational, detailed, clear lighting` 
+  //   }).catch(error => {
+  //     console.error("Image generation failed:", error);
+  //     return { data: { url: null } };
+  //   });
+
+  //   // 5. Handle image response
+  //   imagePromise.then(res => {
+  //     if (res.data && res.data.url) {
+  //       setMedia(res.data.url);
+  //       updateLocalCache(clickedTopic, clickedSub, { image: res.data.url, done: true });
+  //     } else {
+  //       // Use Unsplash fallback
+  //       const fallbackUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(clickedSub)},${encodeURIComponent(mainTopic)}`;
+  //       setMedia(fallbackUrl);
+  //       updateLocalCache(clickedTopic, clickedSub, { image: fallbackUrl, done: true });
+  //     }
+  //   }).catch(() => {
+  //     // Final fallback
+  //     const fallbackUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(clickedSub)},education`;
+  //     setMedia(fallbackUrl);
+  //     updateLocalCache(clickedTopic, clickedSub, { image: fallbackUrl, done: true });
+  //   });
+
+  //   // 6. Theory Track
+  //   try {
+  //     // Switch to image loading stage
+  //     clearTheoryProgress();
+  //     simulateProgress('image');
+      
+  //     const theoryRes = await theoryPromise;
+  //     if (theoryRes.data && theoryRes.data.success && theoryRes.data.topics?.[0]) {
+  //       const newTheory = theoryRes.data.topics[0].subtopics[0].theory;
+  //       setTheory(newTheory);
+  //       updateLocalCache(clickedTopic, clickedSub, { theory: newTheory, done: true });
+  //       updateCourse(); // Sync to server
+  //     } else {
+  //       // Fallback theory if generation fails
+  //       setTheory(`<div class="prose dark:prose-invert max-w-none">
+  //         <h2>${clickedSub}</h2>
+  //         <p>We're having trouble generating AI content right now. Here's what you need to know about ${clickedSub}:</p>
+  //         <p>${clickedSub} is an important concept in ${mainTopic}. We recommend:</p>
+  //         <ul>
+  //           <li>Checking your internet connection</li>
+  //           <li>Refreshing the page</li>
+  //           <li>Trying again in a few minutes</li>
+  //         </ul>
+  //         <p>In the meantime, you can search for "${clickedSub} in ${mainTopic}" on your favorite search engine.</p>
+  //       </div>`);
+  //     }
+      
+  //     // Final stage
+  //     simulateProgress('complete');
+      
+  //     // Hide popup after completion
+  //     setTimeout(() => {
+  //       setShowLoadingPopup(false);
+  //       setLoadingProgress(100);
+  //     }, 1500);
+      
+  //   } catch (error) {
+  //     console.error("Theory generation failed:", error);
+  //     setTheory(`<div class="prose dark:prose-invert max-w-none">
+  //       <h2>${clickedSub}</h2>
+  //       <p>Sorry, we encountered an error loading the content. Please try again.</p>
+  //       <p>You can also search for "${clickedSub} in ${mainTopic}" on your preferred search engine.</p>
+  //     </div>`);
+  //     setShowLoadingPopup(false);
+  //   }
+  // }
+
+//   async function sendBulkCourseContent(clickedTopic, clickedSub) {
+//   setShowLoadingPopup(true);
+//   setLoadingSubtopic(clickedSub);
+  
+//   // Start theory generation progress
+//   const clearTheoryProgress = simulateProgress('theory');
+  
+//   // 1. Instant UI Feedback
+//   setSelected(clickedSub);
+//   setTheory(`<p>Loading content for <strong>${clickedSub}</strong>...</p>`);
+  
+//   // Use Unsplash immediately without calling your API
+//   const fallbackUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(clickedSub)},${encodeURIComponent(mainTopic)}`;
+//   setMedia(fallbackUrl);
+//   updateLocalCache(clickedTopic, clickedSub, { image: fallbackUrl, done: true });
+  
+//   // 2. Theory Track
+//   try {
+//     // Switch to image loading stage
+//     clearTheoryProgress();
+//     simulateProgress('image');
+    
+//     const theoryPayload = {
+//       mainTopic,
+//       topicsList: [{ topicTitle: clickedTopic, subtopics: [clickedSub] }],
+//       lang,
+//       userId
+//     };
+    
+//     const theoryRes = await axios.post(serverURL + '/api/generate-batch', theoryPayload);
+    
+//     if (theoryRes.data && theoryRes.data.success && theoryRes.data.topics?.[0]) {
+//       const newTheory = theoryRes.data.topics[0].subtopics[0].theory;
+//       setTheory(newTheory);
+//       updateLocalCache(clickedTopic, clickedSub, { theory: newTheory, done: true });
+//       updateCourse();
+//     }
+    
+//     // Final stage
+//     simulateProgress('complete');
+    
+//     setTimeout(() => {
+//       setShowLoadingPopup(false);
+//       setLoadingProgress(100);
+//     }, 1500);
+    
+//   } catch (error) {
+//     console.error("Theory generation failed:", error);
+//     setTheory(`<div class="prose dark:prose-invert max-w-none">
+//       <h2>${clickedSub}</h2>
+//       <p>Sorry, we encountered an error loading the content. Please try again.</p>
+//     </div>`);
+//     setShowLoadingPopup(false);
+//   }
+// }
+
+
+async function sendBulkCourseContent(clickedTopic, clickedSub) {
+  setShowLoadingPopup(true);
+  setLoadingSubtopic(clickedSub);
+  
+  // Start theory generation progress
+  const clearTheoryProgress = simulateProgress('theory');
+  
+  // 1. Instant UI Feedback
+  setSelected(clickedSub);
+  setTheory(`<p>Loading content for <strong>${clickedSub}</strong>...</p>`);
+  
+  // Use Unsplash immediately
+  const fallbackUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(clickedSub)},${encodeURIComponent(mainTopic)}`;
+  setMedia(fallbackUrl);
+  updateLocalCache(clickedTopic, clickedSub, { image: fallbackUrl, done: true });
+  
+  // 2. Theory Track
+  try {
+    // Switch to image loading stage
+    clearTheoryProgress();
+    simulateProgress('image');
+    
     const theoryPayload = {
       mainTopic,
       topicsList: [{ topicTitle: clickedTopic, subtopics: [clickedSub] }],
       lang,
       userId
     };
-
-    // 3. Fire requests in parallel with error handling
-    const theoryPromise = axios.post(serverURL + '/api/generate-batch', theoryPayload).catch(error => {
-      console.error("Theory generation failed:", error);
-      return { data: { success: false } };
-    });
     
-    // 4. Image Track with better error handling
-    const imagePromise = axios.post(serverURL + '/api/image', { 
-      prompt: `High resolution professional photography of ${clickedSub} for ${mainTopic}, educational, detailed, clear lighting` 
-    }).catch(error => {
-      console.error("Image generation failed:", error);
-      return { data: { url: null } };
-    });
-
-    // 5. Handle image response
-    imagePromise.then(res => {
-      if (res.data && res.data.url) {
-        setMedia(res.data.url);
-        updateLocalCache(clickedTopic, clickedSub, { image: res.data.url, done: true });
-      } else {
-        // Use Unsplash fallback
-        const fallbackUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(clickedSub)},${encodeURIComponent(mainTopic)}`;
-        setMedia(fallbackUrl);
-        updateLocalCache(clickedTopic, clickedSub, { image: fallbackUrl, done: true });
-      }
-    }).catch(() => {
-      // Final fallback
-      const fallbackUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(clickedSub)},education`;
-      setMedia(fallbackUrl);
-      updateLocalCache(clickedTopic, clickedSub, { image: fallbackUrl, done: true });
-    });
-
-    // 6. Theory Track
-    try {
-      // Switch to image loading stage
-      clearTheoryProgress();
-      simulateProgress('image');
-      
-      const theoryRes = await theoryPromise;
-      if (theoryRes.data && theoryRes.data.success && theoryRes.data.topics?.[0]) {
-        const newTheory = theoryRes.data.topics[0].subtopics[0].theory;
-        setTheory(newTheory);
-        updateLocalCache(clickedTopic, clickedSub, { theory: newTheory, done: true });
-        updateCourse(); // Sync to server
-      } else {
-        // Fallback theory if generation fails
-        setTheory(`<div class="prose dark:prose-invert max-w-none">
-          <h2>${clickedSub}</h2>
-          <p>We're having trouble generating AI content right now. Here's what you need to know about ${clickedSub}:</p>
-          <p>${clickedSub} is an important concept in ${mainTopic}. We recommend:</p>
-          <ul>
-            <li>Checking your internet connection</li>
-            <li>Refreshing the page</li>
-            <li>Trying again in a few minutes</li>
-          </ul>
-          <p>In the meantime, you can search for "${clickedSub} in ${mainTopic}" on your favorite search engine.</p>
-        </div>`);
-      }
-      
-      // Final stage
-      simulateProgress('complete');
-      
-      // Hide popup after completion
-      setTimeout(() => {
-        setShowLoadingPopup(false);
-        setLoadingProgress(100);
-      }, 1500);
-      
-    } catch (error) {
-      console.error("Theory generation failed:", error);
-      setTheory(`<div class="prose dark:prose-invert max-w-none">
-        <h2>${clickedSub}</h2>
-        <p>Sorry, we encountered an error loading the content. Please try again.</p>
-        <p>You can also search for "${clickedSub} in ${mainTopic}" on your preferred search engine.</p>
-      </div>`);
+    const theoryRes = await axios.post(serverURL + '/api/generate-batch', theoryPayload);
+    
+    if (theoryRes.data && theoryRes.data.success && theoryRes.data.topics?.[0]) {
+      const newTheory = theoryRes.data.topics[0].subtopics[0].theory;
+      setTheory(newTheory);
+      updateLocalCache(clickedTopic, clickedSub, { theory: newTheory, done: true });
+      updateCourse();
+    }
+    
+    // Switch to complete stage and set to 100%
+    simulateProgress('complete');
+    setLoadingProgress(100);
+    
+    // Hide popup after showing 100% for 1.5 seconds
+    setTimeout(() => {
       setShowLoadingPopup(false);
+      // Clear the interval when hiding
+      if (window.progressInterval) {
+        clearInterval(window.progressInterval);
+      }
+    }, 1500);
+    
+  } catch (error) {
+    console.error("Theory generation failed:", error);
+    setTheory(`<div class="prose dark:prose-invert max-w-none">
+      <h2>${clickedSub}</h2>
+      <p>Sorry, we encountered an error loading the content. Please try again.</p>
+    </div>`);
+    setShowLoadingPopup(false);
+    if (window.progressInterval) {
+      clearInterval(window.progressInterval);
     }
   }
+}
+// const handleSelect = useCallback((topicTitle, subtopicTitle) => {
+//   if (!jsonData) return;
+
+//   const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+//   const mTopic = topicsList.find(topic => topic.title === topicTitle);
+//   const mSubTopic = mTopic?.subtopics.find(subtopic => subtopic.title === subtopicTitle);
+
+//   if (!mSubTopic) return;
+
+//   if (!isSubtopicUnlocked(topicTitle, subtopicTitle)) {
+//     toast({ title: "Lesson Locked", description: "Complete previous lessons to unlock this one." });
+//     return;
+//   }
+
+//   // INSTANT: Change the title and check cache
+//   setSelected(subtopicTitle);
+
+//   if (mSubTopic.theory) {
+//     // CACHE HIT: Show immediately
+//     setTheory(mSubTopic.theory);
+//     setMedia(type === 'video & text course' ? mSubTopic.youtube : mSubTopic.image);
+//   } else {
+//     // CACHE MISS: Show loading popup and start generation
+//     setShowLoadingPopup(true);
+//     setLoadingSubtopic(subtopicTitle);
+//     simulateProgress('theory');
+    
+//     if (type === 'video & text course') {
+//       sendVideo(`${subtopicTitle} ${mainTopic}`, topicTitle, subtopicTitle, subtopicTitle);
+//     } else {
+//       sendBulkCourseContent(topicTitle, subtopicTitle);
+//     }
+//   }
+// }, [jsonData, mainTopic, isSubtopicUnlocked, type, simulateProgress]);
+
+
 
 const handleSelect = useCallback((topicTitle, subtopicTitle) => {
   if (!jsonData) return;
@@ -6593,6 +6942,11 @@ const handleSelect = useCallback((topicTitle, subtopicTitle) => {
     return;
   }
 
+  // Clear any existing intervals
+  if (window.progressInterval) {
+    clearInterval(window.progressInterval);
+  }
+
   // INSTANT: Change the title and check cache
   setSelected(subtopicTitle);
 
@@ -6604,6 +6958,7 @@ const handleSelect = useCallback((topicTitle, subtopicTitle) => {
     // CACHE MISS: Show loading popup and start generation
     setShowLoadingPopup(true);
     setLoadingSubtopic(subtopicTitle);
+    setLoadingProgress(0); // Reset progress
     simulateProgress('theory');
     
     if (type === 'video & text course') {
@@ -6613,6 +6968,7 @@ const handleSelect = useCallback((topicTitle, subtopicTitle) => {
     }
   }
 }, [jsonData, mainTopic, isSubtopicUnlocked, type, simulateProgress]);
+
 
   async function sendImageForBatch(promptImage: string, topics: string, sub: string, theory: string) {
     try {
