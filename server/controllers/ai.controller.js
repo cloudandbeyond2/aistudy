@@ -65,6 +65,7 @@ export const generatePrompt = async (req, res) => {
       model: 'gemini-2.5-flash',
       systemInstruction: "You are an expert educational course architect. Design highly structured, coherent, and comprehensive course outlines.",
       generationConfig: {
+        maxOutputTokens: 8192,
         responseMimeType: 'application/json',
         responseSchema: {
           type: "object",
@@ -223,6 +224,7 @@ Response Format (JSON):
       safetySettings,
       systemInstruction,
       generationConfig: {
+        maxOutputTokens: 8192,
         responseMimeType: 'application/json',
         responseSchema: {
           type: "object",
@@ -387,14 +389,20 @@ export const generateImage = async (req, res) => {
   }
 
   try {
+    // Clean and optimize the prompt for better search results
+    const cleanedPrompt = prompt.replace(/[-–—]/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 80);
+
     const unsplash = await getUnsplashApi();
     if (unsplash) {
       const result = await unsplash.search.getPhotos({
-        query: prompt,
-        perPage: 1,
+        query: cleanedPrompt,
+        perPage: 3,
+        orientation: 'landscape',
+        contentFilter: 'high',
       });
 
       if (result.response && result.response.results.length > 0) {
+        // Pick the most relevant result (first one from Unsplash is usually best)
         return res.status(200).json({
           success: true,
           url: result.response.results[0].urls.regular
@@ -402,28 +410,51 @@ export const generateImage = async (req, res) => {
       }
     }
 
-    // Fallback to GIS with unsplash.com constraint if API fails or no results
-    gis(`${prompt} site:unsplash.com`, (error, results) => {
-      if (error || !results || results.length === 0) {
-        // Ultimate fallback: broad search
-        gis(prompt, (err2, res2) => {
-          if (err2 || !res2 || res2.length === 0) {
-            return res.status(500).json({ success: false, message: 'Image search failed' });
-          }
-          res.status(200).json({ success: true, url: res2[0].url });
+    const gisOptions = {
+      searchTerm: cleanedPrompt,
+      queryStringAddition: '&tbs=il:cl' // Google Image Search filter for "Creative Commons licenses"
+    };
+
+    // Helper to try GIS searches sequentially
+    const tryGisSearch = (term) => {
+      return new Promise((resolve) => {
+        gis({ searchTerm: term, queryStringAddition: '&tbs=il:cl' }, (err, res) => {
+          if (!err && res && res.length > 0) resolve(res[0].url);
+          else resolve(null);
         });
-        return;
+      });
+    };
+
+    // 1. Try with Unsplash constraint
+    gis({ ...gisOptions, searchTerm: `${cleanedPrompt} site:unsplash.com` }, async (error, results) => {
+      if (!error && results && results.length > 0) {
+        return res.status(200).json({ success: true, url: results[0].url });
       }
 
-      res.status(200).json({
-        success: true,
-        url: results[0].url
-      });
+      // 2. Try full cleaned prompt without site constraint
+      let url = await tryGisSearch(cleanedPrompt);
+      if (url) return res.status(200).json({ success: true, url });
+
+      // 3. Try simplifying the prompt (e.g., getting the text after "in" representing the main topic)
+      const parts = prompt.split(' in ');
+      if (parts.length > 1) {
+        url = await tryGisSearch(parts[1] + ' concept');
+        if (url) return res.status(200).json({ success: true, url });
+      }
+
+      // 4. Ultimate fallback: just the first 3 words of the prompt
+      const words = cleanedPrompt.split(' ').slice(0, 3).join(' ');
+      url = await tryGisSearch(words);
+      if (url) return res.status(200).json({ success: true, url });
+
+      // If everything fails, return 500
+      return res.status(500).json({ success: false, message: 'Image search failed entirely' });
     });
   } catch (error) {
     console.error('Unsplash search error:', error);
-    // Final fallback
-    gis(prompt, (err, results) => {
+    
+    // Final desperate fallback for CC images
+    gis({ searchTerm: prompt.split(' in ')[1] || prompt, queryStringAddition: '&tbs=il:cl' }, (err, results) => {
       if (err || !results || results.length === 0) {
         return res.status(500).json({ success: false, message: 'Image search failed' });
       }

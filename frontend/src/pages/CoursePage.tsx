@@ -8416,19 +8416,10 @@ import ShareOnSocial from 'react-share-on-social';
 import StyledText from '@/components/styledText';
 import html2pdf from 'html2pdf.js';
 
-// Fallback image utility
+// Fallback image utility - uses a working placeholder since source.unsplash.com is deprecated
 const getFallbackImage = (topic: string, subtopic: string) => {
-  // Unsplash curated collections for education
-  const collections = [
-    'education',
-    'learning',
-    'study',
-    'academic',
-    'knowledge'
-  ];
-  
-  const randomCollection = collections[Math.floor(Math.random() * collections.length)];
-  return `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(subtopic)},${randomCollection}`;
+  // Use a reliable placeholder that displays the subtopic name
+  return `https://placehold.co/800x600/4f46e5/ffffff?text=${encodeURIComponent(subtopic.substring(0, 40))}`;
 };
 
 // Loading Popup Component
@@ -8715,26 +8706,14 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
     });
   };
   img.onerror = () => {
-    // If image fails, try to generate a better one with topic context
-    if (topicTitle) {
-      const fallbackUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(subtopicTitle)},${encodeURIComponent(topicTitle)}`;
-      const fallbackImg = new Image();
-      fallbackImg.onload = () => {
-        setPreloadedImages(prev => new Map(prev).set(subtopicTitle, fallbackUrl));
-        setImageLoading(prev => {
-          const newMap = new Map(prev);
-          newMap.delete(subtopicTitle);
-          return newMap;
-        });
-      };
-      fallbackImg.src = fallbackUrl;
-    } else {
-      setImageLoading(prev => {
-        const newMap = new Map(prev);
-        newMap.delete(subtopicTitle);
-        return newMap;
-      });
-    }
+    // If image fails, use a working placeholder
+    const fallbackUrl = getFallbackImage(topicTitle || '', subtopicTitle);
+    setPreloadedImages(prev => new Map(prev).set(subtopicTitle, fallbackUrl));
+    setImageLoading(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(subtopicTitle);
+      return newMap;
+    });
   };
   img.src = url;
 }, []);
@@ -9242,17 +9221,12 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
       </div>
     </div>`);
     
-    // Use Unsplash immediately
-    const fallbackUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(clickedSub)},${encodeURIComponent(mainTopic)}`;
-    setMedia(fallbackUrl);
-    updateLocalCache(clickedTopic, clickedSub, { image: fallbackUrl, done: true });
+    // Set a temporary placeholder while image loads
+    const placeholderUrl = getFallbackImage(mainTopic, clickedSub);
+    setMedia(placeholderUrl);
     
-    // 2. Theory Track
+    // 2. Theory + Image generation in parallel
     try {
-      // Switch to image loading stage
-      clearTheoryProgress();
-      simulateProgress('image');
-      
       const theoryPayload = {
         mainTopic,
         topicsList: [{ topicTitle: clickedTopic, subtopics: [clickedSub] }],
@@ -9260,23 +9234,40 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
         userId
       };
       
-      const theoryRes = await axios.post(serverURL + '/api/generate-batch', theoryPayload);
+      // Fetch theory and image in parallel for faster loading
+      const imagePrompt = `${clickedSub} in ${mainTopic}`;
+      const [theoryRes, imageRes] = await Promise.allSettled([
+        axios.post(serverURL + '/api/generate-batch', theoryPayload),
+        axios.post(serverURL + '/api/image', { prompt: imagePrompt }, { timeout: 10000 })
+      ]);
       
-      if (theoryRes.data && theoryRes.data.success && theoryRes.data.topics?.[0]) {
-        const newTheory = theoryRes.data.topics[0].subtopics[0].theory;
+      // Switch to image loading stage
+      clearTheoryProgress();
+      simulateProgress('image');
+      
+      // Handle theory result
+      if (theoryRes.status === 'fulfilled' && theoryRes.value.data?.success && theoryRes.value.data.topics?.[0]) {
+        const newTheory = theoryRes.value.data.topics[0].subtopics[0].theory;
         setTheory(newTheory);
         updateLocalCache(clickedTopic, clickedSub, { theory: newTheory, done: true });
-        updateCourse();
       }
+      
+      // Handle image result
+      let finalImageUrl = placeholderUrl;
+      if (imageRes.status === 'fulfilled' && imageRes.value.data?.url) {
+        finalImageUrl = imageRes.value.data.url;
+      }
+      setMedia(finalImageUrl);
+      updateLocalCache(clickedTopic, clickedSub, { image: finalImageUrl, done: true });
+      updateCourse();
       
       // Switch to complete stage and set to 100%
       simulateProgress('complete');
       setLoadingProgress(100);
       
-      // Hide popup after showing 100% for 2 seconds (longer for 10 modules)
+      // Hide popup after showing 100% for 2 seconds
       setTimeout(() => {
         setShowLoadingPopup(false);
-        // Clear the interval when hiding
         if (window.progressInterval) {
           clearInterval(window.progressInterval);
         }
@@ -9295,18 +9286,7 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
     }
   }
 
-  // async function sendImageForBatch(promptImage: string, topics: string, sub: string, theory: string) {
-  //   try {
-  //     // Show theory immediately
-  //     setSelected(sub);
-  //     setTheory(theory);
-      
-  //     setImageLoading(prev => new Map(prev).set(sub, true));
-      
-  //     // Generate a more reliable prompt for Unsplash as primary source
-  //     // Unsplash works better with simpler, more general terms
-  //     const unsplashQuery = encodeURIComponent(`${sub} ${mainTopic} concept`.substring(0, 50));
-  //     const unsplashUrl = `https://source.unsplash.com/featured/800x600/?${unsplashQuery}`;
+  // sendImageForBatch is called inside sendBulkCourseContent
       
   //     // Try to get AI-generated image first, but with better error handling
   //     let imageUrl = '';
@@ -9459,70 +9439,39 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
     
     setImageLoading(prev => new Map(prev).set(sub, true));
     
-    // Create better image search queries using topic and subtopic
+    // Create a descriptive prompt using topic and subtopic for the /api/image endpoint
     const topicContext = topics || mainTopic;
-    const subtopicContext = sub;
+    const imageSearchPrompt = `${sub} in ${topicContext}`;
     
-    // Generate multiple query variations for better results
-    const queryVariations = [
-      `${subtopicContext} ${topicContext} concept`,
-      `${subtopicContext} in ${topicContext}`,
-      `${topicContext} ${subtopicContext} example`,
-      `${subtopicContext} diagram illustration`,
-      `${topicContext} learning ${subtopicContext}`,
-      subtopicContext,
-      `${topicContext} education`
-    ];
-    
-    // Try to get AI-generated image first
     let imageUrl = '';
     
     try {
-      // Add timeout to prevent hanging
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+      // Call the backend /api/image endpoint (uses Unsplash API + GIS fallback)
       const postURL = serverURL + '/api/image';
       const res = await axios.post(postURL, { 
-        prompt: `${subtopicContext} in ${topicContext} - educational concept` 
+        prompt: imageSearchPrompt 
       }, {
-        signal: controller.signal,
-        timeout: 8000
+        timeout: 10000
       }).catch(error => {
         console.error("Image API error:", error);
         return { data: { url: null } };
       });
       
-      clearTimeout(timeoutId);
       imageUrl = res.data?.url || '';
     } catch (apiError) {
       console.error("Image generation failed:", apiError);
       imageUrl = '';
     }
     
-    // If AI image generation failed, use Unsplash with the best query
+    // If /api/image failed, use a working placeholder
     if (!imageUrl) {
-      console.log("Using Unsplash fallback for:", sub);
-      
-      // Try each query variation until one works
-      for (const query of queryVariations) {
-        const testUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(query)}`;
-        const works = await testImageUrl(testUrl);
-        if (works) {
-          imageUrl = testUrl;
-          break;
-        }
-      }
-      
-      // If none worked, use the first variation anyway
-      if (!imageUrl) {
-        imageUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(queryVariations[0])}`;
-      }
+      console.log("Using placeholder fallback for:", sub);
+      imageUrl = getFallbackImage(topicContext, sub);
     }
     
     // Update image in cache immediately
     if (imageUrl) {
-      preloadImageWithCache(imageUrl, sub);
+      preloadImageWithCache(imageUrl, sub, topicContext);
       setMedia(imageUrl);
     }
     
@@ -9555,7 +9504,7 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
     
     // Ultimate fallback with topic and subtopic context
     const topicContext = topics || mainTopic;
-    const fallbackUrl = `https://via.placeholder.com/800x600/4f46e5/ffffff?text=${encodeURIComponent(sub)} in ${encodeURIComponent(topicContext)}`;
+    const fallbackUrl = getFallbackImage(topicContext, sub);
     
     setMedia(fallbackUrl);
     
@@ -10554,45 +10503,31 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
                               const target = e.target as HTMLImageElement;
                               target.onerror = null; // Prevent infinite loop
                               
-                              // Try progressive fallbacks
-                              const fallbackSources = [
-                                `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(selected)},${encodeURIComponent(mainTopic || '')}`,
-                                `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(selected)},education`,
-                                `https://source.unsplash.com/featured/800x600/?learning,${encodeURIComponent(mainTopic || '')}`,
-                                `https://picsum.photos/800/600?${encodeURIComponent(selected)}`,
-                                `https://via.placeholder.com/800x600/4f46e5/ffffff?text=${encodeURIComponent(selected)}`
-                              ];
-                              
-                              const currentSrc = target.src;
-                              const currentIndex = fallbackSources.indexOf(currentSrc);
-                              
-                              if (currentIndex < fallbackSources.length - 1) {
-                                // Try next fallback
-                                const nextSrc = fallbackSources[currentIndex + 1];
-                                
-                                // Test if next source works before setting
-                                const works = await testImageUrl(nextSrc);
-                                if (works) {
-                                  target.src = nextSrc;
-                                } else {
-                                  // Skip to next if this one fails
-                                  target.src = fallbackSources[currentIndex + 2] || fallbackSources[fallbackSources.length - 1];
+                              // Try to fetch a new image from the backend API
+                              try {
+                                const imagePrompt = `${selected} in ${mainTopic || ''}`;
+                                const res = await axios.post(serverURL + '/api/image', { prompt: imagePrompt }, { timeout: 8000 });
+                                if (res.data?.url) {
+                                  target.src = res.data.url;
+                                  return;
                                 }
-                              } else {
-                                // Ultimate fallback - show a gradient with text
-                                const parent = target.parentElement;
-                                if (parent) {
-                                  target.style.display = 'none';
-                                  const gradientDiv = document.createElement('div');
-                                  gradientDiv.className = 'flex items-center justify-center w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20';
-                                  gradientDiv.innerHTML = `
-                                    <div class="text-center p-4">
-                                      <p class="text-lg font-semibold text-primary">${selected}</p>
-                                      <p class="text-sm text-muted-foreground">${mainTopic || 'Course'} visualization</p>
-                                    </div>
-                                  `;
-                                  parent.appendChild(gradientDiv);
-                                }
+                              } catch (apiErr) {
+                                console.error('Image API fallback failed:', apiErr);
+                              }
+                              
+                              // Ultimate fallback - show a gradient with text
+                              const parent = target.parentElement;
+                              if (parent) {
+                                target.style.display = 'none';
+                                const gradientDiv = document.createElement('div');
+                                gradientDiv.className = 'flex items-center justify-center w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20';
+                                gradientDiv.innerHTML = `
+                                  <div class="text-center p-4">
+                                    <p class="text-lg font-semibold text-primary">${selected}</p>
+                                    <p class="text-sm text-muted-foreground">${mainTopic || 'Course'} visualization</p>
+                                  </div>
+                                `;
+                                parent.appendChild(gradientDiv);
                               }
                             }}
                           />
