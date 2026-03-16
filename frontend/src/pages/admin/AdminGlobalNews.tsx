@@ -1,100 +1,3 @@
-// import { useState, useEffect } from "react";
-// import axios from "axios";
-// import { serverURL } from "@/constants";
-
-// const AdminGlobalNews = () => {
-//   const [title, setTitle] = useState("");
-//   const [content, setContent] = useState("");
-//   const [news, setNews] = useState([]);
-//   const [submitting, setSubmitting] = useState(false);
-//   const [error, setError] = useState("");
-
-//   const API = `${serverURL}/api/global-news`;
-
-//   const fetchNews = async () => {
-//     try {
-//       const res = await axios.get(API);
-//       setNews(res.data);
-//     } catch (e: any) {
-//       setError(e?.response?.data?.message || "Failed to load global news");
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchNews();
-//   }, []);
-
-//   const handleSubmit = async (e: any) => {
-//     e.preventDefault();
-//     setError("");
-//     setSubmitting(true);
-
-//     try {
-//       await axios.post(API, {
-//         title,
-//         content
-//       });
-//       setTitle("");
-//       setContent("");
-//       fetchNews();
-//     } catch (e: any) {
-//       setError(e?.response?.data?.message || "Unable to post news");
-//     } finally {
-//       setSubmitting(false);
-//     }
-//   };
-
-//   return (
-//     <div className="p-6">
-
-//       <h1 className="text-3xl font-bold mb-6">Global News</h1>
-//       {error && <p className="text-red-600 mb-4 text-sm">{error}</p>}
-
-//       {/* Create News */}
-//       <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow mb-8">
-
-//         <input
-//           type="text"
-//           placeholder="News Title"
-//           className="border p-2 w-full mb-3"
-//           value={title}
-//           onChange={(e) => setTitle(e.target.value)}
-//           required
-//         />
-
-//         <textarea
-//           placeholder="News Content"
-//           className="border p-2 w-full mb-3"
-//           value={content}
-//           onChange={(e) => setContent(e.target.value)}
-//           required
-//         />
-
-//         <button
-//           className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-60"
-//           disabled={submitting}
-//         >
-//           {submitting ? "Posting..." : "Post News"}
-//         </button>
-
-//       </form>
-
-//       {/* News List */}
-//       <div className="space-y-4">
-//         {news.map((item: any) => (
-//           <div key={item._id} className="border p-4 rounded bg-gray-50">
-//             <h3 className="font-bold">{item.title}</h3>
-//             <p className="text-gray-600">{item.content}</p>
-//           </div>
-//         ))}
-//       </div>
-
-//     </div>
-//   );
-// };
-
-// export default AdminGlobalNews;
-
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Table,
@@ -226,12 +129,12 @@ const AdminGlobalNews = () => {
         </div>
 
         <Separator />
-
-        <Card className="p-6 bg-white shadow-sm border-dashed">
+<Card className="p-6 bg-background border border-border shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
-                placeholder="News Title (e.g. System Update)"
+          placeholder="News Title (e.g. System Update)"
+  className="bg-background"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required

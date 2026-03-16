@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { serverURL } from "@/constants";
@@ -29,7 +28,7 @@ const OrgStudentTickets = () => {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   const [statusFilter, setStatusFilter] = useState("All");
 
@@ -88,17 +87,29 @@ const OrgStudentTickets = () => {
   };
 
   const sendReply = async () => {
-    if (!reply.trim()) return;
-    await axios.post(`${serverURL}/api/student-tickets/${selectedTicket._id}/reply`, {
-      sender: "org_admin",
-      message: reply,
-    });
+  if (!reply.trim()) return;
+
+  try {
+    await axios.post(
+      `${serverURL}/api/student-tickets/${selectedTicket._id}/reply`,
+      {
+        sender: "org_admin",
+        message: reply,
+      }
+    );
+
     setReply("");
-    const res = await axios.get(`${serverURL}/api/student-tickets/org/${orgId}`);
-    const updated = res.data.tickets.find((t: any) => t._id === selectedTicket._id);
-    setSelectedTicket(updated);
-    setTickets(res.data.tickets);
-  };
+
+    // refresh tickets
+    await fetchTickets();
+
+    // AUTO CLOSE CHAT
+    setSelectedTicket(null);
+
+  } catch (error) {
+    console.error("Error sending reply", error);
+  }
+};
 
   const handleMarkResolved = async (ticketId: string) => {
     await axios.put(`${serverURL}/api/student-tickets/${ticketId}/status`, { status: "Resolved" });
@@ -117,7 +128,7 @@ const OrgStudentTickets = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-slate-50/30 min-h-screen">
+    <div className="p-6 space-y-6 bg-background min-h-screen">
       <div className="space-y-4">
         <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
           Student Support Center
@@ -137,7 +148,7 @@ const OrgStudentTickets = () => {
     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
     <Input
       placeholder="Search by ID or Subject..."
-      className="pl-9 bg-white"
+      className="pl-9 bg-background"
       value={searchTerm}
       onChange={(e) => {
         setSearchTerm(e.target.value);
@@ -148,7 +159,7 @@ const OrgStudentTickets = () => {
 
   {/* STATUS FILTER */}
   <select
-    className="border rounded-md px-3 py-2 text-sm bg-white"
+    className="border rounded-md px-3 py-2 text-sm bg-background"
     value={statusFilter}
     onChange={(e) => {
       setStatusFilter(e.target.value);
@@ -177,9 +188,9 @@ const OrgStudentTickets = () => {
         </CardHeader>
 
         <CardContent>
-          <div className="rounded-md border bg-white overflow-hidden">
+          <div className="rounded-md border bg-background overflow-hidden">
             <Table>
-              <TableHeader className="bg-slate-50/50">
+            <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead className="w-[120px] font-semibold">Ticket ID</TableHead>
                   <TableHead className="font-semibold">Issue Details</TableHead>
@@ -199,14 +210,14 @@ const OrgStudentTickets = () => {
                     ).length || 0;
 
                     return (
-                      <TableRow key={ticket._id} className="hover:bg-slate-50/50 transition-colors">
+                      <TableRow key={ticket._id} className="hover:bg-muted/40 transition-colors">
                         <TableCell className="font-mono text-xs text-muted-foreground">
                           #{ticket._id.slice(-6).toUpperCase()}
                         </TableCell>
 
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium text-slate-900 line-clamp-1">{ticket.subject}</span>
+                           <span className="font-medium text-foreground line-clamp-1">{ticket.subject}</span>
                             <span className="text-xs text-muted-foreground line-clamp-1 italic">
                               {ticket.messages?.[0]?.message || "No description"}
                             </span>
@@ -215,7 +226,7 @@ const OrgStudentTickets = () => {
 
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-semibold text-slate-900">{ticket.student?.name}</span>
+                            <span className="font-semibold text-foreground">{ticket.student?.name}</span>
                             <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
                               {ticket.student?.department || "General"}
                             </span>
@@ -229,7 +240,7 @@ const OrgStudentTickets = () => {
                         </TableCell>
 
                         {/* Updated Date Column with Year */}
-                        <TableCell className="text-sm text-slate-600 whitespace-nowrap">
+                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                           {new Date(ticket.createdAt).toLocaleDateString("en-GB", {
                             day: "2-digit",
                             month: "short",
@@ -256,7 +267,7 @@ const OrgStudentTickets = () => {
                           <Button 
                             size="sm" 
                             variant="secondary" 
-                            className="hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                            className="hover:bg-blue-500/10 hover:text-blue-600 transition-colors"
                             onClick={() => openChat(ticket)}
                           >
                             View
@@ -309,9 +320,9 @@ const OrgStudentTickets = () => {
 
       <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
         <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden border-none shadow-2xl [&>button]:hidden">
-          <DialogHeader className="p-4 border-b bg-white flex flex-row items-center justify-between space-y-0">
+          <DialogHeader className="p-4 border-b bg-background flex flex-row items-center justify-between space-y-0">
             <div className="flex flex-col truncate">
-              <DialogTitle className="text-lg font-bold text-slate-800 truncate pr-4">
+              <DialogTitle className="text-lg font-bold text-foreground truncate pr-4">
                 {selectedTicket?.subject}
               </DialogTitle>
               <span className="text-xs text-muted-foreground">From: {selectedTicket?.student?.name}</span>
@@ -331,7 +342,7 @@ const OrgStudentTickets = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 rounded-full hover:bg-slate-100"
+               className="h-8 w-8 rounded-full hover:bg-muted"
                 onClick={() => setSelectedTicket(null)}
               >
                 <X className="h-4 w-4 text-slate-500" />
@@ -339,12 +350,12 @@ const OrgStudentTickets = () => {
             </div>
           </DialogHeader>
 
-          <div className="flex flex-col h-[480px] bg-slate-50">
+     <div className="flex flex-col h-[480px] bg-muted/40">
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
               {selectedTicket?.messages?.map((msg: any, i: number) => (
                 <div key={i} className={`flex ${msg.sender === "org_admin" ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-[14px] shadow-sm ${
-                    msg.sender === "org_admin" ? "bg-blue-600 text-white rounded-tr-none" : "bg-white border text-slate-700 rounded-tl-none"
+                    msg.sender === "org_admin" ? "bg-blue-600 text-white rounded-tr-none" : "bg-background border text-foreground rounded-tl-none"
                   }`}>
                     {msg.message}
                   </div>
@@ -353,17 +364,22 @@ const OrgStudentTickets = () => {
             </div>
 
             {selectedTicket?.status !== "Resolved" ? (
-              <div className="p-4 bg-white border-t flex gap-2">
+           <div className="p-4 bg-background border-t flex gap-2">
                 <Input
                   value={reply}
                   onChange={(e) => setReply(e.target.value)}
                   placeholder="Write your response..."
-                  onKeyDown={(e) => e.key === "Enter" && sendReply()}
+               onKeyDown={(e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    sendReply();
+  }
+}}
                 />
                 <Button onClick={sendReply} className="bg-blue-600">Send</Button>
               </div>
             ) : (
-              <div className="p-4 bg-slate-100 text-center text-sm text-slate-500 font-medium">
+              <div className="p-4 bg-muted text-muted-foreground text-center text-sm font-medium">
                 This ticket has been resolved.
               </div>
             )}

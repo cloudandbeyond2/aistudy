@@ -42,7 +42,7 @@ const StudentSupportTickets = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const studentId = sessionStorage.getItem("uid");
@@ -122,41 +122,42 @@ const filteredTickets = tickets.filter((ticket) => {
       console.error(error);
     }
   };
+const sendReply = async () => {
+  if (!reply.trim() || !selectedTicket?._id) return;
 
-  const sendReply = async () => {
-    if (!reply.trim()) return;
-
-    try {
-      await axios.post(`${serverURL}/api/student-tickets/${selectedTicket._id}/reply`, {
+  try {
+    await axios.post(
+      `${serverURL}/api/student-tickets/${selectedTicket._id}/reply`,
+      {
         sender: "student",
         message: reply,
-      });
+      }
+    );
 
-      setReply("");
+    setReply("");
+    await fetchTickets();
 
-      const res = await axios.get(`${serverURL}/api/student-tickets/student/${studentId}`);
-      const updated = res.data.tickets.find((t: any) => t._id === selectedTicket._id);
-      setSelectedTicket(updated);
-      setTickets(res.data.tickets);
+    setTimeout(() => {
+      setSelectedTicket(null);
+    }, 300);
 
-    } catch (err) {
-      console.error("Reply error", err);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Resolved":
-        return "bg-emerald-100 text-emerald-700 border-emerald-200";
-      case "In Progress":
-        return "bg-amber-100 text-amber-700 border-amber-200";
-      default:
-        return "bg-blue-100 text-blue-700 border-blue-200";
-    }
-  };
+  } catch (err) {
+    console.error("Reply error", err);
+  }
+};
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "Resolved":
+      return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
+    case "In Progress":
+      return "bg-amber-500/10 text-amber-500 border-amber-500/20";
+    default:
+      return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+  }
+};
 
   return (
-    <div className="p-6 space-y-6 bg-slate-50/30 min-h-screen">
+    <div className="p-6 space-y-6 bg-background min-h-screen">
 
       {/* HEADER */}
       <div className="flex justify-between items-start">
@@ -186,7 +187,7 @@ const filteredTickets = tickets.filter((ticket) => {
     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
     <Input
       placeholder="Search ID, subject or status..."
-      className="pl-9 bg-white"
+    className="pl-9 bg-background"
       value={searchTerm}
       onChange={(e) => {
         setSearchTerm(e.target.value);
@@ -197,7 +198,7 @@ const filteredTickets = tickets.filter((ticket) => {
 
   {/* STATUS FILTER */}
   <select
-    className="border rounded-md px-3 py-2 text-sm bg-white"
+ className="border rounded-md px-3 py-2 text-sm bg-background text-foreground"
     value={statusFilter}
     onChange={(e) => {
       setStatusFilter(e.target.value);
@@ -226,11 +227,11 @@ const filteredTickets = tickets.filter((ticket) => {
         </CardHeader>
 
         <CardContent>
-          <div className="rounded-md border bg-white">
+        <div className="rounded-md border bg-background">
 
             <Table>
 
-              <TableHeader className="bg-slate-50/50">
+            <TableHeader className="bg-muted/30">
                 <TableRow>
                   <TableHead className="font-semibold">Ticket ID</TableHead>
                   <TableHead className="font-semibold">Subject</TableHead>
@@ -254,10 +255,10 @@ const filteredTickets = tickets.filter((ticket) => {
                     const ticketId = `#${ticket._id.slice(-6).toUpperCase()}`;
 
                     return (
-                      <TableRow key={ticket._id} className="hover:bg-slate-50/30">
+                      <TableRow key={ticket._id} className="hover:bg-muted/40">
 
                         {/* Ticket ID */}
-                        <TableCell className="font-mono text-xs text-gray-500">
+                        <TableCell className="font-mono text-xs text-muted-foreground">
                           {ticketId}
                         </TableCell>
 
@@ -318,19 +319,18 @@ const filteredTickets = tickets.filter((ticket) => {
       <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
         <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden border-none shadow-2xl">
 
-          <DialogHeader className="p-4 border-b bg-white">
-            <DialogTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
-
+        <DialogHeader className="p-4 border-b bg-background">
+      <DialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
               #{selectedTicket?._id?.slice(-6).toUpperCase()} — {selectedTicket?.subject}
 
-              <Badge variant="outline" className={`${getStatusColor(selectedTicket?.status)} text-[10px]`}>
+           <Badge variant="outline" className={`${getStatusColor(selectedTicket?.status)} text-xs`}>
                 {selectedTicket?.status}
               </Badge>
 
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-col h-[480px] bg-slate-50/50">
+       <div className="flex flex-col h-[480px] bg-muted/40">
 
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
               {selectedTicket?.messages?.map((msg: any, i: number) => (
@@ -338,7 +338,7 @@ const filteredTickets = tickets.filter((ticket) => {
                   <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-[14px] shadow-sm ${
                     msg.sender === "student"
                       ? "bg-blue-600 text-white rounded-tr-none"
-                      : "bg-white border text-slate-700 rounded-tl-none"
+                      : "bg-background border text-foreground rounded-tl-none"
                   }`}>
                     {msg.message}
                   </div>
@@ -347,19 +347,24 @@ const filteredTickets = tickets.filter((ticket) => {
             </div>
 
             {selectedTicket?.status !== "Resolved" ? (
-              <div className="p-4 bg-white border-t flex gap-2">
+         <div className="p-4 bg-background border-t flex gap-2">
                 <Input
                   value={reply}
                   onChange={(e) => setReply(e.target.value)}
                   placeholder="Type your message..."
-                  onKeyDown={(e) => e.key === "Enter" && sendReply()}
+              onKeyDown={(e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    sendReply();
+  }
+}}
                 />
                 <Button onClick={sendReply} className="bg-blue-600">
                   Send
                 </Button>
               </div>
             ) : (
-              <div className="p-4 bg-emerald-50 text-center text-sm text-emerald-700 font-medium border-t">
+          <div className="p-4 bg-emerald-500/10 text-center text-sm text-emerald-400 font-medium border-t border-emerald-500/20">
                 This ticket has been marked as Resolved.
               </div>
             )}
