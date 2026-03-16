@@ -661,7 +661,7 @@ const Profile = () => {
 
 
       {/* ================= COVER SECTION ================= */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+ <div className="bg-background rounded-2xl shadow-sm overflow-hidden">
 
         {/* Cover */}
         <div className="h-64 bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-400" />

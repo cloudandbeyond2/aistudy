@@ -343,16 +343,14 @@ const latest = [...orders]
 
   
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+  <div className="min-h-screen bg-background p-6">
       <div className="mx-auto max-w-7xl space-y-8">
 
         {/* HEADER */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-slate-500">
-              Overview of your platform
-            </p>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+<p className="text-muted-foreground">Overview of your platform</p>
           </div>
         </div>
 
@@ -413,7 +411,7 @@ const latest = [...orders]
 
       
             {/* User Distribution */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
   <h2 className="mb-4 text-lg font-semibold text-slate-900">
     User Distribution
   </h2>
@@ -452,7 +450,7 @@ const latest = [...orders]
                 COLORS_USER[index % COLORS_USER.length],
             }}
           />
-          <span className="text-slate-700 font-medium">
+     <span className="text-foreground font-medium">
             {item.name}
           </span>
         </div>
@@ -462,7 +460,7 @@ const latest = [...orders]
 </div>
 
         {/* Organization Enquiries Chart */}
-           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-1 flex flex-col gap-6">
+           <div className="rounded-xl border border-border bg-card p-6 shadow-sm lg:col-span-1 flex flex-col gap-6">
          
               <div className="mb-4 flex items-center justify-between">
                 <div>
@@ -512,7 +510,7 @@ const latest = [...orders]
 
           
  {/* REVENUE TRENDS */}
-       <div className="bg-white p-6 rounded-xl shadow-sm">
+       <div className="bg-card p-6 rounded-xl shadow-sm">
   <div className="flex items-center justify-between mb-4">
     <div>
       <h2 className="text-lg font-semibold">
@@ -556,7 +554,7 @@ const latest = [...orders]
 
             {/* Top Organizations */}
                {/* Course Distribution */}
-           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+           <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
   <h2 className="mb-4 text-lg font-semibold text-slate-900">
     Course Types
   </h2>
@@ -607,7 +605,7 @@ const latest = [...orders]
 </div>
 
            {/* 3. AI FEATURE USAGE (Radar Chart) */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-1">
+          <div className="rounded-xl border border-border bg-card p-6 shadow-sm lg:col-span-1">
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">AI Feature Usage</h2>
@@ -651,7 +649,7 @@ const latest = [...orders]
 
   <div className="overflow-x-auto">
     <table className="min-w-full divide-y divide-border">
-      <thead className="bg-muted/40">
+      <thead className="text-muted-foreground">
         <tr>
           <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
             Order ID
