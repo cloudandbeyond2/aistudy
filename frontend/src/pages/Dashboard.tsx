@@ -22,16 +22,17 @@ import {
   BarChart, Bar, XAxis, YAxis, Legend, CartesianGrid
 } from 'recharts';
 import { Lock } from 'lucide-react';
+import Pagination from './Pagination';
+
+const ITEMS_PER_PAGE = 9;
 
 const Dashboard = () => {
   const daysleftRaw = sessionStorage.getItem("daysLeft");
 
-
-
- const daysleft =
-  daysleftRaw === "UNLIMITED" || daysleftRaw === "EXPIRED"
-    ? null
-    : Number(daysleftRaw);
+  const daysleft =
+    daysleftRaw === "UNLIMITED" || daysleftRaw === "EXPIRED"
+      ? null
+      : Number(daysleftRaw);
 
   const [isUnlimited, setIsUnlimited] = useState(false);
   const [data, setData] = useState([]);
@@ -39,11 +40,10 @@ const Dashboard = () => {
   const isPaid = ['monthly', 'yearly', 'forever'].includes(plan) || sessionStorage.getItem('daysLeft') === 'UNLIMITED';
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
+  const [totalCourses, setTotalCourses] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedYear, setSelectedYear] = useState('all');
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const userId = sessionStorage.getItem('uid');
   const [courseProgress, setCourseProgress] = useState({});
   const [modules, setTotalModules] = useState({});
@@ -58,6 +58,8 @@ const Dashboard = () => {
     inProgressCourses: 0
   });
 
+  const totalPages = Math.ceil(totalCourses / ITEMS_PER_PAGE);
+
   function redirectCreate() {
     navigate("/dashboard/generate-course");
   }
@@ -65,6 +67,7 @@ const Dashboard = () => {
   function redirectPricing() {
     navigate("/dashboard/pricing");
   }
+
   async function redirectCourse(content: string, mainTopic: string, type: string, courseId: string, completed: string, end: string) {
     const postURL = serverURL + '/api/getmyresult';
     const response = await axios.post(postURL, { courseId });
@@ -107,12 +110,12 @@ const Dashboard = () => {
       });
     }
   }
+
   useEffect(() => {
     fetchData();
   }, []);
 
   async function fetchData() {
-    // Use the single-user endpoint instead of fetching ALL users
     const uid = sessionStorage.getItem('uid');
     if (!uid) { setIsLoading(false); return; }
     try {
@@ -125,22 +128,22 @@ const Dashboard = () => {
           setIsUnlimited(true);
         } else {
           const today = new Date();
-const end = new Date(endDate);
+          const end = new Date(endDate);
 
-if (isNaN(end.getTime())) {
-  sessionStorage.setItem("daysLeft", "EXPIRED");
-  return;
-}
-const diffTime = end.getTime() - today.getTime();
-const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          if (isNaN(end.getTime())) {
+            sessionStorage.setItem("daysLeft", "EXPIRED");
+            return;
+          }
+          const diffTime = end.getTime() - today.getTime();
+          const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-if (daysLeft <= 0) {
-  sessionStorage.setItem("daysLeft", "EXPIRED");
-} else {
-  sessionStorage.setItem("daysLeft", daysLeft.toString());
-}
+          if (daysLeft <= 0) {
+            sessionStorage.setItem("daysLeft", "EXPIRED");
+          } else {
+            sessionStorage.setItem("daysLeft", daysLeft.toString());
+          }
 
-setIsUnlimited(false);
+          setIsUnlimited(false);
         }
       }
     } catch (error) {
@@ -165,7 +168,6 @@ setIsUnlimited(false);
     }
   }
 
-
   const handleDeleteCourse = async (courseId: number) => {
     setIsLoading(true);
     const postURL = serverURL + '/api/deletecourse';
@@ -176,7 +178,7 @@ setIsUnlimited(false);
         title: "Course deleted",
         description: "The course has been deleted successfully.",
       });
-      location.reload();
+      fetchUserCourses();
     } else {
       setIsLoading(false);
       toast({
@@ -196,7 +198,7 @@ setIsUnlimited(false);
         title: "Course Completed",
         description: "The course has been marked as complete.",
       });
-      location.reload();
+      fetchUserCourses();
     } else {
       setIsLoading(false);
       toast({
@@ -207,58 +209,72 @@ setIsUnlimited(false);
   };
 
   const fetchUserCourses = useCallback(async () => {
-    setIsLoading(page === 1);
-    setLoadingMore(page > 1);
-    const postURL = `${serverURL}/api/courses?userId=${userId}&page=${page}&limit=9`;
+    setIsLoading(true);
+    const postURL = `${serverURL}/api/courses?userId=${userId}&page=${page}&limit=${ITEMS_PER_PAGE}`;
     try {
       const response = await axios.get(postURL);
-      if (response.data.length === 0) {
-        setHasMore(false);
-      } else {
-        const coursesData = response.data;
-        const courseIds = coursesData.map((c: any) => c._id);
 
-        // Batch-fetch all quiz results and subtopic progress in parallel
-        const [quizResponse, progressResponse] = await Promise.all([
-          axios.post(`${serverURL}/api/getmyresults-batch`, { courseIds }),
-          axios.post(`${serverURL}/api/progress/batch`, { userId, courseIds })
-        ]).catch(() => [{ data: { results: [] } }, { data: { progress: {} } }]);
-
-        const quizMap: Record<string, boolean> = {};
-        if (quizResponse.data?.success) {
-          quizResponse.data.results.forEach((r: any) => {
-            quizMap[r.courseId] = r.passed;
-          });
+      // Support both { courses, total } shape and plain array (backwards compat)
+      let coursesData = [];
+      let total = 0;
+      if (Array.isArray(response.data)) {
+        coursesData = response.data;
+        // If fewer results than the page limit came back, we're on the last page.
+        // Reconstruct an approximate total from what we know.
+        if (coursesData.length < ITEMS_PER_PAGE) {
+          total = (page - 1) * ITEMS_PER_PAGE + coursesData.length;
+        } else {
+          // More pages may exist — set total high enough to show Next
+          total = page * ITEMS_PER_PAGE + 1;
         }
-
-        const apiProgressMap = progressResponse.data?.progress || {};
-
-        // Compute modules count (still local)
-        const moduleValues = await Promise.all(
-          coursesData.map((course: any) => CountTotalTopics(course.content, course.mainTopic))
-        );
-
-        const newProgressMap: Record<string, number> = {};
-        const newModulesMap: Record<string, number> = {};
-
-        coursesData.forEach((course: any, i: number) => {
-          // Priority: 1. Manual completion/Quiz passed -> 100%
-          //           2. API progress percentage
-          //           3. Default to 0
-          const isPassed = quizMap[course._id] || course.completed;
-          newProgressMap[course._id] = isPassed ? 100 : (apiProgressMap[course._id]?.percentage || 0);
-          newModulesMap[course._id] = moduleValues[i];
-        });
-
-        setCourseProgress(prev => ({ ...prev, ...newProgressMap }));
-        setTotalModules(prev => ({ ...prev, ...newModulesMap }));
-        setCourses(prevCourses => [...prevCourses, ...coursesData].sort((a, b) => b._id.localeCompare(a._id)));
+      } else {
+        coursesData = response.data.courses || [];
+        total = response.data.total || 0;
       }
+
+      setTotalCourses(total);
+
+      if (coursesData.length === 0) {
+        setCourses([]);
+        return;
+      }
+
+      const courseIds = coursesData.map((c: any) => c._id);
+
+      const [quizResponse, progressResponse] = await Promise.all([
+        axios.post(`${serverURL}/api/getmyresults-batch`, { courseIds }),
+        axios.post(`${serverURL}/api/progress/batch`, { userId, courseIds })
+      ]).catch(() => [{ data: { results: [] } }, { data: { progress: {} } }]);
+
+      const quizMap: Record<string, boolean> = {};
+      if (quizResponse.data?.success) {
+        quizResponse.data.results.forEach((r: any) => {
+          quizMap[r.courseId] = r.passed;
+        });
+      }
+
+      const apiProgressMap = progressResponse.data?.progress || {};
+
+      const moduleValues = await Promise.all(
+        coursesData.map((course: any) => CountTotalTopics(course.content, course.mainTopic))
+      );
+
+      const newProgressMap: Record<string, number> = {};
+      const newModulesMap: Record<string, number> = {};
+
+      coursesData.forEach((course: any, i: number) => {
+        const isPassed = quizMap[course._id] || course.completed;
+        newProgressMap[course._id] = isPassed ? 100 : (apiProgressMap[course._id]?.percentage || 0);
+        newModulesMap[course._id] = moduleValues[i];
+      });
+
+      setCourseProgress(newProgressMap);
+      setTotalModules(newModulesMap);
+      setCourses(coursesData.sort((a: any, b: any) => b._id.localeCompare(a._id)));
     } catch (error) {
       console.error(error);
     } finally {
       setIsLoading(false);
-      setLoadingMore(false);
     }
   }, [userId, page]);
 
@@ -266,50 +282,10 @@ setIsUnlimited(false);
     fetchUserCourses();
   }, [fetchUserCourses]);
 
-  const handleScroll = useCallback(() => {
-    if (!hasMore || loadingMore) return;
-    const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-    if (scrollTop + clientHeight >= scrollHeight - 100) {
-      setPage((prevPage) => prevPage + 1);
-    }
-  }, [hasMore, loadingMore]);
-
+  // Reset to page 1 when search or year filter changes
   useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
-
-  // Progress is computed from course JSON content locally — no API call needed
-  const CountDoneTopics = async (json: string, mainTopic: string, courseId: string, quizPassed: boolean) => {
-    try {
-      if (quizPassed) return 100;
-
-      const jsonData = JSON.parse(json);
-      let doneCount = 0;
-      let totalTopics = 0;
-
-      const topicsData = jsonData['course_topics'] || (mainTopic ? jsonData[mainTopic.toLowerCase()] : []);
-      if (!topicsData) return 0;
-
-      topicsData.forEach((topic: { subtopics: string[]; }) => {
-        topic.subtopics.forEach((subtopic) => {
-          if (subtopic.done) doneCount++;
-          totalTopics++;
-        });
-      });
-
-      // Total items = subtopics + 1 (quiz)
-      const totalItems = totalTopics + 1;
-      const effectiveDoneCount = doneCount; // Since quizPassed is handled at the start
-
-      const percentage = Math.round((effectiveDoneCount / totalItems) * 100);
-      return Math.min(percentage, 99); // Max 99 if quiz not passed
-    } catch (error) {
-      console.error(error);
-      return 0;
-    }
-  }
-
+    setPage(1);
+  }, [searchTerm, selectedYear]);
 
   const CountTotalTopics = async (json: string, mainTopic: string) => {
     try {
@@ -324,7 +300,7 @@ setIsUnlimited(false);
       console.error(error);
       return 0;
     }
-  }
+  };
 
   const getCourseThumbnail = (course: any) => {
     try {
@@ -336,7 +312,6 @@ setIsUnlimited(false);
           if (course.type?.toLowerCase() === 'video & text course' && subtopic?.youtube) {
             return `https://img.youtube.com/vi/${subtopic.youtube}/hqdefault.jpg`;
           }
-
           if (subtopic?.image) {
             return subtopic.image;
           }
@@ -345,7 +320,6 @@ setIsUnlimited(false);
     } catch (error) {
       console.error('Failed to resolve course thumbnail:', error);
     }
-
     return course.photo || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
   };
 
@@ -381,6 +355,11 @@ setIsUnlimited(false);
     return matchesSearch && matchesYear;
   });
 
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <>
       <SEO
@@ -406,51 +385,43 @@ setIsUnlimited(false);
             <h1 className="text-3xl font-bold tracking-tight text-gradient bg-gradient-to-r from-primary to-indigo-500">My Courses</h1>
             <p className="text-muted-foreground mt-1">Continue learning where you left off</p>
           </div>
-          {/* RIGHT */}
-          {/* Star bala */}
           <div className="flex items-center gap-3 flex-wrap">
-
-            {/* Plan Badge */}
-           <h6
-  onClick={redirectPricing}
- style={{
-  display: "inline-block",
-  padding: "8px 14px",
-  cursor: "pointer",
-  borderRadius: "20px",
-
-  backgroundColor:
-    plan === "free"
-      ? "#E0E7FF"
-      : isUnlimited
-      ? "#FEF3C7"
-      : daysleftRaw === "EXPIRED"
-      ? "#FEE2E2"
-      : "#ECFDF5",
-
-  color:
-    plan === "free"
-      ? "#3730A3"
-      : isUnlimited
-      ? "#92400E"
-      : daysleftRaw === "EXPIRED"
-      ? "#DC2626"
-      : "#065F46",
-
-  fontWeight: 600,
-  fontSize: "14px",
-}}
->
-             {plan === "free"
-  ? "🧪 Free Plan"
-  : isUnlimited
-    ? "👑 Unlimited Access"
-    : daysleftRaw === "EXPIRED"
-      ? "Expired"
-      : `📅 ${daysleft} days left`}
+            <h6
+              onClick={redirectPricing}
+              style={{
+                display: "inline-block",
+                padding: "8px 14px",
+                cursor: "pointer",
+                borderRadius: "20px",
+                backgroundColor:
+                  plan === "free"
+                    ? "#E0E7FF"
+                    : isUnlimited
+                      ? "#FEF3C7"
+                      : daysleftRaw === "EXPIRED"
+                        ? "#FEE2E2"
+                        : "#ECFDF5",
+                color:
+                  plan === "free"
+                    ? "#3730A3"
+                    : isUnlimited
+                      ? "#92400E"
+                      : daysleftRaw === "EXPIRED"
+                        ? "#DC2626"
+                        : "#065F46",
+                fontWeight: 600,
+                fontSize: "14px",
+              }}
+            >
+              {plan === "free"
+                ? "🧪 Free Plan"
+                : isUnlimited
+                  ? "👑 Unlimited Access"
+                  : daysleftRaw === "EXPIRED"
+                    ? "Expired"
+                    : `📅 ${daysleft} days left`}
             </h6>
 
-            {/* View Website */}
             <Button
               onClick={() => (window.location.href = websiteURL)}
               variant="outline"
@@ -459,10 +430,9 @@ setIsUnlimited(false);
               View Website
             </Button>
 
-            {/* Generate */}
             <Button
               onClick={() =>
-           courses.length === 1 && (plan === "free" || daysleftRaw === "EXPIRED")
+                courses.length === 1 && (plan === "free" || daysleftRaw === "EXPIRED")
                   ? redirectPricing()
                   : redirectCreate()
               }
@@ -472,7 +442,6 @@ setIsUnlimited(false);
               Generate New Course
             </Button>
 
-            {/* 🔔 Bell */}
             <NotificationBell />
           </div>
         </div>
@@ -509,7 +478,7 @@ setIsUnlimited(false);
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              Showing {filteredCourses.length} of {courses.length} course{courses.length === 1 ? '' : 's'}
+              Showing {filteredCourses.length} of {totalCourses} course{totalCourses === 1 ? '' : 's'}
             </p>
           </div>
         </div>
@@ -519,7 +488,7 @@ setIsUnlimited(false);
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
             <StatsCard
               title="Total Courses"
-              value={isOrgAdmin ? orgStats.totalCourses : courses.length}
+              value={isOrgAdmin ? orgStats.totalCourses : totalCourses}
               icon={BookOpen}
               description={isOrgAdmin ? "Total organization courses" : "Courses in your library"}
               gradient="from-blue-500 to-indigo-600"
@@ -566,170 +535,153 @@ setIsUnlimited(false);
               </Card>
             ))}
           </div>
-        )
-          :
+        ) : (
           <>
             {courses.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredCourses.map((course) => (
-                  <Card key={course._id} className="overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 group">
-                    <div className="aspect-video relative overflow-hidden">
-                      <img
-                        src={getCourseThumbnail(course)}
-                        alt={course.mainTopic}
-                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute top-2 right-2">
-                        <Badge variant={course.status === 'Completed' ? 'destructive' : 'secondary'}>
-                          {course.completed === true ? 'Completed' : 'Pending'}
-                        </Badge>
-                      </div>
-                      <div className="absolute top-2 left-2">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 bg-background/80 backdrop-blur-sm">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent className="w-40">
-                            <ShareOnSocial
-                              textToShare={sessionStorage.getItem('mName') + " shared you course on " + course.mainTopic}
-                              link={websiteURL + '/shareable?id=' + course._id}
-                              linkTitle={sessionStorage.getItem('mName') + " shared you course on " + course.mainTopic}
-                              linkMetaDesc={sessionStorage.getItem('mName') + " shared you course on " + course.mainTopic}
-                              linkFavicon={appLogo}
-                              noReferer
-                            >
-                              <DropdownMenuItem>
-                                <Share className="h-4 w-4 mr-2" />
-                                Share
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredCourses.map((course) => (
+                    <Card key={course._id} className="overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 group">
+                      <div className="aspect-video relative overflow-hidden">
+                        <img
+                          src={getCourseThumbnail(course)}
+                          alt={course.mainTopic}
+                          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute top-2 right-2">
+                          <Badge variant={course.status === 'Completed' ? 'destructive' : 'secondary'}>
+                            {course.completed === true ? 'Completed' : 'Pending'}
+                          </Badge>
+                        </div>
+                        <div className="absolute top-2 left-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 bg-background/80 backdrop-blur-sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-40">
+                              <ShareOnSocial
+                                textToShare={sessionStorage.getItem('mName') + " shared you course on " + course.mainTopic}
+                                link={websiteURL + '/shareable?id=' + course._id}
+                                linkTitle={sessionStorage.getItem('mName') + " shared you course on " + course.mainTopic}
+                                linkMetaDesc={sessionStorage.getItem('mName') + " shared you course on " + course.mainTopic}
+                                linkFavicon={appLogo}
+                                noReferer
+                              >
+                                <DropdownMenuItem>
+                                  <Share className="h-4 w-4 mr-2" />
+                                  Share
+                                </DropdownMenuItem>
+                              </ShareOnSocial>
+                              <DropdownMenuItem onClick={() => handleDeleteCourse(course._id)}>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
                               </DropdownMenuItem>
-                            </ShareOnSocial>
-                            <DropdownMenuItem onClick={() => handleDeleteCourse(course._id)}>
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleCompleteCourse(course._id)}>
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Mark as Complete
-                            </DropdownMenuItem>
-                            {course.certificateId && (
-                              <DropdownMenuItem onClick={() => navigate(`/verify-certificate?id=${course.certificateId}`)}>
-                                <Medal className="h-4 w-4 mr-2" />
-                                View Certificate
+                              <DropdownMenuItem onClick={() => handleCompleteCourse(course._id)}>
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Mark as Complete
                               </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              {course.certificateId && (
+                                <DropdownMenuItem onClick={() => navigate(`/verify-certificate?id=${course.certificateId}`)}>
+                                  <Medal className="h-4 w-4 mr-2" />
+                                  View Certificate
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
-                    </div>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-xl leading-tight capitalize">{course.mainTopic}</CardTitle>
-                      <CardDescription className="line-clamp-2 capitalize">{course.type}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pb-2">
-                      {!isOrgAdmin && (
-                        <div className="mb-3">
-                          <div className="h-2 bg-secondary rounded-full">
-                            <div
-                              className="h-2 bg-gradient-to-r from-primary to-indigo-500 rounded-full"
-                              style={{ width: `${courseProgress[course._id] || 0}%` }}
-                            ></div>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-xl leading-tight capitalize">{course.mainTopic}</CardTitle>
+                        <CardDescription className="line-clamp-2 capitalize">{course.type}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="pb-2">
+                        {!isOrgAdmin && (
+                          <div className="mb-3">
+                            <div className="h-2 bg-secondary rounded-full">
+                              <div
+                                className="h-2 bg-gradient-to-r from-primary to-indigo-500 rounded-full"
+                                style={{ width: `${courseProgress[course._id] || 0}%` }}
+                              ></div>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">{courseProgress[course._id] || 0}% complete</p>
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1">{courseProgress[course._id] || 0}% complete</p>
+                        )}
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <div className="flex items-center">
+                            <BookOpen className="mr-1 h-4 w-4" />
+                            {modules[course._id] || 0} modules
+                          </div>
                         </div>
-                      )}
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <div className="flex items-center">
-                          <BookOpen className="mr-1 h-4 w-4" />
-                          {modules[course._id] || 0} modules
-                        </div>
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button
-                        onClick={() => redirectCourse(course.content, course.mainTopic, course.type, course._id, course.completed, course.end)}
-                        variant="ghost"
-                        className="w-full group-hover:bg-primary/10 transition-colors justify-between"
-                        asChild
-                      >
-                        <div>
-                          {courseProgress[course._id] === 100 ? "View Course" : "Continue Learning"}
-                          <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            ) : null}
+                      </CardContent>
+                      <CardFooter>
+                        <Button
+                          onClick={() => redirectCourse(course.content, course.mainTopic, course.type, course._id, course.completed, course.end)}
+                          variant="ghost"
+                          className="w-full group-hover:bg-primary/10 transition-colors justify-between"
+                          asChild
+                        >
+                          <div>
+                            {courseProgress[course._id] === 100 ? "View Course" : "Continue Learning"}
+                            <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                          </div>
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
 
-            {courses.length > 0 && filteredCourses.length === 0 ? (
+                {/* Pagination */}
+                {!searchTerm && selectedYear === 'all' && (
+                  <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                  />
+                )}
+
+                {/* When filters are active, show a clear filters nudge instead of pagination */}
+                {(searchTerm || selectedYear !== 'all') && filteredCourses.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="bg-muted/50 rounded-full p-8 mb-6">
+                      <Search className="h-16 w-16 text-muted-foreground/60" />
+                    </div>
+                    <h2 className="text-2xl font-bold mb-2">No Matching Courses</h2>
+                    <p className="text-muted-foreground max-w-md mb-6">
+                      Try a different keyword or switch the year filter to view more courses.
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSearchTerm('');
+                        setSelectedYear('all');
+                      }}
+                    >
+                      Clear Filters
+                    </Button>
+                  </div>
+                )}
+              </>
+            ) : (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="bg-muted/50 rounded-full p-8 mb-6">
-                  <Search className="h-16 w-16 text-muted-foreground/60" />
+                  <FileQuestion className="h-16 w-16 text-muted-foreground/60" />
                 </div>
-                <h2 className="text-2xl font-bold mb-2">No Matching Courses</h2>
+                <h2 className="text-2xl font-bold mb-2">No Courses Created Yet</h2>
                 <p className="text-muted-foreground max-w-md mb-6">
-                  Try a different keyword or switch the year filter to view more courses.
+                  You haven't created any courses yet. Generate your first AI-powered course to start learning.
                 </p>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setSelectedYear('all');
-                  }}
-                >
-                  Clear Filters
+                <Button size="lg" className="shadow-lg" asChild>
+                  <Link to="/dashboard/generate-course">
+                    <BookPlus className="mr-2 h-5 w-5" />
+                    Create Your First Course
+                  </Link>
                 </Button>
-              </div>
-            ) : (
-              courses.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="bg-muted/50 rounded-full p-8 mb-6">
-                    <FileQuestion className="h-16 w-16 text-muted-foreground/60" />
-                  </div>
-                  <h2 className="text-2xl font-bold mb-2">No Courses Created Yet</h2>
-                  <p className="text-muted-foreground max-w-md mb-6">
-                    You haven't created any courses yet. Generate your first AI-powered course to start learning.
-                  </p>
-                  <Button size="lg" className="shadow-lg" asChild>
-                    <Link to="/dashboard/generate-course">
-                      <BookPlus className="mr-2 h-5 w-5" />
-                      Create Your First Course
-                    </Link>
-                  </Button>
-                </div>
-              )
-            )}
-            {loadingMore && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3].map((i) => (
-                  <Card key={i} className="overflow-hidden border-border/50">
-                    <div className="aspect-video relative overflow-hidden">
-                      <Skeleton className="w-full h-full" />
-                    </div>
-                    <CardHeader className="pb-2">
-                      <Skeleton className="w-3/4 h-6 mb-2" />
-                      <Skeleton className="w-full h-4" />
-                    </CardHeader>
-                    <CardContent className="pb-2">
-                      <Skeleton className="w-full h-2 mb-4" />
-                      <div className="flex items-center justify-between">
-                        <Skeleton className="w-1/4 h-4" />
-                        <Skeleton className="w-1/4 h-4" />
-                        <Skeleton className="w-1/4 h-4" />
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Skeleton className="w-full h-10" />
-                    </CardFooter>
-                  </Card>
-                ))}
               </div>
             )}
           </>
-        }
+        )}
 
         {/* Advanced Analytics Section */}
         <div className="mt-12 space-y-6">
@@ -787,7 +739,7 @@ setIsUnlimited(false);
                           <Cell key={`cell-${index}`} fill={['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'][index % 5]} />
                         ))}
                       </Pie>
-                      <Tooltip 
+                      <Tooltip
                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                       />
                       <Legend />
@@ -812,9 +764,9 @@ setIsUnlimited(false);
                       <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
                       <XAxis dataKey="name" axisLine={false} tickLine={false} />
                       <YAxis axisLine={false} tickLine={false} />
-                      <Tooltip 
-                         cursor={{fill: 'transparent'}}
-                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      <Tooltip
+                        cursor={{ fill: 'transparent' }}
+                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                       />
                       <Bar dataKey="value" radius={[10, 10, 0, 0]}>
                         <Cell fill="#10B981" />

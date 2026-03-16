@@ -301,6 +301,8 @@ export const getUserCourses = async (req, res) => {
     const { userId, page = 1, limit = 9 } = req.query;
     const skip = (page - 1) * limit;
 
+    const total = await Course.countDocuments({ user: userId });
+
     const courses = await Course.find({ user: userId })
       .skip(parseInt(skip))
       .limit(parseInt(limit))
@@ -321,7 +323,7 @@ export const getUserCourses = async (req, res) => {
       })
     );
 
-    res.json(coursesWithCert);
+    res.json({ courses: coursesWithCert, total });
   } catch (error) {
     console.log('Error', error);
     res.status(500).send('Internal Server Error');
