@@ -530,7 +530,7 @@ You MUST respond with ONLY a valid JSON object in this exact format, with no add
             </div>
 
             {/* Step Indicator */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2">
                 {STEPS.map((s, idx) => {
                     const Icon = s.icon;
                     const active = step === s.id;
