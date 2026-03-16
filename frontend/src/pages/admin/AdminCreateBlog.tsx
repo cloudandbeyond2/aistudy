@@ -253,8 +253,16 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from '@/hooks/use-toast';
-import { Image } from 'lucide-react';
+import { Image, Sparkles, Wand2, RefreshCw, Loader2 } from 'lucide-react';
 import SEO from '@/components/SEO';
 import { MinimalTiptapEditor } from '../../minimal-tiptap';
 import { Content } from '@tiptap/react';
@@ -276,6 +284,12 @@ const AdminCreateBlog = () => {
   const [preview, setPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // AI States
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isSuggestingTags, setIsSuggestingTags] = useState(false);
 
   // =========================
   // LOAD SINGLE BLOG (EDIT MODE)
@@ -321,6 +335,69 @@ const AdminCreateBlog = () => {
 
     fetchBlog();
   }, [id, isEditMode, navigate, toast]);
+
+  // =========================
+  // AI FUNCTIONS
+  // =========================
+  const handleAIGenerate = async () => {
+    if (!aiPrompt) return;
+    setIsGenerating(true);
+    try {
+      const res = await axios.post(`${serverURL}/api/generate-blog-content`, { prompt: aiPrompt });
+      if (res.data.success) {
+        const { title, excerpt, content, category, tags } = res.data.data;
+        setTitle(title);
+        setExcerpt(excerpt);
+        setContent(content);
+        setCategory(category.toLowerCase());
+        setTags(tags);
+        toast({
+          title: "Blog Content Generated",
+          description: "AI has successfully prepared your blog post.",
+        });
+        setIsAIModalOpen(false);
+      } else {
+        throw new Error(res.data.message);
+      }
+    } catch (error: any) {
+      toast({
+        title: "AI Generation Failed",
+        description: error.message || "Failed to connect to AI service.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleAISuggestTags = async () => {
+    if (!title && !content) {
+        toast({
+            title: "Input Required",
+            description: "Please enter a title or content first.",
+            variant: "destructive"
+        });
+        return;
+    }
+    setIsSuggestingTags(true);
+    try {
+      const res = await axios.post(`${serverURL}/api/suggest-blog-tags`, { title, content });
+      if (res.data.success) {
+        setTags(res.data.tags);
+        toast({
+          title: "Tags Suggested",
+          description: "Optimized SEO tags have been added.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to suggest tags",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSuggestingTags(false);
+    }
+  };
 
   // =========================
   // IMAGE HANDLING
@@ -390,9 +467,6 @@ const AdminCreateBlog = () => {
     }
   };
 
-  // =========================
-  // UI
-  // =========================
   return (
     <>
       <SEO
@@ -402,15 +476,26 @@ const AdminCreateBlog = () => {
       />
 
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">
-            {isEditMode ? "Edit Blog Post" : "Create Blog Post"}
-          </h1>
-          <p className="text-muted-foreground">
-            {isEditMode
-              ? "Update existing blog content"
-              : "Create and publish new blog content"}
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">
+              {isEditMode ? "Edit Blog Post" : "Create Blog Post"}
+            </h1>
+            <p className="text-muted-foreground">
+              {isEditMode
+                ? "Update existing blog content"
+                : "Create and publish new blog content"}
+            </p>
+          </div>
+          {!isEditMode && (
+              <Button 
+                onClick={() => setIsAIModalOpen(true)}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white border-none shadow-lg shadow-purple-500/20"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                Generate with AI
+              </Button>
+          )}
         </div>
 
         <Separator />
@@ -428,6 +513,7 @@ const AdminCreateBlog = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
+                  placeholder="e.g. The Future of AI in Education"
                 />
               </div>
 
@@ -439,6 +525,7 @@ const AdminCreateBlog = () => {
                   onChange={(e) => setExcerpt(e.target.value)}
                   rows={3}
                   required
+                  placeholder="A short summary for previews..."
                 />
               </div>
 
@@ -462,11 +549,24 @@ const AdminCreateBlog = () => {
                 </div>
 
                 <div>
-                  <Label>Tags</Label>
+                    <div className="flex items-center justify-between mb-2">
+                        <Label>Tags</Label>
+                        <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                            onClick={handleAISuggestTags}
+                            disabled={isSuggestingTags}
+                        >
+                            {isSuggestingTags ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Wand2 className="h-3 w-3 mr-1" />}
+                            Suggest with AI
+                        </Button>
+                    </div>
                   <Input
                     value={tags}
                     onChange={(e) => setTags(e.target.value)}
-                    placeholder="AI, LMS, certification"
+                    placeholder="AI, LMS, certification (Comma separated)"
                   />
                 </div>
               </div>
@@ -475,7 +575,7 @@ const AdminCreateBlog = () => {
               <div>
                 <Label>Cover Image (1200x630)</Label>
                 <label className="cursor-pointer block">
-                  <div className="flex items-center justify-center h-32 border-2 border-dashed rounded-md bg-muted/50 overflow-hidden">
+                  <div className="flex items-center justify-center h-48 border-2 border-dashed rounded-xl bg-muted/50 overflow-hidden hover:bg-muted transition-colors mt-2">
                     {preview ? (
                       <img
                         src={preview}
@@ -484,8 +584,9 @@ const AdminCreateBlog = () => {
                       />
                     ) : (
                       <div className="text-center text-muted-foreground">
-                        <Image className="h-8 w-8 mx-auto mb-2" />
-                        Upload image
+                        <Image className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                        <p className="font-medium">Click to upload cover image</p>
+                        <p className="text-xs opacity-60 mt-1">PNG, JPG up to 5MB</p>
                       </div>
                     )}
                   </div>
@@ -501,22 +602,24 @@ const AdminCreateBlog = () => {
               {/* CONTENT */}
               <div>
                 <Label>Blog Content</Label>
-                <MinimalTiptapEditor
-                  value={content}
-                  onChange={setContent}
-                  output="html"
-                  placeholder="Start writing..."
-                />
+                <div className="mt-2 border rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                    <MinimalTiptapEditor
+                    value={content}
+                    onChange={setContent}
+                    output="html"
+                    placeholder="Start writing or use AI to generate content..."
+                    />
+                </div>
               </div>
 
               {/* BUTTON */}
-              <div className="flex justify-end">
-                <Button type="submit" disabled={isSubmitting}>
+              <div className="flex justify-end pt-4">
+                <Button type="submit" disabled={isSubmitting} size="lg" className="px-8 font-bold rounded-full">
                   {isSubmitting
-                    ? "Saving..."
+                    ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
                     : isEditMode
-                      ? "Update Blog"
-                      : "Publish Blog"}
+                      ? "Update Blog Post"
+                      : "Publish Blog Post"}
                 </Button>
               </div>
 
@@ -524,8 +627,41 @@ const AdminCreateBlog = () => {
           )}
         </Card>
       </div>
+
+      {/* AI PROMPT DIALOG */}
+      <Dialog open={isAIModalOpen} onOpenChange={setIsAIModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-purple-600" />
+                Generate Blog with AI
+            </DialogTitle>
+            <DialogDescription>
+              Describe the topic you want to write about. AI will generate a title, excerpt, category, and full content for you.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea 
+                placeholder="e.g. Write a blog about the benefits of online learning for working professionals in 2025."
+                className="min-h-[120px]"
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAIModalOpen(false)}>Cancel</Button>
+            <Button 
+                onClick={handleAIGenerate} 
+                disabled={!aiPrompt || isGenerating}
+                className="bg-gradient-to-r from-purple-600 to-blue-600"
+            >
+              {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</> : "Start Generation"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
 
-export default AdminCreateBlog;
+export default AdminCreateBlog;

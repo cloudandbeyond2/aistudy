@@ -1,4 +1,5 @@
 import Blog from '../models/Blog.js';
+import { getGenAI } from '../config/gemini.js';
 
 /**
  * GET ALL BLOGS
@@ -157,5 +158,87 @@ export const deleteBlog = async (req, res) => {
       success: false,
       message: 'Internal Server Error'
     });
+  }
+};
+
+/**
+ * GENERATE BLOG CONTENT (AI)
+ */
+export const generateBlogContent = async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    if (!prompt) {
+      return res.json({ success: false, message: 'Prompt is required' });
+    }
+
+    const genAI = getGenAI();
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      systemInstruction: `You are a professional blog writer. Given a topic or prompt, generate a high-quality blog post.
+      Return the response in JSON format with the following keys:
+      "title": A catchy title for the blog post.
+      "excerpt": A short summary (max 160 characters).
+      "content": The full blog post content in HTML format (using semantic tags like <h2>, <p>, <strong>, <em>, <ul>, <li>, etc.).
+      "category": A suitable category (one of: technology, education, ai, programming, design, business).
+      "tags": A string of 5-8 comma-separated tags.`,
+      generationConfig: {
+        responseMimeType: "application/json",
+      }
+    });
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    try {
+      const data = JSON.parse(text);
+      res.json({ success: true, data });
+    } catch (parseError) {
+      console.error('AI Response Parse Error:', text);
+      res.status(500).json({ success: false, message: 'AI returned invalid format. Try again.' });
+    }
+  } catch (error) {
+    console.error('AI Generation Error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Internal Server Error' });
+  }
+};
+
+/**
+ * SUGGEST BLOG TAGS (AI)
+ */
+export const suggestBlogTags = async (req, res) => {
+  try {
+    const { title, content } = req.body;
+    if (!title && !content) {
+      return res.json({ success: false, message: 'Title or content is required' });
+    }
+
+    const genAI = getGenAI();
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      systemInstruction: "You are an SEO expert. Based on the following blog details, suggest 5-8 relevant SEO tags.",
+      generationConfig: {
+        responseMimeType: "application/json",
+      }
+    });
+
+    const prompt = `Title: ${title || 'N/A'}
+    Content Snippet: ${(content || '').substring(0, 1000)}
+    
+    Return the tags in JSON format with a single key "tags" containing a comma-separated string.`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    
+    try {
+      const { tags } = JSON.parse(text);
+      res.json({ success: true, tags });
+    } catch (parseError) {
+      res.json({ success: true, tags: "" });
+    }
+  } catch (error) {
+    console.error('AI Suggestion Error:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };

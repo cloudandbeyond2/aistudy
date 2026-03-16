@@ -15,11 +15,13 @@ const SEO = ({
   title,
   description,
   keywords = '',
-  canonicalUrl = ''
+  canonicalUrl = '',
+  ogImage = ''
 }: SEOProps) => {
   const { appName } = useBranding();
   // Format the title to include the brand name
   const formattedTitle = `${title} | ${appName}`;
+  const defaultOgImage = `${window.location.origin}/logo.png`; // Fallback image
 
   return (
     <Helmet>
@@ -35,11 +37,13 @@ const SEO = ({
       <meta property="og:type" content="website" />
       <meta property="og:title" content={formattedTitle} />
       <meta property="og:description" content={description} />
+      <meta property="og:image" content={ogImage || defaultOgImage} />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={formattedTitle} />
       <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={ogImage || defaultOgImage} />
     </Helmet>
   );
 };
