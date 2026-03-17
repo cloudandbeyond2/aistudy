@@ -8,6 +8,9 @@ import SEO from '@/components/SEO';
 import StyledText from '@/components/styledText';
 import { motion, useScroll, useSpring } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
+import axios from "axios";
+import { serverURL } from "@/constants";
+import { useToast } from "@/hooks/use-toast";
 
 const BlogPost = () => {
     const { id: blogId } = useParams();
@@ -50,6 +53,40 @@ const BlogPost = () => {
         { name: 'WhatsApp', icon: <MessageCircle className="h-4 w-4" />, url: `https://api.whatsapp.com/send?text=${encodeURIComponent(shareTitle + " " + shareUrl)}`, color: 'hover:text-[#25D366]' },
     ];
 
+    const [email, setEmail] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { toast } = useToast();
+
+    const handleSubscribe = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email) return;
+
+        setIsSubmitting(true);
+
+        try {
+            const res = await axios.post(`${serverURL}/api/subscribe`, { email });
+
+            if (res.data.success) {
+                toast({
+                    title: "Subscribed!",
+                    description: "Thank you for joining our newsletter.",
+                });
+                setEmail("");
+            }
+
+        } catch (error: any) {
+            toast({
+                title: "Error",
+                description:
+                    error.response?.data?.message ||
+                    "Something went wrong. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <>
             <SEO
@@ -58,7 +95,7 @@ const BlogPost = () => {
                 keywords={`education blog, online learning, AI education, ${isLoading || !blogExists ? '' : category}`}
                 ogImage={imageUrl}
             />
-            
+
             {/* Reading Progress Bar */}
             <motion.div
                 className="fixed top-0 left-0 right-0 h-1.5 bg-primary origin-left z-50"
@@ -98,7 +135,7 @@ const BlogPost = () => {
                         </div>
                     ) : blogExists ? (
                         <article>
-                            <motion.header 
+                            <motion.header
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 className="mb-12 text-center"
@@ -125,7 +162,7 @@ const BlogPost = () => {
                                 </div>
                             </motion.header>
 
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.2 }}
@@ -161,7 +198,7 @@ const BlogPost = () => {
                                 </aside>
 
                                 {/* Content */}
-                                <motion.div 
+                                <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     transition={{ delay: 0.4 }}
@@ -201,14 +238,45 @@ const BlogPost = () => {
                                     )}
 
                                     {/* Footer / CTA */}
-                                    <div className="mt-16 p-10 bg-gradient-to-br from-primary/10 to-transparent rounded-3xl border border-primary/10 flex flex-col md:flex-row items-center justify-between gap-8">
-                                        <div>
+                                    {/* Footer / Newsletter CTA */}
+                                    <div className="mt-16 p-10 bg-gradient-to-br from-primary/10 to-transparent rounded-3xl border border-primary/10">
+
+                                        <div className="mb-6">
                                             <h3 className="text-2xl font-bold mb-2">Did you enjoy this?</h3>
-                                            <p className="text-muted-foreground">Subscribe to our newsletter for more insights.</p>
+                                            <p className="text-muted-foreground">
+                                                Subscribe to our newsletter for more insights.
+                                            </p>
                                         </div>
-                                        <Button size="lg" className="rounded-full px-8 h-14 text-lg shadow-xl shadow-primary/20">
-                                            Join the Community
-                                        </Button>
+
+                                        <form onSubmit={handleSubscribe} className="max-w-xl">
+
+                                            <div className="relative group">
+
+                                                <input
+                                                    type="email"
+                                                    placeholder="Your email address"
+                                                    value={email}
+                                                    onChange={(e) => setEmail(e.target.value)}
+                                                    required
+                                                    className="w-full bg-slate-900 border border-slate-800 text-white rounded-2xl px-6 py-4 pr-40 focus:outline-none focus:border-primary transition-all text-lg"
+                                                />
+
+                                                <button
+                                                    type="submit"
+                                                    disabled={isSubmitting}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 px-5 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all disabled:opacity-50"
+                                                >
+                                                    {isSubmitting ? "Joining..." : "Join Our Community"}
+                                                </button>
+
+                                            </div>
+
+                                            <p className="text-xs text-muted-foreground italic mt-2">
+                                                We respect your privacy. Unsubscribe at any time.
+                                            </p>
+
+                                        </form>
+
                                     </div>
 
                                     <div className="mt-12 flex justify-center">
