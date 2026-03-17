@@ -651,15 +651,6 @@ const DashboardLayout = () => {
                     </SidebarMenuItem> */}
 
 
-                   {/* Students */}
-                      <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip="students" isActive={location.search === '?tab=students'}>
-                        <Link to="/dashboard/org?tab=students" className={cn(location.search === '?tab=students' && "text-primary")}>
-                          <BookOpen />
-                          <span>Student</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
 
                     {/* Grading */}
                     {/* <SidebarMenuItem>
@@ -718,12 +709,24 @@ const DashboardLayout = () => {
                     <div className="h-px bg-border/40 my-2 mx-4" />
                     <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Management</div>
 
+
                     {/* Courses */}
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Courses" isActive={location.search === '?tab=courses'}>
                         <Link to="/dashboard/org?tab=courses" className={cn(location.search === '?tab=courses' && "text-primary")}>
                           <BookOpen />
                           <span>Courses</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    
+                   {/* Students */}
+                      <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="students" isActive={location.search === '?tab=students'}>
+                        <Link to="/dashboard/org?tab=students" className={cn(location.search === '?tab=students' && "text-primary")}>
+                          <Users />
+                          <span>Student</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
