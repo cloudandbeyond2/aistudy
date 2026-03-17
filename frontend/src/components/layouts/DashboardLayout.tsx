@@ -631,44 +631,55 @@ const DashboardLayout = () => {
                     </SidebarMenuItem>
 
                     {/* Classes */}
-                    <SidebarMenuItem>
+                    {/* <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Classes" isActive={isActive('/dashboard/staff/classes')}>
                         <Link to="/dashboard/staff/classes">
                           <BookOpen />
                           <span>Classes</span>
                         </Link>
                       </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    </SidebarMenuItem> */}
 
                     {/* Students */}
-                    <SidebarMenuItem>
+                    {/* <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Students" isActive={isActive('/dashboard/staff/students')}>
                         <Link to="/dashboard/staff/students">
                           <Users />
                           <span>Students</span>
                         </Link>
                       </SidebarMenuButton>
+                    </SidebarMenuItem> */}
+
+
+                   {/* Students */}
+                      <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="students" isActive={location.search === '?tab=students'}>
+                        <Link to="/dashboard/org?tab=students" className={cn(location.search === '?tab=students' && "text-primary")}>
+                          <BookOpen />
+                          <span>Student</span>
+                        </Link>
+                      </SidebarMenuButton>
                     </SidebarMenuItem>
 
                     {/* Grading */}
-                    <SidebarMenuItem>
+                    {/* <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Grading" isActive={isActive('/dashboard/staff/grading')}>
                         <Link to="/dashboard/staff/grading">
                           <FileText />
                           <span>Grading</span>
                         </Link>
                       </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    </SidebarMenuItem> */}
 
                     {/* Schedule */}
-                    <SidebarMenuItem>
+                    {/* <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Schedule" isActive={isActive('/dashboard/staff/schedule')}>
                         <Link to="/dashboard/staff/schedule">
                           <Calendar />
                           <span>Schedule</span>
                         </Link>
                       </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    </SidebarMenuItem> */}
 
                {/* Global News */}
 <SidebarMenuItem>
@@ -685,14 +696,14 @@ const DashboardLayout = () => {
 </SidebarMenuItem>
 
                     {/* Resources */}
-                    <SidebarMenuItem>
+                    {/* <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Resources" isActive={isActive('/dashboard/staff/resources')}>
                         <Link to="/dashboard/staff/resources">
                           <Folder />
                           <span>Resources</span>
                         </Link>
                       </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    </SidebarMenuItem> */}
 
                     {/* Support */}
                     <SidebarMenuItem>

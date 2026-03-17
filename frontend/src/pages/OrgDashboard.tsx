@@ -1296,9 +1296,10 @@ const OrgDashboard = () => {
                     {role !== 'dept_admin' && (
                         <>
                             <TabsTrigger value="departments" className="flex-1 min-w-[120px]">Departments</TabsTrigger>
-                            <TabsTrigger value="students" className="flex-1 min-w-[120px]">Students</TabsTrigger>
+                            {/* <TabsTrigger value="students" className="flex-1 min-w-[120px]">Students</TabsTrigger> */}
                         </>
                     )}
+                    <TabsTrigger value="students" className="flex-1 min-w-[120px]">Students</TabsTrigger>
                     <TabsTrigger value="courses" className="flex-1 min-w-[120px]">Courses</TabsTrigger>
                     <TabsTrigger value="assignments" className="flex-1 min-w-[120px]">Assignments</TabsTrigger>
                     <TabsTrigger value="meetings" className="flex-1 min-w-[120px]">Meetings</TabsTrigger>
