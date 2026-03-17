@@ -767,48 +767,21 @@ const Profile = () => {
 
                 {/* ================= ACCOUNT TAB ================= */}
                 <TabsContent value="account" className="p-6">
-                  <div className="flex gap-3 mb-6 justify-end">
-                    {!isEditing ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setOriginalData(formData); // store current data
-                          setIsEditing(true);
-                        }}
-                      >
-                        <PenLine className="mr-2 h-4 w-4" />
-                        Edit Profile
-                      </Button>
-                    ) : (
-                      <>
-                        {/* SAVE BUTTON */}
-                        <Button
-                          type="button"
-                          disabled={processing}
-                          onClick={handleSubmit}
-                        >
-                          {processing && (
-                            <Loader className="animate-spin mr-2 h-4 w-4" />
-                          )}
-                          <Save className="mr-2 h-4 w-4" />
-                          {processing ? "Saving..." : "Save"}
-                        </Button>
-
-                        {/* CANCEL BUTTON */}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            setFormData(originalData); // restore old data
-                            setIsEditing(false);       // disable edit mode
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                      </>
-                    )}
-                  </div>
+                   <div className="flex gap-3 mb-6 justify-end">
+    {!isEditing && (
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => {
+          setOriginalData(formData);
+          setIsEditing(true);
+        }}
+      >
+        <PenLine className="mr-2 h-4 w-4" />
+        Edit Profile
+      </Button>
+    )}
+  </div>
 
 
                   <form onSubmit={handleSubmit}>
@@ -1017,7 +990,36 @@ const Profile = () => {
                           />
                         </div>
                       )}
+{/* ================= BOTTOM ACTION BUTTONS ================= */}
+      {isEditing && (
+        <div className="flex gap-3 justify-end pt-6 border-t">
+          
+          {/* SAVE */}
+          <Button
+            type="submit"
+            disabled={processing}
+          >
+            {processing && (
+              <Loader className="animate-spin mr-2 h-4 w-4" />
+            )}
+            <Save className="mr-2 h-4 w-4" />
+            {processing ? "Saving..." : "Save"}
+          </Button>
 
+          {/* CANCEL */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setFormData(originalData);
+              setIsEditing(false);
+            }}
+          >
+            Cancel
+          </Button>
+
+        </div>
+      )}
                     </div>
                   </form>
                 </TabsContent>
