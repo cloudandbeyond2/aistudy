@@ -337,7 +337,8 @@ const ResumeBuilder = () => {
         setGeneratingSummary(true);
         try {
             const professionToUse = resume.profession === 'Other' ? customProfession : resume.profession;
-            const prompt = `Create a professional 2-3 sentence resume summary for ${userName}, a ${professionToUse}. Focus on expertise, impact, and a professional tone.`;
+            const prompt = `Create a professional 2-3 sentence resume summary for ${userName}, a ${professionToUse}. Focus on expertise, impact, and a professional tone. 
+            IMPORTANT: Return ONLY the summary as plain text. Do NOT include any JSON, markdown, array format, or extra labels. Just the sentences.`;
             const res = await axios.post(`${serverURL}/api/prompt`, { prompt });
             if (res.data && res.data.generatedText) {
                 setField('summary', res.data.generatedText.trim());
@@ -369,54 +370,74 @@ const ResumeBuilder = () => {
                 `Education: ${resume.education.map(e => `${e.degree} from ${e.institution} (${e.year})`).join('; ')}`,
             ].join('\n');
 
-            const prompt = `You are an expert ATS (Applicant Tracking System) analyzer. Compare the following resume against the job description and provide a detailed analysis.
+            const res = await axios.post(`${serverURL}/api/prompt`, { 
+                prompt: `Compare the following resume against the job description and provide a detailed analysis.
 
 RESUME:
 ${resumeText}
 
 JOB DESCRIPTION:
-${jobDescription}
-
-Instructions:
-1. Calculate an ATS compatibility score from 0 to 100 based on keyword matches, skills alignment, and experience relevance.
-2. List the important keywords from the job description that are MISSING from the resume.
-3. Determine the match level: "High" if score >= 70, "Medium" if score >= 40, "Low" if score < 40.
-4. Provide 3-5 actionable suggestions to improve the resume's ATS score.
-
-You MUST respond with ONLY a valid JSON object in this exact format, with no additional text, no markdown, no code fences, no explanation before or after:
-{"score": 75, "missingKeywords": ["keyword1", "keyword2"], "matchLevel": "High", "suggestions": ["suggestion1", "suggestion2"]}`;
-
-            const res = await axios.post(`${serverURL}/api/prompt`, { prompt });
+${jobDescription}`,
+                systemInstruction: `You are an expert ATS (Applicant Tracking System) analyzer. 
+                1. Calculate an ATS compatibility score from 0 to 100 based on keyword matches, skills alignment, and experience relevance.
+                2. List the important keywords from the job description that are MISSING from the resume.
+                3. Determine the match level: "High" if score >= 70, "Medium" if score >= 40, "Low" if score < 40.
+                4. Provide 3-5 actionable suggestions to improve the resume's ATS score.
+                
+                You MUST respond with ONLY a valid JSON object matching the requested schema.`,
+                responseMimeType: 'application/json',
+                responseSchema: {
+                    type: "object",
+                    properties: {
+                        score: { type: "number" },
+                        missingKeywords: { type: "array", items: { type: "string" } },
+                        matchLevel: { type: "string", enum: ["High", "Medium", "Low"] },
+                        suggestions: { type: "array", items: { type: "string" } }
+                    },
+                    required: ["score", "missingKeywords", "matchLevel", "suggestions"]
+                }
+            });
             if (res.data && res.data.generatedText) {
                 const rawText = res.data.generatedText;
                 console.log('ATS Raw AI Response:', rawText);
 
-                // Robust JSON extraction: find the JSON object in the response
-                let jsonStr = rawText;
+                try {
+                    const parsed = JSON.parse(rawText);
+                    console.log('ATS Parsed Result:', parsed);
 
-                // Strip markdown code fences if present
-                jsonStr = jsonStr.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+                    // Ensure score is a number between 0-100
+                    let finalScore = 0;
+                    if (typeof parsed.score === 'number') {
+                        finalScore = parsed.score;
+                    } else if (typeof parsed.score === 'string') {
+                        finalScore = parseInt(parsed.score.replace(/[^0-9]/g, '')) || 0;
+                    }
 
-                // Try to extract JSON object using regex if there's extra text
-                const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
-                if (jsonMatch) {
-                    jsonStr = jsonMatch[0];
+                    setAtsResult({
+                        score: finalScore,
+                        missingKeywords: Array.isArray(parsed.missingKeywords) ? parsed.missingKeywords : [],
+                        matchLevel: parsed.matchLevel || 'Low',
+                        suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
+                    });
+                    toast({ title: 'Scan Complete', description: 'Your resume has been analyzed.' });
+                } catch (parseErr) {
+                    console.error('ATS JSON Parse Error:', parseErr);
+                    // Fallback for manual extraction if JSON mode fails (unlikely with schema)
+                    let jsonStr = rawText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+                    const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        const extractedParsed = JSON.parse(jsonMatch[0]);
+                        setAtsResult({
+                            score: parseInt(extractedParsed.score) || 0,
+                            missingKeywords: extractedParsed.missingKeywords || [],
+                            matchLevel: extractedParsed.matchLevel || 'Low',
+                            suggestions: extractedParsed.suggestions || [],
+                        });
+                        toast({ title: 'Scan Complete', description: 'Your resume has been analyzed (recovered).' });
+                    } else {
+                        throw new Error('Failed to parse AI response');
+                    }
                 }
-
-                console.log('ATS Cleaned JSON:', jsonStr);
-
-                const parsed = JSON.parse(jsonStr);
-                console.log('ATS Parsed Result:', parsed);
-
-                setAtsResult({
-                    score: typeof parsed.score === 'number' ? parsed.score : (parseInt(parsed.score) || 0),
-                    missingKeywords: Array.isArray(parsed.missingKeywords) ? parsed.missingKeywords
-                        : Array.isArray(parsed.missing_keywords) ? parsed.missing_keywords : [],
-                    matchLevel: parsed.matchLevel || parsed.match_level || parsed.matchlevel || 'Low',
-                    suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions
-                        : Array.isArray(parsed.improvements) ? parsed.improvements : [],
-                });
-                toast({ title: 'Scan Complete', description: 'Your resume has been analyzed.' });
             }
         } catch (err: any) {
             console.error('ATS Scan Error:', err);

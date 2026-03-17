@@ -30,7 +30,7 @@ export const getChatModel = async () => {
   const genAI = new GoogleGenerativeAI(key);
 
   return genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-1.5-flash',
     safetySettings,
     systemInstruction: 'You are an AI assistant for an educational platform. You answer questions about course materials (theory, videos, images) in a concise, accurate, and teaching manner. Use markdown.'
   });

@@ -480,7 +480,7 @@ app.post('/api/prompt', async (req, res) => {
         },
     ];
 
-    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest", safetySettings });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", safetySettings });
 
     const prompt = promptString;
 
@@ -524,7 +524,7 @@ app.post('/api/generate', async (req, res) => {
         },
     ];
 
-    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest", safetySettings });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", safetySettings });
 
     const prompt = promptString
 

@@ -57,51 +57,40 @@ import { getUnsplashApi } from '../config/unsplash.js';
 
 
 export const generatePrompt = async (req, res) => {
-  const { prompt } = req.body;
+  const { prompt, systemInstruction, responseMimeType, responseSchema } = req.body;
 
   try {
     const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      systemInstruction: "You are an expert educational course architect. Design highly structured, coherent, and comprehensive course outlines.",
-      generationConfig: {
-        maxOutputTokens: 8192,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: "object",
-          properties: {
-            course_topics: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  title: { type: "string" },
-                  subtopics: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        title: { type: "string" },
-                        theory: { type: "string" },
-                        youtube: { type: "string" },
-                        image: { type: "string" },
-                        done: { type: "boolean" }
-                      },
-                      required: ["title"]
-                    }
-                  }
-                },
-                required: ["title", "subtopics"]
-              }
-            }
-          },
-          required: ["course_topics"]
-        }
-      }
-    });
+    const modelOptions = {
+      model: 'gemini-1.5-flash',
+    };
+
+    if (systemInstruction) {
+      modelOptions.systemInstruction = systemInstruction;
+    }
+
+    const generationConfig = {
+      maxOutputTokens: 8192,
+    };
+
+    if (responseMimeType) {
+      generationConfig.responseMimeType = responseMimeType;
+    }
+    if (responseSchema) {
+      generationConfig.responseSchema = responseSchema;
+    }
+
+    if (Object.keys(generationConfig).length > 1) {
+      modelOptions.generationConfig = generationConfig;
+    }
+
+    const model = genAI.getGenerativeModel(modelOptions);
 
     const result = await retryWithBackoff(() => model.generateContent(prompt));
     const generatedText = await result.response.text();
+
+    console.log('--- AI RESPONSE SUCCESS ---');
+    console.log('Generated Text length:', generatedText?.length || 0);
 
     res.status(200).json({
       success: true,
@@ -220,7 +209,7 @@ Response Format (JSON):
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       safetySettings,
       systemInstruction,
       generationConfig: {
@@ -327,7 +316,7 @@ export const generateHtml = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       safetySettings,
       systemInstruction: 'You are a helpful educational assistant. Provide thorough and interesting explanations with examples. Use markdown formatting.'
     });
@@ -608,7 +597,7 @@ Generate 10 MCQs in JSON format:
 ]`;
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       safetySettings,
       systemInstruction,
       generationConfig: {
