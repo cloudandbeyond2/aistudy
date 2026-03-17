@@ -401,7 +401,17 @@ export const generateImage = async (req, res) => {
         contentFilter: 'high',
       });
 
-      if (result.response && result.response.results.length > 0) {
+      if (result.errors) {
+        console.error('❌ Unsplash API Error:', result.errors);
+        if (result.errors.some(e => e.toLowerCase().includes('invalid') || e.toLowerCase().includes('oauth'))) {
+          console.warn('⚠️  CRITICAL: Unsplash Access Token is INVALID. Please update it in Admin Settings or .env file.');
+        }
+      } else if (
+        result &&
+        result.response &&
+        Array.isArray(result.response.results) &&
+        result.response.results.length > 0
+      ) {
         // Pick the most relevant result (first one from Unsplash is usually best)
         return res.status(200).json({
           success: true,
@@ -410,56 +420,81 @@ export const generateImage = async (req, res) => {
       }
     }
 
-    const gisOptions = {
-      searchTerm: cleanedPrompt,
-      queryStringAddition: '&tbs=il:cl' // Google Image Search filter for "Creative Commons licenses"
-    };
+    // --- NEW: YouTube Thumbnail Fallback ---
+    console.log(`🔍 Unsplash failed. Trying YouTube Thumbnail fallback for: "${cleanedPrompt}"`);
+    try {
+      const ytResults = await youtubesearchapi.GetListByKeyword(cleanedPrompt, false, 3);
+      if (ytResults && ytResults.items && ytResults.items.length > 0) {
+        // Find the first item with a valid thumbnail
+        for (const item of ytResults.items) {
+          if (item.thumbnail && item.thumbnail.thumbnails && item.thumbnail.thumbnails.length > 0) {
+            // Use the highest resolution thumbnail (usually the last one)
+            const bestThumb = item.thumbnail.thumbnails.slice(-1)[0].url;
+            if (bestThumb && bestThumb.startsWith('http')) {
+              console.log('✅ Found relevant image via YouTube Thumbnail');
+              return res.status(200).json({ success: true, url: bestThumb });
+            }
+          }
+        }
+      }
+    } catch (ytErr) {
+      console.error('YouTube Thumbnail fallback error:', ytErr.message);
+    }
+    // ----------------------------------------
 
-    // Helper to try GIS searches sequentially
-    const tryGisSearch = (term) => {
+    console.log(`🔍 Falling back to Google Image Search for: "${cleanedPrompt}"`);
+
+    // Helper to try GIS searches sequentially with timeout
+    const tryGisSearch = (term, useFilter = false) => {
       return new Promise((resolve) => {
-        gis({ searchTerm: term, queryStringAddition: '&tbs=il:cl' }, (err, res) => {
-          if (!err && res && res.length > 0) resolve(res[0].url);
+        const options = { searchTerm: term };
+        if (useFilter) options.queryStringAddition = '&tbs=il:cl';
+
+        const timeout = setTimeout(() => resolve(null), 5000);
+
+        gis(options, (err, res) => {
+          clearTimeout(timeout);
+          if (!err && res && res.length > 0) {
+            const url = res[0].url;
+            // Basic URL validation
+            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+              resolve(url);
+            } else {
+              resolve(null);
+            }
+          }
           else resolve(null);
         });
       });
     };
 
-    // 1. Try with Unsplash constraint
-    gis({ ...gisOptions, searchTerm: `${cleanedPrompt} site:unsplash.com` }, async (error, results) => {
-      if (!error && results && results.length > 0) {
-        return res.status(200).json({ success: true, url: results[0].url });
-      }
+    // 1. Try with Unsplash site constraint (Often works better than raw Google)
+    let url = await tryGisSearch(`${cleanedPrompt} site:unsplash.com`, false);
+    if (url) return res.status(200).json({ success: true, url });
 
-      // 2. Try full cleaned prompt without site constraint
-      let url = await tryGisSearch(cleanedPrompt);
+    // 2. Try full cleaned prompt without site constraint
+    url = await tryGisSearch(cleanedPrompt, false);
+    if (url) return res.status(200).json({ success: true, url });
+
+    // 3. Try simplifying the prompt (e.g., getting the text after "in" representing the main topic)
+    const parts = prompt.split(' in ');
+    if (parts.length > 1) {
+      url = await tryGisSearch(parts[1] + ' concept', false);
       if (url) return res.status(200).json({ success: true, url });
+    }
 
-      // 3. Try simplifying the prompt (e.g., getting the text after "in" representing the main topic)
-      const parts = prompt.split(' in ');
-      if (parts.length > 1) {
-        url = await tryGisSearch(parts[1] + ' concept');
-        if (url) return res.status(200).json({ success: true, url });
-      }
+    // 4. Ultimate fallback: just the first 3 words of the prompt
+    const words = cleanedPrompt.split(' ').slice(0, 3).join(' ');
+    url = await tryGisSearch(words, false);
+    if (url) return res.status(200).json({ success: true, url });
 
-      // 4. Ultimate fallback: just the first 3 words of the prompt
-      const words = cleanedPrompt.split(' ').slice(0, 3).join(' ');
-      url = await tryGisSearch(words);
-      if (url) return res.status(200).json({ success: true, url });
+    // If everything fails, return 500
+    console.error(`❌ Image search failed entirely for: "${cleanedPrompt}"`);
+    return res.status(500).json({ success: false, message: 'Image search failed entirely' });
 
-      // If everything fails, return 500
-      return res.status(500).json({ success: false, message: 'Image search failed entirely' });
-    });
   } catch (error) {
-    console.error('Unsplash search error:', error);
-    
-    // Final desperate fallback for CC images
-    gis({ searchTerm: prompt.split(' in ')[1] || prompt, queryStringAddition: '&tbs=il:cl' }, (err, results) => {
-      if (err || !results || results.length === 0) {
-        return res.status(500).json({ success: false, message: 'Image search failed' });
-      }
-      res.status(200).json({ success: true, url: results[0].url });
-    });
+    console.error('Image generation global error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error during image generation' });
   }
 };
 
