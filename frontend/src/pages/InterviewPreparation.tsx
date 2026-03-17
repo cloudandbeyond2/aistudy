@@ -3,17 +3,255 @@ import { serverURL } from '@/constants';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Newspaper, Target, Network, Lock, Sparkles, Brain } from 'lucide-react';
+import { Loader2, Newspaper, Target, Network, Lock, Sparkles, Brain, CheckCircle2, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import SEO from '@/components/SEO';
 import { useNavigate } from 'react-router-dom';
+
+const AptitudeTestViewer = ({ test }: { test: any }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+
+  const questions = test.questions?.slice(0, 15) || [];
+
+  if (questions.length === 0) return null;
+
+  const q = questions[currentIndex];
+
+  const handleNext = () => {
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setShowAnswer(false);
+      setSelectedAnswer(null);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+      setShowAnswer(false);
+      setSelectedAnswer(null);
+    }
+  };
+
+  return (
+    <div className="mb-8">
+      <div className="flex items-baseline justify-between mb-4">
+        <div>
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" /> {test.title}
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">{test.description}</p>
+        </div>
+        <span className="text-xs font-semibold px-3 py-1.5 bg-primary/10 text-primary rounded-full shrink-0">
+          Question {currentIndex + 1} of {questions.length}
+        </span>
+      </div>
+
+      <Card className="border-l-4 border-l-primary/50 hover:shadow-md transition-shadow">
+        <CardHeader className="py-4">
+          <CardTitle className="text-lg leading-snug">
+            <span className="text-muted-foreground mr-2 font-mono">Q{currentIndex + 1}.</span>
+            {q.question}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pb-4">
+          <div className="grid sm:grid-cols-2 gap-3 mb-6">
+            {q.options.map((opt: string, j: number) => {
+              const isSelected = selectedAnswer === opt;
+              const isCorrect = q.answer === opt;
+
+              let optionStyle = "bg-muted/40 border-border/40 text-foreground";
+              let indicator = <div className={`w-2 h-2 rounded-full shrink-0 ${isSelected ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'}`}></div>;
+
+              if (showAnswer) {
+                if (isCorrect) {
+                  optionStyle = "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-500 text-emerald-800 dark:text-emerald-400 font-medium";
+                  indicator = <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />;
+                } else if (isSelected && !isCorrect) {
+                  optionStyle = "bg-red-100 dark:bg-red-900/30 border-red-500 text-red-800 dark:text-red-400 font-medium";
+                  indicator = <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" />;
+                } else {
+                  optionStyle = "bg-muted/20 border-border/20 text-muted-foreground opacity-60";
+                }
+              } else if (isSelected) {
+                optionStyle = "bg-primary/10 border-primary text-primary font-medium";
+              }
+
+              return (
+                <div
+                  key={j}
+                  onClick={() => !showAnswer && setSelectedAnswer(opt)}
+                  className={`p-3 rounded-lg border transition-all text-sm flex items-center gap-3 ${!showAnswer ? 'cursor-pointer hover:border-primary/50 hover:bg-muted/60' : ''} ${optionStyle}`}
+                >
+                  {indicator}
+                  {opt}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="space-y-6">
+            <div className="min-h-[40px] flex items-center">
+              {showAnswer ? (
+                <div className="animate-in fade-in slide-in-from-left-2">
+                  <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 rounded-md inline-flex items-center">
+                    <Target className="w-4 h-4 mr-2" /> Correct Answer: {q.answer}
+                  </span>
+                </div>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setShowAnswer(true)}>
+                  Show Answer
+                </Button>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t border-border/50">
+              <Button
+                variant="ghost"
+                onClick={handlePrev}
+                disabled={currentIndex === 0}
+              >
+                Previous
+              </Button>
+              <Button
+                onClick={handleNext}
+                disabled={currentIndex === questions.length - 1}
+              >
+                {currentIndex === questions.length - 1 ? 'Finish' : 'Next Question'}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+const AiQuizViewer = ({ questions, category }: { questions: any[], category: string }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+
+  if (questions.length === 0) return null;
+
+  const q = questions[currentIndex];
+
+  const handleNext = () => {
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setShowAnswer(false);
+      setSelectedAnswer(null);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+      setShowAnswer(false);
+      setSelectedAnswer(null);
+    }
+  };
+
+  return (
+    <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+      <div className="flex items-baseline justify-between mb-4">
+        <h3 className="text-xl font-bold flex items-center">
+          <Network className="mr-2 h-5 w-5 text-primary" /> Generated Quiz on "<span className="capitalize">{category}</span>"
+        </h3>
+        <span className="text-xs font-semibold px-3 py-1.5 bg-primary/10 text-primary rounded-full shrink-0">
+          Question {currentIndex + 1} of {questions.length}
+        </span>
+      </div>
+
+      <Card className="border-l-4 border-l-primary/60 hover:shadow-md transition-shadow">
+        <CardHeader className="py-4">
+          <CardTitle className="text-lg leading-snug">
+            <span className="text-muted-foreground mr-2 font-mono">Q{currentIndex + 1}.</span>
+            {q.question}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pb-4">
+          <div className="grid sm:grid-cols-2 gap-3 mb-6">
+            {q.options.map((opt: string, oi: number) => {
+              const isSelected = selectedAnswer === opt;
+              const isCorrect = q.answer === opt;
+
+              let optionStyle = "bg-muted/40 border-border/40 text-foreground";
+              let indicator = <div className={`w-2 h-2 rounded-full shrink-0 ${isSelected ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'}`}></div>;
+
+              if (showAnswer) {
+                if (isCorrect) {
+                  optionStyle = "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-500 text-emerald-800 dark:text-emerald-400 font-medium";
+                  indicator = <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />;
+                } else if (isSelected && !isCorrect) {
+                  optionStyle = "bg-red-100 dark:bg-red-900/30 border-red-500 text-red-800 dark:text-red-400 font-medium";
+                  indicator = <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" />;
+                } else {
+                  optionStyle = "bg-muted/20 border-border/20 text-muted-foreground opacity-60";
+                }
+              } else if (isSelected) {
+                optionStyle = "bg-primary/10 border-primary text-primary font-medium";
+              }
+
+              return (
+                <div
+                  key={oi}
+                  onClick={() => !showAnswer && setSelectedAnswer(opt)}
+                  className={`p-3 rounded-lg border transition-all text-sm flex items-center gap-3 ${!showAnswer ? 'cursor-pointer hover:border-primary/50 hover:bg-muted/60' : ''} ${optionStyle}`}
+                >
+                  {indicator}
+                  {opt}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="space-y-6">
+            <div className="min-h-[40px] flex items-center">
+              {showAnswer ? (
+                <div className="animate-in fade-in slide-in-from-left-2">
+                  <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 rounded-md inline-flex items-center">
+                    <Target className="w-4 h-4 mr-2" /> Correct Answer: {q.answer}
+                  </span>
+                </div>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setShowAnswer(true)}>
+                  Show Answer
+                </Button>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t border-border/50">
+              <Button
+                variant="ghost"
+                onClick={handlePrev}
+                disabled={currentIndex === 0}
+              >
+                Previous
+              </Button>
+              <Button
+                onClick={handleNext}
+                disabled={currentIndex === questions.length - 1}
+              >
+                {currentIndex === questions.length - 1 ? 'Finish' : 'Next Question'}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 const InterviewPreparation = () => {
   const [isPaidUser, setIsPaidUser] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(true);
-  
+
   // States for features
   const [currentAffairs, setCurrentAffairs] = useState([]);
   const [dailyAptitudes, setDailyAptitudes] = useState([]);
@@ -21,7 +259,8 @@ const InterviewPreparation = () => {
   const [aiQuizData, setAiQuizData] = useState([]);
   const [aiCategory, setAiCategory] = useState('');
   const [generatingQuiz, setGeneratingQuiz] = useState(false);
-  
+  const [selectedNewsItem, setSelectedNewsItem] = useState<any | null>(null);
+
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -41,7 +280,7 @@ const InterviewPreparation = () => {
         const orgId = user.organizationId;
         const isOrg = user.isOrganization;
         const paidTypes = ['monthly', 'yearly', 'forever'];
-        
+
         if (paidTypes.includes(type) || orgId || isOrg) {
           setIsPaidUser(true);
           fetchCurrentAffairs(uid);
@@ -95,18 +334,18 @@ const InterviewPreparation = () => {
       toast({ title: "Error", description: "Please enter a category", variant: "destructive" });
       return;
     }
-    
+
     setGeneratingQuiz(true);
     setAiQuizData([]);
     try {
       const uid = sessionStorage.getItem('uid');
       console.log("Generating quiz for:", uid, "category:", aiCategory);
-      
-      const resp = await axios.post(`${serverURL}/api/interview-prep/generate-category-quiz`, 
+
+      const resp = await axios.post(`${serverURL}/api/interview-prep/generate-category-quiz`,
         { userId: uid, category: aiCategory },
         { headers: { 'user-id': uid } }
       );
-      
+
       console.log("Generate quiz response:", resp.data);
       if (resp.data.success) {
         setAiQuizData(resp.data.data);
@@ -116,8 +355,8 @@ const InterviewPreparation = () => {
       }
     } catch (e: any) {
       console.error("Generate quiz error:", e);
-      toast({ 
-        title: "Error Generating Quiz", 
+      toast({
+        title: "Error Generating Quiz",
         description: e.response?.data?.message || e.message || "Something went wrong",
         variant: "destructive"
       });
@@ -160,7 +399,7 @@ const InterviewPreparation = () => {
     <>
       <SEO title="Interview Preparation" description="Master your interviews with daily tests and AI quizzes" />
       <div className="space-y-8 animate-fade-in max-w-6xl mx-auto pb-10">
-        
+
         {/* Banner Section */}
         <div className="p-8 rounded-3xl bg-gradient-to-br from-indigo-500/10 via-primary/5 to-transparent border border-primary/20 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[80px] -z-10" />
@@ -198,17 +437,39 @@ const InterviewPreparation = () => {
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {currentAffairs.map((item: any) => (
-                  <Card key={item._id} className="hover:shadow-md transition-all h-full flex flex-col group border-border/50">
+                  <Card
+                    key={item._id}
+                    className="cursor-pointer hover:shadow-md transition-all h-full flex flex-col group border-border/50"
+                    onClick={() => setSelectedNewsItem(item)}
+                  >
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg leading-snug group-hover:text-primary transition-colors line-clamp-2">{item.title}</CardTitle>
                     </CardHeader>
                     <CardContent className="flex-1 pt-0">
-                      <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">{item.content}</p>
+                      <div className="text-muted-foreground text-sm leading-relaxed line-clamp-3 prose dark:prose-invert" dangerouslySetInnerHTML={{ __html: item.content }} />
                     </CardContent>
                   </Card>
                 ))}
               </div>
             )}
+
+            <Dialog open={!!selectedNewsItem} onOpenChange={(open) => !open && setSelectedNewsItem(null)}>
+              <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl leading-relaxed">{selectedNewsItem?.title}</DialogTitle>
+                </DialogHeader>
+                <div className="mt-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6 pb-4 border-b">
+                    <Newspaper className="h-4 w-4" />
+                    {selectedNewsItem?.createdAt && <span>{new Date(selectedNewsItem.createdAt).toLocaleDateString()}</span>}
+                  </div>
+                  <div
+                    className="text-base text-foreground/90 leading-relaxed prose dark:prose-invert max-w-none"
+                    dangerouslySetInnerHTML={{ __html: selectedNewsItem?.content || '' }}
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           {/* Daily Aptitude Content */}
@@ -226,44 +487,7 @@ const InterviewPreparation = () => {
             ) : (
               <div className="space-y-6">
                 {dailyAptitudes.map((test: any) => (
-                  <div key={test._id}>
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h2 className="text-xl font-bold flex items-center gap-2">
-                          <Brain className="h-5 w-5 text-primary" /> {test.title}
-                        </h2>
-                        <p className="text-sm text-muted-foreground mt-1">{test.description}</p>
-                      </div>
-                      <span className="text-xs font-semibold px-3 py-1.5 bg-primary/10 text-primary rounded-full">
-                        {test.questions.length} Questions
-                      </span>
-                    </div>
-                    <div className="grid gap-4">
-                      {test.questions.slice(0, 15).map((q: any, i: number) => (
-                        <Card key={i} className="border-l-4 border-l-primary/50 hover:shadow-md transition-shadow">
-                          <CardHeader className="py-4">
-                            <CardTitle className="text-base leading-snug">
-                              <span className="text-muted-foreground mr-2 font-mono">{i+1}.</span>
-                              {q.question}
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="pb-4">
-                            <div className="grid sm:grid-cols-2 gap-2 mb-3">
-                              {q.options.map((opt: string, j: number) => (
-                                <div key={j} className="p-2.5 rounded-lg bg-muted/40 border border-border/40 text-sm flex items-center gap-2">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0"></div>
-                                  {opt}
-                                </div>
-                              ))}
-                            </div>
-                            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-1 rounded inline-flex items-center">
-                              <Target className="w-3 h-3 mr-1" /> Ans: {q.answer}
-                            </span>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
+                  <AptitudeTestViewer key={test._id} test={test} />
                 ))}
               </div>
             )}
@@ -277,19 +501,19 @@ const InterviewPreparation = () => {
                   <Brain className="h-12 w-12 mx-auto text-primary" />
                   <h2 className="text-2xl font-bold">AI Quiz Generator</h2>
                   <p className="text-muted-foreground text-sm">Create tailored interview questions by entering any specific topic or industry below. Let the AI build a custom test for you instantly.</p>
-                  
+
                   <div className="flex w-full items-center space-x-2 mt-6">
-                    <Input 
-                      type="text" 
-                      placeholder="e.g. History, ReactJS, Machine Learning, Geography..." 
+                    <Input
+                      type="text"
+                      placeholder="e.g. History, ReactJS, Machine Learning, Geography..."
                       value={aiCategory}
                       onChange={(e) => setAiCategory(e.target.value)}
                       className="bg-background shadow-sm h-12"
                       onKeyDown={(e) => e.key === 'Enter' && generateQuiz()}
                     />
-                    <Button 
-                      type="submit" 
-                      onClick={generateQuiz} 
+                    <Button
+                      type="submit"
+                      onClick={generateQuiz}
                       disabled={generatingQuiz}
                       className="h-12 px-6 shadow-sm"
                     >
@@ -303,37 +527,7 @@ const InterviewPreparation = () => {
 
             {/* Generated Quiz Display */}
             {aiQuizData.length > 0 && (
-              <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-                <h3 className="text-xl font-bold flex items-center">
-                  <Network className="mr-2 h-5 w-5 text-primary" /> Generated Quiz on "<span className="capitalize">{aiCategory}</span>"
-                </h3>
-                <div className="grid gap-6">
-                  {aiQuizData.map((q: any, idx: number) => (
-                    <Card key={idx} className="border-l-4 border-l-primary/60 hover:shadow-md transition-shadow">
-                      <CardHeader className="py-4">
-                        <CardTitle className="text-lg leading-snug">
-                          <span className="text-muted-foreground mr-2 font-mono">{idx + 1}.</span> 
-                          {q.question}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="pb-4">
-                        <div className="grid sm:grid-cols-2 gap-3 mb-4">
-                          {q.options.map((opt: string, oi: number) => (
-                            <div key={oi} className="p-3 rounded-lg bg-muted/40 border border-border/40 text-sm">
-                              {opt}
-                            </div>
-                          ))}
-                        </div>
-                        <div className="flex items-center text-sm font-medium">
-                          <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-3 py-1.5 rounded-md flex items-center">
-                            <Target className="w-4 h-4 mr-1.5" /> Correct Answer: {q.answer}
-                          </span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
+              <AiQuizViewer questions={aiQuizData} category={aiCategory} />
             )}
           </TabsContent>
         </Tabs>

@@ -631,44 +631,46 @@ const DashboardLayout = () => {
                     </SidebarMenuItem>
 
                     {/* Classes */}
-                    <SidebarMenuItem>
+                    {/* <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Classes" isActive={isActive('/dashboard/staff/classes')}>
                         <Link to="/dashboard/staff/classes">
                           <BookOpen />
                           <span>Classes</span>
                         </Link>
                       </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    </SidebarMenuItem> */}
 
                     {/* Students */}
-                    <SidebarMenuItem>
+                    {/* <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Students" isActive={isActive('/dashboard/staff/students')}>
                         <Link to="/dashboard/staff/students">
                           <Users />
                           <span>Students</span>
                         </Link>
                       </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    </SidebarMenuItem> */}
+
+
 
                     {/* Grading */}
-                    <SidebarMenuItem>
+                    {/* <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Grading" isActive={isActive('/dashboard/staff/grading')}>
                         <Link to="/dashboard/staff/grading">
                           <FileText />
                           <span>Grading</span>
                         </Link>
                       </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    </SidebarMenuItem> */}
 
                     {/* Schedule */}
-                    <SidebarMenuItem>
+                    {/* <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Schedule" isActive={isActive('/dashboard/staff/schedule')}>
                         <Link to="/dashboard/staff/schedule">
                           <Calendar />
                           <span>Schedule</span>
                         </Link>
                       </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    </SidebarMenuItem> */}
 
                {/* Global News */}
 <SidebarMenuItem>
@@ -685,14 +687,14 @@ const DashboardLayout = () => {
 </SidebarMenuItem>
 
                     {/* Resources */}
-                    <SidebarMenuItem>
+                    {/* <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Resources" isActive={isActive('/dashboard/staff/resources')}>
                         <Link to="/dashboard/staff/resources">
                           <Folder />
                           <span>Resources</span>
                         </Link>
                       </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    </SidebarMenuItem> */}
 
                     {/* Support */}
                     <SidebarMenuItem>
@@ -707,12 +709,24 @@ const DashboardLayout = () => {
                     <div className="h-px bg-border/40 my-2 mx-4" />
                     <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Management</div>
 
+
                     {/* Courses */}
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Courses" isActive={location.search === '?tab=courses'}>
                         <Link to="/dashboard/org?tab=courses" className={cn(location.search === '?tab=courses' && "text-primary")}>
                           <BookOpen />
                           <span>Courses</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    
+                   {/* Students */}
+                      <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="students" isActive={location.search === '?tab=students'}>
+                        <Link to="/dashboard/org?tab=students" className={cn(location.search === '?tab=students' && "text-primary")}>
+                          <Users />
+                          <span>Student</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

@@ -177,8 +177,7 @@ const AINotebook = () => {
     };
 
     return (
-        <div className="flex flex-col md:flex-row h-[calc(100vh-6rem)] w-full gap-4 bg-background">
-
+        <div className="flex flex-col lg:flex-row min-h-[calc(100vh-6rem)] w-full gap-4 bg-background overflow-hidden">
             {/* LEFT SIDEBAR: SOURCES */}
             <Card className="w-full md:w-80 border-border/40 shadow-sm flex flex-col overflow-hidden bg-card/50 backdrop-blur-sm">
                 <CardHeader className="px-5 py-5 border-b border-border/40 flex flex-row items-center justify-between space-y-0 bg-muted/5">
@@ -215,18 +214,18 @@ const AINotebook = () => {
                                     <p className="text-xs text-muted-foreground max-w-[180px]">Upload PDFs or paste text to build your knowledge base.</p>
                                 </div>
                             ) : (
-                                sources.map((source) => (
+                                sources.map((source, index) => (
                                     <motion.div
+                                        key={source.id || index}
                                         initial={{ opacity: 0, x: -10 }}
                                         animate={{ opacity: 1, x: 0 }}
-                                        key={source.id}
+                                        transition={{ duration: 0.2 }}
                                         onClick={() => toggleSourceSelection(source.id)}
                                         className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 flex items-start gap-4 group relative overflow-hidden ${source.selected
-                                            ? 'border-primary/40 bg-primary/5 shadow-sm ring-1 ring-primary/20'
-                                            : 'border-border/40 hover:border-primary/30 hover:bg-muted/30 shadow-[0_2px_4px_rgba(0,0,0,0.02)]'
+                                                ? 'border-primary/40 bg-primary/5 shadow-sm ring-1 ring-primary/20'
+                                                : 'border-border/40 hover:border-primary/30 hover:bg-muted/30'
                                             }`}
-                                    >
-                                        <div className="mt-0.5 relative z-10">
+                                    >                                     <div className="mt-0.5 relative z-10">
                                             {source.selected ? (
                                                 <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-sm">
                                                     <CheckCircle2 className="w-3.5 h-3.5 text-primary-foreground" />
@@ -268,9 +267,9 @@ const AINotebook = () => {
             </Card>
 
             {/* MAIN CONTENT AREA: NOTEBOOK STUDIO */}
-            <Card className="flex-1 border-border/40 shadow-md flex flex-col overflow-hidden relative overflow-y-auto">
+            <Card className="flex-1 border-border/40 shadow-md flex flex-col overflow-hidden relative">
                 <CardHeader className="px-6 py-5 border-b border-border/40 bg-card z-10 sticky top-0 backdrop-blur-md bg-opacity-80">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div>
                             <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-indigo-500 text-gradient flex items-center gap-2">
                                 <BrainCircuit className="w-6 h-6 text-primary" /> Notebook Studio
@@ -288,7 +287,7 @@ const AINotebook = () => {
                     </div>
                 </CardHeader>
 
-                <CardContent className="p-0 flex-1 flex flex-col">
+                <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col">
                         <div className="px-6 border-b border-border/40 pt-4 bg-muted/10">
                             <TabsList className="bg-transparent space-x-2">
@@ -297,7 +296,7 @@ const AINotebook = () => {
                             </TabsList>
                         </div>
 
-                        <ScrollArea className="flex-1">
+                        <ScrollArea className="flex-1 h-full">
                             <TabsContent value="guide" className="p-6 m-0 h-full">
 
                                 {/* Audio Overview Section (Like NotebookLM) */}
@@ -328,7 +327,7 @@ const AINotebook = () => {
                                     <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
                                         <Target className="w-4 h-4" /> Recommended Actions
                                     </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                         {[
                                             { title: 'Study Guide', desc: 'Comprehensive overview', icon: BookOpen, color: 'text-blue-500', bg: 'bg-blue-500/10' },
                                             { title: 'FAQ', desc: 'Frequently asked questions', icon: MessageSquare, color: 'text-green-500', bg: 'bg-green-500/10' },
@@ -411,7 +410,7 @@ const AINotebook = () => {
                                 <div className="flex-1 overflow-auto bg-background/30">
                                     {isEditMode ? (
                                         <Textarea
-                                            className="w-full h-full border-0 focus-visible:ring-0 rounded-none resize-none p-8 text-base bg-transparent min-h-[500px] font-mono leading-relaxed"
+                                            className="w-full h-full border-0 focus-visible:ring-0 rounded-none resize-none p-6 md:p-8 text-base bg-transparent min-h-[400px] md:min-h-[600px] font-mono leading-relaxed"
                                             placeholder="Start typing your notes here. You can ask AI to help you draft or summarize while you write..."
                                             value={notes}
                                             onChange={(e) => setNotes(e.target.value)}
@@ -445,13 +444,13 @@ const AINotebook = () => {
 
             {/* RIGHT SIDEBAR: CHAT (Expandable) */}
             <AnimatePresence>
-                {(isChatOpen || !isChatOpen && window.innerWidth < 768) && ( // On mobile it might be better as modal, but let's keep it simple for now
+                {isChatOpen && (
                     <motion.div
-                        initial={{ width: 0, opacity: 0 }}
-                        animate={{ width: 380, opacity: 1 }}
-                        exit={{ width: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="md:relative fixed inset-y-0 right-0 z-50 md:z-0 flex shrink-0"
+                        initial={{ x: 400 }}
+                        animate={{ x: 0 }}
+                        exit={{ x: 400 }}
+                        transition={{ duration: 0.25 }}
+                        className="fixed md:relative inset-y-0 right-0 w-full md:w-[380px] z-50"
                     >
                         <Card className="w-full h-full border-border/40 shadow-xl md:shadow-sm flex flex-col overflow-hidden bg-card/90 backdrop-blur-xl">
                             <CardHeader className="py-4 border-b border-border/40 bg-muted/20">
@@ -469,7 +468,7 @@ const AINotebook = () => {
                                 <div className="space-y-4">
                                     {chatMessages.map((msg, i) => (
                                         <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`max-w-[90%] rounded-2xl px-4 py-3 shadow-sm ${msg.role === 'user'
+                                            <div className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${msg.role === 'user'
                                                 ? 'bg-primary text-primary-foreground rounded-tr-sm'
                                                 : 'bg-muted border rounded-tl-sm text-foreground'
                                                 }`}>

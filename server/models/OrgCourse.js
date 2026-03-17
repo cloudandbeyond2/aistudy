@@ -12,6 +12,7 @@ const orgCourseSchema = new mongoose.Schema({
             title: String,
             content: String,
             videoUrl: String,
+            diagram: String,
             order: Number
         }],
         order: Number

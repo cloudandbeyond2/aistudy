@@ -1,6 +1,0 @@
-{
-  "courseId": "69b2647697863f192cf665d2",
-  "mainTopic": "NEXT JS",
-  "subtopicsString": "What is Next.js and Why Use It?, Key Features and Advantages, Setting Up Your First Next.js Project, Project Structure and File System Routing, Pages, Components, and Layouts, Static Site Generation (SSG) with getStaticProps, Server-Side Rendering (SSR) with getServerSideProps, Client-Side Data Fetching, Incremental Static Regeneration (ISR), Styling Next.js Applications (CSS Modules, Tailwind CSS), Image Optimization with next/image, Creating API Routes for Backend Functionality, Handling Forms and User Input, Dynamic Routes and Nested Routing, Authentication Strategies in Next.js, Internationalization (i18n), Error Handling and Custom Error Pages, Middleware in Next.js, Deploying Next.js Applications to Vercel, Performance Optimization Techniques, Testing Next.js Applications, Security Best Practices, Future Trends and Community Resources",
-  "lang": "english"
-}
