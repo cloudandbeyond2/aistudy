@@ -173,7 +173,7 @@ export const generateBlogContent = async (req, res) => {
 
     const genAI = getGenAI();
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       systemInstruction: `You are a professional blog writer. Given a topic or prompt, generate a high-quality blog post.
       Return the response in JSON format with the following keys:
       "title": A catchy title for the blog post.
@@ -215,7 +215,7 @@ export const suggestBlogTags = async (req, res) => {
 
     const genAI = getGenAI();
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       systemInstruction: "You are an SEO expert. Based on the following blog details, suggest 5-8 relevant SEO tags.",
       generationConfig: {
         responseMimeType: "application/json",

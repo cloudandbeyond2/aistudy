@@ -238,7 +238,7 @@ export const getDailyAptitudes = async (req, res) => {
       { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
       { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }
     ];
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', safetySettings });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', safetySettings });
 
     const prompt = `Generate exactly 15 multiple choice aptitude questions on the concept "${concept}". 
     These should be suitable for competitive exam and interview preparation. Mix easy, medium, and hard difficulty.

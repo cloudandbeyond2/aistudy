@@ -17,7 +17,7 @@ import { getUnsplashApi } from '../config/unsplash.js';
 //   const { prompt } = req.body;
 
 //   const model = genAI.getGenerativeModel({
-//     model: 'gemini-1.5-flash',
+//     model: 'gemini-2.5-flash',
 //     safetySettings: [
 //       {
 //         category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -62,7 +62,7 @@ export const generatePrompt = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const modelOptions = {
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
     };
 
     if (systemInstruction) {
@@ -209,7 +209,7 @@ Response Format (JSON):
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       safetySettings,
       systemInstruction,
       generationConfig: {
@@ -316,7 +316,7 @@ export const generateHtml = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       safetySettings,
       systemInstruction: 'You are a helpful educational assistant. Provide thorough and interesting explanations with examples. Use markdown formatting.'
     });
@@ -632,7 +632,7 @@ Generate 10 MCQs in JSON format:
 ]`;
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       safetySettings,
       systemInstruction,
       generationConfig: {

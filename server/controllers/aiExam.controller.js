@@ -59,7 +59,7 @@ IMPORTANT: "correctAnswer" must match exactly one of the strings in "options".`;
 
   try {
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       safetySettings
     });
 
