@@ -209,3 +209,22 @@ export const toggleBlockUser = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+export const getLimitRequests = async (req, res) => {
+    try {
+        const requests = await adminService.getAllLimitRequests();
+        res.json({ success: true, requests });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+export const processLimitRequest = async (req, res) => {
+    try {
+        const { requestId, status, adminComment } = req.body;
+        const request = await adminService.processLimitRequest(requestId, status, adminComment);
+        res.json({ success: true, request });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};

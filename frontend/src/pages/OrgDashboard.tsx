@@ -335,11 +335,17 @@ const OrgDashboard = () => {
     const deptId = sessionStorage.getItem('deptId');
     const activeTab = searchParams.get('tab') || (role === 'dept_admin' ? 'courses' : 'students');
     const { toast } = useToast();
-    const [stats, setStats] = useState<{ studentCount: number; assignmentCount: number; submissionCount: number; placedCount: number }>({ studentCount: 0, assignmentCount: 0, submissionCount: 0, placedCount: 0 });
+    const [stats, setStats] = useState<{ studentCount: number; studentLimit: number; assignmentCount: number; submissionCount: number; placedCount: number }>({ studentCount: 0, studentLimit: 50, assignmentCount: 0, submissionCount: 0, placedCount: 0 });
     const [students, setStudents] = useState([]); // Simplified for now
     const [assignments, setAssignments] = useState([]);
     const [notices, setNotices] = useState([]);
     const [courses, setCourses] = useState([]);
+    
+    const [userDeptName, setUserDeptName] = useState('');
+    const [userDeptId, setUserDeptId] = useState(deptId || '');
+    const getDeptScopedDepartment = () => (role === 'dept_admin' ? (userDeptId || deptId || '') : '');
+    const orgId = sessionStorage.getItem('orgId') || sessionStorage.getItem('uid');
+
     const [newStudent, setNewStudent] = useState({ name: '', email: '', password: '', department: '', section: '', studentClass: '', rollNo: '', academicYear: '' });
     const [editStudent, setEditStudent] = useState<any>(null);
     const [placementStudent, setPlacementStudent] = useState<any>(null);
@@ -355,6 +361,8 @@ const OrgDashboard = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [studentSearch, setStudentSearch] = useState('');
     const [courseSearch, setCourseSearch] = useState('');
+    const [openLimitIncreaseDialog, setOpenLimitIncreaseDialog] = useState(false);
+    const [limitIncreaseData, setLimitIncreaseData] = useState({ requestedSlot: 1, requestedCustomLimit: 0 });
 
     // New features state
     const [meetings, setMeetings] = useState<any[]>([]);
@@ -362,8 +370,13 @@ const OrgDashboard = () => {
     const [materials, setMaterials] = useState<any[]>([]);
     const [openMeetingDialog, setOpenMeetingDialog] = useState(false);
     const [openProjectDialog, setOpenProjectDialog] = useState(false);
-    const [newMeeting, setNewMeeting] = useState({ title: '', link: '', platform: 'google-meet', date: '', time: '', department: '' });
-    const [newProject, setNewProject] = useState({ title: '', description: '', type: 'Project', department: '', dueDate: '' });
+
+
+
+    const [newMeeting, setNewMeeting] = useState({ title: '', link: '', platform: 'google-meet', date: '', time: '', department: getDeptScopedDepartment() });
+    const [newProject, setNewProject] = useState({ title: '', description: '', type: 'Project', department: '', dueDate: '', guidance: '', subtopics: [] as string[], isAiGenerated: false });
+    const [projectAiTopic, setProjectAiTopic] = useState('');
+    const [isGeneratingProject, setIsGeneratingProject] = useState(false);
 
     // Departments & Dept Admins
     const [departmentsList, setDepartmentsList] = useState<any[]>([]);
@@ -380,10 +393,6 @@ const OrgDashboard = () => {
         department: ''
     });
 
-    const orgId = sessionStorage.getItem('orgId') || sessionStorage.getItem('uid');
-    const [userDeptName, setUserDeptName] = useState('');
-    const [userDeptId, setUserDeptId] = useState(deptId || '');
-    const getDeptScopedDepartment = () => (role === 'dept_admin' ? (userDeptId || deptId || '') : '');
     const getDepartmentValue = (value: any) => {
         if (!value) return '';
         if (typeof value === 'string') return value;
@@ -643,9 +652,13 @@ const OrgDashboard = () => {
                     title: '',
                     description: '',
                     type: 'Project',
-                    department: '',
-                    dueDate: ''
+                    department: getDeptScopedDepartment(),
+                    dueDate: '',
+                    guidance: '',
+                    subtopics: [],
+                    isAiGenerated: false
                 });
+                setProjectAiTopic('');
 
                 setOpenProjectDialog(false); // close popup
 
@@ -653,6 +666,38 @@ const OrgDashboard = () => {
             }
         } catch (e: any) {
             toast({ title: "Error", description: e.response?.data?.message || "Failed to add project" });
+        }
+    };
+
+    const handleGenerateProjectContent = async () => {
+        if (!projectAiTopic) {
+            toast({ title: "Required", description: "Please enter a topic or keywords" });
+            return;
+        }
+
+        setIsGeneratingProject(true);
+        try {
+            const res = await axios.post(`${serverURL}/api/org/project/generate`, { 
+                topic: projectAiTopic,
+                type: newProject.type 
+            });
+
+            if (res.data.success) {
+                const { title, description, guidance, subtopics } = res.data.content;
+                setNewProject({
+                    ...newProject,
+                    title,
+                    description,
+                    guidance,
+                    subtopics: subtopics || [],
+                    isAiGenerated: true
+                });
+                toast({ title: "Success", description: "Project content generated!" });
+            }
+        } catch (e: any) {
+            toast({ title: "Error", description: "Failed to generate content" });
+        } finally {
+            setIsGeneratingProject(false);
         }
     };
 
@@ -1190,6 +1235,22 @@ const OrgDashboard = () => {
         XLSX.utils.book_append_sheet(wb, ws, "Template");
         XLSX.writeFile(wb, "student_bulk_upload_template.xlsx");
     };
+ 
+    const handleLimitIncreaseRequest = async () => {
+        try {
+            const res = await axios.post(`${serverURL}/api/org/limit-increase/request`, {
+                organizationId: orgId,
+                requestedSlot: limitIncreaseData.requestedSlot,
+                requestedCustomLimit: limitIncreaseData.requestedCustomLimit
+            });
+            if (res.data.success) {
+                toast({ title: "Request Sent", description: "Your request for limit increase has been sent to admin." });
+                setOpenLimitIncreaseDialog(false);
+            }
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: "Error", description: error.response?.data?.message || "Failed to send request" });
+        }
+    };
 
     return (
         <div className="container mx-auto py-10 space-y-8 animate-fade-in">
@@ -1223,9 +1284,14 @@ const OrgDashboard = () => {
                             <DialogHeader>
                                 <DialogTitle>Bulk Student Upload</DialogTitle>
                                 <DialogDescription>
-                                    Upload an Excel file containing student details.
                                     Columns should be: **Name, Email, Password, Department, Section, Roll No**.
                                 </DialogDescription>
+                                <div className="mt-2 p-3 bg-muted rounded-lg flex justify-between items-center text-sm">
+                                    <span className="font-medium">Remaining Capacity:</span>
+                                    <Badge variant={stats.studentLimit - stats.studentCount > 0 ? "secondary" : "destructive"}>
+                                        {Math.max(0, stats.studentLimit - stats.studentCount)} Students
+                                    </Badge>
+                                </div>
                             </DialogHeader>
                             <div className="grid gap-6 py-4">
                                 <div className="space-y-2">
@@ -1456,7 +1522,55 @@ const OrgDashboard = () => {
                 <TabsContent value="students" className="space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Manage Students</CardTitle>
+                            <CardTitle className="flex justify-between items-center">
+                                Manage Students
+                                {role !== 'dept_admin' && (
+                                    <div className="flex items-center gap-4">
+                                        <Badge variant="secondary" className="font-semibold">
+                                            {stats.studentCount} / {stats.studentLimit} Students Used
+                                        </Badge>
+                                        <Dialog open={openLimitIncreaseDialog} onOpenChange={setOpenLimitIncreaseDialog}>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" size="sm">Request Increase</Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Request Student Limit Increase</DialogTitle>
+                                                    <DialogDescription>
+                                                        Current Limit: {stats.studentLimit} students.
+                                                        Submit a request to increase your student capacity.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <div className="grid gap-4 py-4">
+                                                    <div className="grid gap-2">
+                                                        <Label>Requested Slot</Label>
+                                                        <select
+                                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                            value={limitIncreaseData.requestedSlot}
+                                                            onChange={(e) => setLimitIncreaseData({ ...limitIncreaseData, requestedSlot: parseInt(e.target.value) })}
+                                                        >
+                                                            <option value={1}>Slot 1 (50 Students)</option>
+                                                            <option value={2}>Slot 2 (100 Students)</option>
+                                                            <option value={3}>Slot 3 (150 Students)</option>
+                                                            <option value={4}>Slot 4 (200 Students)</option>
+                                                        </select>
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label>Custom Limit (Optional - overrides slot)</Label>
+                                                        <Input
+                                                            type="number"
+                                                            value={limitIncreaseData.requestedCustomLimit}
+                                                            onChange={(e) => setLimitIncreaseData({ ...limitIncreaseData, requestedCustomLimit: parseInt(e.target.value) })}
+                                                            placeholder="0 for none"
+                                                        />
+                                                    </div>
+                                                    <Button onClick={handleLimitIncreaseRequest}>Submit Request</Button>
+                                                </div>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                )}
+                            </CardTitle>
                             <CardDescription>Add, view, and manage student accounts.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -1475,7 +1589,12 @@ const OrgDashboard = () => {
                                     </DialogTrigger>
                                     <DialogContent>
                                         <DialogHeader>
-                                            <DialogTitle>Add New Student</DialogTitle>
+                                            <DialogTitle className="flex justify-between items-center">
+                                                Add New Student
+                                                <span className="text-xs font-normal text-muted-foreground">
+                                                    {stats.studentCount} / {stats.studentLimit} used
+                                                </span>
+                                            </DialogTitle>
                                         </DialogHeader>
                                         <div className="grid gap-4 py-4">
                                             <div className="grid grid-cols-4 items-center gap-4">
@@ -2013,11 +2132,36 @@ const OrgDashboard = () => {
                                 <DialogTrigger asChild onClick={() => setOpenProjectDialog(true)}>
                                     <Button><Plus className="w-4 h-4 mr-2" /> Add Project</Button>
                                 </DialogTrigger>
-                                <DialogContent>
+                                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                                     <DialogHeader>
                                         <DialogTitle>Add Project/Practical</DialogTitle>
                                     </DialogHeader>
-                                    <div className="grid gap-4 py-4">
+                                    <div className="grid gap-6 py-4">
+                                        {/* AI Generation Section */}
+                                        <div className="p-4 border border-primary/20 bg-primary/5 rounded-xl space-y-3">
+                                            <div className="flex items-center gap-2 text-primary font-semibold">
+                                                <Sparkles className="w-4 h-4" />
+                                                <span>AI Content Generator</span>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">Enter a topic or keywords and let AI suggest a title, description, and guidance.</p>
+                                            <div className="flex gap-2">
+                                                <Input 
+                                                    placeholder="e.g., IoT based Smart Waste Management" 
+                                                    value={projectAiTopic} 
+                                                    onChange={(e) => setProjectAiTopic(e.target.value)}
+                                                    className="bg-background"
+                                                />
+                                                <Button 
+                                                    type="button" 
+                                                    onClick={handleGenerateProjectContent}
+                                                    disabled={isGeneratingProject}
+                                                    className="shrink-0"
+                                                >
+                                                    {isGeneratingProject ? "Generating..." : "Generate"}
+                                                </Button>
+                                            </div>
+                                        </div>
+
                                         <div className="grid gap-2">
                                             <Label>Project Title</Label>
                                             <Input value={newProject.title} onChange={(e) => setNewProject({ ...newProject, title: e.target.value })} placeholder="e.g., AI Research Phase 1" />
@@ -2036,14 +2180,66 @@ const OrgDashboard = () => {
                                             </select>
                                         </div>
                                         <div className="grid gap-2">
-                                            <Label>Description</Label>
+                                            <Label>Project Description</Label>
                                             <RichTextEditor
                                                 value={newProject.description || ''}
                                                 onChange={(content) => setNewProject({ ...newProject, description: content })}
-                                                placeholder="Project guidelines..."
+                                                placeholder="Project overview..."
+                                                className="min-h-[120px]"
+                                            />
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label>Project Guidance & Steps</Label>
+                                            <RichTextEditor
+                                                value={newProject.guidance || ''}
+                                                onChange={(content) => setNewProject({ ...newProject, guidance: content })}
+                                                placeholder="Step-by-step guidance for students..."
                                                 className="min-h-[150px]"
                                             />
                                         </div>
+
+                                        <div className="grid gap-2">
+                                            <Label>Reference Subtopics</Label>
+                                            <div className="flex gap-2">
+                                                <Input 
+                                                    id="subtopic-input" 
+                                                    placeholder="Add a subtopic..." 
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            const val = e.currentTarget.value.trim();
+                                                            if (val) {
+                                                                setNewProject({ ...newProject, subtopics: [...newProject.subtopics, val] });
+                                                                e.currentTarget.value = '';
+                                                            }
+                                                            e.preventDefault();
+                                                        }
+                                                    }}
+                                                />
+                                                <Button 
+                                                    type="button" 
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        const el = document.getElementById('subtopic-input') as HTMLInputElement;
+                                                        if (el.value.trim()) {
+                                                            setNewProject({ ...newProject, subtopics: [...newProject.subtopics, el.value.trim()] });
+                                                            el.value = '';
+                                                        }
+                                                    }}
+                                                >
+                                                    Add
+                                                </Button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {newProject.subtopics.map((st, i) => (
+                                                    <Badge key={i} variant="secondary" className="flex items-center gap-1 py-1 px-2">
+                                                        {st}
+                                                        <X className="w-3 h-3 cursor-pointer hover:text-destructive" onClick={() => setNewProject({ ...newProject, subtopics: newProject.subtopics.filter((_, idx) => idx !== i) })} />
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        </div>
+
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="grid gap-2">
                                                 <Label>Due Date</Label>
@@ -2064,7 +2260,7 @@ const OrgDashboard = () => {
                                                 </select>
                                             </div>
                                         </div>
-                                        <Button onClick={handleCreateProject}>Add Project</Button>
+                                        <Button onClick={handleCreateProject} className="h-12 text-lg font-semibold">Publish Project</Button>
                                     </div>
                                 </DialogContent>
                             </Dialog>
@@ -2072,20 +2268,39 @@ const OrgDashboard = () => {
                         <CardContent>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {projects.length > 0 ? projects.map((p: any) => (
-                                    <Card key={p._id} className="relative group overflow-hidden border-primary/20">
-                                        <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Card key={p._id} className="relative group overflow-hidden border-primary/20 hover:shadow-lg transition-all">
+                                        <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                             <Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => handleDeleteProject(p._id)}><Trash2 className="w-3 h-3" /></Button>
                                         </div>
                                         <CardHeader className="pb-2">
-                                            <div className="flex items-center gap-2 mb-2">
+                                            <div className="flex items-center justify-between mb-2">
                                                 <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-bold uppercase tracking-wider">{p.type}</span>
+                                                {p.isAiGenerated && (
+                                                    <Badge variant="outline" className="text-[9px] h-4 bg-emerald-50 text-emerald-600 border-emerald-200">
+                                                        <Sparkles className="w-2 h-2 mr-1" /> AI
+                                                    </Badge>
+                                                )}
                                             </div>
                                             <CardTitle className="text-base line-clamp-1">{p.title}</CardTitle>
-                                            <div className="line-clamp-2 text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: p.description }} />
+                                            <div className="line-clamp-2 text-xs text-muted-foreground mt-1" dangerouslySetInnerHTML={{ __html: p.description }} />
                                         </CardHeader>
-                                        <CardContent className="pt-0 text-[11px] text-muted-foreground flex justify-between">
-                                            <span>Dept: {getDepartmentLabel(p.department) || 'All'}</span>
-                                            {p.dueDate && <span>Due: {new Date(p.dueDate).toLocaleDateString()}</span>}
+                                        <CardContent className="pt-0 space-y-2">
+                                            <div className="flex flex-wrap gap-1">
+                                                {p.guidance && (
+                                                    <Badge variant="secondary" className="text-[9px] h-4 bg-blue-50 text-blue-600 border-none font-normal">
+                                                        Has Guidance
+                                                    </Badge>
+                                                )}
+                                                {p.subtopics?.length > 0 && (
+                                                    <Badge variant="secondary" className="text-[9px] h-4 bg-purple-50 text-purple-600 border-none font-normal">
+                                                        {p.subtopics.length} Subtopics
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <div className="text-[11px] text-muted-foreground flex justify-between">
+                                                <span>Dept: {getDepartmentLabel(p.department) || 'All'}</span>
+                                                {p.dueDate && <span>Due: {new Date(p.dueDate).toLocaleDateString()}</span>}
+                                            </div>
                                         </CardContent>
                                     </Card>
                                 )) : (

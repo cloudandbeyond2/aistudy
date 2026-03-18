@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import Organization from '../models/Organization.js';
+import LimitRequest from '../models/LimitRequest.js';
 import bcrypt from 'bcrypt';
 import Course from '../models/Course.js';
 import Admin from '../models/Admin.js';
@@ -291,12 +292,62 @@ export const updateOrganization = async (id, data) => {
   // Also update core user fields if needed
   if (data.institutionName) user.mName = data.institutionName;
 
+  // Update new limit fields if provided
+  if (data.studentSlot !== undefined) user.organizationDetails.studentSlot = data.studentSlot;
+  if (data.customStudentLimit !== undefined) user.organizationDetails.customStudentLimit = data.customStudentLimit;
+
   await user.save();
+
+  // Also update the Organization model document
+  await Organization.findByIdAndUpdate(user.organization, {
+      studentSlot: data.studentSlot,
+      customStudentLimit: data.customStudentLimit,
+      name: data.institutionName || undefined,
+      address: data.address || undefined
+  });
+
   return user;
 };
 
+/* ---------------- LIMIT REQUESTS ---------------- */
+export const getAllLimitRequests = async () => {
+    return LimitRequest.find()
+        .populate('organizationId', 'name email studentSlot customStudentLimit')
+        .populate('adminId', 'mName email')
+        .sort({ createdAt: -1 });
+};
 
-export const createOrganization = async ({ email, password, institutionName, inchargeName, inchargeEmail, inchargePhone, address }) => {
+export const processLimitRequest = async (requestId, status, adminComment) => {
+    const request = await LimitRequest.findById(requestId);
+    if (!request) throw new Error('Request not found');
+
+    request.status = status.toLowerCase(); // Standardize to lowercase
+    request.adminComment = adminComment;
+    await request.save();
+
+    if (request.status === 'approved') {
+        const updateData = {};
+        if (request.requestedSlot) updateData.studentSlot = request.requestedSlot;
+        if (request.requestedCustomLimit) updateData.customStudentLimit = request.requestedCustomLimit;
+
+        // Update Organization
+        await Organization.findByIdAndUpdate(request.organizationId, updateData);
+
+        // Update Org Admin User
+        await User.findOneAndUpdate(
+            { organization: request.organizationId, role: 'org_admin' },
+            { 
+                'organizationDetails.studentSlot': request.requestedSlot,
+                'organizationDetails.customStudentLimit': request.requestedCustomLimit
+            }
+        );
+    }
+
+    return request;
+};
+
+
+export const createOrganization = async ({ email, password, institutionName, inchargeName, inchargeEmail, inchargePhone, address, studentSlot, customStudentLimit }) => {
   const existingUser = await User.findOne({ email });
   if (existingUser) throw new Error('User already exists');
 
@@ -308,7 +359,9 @@ export const createOrganization = async ({ email, password, institutionName, inc
     email,
     password: hashedPassword,
     address,
-    contactNumber: inchargePhone
+    contactNumber: inchargePhone,
+    studentSlot: studentSlot || 1,
+    customStudentLimit: customStudentLimit || 0
   });
   await newOrgDoc.save();
 
@@ -329,7 +382,9 @@ export const createOrganization = async ({ email, password, institutionName, inc
       inchargePhone,
       address,
       documents: ['', ''],
-      isBlocked: false
+      isBlocked: false,
+      studentSlot: studentSlot || 1,
+      customStudentLimit: customStudentLimit || 0
     }
   });
 

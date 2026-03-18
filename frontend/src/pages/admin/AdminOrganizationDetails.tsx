@@ -27,7 +27,9 @@ const AdminOrganizationDetails = () => {
         planDetails: '',
         logo: '',
         documents: ['', ''], // 2 document slots
-        allowCareerPlacement: true
+        allowCareerPlacement: true,
+        studentSlot: 1,
+        customStudentLimit: 0
     });
 
     useEffect(() => {
@@ -52,7 +54,9 @@ const AdminOrganizationDetails = () => {
                         org.organizationDetails.documents?.[0] || '',
                         org.organizationDetails.documents?.[1] || ''
                     ],
-                    allowCareerPlacement: org.allowCareerPlacement ?? true
+                    allowCareerPlacement: org.allowCareerPlacement ?? true,
+                    studentSlot: org.organizationDetails.studentSlot ?? 1,
+                    customStudentLimit: org.organizationDetails.customStudentLimit ?? 0
                 });
             }
         } catch (error) {
@@ -216,6 +220,39 @@ const AdminOrganizationDetails = () => {
                     </CardContent>
                 </Card>
 
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Student Limits</CardTitle>
+                        <CardDescription>Configure the maximum number of students this organization can have.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Student Slot</Label>
+                                <select 
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                    value={formData.studentSlot}
+                                    onChange={(e) => handleChange('studentSlot', parseInt(e.target.value))}
+                                >
+                                    <option value={1}>Slot 1 (50 Students)</option>
+                                    <option value={2}>Slot 2 (100 Students)</option>
+                                    <option value={3}>Slot 3 (150 Students)</option>
+                                    <option value={4}>Slot 4 (200 Students)</option>
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Custom Student Limit (Overrides Slot)</Label>
+                                <Input
+                                    type="number"
+                                    value={formData.customStudentLimit}
+                                    onChange={(e) => handleChange('customStudentLimit', parseInt(e.target.value))}
+                                    placeholder="0 for none"
+                                />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+ 
                 <Card>
                     <CardHeader>
                         <CardTitle>Feature Access</CardTitle>

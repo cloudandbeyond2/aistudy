@@ -12,6 +12,8 @@ const organizationSchema = new mongoose.Schema({
     allowManualCreation: { type: Boolean, default: true },
     isBlocked: { type: Boolean, default: false },
     allowCareerPlacement: { type: Boolean, default: true },
+    studentSlot: { type: Number, default: 1 }, // 1: 50, 2: 100, 3: 150, 4: 200
+    customStudentLimit: { type: Number, default: 0 }, // If > 0, overrides studentSlot
     createdAt: { type: Date, default: Date.now }
 });
 

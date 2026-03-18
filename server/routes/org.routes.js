@@ -43,7 +43,9 @@ import {
     deleteDeptAdmin,
     deleteNotice,
     updateAssignment,
-    deleteAssignment
+    deleteAssignment,
+    requestLimitIncrease,
+    generateProjectContent
 } from '../controllers/org.controller.js';
 import Organization from '../models/Organization.js';
 import { uploadAssignment, uploadCourseImage, uploadMaterial } from '../config/upload.config.js';
@@ -131,5 +133,11 @@ router.delete('/org/department/:id', deleteDepartment);
 router.post('/org/dept-admin/add', addDeptAdmin);
 router.get('/org/dept-admins', getDeptAdmins);
 router.delete('/org/dept-admin/:id', deleteDeptAdmin);
+
+// Student Limit Increase Request
+router.post('/org/limit-increase/request', requestLimitIncrease);
+
+// Project AI Generation
+router.post('/org/project/generate', generateProjectContent);
 
 export default router;

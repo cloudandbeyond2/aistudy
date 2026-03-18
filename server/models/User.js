@@ -66,7 +66,9 @@ const userSchema = new mongoose.Schema({
     address: String,
     documents: [String],
     isBlocked: { type: Boolean, default: false },
-    planDetails: String
+    planDetails: String,
+    studentSlot: { type: Number, default: 1 },
+    customStudentLimit: { type: Number, default: 0 }
   },
 
   isBlocked: { type: Boolean, default: false },

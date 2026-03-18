@@ -7,11 +7,13 @@ import OrgCourse from '../models/OrgCourse.js';
 import Course from '../models/Course.js';
 import bcrypt from 'bcrypt';
 import Meeting from '../models/Meeting.js';
-import Project from '../models/Project.js';
-import Material from '../models/Material.js';
 import Department from '../models/Department.js';
 import StudentProgress from '../models/StudentProgress.js';
+import LimitRequest from '../models/LimitRequest.js';
+import ProjectModel from '../models/Project.js';
+import MaterialModel from '../models/Material.js';
 import { createNotification } from './notification.controller.js';
+import { getChatModel } from '../config/genai.js';
 import { sendMail } from '../services/mail.service.js';
 // import { generateAssignments } from './ai.controller.js'; // Will implement this export next
 
@@ -142,13 +144,44 @@ export const orgSignin = async (req, res) => {
 };
 
 /**
+ * HELPER: GET ORGANIZATION STUDENT LIMIT
+ */
+const getOrgStudentLimit = async (organizationId) => {
+    const org = await Organization.findById(organizationId);
+    if (!org) return 0;
+
+    if (org.customStudentLimit > 0) return org.customStudentLimit;
+
+    const slotLimits = {
+        1: 50,
+        2: 100,
+        3: 150,
+        4: 200
+    };
+
+    return slotLimits[org.studentSlot] || 50;
+};
+
+/**
  * ADD STUDENT (Single)
  */
 export const addStudent = async (req, res) => {
-    // const { email, name, phone, password, department, section, rollNo, studentClass, organizationId } = req.body;
     const { email, name, phone, password, department, section, rollNo, studentClass, classId, organizationId, academicYear } = req.body;
 
     try {
+        // --- STUDENT LIMIT CHECK ---
+        const limit = await getOrgStudentLimit(organizationId);
+        const currentCount = await User.countDocuments({ organization: organizationId, role: 'student' });
+
+        if (currentCount >= limit) {
+            return res.json({ 
+                success: false, 
+                message: `Student limit reached (${limit}). Please contact admin or request for a limit increase.`,
+                limitReached: true 
+            });
+        }
+        // ---------------------------
+
         let user = await User.findOne({ email });
         if (user) {
             return res.json({ success: false, message: 'User with this email already exists' });
@@ -318,10 +351,30 @@ export const bulkUploadStudents = async (req, res) => {
     }
 
     try {
+        // --- STUDENT LIMIT CHECK ---
+        const limit = await getOrgStudentLimit(organizationId);
+        const currentCount = await User.countDocuments({ organization: organizationId, role: 'student' });
+
+        if (currentCount >= limit) {
+            return res.json({ 
+                success: false, 
+                message: `Student limit reached (${limit}). Bulk upload aborted.`,
+                limitReached: true 
+            });
+        }
+
+        const remainingSlots = limit - currentCount;
+        const studentsToProcess = students.slice(0, remainingSlots);
+        const droppedCount = students.length - studentsToProcess.length;
+
         let addedCount = 0;
         const errors = [];
 
-        for (const student of students) {
+        if (droppedCount > 0) {
+            errors.push(`${droppedCount} students were skipped because the organization limit (${limit}) was reached.`);
+        }
+
+        for (const student of studentsToProcess) {
             const { email, name, password, department, section, rollNo, studentClass, academicYear } = student;
 
             // Simple validation: skip rows with no email and no name
@@ -401,9 +454,13 @@ export const getDashboardStats = async (req, res) => {
             'studentDetails.isPlacementClosed': true
         });
 
+ 
+        const studentLimit = await getOrgStudentLimit(organizationId);
+ 
         res.json({
             success: true,
             studentCount,
+            studentLimit,
             assignmentCount,
             submissionCount,
             totalCoursesCount,
@@ -1028,10 +1085,20 @@ export const deleteMeeting = async (req, res) => {
  * PROJECTS
  */
 export const createProject = async (req, res) => {
-    const { organizationId, title, description, type, department, dueDate } = req.body;
+    const { organizationId, title, description, type, department, dueDate, guidance, subtopics, isAiGenerated } = req.body;
     try {
         const parsedDepartment = department && department !== 'all' ? department : undefined;
-        const project = new Project({ organizationId, title, description, type, department: parsedDepartment, dueDate });
+        const project = new ProjectModel({ 
+            organizationId, 
+            title, 
+            description, 
+            type, 
+            department: parsedDepartment, 
+            dueDate,
+            guidance,
+            subtopics,
+            isAiGenerated
+        });
         await project.save();
 
         try {
@@ -1056,6 +1123,47 @@ export const createProject = async (req, res) => {
     } catch (error) {
         console.error('Create Project Error:', error);
         res.status(500).json({ success: false, message: error.message || 'Server error' });
+    }
+};
+
+/**
+ * GENERATE PROJECT CONTENT USING AI
+ */
+export const generateProjectContent = async (req, res) => {
+    const { topic, type } = req.body;
+
+    if (!topic) {
+        return res.status(400).json({ success: false, message: 'Topic is required' });
+    }
+
+    try {
+        const model = await getChatModel();
+        const prompt = `
+            Generate a detailed project structure for an educational platform.
+            Project Topic/Keywords: ${topic}
+            Project Type: ${type || 'Project'}
+
+            Respond ONLY with a JSON object in the following format:
+            {
+                "title": "A compelling project title",
+                "description": "A comprehensive project description (HTML/Markdown supported)",
+                "guidance": "Detailed guidance/steps for students to complete the project",
+                "subtopics": ["Subtopic 1", "Subtopic 2", "Subtopic 3"]
+            }
+        `;
+
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
+        
+        // Extract JSON from response (sometimes AI wraps it in code blocks)
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('Failed to parse AI response');
+        
+        const content = JSON.parse(jsonMatch[0]);
+        res.json({ success: true, content });
+    } catch (error) {
+        console.error('Generate Project Content Error:', error);
+        res.status(500).json({ success: false, message: 'Failed to generate content' });
     }
 };
 
@@ -1084,7 +1192,7 @@ export const getProjects = async (req, res) => {
                 query.$or = conditions;
             }
         }
-        const projects = await Project.find(query).sort({ createdAt: -1 });
+        const projects = await ProjectModel.find(query).sort({ createdAt: -1 });
         res.json({ success: true, projects });
     } catch (error) {
         console.error('getProjects Error:', error);
@@ -1094,7 +1202,7 @@ export const getProjects = async (req, res) => {
 
 export const deleteProject = async (req, res) => {
     try {
-        await Project.findByIdAndDelete(req.params.id);
+        await ProjectModel.findByIdAndDelete(req.params.id);
         res.json({ success: true, message: 'Project deleted' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error' });
@@ -1145,7 +1253,7 @@ export const createMaterial = async (req, res) => {
 
         const parsedDepartment = department && department !== 'all' ? department : undefined;
 
-        const material = new Material({
+        const material = new MaterialModel({
             organizationId,
             title,
             description,
@@ -1206,7 +1314,7 @@ export const getMaterials = async (req, res) => {
                 ];
             }
         }
-        const materials = await Material.find(query).sort({ createdAt: -1 });
+        const materials = await MaterialModel.find(query).sort({ createdAt: -1 });
         res.json({ success: true, materials });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error' });
@@ -1215,7 +1323,7 @@ export const getMaterials = async (req, res) => {
 
 export const deleteMaterial = async (req, res) => {
     try {
-        await Material.findByIdAndDelete(req.params.id);
+        await MaterialModel.findByIdAndDelete(req.params.id);
         res.json({ success: true, message: 'Material deleted' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error' });
@@ -1341,6 +1449,32 @@ export const uploadImage = async (req, res) => {
         res.json({ success: true, url: fileUrl });
     } catch (error) {
         console.error('Upload image error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+/**
+ * REQUEST STUDENT LIMIT INCREASE
+ */
+export const requestLimitIncrease = async (req, res) => {
+    const { organizationId, adminId, requestedSlot, requestedCustomLimit } = req.body;
+
+    if (!organizationId || !adminId) {
+        return res.status(400).json({ success: false, message: 'Missing organizationId or adminId' });
+    }
+
+    try {
+        const newRequest = new LimitRequest({
+            organizationId,
+            adminId,
+            requestedSlot,
+            requestedCustomLimit
+        });
+
+        await newRequest.save();
+
+        res.json({ success: true, message: 'Limit increase request submitted successfully' });
+    } catch (error) {
+        console.error('requestLimitIncrease error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };

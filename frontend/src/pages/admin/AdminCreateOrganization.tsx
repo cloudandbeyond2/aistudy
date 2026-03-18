@@ -24,6 +24,8 @@ const AdminCreateOrganization = () => {
         inchargeEmail: '',
         inchargePhone: '',
         address: '',
+        studentSlot: 1,
+        customStudentLimit: 0,
     });
 
     const handleChange = (field, value) => {
@@ -147,6 +149,34 @@ const AdminCreateOrganization = () => {
                             onChange={(e) => handleChange('address', e.target.value)}
                             placeholder="Full address of the institution"
                         />
+                    </div>
+
+                    <div className="space-y-4 border-t pt-4">
+                        <Label className="text-lg font-semibold">Student Limits</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Student Slot</Label>
+                                <select 
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                    value={formData.studentSlot}
+                                    onChange={(e) => handleChange('studentSlot', parseInt(e.target.value))}
+                                >
+                                    <option value={1}>Slot 1 (50 Students)</option>
+                                    <option value={2}>Slot 2 (100 Students)</option>
+                                    <option value={3}>Slot 3 (150 Students)</option>
+                                    <option value={4}>Slot 4 (200 Students)</option>
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Custom Student Limit (Optional)</Label>
+                                <Input
+                                    type="number"
+                                    value={formData.customStudentLimit}
+                                    onChange={(e) => handleChange('customStudentLimit', parseInt(e.target.value))}
+                                    placeholder="0 for default"
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     <div className="flex justify-end pt-4">

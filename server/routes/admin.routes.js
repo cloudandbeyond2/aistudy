@@ -31,6 +31,9 @@ router.post('/organization/create', adminController.createOrganization);
 router.post('/organization/:id', adminController.updateOrganization);
 router.post('/organization/:id/block', adminController.toggleBlockOrganization);
 
+router.get('/limit-requests', adminController.getLimitRequests);
+router.post('/limit-request/process', adminController.processLimitRequest);
+
 router.get('/settings', adminController.getAdminSettings);
 router.post('/settings', adminController.updateAdminSettings);
 router.post('/settings/upload-logo', uploadLogo.single('logo'), adminController.uploadLogo);

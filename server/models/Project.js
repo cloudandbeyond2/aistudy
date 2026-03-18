@@ -31,6 +31,18 @@ const projectSchema = new mongoose.Schema({
     dueDate: {
         type: Date
     },
+    guidance: {
+        type: String,
+        default: ''
+    },
+    subtopics: {
+        type: [String],
+        default: []
+    },
+    isAiGenerated: {
+        type: Boolean,
+        default: false
+    },
     // Student showcase fields
     githubUrl: { type: String, default: '' },
     liveUrl: { type: String, default: '' },

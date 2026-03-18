@@ -97,6 +97,7 @@ import StaffDashboard from './pages/StaffDashboard';
 import StudentAttendance from './pages/StudentAttendance';
 import AdminGlobalNews from "./pages/admin/AdminGlobalNews";
 import AdminKpiReports from "./pages/admin/AdminKpiReports";
+import AdminLimitRequests from "./pages/admin/AdminLimitRequests";
 
 
 // Staff Pages
@@ -212,6 +213,7 @@ const App = () => (
                     <Route path="blogs" element={<AdminBlogs />} />
                     <Route path="certificate" element={<AdminCertificate />} />
                     <Route path="orgs" element={<AdminOrganizations />} />
+                    <Route path="limit-requests" element={<AdminLimitRequests />} />
                     <Route path="organization-enquiries" element={<AdminOrganizationEnquiries />} />
                     <Route path="testimonials" element={<AdminTestimonials />} />
                     <Route path="orders" element={<AdminOrders />} />
