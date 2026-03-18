@@ -13,8 +13,13 @@ const VerifyEmail = () => {
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [message, setMessage] = useState('');
 
+    const hasRun = React.useRef(false);
+
     useEffect(() => {
         const verifyToken = async () => {
+            if (hasRun.current) return;
+            hasRun.current = true;
+            
             try {
                 const response = await axios.get(`${serverURL}/api/verify-email/${token}`);
                 if (response.data.success) {

@@ -540,9 +540,10 @@ export const signup = async (req, res) => {
 
       // 4. Send verification email
       try {
-        const baseUrl = process.env.WEBSITE_URL.endsWith("/")
-          ? process.env.WEBSITE_URL.slice(0, -1)
-          : process.env.WEBSITE_URL;
+        const rawWebsiteUrl = process.env.WEBSITE_URL || 'https://aistudy-infilabs.vercel.app';
+        const baseUrl = rawWebsiteUrl.endsWith("/")
+          ? rawWebsiteUrl.slice(0, -1)
+          : rawWebsiteUrl;
         const verificationLink = `${baseUrl}/verify-email/${verificationToken}`;
         await transporter.sendMail({
           from: process.env.EMAIL,
@@ -783,7 +784,7 @@ export const verifyEmail = async (req, res) => {
   try {
     const user = await User.findOne({
       emailVerificationToken: token,
-      emailVerificationExpires: { $gt: Date.now() },
+      emailVerificationExpires: { $gt: new Date() },
     });
 
     if (!user) {
@@ -798,12 +799,13 @@ export const verifyEmail = async (req, res) => {
     user.emailVerificationExpires = null;
     await user.save();
 
-    // Send account creation/welcome email
+    // Send account creation/welcome email (fire and forget for better UX)
     try {
-      const baseUrl = process.env.WEBSITE_URL.endsWith("/")
-        ? process.env.WEBSITE_URL.slice(0, -1)
-        : process.env.WEBSITE_URL;
-      await transporter.sendMail({
+      const rawWebsiteUrl = process.env.WEBSITE_URL || 'https://aistudy-infilabs.vercel.app';
+      const baseUrl = rawWebsiteUrl.endsWith("/")
+        ? rawWebsiteUrl.slice(0, -1)
+        : rawWebsiteUrl;
+      transporter.sendMail({
         from: process.env.EMAIL,
         to: user.email,
         subject: `Welcome to ${process.env.COMPANY || "AIstudy"}!`,
