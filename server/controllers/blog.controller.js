@@ -171,7 +171,7 @@ export const generateBlogContent = async (req, res) => {
       return res.json({ success: false, message: 'Prompt is required' });
     }
 
-    const genAI = getGenAI();
+    const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.5-flash",
       systemInstruction: `You are a professional blog writer. Given a topic or prompt, generate a high-quality blog post.
@@ -213,7 +213,7 @@ export const suggestBlogTags = async (req, res) => {
       return res.json({ success: false, message: 'Title or content is required' });
     }
 
-    const genAI = getGenAI();
+    const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.5-flash",
       systemInstruction: "You are an SEO expert. Based on the following blog details, suggest 5-8 relevant SEO tags.",

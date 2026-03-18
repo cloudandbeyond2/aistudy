@@ -292,9 +292,13 @@ const Dashboard = () => {
       const jsonData = JSON.parse(json);
       let totalTopics = 0;
       const topicsData = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
-      topicsData.forEach((topic: { subtopics: string[]; }) => {
-        topic.subtopics.forEach(() => { totalTopics++; });
-      });
+      if (Array.isArray(topicsData)) {
+        topicsData.forEach((topic: { subtopics: string[]; }) => {
+          if (Array.isArray(topic.subtopics)) {
+            topic.subtopics.forEach(() => { totalTopics++; });
+          }
+        });
+      }
       return totalTopics;
     } catch (error) {
       console.error(error);

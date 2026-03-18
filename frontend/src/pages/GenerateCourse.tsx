@@ -1269,8 +1269,38 @@ const GenerateCourse = () => {
     sendPrompt(prompt);
   };
 
-  async function sendPrompt(prompt: string) {
-    const dataToSend = { prompt };
+  async function sendPrompt(promptText: string) {
+    const dataToSend = { 
+      prompt: promptText,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "object",
+        properties: {
+          course_topics: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                subtopics: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      title: { type: "string" }
+                    },
+                    required: ["title"]
+                  }
+                }
+              },
+              required: ["title", "subtopics"]
+            }
+          }
+        },
+        required: ["course_topics"]
+      }
+    };
+
     try {
       setGenerationProgress(40);
       setProgressMessage("AI is thinking...");
@@ -1297,9 +1327,8 @@ const GenerateCourse = () => {
       setGenerationProgress(85);
       setProgressMessage("Parsing course structure...");
 
-      const cleanedJsonString = generatedText.replace(/```json/g, '').replace(/```/g, '');
       try {
-        const parsedJson = JSON.parse(cleanedJsonString);
+        const parsedJson = JSON.parse(generatedText);
         
         setGenerationProgress(95);
         setProgressMessage("Finalizing course...");

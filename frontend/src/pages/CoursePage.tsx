@@ -8996,14 +8996,16 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
     if (!jsonData) return false;
 
     const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
-    if (!topicsList) return false;
-
+    if (!Array.isArray(topicsList)) return false;
+    
     // Flatten all subtopics to check order
     const allSubtopics = [];
     topicsList.forEach(t => {
-      t.subtopics.forEach(s => {
-        allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
-      });
+      if (Array.isArray(t.subtopics)) {
+        t.subtopics.forEach(s => {
+          allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
+        });
+      }
     });
 
     const currentIndex = allSubtopics.findIndex(s => s.topicTitle === topicTitle && s.subtopicTitle === subtopicTitle);
@@ -9028,13 +9030,15 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
   const handleMarkAsComplete = async () => {
     if (!userId || !courseId || !selected) return;
 
-    const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+    const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
     let currentTopicTitle = '';
-    topicsList.forEach(t => {
-      if (t.subtopics.some(s => s.title === selected)) {
-        currentTopicTitle = t.title;
-      }
-    });
+    if (Array.isArray(topicsList)) {
+      topicsList.forEach(t => {
+        if (Array.isArray(t.subtopics) && t.subtopics.some(s => s.title === selected)) {
+          currentTopicTitle = t.title;
+        }
+      });
+    }
 
     let total = 0;
     topicsList.forEach(t => total += t.subtopics.length);
@@ -9168,18 +9172,20 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
     let totalTopics = 0;
 
     const topicsData = jsonData['course_topics'] || (mainTopic ? jsonData[mainTopic.toLowerCase()] : []);
-    if (!topicsData) return;
+    if (!Array.isArray(topicsData)) return;
 
     topicsData.forEach((topic) => {
-      topic.subtopics.forEach((subtopic) => {
-        const isDone = completedSubtopics.some(
-          s => s.topicTitle === topic.title && s.subtopicTitle === subtopic.title
-        );
-        if (isDone) {
-          doneCount++;
-        }
-        totalTopics++;
-      });
+      if (Array.isArray(topic.subtopics)) {
+        topic.subtopics.forEach((subtopic) => {
+          const isDone = completedSubtopics.some(
+            s => s.topicTitle === topic.title && s.subtopicTitle === subtopic.title
+          );
+          if (isDone) {
+            doneCount++;
+          }
+          totalTopics++;
+        });
+      }
     });
 
     // Subtopic-only percentage (matches server logic)
@@ -9205,86 +9211,89 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
   };
 
   async function sendBulkCourseContent(clickedTopic, clickedSub) {
-    setShowLoadingPopup(true);
-    setLoadingSubtopic(clickedSub);
+  setShowLoadingPopup(true);
+  setLoadingSubtopic(clickedSub);
+  
+  // Start theory generation progress
+  const clearTheoryProgress = simulateProgress('theory');
+  
+  // 1. Instant UI Feedback
+  setSelected(clickedSub);
+  setTheory(`<div class="prose dark:prose-invert max-w-none">
+    <h2>${clickedSub}</h2>
+    <p>Loading comprehensive content for 10 modules depth...</p>
+    <div class="flex items-center justify-center p-8">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    </div>
+  </div>`);
+  
+  // Set a temporary placeholder while image loads
+  const placeholderUrl = getFallbackImage(mainTopic, clickedSub);
+  setMedia(placeholderUrl);
+  
+  // 2. Theory generation
+  try {
+    const theoryPayload = {
+      mainTopic,
+      topicsList: [{ topicTitle: clickedTopic, subtopics: [clickedSub] }],
+      lang,
+      userId
+    };
     
-    // Start theory generation progress
-    const clearTheoryProgress = simulateProgress('theory');
+    // FIX: The backend returns { success: true, topics: [...] }
+    const theoryRes = await axios.post(serverURL + '/api/generate-batch', theoryPayload);
     
-    // 1. Instant UI Feedback
-    setSelected(clickedSub);
-    setTheory(`<div class="prose dark:prose-invert max-w-none">
-      <h2>${clickedSub}</h2>
-      <p>Loading comprehensive content for 10 modules depth...</p>
-      <div class="flex items-center justify-center p-8">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    </div>`);
+    // Switch to image loading stage
+    clearTheoryProgress();
+    simulateProgress('image');
     
-    // Set a temporary placeholder while image loads
-    const placeholderUrl = getFallbackImage(mainTopic, clickedSub);
-    setMedia(placeholderUrl);
-    
-    // 2. Theory + Image generation in parallel
-    try {
-      const theoryPayload = {
-        mainTopic,
-        topicsList: [{ topicTitle: clickedTopic, subtopics: [clickedSub] }],
-        lang,
-        userId
-      };
+    // FIX: Check the response structure correctly
+    if (theoryRes.data && theoryRes.data.success && theoryRes.data.topics && theoryRes.data.topics[0]) {
+      const newTheory = theoryRes.data.topics[0].subtopics[0].theory;
+      setTheory(newTheory);
+      updateLocalCache(clickedTopic, clickedSub, { theory: newTheory, done: true });
       
-      // Fetch theory and image in parallel for faster loading
+      // Now fetch image
       const imagePrompt = `${clickedSub} in ${mainTopic}`;
-      const [theoryRes, imageRes] = await Promise.allSettled([
-        axios.post(serverURL + '/api/generate-batch', theoryPayload),
-        axios.post(serverURL + '/api/image', { prompt: imagePrompt }, { timeout: 10000 })
-      ]);
-      
-      // Switch to image loading stage
-      clearTheoryProgress();
-      simulateProgress('image');
-      
-      // Handle theory result
-      if (theoryRes.status === 'fulfilled' && theoryRes.value.data?.success && theoryRes.value.data.topics?.[0]) {
-        const newTheory = theoryRes.value.data.topics[0].subtopics[0].theory;
-        setTheory(newTheory);
-        updateLocalCache(clickedTopic, clickedSub, { theory: newTheory, done: true });
-      }
-      
-      // Handle image result
-      let finalImageUrl = placeholderUrl;
-      if (imageRes.status === 'fulfilled' && imageRes.value.data?.url) {
-        finalImageUrl = imageRes.value.data.url;
-      }
-      setMedia(finalImageUrl);
-      updateLocalCache(clickedTopic, clickedSub, { image: finalImageUrl, done: true });
-      updateCourse();
-      
-      // Switch to complete stage and set to 100%
-      simulateProgress('complete');
-      setLoadingProgress(100);
-      
-      // Hide popup after showing 100% for 2 seconds
-      setTimeout(() => {
-        setShowLoadingPopup(false);
-        if (window.progressInterval) {
-          clearInterval(window.progressInterval);
+      try {
+        const imageRes = await axios.post(serverURL + '/api/image', { prompt: imagePrompt }, { timeout: 10000 });
+        if (imageRes.data?.url) {
+          setMedia(imageRes.data.url);
+          updateLocalCache(clickedTopic, clickedSub, { image: imageRes.data.url, done: true });
         }
-      }, 2000);
+      } catch (imageErr) {
+        console.error("Image fetch failed:", imageErr);
+        // Keep the placeholder
+        updateLocalCache(clickedTopic, clickedSub, { image: placeholderUrl, done: true });
+      }
       
-    } catch (error) {
-      console.error("Theory generation failed:", error);
-      setTheory(`<div class="prose dark:prose-invert max-w-none">
-        <h2>${clickedSub}</h2>
-        <p>Sorry, we encountered an error loading the content. Please try again.</p>
-      </div>`);
+      updateCourse();
+    }
+    
+    // Switch to complete stage and set to 100%
+    simulateProgress('complete');
+    setLoadingProgress(100);
+    
+    // Hide popup after showing 100% for 2 seconds
+    setTimeout(() => {
       setShowLoadingPopup(false);
       if (window.progressInterval) {
         clearInterval(window.progressInterval);
       }
+    }, 2000);
+    
+  } catch (error) {
+    console.error("Theory generation failed:", error);
+    setTheory(`<div class="prose dark:prose-invert max-w-none">
+      <h2>${clickedSub}</h2>
+      <p>Sorry, we encountered an error loading the content. Please try again.</p>
+    </div>`);
+    setShowLoadingPopup(false);
+    if (window.progressInterval) {
+      clearInterval(window.progressInterval);
     }
   }
+}
 
   // sendImageForBatch is called inside sendBulkCourseContent
       
