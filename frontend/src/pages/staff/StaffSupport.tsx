@@ -11,8 +11,7 @@ import {
 } from "lucide-react";
 import Swal from "sweetalert2";
 import axios from "axios";
-
-const serverURL = "http://localhost:5001";
+import { serverURL } from "@/constants";
 
 export default function StaffSupport() {
 

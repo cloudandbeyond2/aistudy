@@ -232,14 +232,15 @@
 // };
 
 
-
 import StudentTicket from "../models/StudentTicket.js";
 import mongoose from "mongoose";
+import Notification from "../models/Notification.js";
+import User from "../models/User.js";
 
 /* ================= CREATE STUDENT TICKET ================= */
 export const createStudentTicket = async (req, res) => {
   try {
-    // 1. Destructure department from req.body
+
     const { subject, message, studentId, orgId, department } = req.body;
 
     if (!subject || !message || !studentId || !orgId) {
@@ -253,8 +254,7 @@ export const createStudentTicket = async (req, res) => {
       subject,
       studentId,
       orgId,
-      // 2. Save the department to the ticket
-      department: department || "General", 
+      department: department || "General",
       status: "Open",
       messages: [
         {
@@ -268,11 +268,36 @@ export const createStudentTicket = async (req, res) => {
 
     await ticket.save();
 
+    /* 🔔 NOTIFY ORG ADMIN WHEN STUDENT CREATES TICKET */
+    try {
+
+      const student = await User.findById(studentId);
+      const studentName = student?.mName || "Student";
+
+      const orgAdmins = await User.find({
+        role: "org_admin",
+        organizationId: orgId
+      });
+
+      for (const admin of orgAdmins) {
+        await Notification.create({
+          user: admin._id,
+          message: `${studentName} created support ticket "${subject}".`,
+          type: "info",
+          link: "/dashboard/org/student-tickets"
+        });
+      }
+
+    } catch (err) {
+      console.log("Notification error:", err);
+    }
+
     res.status(201).json({
       success: true,
       message: "Support ticket created successfully",
       ticket,
     });
+
   } catch (error) {
     console.error("CREATE STUDENT TICKET ERROR:", error);
     res.status(500).json({
@@ -282,9 +307,11 @@ export const createStudentTicket = async (req, res) => {
   }
 };
 
+
 /* ================= GET ALL ORG TICKETS ================= */
 export const getOrgStudentTickets = async (req, res) => {
   try {
+
     const { orgId } = req.params;
 
     const tickets = await StudentTicket.find({ orgId })
@@ -300,13 +327,11 @@ export const getOrgStudentTickets = async (req, res) => {
       status: ticket.status,
       createdAt: ticket.createdAt,
       messages: ticket.messages,
-      // Pass the department saved directly on the ticket
-      department: ticket.department, 
+      department: ticket.department,
       student: {
         id: ticket.studentId?._id,
         name: ticket.studentId?.mName,
         email: ticket.studentId?.email,
-        // Fallback to student profile if ticket.department is missing
         department: ticket.studentId?.studentDetails?.department,
         section: ticket.studentId?.studentDetails?.section,
         rollNo: ticket.studentId?.studentDetails?.rollNo
@@ -314,32 +339,33 @@ export const getOrgStudentTickets = async (req, res) => {
     }));
 
     res.json({ success: true, tickets: formattedTickets });
+
   } catch (error) {
     console.error("GET ORG TICKETS ERROR:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-/* ================= GET STUDENT TICKETS ================= */
+
+
 /* ================= GET STUDENT TICKETS ================= */
 export const getStudentTickets = async (req, res) => {
   try {
+
     const { studentId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(studentId)) {
       return res.status(400).json({ success: false, message: "Invalid student ID" });
     }
 
-    // 3. Populate studentDetails to access the department field
     const tickets = await StudentTicket.find({
       studentId: new mongoose.Types.ObjectId(studentId),
     })
-    .populate({
-      path: "studentId",
-      select: "studentDetails"
-    })
-    .sort({ createdAt: -1 });
+      .populate({
+        path: "studentId",
+        select: "studentDetails"
+      })
+      .sort({ createdAt: -1 });
 
-    // 4. Map the tickets to include the department in the top level
     const formattedTickets = tickets.map(ticket => ({
       ...ticket._doc,
       department: ticket.department || ticket.studentId?.studentDetails?.department || "General"
@@ -347,10 +373,10 @@ export const getStudentTickets = async (req, res) => {
 
     res.json({
       success: true,
-      tickets: formattedTickets,
+      tickets,
     });
+
   } catch (error) {
-    
     console.error("GET STUDENT TICKETS ERROR:", error);
     res.status(500).json({
       success: false,
@@ -359,9 +385,11 @@ export const getStudentTickets = async (req, res) => {
   }
 };
 
+
 /* ================= UPDATE STATUS (ORG ADMIN ONLY) ================= */
 export const updateStudentTicketStatus = async (req, res) => {
   try {
+
     const { ticketId } = req.params;
     const { status } = req.body;
 
@@ -383,6 +411,7 @@ export const updateStudentTicketStatus = async (req, res) => {
       message: "Ticket status updated",
       ticket: updatedTicket,
     });
+
   } catch (error) {
     console.error("UPDATE STATUS ERROR:", error);
     res.status(500).json({
@@ -392,9 +421,11 @@ export const updateStudentTicketStatus = async (req, res) => {
   }
 };
 
+
 /* ================= ADD REPLY ================= */
 export const addStudentTicketReply = async (req, res) => {
   try {
+
     const { ticketId } = req.params;
     const { sender, message } = req.body;
 
@@ -414,7 +445,7 @@ export const addStudentTicketReply = async (req, res) => {
       readByStudent: sender === "student",
     });
 
-    /* 🔄 STATUS LOGIC */
+    /* STATUS LOGIC */
     if (sender === "org_admin" && ticket.status === "Open") {
       ticket.status = "In Progress";
     }
@@ -425,10 +456,47 @@ export const addStudentTicketReply = async (req, res) => {
 
     await ticket.save();
 
+    /* 🔔 NOTIFY STUDENT WHEN ADMIN REPLIES */
+    if (sender === "org_admin") {
+
+      await Notification.create({
+        user: ticket.studentId,
+        message: `Admin replied to your ticket "${ticket.subject}".`,
+        type: "info",
+        link: "/dashboard/student/support"
+      });
+
+    }
+
+    /* 🔔 NOTIFY ORG ADMIN WHEN STUDENT REPLIES */
+    /* 🔔 NOTIFY ORG ADMIN WHEN STUDENT REPLIES */
+
+    if (sender === "student") {
+
+      const admins = await User.find({
+        $or: [
+          { role: "org_admin", orgId: ticket.orgId },
+          { role: "org_admin", organizationId: ticket.orgId },
+          { role: "org_admin" }
+        ]
+      });
+
+      for (const admin of admins) {
+        await Notification.create({
+          user: admin._id,
+          message: `Student replied to ticket "${ticket.subject}".`,
+          type: "info",
+          link: "/dashboard/org/student-tickets"
+        });
+      }
+
+    }
+
     res.json({
       success: true,
       ticket,
     });
+
   } catch (error) {
     console.error("ADD REPLY ERROR:", error);
     res.status(500).json({
@@ -438,11 +506,13 @@ export const addStudentTicketReply = async (req, res) => {
   }
 };
 
+
 /* ================= MARK AS READ ================= */
 export const markStudentTicketAsRead = async (req, res) => {
   try {
+
     const { ticketId } = req.params;
-    const { role } = req.body; // "org_admin" or "student"
+    const { role } = req.body;
 
     const ticket = await StudentTicket.findById(ticketId);
 
@@ -454,6 +524,7 @@ export const markStudentTicketAsRead = async (req, res) => {
     }
 
     ticket.messages = ticket.messages.map((msg) => {
+
       if (role === "org_admin" && !msg.readByOrg) {
         msg.readByOrg = true;
       }
@@ -468,6 +539,7 @@ export const markStudentTicketAsRead = async (req, res) => {
     await ticket.save();
 
     res.json({ success: true });
+
   } catch (error) {
     console.error("MARK AS READ ERROR:", error);
     res.status(500).json({ success: false });

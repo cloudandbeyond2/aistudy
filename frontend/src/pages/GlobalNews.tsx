@@ -39,6 +39,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Megaphone, Search, Calendar, Inbox, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { serverURL } from "@/constants";
 
 const GlobalNews = () => {
   const [news, setNews] = useState([]);
@@ -48,7 +49,7 @@ const GlobalNews = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  const API = "http://localhost:5001/api/global-news";
+  const API = `${serverURL}/api/global-news`;
 
   useEffect(() => {
     fetchNews();

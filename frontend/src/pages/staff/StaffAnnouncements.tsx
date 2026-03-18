@@ -353,7 +353,7 @@ export default function GlobalNews() {
  
   const fetchNews = async () => {
     try {
-      const res = await axios.get(`${API}/all`);
+      const res = await axios.get(`${API}`);
  
       console.log("API Response:", res.data);
  

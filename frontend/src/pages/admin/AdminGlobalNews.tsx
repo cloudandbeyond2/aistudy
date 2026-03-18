@@ -44,7 +44,7 @@
 //   const [news, setNews] = useState<NewsItem[]>([]);
 //   const [isLoading, setIsLoading] = useState(true);
 //   const [searchQuery, setSearchQuery] = useState("");
-  
+
 //   // Basic Pagination State
 //   const [currentPage, setCurrentPage] = useState(1);
 //   const itemsPerPage = 5;
@@ -246,9 +246,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Trash2, 
-  MoreVertical, 
+import {
+  Trash2,
+  MoreVertical,
   PlusCircle,
   Search,
   ChevronLeft,
@@ -264,6 +264,7 @@ import {
 import SEO from '@/components/SEO';
 import axios from 'axios';
 import { toast } from '@/hooks/use-toast';
+import { serverURL } from '@/constants';
 import { Badge } from '@/components/ui/badge';
 
 interface NewsItem {
@@ -279,12 +280,12 @@ const AdminGlobalNews = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   // Change this to your production URL when ready
-  const API = "http://localhost:5001/api/global-news";
+  const API = `${serverURL}/api/global-news`;
 
   const fetchNews = async () => {
     setIsLoading(true);
@@ -326,7 +327,7 @@ const AdminGlobalNews = () => {
   };
 
   const filteredNews = useMemo(() => {
-    return news.filter(item => 
+    return news.filter(item =>
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.content.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -353,15 +354,15 @@ const AdminGlobalNews = () => {
             <p className="text-muted-foreground">Internal Dashboard Updates</p>
           </div>
           <div className="flex items-center gap-2">
-             <Badge variant="outline" className="h-8 px-3">Total: {news.length}</Badge>
-             <Button variant="outline" size="icon" onClick={fetchNews} disabled={isLoading}>
-                <RefreshCcw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-             </Button>
+            <Badge variant="outline" className="h-8 px-3">Total: {news.length}</Badge>
+            <Button variant="outline" size="icon" onClick={fetchNews} disabled={isLoading}>
+              <RefreshCcw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
           </div>
         </div>
 
         <Separator />
-        
+
         <Card className="p-6 bg-background border border-border shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

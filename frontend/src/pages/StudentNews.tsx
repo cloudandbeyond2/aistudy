@@ -28,6 +28,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { serverURL } from "@/constants";
 
 const StudentNews = () => {
   const [news, setNews] = useState([]);
@@ -37,7 +38,7 @@ const StudentNews = () => {
   }, []);
 
   const fetchNews = async () => {
-    const res = await axios.get("http://localhost:5001/api/global-news");
+    const res = await axios.get(`${serverURL}/api/global-news`);
     setNews(res.data);
   };
 
