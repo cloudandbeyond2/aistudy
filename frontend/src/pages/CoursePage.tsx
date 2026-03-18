@@ -9618,7 +9618,7 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
     try {
       const postURL = serverURL + '/api/generate';
       const res = await axios.post(postURL, dataToSend);
-      const generatedText = res.data.text;
+      const generatedText = res.data.generatedText;
       const htmlContent = generatedText;
       try {
         const parsedJson = htmlContent;
@@ -9816,10 +9816,13 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
     const res = await axios.post(postURL, dataToSend);
 
     try {
-      const generatedText = res.data.url;
+      const generatedText = res.data.transcript;
       const allText = generatedText.map(item => item.text);
       const concatenatedText = allText.join(' ');
-      const prompt = `Strictly in ${lang}, Summarize this theory in a teaching way :- ${concatenatedText}.`;
+      const prompt = `Strictly in ${lang}, you are an educational instructor creating content for a course on "${mainTopic}". Explain the subtopic "${subtop}" in detail with examples.
+Use the following video transcript as a reference/context for your explanation (ignore any YouTube intro/outro/like/subscribe talk):
+${concatenatedText}
+Please ensure the content is strictly educational and about the subtopic "${subtop}". Do not include additional external resources or image links.`;
       stopSim();
       sendSummery(prompt, url, mTopic, mSubTopic);
     } catch (error) {
@@ -9845,7 +9848,7 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
   try {
     const postURL = serverURL + '/api/generate';
     const res = await axios.post(postURL, dataToSend);
-    const generatedText = res.data.text;
+    const generatedText = res.data.generatedText;
     const htmlContent = generatedText;
     try {
       const parsedJson = htmlContent;
