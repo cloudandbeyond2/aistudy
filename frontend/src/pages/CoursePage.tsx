@@ -8395,7 +8395,7 @@ import { Content } from '@tiptap/react'
 import { MinimalTiptapEditor } from '../minimal-tiptap'
 import YouTube from 'react-youtube';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2, Loader2, Sparkles, BookOpen, Image as ImageIcon, Brain } from 'lucide-react';
+import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2, Loader2, Sparkles, BookOpen, Image as ImageIcon, Brain, Video, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
@@ -8426,12 +8426,28 @@ const getFallbackImage = (topic: string, subtopic: string) => {
 const LoadingPopup = ({ isOpen, stage, subtopic, progress = 0 }) => {
   const getStageContent = () => {
     switch(stage) {
+      case 'video':
+        return {
+          icon: <Video className="w-8 h-8 text-red-500 animate-pulse" />,
+          title: 'Searching Video',
+          message: `Finding the best tutorial for "${subtopic}"`,
+          details: 'Analyzing YouTube for high-quality content...',
+          color: 'red'
+        };
+      case 'transcript':
+        return {
+          icon: <FileText className="w-8 h-8 text-orange-500 animate-bounce" />,
+          title: 'Extracting Knowledge',
+          message: `Processing video transcript for "${subtopic}"`,
+          details: 'Summarizing key points for fast learning...',
+          color: 'orange'
+        };
       case 'theory':
         return {
           icon: <BookOpen className="w-8 h-8 text-blue-500 animate-pulse" />,
-          title: 'Generating Course Content',
-          message: `AI is creating comprehensive learning material for "${subtopic}"`,
-          details: 'This may take 30-45 seconds for 10 modules...',
+          title: 'Generating Content',
+          message: `AI is creating learning material for "${subtopic}"`,
+          details: 'This usually takes a few seconds...',
           color: 'blue'
         };
       case 'image':
@@ -8439,14 +8455,14 @@ const LoadingPopup = ({ isOpen, stage, subtopic, progress = 0 }) => {
           icon: <ImageIcon className="w-8 h-8 text-green-500 animate-bounce" />,
           title: 'Fetching Visuals',
           message: `Finding the perfect image for "${subtopic}"`,
-          details: 'Optimizing images for better learning...',
+          details: 'Optimizing visuals for better learning...',
           color: 'green'
         };
       case 'complete':
         return {
           icon: <Sparkles className="w-8 h-8 text-yellow-500 animate-spin" />,
           title: 'Finalizing',
-          message: 'Polishing the content for best learning experience',
+          message: 'Polishing the content for best experience',
           details: 'Almost there...',
           color: 'yellow'
         };
@@ -8454,7 +8470,7 @@ const LoadingPopup = ({ isOpen, stage, subtopic, progress = 0 }) => {
         return {
           icon: <Brain className="w-8 h-8 text-purple-500 animate-pulse" />,
           title: 'AI is Thinking',
-          message: `Preparing your personalized course on "${subtopic}"`,
+          message: `Preparing your subtopic "${subtopic}"`,
           details: 'This may take a few seconds...',
           color: 'purple'
         };
@@ -8540,7 +8556,7 @@ const LoadingPopup = ({ isOpen, stage, subtopic, progress = 0 }) => {
           {/* Fun Fact or Tip */}
           {progress < 100 && (
             <p className="text-xs text-muted-foreground/60 mt-6 italic">
-              ✨ AI is crafting personalized content just for you with 10 modules depth
+              ✨ AI is crafting personalized content just for you...
             </p>
           )}
         </div>
@@ -8640,20 +8656,20 @@ const CoursePage = () => {
       clearInterval(window.progressInterval);
     }
     
-    // Create new interval with slower progress for 10 modules
+    // Create new interval with snappier progress
     window.progressInterval = setInterval(() => {
       setLoadingProgress(prev => {
         // If we're at 90% and stage is complete, let the timeout handle the jump to 100%
         if (stage === 'complete' && prev >= 90) {
-          return prev; // Stop incrementing, will be set to 100 by timeout
+          return prev; 
         }
-        // Normal increment up to 90% - slower for 10 modules
+        // Normal increment up to 90%
         if (prev < 90) {
-          return prev + 5; // Slower increment for 10 modules
+          return prev + 10; // Faster increment for better feel
         }
-        return prev; // Stay at 90 until completion
+        return prev; // Stay at 90 until actual completion
       });
-    }, 800); // Slower interval for 10 modules
+    }, 400); // Faster interval (400ms instead of 800ms)
 
     return () => {
       if (window.progressInterval) {
@@ -8772,31 +8788,47 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
       
       // If next subtopic doesn't have content, pre-generate it
       if (!next.subtopic.theory) {
-        try {
-          const res = await axios.post(serverURL + '/api/generate-batch', {
-            mainTopic,
-            topicsList: [{
-              topicTitle: next.topicTitle,
-              subtopics: [next.subtopicTitle]
-            }],
-            lang,
-            userId
-          });
-          
-          if (res.data.success && res.data.topics[0]) {
-            setPreloadedNextContent({
-              topicTitle: next.topicTitle,
-              subtopicTitle: next.subtopicTitle,
-              theory: res.data.topics[0].subtopics[0].theory
+        if (type === 'video & text course') {
+          // Optimization: Background video generation
+          try {
+            const query = `${next.subtopicTitle} ${mainTopic} in english`;
+            // Call video search in background (we don't wait for it)
+            axios.post(serverURL + '/api/yt', { prompt: query }).then(res => {
+              if (res.data?.url) {
+                // Silently update YouTube ID
+                updateLocalCache(next.topicTitle, next.subtopicTitle, { youtube: res.data.url });
+              }
+            });
+          } catch (e) {
+            console.error("Background video search failed:", e);
+          }
+        } else {
+          try {
+            const res = await axios.post(serverURL + '/api/generate-batch', {
+              mainTopic,
+              topicsList: [{
+                topicTitle: next.topicTitle,
+                subtopics: [next.subtopicTitle]
+              }],
+              lang,
+              userId
             });
             
-            // Also preload image if available
-            if (res.data.topics[0].subtopics[0].image) {
-              preloadImageWithCache(res.data.topics[0].subtopics[0].image, next.subtopicTitle);
+            if (res.data.success && res.data.topics[0]) {
+              setPreloadedNextContent({
+                topicTitle: next.topicTitle,
+                subtopicTitle: next.subtopicTitle,
+                theory: res.data.topics[0].subtopics[0].theory
+              });
+              
+              // Also preload image if available
+              if (res.data.topics[0].subtopics[0].image) {
+                preloadImageWithCache(res.data.topics[0].subtopics[0].image, next.subtopicTitle);
+              }
             }
+          } catch (error) {
+            console.error("Preload failed:", error);
           }
-        } catch (error) {
-          console.error("Preload failed:", error);
         }
       } else if (next.subtopic.image) {
         // Preload image if content exists
@@ -9221,7 +9253,7 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
   setSelected(clickedSub);
   setTheory(`<div class="prose dark:prose-invert max-w-none">
     <h2>${clickedSub}</h2>
-    <p>Loading comprehensive content for 10 modules depth...</p>
+    <p>AI is crafting personalized content for you...</p>
     <div class="flex items-center justify-center p-8">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
     </div>
@@ -9746,13 +9778,15 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
     const dataToSend = {
       prompt: query,
     };
-    try {
-      const postURL = serverURL + '/api/yt';
-      const res = await axios.post(postURL, dataToSend);
+  const stopSim = simulateProgress('video');
+  try {
+    const postURL = serverURL + '/api/yt';
+    const res = await axios.post(postURL, dataToSend);
 
-      try {
-        const generatedText = res.data.url;
-        sendTranscript(generatedText, mTopic, mSubTopic, subtop);
+    try {
+      const generatedText = res.data.url;
+      stopSim();
+      sendTranscript(generatedText, mTopic, mSubTopic, subtop);
       } catch (error) {
         console.error(error);
         toast({
@@ -9776,41 +9810,50 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
     const dataToSend = {
       prompt: url,
     };
+  const stopSim = simulateProgress('transcript');
+  try {
+    const postURL = serverURL + '/api/transcript';
+    const res = await axios.post(postURL, dataToSend);
+
     try {
-      const postURL = serverURL + '/api/transcript';
-      const res = await axios.post(postURL, dataToSend);
-
-      try {
-        const generatedText = res.data.url;
-        const allText = generatedText.map(item => item.text);
-        const concatenatedText = allText.join(' ');
-        const prompt = `Strictly in ${lang}, Summarize this theory in a teaching way :- ${concatenatedText}.`;
-        sendSummery(prompt, url, mTopic, mSubTopic);
-      } catch (error) {
-        console.error(error)
-        const prompt = `Strictly in ${lang}, Explain me about this subtopic of ${mainTopic} with examples :- ${subtop}. Please Strictly Don't Give Additional Resources And Images.`;
-        sendSummery(prompt, url, mTopic, mSubTopic);
-      }
-
+      const generatedText = res.data.url;
+      const allText = generatedText.map(item => item.text);
+      const concatenatedText = allText.join(' ');
+      const prompt = `Strictly in ${lang}, Summarize this theory in a teaching way :- ${concatenatedText}.`;
+      stopSim();
+      sendSummery(prompt, url, mTopic, mSubTopic);
     } catch (error) {
       console.error(error)
-      const prompt = `Strictly in ${lang}, Explain me about this subtopic of ${mainTopic} with examples :- ${subtop}.  Please Strictly Don't Give Additional Resources And Images.`;
+      const prompt = `Strictly in ${lang}, Explain me about this subtopic of ${mainTopic} with examples :- ${subtop}. Please Strictly Don't Give Additional Resources And Images.`;
+      stopSim();
       sendSummery(prompt, url, mTopic, mSubTopic);
     }
+
+  } catch (error) {
+    console.error(error)
+    const prompt = `Strictly in ${lang}, Explain me about this subtopic of ${mainTopic} with examples :- ${subtop}.  Please Strictly Don't Give Additional Resources And Images.`;
+    stopSim();
+    sendSummery(prompt, url, mTopic, mSubTopic);
+  }
   }
 
   async function sendSummery(prompt, url, mTopic, mSubTopic) {
     const dataToSend = {
       prompt: prompt,
     };
+  const stopSim = simulateProgress('theory');
+  try {
+    const postURL = serverURL + '/api/generate';
+    const res = await axios.post(postURL, dataToSend);
+    const generatedText = res.data.text;
+    const htmlContent = generatedText;
     try {
-      const postURL = serverURL + '/api/generate';
-      const res = await axios.post(postURL, dataToSend);
-      const generatedText = res.data.text;
-      const htmlContent = generatedText;
-      try {
-        const parsedJson = htmlContent;
-        sendDataVideo(url, parsedJson, mTopic, mSubTopic);
+      const parsedJson = htmlContent;
+      stopSim();
+      simulateProgress('complete');
+      setLoadingProgress(100);
+      setTimeout(() => setShowLoadingPopup(false), 1500);
+      sendDataVideo(url, parsedJson, mTopic, mSubTopic);
       } catch (error) {
         console.error(error);
         toast({
@@ -10290,7 +10333,7 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
             // Show loading message and trigger generation
             setTheory(`<div class="prose dark:prose-invert max-w-none">
               <h2>${firstSubtopic.title}</h2>
-              <p>Loading comprehensive content for 10 modules depth...</p>
+              <p>AI is crafting personalized content for you...</p>
               <div class="flex items-center justify-center p-8">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
