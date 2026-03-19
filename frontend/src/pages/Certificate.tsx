@@ -14,11 +14,7 @@ import { QRCodeSVG } from 'qrcode.react';
 
 import certificate from '../res/certificate.png';
 import logo from '../res/logo.svg';
-import cloudBeyondLogo from '../res/cloud-beyond.png';
-import infilabsLogo from '../res/infilabs.png';
-import trainingLabsLogo from '../res/traininglabs.png';
 import saravananSign from '../res/saravanan-sign.png';
-import { cn } from '@/lib/utils';
 import { toPng } from 'html-to-image';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -40,7 +36,20 @@ const Certificate = () => {
   const orgId = sessionStorage.getItem('orgId');
   const isOrgStudent = !!orgId;
 
+  const [certificateSettings, setCertificateSettings] = useState<any>(null);
+
   useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await axios.get(`${serverURL}/api/certificate-settings`);
+        setCertificateSettings(response.data);
+      } catch (error) {
+        console.error('Error fetching certificate settings:', error);
+      }
+    };
+
+    fetchSettings();
+
     if (!courseTitle || !end || !userName) {
       setLoading(false);
       return;
@@ -127,15 +136,43 @@ const Certificate = () => {
       {isOrgStudent ? (
         /* Organization Student UI - Simplified */
         <div className="relative shadow-2xl rounded-lg overflow-hidden max-w-4xl w-full aspect-[1.414/1] bg-white text-center" ref={certificateRef}>
-          {/* Background Image */}
-          <img
-            src={certificateTemplate}
-            alt="Certificate Template"
-            className="absolute inset-0 w-full h-full object-cover z-0"
-          />
+          {/* Custom Background Image */}
+          {certificateSettings?.backgroundImage ? (
+            <img
+              src={certificateSettings.backgroundImage}
+              alt="Certificate Background"
+              className="absolute inset-0 w-full h-full object-cover z-0"
+            />
+          ) : (
+            <img
+              src={certificateTemplate}
+              alt="Certificate Template"
+              className="absolute inset-0 w-full h-full object-cover z-0"
+            />
+          )}
 
           {/* Overlay Content */}
           <div className="relative z-10 flex flex-col items-center h-full w-full pt-20 text-slate-800 font-serif">
+
+            {/* Organization Logo */}
+            {certificateSettings?.showOrganization && certificateSettings?.organizationLogo && (
+              <div className="absolute top-[10%]">
+                <img
+                  src={certificateSettings.organizationLogo}
+                  alt="Organization Logo"
+                  className="h-16 object-contain"
+                />
+              </div>
+            )}
+
+            {/* Organization Name */}
+            {certificateSettings?.showOrganization && (
+              <div className="absolute top-[20%] w-full text-center">
+                <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-wide">
+                  {certificateSettings?.organizationName || 'AI Study'}
+                </h1>
+              </div>
+            )}
 
             {/* "This is to certify that" */}
             <div className="absolute top-[38%] w-full text-center">
@@ -149,11 +186,10 @@ const Certificate = () => {
               </h1>
             </div>
 
-            {/* "has successfully..." */}
+            {/* Custom Certificate Description */}
             <div className="absolute top-[52%] w-full text-center px-12">
               <p className="text-md md:text-lg text-slate-600 leading-relaxed">
-                has successfully demonstrated proficient comprehension<br />
-                in the course of
+                {certificateSettings?.certificateDescription || 'has successfully demonstrated proficient comprehension in the course of'}
               </p>
             </div>
 
@@ -164,17 +200,30 @@ const Certificate = () => {
               </h2>
             </div>
 
-            {/* "And is therefore awarded..." */}
-            <div className="absolute top-[69%] w-full text-center px-12">
-              <p className="text-sm md:text-md text-slate-500 italic">
-                And is therefore awarded this qualification with distinction
-              </p>
-            </div>
+            {/* Partner Logo */}
+            {certificateSettings?.showPartnerLogo && certificateSettings?.partnerLogo && (
+              <div className="absolute top-[75%]">
+                <img
+                  src={certificateSettings.partnerLogo}
+                  alt="Partner Logo"
+                  className="h-12 object-contain"
+                />
+              </div>
+            )}
 
             {/* Signature Section */}
             <div className="absolute bottom-[18%] left-[20%] text-center">
+              {certificateSettings?.ceoSignature && (
+                <img
+                  src={certificateSettings.ceoSignature}
+                  alt="Signature"
+                  className="h-8 object-contain mb-2 mx-auto"
+                />
+              )}
               <div className="w-48 border-t border-slate-400 mb-2 mx-auto"></div>
-              {/* <p className="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-widest">Director of Studies</p> */}
+              <p className="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-widest">
+                {certificateSettings?.signatureTitle || 'Director'}
+              </p>
             </div>
 
             {/* Date Section */}
@@ -183,15 +232,15 @@ const Certificate = () => {
                 {end}
               </p>
               <div className="w-48 border-t border-slate-400 mb-2 mx-auto"></div>
-              {/* <p className="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-widest">Date</p> */}
+              <p className="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-widest">Date</p>
             </div>
 
           </div>
         </div>
       ) : (
         /* Regular User UI - Original Detailed Layout */
-        <Card className="w-full max-w-4xl shadow-xl">
-          <CardContent className="p-0">
+        <Card className="w-full max-w-4xl shadow-none bg-transparent border-none" style={{ backgroundColor: 'transparent' }}>
+          <CardContent className="p-0 bg-transparent" style={{ backgroundColor: 'transparent' }}>
             {/* Header */}
             <div className="text-center p-8 border-b">
               <Award className="h-14 w-14 mx-auto text-primary mb-3" />
@@ -202,9 +251,39 @@ const Certificate = () => {
             </div>
 
             {/* Certificate */}
-            <div className="p-6 overflow-hidden">
-              <div ref={certificateRef} className="relative w-full font-serif">
-                <img src={certificate} className="w-full" alt="Certificate" />
+            <div className="p-6 overflow-hidden bg-transparent">
+              <div ref={certificateRef} className="relative w-full aspect-[1.414/1] font-serif overflow-hidden bg-transparent">
+                {/* Background (custom or default) */}
+                <img
+                  src={certificateSettings?.backgroundImage || certificate}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  alt="Certificate Background"
+                />
+
+                {/* Organization logo + name (bottom-left) */}
+                {certificateSettings?.showOrganization && (
+                  <div
+                    className="absolute flex flex-col gap-1"
+                    style={{
+                      bottom: certificateSettings?.positions?.organizationName?.bottom || '10%',
+                      left: certificateSettings?.positions?.organizationName?.left || '8%'
+                    }}
+                  >
+                    {certificateSettings?.organizationLogo && (
+                      <img
+                        src={certificateSettings.organizationLogo}
+                        alt="Organization Logo"
+                        style={{
+                          height: certificateSettings?.sizes?.organizationLogoHeight || '50px'
+                        }}
+                        className="object-contain"
+                      />
+                    )}
+                    <p className="text-sm font-semibold text-slate-900">
+                      {certificateSettings?.organizationName || appName}
+                    </p>
+                  </div>
+                )}
 
                 {/* WATERMARK */}
                 <div
@@ -217,13 +296,19 @@ const Certificate = () => {
                     letterSpacing: '0.3em',
                   }}
                 >
-                  {appName}
+                  {certificateSettings?.organizationName || appName}
                 </div>
 
                 {/* Name */}
                 <p
                   className="absolute text-4xl font-semibold italic max-lg:text-2xl max-md:text-lg"
-                  style={{ top: '46%', left: '50%', transform: 'translate(-50%, -50%)' }}
+                  style={{
+                    top: certificateSettings?.positions?.name?.top || '46%',
+                    left: certificateSettings?.positions?.name?.left || '50%',
+                    right: certificateSettings?.positions?.name?.right || 'auto',
+                    bottom: certificateSettings?.positions?.name?.bottom || 'auto',
+                    transform: certificateSettings?.positions?.name?.left === '50%' ? 'translate(-50%, -50%)' : 'translateY(-50%)'
+                  }}
                 >
                   {userName}
                 </p>
@@ -231,68 +316,83 @@ const Certificate = () => {
                 {/* Course */}
                 <p
                   className="absolute text-lg font-medium uppercase tracking-widest max-lg:text-sm max-md:text-[10px]"
-                  style={{ top: '58%', left: '50%', transform: 'translate(-50%, -50%)' }}
+                  style={{
+                    top: certificateSettings?.positions?.courseName?.top || '58%',
+                    left: certificateSettings?.positions?.courseName?.left || '50%',
+                    right: certificateSettings?.positions?.courseName?.right || 'auto',
+                    bottom: certificateSettings?.positions?.courseName?.bottom || 'auto',
+                    transform: certificateSettings?.positions?.courseName?.left === '50%' ? 'translate(-50%, -50%)' : 'translateY(-50%)'
+                  }}
                 >
                   {courseTitle}
                 </p>
 
-                {/* Date */}
-                <p
-                  className="absolute text-sm max-md:text-[8px]"
-                  style={{ top: '63.5%', left: '50%', transform: 'translate(-50%, -50%)' }}
-                >
-                  Completed on {end}
-                </p>
-
-                {/* ISSUER + PARTNER LOGOS */}
-                <div
-                  className="absolute flex items-center gap-6 max-lg:gap-3"
-                  style={{ bottom: '20%', left: '50%', transform: 'translateX(-50%)' }}
-                >
-                  {/* Cloud & Beyond */}
-                  <div className="bg-white px-3 py-2 rounded-sm max-lg:px-1 max-lg:py-1">
-                    <img src={cloudBeyondLogo} className="h-14 object-contain max-lg:h-8 max-md:h-6" />
-                  </div>
-
-                  {/* Infilabs */}
-                  <div className="bg-white px-3 py-2 rounded-sm max-lg:px-1 max-lg:py-1">
-                    <img src={infilabsLogo} className="h-14 object-contain max-lg:h-8 max-md:h-6" />
-                  </div>
-
-                  {/* TrainingLabs */}
-                  <div className="bg-white px-3 py-2 rounded-sm max-lg:px-1 max-lg:py-1">
-                    <img src={trainingLabsLogo} className="h-14 object-contain max-lg:h-8 max-md:h-6" />
-                  </div>
-                </div>
+                {/* Custom Description */}
+                {certificateSettings?.certificateDescription && (
+                  <p
+                    className="absolute text-sm max-md:text-[8px] text-center px-4"
+                    style={{
+                      top: certificateSettings?.positions?.description?.top || '62%',
+                      left: certificateSettings?.positions?.description?.left || '50%',
+                      right: certificateSettings?.positions?.description?.right || 'auto',
+                      bottom: certificateSettings?.positions?.description?.bottom || 'auto',
+                      transform: certificateSettings?.positions?.description?.left === '50%' ? 'translate(-50%, -50%)' : 'translateY(-50%)'
+                    }}
+                  >
+                    {certificateSettings.certificateDescription}
+                  </p>
+                )}
 
                 {/* Director Signature */}
                 <div
                   className="absolute flex flex-col items-start"
-                  style={{ bottom: '22%', left: '8%' }}
+                  style={{
+                    bottom: certificateSettings?.positions?.signature?.bottom || '22%',
+                    left: certificateSettings?.positions?.signature?.left || '8%',
+                    right: certificateSettings?.positions?.signature?.right || 'auto',
+                    top: certificateSettings?.positions?.signature?.top || 'auto'
+                  }}
                 >
-                  <img
-                    src={saravananSign}
-                    alt="Saravanan Signature"
-                    className="h-10 object-contain max-lg:h-6"
-                  />
-                  <p className="text-md font-semibold leading-tight max-lg:text-xs">(Saravanan)</p>
-                  <p className="text-md text-gray-600 max-lg:text-[10px]">Director</p>
+                  {certificateSettings?.ceoSignature ? (
+                    <img
+                      src={certificateSettings.ceoSignature}
+                      alt="Director Signature"
+                      style={{
+                        height: certificateSettings?.sizes?.signatureHeight || '40px'
+                      }}
+                      className="object-contain max-lg:h-6"
+                    />
+                  ) : (
+                    <img
+                      src={saravananSign}
+                      alt="Saravanan Signature"
+                      className="h-10 object-contain max-lg:h-6"
+                    />
+                  )}
+                  <p className="text-md font-semibold leading-tight max-lg:text-xs">
+                    ({certificateSettings?.ceoName || 'Saravanan'})
+                  </p>
+                  <p className="text-md text-gray-600 max-lg:text-[10px]">
+                    {certificateSettings?.signatureTitle || 'Director'}
+                  </p>
                 </div>
 
                 {/* QR */}
                 {certificateId && (
                   <div
-                    className="absolute bg-white p-2 rounded-md shadow max-lg:p-1"
-                    style={{ bottom: '21%', right: '8%' }}
+                    className="absolute"
+                    style={{
+                      bottom: certificateSettings?.positions?.qrCode?.bottom || '10%',
+                      right: certificateSettings?.positions?.qrCode?.right || '7%',
+                      left: certificateSettings?.positions?.qrCode?.left || 'auto',
+                      top: certificateSettings?.positions?.qrCode?.top || 'auto'
+                    }}
                   >
                     <QRCodeSVG
-                      value={`${websiteURL}/verify-certificate?id=${certificateId}`}
-                      size={80}
+                      value={`${certificateSettings?.qrCodeUrl || websiteURL}/verify-certificate?id=${certificateId}`}
+                      size={parseInt(certificateSettings?.sizes?.qrCodeSize || '55')}
                       className="max-lg:w-12 max-lg:h-12 max-md:w-8 max-md:h-8"
                     />
-                    <p className="text-[8px] text-center mt-1 text-gray-500 max-md:text-[6px]">
-                      Verify
-                    </p>
                   </div>
                 )}
 
@@ -301,8 +401,14 @@ const Certificate = () => {
                   className="absolute w-full text-center"
                   style={{ bottom: '10%' }}
                 >
-                  <img src={logo} className="h-8 mx-auto mb-1 max-lg:h-5" />
-                  <p className="text-sm font-semibold max-lg:text-xs">{appName}</p>
+                  {certificateSettings?.logo ? (
+                    <img src={certificateSettings.logo} className="h-8 mx-auto mb-1 max-lg:h-5" />
+                  ) : (
+                    <img src={logo} className="h-8 mx-auto mb-1 max-lg:h-5" />
+                  )}
+                  <p className="text-sm font-semibold max-lg:text-xs">
+                    {certificateSettings?.organizationName || appName}
+                  </p>
                   <p className="text-[10px] font-mono text-gray-600 max-lg:text-[8px]">
                     Certificate ID: {certificateId}
                   </p>
