@@ -33,6 +33,7 @@ import PaymentPending from "./pages/PaymentPending";
 import PaymentFailed from "./pages/PaymentFailed";
 import VerifyEmail from "./pages/VerifyEmail";
 import GlobalNews from "./pages/GlobalNews";
+import Analytics from "./pages/Analytics";
 
 // Admin imports
 import AdminLayout from "./components/layouts/AdminLayout";
@@ -137,6 +138,7 @@ const App = () => (
                     <Route path="pricing" element={<ProfilePricing />} />
                     <Route path="payment/:planId" element={<PaymentDetails />} />
                     <Route path="profile" element={<Profile />} />
+                      <Route path="analytics" element={<Analytics />} />
                     <Route path="org" element={<OrgDashboard />} />
                     <Route path="org/career" element={<OrgCareerPlacement />} />
                     <Route path="org/reports" element={<OrgKpiReports />} />
@@ -157,6 +159,7 @@ const App = () => (
 
                     <Route path="notebook" element={<AINotebook />} />
                     <Route path="resume-builder" element={<ResumeBuilder />} />
+                  
 
                     <Route path="support" element={<SupportTickets />} />
                     <Route path="student/support-tickets" element={<StudentSupportTickets />} />

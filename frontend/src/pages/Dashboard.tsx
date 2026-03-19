@@ -21,8 +21,10 @@ import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, Legend, CartesianGrid
 } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 import { Lock } from 'lucide-react';
 import Pagination from './Pagination';
+
 
 const ITEMS_PER_PAGE = 9;
 
@@ -59,6 +61,7 @@ const Dashboard = () => {
   });
 
   const totalPages = Math.ceil(totalCourses / ITEMS_PER_PAGE);
+
 
   function redirectCreate() {
     navigate("/dashboard/generate-course");
@@ -282,6 +285,12 @@ const Dashboard = () => {
     fetchUserCourses();
   }, [fetchUserCourses]);
 
+  // ✅ ADD HERE
+useEffect(() => {
+  if (courses.length > 0) {
+    sessionStorage.setItem("courses", JSON.stringify(courses));
+  }
+}, [courses]);
   // Reset to page 1 when search or year filter changes
   useEffect(() => {
     setPage(1);
@@ -688,7 +697,7 @@ const Dashboard = () => {
         )}
 
         {/* Advanced Analytics Section */}
-        <div className="mt-12 space-y-6">
+        {/* <div className="mt-12 space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold tracking-tight text-gradient bg-gradient-to-r from-primary to-indigo-500">Advanced Analytics</h2>
             {!isPaid && (
@@ -782,7 +791,7 @@ const Dashboard = () => {
               </Card>
             </div>
           </div>
-        </div>
+        </div> */}
 
       </div>
     </>

@@ -55,19 +55,22 @@ import axios from 'axios';
 import NotificationBell from '../NotificationBell';
 import { useTheme } from '@/contexts/ThemeContext';
 
-
-
-
-
 const DashboardLayout = () => {
   const { appName, appLogo } = useBranding();
   const isMobile = useIsMobile();
   const location = useLocation();
+   const [admin, setAdmin] = useState(false);
+   
+  const plan = sessionStorage.getItem("type")?.toLowerCase()?.trim();
+const role = sessionStorage.getItem("role");
+const isPaidUser =
+  ["monthly", "yearly"].includes(plan) || admin;
+
   const [installPrompt, setInstallPrompt] = useState(null);
   const { toast } = useToast();
   // Helper to check active route
   const isActive = (path: string) => location.pathname === path;
-  const [admin, setAdmin] = useState(false);
+ 
   const { toggleTheme } = useTheme();
   const [notebookEnabled, setNotebookEnabled] = useState({
     free: false,
@@ -487,8 +490,25 @@ const DashboardLayout = () => {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   )}
-
-
+                  
+                {/* Analytics */}
+                 {isPaidUser && (
+  <SidebarMenuItem>
+    <SidebarMenuButton 
+      asChild 
+      tooltip="Analytics" 
+      isActive={isActive('/dashboard/analytics')}
+    >
+      <Link 
+        to="/dashboard/analytics" 
+        className={cn(isActive('/dashboard/analytics') && "text-primary")}
+      >
+        <BarChart3 />
+        <span>Analytics</span>
+      </Link>
+    </SidebarMenuButton>
+  </SidebarMenuItem>
+)}
                   {sessionStorage.getItem('isOrganization') === 'true' && (
                     <>
                       <SidebarMenuItem>
