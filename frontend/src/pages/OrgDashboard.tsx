@@ -16,7 +16,7 @@ import * as XLSX from 'xlsx';
 import RichTextEditor from '@/components/RichTextEditor';
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import { Badge } from "@/components/ui/badge";
-
+import Swal from 'sweetalert2';
 const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [], role }: any) => {
     if (!course) return null;
     const [expandedTopic, setExpandedTopic] = useState<number | null>(null);
@@ -826,18 +826,41 @@ const formatGuidanceText = (text: string) => {
     return html;
 };
 
-    const handleDeleteProject = async (id: string) => {
-        if (!confirm('Delete this project?')) return;
+   const handleDeleteProject = async (id: string) => {
+    const result = await Swal.fire({
+        title: 'Delete Project?',
+        text: "This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
         try {
             const res = await axios.delete(`${serverURL}/api/org/project/${id}`);
             if (res.data.success) {
-                toast({ title: "Success", description: "Project deleted" });
+                await Swal.fire({
+                    title: 'Deleted!',
+                    text: 'Project has been deleted.',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
                 fetchProjects();
             }
         } catch (e) {
-            toast({ title: "Error", description: "Failed to delete project" });
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to delete project',
+                icon: 'error',
+                confirmButtonColor: '#d33'
+            });
         }
-    };
+    }
+};
 
     const handleCreateMaterial = async () => {
         try {
