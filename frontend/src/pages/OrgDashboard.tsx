@@ -16,7 +16,7 @@ import * as XLSX from 'xlsx';
 import RichTextEditor from '@/components/RichTextEditor';
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import { Badge } from "@/components/ui/badge";
-
+import Swal from 'sweetalert2';
 const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [], role }: any) => {
     if (!course) return null;
     const [expandedTopic, setExpandedTopic] = useState<number | null>(null);
@@ -340,7 +340,8 @@ const OrgDashboard = () => {
     const [assignments, setAssignments] = useState([]);
     const [notices, setNotices] = useState([]);
     const [courses, setCourses] = useState([]);
-    
+    // Add this line with your other state declarations (around line where you have other useState declarations)
+const [previewProject, setPreviewProject] = useState<any>(null);
     const [userDeptName, setUserDeptName] = useState('');
     const [userDeptId, setUserDeptId] = useState(deptId || '');
     const getDeptScopedDepartment = () => (role === 'dept_admin' ? (userDeptId || deptId || '') : '');
@@ -393,6 +394,21 @@ const OrgDashboard = () => {
         department: ''
     });
 
+    // Add this function before your return statement
+const resetProjectForm = () => {
+    setNewProject({
+        title: '',
+        description: '',
+        type: 'Project',
+        department: getDeptScopedDepartment(),
+        dueDate: '',
+        guidance: '',
+        subtopics: [],
+        isAiGenerated: false
+    });
+    setProjectAiTopic('');
+};
+
     const getDepartmentValue = (value: any) => {
         if (!value) return '';
         if (typeof value === 'string') return value;
@@ -423,7 +439,7 @@ const OrgDashboard = () => {
         fetchStudents();
         fetchCourses();
         fetchAssignments();
-        fetchOrgSettings();
+        // fetchOrgSettings();
         fetchMeetings();
         fetchProjects();
         fetchMaterials();
@@ -660,59 +676,408 @@ const OrgDashboard = () => {
                 });
                 setProjectAiTopic('');
 
-                setOpenProjectDialog(false); // close popup
-
-                fetchProjects();
+                 resetProjectForm(); // Reset form
+            setOpenProjectDialog(false); // Close popup
+            fetchProjects(); // Refresh the list
             }
         } catch (e: any) {
             toast({ title: "Error", description: e.response?.data?.message || "Failed to add project" });
         }
     };
 
-    const handleGenerateProjectContent = async () => {
-        if (!projectAiTopic) {
-            toast({ title: "Required", description: "Please enter a topic or keywords" });
-            return;
-        }
+// const handleGenerateProjectContent = async () => {
+//     if (!projectAiTopic) {
+//         toast({ title: "Required", description: "Please enter a topic or keywords" });
+//         return;
+//     }
 
-        setIsGeneratingProject(true);
-        try {
-            const res = await axios.post(`${serverURL}/api/org/project/generate`, { 
-                topic: projectAiTopic,
-                type: newProject.type 
+//     setIsGeneratingProject(true);
+    
+//     const steps = [
+//         { name: 'Analyzing topic', icon: '🔍', progress: 10 },
+//         { name: 'Researching keywords', icon: '📊', progress: 25 },
+//         { name: 'Generating structure', icon: '🏗️', progress: 40 },
+//         { name: 'Writing title', icon: '📝', progress: 55 },
+//         { name: 'Creating description', icon: '✍️', progress: 70 },
+//         { name: 'Developing guidance', icon: '📚', progress: 85 },
+//         { name: 'Adding subtopics', icon: '🔖', progress: 95 },
+//         { name: 'Finalizing', icon: '✨', progress: 100 }
+//     ];
+    
+//     let currentStep = 0;
+    
+//     Swal.fire({
+//         title: '🤖 AI Project Generator',
+//         html: `
+//             <div class="text-left space-y-4">
+//                 <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+//                     <span>Topic:</span>
+//                     <span class="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">${projectAiTopic.substring(0, 40)}${projectAiTopic.length > 40 ? '...' : ''}</span>
+//                 </div>
+                
+//                 <div class="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700">
+//                     <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+//                 </div>
+                
+//                 <div id="current-step" class="flex items-center gap-2 text-lg font-medium mt-4">
+//                     <span id="step-icon">🔍</span>
+//                     <span id="step-name">Analyzing topic</span>
+//                 </div>
+                
+//                 <div id="progress-percentage" class="text-2xl font-bold text-blue-600 dark:text-blue-400">0%</div>
+                
+//                 <div class="grid grid-cols-2 gap-2 mt-4 text-xs">
+//                     ${steps.map((step, index) => `
+//                         <div id="step-${index}" class="step-item flex items-center gap-1 text-gray-400">
+//                             <span>${step.icon}</span>
+//                             <span>${step.name}</span>
+//                         </div>
+//                     `).join('')}
+//                 </div>
+//             </div>
+//         `,
+//         showConfirmButton: false,
+//         allowOutsideClick: false,
+//         allowEscapeKey: false,
+//         didOpen: () => {
+//             // Start progress animation
+//             const progressBar = document.getElementById('progress-bar');
+//             const stepIcon = document.getElementById('step-icon');
+//             const stepName = document.getElementById('step-name');
+//             const progressPercentage = document.getElementById('progress-percentage');
+            
+//             const updateStep = () => {
+//                 if (currentStep < steps.length) {
+//                     const step = steps[currentStep];
+                    
+//                     // Update progress bar
+//                     if (progressBar) {
+//                         progressBar.style.width = `${step.progress}%`;
+//                     }
+                    
+//                     // Update step display
+//                     if (stepIcon) stepIcon.textContent = step.icon;
+//                     if (stepName) stepName.textContent = step.name;
+//                     if (progressPercentage) progressPercentage.textContent = `${step.progress}%`;
+                    
+//                     // Update step indicators
+//                     for (let i = 0; i <= currentStep; i++) {
+//                         const stepEl = document.getElementById(`step-${i}`);
+//                         if (stepEl) {
+//                             stepEl.className = 'flex items-center gap-1 text-green-600 dark:text-green-400';
+//                         }
+//                     }
+                    
+//                     currentStep++;
+                    
+//                     // Schedule next step
+//                     if (currentStep < steps.length) {
+//                         setTimeout(updateStep, 800);
+//                     }
+//                 }
+//             };
+            
+//             // Start the step progression
+//             setTimeout(updateStep, 500);
+//         }
+//     });
+
+//     try {
+//         const res = await axios.post(`${serverURL}/api/org/project/generate`, { 
+//             topic: projectAiTopic,
+//             type: newProject.type 
+//         });
+
+//         if (res.data.success) {
+//             const { title, description, guidance, subtopics } = res.data.content;
+            
+//             // Update to 100% and show completion
+//             const progressBar = document.getElementById('progress-bar');
+//             const progressPercentage = document.getElementById('progress-percentage');
+//             const stepName = document.getElementById('step-name');
+//             const stepIcon = document.getElementById('step-icon');
+            
+//             if (progressBar) progressBar.style.width = '100%';
+//             if (progressPercentage) progressPercentage.textContent = '100%';
+//             if (stepIcon) stepIcon.textContent = '🎉';
+//             if (stepName) stepName.textContent = 'Complete!';
+            
+//             // Close and show result
+//             setTimeout(() => {
+//                 Swal.close();
+                
+//                 const formattedGuidance = guidance ? formatGuidanceText(guidance) : '';
+//                 const formattedDescription = description ? formatGuidanceText(description) : '';
+                
+//                 setNewProject({
+//                     ...newProject,
+//                     title: title || '',
+//                     description: formattedDescription || description || '',
+//                     guidance: formattedGuidance,
+//                     subtopics: subtopics || [],
+//                     isAiGenerated: true
+//                 });
+                
+//                 Swal.fire({
+//                     icon: 'success',
+//                     title: 'Project Generated!',
+//                     text: 'Your AI project has been created successfully',
+//                     timer: 2000,
+//                     showConfirmButton: false
+//                 });
+//             }, 1000);
+//         }
+//     } catch (e: any) {
+//         Swal.fire({
+//             icon: 'error',
+//             title: 'Generation Failed',
+//             text: e.response?.data?.message || 'Failed to generate content',
+//             confirmButtonColor: '#d33'
+//         });
+//     } finally {
+//         setIsGeneratingProject(false);
+//     }
+// };
+
+
+const handleGenerateProjectContent = async () => {
+    if (!projectAiTopic) {
+        toast({ title: "Required", description: "Please enter a topic or keywords" });
+        return;
+    }
+
+    setIsGeneratingProject(true);
+    
+    let progressInterval;
+    let progress = 0;
+    
+    Swal.fire({
+        title: '🤖 AI Project Generator',
+        html: `
+            <div class="text-left space-y-4">
+                <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    <span>Topic:</span>
+                    <span class="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">${projectAiTopic.substring(0, 40)}${projectAiTopic.length > 40 ? '...' : ''}</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700">
+                    <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div id="progress-status" class="flex items-center justify-center gap-2 text-sm mt-2">
+                    <span id="progress-icon">⏳</span>
+                    <span id="progress-message">Initializing...</span>
+                </div>
+                <div id="progress-percentage" class="text-2xl font-bold text-blue-600 dark:text-blue-400 text-center">0%</div>
+            </div>
+        `,
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+            progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.random() * 2;
+                    if (progress > 90) progress = 90;
+                    
+                    const progressBar = document.getElementById('progress-bar');
+                    const progressPercentage = document.getElementById('progress-percentage');
+                    const progressMessage = document.getElementById('progress-message');
+                    
+                    if (progressBar) progressBar.style.width = `${progress}%`;
+                    if (progressPercentage) progressPercentage.textContent = `${Math.round(progress)}%`;
+                    
+                    if (progress < 20) {
+                        if (progressMessage) progressMessage.textContent = 'Analyzing topic...';
+                    } else if (progress < 40) {
+                        if (progressMessage) progressMessage.textContent = 'Researching content...';
+                    } else if (progress < 60) {
+                        if (progressMessage) progressMessage.textContent = 'Generating structure...';
+                    } else if (progress < 80) {
+                        if (progressMessage) progressMessage.textContent = 'Writing content...';
+                    } else {
+                        if (progressMessage) progressMessage.textContent = 'Almost there...';
+                    }
+                }
+            }, 200);
+        }
+    });
+
+    try {
+        const startTime = Date.now();
+        const res = await axios.post(`${serverURL}/api/org/project/generate`, { 
+            topic: projectAiTopic,
+            type: newProject.type 
+        });
+
+        if (progressInterval) clearInterval(progressInterval);
+        const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+
+        if (res.data.success) {
+            const { title, description, guidance, subtopics } = res.data.content;
+            
+            const progressBar = document.getElementById('progress-bar');
+            const progressPercentage = document.getElementById('progress-percentage');
+            const progressMessage = document.getElementById('progress-message');
+            const progressIcon = document.getElementById('progress-icon');
+            
+            if (progressBar) progressBar.style.width = '100%';
+            if (progressPercentage) progressPercentage.textContent = '100%';
+            if (progressMessage) progressMessage.textContent = `Complete! (${totalTime}s)`;
+            if (progressIcon) progressIcon.textContent = '✅';
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            Swal.close();
+            
+            const formattedGuidance = guidance ? formatGuidanceText(guidance) : '';
+            const formattedDescription = description ? formatGuidanceText(description) : '';
+            
+            setNewProject({
+                ...newProject,
+                title: title || '',
+                description: formattedDescription || description || '',
+                guidance: formattedGuidance,
+                subtopics: subtopics || [],
+                isAiGenerated: true
             });
-
-            if (res.data.success) {
-                const { title, description, guidance, subtopics } = res.data.content;
-                setNewProject({
-                    ...newProject,
-                    title,
-                    description,
-                    guidance,
-                    subtopics: subtopics || [],
-                    isAiGenerated: true
-                });
-                toast({ title: "Success", description: "Project content generated!" });
-            }
-        } catch (e: any) {
-            toast({ title: "Error", description: "Failed to generate content" });
-        } finally {
-            setIsGeneratingProject(false);
+            
+            toast({ title: "Success", description: `Project generated in ${totalTime}s` });
         }
-    };
+    } catch (e: any) {
+        if (progressInterval) clearInterval(progressInterval);
+        Swal.close();
+        Swal.fire({
+            icon: 'error',
+            title: 'Generation Failed',
+            text: e.response?.data?.message || 'Failed to generate content',
+            confirmButtonColor: '#d33'
+        });
+    } finally {
+        setIsGeneratingProject(false);
+    }
+};
 
-    const handleDeleteProject = async (id: string) => {
-        if (!confirm('Delete this project?')) return;
+const formatGuidanceText = (text: string) => {
+    if (!text) return '';
+    
+    const lines = text.split('\n');
+    let html = '';
+    let inList = false;
+    let listType = '';
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trimRight();
+        
+        if (line.startsWith('### ')) {
+            if (inList) {
+                html += `</${listType}>`;
+                inList = false;
+            }
+            html += `<h3 class="text-lg font-bold text-primary mt-6 mb-3">${line.substring(4)}</h3>`;
+        }
+        else if (line.startsWith('## ')) {
+            if (inList) {
+                html += `</${listType}>`;
+                inList = false;
+            }
+            html += `<h2 class="text-xl font-bold text-primary-dark mt-5 mb-3">${line.substring(3)}</h2>`;
+        }
+        else if (line.startsWith('# ')) {
+            if (inList) {
+                html += `</${listType}>`;
+                inList = false;
+            }
+            html += `<h1 class="text-2xl font-bold text-primary mt-6 mb-4">${line.substring(2)}</h1>`;
+        }
+        else if (line.match(/^(Phase|Step|Part)\s+\d+[:.]/i)) {
+            if (inList) {
+                html += `</${listType}>`;
+                inList = false;
+            }
+            html += `<h3 class="text-lg font-bold text-blue-600 dark:text-blue-400 mt-6 mb-3">${line}</h3>`;
+        }
+        else if (line.match(/^[A-Z][a-z]+(\s+[A-Z][a-z]+)*:$/) || (line.length < 60 && line.endsWith(':'))) {
+            if (inList) {
+                html += `</${listType}>`;
+                inList = false;
+            }
+            html += `<h4 class="font-bold text-base text-foreground mt-4 mb-2">${line}</h4>`;
+        }
+        else if (line.startsWith('•') || line.startsWith('- ') || line.startsWith('* ')) {
+            if (!inList || listType !== 'ul') {
+                if (inList) html += `</${listType}>`;
+                html += '<ul class="list-disc pl-6 my-3 space-y-1.5">';
+                inList = true;
+                listType = 'ul';
+            }
+            const content = line.substring(line.indexOf(' ') + 1).trim();
+            const formattedContent = content.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold text-foreground">$1</span>');
+            html += `<li class="text-sm text-muted-foreground">${formattedContent}</li>`;
+        }
+        else if (line.match(/^\d+[.)]\s/)) {
+            if (!inList || listType !== 'ol') {
+                if (inList) html += `</${listType}>`;
+                html += '<ol class="list-decimal pl-6 my-3 space-y-1.5">';
+                inList = true;
+                listType = 'ol';
+            }
+            const content = line.replace(/^\d+[.)]\s/, '');
+            const formattedContent = content.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold text-foreground">$1</span>');
+            html += `<li class="text-sm text-muted-foreground">${formattedContent}</li>`;
+        }
+        else if (line.length > 0) {
+            if (inList) {
+                html += `</${listType}>`;
+                inList = false;
+            }
+            const formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold text-foreground">$1</span>');
+            html += `<p class="text-sm text-muted-foreground mb-3 leading-relaxed">${formattedLine}</p>`;
+        }
+        else if (line === '' && !inList) {
+            html += '<div class="h-3"></div>';
+        }
+    }
+    
+    if (inList) {
+        html += `</${listType}>`;
+    }
+    
+    return html;
+};
+
+   const handleDeleteProject = async (id: string) => {
+    const result = await Swal.fire({
+        title: 'Delete Project?',
+        text: "This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
         try {
             const res = await axios.delete(`${serverURL}/api/org/project/${id}`);
             if (res.data.success) {
-                toast({ title: "Success", description: "Project deleted" });
+                await Swal.fire({
+                    title: 'Deleted!',
+                    text: 'Project has been deleted.',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
                 fetchProjects();
             }
         } catch (e) {
-            toast({ title: "Error", description: "Failed to delete project" });
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to delete project',
+                icon: 'error',
+                confirmButtonColor: '#d33'
+            });
         }
-    };
+    }
+};
 
     const handleCreateMaterial = async () => {
         try {
@@ -2121,197 +2486,526 @@ const OrgDashboard = () => {
                 </TabsContent>
 
                 {/* PROJECTS TAB */}
-                <TabsContent value="projects" className="space-y-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Projects & Research</CardTitle>
-                                <CardDescription>Assign practical projects, research topics, or lab work.</CardDescription>
+   <TabsContent value="projects" className="space-y-4">
+    <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+                <CardTitle>Projects & Research</CardTitle>
+                <CardDescription>Assign practical projects, research topics, or lab work.</CardDescription>
+            </div>
+            {/* <Dialog open={openProjectDialog} onOpenChange={setOpenProjectDialog}>
+                <DialogTrigger asChild onClick={() => setOpenProjectDialog(true)}> */}
+                    <Dialog open={openProjectDialog} onOpenChange={(open) => {
+    setOpenProjectDialog(open);
+    if (!open) {
+        resetProjectForm(); // Reset form when dialog closes
+    }
+}}>
+    <DialogTrigger asChild onClick={() => {
+        resetProjectForm(); // Reset form when opening
+        setOpenProjectDialog(true);
+    }}>
+        <Button><Plus className="w-4 h-4 mr-2" /> Add Project</Button>
+    </DialogTrigger>
+                   
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="text-2xl font-bold">Add New Project / Practical</DialogTitle>
+                        <DialogDescription>
+                            Create a structured project with clear phases, steps, and requirements
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="grid gap-8 py-6">
+                        {/* AI Generation Section */}
+                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800/30">
+                            <div className="flex items-start gap-4">
+                                <div className="bg-purple-500/10 p-3 rounded-xl">
+                                    <Sparkles className="w-6 h-6 text-purple-600" />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-semibold mb-1">AI Content Generator</h3>
+                                    <p className="text-sm text-muted-foreground mb-4">
+                                        Enter a topic or keywords and let AI generate a complete project structure with phases, steps, and requirements.
+                                    </p>
+                                    <div className="flex gap-3">
+                                        <Input 
+                                            placeholder="e.g., IoT based Smart Waste Management System" 
+                                            value={projectAiTopic} 
+                                            onChange={(e) => setProjectAiTopic(e.target.value)}
+                                            className="bg-white dark:bg-gray-900 flex-1"
+                                        />
+                                        <Button 
+                                            type="button" 
+                                            onClick={handleGenerateProjectContent}
+                                            disabled={isGeneratingProject}
+                                            className="px-6 bg-purple-600 hover:bg-purple-700 text-white"
+                                        >
+                                            {isGeneratingProject ? "Generating..." : "Generate"}
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
-                            <Dialog open={openProjectDialog} onOpenChange={setOpenProjectDialog}>
-                                <DialogTrigger asChild onClick={() => setOpenProjectDialog(true)}>
-                                    <Button><Plus className="w-4 h-4 mr-2" /> Add Project</Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                                    <DialogHeader>
-                                        <DialogTitle>Add Project/Practical</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="grid gap-6 py-4">
-                                        {/* AI Generation Section */}
-                                        <div className="p-4 border border-primary/20 bg-primary/5 rounded-xl space-y-3">
-                                            <div className="flex items-center gap-2 text-primary font-semibold">
-                                                <Sparkles className="w-4 h-4" />
-                                                <span>AI Content Generator</span>
-                                            </div>
-                                            <p className="text-xs text-muted-foreground">Enter a topic or keywords and let AI suggest a title, description, and guidance.</p>
-                                            <div className="flex gap-2">
-                                                <Input 
-                                                    placeholder="e.g., IoT based Smart Waste Management" 
-                                                    value={projectAiTopic} 
-                                                    onChange={(e) => setProjectAiTopic(e.target.value)}
-                                                    className="bg-background"
-                                                />
-                                                <Button 
-                                                    type="button" 
-                                                    onClick={handleGenerateProjectContent}
-                                                    disabled={isGeneratingProject}
-                                                    className="shrink-0"
-                                                >
-                                                    {isGeneratingProject ? "Generating..." : "Generate"}
-                                                </Button>
-                                            </div>
-                                        </div>
+                        </div>
 
-                                        <div className="grid gap-2">
-                                            <Label>Project Title</Label>
-                                            <Input value={newProject.title} onChange={(e) => setNewProject({ ...newProject, title: e.target.value })} placeholder="e.g., AI Research Phase 1" />
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label>Type</Label>
-                                            <select
-                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                value={newProject.type}
-                                                onChange={(e) => setNewProject({ ...newProject, type: e.target.value })}
-                                            >
-                                                <option value="Project">Project</option>
-                                                <option value="Practical">Practical</option>
-                                                <option value="Research">Research</option>
-                                                <option value="Other">Other</option>
-                                            </select>
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label>Project Description</Label>
-                                            <RichTextEditor
-                                                value={newProject.description || ''}
-                                                onChange={(content) => setNewProject({ ...newProject, description: content })}
-                                                placeholder="Project overview..."
-                                                className="min-h-[120px]"
-                                            />
-                                        </div>
-
-                                        <div className="grid gap-2">
-                                            <Label>Project Guidance & Steps</Label>
-                                            <RichTextEditor
-                                                value={newProject.guidance || ''}
-                                                onChange={(content) => setNewProject({ ...newProject, guidance: content })}
-                                                placeholder="Step-by-step guidance for students..."
-                                                className="min-h-[150px]"
-                                            />
-                                        </div>
-
-                                        <div className="grid gap-2">
-                                            <Label>Reference Subtopics</Label>
-                                            <div className="flex gap-2">
-                                                <Input 
-                                                    id="subtopic-input" 
-                                                    placeholder="Add a subtopic..." 
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            const val = e.currentTarget.value.trim();
-                                                            if (val) {
-                                                                setNewProject({ ...newProject, subtopics: [...newProject.subtopics, val] });
-                                                                e.currentTarget.value = '';
-                                                            }
-                                                            e.preventDefault();
-                                                        }
-                                                    }}
-                                                />
-                                                <Button 
-                                                    type="button" 
-                                                    variant="outline"
-                                                    onClick={() => {
-                                                        const el = document.getElementById('subtopic-input') as HTMLInputElement;
-                                                        if (el.value.trim()) {
-                                                            setNewProject({ ...newProject, subtopics: [...newProject.subtopics, el.value.trim()] });
-                                                            el.value = '';
-                                                        }
-                                                    }}
-                                                >
-                                                    Add
-                                                </Button>
-                                            </div>
-                                            <div className="flex flex-wrap gap-2 mt-2">
-                                                {newProject.subtopics.map((st, i) => (
-                                                    <Badge key={i} variant="secondary" className="flex items-center gap-1 py-1 px-2">
-                                                        {st}
-                                                        <X className="w-3 h-3 cursor-pointer hover:text-destructive" onClick={() => setNewProject({ ...newProject, subtopics: newProject.subtopics.filter((_, idx) => idx !== i) })} />
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="grid gap-2">
-                                                <Label>Due Date</Label>
-                                                <Input type="date" value={newProject.dueDate} onChange={(e) => setNewProject({ ...newProject, dueDate: e.target.value })} />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label>Department (Optional)</Label>
-                                                <select
-                                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                    value={newProject.department}
-                                                    onChange={(e) => setNewProject({ ...newProject, department: e.target.value })}
-                                                    disabled={role === 'dept_admin'}
-                                                >
-                                                    {role !== 'dept_admin' && <option value="">All Students</option>}
-                                                    {departmentsList.map((d: any) => (
-                                                        <option key={d._id} value={d._id}>{d.name}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <Button onClick={handleCreateProject} className="h-12 text-lg font-semibold">Publish Project</Button>
+                        {/* Basic Information */}
+                        <div className="space-y-4">
+                            <div className="border-b pb-2">
+                                <h3 className="text-xl font-bold flex items-center gap-2">
+                                    <span className="bg-primary/10 p-2 rounded-lg">
+                                        <FileText className="w-5 h-5 text-primary" />
+                                    </span>
+                                    Basic Information
+                                </h3>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                    Essential details about your project
+                                </p>
+                            </div>
+                            
+                            <div className="grid gap-4 pl-2">
+                                <div className="grid gap-2">
+                                    <Label className="text-sm font-semibold">Project Title</Label>
+                                    <Input 
+                                        value={newProject.title} 
+                                        onChange={(e) => setNewProject({ ...newProject, title: e.target.value })} 
+                                        placeholder="e.g., Building a Complete E-Learning Platform with PHP & MySQL"
+                                        className="h-11"
+                                    />
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label className="text-sm font-semibold">Project Type</Label>
+                                        <select
+                                            className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                            value={newProject.type}
+                                            onChange={(e) => setNewProject({ ...newProject, type: e.target.value })}
+                                        >
+                                            <option value="Project">Project</option>
+                                            <option value="Practical">Practical</option>
+                                            <option value="Research">Research</option>
+                                            <option value="Other">Other</option>
+                                        </select>
                                     </div>
-                                </DialogContent>
-                            </Dialog>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {projects.length > 0 ? projects.map((p: any) => (
-                                    <Card key={p._id} className="relative group overflow-hidden border-primary/20 hover:shadow-lg transition-all">
-                                        <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                            <Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => handleDeleteProject(p._id)}><Trash2 className="w-3 h-3" /></Button>
-                                        </div>
-                                        <CardHeader className="pb-2">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-bold uppercase tracking-wider">{p.type}</span>
-                                                {p.isAiGenerated && (
-                                                    <Badge variant="outline" className="text-[9px] h-4 bg-emerald-50 text-emerald-600 border-emerald-200">
-                                                        <Sparkles className="w-2 h-2 mr-1" /> AI
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                            <CardTitle className="text-base line-clamp-1">{p.title}</CardTitle>
-                                            <div className="line-clamp-2 text-xs text-muted-foreground mt-1" dangerouslySetInnerHTML={{ __html: p.description }} />
-                                        </CardHeader>
-                                        <CardContent className="pt-0 space-y-2">
-                                            <div className="flex flex-wrap gap-1">
-                                                {p.guidance && (
-                                                    <Badge variant="secondary" className="text-[9px] h-4 bg-blue-50 text-blue-600 border-none font-normal">
-                                                        Has Guidance
-                                                    </Badge>
-                                                )}
-                                                {p.subtopics?.length > 0 && (
-                                                    <Badge variant="secondary" className="text-[9px] h-4 bg-purple-50 text-purple-600 border-none font-normal">
-                                                        {p.subtopics.length} Subtopics
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                            <div className="text-[11px] text-muted-foreground flex justify-between">
-                                                <span>Dept: {getDepartmentLabel(p.department) || 'All'}</span>
-                                                {p.dueDate && <span>Due: {new Date(p.dueDate).toLocaleDateString()}</span>}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                )) : (
-                                    <div className="col-span-full py-10 text-center text-muted-foreground border-2 border-dashed rounded-lg">
-                                        No projects or research topics added.
+                                    <div className="grid gap-2">
+                                        <Label className="text-sm font-semibold">Due Date</Label>
+                                        <Input 
+                                            type="date" 
+                                            value={newProject.dueDate} 
+                                            onChange={(e) => setNewProject({ ...newProject, dueDate: e.target.value })} 
+                                            className="h-11"
+                                        />
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Project Overview Section */}
+                        <div className="space-y-4">
+                            <div className="border-b pb-2">
+                                <h3 className="text-xl font-bold flex items-center gap-2">
+                                    <span className="bg-blue-500/10 p-2 rounded-lg">
+                                        <Eye className="w-5 h-5 text-blue-500" />
+                                    </span>
+                                    Project Overview
+                                </h3>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                    Describe the project goals, objectives, and expected outcomes
+                                </p>
+                            </div>
+                            
+                            <div className="pl-2">
+                                <RichTextEditor
+                                    value={newProject.description || ''}
+                                    onChange={(content) => setNewProject({ ...newProject, description: content })}
+                                    placeholder={`Write a comprehensive project overview including:
+
+• Project goals and objectives
+• Problem statement
+• Target audience
+• Expected outcomes
+• Technologies to be used`}
+                                    className="min-h-[180px]"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Detailed Guidance with Hierarchical Structure */}
+                        <div className="space-y-4">
+                            <div className="border-b pb-2">
+                                <h3 className="text-xl font-bold flex items-center gap-2">
+                                    <span className="bg-emerald-500/10 p-2 rounded-lg">
+                                        <Briefcase className="w-5 h-5 text-emerald-500" />
+                                    </span>
+                                    Project Guidance & Implementation Steps
+                                </h3>
+                            </div>
+
+                            {/* Main Guidance Editor */}
+                            <div className="space-y-3 mt-4">
+                                <Label className="text-base font-semibold flex items-center justify-between">
+                                    <span>Guidance Content <span className="text-destructive">*</span></span>
+                                    <span className="text-xs font-normal text-muted-foreground bg-muted px-3 py-1 rounded-full">
+                                        Supports H1, H2, bold, lists, and paragraphs
+                                    </span>
+                                </Label>
+                                
+                                <div className="border-2 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                    <RichTextEditor
+                                        value={newProject.guidance || ''}
+                                        onChange={(content) => setNewProject({ ...newProject, guidance: content })}
+                                        placeholder={`Phase 1: Setup & Planning
+Set up your development environment and plan the database structure. This phase ensures you have all the necessary tools and a solid foundation before starting development.
+
+Environment Setup
+Install and configure a local web server environment (e.g., XAMPP, WAMP, or MAMP) which includes Apache, PHP, and MySQL.
+
+Database Design
+Plan and create your database schema. You'll typically need at least two tables:
+
+• users table with columns: id, username, email, password, created_at, updated_at
+• user_profiles table for additional user information
+
+Phase 2: Core Backend Development
+Build the PHP backend with database connectivity and user authentication system.
+
+Database Connection
+Create a PHP script (config/db.php) to establish a connection to your MySQL database using PDO or MySQLi.
+
+User Authentication Module
+
+Registration:
+1. Create a registration form with fields: name, email, password, confirm password
+2. Validate input data (email format, password strength, required fields)
+3. Hash passwords using password_hash() before storing
+4. Check for duplicate email addresses
+
+Login:
+1. Create a login form for email and password
+2. Verify credentials against database using password_verify()
+3. Start a session and store user data upon successful login
+4. Implement logout functionality`}
+                                        className="min-h-[500px] max-h-[600px] overflow-y-auto"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Reference Subtopics */}
+                        <div className="space-y-3">
+                            <div className="border-b pb-2">
+                                <h3 className="text-lg font-semibold flex items-center gap-2">
+                                    <span className="bg-purple-500/10 p-1.5 rounded-lg">
+                                        <FileText className="w-4 h-4 text-purple-500" />
+                                    </span>
+                                    Reference Subtopics / Tags
+                                </h3>
+                            </div>
+                            
+                            <div className="flex gap-2">
+                                <Input 
+                                    id="subtopic-input" 
+                                    placeholder="e.g., PHP, MySQL, Authentication, Database Design" 
+                                    className="flex-1"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            const val = e.currentTarget.value.trim();
+                                            if (val) {
+                                                setNewProject({ ...newProject, subtopics: [...newProject.subtopics, val] });
+                                                e.currentTarget.value = '';
+                                            }
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                />
+                                <Button 
+                                    type="button" 
+                                    variant="outline"
+                                    onClick={() => {
+                                        const el = document.getElementById('subtopic-input') as HTMLInputElement;
+                                        if (el.value.trim()) {
+                                            setNewProject({ ...newProject, subtopics: [...newProject.subtopics, el.value.trim()] });
+                                            el.value = '';
+                                        }
+                                    }}
+                                >
+                                    Add Tag
+                                </Button>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-2 mt-3">
+                                {newProject.subtopics.map((st, i) => (
+                                    <Badge key={i} variant="secondary" className="flex items-center gap-1 py-2 px-3 text-sm">
+                                        {st}
+                                        <X className="w-3 h-3 cursor-pointer hover:text-destructive ml-1" onClick={() => setNewProject({ ...newProject, subtopics: newProject.subtopics.filter((_, idx) => idx !== i) })} />
+                                    </Badge>
+                                ))}
+                                {newProject.subtopics.length === 0 && (
+                                    <p className="text-xs text-muted-foreground">Add tags to help categorize this project</p>
                                 )}
                             </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+                        </div>
+
+                        {/* Department Assignment */}
+                        <div className="space-y-3">
+                            <div className="border-b pb-2">
+                                <h3 className="text-lg font-semibold flex items-center gap-2">
+                                    <span className="bg-amber-500/10 p-1.5 rounded-lg">
+                                        <Users className="w-4 h-4 text-amber-500" />
+                                    </span>
+                                    Assignment Settings
+                                </h3>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label>Department (Optional)</Label>
+                                    <select
+                                        className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                        value={newProject.department}
+                                        onChange={(e) => setNewProject({ ...newProject, department: e.target.value })}
+                                        disabled={role === 'dept_admin'}
+                                    >
+                                        {role !== 'dept_admin' && <option value="">All Students</option>}
+                                        {departmentsList.map((d: any) => (
+                                            <option key={d._id} value={d._id}>{d.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                          
+                            </div>
+                        </div>
+
+                        <Button 
+                            onClick={handleCreateProject} 
+                            className="w-full h-14 text-lg font-bold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-xl shadow-primary/20"
+                        >
+                            <Sparkles className="w-5 h-5 mr-2" />
+                            Publish Project
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </CardHeader>
+        
+        <CardContent>
+            {/* Projects Grid Display with View and Delete Icons */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {projects.length > 0 ? (
+                    projects.map((project: any) => (
+                        <Card key={project._id} className="group relative overflow-hidden border border-primary/10 hover:border-primary/30 hover:shadow-xl transition-all duration-300">
+                            {/* Action Buttons - Always visible on hover */}
+                            <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                <Button 
+                                    size="icon" 
+                                    variant="outline" 
+                                    className="h-8 w-8 bg-white/90 backdrop-blur-sm hover:bg-white shadow-md"
+                                    onClick={() => {
+                                        setPreviewProject(project);
+                                    }}
+                                >
+                                    <Eye className="h-4 w-4 text-primary" />
+                                </Button>
+                                <Button 
+                                    size="icon" 
+                                    variant="destructive" 
+                                    className="h-8 w-8 shadow-md"
+                                    onClick={() => handleDeleteProject(project._id)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+
+                            {/* Type Badge - Always visible */}
+                            <div className="absolute top-3 left-3">
+                                <Badge variant="secondary" className="bg-primary/10 text-primary border-0 font-semibold text-xs">
+                                    {project.type || 'Project'}
+                                </Badge>
+                                {project.isAiGenerated && (
+                                    <Badge variant="outline" className="ml-2 bg-purple-50 text-purple-600 border-purple-200 text-[10px]">
+                                        <Sparkles className="w-3 h-3 mr-1" /> AI
+                                    </Badge>
+                                )}
+                            </div>
+
+                            <CardHeader className="pt-12 pb-3">
+                                <CardTitle className="text-lg font-bold line-clamp-2 min-h-[3.5rem]">
+                                    {project.title}
+                                </CardTitle>
+                                <CardDescription className="flex items-center gap-2 text-xs">
+                                    {project.dueDate && (
+                                        <span className="flex items-center gap-1">
+                                            <Clock className="w-3 h-3" />
+                                            Due: {new Date(project.dueDate).toLocaleDateString()}
+                                        </span>
+                                    )}
+                                </CardDescription>
+                            </CardHeader>
+
+                            <CardContent className="space-y-4">
+                                {/* Description Preview */}
+                                {project.description && (
+                                    <div className="text-sm text-muted-foreground line-clamp-3 prose prose-sm dark:prose-invert"
+                                         dangerouslySetInnerHTML={{ 
+                                             __html: project.description.length > 150 
+                                                 ? project.description.substring(0, 150) + '...' 
+                                                 : project.description 
+                                         }} 
+                                    />
+                                )}
+
+                                {/* Guidance Preview */}
+                                {project.guidance && (
+                                    <div className="mt-3 p-3 bg-muted/30 rounded-lg border border-muted">
+                                        <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1">
+                                            <Briefcase className="w-3 h-3" />
+                                            Guidance Preview:
+                                        </p>
+                                        <div className="text-xs line-clamp-3 prose prose-sm dark:prose-invert max-w-none"
+                                             dangerouslySetInnerHTML={{ 
+                                                 __html: project.guidance.length > 120 
+                                                     ? project.guidance.substring(0, 120) + '...' 
+                                                     : project.guidance 
+                                             }} />
+                                    </div>
+                                )}
+
+                                {/* Subtopics/Tags */}
+                                {project.subtopics && project.subtopics.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-3">
+                                        {project.subtopics.slice(0, 3).map((tag: string, idx: number) => (
+                                            <Badge key={idx} variant="outline" className="text-[10px] bg-muted/30">
+                                                {tag}
+                                            </Badge>
+                                        ))}
+                                        {project.subtopics.length > 3 && (
+                                            <Badge variant="outline" className="text-[10px]">
+                                                +{project.subtopics.length - 3} more
+                                            </Badge>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Department Info */}
+                                <div className="flex justify-between items-center pt-2 border-t text-xs">
+                                    <span className="text-muted-foreground">
+                                        Dept: {getDepartmentLabel(project.department) || 'All'}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                        Created: {new Date(project.createdAt || project.date).toLocaleDateString()}
+                                    </span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))
+                ) : (
+                    <div className="col-span-full py-16 text-center border-2 border-dashed rounded-xl bg-muted/10">
+                        <div className="flex flex-col items-center gap-3">
+                            <div className="bg-primary/10 p-4 rounded-full">
+                                <Briefcase className="w-8 h-8 text-primary opacity-60" />
+                            </div>
+                            <h3 className="text-lg font-semibold">No Projects Added Yet</h3>
+                            <p className="text-sm text-muted-foreground max-w-md">
+                                Get started by creating your first project. Click the "Add Project" button to create a structured project with guidance and steps.
+                            </p>
+                            <Button 
+                                variant="outline" 
+                                className="mt-2"
+                                onClick={() => setOpenProjectDialog(true)}
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Create Your First Project
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </CardContent>
+    </Card>
+
+    {/* Project Preview Dialog */}
+    <Dialog open={!!previewProject} onOpenChange={(open) => !open && setPreviewProject(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-2xl">
+                    {previewProject?.title}
+                    {/* {previewProject?.isAiGenerated && (
+                        <Badge variant="outline" className="bg-purple-50 text-purple-600 border-purple-200">
+                            <Sparkles className="w-3 h-3 mr-1" /> AI Generated
+                        </Badge>
+                    )} */}
+                </DialogTitle>
+                <DialogDescription className="flex items-center gap-3">
+                    <Badge variant="secondary" className="bg-primary/10 text-primary">
+                        {previewProject?.type || 'Project'}
+                    </Badge>
+                    <span>•</span>
+                    <span>Dept: {getDepartmentLabel(previewProject?.department) || 'All'}</span>
+                    {previewProject?.dueDate && (
+                        <>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                Due: {new Date(previewProject.dueDate).toLocaleDateString()}
+                            </span>
+                        </>
+                    )}
+                </DialogDescription>
+            </DialogHeader>
+            
+            {previewProject && (
+                <div className="space-y-8 py-4">
+                    {/* Description Section */}
+                    {previewProject?.description && (
+                        <div>
+                            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                                <span className="bg-blue-500/10 p-1.5 rounded-lg">
+                                    <Eye className="w-4 h-4 text-blue-500" />
+                                </span>
+                                Project Overview
+                            </h3>
+                            <div className="prose prose-sm dark:prose-invert max-w-none p-5 bg-muted/20 rounded-xl border"
+                                 dangerouslySetInnerHTML={{ __html: previewProject.description }} />
+                        </div>
+                    )}
+                    
+                    {/* Guidance Section - Fully formatted */}
+                    {previewProject?.guidance && (
+                        <div>
+                            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                                <span className="bg-emerald-500/10 p-1.5 rounded-lg">
+                                    <Briefcase className="w-4 h-4 text-emerald-500" />
+                                </span>
+                                Project Guidance & Implementation Steps
+                            </h3>
+                            <div className="prose prose-sm dark:prose-invert max-w-none p-5 bg-muted/20 rounded-xl border"
+                                 dangerouslySetInnerHTML={{ __html: previewProject.guidance }} />
+                        </div>
+                    )}
+                    
+                    {/* Subtopics Section */}
+                    {previewProject?.subtopics?.length > 0 && (
+                        <div>
+                            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                                <span className="bg-purple-500/10 p-1.5 rounded-lg">
+                                    <FileText className="w-4 h-4 text-purple-500" />
+                                </span>
+                                Reference Subtopics
+                            </h3>
+                            <div className="flex flex-wrap gap-2 p-3 bg-muted/20 rounded-xl border">
+                                {previewProject.subtopics.map((st: string, i: number) => (
+                                    <Badge key={i} variant="secondary" className="py-1.5 px-3">
+                                        {st}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+        </DialogContent>
+    </Dialog>
+</TabsContent>
 
                 {/* MATERIALS TAB */}
                 <TabsContent value="materials" className="space-y-4">

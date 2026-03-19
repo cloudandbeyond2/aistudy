@@ -184,6 +184,7 @@ export const generateBatchSubtopics = async (req, res) => {
 
   const systemInstruction = `Strictly in ${lang || 'English'}, you are a specialized educational content writer. 
 Your goal is to provide thorough, in-depth, and "large" explanations for course subtopics.
+IMPORTANT: You MUST explicitly translate the 'topicTitle' and subtopic 'title' fields into ${lang || 'English'}, alongside the 'theory' content.
 For each subtopic, provide a detailed explanation (approx 500-1000 words if possible) with rich examples and clear definitions.
 Use valid HTML formatting for the "theory" field (paragraphs, bold text, lists).
 Do NOT include images, external links, or additional resource suggestions.
@@ -378,8 +379,22 @@ export const generateImage = async (req, res) => {
   }
 
   try {
+    let searchPrompt = prompt;
+    try {
+      const genAI = await getGenAI();
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const transResult = await model.generateContent(`Translate the following search query into brief English keywords for an image search engine. Give me only the translated keywords, with no extra text or explanation: "${prompt}"`);
+      const engPrompt = await transResult.response.text();
+      if (engPrompt && engPrompt.trim()) {
+        searchPrompt = engPrompt.trim().replace(/^["']|["']$/g, '');
+        console.log(`🖼️ Translated image prompt from "${prompt}" to "${searchPrompt}"`);
+      }
+    } catch (e) {
+      console.log('Image prompt English translation failed, using original prompt');
+    }
+
     // Clean and optimize the prompt for better search results
-    const cleanedPrompt = prompt.replace(/[-–—]/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 80);
+    const cleanedPrompt = searchPrompt.replace(/[-–—]/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 80);
 
     const unsplash = await getUnsplashApi();
     if (unsplash) {
