@@ -8790,17 +8790,19 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
       if (!next.subtopic.theory) {
         if (type === 'video & text course') {
           // Optimization: Background video generation
-          try {
-            const query = `${next.subtopicTitle} ${mainTopic} in english`;
-            // Call video search in background (we don't wait for it)
-            axios.post(serverURL + '/api/yt', { prompt: query }).then(res => {
-              if (res.data?.url) {
-                // Silently update YouTube ID
-                updateLocalCache(next.topicTitle, next.subtopicTitle, { youtube: res.data.url });
-              }
-            });
-          } catch (e) {
-            console.error("Background video search failed:", e);
+          if (!next.subtopic.youtube) {
+            try {
+              const query = `${next.subtopicTitle} ${mainTopic} in english`;
+              // Call video search in background (we don't wait for it)
+              axios.post(serverURL + '/api/yt', { prompt: query }).then(res => {
+                if (res.data?.url) {
+                  // Silently update YouTube ID
+                  updateLocalCache(next.topicTitle, next.subtopicTitle, { youtube: res.data.url });
+                }
+              });
+            } catch (e) {
+              console.error("Background video search failed:", e);
+            }
           }
         } else {
           try {
@@ -10289,6 +10291,14 @@ Please ensure the content is strictly educational and about the subtopic "${subt
     }
   }
 
+  // Scroll to top when selected subtopic changes
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+    window.scrollTo(0, 0);
+  }, [selected]);
+
   // In the useEffect that sets initial subtopic
   useEffect(() => {
     // Only run if we have data
@@ -10308,12 +10318,6 @@ Please ensure the content is strictly educational and about the subtopic "${subt
     updateQuizStatus();
     loadMessages();
     getNotes();
-    
-    // Ensure the page starts at the top when loaded
-    if (mainContentRef.current) {
-      mainContentRef.current.scrollTop = 0;
-    }
-    window.scrollTo(0, 0);
 
     if (!mainTopic) {
       if (!isLoading && !courseData) {
