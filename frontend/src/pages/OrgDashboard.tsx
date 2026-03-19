@@ -16,7 +16,7 @@ import * as XLSX from 'xlsx';
 import RichTextEditor from '@/components/RichTextEditor';
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import { Badge } from "@/components/ui/badge";
-
+import Swal from 'sweetalert2';
 const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [], role }: any) => {
     if (!course) return null;
     const [expandedTopic, setExpandedTopic] = useState<number | null>(null);
@@ -685,6 +685,161 @@ const resetProjectForm = () => {
         }
     };
 
+// const handleGenerateProjectContent = async () => {
+//     if (!projectAiTopic) {
+//         toast({ title: "Required", description: "Please enter a topic or keywords" });
+//         return;
+//     }
+
+//     setIsGeneratingProject(true);
+    
+//     const steps = [
+//         { name: 'Analyzing topic', icon: '🔍', progress: 10 },
+//         { name: 'Researching keywords', icon: '📊', progress: 25 },
+//         { name: 'Generating structure', icon: '🏗️', progress: 40 },
+//         { name: 'Writing title', icon: '📝', progress: 55 },
+//         { name: 'Creating description', icon: '✍️', progress: 70 },
+//         { name: 'Developing guidance', icon: '📚', progress: 85 },
+//         { name: 'Adding subtopics', icon: '🔖', progress: 95 },
+//         { name: 'Finalizing', icon: '✨', progress: 100 }
+//     ];
+    
+//     let currentStep = 0;
+    
+//     Swal.fire({
+//         title: '🤖 AI Project Generator',
+//         html: `
+//             <div class="text-left space-y-4">
+//                 <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+//                     <span>Topic:</span>
+//                     <span class="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">${projectAiTopic.substring(0, 40)}${projectAiTopic.length > 40 ? '...' : ''}</span>
+//                 </div>
+                
+//                 <div class="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700">
+//                     <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+//                 </div>
+                
+//                 <div id="current-step" class="flex items-center gap-2 text-lg font-medium mt-4">
+//                     <span id="step-icon">🔍</span>
+//                     <span id="step-name">Analyzing topic</span>
+//                 </div>
+                
+//                 <div id="progress-percentage" class="text-2xl font-bold text-blue-600 dark:text-blue-400">0%</div>
+                
+//                 <div class="grid grid-cols-2 gap-2 mt-4 text-xs">
+//                     ${steps.map((step, index) => `
+//                         <div id="step-${index}" class="step-item flex items-center gap-1 text-gray-400">
+//                             <span>${step.icon}</span>
+//                             <span>${step.name}</span>
+//                         </div>
+//                     `).join('')}
+//                 </div>
+//             </div>
+//         `,
+//         showConfirmButton: false,
+//         allowOutsideClick: false,
+//         allowEscapeKey: false,
+//         didOpen: () => {
+//             // Start progress animation
+//             const progressBar = document.getElementById('progress-bar');
+//             const stepIcon = document.getElementById('step-icon');
+//             const stepName = document.getElementById('step-name');
+//             const progressPercentage = document.getElementById('progress-percentage');
+            
+//             const updateStep = () => {
+//                 if (currentStep < steps.length) {
+//                     const step = steps[currentStep];
+                    
+//                     // Update progress bar
+//                     if (progressBar) {
+//                         progressBar.style.width = `${step.progress}%`;
+//                     }
+                    
+//                     // Update step display
+//                     if (stepIcon) stepIcon.textContent = step.icon;
+//                     if (stepName) stepName.textContent = step.name;
+//                     if (progressPercentage) progressPercentage.textContent = `${step.progress}%`;
+                    
+//                     // Update step indicators
+//                     for (let i = 0; i <= currentStep; i++) {
+//                         const stepEl = document.getElementById(`step-${i}`);
+//                         if (stepEl) {
+//                             stepEl.className = 'flex items-center gap-1 text-green-600 dark:text-green-400';
+//                         }
+//                     }
+                    
+//                     currentStep++;
+                    
+//                     // Schedule next step
+//                     if (currentStep < steps.length) {
+//                         setTimeout(updateStep, 800);
+//                     }
+//                 }
+//             };
+            
+//             // Start the step progression
+//             setTimeout(updateStep, 500);
+//         }
+//     });
+
+//     try {
+//         const res = await axios.post(`${serverURL}/api/org/project/generate`, { 
+//             topic: projectAiTopic,
+//             type: newProject.type 
+//         });
+
+//         if (res.data.success) {
+//             const { title, description, guidance, subtopics } = res.data.content;
+            
+//             // Update to 100% and show completion
+//             const progressBar = document.getElementById('progress-bar');
+//             const progressPercentage = document.getElementById('progress-percentage');
+//             const stepName = document.getElementById('step-name');
+//             const stepIcon = document.getElementById('step-icon');
+            
+//             if (progressBar) progressBar.style.width = '100%';
+//             if (progressPercentage) progressPercentage.textContent = '100%';
+//             if (stepIcon) stepIcon.textContent = '🎉';
+//             if (stepName) stepName.textContent = 'Complete!';
+            
+//             // Close and show result
+//             setTimeout(() => {
+//                 Swal.close();
+                
+//                 const formattedGuidance = guidance ? formatGuidanceText(guidance) : '';
+//                 const formattedDescription = description ? formatGuidanceText(description) : '';
+                
+//                 setNewProject({
+//                     ...newProject,
+//                     title: title || '',
+//                     description: formattedDescription || description || '',
+//                     guidance: formattedGuidance,
+//                     subtopics: subtopics || [],
+//                     isAiGenerated: true
+//                 });
+                
+//                 Swal.fire({
+//                     icon: 'success',
+//                     title: 'Project Generated!',
+//                     text: 'Your AI project has been created successfully',
+//                     timer: 2000,
+//                     showConfirmButton: false
+//                 });
+//             }, 1000);
+//         }
+//     } catch (e: any) {
+//         Swal.fire({
+//             icon: 'error',
+//             title: 'Generation Failed',
+//             text: e.response?.data?.message || 'Failed to generate content',
+//             confirmButtonColor: '#d33'
+//         });
+//     } finally {
+//         setIsGeneratingProject(false);
+//     }
+// };
+
+
 const handleGenerateProjectContent = async () => {
     if (!projectAiTopic) {
         toast({ title: "Required", description: "Please enter a topic or keywords" });
@@ -692,19 +847,87 @@ const handleGenerateProjectContent = async () => {
     }
 
     setIsGeneratingProject(true);
+    
+    let progressInterval;
+    let progress = 0;
+    
+    Swal.fire({
+        title: '🤖 AI Project Generator',
+        html: `
+            <div class="text-left space-y-4">
+                <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    <span>Topic:</span>
+                    <span class="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">${projectAiTopic.substring(0, 40)}${projectAiTopic.length > 40 ? '...' : ''}</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700">
+                    <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div id="progress-status" class="flex items-center justify-center gap-2 text-sm mt-2">
+                    <span id="progress-icon">⏳</span>
+                    <span id="progress-message">Initializing...</span>
+                </div>
+                <div id="progress-percentage" class="text-2xl font-bold text-blue-600 dark:text-blue-400 text-center">0%</div>
+            </div>
+        `,
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+            progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.random() * 2;
+                    if (progress > 90) progress = 90;
+                    
+                    const progressBar = document.getElementById('progress-bar');
+                    const progressPercentage = document.getElementById('progress-percentage');
+                    const progressMessage = document.getElementById('progress-message');
+                    
+                    if (progressBar) progressBar.style.width = `${progress}%`;
+                    if (progressPercentage) progressPercentage.textContent = `${Math.round(progress)}%`;
+                    
+                    if (progress < 20) {
+                        if (progressMessage) progressMessage.textContent = 'Analyzing topic...';
+                    } else if (progress < 40) {
+                        if (progressMessage) progressMessage.textContent = 'Researching content...';
+                    } else if (progress < 60) {
+                        if (progressMessage) progressMessage.textContent = 'Generating structure...';
+                    } else if (progress < 80) {
+                        if (progressMessage) progressMessage.textContent = 'Writing content...';
+                    } else {
+                        if (progressMessage) progressMessage.textContent = 'Almost there...';
+                    }
+                }
+            }, 200);
+        }
+    });
+
     try {
+        const startTime = Date.now();
         const res = await axios.post(`${serverURL}/api/org/project/generate`, { 
             topic: projectAiTopic,
             type: newProject.type 
         });
 
+        if (progressInterval) clearInterval(progressInterval);
+        const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+
         if (res.data.success) {
             const { title, description, guidance, subtopics } = res.data.content;
             
-            // Format the guidance text to HTML if it's plain text
-            const formattedGuidance = guidance ? formatGuidanceText(guidance) : '';
+            const progressBar = document.getElementById('progress-bar');
+            const progressPercentage = document.getElementById('progress-percentage');
+            const progressMessage = document.getElementById('progress-message');
+            const progressIcon = document.getElementById('progress-icon');
             
-            // Format the description if needed (assuming description might also need formatting)
+            if (progressBar) progressBar.style.width = '100%';
+            if (progressPercentage) progressPercentage.textContent = '100%';
+            if (progressMessage) progressMessage.textContent = `Complete! (${totalTime}s)`;
+            if (progressIcon) progressIcon.textContent = '✅';
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            Swal.close();
+            
+            const formattedGuidance = guidance ? formatGuidanceText(guidance) : '';
             const formattedDescription = description ? formatGuidanceText(description) : '';
             
             setNewProject({
@@ -715,30 +938,34 @@ const handleGenerateProjectContent = async () => {
                 subtopics: subtopics || [],
                 isAiGenerated: true
             });
-            toast({ title: "Success", description: "Project content generated!" });
+            
+            toast({ title: "Success", description: `Project generated in ${totalTime}s` });
         }
     } catch (e: any) {
-        toast({ title: "Error", description: "Failed to generate content" });
+        if (progressInterval) clearInterval(progressInterval);
+        Swal.close();
+        Swal.fire({
+            icon: 'error',
+            title: 'Generation Failed',
+            text: e.response?.data?.message || 'Failed to generate content',
+            confirmButtonColor: '#d33'
+        });
     } finally {
         setIsGeneratingProject(false);
     }
 };
 
-// Helper function to format plain text guidance into HTML structure
-// Helper function to format plain text guidance into HTML structure
 const formatGuidanceText = (text: string) => {
     if (!text) return '';
     
-    // Split into lines and process
     const lines = text.split('\n');
     let html = '';
     let inList = false;
     let listType = '';
     
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trimRight(); // Preserve intentional indentation
+        const line = lines[i].trimRight();
         
-        // Check for main headings (###, ##, or #)
         if (line.startsWith('### ')) {
             if (inList) {
                 html += `</${listType}>`;
@@ -760,7 +987,6 @@ const formatGuidanceText = (text: string) => {
             }
             html += `<h1 class="text-2xl font-bold text-primary mt-6 mb-4">${line.substring(2)}</h1>`;
         }
-        // Check for Phase/Step headings
         else if (line.match(/^(Phase|Step|Part)\s+\d+[:.]/i)) {
             if (inList) {
                 html += `</${listType}>`;
@@ -768,16 +994,13 @@ const formatGuidanceText = (text: string) => {
             }
             html += `<h3 class="text-lg font-bold text-blue-600 dark:text-blue-400 mt-6 mb-3">${line}</h3>`;
         }
-        // Check for subheadings (ends with colon)
-        else if (line.match(/^[A-Z][a-z]+(\s+[A-Z][a-z]+)*:$/) || 
-                 (line.length < 60 && line.endsWith(':'))) {
+        else if (line.match(/^[A-Z][a-z]+(\s+[A-Z][a-z]+)*:$/) || (line.length < 60 && line.endsWith(':'))) {
             if (inList) {
                 html += `</${listType}>`;
                 inList = false;
             }
             html += `<h4 class="font-bold text-base text-foreground mt-4 mb-2">${line}</h4>`;
         }
-        // Check for bullet points
         else if (line.startsWith('•') || line.startsWith('- ') || line.startsWith('* ')) {
             if (!inList || listType !== 'ul') {
                 if (inList) html += `</${listType}>`;
@@ -786,11 +1009,9 @@ const formatGuidanceText = (text: string) => {
                 listType = 'ul';
             }
             const content = line.substring(line.indexOf(' ') + 1).trim();
-            // Check for bold in bullet points
             const formattedContent = content.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold text-foreground">$1</span>');
             html += `<li class="text-sm text-muted-foreground">${formattedContent}</li>`;
         }
-        // Check for numbered lists
         else if (line.match(/^\d+[.)]\s/)) {
             if (!inList || listType !== 'ol') {
                 if (inList) html += `</${listType}>`;
@@ -799,21 +1020,17 @@ const formatGuidanceText = (text: string) => {
                 listType = 'ol';
             }
             const content = line.replace(/^\d+[.)]\s/, '');
-            // Check for bold in numbered items
             const formattedContent = content.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold text-foreground">$1</span>');
             html += `<li class="text-sm text-muted-foreground">${formattedContent}</li>`;
         }
-        // Regular paragraph
         else if (line.length > 0) {
             if (inList) {
                 html += `</${listType}>`;
                 inList = false;
             }
-            // Check for bold markers (**text**)
             const formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold text-foreground">$1</span>');
             html += `<p class="text-sm text-muted-foreground mb-3 leading-relaxed">${formattedLine}</p>`;
         }
-        // Empty line - add spacing
         else if (line === '' && !inList) {
             html += '<div class="h-3"></div>';
         }
@@ -826,18 +1043,41 @@ const formatGuidanceText = (text: string) => {
     return html;
 };
 
-    const handleDeleteProject = async (id: string) => {
-        if (!confirm('Delete this project?')) return;
+   const handleDeleteProject = async (id: string) => {
+    const result = await Swal.fire({
+        title: 'Delete Project?',
+        text: "This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
         try {
             const res = await axios.delete(`${serverURL}/api/org/project/${id}`);
             if (res.data.success) {
-                toast({ title: "Success", description: "Project deleted" });
+                await Swal.fire({
+                    title: 'Deleted!',
+                    text: 'Project has been deleted.',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
                 fetchProjects();
             }
         } catch (e) {
-            toast({ title: "Error", description: "Failed to delete project" });
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to delete project',
+                icon: 'error',
+                confirmButtonColor: '#d33'
+            });
         }
-    };
+    }
+};
 
     const handleCreateMaterial = async () => {
         try {
