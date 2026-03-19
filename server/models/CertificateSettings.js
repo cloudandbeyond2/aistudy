@@ -29,17 +29,17 @@ const certificateSettingsSchema = new mongoose.Schema({
   
   // Dynamic Positions
   positions: {
-    organizationLogo: { type: positionSchema, default: () => ({ bottom: '12%', left: '8%' }) },
-    organizationName: { type: positionSchema, default: () => ({ bottom: '8%', left: '8%' }) },
+    organizationLogo: { type: positionSchema, default: () => ({ top: '10%', left: '50%' }) },
+    organizationName: { type: positionSchema, default: () => ({ top: '17%', left: '50%' }) },
     title: { type: positionSchema, default: () => ({ top: '25%', left: '50%' }) },
     subtitle: { type: positionSchema, default: () => ({ top: '32%', left: '50%' }) },
     certifyText: { type: positionSchema, default: () => ({ top: '38%', left: '50%' }) },
     name: { type: positionSchema, default: () => ({ top: '46%', left: '50%' }) },
     description: { type: positionSchema, default: () => ({ top: '56%', left: '50%' }) },
     courseName: { type: positionSchema, default: () => ({ top: '64%', left: '50%' }) },
-    signature: { type: positionSchema, default: () => ({ bottom: '22%', left: '12%' }) },
-    date: { type: positionSchema, default: () => ({ bottom: '22%', right: '12%' }) },
-    qrCode: { type: positionSchema, default: () => ({ bottom: '14%', right: '7%' }) },
+    signature: { type: positionSchema, default: () => ({ bottom: '12%', left: '8%' }) },
+    date: { type: positionSchema, default: () => ({ bottom: '12%', right: '12%' }) },
+    qrCode: { type: positionSchema, default: () => ({ bottom: '6%', left: '8%' }) },
     footer: { type: positionSchema, default: () => ({ bottom: '4%', left: '50%' }) }
   },
   
