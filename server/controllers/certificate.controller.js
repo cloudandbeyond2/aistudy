@@ -34,7 +34,17 @@ export const updateCertificateSettings = async (req, res) => {
     vpName,
     vpSignature,
     logo,
-    qrCodeUrl
+    qrCodeUrl,
+    backgroundImage,
+    organizationName,
+    organizationLogo,
+    partnerLogo,
+    certificateDescription,
+    signatureTitle,
+    showOrganization,
+    showPartnerLogo,
+    positions,
+    sizes
   } = req.body;
 
   try {
@@ -47,7 +57,17 @@ export const updateCertificateSettings = async (req, res) => {
         vpName,
         vpSignature,
         logo,
-        qrCodeUrl
+        qrCodeUrl,
+        backgroundImage,
+        organizationName,
+        organizationLogo,
+        partnerLogo,
+        certificateDescription,
+        signatureTitle,
+        showOrganization,
+        showPartnerLogo,
+        positions,
+        sizes
       });
     } else {
       settings.ceoName = ceoName;
@@ -56,6 +76,16 @@ export const updateCertificateSettings = async (req, res) => {
       settings.vpSignature = vpSignature;
       settings.logo = logo;
       settings.qrCodeUrl = qrCodeUrl;
+      settings.backgroundImage = backgroundImage;
+      settings.organizationName = organizationName;
+      settings.organizationLogo = organizationLogo;
+      settings.partnerLogo = partnerLogo;
+      settings.certificateDescription = certificateDescription;
+      settings.signatureTitle = signatureTitle;
+      settings.showOrganization = showOrganization;
+      settings.showPartnerLogo = showPartnerLogo;
+      if (positions) settings.positions = positions;
+      if (sizes) settings.sizes = sizes;
     }
 
     await settings.save();
