@@ -25,7 +25,7 @@ const OrgAssignmentCertificate = () => {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const response = await axios.get(`${serverURL}/api/certificate-settings`);
+                const response = await axios.get(`${serverURL}/api/certificate-settings?type=org`);
                 setCertificateSettings(response.data);
             } catch (error) {
                 console.error('Error fetching certificate settings:', error);
@@ -138,7 +138,7 @@ const OrgAssignmentCertificate = () => {
 
                     {/* "This is to certify that" */}
                     <div className="absolute top-[38%] w-full text-center">
-                        <p className="text-lg md:text-xl italic text-slate-500">This is to certifyy that</p>
+                        <p className="text-lg md:text-xl italic text-slate-500">This is to certify that</p>
                     </div>
 
                     {/* Student Name */}
@@ -228,9 +228,11 @@ const OrgAssignmentCertificate = () => {
                         <p className="text-[10px] md:text-[11px] font-mono text-slate-700 mb-1 font-bold">
                             ID: {certificateData._id?.substring(0, 8).toUpperCase()}
                         </p>
-                        <p className="text-sm md:text-md font-medium text-slate-700 mt-1" style={{ fontFamily: 'Times New Roman, serif' }}>
-                            {new Date(certificateData.date).toLocaleDateString()}
-                        </p>
+                        {certificateData.date && !isNaN(new Date(certificateData.date).getTime()) && (
+                            <p className="text-sm md:text-md font-medium text-slate-700 mt-1" style={{ fontFamily: 'Times New Roman, serif' }}>
+                                {new Date(certificateData.date).toLocaleDateString()}
+                            </p>
+                        )}
                     </div>
 
                 </div>

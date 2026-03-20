@@ -7,10 +7,11 @@ import transporter from '../config/mail.js';
  */
 export const getCertificateSettings = async (req, res) => {
   try {
-    let settings = await CertificateSettings.findOne();
+    const type = req.query.type || 'regular';
+    let settings = await CertificateSettings.findOne({ type });
 
     if (!settings) {
-      settings = new CertificateSettings();
+      settings = new CertificateSettings({ type });
       await settings.save();
     }
 
@@ -29,6 +30,7 @@ export const getCertificateSettings = async (req, res) => {
  */
 export const updateCertificateSettings = async (req, res) => {
   const {
+    type = 'regular',
     ceoName,
     ceoSignature,
     vpName,
@@ -48,10 +50,11 @@ export const updateCertificateSettings = async (req, res) => {
   } = req.body;
 
   try {
-    let settings = await CertificateSettings.findOne();
+    let settings = await CertificateSettings.findOne({ type });
 
     if (!settings) {
       settings = new CertificateSettings({
+        type,
         ceoName,
         ceoSignature,
         vpName,
