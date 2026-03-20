@@ -179,7 +179,7 @@ const Hero = () => {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">
               Futuristic
             </span>{" "}
-            Learning
+            Learning with AI
           </h1>
 
           {/* Description */}
