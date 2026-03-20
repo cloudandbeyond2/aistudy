@@ -296,6 +296,32 @@ const CoursePage = () => {
     };
   }, []);
 
+  // OPTIMIZATION: Enhanced image preloader with queue and cache
+  // const preloadImageWithCache = useCallback((url, subtopicTitle) => {
+  //   if (!url || imageCache.current.has(url)) return;
+    
+  //   imageCache.current.add(url);
+  //   setImageLoading(prev => new Map(prev).set(subtopicTitle, true));
+    
+  //   const img = new Image();
+  //   img.onload = () => {
+  //     setPreloadedImages(prev => new Map(prev).set(subtopicTitle, url));
+  //     setImageLoading(prev => {
+  //       const newMap = new Map(prev);
+  //       newMap.delete(subtopicTitle);
+  //       return newMap;
+  //     });
+  //   };
+  //   img.onerror = () => {
+  //     setImageLoading(prev => {
+  //       const newMap = new Map(prev);
+  //       newMap.delete(subtopicTitle);
+  //       return newMap;
+  //     });
+  //   };
+  //   img.src = url;
+  // }, []);
+
 
   // OPTIMIZATION: Enhanced image preloader with queue and cache
 const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') => {
@@ -561,52 +587,6 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
     }
   }
 
-
-// Add this function to validate if content is complete
-const isContentComplete = (content: string, subtopic: string): boolean => {
-  if (!content) return false;
-  
-  // Check if content has proper structure
-  const hasProperClosing = content.includes('</div>') || content.includes('</html>');
-  
-  // Check if content ends with proper punctuation
-  const lastChar = content.trim().slice(-1);
-  const endsProperly = ['.', '!', '?', '"', "'", ')', '}', '>'].includes(lastChar);
-  
-  // Check minimum length (at least 500 chars for meaningful content)
-  const hasMinimumLength = content.length > 500;
-  
-  // Check if content contains all key sections
-  const hasIntroduction = content.includes('Introduction') || content.includes('<h3>');
-  const hasConclusion = content.includes('Conclusion') || content.includes('Summary');
-  const hasKeyConcepts = content.includes('Key Concept') || content.includes('Key Points');
-  
-  // For video courses, also check if content is complete
-  const isComplete = hasProperClosing && endsProperly && hasMinimumLength && 
-                     (hasIntroduction || hasConclusion || hasKeyConcepts);
-  
-  return isComplete;
-};
-
-// Retry mechanism with exponential backoff
-const generateWithRetry = async (apiCall: () => Promise<any>, maxRetries: number = 3): Promise<any> => {
-  let lastError;
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      const result = await apiCall();
-      return result;
-    } catch (error) {
-      lastError = error;
-      if (attempt < maxRetries - 1) {
-        const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-  }
-  throw lastError;
-};
-
-
   const handleSaveNote = async () => {
     setSaving(true);
     const postURL = serverURL + '/api/savenotes';
@@ -699,594 +679,65 @@ const generateWithRetry = async (apiCall: () => Promise<any>, maxRetries: number
     return isPrevCompleted || isCurrentCompleted;
   };
 
-// ==================== FIXED CONTENT GENERATION FUNCTIONS ====================
+  const handleMarkAsComplete = async () => {
+    if (!userId || !courseId || !selected) return;
 
-/**
- * FIXED: Complete content generation for text & image courses
- * This function now properly handles all stages and ensures content is saved without truncation
- */
-async function sendBulkCourseContent(clickedTopic, clickedSub) {
-  setShowLoadingPopup(true);
-  setLoadingSubtopic(clickedSub);
-  
-  const clearTheoryProgress = simulateProgress('theory');
-  
-  // 1. Instant UI Feedback
-  setSelected(clickedSub);
-  setTheory(`<div class="prose dark:prose-invert max-w-none">
-    <h2>${clickedSub}</h2>
-    <p>AI is crafting personalized content for you...</p>
-    <div class="flex items-center justify-center p-8">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-    </div>
-  </div>`);
-  
-  const placeholderUrl = getFallbackImage(mainTopic, clickedSub);
-  setMedia(placeholderUrl);
-  
-  try {
-    // 2. Generate theory content with retry mechanism
-    const theoryPayload = {
-      mainTopic,
-      topicsList: [{ topicTitle: clickedTopic, subtopics: [clickedSub] }],
-      lang,
-      userId
-    };
-    
-    let generatedTheory = null;
-    let retryCount = 0;
-    const maxRetries = 3;
-    
-    while (retryCount < maxRetries && !generatedTheory) {
-      try {
-        const theoryRes = await axios.post(serverURL + '/api/generate-batch', theoryPayload, {
-          timeout: 60000 // 60 second timeout
+    const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+    let currentTopicTitle = '';
+    if (Array.isArray(topicsList)) {
+      topicsList.forEach(t => {
+        if (Array.isArray(t.subtopics) && t.subtopics.some(s => s.title === selected)) {
+          currentTopicTitle = t.title;
+        }
+      });
+    }
+
+    let total = 0;
+    topicsList.forEach(t => total += t.subtopics.length);
+
+    try {
+      const res = await axios.post(`${serverURL}/api/progress/update`, {
+        userId,
+        courseId,
+        topicTitle: currentTopicTitle,
+        subtopicTitle: selected,
+        totalSubtopics: total
+      });
+
+      if (res.data.success) {
+        setCompletedSubtopics(res.data.progress.completedSubtopics);
+        setPercentage(res.data.progress.percentage);
+
+        // --- LOGIC TO MOVE TO NEXT SUBTOPIC ---
+        const allSubtopics = [];
+        topicsList.forEach(t => {
+          t.subtopics.forEach(s => {
+            allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
+          });
         });
+
+        const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
         
-        if (theoryRes.data && theoryRes.data.success && theoryRes.data.topics && theoryRes.data.topics[0]) {
-          generatedTheory = theoryRes.data.topics[0].subtopics[0].theory;
+        if (currentIndex < allSubtopics.length - 1) {
+          const next = allSubtopics[currentIndex + 1];
+          // Move to next subtopic immediately
+          handleSelect(next.topicTitle, next.subtopicTitle);
           
-          // Validate content completeness
-          if (!isContentComplete(generatedTheory, clickedSub)) {
-            console.warn(`Content incomplete for ${clickedSub}, retry ${retryCount + 1}`);
-            generatedTheory = null;
-            retryCount++;
-            await new Promise(resolve => setTimeout(resolve, 2000));
-          } else {
-            break;
+          // Scroll to top for the new lesson
+          if (mainContentRef.current) {
+            mainContentRef.current.scrollTop = 0;
           }
         } else {
-          retryCount++;
-        }
-      } catch (error) {
-        console.error(`Generation attempt ${retryCount + 1} failed:`, error);
-        retryCount++;
-        if (retryCount < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          toast({
+            title: "Course Completed!",
+            description: "You've finished all lessons. You can now take the quiz.",
+          });
         }
       }
+    } catch (error) {
+      console.error("Failed to update progress:", error);
     }
-    
-    // Switch to image loading stage
-    clearTheoryProgress();
-    simulateProgress('image');
-    
-    // Ensure we have complete content
-    let finalTheory = generatedTheory;
-    if (!finalTheory || !isContentComplete(finalTheory, clickedSub)) {
-      finalTheory = generateCompleteContent(clickedSub, mainTopic);
-      console.log(`Using fallback complete content for ${clickedSub}`);
-    } else {
-      // Format and enhance the content
-      finalTheory = formatCompleteContent(finalTheory, clickedSub, mainTopic);
-    }
-    
-    // Update theory in state and cache
-    setTheory(finalTheory);
-    updateLocalCache(clickedTopic, clickedSub, { theory: finalTheory });
-    
-    // 3. Generate image with retry
-    let imageUrl = placeholderUrl;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        const imagePrompt = `${clickedSub} in ${mainTopic}`;
-        const imageRes = await axios.post(serverURL + '/api/image', { prompt: imagePrompt }, { timeout: 15000 });
-        
-        if (imageRes.data?.url) {
-          imageUrl = imageRes.data.url;
-          break;
-        }
-      } catch (imageErr) {
-        console.error(`Image fetch attempt ${attempt + 1} failed:`, imageErr);
-        if (attempt < 2) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-    }
-    
-    setMedia(imageUrl);
-    updateLocalCache(clickedTopic, clickedSub, { 
-      image: imageUrl,
-      done: true 
-    });
-    
-    // 4. Update course in backend
-    await updateCourse();
-    
-    // Switch to complete stage
-    simulateProgress('complete');
-    setLoadingProgress(100);
-    
-    setTimeout(() => {
-      setShowLoadingPopup(false);
-      if (window.progressInterval) {
-        clearInterval(window.progressInterval);
-      }
-    }, 1500);
-    
-  } catch (error) {
-    console.error("Content generation failed:", error);
-    const fallbackContent = generateCompleteContent(clickedSub, mainTopic);
-    setTheory(fallbackContent);
-    setMedia(placeholderUrl);
-    updateLocalCache(clickedTopic, clickedSub, { 
-      theory: fallbackContent, 
-      image: placeholderUrl,
-      done: true 
-    });
-    await updateCourse();
-    
-    setShowLoadingPopup(false);
-    if (window.progressInterval) {
-      clearInterval(window.progressInterval);
-    }
-  }
-}
-
-/**
- * Formats content to ensure it's complete and well-structured
- */
-function formatCompleteContent(content, subtopic, topic) {
-  if (!content || content.trim() === '') {
-    return generateCompleteContent(subtopic, topic);
-  }
-  
-  // Check if content has proper HTML structure
-  let formattedContent = content;
-  
-  // Ensure content starts with proper container
-  if (!formattedContent.includes('<div class="prose') && !formattedContent.includes('<div')) {
-    formattedContent = `<div class="prose dark:prose-invert max-w-none">
-      ${formattedContent}
-    </div>`;
-  }
-  
-  // Ensure content has proper closing tags
-  if (!formattedContent.includes('</div>')) {
-    formattedContent = formattedContent + '</div>';
-  }
-  
-  // Check if content is complete (has conclusion/summary)
-  const hasConclusion = formattedContent.toLowerCase().includes('conclusion') || 
-                        formattedContent.toLowerCase().includes('summary') ||
-                        formattedContent.toLowerCase().includes('key takeaway');
-  
-  if (!hasConclusion) {
-    formattedContent = formattedContent.replace('</div>', `
-      <h3>Summary</h3>
-      <p>In conclusion, ${subtopic} is a fundamental concept in ${topic}. Understanding this topic is essential for mastering ${topic} and applying it effectively in real-world scenarios.</p>
-      </div>
-    `);
-  }
-  
-  // Ensure content has proper section structure
-  if (!formattedContent.includes('<h2>') && !formattedContent.includes('<h1>')) {
-    formattedContent = formattedContent.replace('<div', `<div>\n<h2>${subtopic}</h2>`);
-  }
-  
-  return formattedContent;
-}
-
-/**
- * Generates COMPLETE educational content for any subtopic
- */
-function generateCompleteContent(subtopic, topic) {
-  return `<div class="prose dark:prose-invert max-w-none">
-    <h2>${subtopic}</h2>
-    
-    <h3>📚 Introduction to ${subtopic}</h3>
-    <p><strong>${subtopic}</strong> is a crucial concept in the field of <strong>${topic}</strong>. This topic forms the foundation for understanding more advanced concepts and practical applications in real-world scenarios.</p>
-    
-    <h3>🎯 Learning Objectives</h3>
-    <ul>
-      <li>Understand the core principles of ${subtopic}</li>
-      <li>Learn practical applications and use cases</li>
-      <li>Master key techniques and best practices</li>
-      <li>Develop problem-solving skills in ${topic}</li>
-    </ul>
-    
-    <h3>🔑 Key Concepts and Definitions</h3>
-    <ul>
-      <li><strong>Definition:</strong> ${subtopic} refers to the systematic approach of analyzing, processing, and deriving insights from data in ${topic}.</li>
-      <li><strong>Core Principles:</strong> The fundamental principles include accuracy, consistency, validity, and completeness of information.</li>
-      <li><strong>Importance:</strong> Understanding ${subtopic} is essential because it enables professionals to make data-driven decisions and solve complex problems efficiently.</li>
-    </ul>
-    
-    <h3>💡 Practical Applications</h3>
-    <p><strong>${subtopic}</strong> finds applications across various domains:</p>
-    <ul>
-      <li><strong>Business Intelligence:</strong> Companies use these concepts to analyze customer behavior and optimize operations.</li>
-      <li><strong>Scientific Research:</strong> Researchers apply these techniques to validate hypotheses and discover patterns.</li>
-      <li><strong>Machine Learning:</strong> ${subtopic} is fundamental to building accurate predictive models and understanding model performance.</li>
-    </ul>
-    
-    <h3>🔧 Step-by-Step Implementation</h3>
-    <p>Let's explore a practical example to understand ${subtopic} better:</p>
-    <pre><code>
-# Example: Understanding ${subtopic.toLowerCase()} in practice
-import pandas as pd
-import numpy as np
-
-# Sample data for analysis
-data = {
-    'feature1': [1, 2, 3, 4, 5],
-    'feature2': [10, 20, 30, 40, 50],
-    'target': [100, 200, 300, 400, 500]
-}
-
-df = pd.DataFrame(data)
-
-# Apply ${subtopic.toLowerCase()} concepts
-print("Data shape:", df.shape)
-print("Data types:", df.dtypes)
-print("Summary statistics:", df.describe())
-    </code></pre>
-    
-    <h3>⚠️ Common Challenges and Solutions</h3>
-    <p>When working with ${subtopic}, practitioners often face several challenges:</p>
-    <ul>
-      <li><strong>Data Quality Issues:</strong> Missing values, outliers, and inconsistencies can affect results. Solutions include data cleaning, imputation, and validation techniques.</li>
-      <li><strong>Scalability Problems:</strong> As data volume grows, performance can degrade. Using efficient algorithms and distributed computing helps address this.</li>
-      <li><strong>Interpretability:</strong> Complex models can be hard to explain. Visualization and feature importance analysis improve understanding.</li>
-    </ul>
-    
-    <h3>✅ Best Practices</h3>
-    <p>To excel in ${subtopic}, follow these best practices:</p>
-    <ul>
-      <li>Always start with exploratory analysis to understand your data</li>
-      <li>Document your methodology and assumptions clearly</li>
-      <li>Validate results using multiple approaches when possible</li>
-      <li>Stay updated with the latest tools and techniques in ${topic}</li>
-      <li>Collaborate with domain experts to ensure practical relevance</li>
-    </ul>
-    
-    <h3>🛠️ Tools and Resources</h3>
-    <p>Popular tools for working with ${subtopic} include:</p>
-    <ul>
-      <li><strong>Python Libraries:</strong> Pandas, NumPy, Scikit-learn, Matplotlib, Seaborn</li>
-      <li><strong>R Packages:</strong> dplyr, ggplot2, tidyr, caret</li>
-      <li><strong>Visualization Tools:</strong> Tableau, Power BI, D3.js</li>
-      <li><strong>Big Data Platforms:</strong> Apache Spark, Dask, Hadoop</li>
-    </ul>
-    
-    <h3>📝 Practice Exercises</h3>
-    <p>Test your understanding of ${subtopic} with these exercises:</p>
-    <ol>
-      <li>Create a simple implementation of ${subtopic} with sample data</li>
-      <li>Identify three real-world scenarios where ${subtopic} would be applicable</li>
-      <li>Compare different approaches to solving problems using ${subtopic}</li>
-      <li>Document the key steps in your ${subtopic} workflow</li>
-    </ol>
-    
-    <h3>📖 Conclusion and Next Steps</h3>
-    <p><strong>${subtopic}</strong> is a vast and fascinating area of ${topic} that continues to evolve. Mastering these concepts requires consistent practice and application to real-world problems. As you progress, you'll discover deeper nuances and advanced techniques that build upon this foundation.</p>
-    
-    <h4>Key Takeaways:</h4>
-    <ul>
-      <li>✅ ${subtopic} is fundamental to data analysis and decision-making in ${topic}</li>
-      <li>✅ Understanding both theoretical concepts and practical applications is crucial</li>
-      <li>✅ Regular practice with real datasets helps reinforce learning</li>
-      <li>✅ Stay curious and explore advanced topics as you build confidence</li>
-    </ul>
-    
-    <p><em>🎓 Remember: The journey of mastering ${subtopic} is ongoing. Each concept you learn opens doors to new possibilities in your ${topic} journey. Keep practicing, stay curious, and don't hesitate to explore additional resources!</em></p>
-  </div>`;
-}
-
-/**
- * FIXED: Complete video course content generation with no truncation
- */
-async function sendVideo(query, mTopic, mSubTopic, subtop) {
-  const dataToSend = { prompt: query };
-  const stopSim = simulateProgress('video');
-  
-  try {
-    const res = await axios.post(serverURL + '/api/yt', dataToSend);
-    const videoUrl = res.data.url;
-    
-    stopSim();
-    
-    if (videoUrl) {
-      updateLocalCache(mTopic, mSubTopic, { youtube: videoUrl });
-      await sendTranscript(videoUrl, mTopic, mSubTopic, subtop);
-    } else {
-      throw new Error("No video URL received");
-    }
-    
-  } catch (error) {
-    console.error("Video search failed:", error);
-    const prompt = `Strictly in ${lang}, provide a COMPLETE and DETAILED explanation of this subtopic "${subtop}" in ${mainTopic}. Include introduction, key concepts, examples, best practices, and a conclusion. Format with proper HTML structure.`;
-    stopSim();
-    await sendSummery(prompt, '', mTopic, mSubTopic);
-  }
-}
-
-async function sendTranscript(url, mTopic, mSubTopic, subtop) {
-  const dataToSend = { prompt: url };
-  const stopSim = simulateProgress('transcript');
-  
-  try {
-    const res = await axios.post(serverURL + '/api/transcript', dataToSend);
-    const generatedText = res.data.transcript;
-    
-    if (generatedText && Array.isArray(generatedText)) {
-      const allText = generatedText.map(item => item.text);
-      const concatenatedText = allText.join(' ');
-      
-      const prompt = `Strictly in ${lang}, you are an educational instructor creating a COMPLETE course on "${mainTopic}". Provide a thorough, detailed explanation of the subtopic "${subtop}" with:
-1. A comprehensive introduction
-2. Key concepts and definitions
-3. Practical examples with code if applicable
-4. Best practices and common pitfalls
-5. A proper conclusion summarizing key takeaways
-
-Use the following video transcript as reference:
-${concatenatedText}
-
-Format with proper HTML tags for better readability. Ensure the content is COMPLETE and not truncated.`;
-      
-      stopSim();
-      await sendSummery(prompt, url, mTopic, mSubTopic);
-    } else {
-      throw new Error("Invalid transcript format");
-    }
-    
-  } catch (error) {
-    console.error("Transcript fetch failed:", error);
-    const prompt = `Strictly in ${lang}, provide a COMPLETE and DETAILED educational lesson on "${subtop}" in ${mainTopic}. Include:
-- Introduction
-- Core concepts with explanations
-- Real-world examples
-- Step-by-step implementation guide
-- Best practices
-- Common mistakes to avoid
-- Summary and key takeaways
-
-Format with proper HTML. Make sure the content is comprehensive and not truncated.`;
-    stopSim();
-    await sendSummery(prompt, url, mTopic, mSubTopic);
-  }
-}
-
-async function sendSummery(prompt, url, mTopic, mSubTopic) {
-  const dataToSend = { prompt: prompt };
-  const stopSim = simulateProgress('theory');
-  
-  try {
-    let generatedText = '';
-    let retryCount = 0;
-    const maxRetries = 3;
-    
-    while (retryCount < maxRetries && (!generatedText || !isContentComplete(generatedText, mSubTopic))) {
-      try {
-        const res = await axios.post(serverURL + '/api/generate', dataToSend, {
-          timeout: 60000 // 60 second timeout
-        });
-        
-        generatedText = res.data.generatedText;
-        
-        if (!generatedText || !isContentComplete(generatedText, mSubTopic)) {
-          console.warn(`Content incomplete for ${mSubTopic}, retry ${retryCount + 1}`);
-          generatedText = '';
-          retryCount++;
-          await new Promise(resolve => setTimeout(resolve, 2000));
-        } else {
-          break;
-        }
-      } catch (error) {
-        console.error(`Summary generation attempt ${retryCount + 1} failed:`, error);
-        retryCount++;
-        if (retryCount < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
-        }
-      }
-    }
-    
-    // Ensure content is complete and properly formatted
-    let finalText = generatedText;
-    if (!finalText || !isContentComplete(finalText, mSubTopic)) {
-      finalText = generateCompleteContent(mSubTopic, mainTopic);
-      console.log(`Using fallback complete content for ${mSubTopic}`);
-    } else {
-      finalText = formatCompleteContent(finalText, mSubTopic, mainTopic);
-    }
-    
-    stopSim();
-    simulateProgress('complete');
-    setLoadingProgress(100);
-    
-    setSelected(mSubTopic);
-    setTheory(finalText);
-    
-    if (url) {
-      setMedia(url);
-      updateLocalCache(mTopic, mSubTopic, { 
-        theory: finalText, 
-        youtube: url,
-        done: true 
-      });
-    } else {
-      const placeholderUrl = getFallbackImage(mainTopic, mSubTopic);
-      setMedia(placeholderUrl);
-      updateLocalCache(mTopic, mSubTopic, { 
-        theory: finalText, 
-        image: placeholderUrl,
-        done: true 
-      });
-    }
-    
-    await updateCourse();
-    
-    setTimeout(() => {
-      setShowLoadingPopup(false);
-      if (window.progressInterval) {
-        clearInterval(window.progressInterval);
-      }
-    }, 1500);
-    
-  } catch (error) {
-    console.error("Summary generation failed:", error);
-    const fallbackContent = generateCompleteContent(mSubTopic, mainTopic);
-    
-    setTheory(fallbackContent);
-    const placeholderUrl = getFallbackImage(mainTopic, mSubTopic);
-    setMedia(placeholderUrl);
-    
-    updateLocalCache(mTopic, mSubTopic, { 
-      theory: fallbackContent, 
-      image: placeholderUrl,
-      done: true 
-    });
-    
-    await updateCourse();
-    
-    setShowLoadingPopup(false);
-    if (window.progressInterval) {
-      clearInterval(window.progressInterval);
-    }
-  }
-}
-
-const handleSelect = useCallback((topicTitle, subtopicTitle) => {
-  if (!jsonData) return;
-
-  const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
-  const mTopic = topicsList.find(topic => topic.title === topicTitle);
-  const mSubTopic = mTopic?.subtopics.find(subtopic => subtopic.title === subtopicTitle);
-
-  if (!mSubTopic) return;
-
-  if (!isSubtopicUnlocked(topicTitle, subtopicTitle)) {
-    toast({ title: "Lesson Locked", description: "Complete previous lessons to unlock this one." });
-    return;
-  }
-
-  if (window.progressInterval) {
-    clearInterval(window.progressInterval);
-  }
-
-  setSelected(subtopicTitle);
-
-  if (mSubTopic.theory && mSubTopic.done) {
-    // Validate content completeness before displaying
-    let contentToShow = mSubTopic.theory;
-    if (!isContentComplete(contentToShow, subtopicTitle)) {
-      console.warn(`Incomplete content detected for ${subtopicTitle}, regenerating...`);
-      // Content is incomplete, regenerate it
-      setShowLoadingPopup(true);
-      setLoadingSubtopic(subtopicTitle);
-      setLoadingProgress(0);
-      
-      if (type === 'video & text course') {
-        const query = `${subtopicTitle} ${mainTopic} in english`;
-        sendVideo(query, topicTitle, subtopicTitle, subtopicTitle);
-      } else {
-        sendBulkCourseContent(topicTitle, subtopicTitle);
-      }
-      return;
-    }
-    
-    // Ensure content is properly formatted
-    contentToShow = formatCompleteContent(contentToShow, subtopicTitle, mainTopic);
-    setTheory(contentToShow);
-    
-    if (type === 'video & text course') {
-      setMedia(mSubTopic.youtube);
-    } else {
-      setMedia(mSubTopic.image || getFallbackImage(mainTopic, subtopicTitle));
-    }
-  } else {
-    setShowLoadingPopup(true);
-    setLoadingSubtopic(subtopicTitle);
-    setLoadingProgress(0);
-    
-    if (type === 'video & text course') {
-      const query = `${subtopicTitle} ${mainTopic} in english`;
-      sendVideo(query, topicTitle, subtopicTitle, subtopicTitle);
-    } else {
-      sendBulkCourseContent(topicTitle, subtopicTitle);
-    }
-  }
-}, [jsonData, mainTopic, isSubtopicUnlocked, type]);
-
-const handleMarkAsComplete = async () => {
-  if (!userId || !courseId || !selected) return;
-
-  const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
-  let currentTopicTitle = '';
-  if (Array.isArray(topicsList)) {
-    topicsList.forEach(t => {
-      if (Array.isArray(t.subtopics) && t.subtopics.some(s => s.title === selected)) {
-        currentTopicTitle = t.title;
-      }
-    });
-  }
-
-  let total = 0;
-  topicsList.forEach(t => total += t.subtopics.length);
-
-  try {
-    const res = await axios.post(`${serverURL}/api/progress/update`, {
-      userId,
-      courseId,
-      topicTitle: currentTopicTitle,
-      subtopicTitle: selected,
-      totalSubtopics: total
-    });
-
-    if (res.data.success) {
-      setCompletedSubtopics(res.data.progress.completedSubtopics);
-      setPercentage(res.data.progress.percentage);
-
-      const allSubtopics = [];
-      topicsList.forEach(t => {
-        t.subtopics.forEach(s => {
-          allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
-        });
-      });
-
-      const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
-      
-      if (currentIndex < allSubtopics.length - 1) {
-        const next = allSubtopics[currentIndex + 1];
-        handleSelect(next.topicTitle, next.subtopicTitle);
-        
-        if (mainContentRef.current) {
-          mainContentRef.current.scrollTop = 0;
-        }
-      } else {
-        setIsCompleted(true);
-        setPercentage(100);
-        toast({
-          title: "Course Completed!",
-          description: "You've finished all lessons. You can now take the quiz.",
-        });
-      }
-    }
-  } catch (error) {
-    console.error("Failed to update progress:", error);
-  }
-};
+  };
 
   const loadMessages = async () => {
     try {
@@ -1411,77 +862,236 @@ const handleMarkAsComplete = async () => {
     }
   };
 
-
-
-
-/**
- * Complete fallback content generator
- */
-function getCompleteFallbackContent(subtopic, topic) {
-  return `<div class="prose dark:prose-invert max-w-none">
-    <h2>${subtopic}</h2>
+async function sendBulkCourseContent(clickedTopic, clickedSub) {
+  setShowLoadingPopup(true);
+  setLoadingSubtopic(clickedSub);
+  
+  // Start theory generation progress
+  const clearTheoryProgress = simulateProgress('theory');
+  
+  // Instant UI Feedback - show loading state
+  setSelected(clickedSub);
+  setTheory(`<div class="prose dark:prose-invert max-w-none">
+    <h2>${clickedSub}</h2>
+    <p>AI is crafting personalized content for you...</p>
+    <div class="flex items-center justify-center p-8">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    </div>
+  </div>`);
+  
+  // Set a subtle placeholder for image
+  setMedia(null);
+  
+  try {
+    // Theory generation
+    const theoryPayload = {
+      mainTopic,
+      topicsList: [{ topicTitle: clickedTopic, subtopics: [clickedSub] }],
+      lang,
+      userId
+    };
     
-    <h3>Introduction</h3>
-    <p>${subtopic} is a fundamental concept in ${topic}. Understanding this topic is essential for building a strong foundation in ${topic}.</p>
+    const theoryRes = await axios.post(serverURL + '/api/generate-batch', theoryPayload);
     
-    <h3>Key Concepts</h3>
-    <ul>
-      <li><strong>Definition:</strong> ${subtopic} refers to the process of making decisions based on conditions in programming.</li>
-      <li><strong>Importance:</strong> It allows programs to execute different code paths based on different conditions.</li>
-      <li><strong>Common Use Cases:</strong> Input validation, user authentication, data processing, and business logic implementation.</li>
-    </ul>
+    // IMPORTANT: Update theory content FIRST before handling images
+    if (theoryRes.data && theoryRes.data.success && theoryRes.data.topics && theoryRes.data.topics[0]) {
+      const newTheory = theoryRes.data.topics[0].subtopics[0].theory;
+      
+      // Set theory content immediately - this should display your example text
+      setTheory(newTheory);
+      updateLocalCache(clickedTopic, clickedSub, { theory: newTheory, done: true });
+    }
     
-    <h3>Examples</h3>
-    <pre><code>
-# Example of ${subtopic.toLowerCase()} in Python
-condition = True
-
-if condition:
-    print("Condition is true")
-else:
-    print("Condition is false")
-    </code></pre>
+    // Switch to image loading stage (but don't block content display)
+    clearTheoryProgress();
+    simulateProgress('image');
     
-    <h3>Best Practices</h3>
-    <ul>
-      <li>Keep conditions simple and readable</li>
-      <li>Avoid deep nesting of conditional statements</li>
-      <li>Use meaningful variable names in conditions</li>
-      <li>Consider edge cases and handle them appropriately</li>
-    </ul>
+    // Fetch image in background - don't let image failure block theory display
+    const imagePrompt = `${clickedSub} in ${mainTopic}`;
+    try {
+      const imageRes = await axios.post(serverURL + '/api/image', { prompt: imagePrompt }, { timeout: 10000 });
+      if (imageRes.data?.url) {
+        setMedia(imageRes.data.url);
+        updateLocalCache(clickedTopic, clickedSub, { image: imageRes.data.url });
+      } else {
+        // Don't set a generic placeholder - just leave media as null
+        setMedia(null);
+      }
+    } catch (imageErr) {
+      console.error("Image fetch failed:", imageErr);
+      // Keep media as null - theory content will display normally
+      setMedia(null);
+    }
     
-    <h3>Conclusion</h3>
-    <p>Mastering ${subtopic} is crucial for writing effective and efficient ${topic} code. Practice with different scenarios to become proficient in using conditional statements.</p>
-  </div>`;
+    updateCourse();
+    
+    // Complete the loading process
+    simulateProgress('complete');
+    setLoadingProgress(100);
+    
+    setTimeout(() => {
+      setShowLoadingPopup(false);
+      if (window.progressInterval) {
+        clearInterval(window.progressInterval);
+      }
+    }, 1500);
+    
+  } catch (error) {
+    console.error("Theory generation failed:", error);
+    setTheory(`<div class="prose dark:prose-invert max-w-none">
+      <h2>${clickedSub}</h2>
+      <p>Sorry, we encountered an error loading the content. Please try again.</p>
+    </div>`);
+    setShowLoadingPopup(false);
+    if (window.progressInterval) {
+      clearInterval(window.progressInterval);
+    }
+  }
 }
 
-
-/**
- * Helper function to ensure content is complete
- */
-function ensureCompleteContent(content, subtopic, topic) {
-  // Check if content seems truncated (ends mid-sentence)
-  if (!content) {
-    return getCompleteFallbackContent(subtopic, topic);
-  }
-  
-  // Check if content ends with incomplete sentence
-  const lastChar = content.trim().slice(-1);
-  const words = content.split(' ');
-  const lastWord = words[words.length - 1];
-  
-  // If content doesn't end with proper punctuation and seems cut off
-  if (!['.', '!', '?', '"', "'", ')', '}'].includes(lastChar) && 
-      lastWord.length > 3 && 
-      !lastWord.includes('</') && 
-      !lastWord.includes('/>')) {
-    
-    // Append a proper conclusion
-    return content + ' This concept is fundamental to understanding ' + topic + '.';
-  }
-  
-  return content;
-}
+  // sendImageForBatch is called inside sendBulkCourseContent
+      
+  //     // Try to get AI-generated image first, but with better error handling
+  //     let imageUrl = '';
+      
+  //     try {
+  //       // Add timeout to prevent hanging
+  //       const controller = new AbortController();
+  //       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+  //       const postURL = serverURL + '/api/image';
+  //       const res = await axios.post(postURL, { prompt: promptImage }, {
+  //         signal: controller.signal,
+  //         timeout: 8000 // 8 second timeout
+  //       }).catch(error => {
+  //         console.error("Image API error:", error);
+  //         return { data: { url: null } };
+  //       });
+        
+  //       clearTimeout(timeoutId);
+  //       imageUrl = res.data?.url || '';
+  //     } catch (apiError) {
+  //       console.error("Image generation failed:", apiError);
+  //       imageUrl = '';
+  //     }
+      
+  //     // If AI image generation failed or returned empty, use Unsplash
+  //     if (!imageUrl) {
+  //       console.log("Using Unsplash fallback for:", sub);
+        
+  //       // Try multiple Unsplash queries for better results
+  //       const fallbackQueries = [
+  //         `${sub} ${mainTopic}`,
+  //         sub,
+  //         `${mainTopic} concept`,
+  //         'education learning'
+  //       ];
+        
+  //       // Use the first one that works
+  //       imageUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(fallbackQueries[0])}`;
+  //     }
+      
+  //     // Update image in cache immediately
+  //     if (imageUrl) {
+  //       preloadImageWithCache(imageUrl, sub);
+  //       setMedia(imageUrl);
+  //     }
+      
+  //     // Find the subtopic and update its image
+  //     const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+  //     if (topicsList) {
+  //       const mTopic = topicsList.find((t: any) => t.title === topics);
+  //       const mSubTopic = mTopic?.subtopics.find((s: any) => s.title === sub);
+        
+  //       if (mSubTopic) {
+  //         mSubTopic.image = imageUrl;
+  //         mSubTopic.done = true;
+          
+  //         // Save to sessionStorage and update course
+  //         sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+  //         updateCourse();
+  //       }
+  //     }
+      
+  //     setImageLoading(prev => {
+  //       const newMap = new Map(prev);
+  //       newMap.delete(sub);
+  //       return newMap;
+  //     });
+      
+  //     setIsLoading(false);
+      
+  //   } catch (error) {
+  //     console.error("Image generation error:", error);
+      
+  //     // Multiple fallback strategies
+  //     let fallbackUrl = '';
+      
+  //     try {
+  //       // Try Unsplash with different query combinations
+  //       const fallbackQueries = [
+  //         `${sub} ${mainTopic}`,
+  //         sub,
+  //         `${mainTopic} concept`,
+  //         'education',
+  //         'learning',
+  //         'study'
+  //       ];
+        
+  //       // Try each query until one works
+  //       for (const query of fallbackQueries) {
+  //         const testUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(query)}`;
+          
+  //         // Test if image loads (simple check)
+  //         const img = new Image();
+  //         await new Promise((resolve, reject) => {
+  //           img.onload = resolve;
+  //           img.onerror = reject;
+  //           img.src = testUrl;
+            
+  //           // Timeout after 2 seconds
+  //           setTimeout(reject, 2000);
+  //         }).catch(() => {
+  //           // Continue to next query
+  //           return;
+  //         });
+          
+  //         fallbackUrl = testUrl;
+  //         break;
+  //       }
+  //     } catch (fallbackError) {
+  //       console.error("All fallbacks failed:", fallbackError);
+  //     }
+      
+  //     // Ultimate fallback - use a reliable placeholder service
+  //     if (!fallbackUrl) {
+  //       fallbackUrl = `https://picsum.photos/800/600?random=${encodeURIComponent(sub)}`;
+  //     }
+      
+  //     setMedia(fallbackUrl);
+      
+  //     // Update the cache with fallback
+  //     const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+  //     if (topicsList) {
+  //       const mTopic = topicsList.find((t: any) => t.title === topics);
+  //       const mSubTopic = mTopic?.subtopics.find((s: any) => s.title === sub);
+        
+  //       if (mSubTopic) {
+  //         mSubTopic.image = fallbackUrl;
+  //         mSubTopic.done = true;
+  //         sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+  //       }
+  //     }
+      
+  //     setImageLoading(prev => {
+  //       const newMap = new Map(prev);
+  //       newMap.delete(sub);
+  //       return newMap;
+  //     });
+      
+  //     setIsLoading(false);
+  //   }
+  // }
 
 
   async function sendImageForBatch(promptImage: string, topics: string, sub: string, theory: string) {
@@ -1583,8 +1193,45 @@ function ensureCompleteContent(content, subtopic, topic) {
     setIsLoading(false);
   }
 }
+  const handleSelect = useCallback((topicTitle, subtopicTitle) => {
+    if (!jsonData) return;
 
+    const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
+    const mTopic = topicsList.find(topic => topic.title === topicTitle);
+    const mSubTopic = mTopic?.subtopics.find(subtopic => subtopic.title === subtopicTitle);
 
+    if (!mSubTopic) return;
+
+    if (!isSubtopicUnlocked(topicTitle, subtopicTitle)) {
+      toast({ title: "Lesson Locked", description: "Complete previous lessons to unlock this one." });
+      return;
+    }
+
+    // Clear any existing intervals
+    if (window.progressInterval) {
+      clearInterval(window.progressInterval);
+    }
+
+    // INSTANT: Change the title
+    setSelected(subtopicTitle);
+
+    if (mSubTopic.theory) {
+      // CACHE HIT: Show immediately
+      setTheory(mSubTopic.theory);
+      setMedia(type === 'video & text course' ? mSubTopic.youtube : mSubTopic.image);
+    } else {
+      // CACHE MISS: Show loading popup and start generation
+      setShowLoadingPopup(true);
+      setLoadingSubtopic(subtopicTitle);
+      setLoadingProgress(0); // Reset progress
+      
+      if (type === 'video & text course') {
+        sendVideo(`${subtopicTitle} ${mainTopic}`, topicTitle, subtopicTitle, subtopicTitle);
+      } else {
+        sendBulkCourseContent(topicTitle, subtopicTitle);
+      }
+    }
+  }, [jsonData, mainTopic, isSubtopicUnlocked, type]);
 
   async function sendPrompt(prompt, promptImage, topics, sub) {
     const dataToSend = {
@@ -1749,10 +1396,107 @@ function ensureCompleteContent(content, subtopic, topic) {
     }
   }
 
+  async function sendVideo(query, mTopic, mSubTopic, subtop) {
+    const dataToSend = {
+      prompt: query,
+    };
+  const stopSim = simulateProgress('video');
+  try {
+    const postURL = serverURL + '/api/yt';
+    const res = await axios.post(postURL, dataToSend);
 
+    try {
+      const generatedText = res.data.url;
+      stopSim();
+      sendTranscript(generatedText, mTopic, mSubTopic, subtop);
+      } catch (error) {
+        console.error(error);
+        toast({
+          title: "Error",
+          description: "Internal Server Error",
+        });
+        setIsLoading(false);
+      }
 
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: "Internal Server Error",
+      });
+      setIsLoading(false);
+    }
+  }
 
+  async function sendTranscript(url, mTopic, mSubTopic, subtop) {
+    const dataToSend = {
+      prompt: url,
+    };
+  const stopSim = simulateProgress('transcript');
+  try {
+    const postURL = serverURL + '/api/transcript';
+    const res = await axios.post(postURL, dataToSend);
 
+    try {
+      const generatedText = res.data.transcript;
+      const allText = generatedText.map(item => item.text);
+      const concatenatedText = allText.join(' ');
+      const prompt = `Strictly in ${lang}, you are an educational instructor creating content for a course on "${mainTopic}". Explain the subtopic "${subtop}" in detail with examples.
+Use the following video transcript as a reference/context for your explanation (ignore any YouTube intro/outro/like/subscribe talk):
+${concatenatedText}
+Please ensure the content is strictly educational and about the subtopic "${subtop}". Do not include additional external resources or image links.`;
+      stopSim();
+      sendSummery(prompt, url, mTopic, mSubTopic);
+    } catch (error) {
+      console.error(error)
+      const prompt = `Strictly in ${lang}, Explain me about this subtopic of ${mainTopic} with examples :- ${subtop}. Please Strictly Don't Give Additional Resources And Images.`;
+      stopSim();
+      sendSummery(prompt, url, mTopic, mSubTopic);
+    }
+
+  } catch (error) {
+    console.error(error)
+    const prompt = `Strictly in ${lang}, Explain me about this subtopic of ${mainTopic} with examples :- ${subtop}.  Please Strictly Don't Give Additional Resources And Images.`;
+    stopSim();
+    sendSummery(prompt, url, mTopic, mSubTopic);
+  }
+  }
+
+  async function sendSummery(prompt, url, mTopic, mSubTopic) {
+    const dataToSend = {
+      prompt: prompt,
+    };
+  const stopSim = simulateProgress('theory');
+  try {
+    const postURL = serverURL + '/api/generate';
+    const res = await axios.post(postURL, dataToSend);
+    const generatedText = res.data.generatedText;
+    const htmlContent = generatedText;
+    try {
+      const parsedJson = htmlContent;
+      stopSim();
+      simulateProgress('complete');
+      setLoadingProgress(100);
+      setTimeout(() => setShowLoadingPopup(false), 1500);
+      sendDataVideo(url, parsedJson, mTopic, mSubTopic);
+      } catch (error) {
+        console.error(error);
+        toast({
+          title: "Error",
+          description: "Internal Server Error",
+        });
+        setIsLoading(false);
+      }
+
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: "Internal Server Error",
+      });
+      setIsLoading(false);
+    }
+  }
 
   async function htmlDownload() {
     try {
