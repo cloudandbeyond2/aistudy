@@ -18,7 +18,7 @@ import saravananSign from '../res/saravanan-sign.png';
 import { toPng } from 'html-to-image';
 import { Card, CardContent } from '@/components/ui/card';
 
-const certificateTemplate = '/assets/images/certificate_template.jpg';
+const certificateTemplate = '/assets/images/certificate_template_blue.jpg';
 
 const Certificate = () => {
   const { state } = useLocation();
@@ -136,43 +136,38 @@ const Certificate = () => {
       {isOrgStudent ? (
         /* Organization Student UI - Simplified */
         <div className="relative shadow-2xl rounded-lg overflow-hidden max-w-4xl w-full aspect-[1.414/1] bg-white text-center" ref={certificateRef}>
-          {/* Custom Background Image */}
-          {certificateSettings?.backgroundImage ? (
-            <img
-              src={certificateSettings.backgroundImage}
-              alt="Certificate Background"
-              className="absolute inset-0 w-full h-full object-cover z-0"
-            />
-          ) : (
-            <img
-              src={certificateTemplate}
-              alt="Certificate Template"
-              className="absolute inset-0 w-full h-full object-cover z-0"
-            />
-          )}
+          {/* Custom Background Image for Org Students is always the blue template */}
+          <img
+            src={certificateTemplate}
+            alt="Certificate Template"
+            className="absolute inset-0 w-full h-full object-cover z-0"
+          />
 
           {/* Overlay Content */}
           <div className="relative z-10 flex flex-col items-center h-full w-full pt-20 text-slate-800 font-serif">
 
             {/* Brand logo + name (bottom-right) */}
-            {certificateSettings?.showOrganization && (
-              <div
-                className="absolute flex flex-col items-end gap-1"
-                style={{
-                  bottom: certificateSettings?.positions?.organizationLogo?.bottom || '10%',
-                  right: certificateSettings?.positions?.organizationLogo?.right || '8%'
-                }}
-              >
-                {certificateSettings?.organizationLogo && (
-                  <img
-                    src={certificateSettings.organizationLogo}
-                    alt="Brand Logo"
-                    className="h-16 object-contain"
-                  />
-                )}
-                <p className="text-sm font-semibold text-slate-900">
-                  {certificateSettings?.organizationName || appName}
-                </p>
+            {/* Partner Logo (Top Left) */}
+            {certificateSettings?.partnerLogo && (
+              <div className="absolute top-[8%] left-[8%]">
+                <img
+                  src={certificateSettings.partnerLogo}
+                  alt="Partner Logo"
+                  style={{ height: certificateSettings?.sizes?.partnerLogoHeight || '50px' }}
+                  className="object-contain"
+                />
+               </div>
+            )}
+
+            {/* Organization Logo (Top Right) */}
+            {certificateSettings?.organizationLogo && (
+              <div className="absolute top-[8%] right-[8%]">
+                <img
+                  src={certificateSettings.organizationLogo}
+                  alt="Organization Logo"
+                  style={{ height: certificateSettings?.sizes?.organizationLogoHeight || '50px' }}
+                  className="object-contain"
+                />
               </div>
             )}
 
@@ -202,57 +197,72 @@ const Certificate = () => {
               </h2>
             </div>
 
-            {/* Partner Logo */}
-            {certificateSettings?.showPartnerLogo && certificateSettings?.partnerLogo && (
-              <div className="absolute top-[75%]">
+            {/* Bottom Left: Director Signature & Name */}
+            <div
+              className="absolute flex flex-col items-center text-center w-48"
+              style={{
+                bottom: '14%',
+                left: '20%',
+                transform: 'translateX(-50%)'
+              }}
+            >
+              {certificateSettings?.ceoSignature && (
                 <img
-                  src={certificateSettings.partnerLogo}
-                  alt="Partner Logo"
-                  className="h-12 object-contain"
+                  src={certificateSettings.ceoSignature}
+                  alt="Director Signature"
+                  style={{ height: certificateSettings?.sizes?.signatureHeight || '40px' }}
+                  className="object-contain mb-1"
                 />
-              </div>
-            )}
+              )}
+              {/* Cover up built-in text with bg-white */}
+              <p className="text-sm font-semibold text-slate-800 uppercase tracking-widest mt-1 bg-white/90 px-2 rounded">
+                {certificateSettings?.ceoName || 'Director'}
+              </p>
+            </div>
 
-{/* Bottom-left block (QR + Signature + Date) */}
-                <div
-                  className="absolute flex flex-col items-start gap-4"
-                  style={{
-                    bottom: certificateSettings?.positions?.signature?.bottom || '10%',
-                    left: certificateSettings?.positions?.signature?.left || '8%'
-                  }}
-                >
-                  {certificateId && (
-                    <QRCodeSVG
-                      value={`${certificateSettings?.qrCodeUrl || websiteURL}/verify-certificate?id=${certificateId}`}
-                      size={parseInt(certificateSettings?.sizes?.qrCodeSize || '55')}
-                      className="max-lg:w-12 max-lg:h-12 max-md:w-8 max-md:h-8"
-                    />
-                  )}
+            {/* Bottom Middle-Right: Org Director Sign */}
+            <div
+              className="absolute flex justify-center items-center"
+              style={{
+                bottom: '18%',
+                right: '38%'
+              }}
+            >
+              {certificateSettings?.vpSignature && (
+                <img
+                  src={certificateSettings.vpSignature}
+                  alt="Org Signature"
+                  style={{ height: certificateSettings?.sizes?.signatureHeight || '40px' }}
+                  className="object-contain"
+                />
+              )}
+            </div>
 
-                  <div className="flex flex-col items-start gap-2 min-w-[180px]">
-                    {certificateSettings?.ceoSignature && (
-                      <img
-                        src={certificateSettings.ceoSignature}
-                        alt="Signature"
-                        style={{
-                          height: certificateSettings?.sizes?.signatureHeight || '40px'
-                        }}
-                        className="object-contain"
-                      />
-                    )}
-                    <div className="w-40 border-t border-slate-400"></div>
-                    <p className="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-widest">
-                      {certificateSettings?.signatureTitle || 'Director'}
-                    </p>
-
-                    <div>
-                      <p className="text-sm font-medium text-slate-700" style={{ fontFamily: 'Times New Roman, serif' }}>
-                        {end}
-                      </p>
-                      <p className="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-widest">Date</p>
-                    </div>
-                  </div>
-                </div>
+            {/* Bottom Right: QR, Cert No, Date */}
+            <div
+              className="absolute flex flex-col items-center text-center w-36 bg-white/90 p-2 rounded"
+              style={{
+                bottom: '11%',
+                right: '18%',
+                transform: 'translateX(50%)'
+              }}
+            >
+              {certificateId && (
+                <QRCodeSVG
+                  value={`${certificateSettings?.qrCodeUrl || websiteURL}/verify-certificate?id=${certificateId}`}
+                  size={parseInt(certificateSettings?.sizes?.qrCodeSize || '55')}
+                  className="max-lg:w-12 max-lg:h-12 max-md:w-8 max-md:h-8 mb-2"
+                />
+              )}
+              {certificateId && (
+                <p className="text-[10px] md:text-[11px] font-mono text-slate-700 mb-1 font-bold">
+                  ID: {certificateId.substring(0, 8).toUpperCase()}
+                </p>
+              )}
+              <p className="text-sm md:text-md font-medium text-slate-700 mt-1" style={{ fontFamily: 'Times New Roman, serif' }}>
+                {end}
+              </p>
+            </div>
 
           </div>
         </div>
@@ -299,7 +309,7 @@ const Certificate = () => {
                       />
                     )}
                     <p className="text-sm font-semibold text-slate-900">
-                      {certificateSettings?.organizationName || appName}
+                      {certificateSettings?.organizationName}
                     </p>
                   </div>
                 )}
@@ -315,7 +325,7 @@ const Certificate = () => {
                     letterSpacing: '0.3em',
                   }}
                 >
-                  {certificateSettings?.organizationName || appName}
+                  {certificateSettings?.organizationName}
                 </div>
 
                 {/* Name */}
@@ -440,7 +450,7 @@ const Certificate = () => {
                         <img src={logo} alt="Logo" className="h-8 object-contain" />
                       )}
                       <p className="text-sm font-semibold text-slate-900">
-                        {certificateSettings?.organizationName || appName}
+                        {certificateSettings?.organizationName}
                       </p>
                     </div>
                   )}

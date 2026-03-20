@@ -2,7 +2,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { serverURL } from '@/constants';
+import { serverURL, websiteURL } from '@/constants';
+import { QRCodeSVG } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Download, ArrowLeft } from 'lucide-react';
 import html2canvas from 'html2canvas';
@@ -10,18 +11,28 @@ import jsPDF from 'jspdf';
 import { useToast } from '@/hooks/use-toast';
 import SEO from '@/components/SEO';
 
-const certificateTemplate = '/assets/images/certificate_template.jpg';
-
+const certificateTemplate = '/assets/images/certificate_template_blue.jpg';
 
 const OrgAssignmentCertificate = () => {
     const { submissionId } = useParams();
     const navigate = useNavigate();
     const { toast } = useToast();
     const [certificateData, setCertificateData] = useState<any>(null);
+    const [certificateSettings, setCertificateSettings] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const certificateRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const response = await axios.get(`${serverURL}/api/certificate-settings`);
+                setCertificateSettings(response.data);
+            } catch (error) {
+                console.error('Error fetching certificate settings:', error);
+            }
+        };
+
+        fetchSettings();
         fetchCertificateData();
     }, [submissionId]);
 
@@ -101,9 +112,33 @@ const OrgAssignmentCertificate = () => {
                 {/* Overlay Content */}
                 <div className="relative z-10 flex flex-col items-center h-full w-full pt-20 text-slate-800 font-serif">
 
+                    {/* Partner Logo (Top Left) */}
+                    {certificateSettings?.partnerLogo && (
+                        <div className="absolute top-[8%] left-[8%]">
+                            <img
+                                src={certificateSettings.partnerLogo}
+                                alt="Partner Logo"
+                                style={{ height: certificateSettings?.sizes?.partnerLogoHeight || '50px' }}
+                                className="object-contain"
+                            />
+                        </div>
+                    )}
+
+                    {/* Organization Logo (Top Right) */}
+                    {certificateSettings?.organizationLogo && (
+                        <div className="absolute top-[8%] right-[8%]">
+                            <img
+                                src={certificateSettings.organizationLogo}
+                                alt="Organization Logo"
+                                style={{ height: certificateSettings?.sizes?.organizationLogoHeight || '50px' }}
+                                className="object-contain"
+                            />
+                        </div>
+                    )}
+
                     {/* "This is to certify that" */}
                     <div className="absolute top-[38%] w-full text-center">
-                        <p className="text-lg md:text-xl italic text-slate-500">This is to certify that</p>
+                        <p className="text-lg md:text-xl italic text-slate-500">This is to certifyy that</p>
                     </div>
 
                     {/* Student Name */}
@@ -135,19 +170,67 @@ const OrgAssignmentCertificate = () => {
                         </p>
                     </div>
 
-                    {/* Signature Section (Static Placeholder) */}
-                    <div className="absolute bottom-[18%] left-[20%] text-center">
-                        <div className="w-48 border-t border-slate-400 mb-2 mx-auto"></div>
-                        {/* <p className="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-widest">Director of Studies</p> */}
+                    {/* Bottom Left: Director Signature & Name */}
+                    <div
+                        className="absolute flex flex-col items-center text-center w-48"
+                        style={{
+                            bottom: '14%',
+                            left: '20%',
+                            transform: 'translateX(-50%)'
+                        }}
+                    >
+                        {certificateSettings?.ceoSignature && (
+                            <img
+                                src={certificateSettings.ceoSignature}
+                                alt="Director Signature"
+                                style={{ height: certificateSettings?.sizes?.signatureHeight || '40px' }}
+                                className="object-contain mb-1"
+                            />
+                        )}
+                        {/* We use bg-white px-2 py-1 to obscure the built-in 'Director of Studies' text on the image */}
+                        <p className="text-sm font-semibold text-slate-800 uppercase tracking-widest mt-1 bg-white/90 px-2 rounded">
+                            {certificateSettings?.ceoName || 'Director'}
+                        </p>
                     </div>
 
-                    {/* Date Section */}
-                    <div className="absolute bottom-[18%] right-[20%] text-center">
-                        <p className="text-lg md:text-xl font-medium text-slate-700 mb-1" style={{ fontFamily: 'Times New Roman, serif' }}>
+                    {/* Bottom Middle-Right: Org Director Sign */}
+                    <div
+                        className="absolute flex justify-center items-center"
+                        style={{
+                            bottom: '18%',
+                            right: '38%'
+                        }}
+                    >
+                        {certificateSettings?.vpSignature && (
+                            <img
+                                src={certificateSettings.vpSignature}
+                                alt="Org Signature"
+                                style={{ height: certificateSettings?.sizes?.signatureHeight || '40px' }}
+                                className="object-contain"
+                            />
+                        )}
+                    </div>
+
+                    {/* Bottom Right: QR, Cert No, Date */}
+                    <div
+                        className="absolute flex flex-col items-center text-center w-36 bg-white/90 p-2 rounded"
+                        style={{
+                            bottom: '11%',
+                            right: '18%',
+                            transform: 'translateX(50%)'
+                        }}
+                    >
+                        <QRCodeSVG
+                            value={`${certificateSettings?.qrCodeUrl || websiteURL}/verify-certificate?id=${certificateData._id}`}
+                            size={parseInt(certificateSettings?.sizes?.qrCodeSize || '55')}
+                            className="max-lg:w-12 max-lg:h-12 max-md:w-8 max-md:h-8 mb-2"
+                        />
+                        <p className="text-[10px] md:text-[11px] font-mono text-slate-700 mb-1 font-bold">
+                            ID: {certificateData._id?.substring(0, 8).toUpperCase()}
+                        </p>
+                        <p className="text-sm md:text-md font-medium text-slate-700 mt-1" style={{ fontFamily: 'Times New Roman, serif' }}>
                             {new Date(certificateData.date).toLocaleDateString()}
                         </p>
-                        <div className="w-48 border-t border-slate-400 mb-2 mx-auto"></div>
-                        {/* <p className="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-widest">Date</p> */}
                     </div>
 
                 </div>
