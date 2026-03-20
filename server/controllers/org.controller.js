@@ -67,7 +67,7 @@ export const orgSignup = async (req, res) => {
         try {
             await sendMail({
                 to: email,
-                subject: `Welcome to ${process.env.COMPANY || "AIstudy"}! - Organization Registered`,
+                subject: `Welcome to ${process.env.COMPANY || "Colossus IQ"}! - Organization Registered`,
                 html: `
 <!DOCTYPE html>
 <html>
@@ -214,7 +214,7 @@ export const addStudent = async (req, res) => {
         try {
             await sendMail({
                 to: email,
-                subject: `Account Created - ${process.env.COMPANY || "AIstudy"}`,
+                subject: `Account Created - ${process.env.COMPANY || "Colossus IQ"}`,
                 html: `
 <!DOCTYPE html>
 <html>

@@ -209,7 +209,7 @@ const ResumeView = () => {
 
                 {/* Footer */}
                 <div className="bg-slate-50 border-t border-slate-100 px-10 py-4 flex justify-between items-center">
-                    <p className="text-xs text-slate-400">Built with AiStudy Resume Builder</p>
+                    <p className="text-xs text-slate-400">Built with Colossus IQ Resume Builder</p>
                     <p className="text-xs text-slate-400">{new Date().getFullYear()}</p>
                 </div>
             </div>

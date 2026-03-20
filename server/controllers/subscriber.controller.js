@@ -148,13 +148,13 @@ export const subscribe = async (req, res) => {
     try {
       await sendMail({
         to: email,
-        subject: "Welcome to AIStudy 🚀",
+        subject: "Welcome to Colossus IQ 🚀",
         html: `
-          <h2>Welcome to AIStudy!</h2>
+          <h2>Welcome to Colossus IQ!</h2>
           <p>Thank you for subscribing to our newsletter.</p>
           <p>You’ll now receive updates about new courses, learning resources, and platform announcements.</p>
-          <p>Start exploring: <a href="https://aistudy-infilabs.vercel.app/">AIStudy Platform</a></p>
-          <p>Best regards,<br/>AIStudy Team</p>
+          <p>Start exploring: <a href="https://Colossus IQ-infilabs.vercel.app/">Colossus IQ Platform</a></p>
+          <p>Best regards,<br/>Colossus IQ Team</p>
         `
       });
     } catch (mailError) {

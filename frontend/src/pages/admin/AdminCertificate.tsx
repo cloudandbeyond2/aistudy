@@ -228,7 +228,7 @@ const AdminCertificate = () => {
                                         name="organizationName"
                                         value={formData.organizationName}
                                         onChange={handleInputChange}
-                                        placeholder="e.g., AI Study Institute"
+                                        placeholder="e.g., Colossus IQ Institute"
                                     />
                                 </div>
                                 <div className="space-y-2">

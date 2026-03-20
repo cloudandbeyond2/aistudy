@@ -53,7 +53,7 @@ const AdminSettings = () => {
             const res = await axios.get(`${serverURL}/api/settings`);
             setGeminiApiKey(res.data.geminiApiKey || '');
             setUnsplashApiKey(res.data.unsplashApiKey || '');
-            setWebsiteName(res.data.websiteName || 'AIstudy');
+            setWebsiteName(res.data.websiteName || 'Colossus IQ');
             setWebsiteLogo(res.data.websiteLogo || '/logo.png');
             setTaxPercentage(res.data.taxPercentage || 0);
             if (res.data.notebookEnabled) {
@@ -220,7 +220,7 @@ const AdminSettings = () => {
                                     <Label htmlFor="website-name">Website Name</Label>
                                     <Input
                                         id="website-name"
-                                        placeholder="e.g. AIstudy"
+                                        placeholder="e.g. Colossus IQ"
                                         value={websiteName}
                                         onChange={(e) => setWebsiteName(e.target.value)}
                                     />

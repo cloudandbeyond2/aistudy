@@ -13,7 +13,7 @@ const adminSchema = new mongoose.Schema({
   billing: { type: String, default: '' },
   geminiApiKey: { type: String, default: '' },
   unsplashApiKey: { type: String, default: '' },
-  websiteName: { type: String, default: 'AIstudy' },
+  websiteName: { type: String, default: 'Colossus IQ' },
   websiteLogo: { type: String, default: '/logo.png' },
   taxPercentage: { type: Number, default: 0 },
   notebookEnabled: {

@@ -40,7 +40,7 @@ const AINotebook = () => {
     const [sources, setSources] = useState(INITIAL_SOURCES);
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [chatMessages, setChatMessages] = useState([
-        { role: 'system', content: 'Hi! Im your AI Study Assistant. I have reviewed your selected sources and am ready to answer any questions or help you summarize the materials.' }
+        { role: 'system', content: 'Hi! Im your Colossus IQ Assistant. I have reviewed your selected sources and am ready to answer any questions or help you summarize the materials.' }
     ]);
     const [currentInput, setCurrentInput] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);

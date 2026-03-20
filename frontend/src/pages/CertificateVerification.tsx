@@ -118,7 +118,7 @@ const CertificateVerification = () => {
                                     </div>
                                     <Separator className="bg-green-200" />
                                     <p className="text-xs text-green-800 text-center">
-                                        This certificate was officially issued by AIstudy.
+                                        This certificate was officially issued by Colossus IQ.
                                     </p>
                                 </CardContent>
                             </Card>

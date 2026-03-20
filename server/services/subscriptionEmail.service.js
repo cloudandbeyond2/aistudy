@@ -48,7 +48,7 @@ export const sendCancelEmail = async (email, name, subject) => {
   });
 };
 
-export const sendExpiryWarningEmail = async (email, name, platformName = 'AI Study') => {
+export const sendExpiryWarningEmail = async (email, name, platformName = 'Colossus IQ') => {
   const renewLink = `${process.env.WEBSITE_URL}/pricing`;
 
   const html = `

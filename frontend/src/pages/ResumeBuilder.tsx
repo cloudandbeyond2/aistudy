@@ -502,7 +502,7 @@ ${jobDescription}`,
         const shareUrl = `${websiteURL}/resume/${uid}`;
         const shareData = {
             title: `${userName}'s Professional Resume`,
-            text: `Check out ${userName}'s professional resume built with AiStudy!`,
+            text: `Check out ${userName}'s professional resume built with Colossus IQ!`,
             url: shareUrl,
         };
         if (navigator.share) {

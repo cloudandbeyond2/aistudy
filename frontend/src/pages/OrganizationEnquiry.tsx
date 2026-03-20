@@ -118,9 +118,9 @@
 //       <div className="max-w-7xl mx-auto px-6 py-5 grid grid-cols-3 items-center">
 
 //         <div className="flex items-center gap-3">
-//           <img src={Logo} alt="AI Study Logo" className="h-10 w-10" />
+//           <img src={Logo} alt="Colossus IQ Logo" className="h-10 w-10" />
 //           <span className="text-xl font-semibold">
-//             AI Study
+//             Colossus IQ
 //           </span>
 //         </div>
 
@@ -259,8 +259,8 @@
 
 //           <div>
 //             <div className="flex items-center gap-3 mb-4">
-//               <img src={Logo} alt="AI Study Logo" className="h-10 w-10" />
-//               <span className="text-xl font-semibold">AI Study</span>
+//               <img src={Logo} alt="Colossus IQ Logo" className="h-10 w-10" />
+//               <span className="text-xl font-semibold">Colossus IQ</span>
 //             </div>
 
 //             <p className="text-slate-400">
@@ -280,14 +280,14 @@
 //             <div className="space-y-3 text-slate-400">
 //               <div className="flex items-center gap-3">
 //                 <Mail size={18} />
-//                 <a href="mailto:traininglabs2017@gmail.com">
-//                   traininglabs2017@gmail.com
+//                 <a href="mailto:info@colossusiq.com">
+//                   info@colossusiq.com
 //                 </a>
 //               </div>
 //               <div className="flex items-center gap-3">
 //                 <Phone size={18} />
-//                 <a href="tel:8220002535">
-//                   8220002535
+//                 <a href="tel:+91 82200 02535">
+//                   +91 82200 02535
 //                 </a>
 //               </div>
 //             </div>
@@ -296,7 +296,7 @@
 //         </div>
 
 //         <div className="text-center text-slate-500 text-sm mt-10">
-//           © {new Date().getFullYear()} AI Study. All rights reserved.
+//           © {new Date().getFullYear()} Colossus IQ. All rights reserved.
 //         </div>
 //       </footer>
 
@@ -416,8 +416,8 @@ const OrganizationEnquiry = () => {
           <div className="max-w-7xl mx-auto px-6 py-5 grid grid-cols-3 items-center">
 
             <div className="flex items-center gap-3">
-              <img src={Logo} alt="AI Study Logo" className="h-10 w-10" />
-              <span className="text-xl font-semibold">AI Study</span>
+              <img src={Logo} alt="Colossus IQ Logo" className="h-10 w-10" />
+              <span className="text-xl font-semibold">Colossus IQ</span>
             </div>
 
             <nav className="hidden md:flex justify-center gap-10 text-sm font-medium">
@@ -563,8 +563,8 @@ const OrganizationEnquiry = () => {
 
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <img src={Logo} alt="AI Study Logo" className="h-10 w-10" />
-              <span className="text-xl font-semibold">AI Study</span>
+              <img src={Logo} alt="Colossus IQ Logo" className="h-10 w-10" />
+              <span className="text-xl font-semibold">Colossus IQ</span>
             </div>
 
             <p className="text-slate-400">
@@ -590,14 +590,14 @@ const OrganizationEnquiry = () => {
 
               <div className="flex items-center gap-3">
                 <Mail size={18} />
-                <a href="mailto:traininglabs2017@gmail.com">
-                  traininglabs2017@gmail.com
+                <a href="mailto:info@colossusiq.com">
+                  info@colossusiq.com
                 </a>
               </div>
 
               <div className="flex items-center gap-3">
                 <Phone size={18} />
-                <a href="tel:8220002535">8220002535</a>
+                <a href="tel:+91 82200 02535">+91 82200 02535</a>
               </div>
 
             </div>
@@ -606,7 +606,7 @@ const OrganizationEnquiry = () => {
         </div>
 
         <div className="text-center text-slate-500 text-sm mt-10">
-          © {new Date().getFullYear()} AI Study. All rights reserved.
+          © {new Date().getFullYear()} Colossus IQ. All rights reserved.
         </div>
 
       </footer>

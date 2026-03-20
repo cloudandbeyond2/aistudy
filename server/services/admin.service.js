@@ -250,7 +250,7 @@ export const getDashboardStatsWithOrgs = async () => {
     orgStudents,
     admin: {
       email: stats.admin.email,
-      websiteName: admin?.websiteName || 'AIstudy',
+      websiteName: admin?.websiteName || 'Colossus IQ',
       websiteLogo: admin?.websiteLogo || '/logo.png',
       notebookEnabled: admin?.notebookEnabled || {
         free: false,
@@ -449,7 +449,7 @@ export const getAdminSettings = async () => {
   return {
     geminiApiKey: admin?.geminiApiKey || '',
     unsplashApiKey: admin?.unsplashApiKey || '',
-    websiteName: admin?.websiteName || 'AIstudy',
+    websiteName: admin?.websiteName || 'Colossus IQ',
     websiteLogo: admin?.websiteLogo || '/logo.png',
     taxPercentage: admin?.taxPercentage || 0,
     notebookEnabled: admin?.notebookEnabled || {

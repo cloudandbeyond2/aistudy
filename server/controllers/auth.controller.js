@@ -108,7 +108,7 @@
 //     await transporter.sendMail({
 //       from: process.env.EMAIL,
 //       to: email,
-//       subject: `Verify your email for ${process.env.COMPANY || 'AIstudy'}`,
+//       subject: `Verify your email for ${process.env.COMPANY || 'Colossus IQ'}`,
 //       html: `<p>Hello ${mName}, click <a href="${verificationLink}">here</a> to verify your email.</p>`
 //     });
 
@@ -540,7 +540,7 @@ export const signup = async (req, res) => {
 
       // 4. Send verification email
       try {
-        const rawWebsiteUrl = process.env.WEBSITE_URL || 'https://aistudy-infilabs.vercel.app';
+        const rawWebsiteUrl = process.env.WEBSITE_URL || 'https://Colossus IQ-infilabs.vercel.app';
         const baseUrl = rawWebsiteUrl.endsWith("/")
           ? rawWebsiteUrl.slice(0, -1)
           : rawWebsiteUrl;
@@ -548,7 +548,7 @@ export const signup = async (req, res) => {
         await transporter.sendMail({
           from: process.env.EMAIL,
           to: email,
-          subject: `Verify your email for ${process.env.COMPANY || "AIstudy"}`,
+          subject: `Verify your email for ${process.env.COMPANY || "Colossus IQ"}`,
           html: `
 <!DOCTYPE html>
 <html>
@@ -801,14 +801,14 @@ export const verifyEmail = async (req, res) => {
 
     // Send account creation/welcome email (fire and forget for better UX)
     try {
-      const rawWebsiteUrl = process.env.WEBSITE_URL || 'https://aistudy-infilabs.vercel.app';
+      const rawWebsiteUrl = process.env.WEBSITE_URL || 'https://Colossus IQ-infilabs.vercel.app';
       const baseUrl = rawWebsiteUrl.endsWith("/")
         ? rawWebsiteUrl.slice(0, -1)
         : rawWebsiteUrl;
       transporter.sendMail({
         from: process.env.EMAIL,
         to: user.email,
-        subject: `Welcome to ${process.env.COMPANY || "AIstudy"}!`,
+        subject: `Welcome to ${process.env.COMPANY || "Colossus IQ"}!`,
         html: `
 <!DOCTYPE html>
 <html>
@@ -914,13 +914,13 @@ export const socialLogin = async (req, res) => {
       await transporter.sendMail({
         from: process.env.EMAIL,
         to: user.email,
-        subject: `Welcome to ${process.env.COMPANY || "AIstudy"}!`,
+        subject: `Welcome to ${process.env.COMPANY || "Colossus IQ"}!`,
         html: `
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Welcome to AIstudy</title>
+<title>Welcome to Colossus IQ</title>
 </head>
 <body style="margin:0;padding:0;background:#f2f2f2;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
@@ -985,7 +985,7 @@ export const forgotPassword = async (req, res) => {
   const { email, name, company, logo } = req.body;
 
   // Fallbacks for email template variables
-  const appName = name || process.env.COMPANY || "AIstudy";
+  const appName = name || process.env.COMPANY || "Colossus IQ";
   const orgCompany = company || process.env.COMPANY || "Traininglabs Ai Solutions";
 
   try {

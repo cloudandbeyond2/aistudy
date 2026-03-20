@@ -299,7 +299,7 @@ const AdminContacts = () => {
   };
 
   const sendReply = (email: string, subject: string) => {
-    const ccMail = adminEmail || 'traininglabs2017@gmail.com';
+    const ccMail = adminEmail || 'info@colossusiq.com';
     const encodedSubject = encodeURIComponent(subject || 'Reply to Inquiry');
 
     // Direct Gmail Compose URL

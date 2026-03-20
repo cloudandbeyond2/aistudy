@@ -1,9 +1,9 @@
 //BRAND
-export const appName = 'AIstudy';
-export const companyName = 'AIstudy by traininglabs';
-export const websiteURL = 'https://aistudy-infilabs.vercel.app';
+export const appName = 'Colossus IQ';
+export const companyName = 'Colossus IQ by traininglabs';
+export const websiteURL = 'https://Colossus IQ-infilabs.vercel.app';
 export const serverURL = import.meta.env.PROD
-  ? 'https://aistudy-backend1.vercel.app'
+  ? 'https://Colossus IQ-backend1.vercel.app'
   : 'http://localhost:5001';
 export const appLogo = 'https://firebasestorage.googleapis.com/v0/b/aicourse-81b42.appspot.com/o/aicouse.png?alt=media&token=7175cdbe-64b4-4fe4-bb6d-b519347ad8af';
 export const razorpayEnabled = true;
@@ -11,7 +11,7 @@ export const paypalEnabled = true;
 export const stripeEnabled = true;
 export const paystackEnabled = true;
 export const flutterwaveEnabled = true;
-export const adminEmail = 'traininglabs2017@gmail.com';
+export const adminEmail = 'info@colossusiq.com';
 
 
 //PRICING :-

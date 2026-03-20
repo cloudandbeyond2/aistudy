@@ -323,7 +323,7 @@ export default function StaffSupport() {
               <div>
                 <p className="text-xs">Email</p>
                 <p className="font-semibold">
-                  supportaistudy@gmail.com
+                  supportColossus IQ@gmail.com
                 </p>
               </div>
             </div>

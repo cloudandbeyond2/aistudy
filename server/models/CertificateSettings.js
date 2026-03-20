@@ -19,7 +19,7 @@ const certificateSettingsSchema = new mongoose.Schema({
   },
   // Customizable fields
   backgroundImage: { type: String, default: '' }, // Base64 background image
-  organizationName: { type: String, default: 'AI Study' },
+  organizationName: { type: String, default: 'Colossus IQ' },
   organizationLogo: { type: String, default: '' }, // Base64 organization logo
   partnerLogo: { type: String, default: '' }, // Base64 partner logo
   certificateDescription: { type: String, default: 'This certificate is awarded for successfully completing the course with distinction.' },

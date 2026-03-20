@@ -261,7 +261,7 @@ const StudentPublicPortfolio = () => {
             {/* Footer */}
             <div className="border-t py-6 text-center">
                 <p className="text-xs text-muted-foreground">
-                    Portfolio powered by <span className="font-semibold text-primary">AIstudy</span> Career Platform
+                    Portfolio powered by <span className="font-semibold text-primary">Colossus IQ</span> Career Platform
                 </p>
             </div>
         </div>
