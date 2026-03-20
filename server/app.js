@@ -74,7 +74,7 @@ app.use('/uploads', express.static('uploads'));
 mongoose.set('returnDocument', 'after');
 // -------------------- MIDDLEWARES --------------------
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Handle all OPTIONS preflight requests
+// app.options('/*', cors(corsOptions));
 app.use(compressionConfig);
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(express.json({ limit: '50mb' }));
