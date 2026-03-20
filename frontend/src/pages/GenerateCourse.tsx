@@ -1660,7 +1660,7 @@ const GenerateCourse = () => {
                             <FormControl>
                               <Input 
                                 className="h-12 text-base shadow-sm focus-visible:ring-primary/30" 
-                                placeholder="e.g., Master the Art of Sushi Making" 
+                                placeholder="Start with a topic you’re curious about" 
                                 {...field} 
                                 disabled={!isAuthenticated}
                               />
