@@ -11,6 +11,7 @@ import { Loader2, Upload } from 'lucide-react';
 const AdminCertificate = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [activeTab, setActiveTab] = useState<'regular' | 'org'>('regular');
     const { toast } = useToast();
 
     const [formData, setFormData] = useState({
@@ -46,12 +47,13 @@ const AdminCertificate = () => {
     });
 
     useEffect(() => {
-        fetchSettings();
-    }, []);
+        fetchSettings(activeTab);
+    }, [activeTab]);
 
-    const fetchSettings = async () => {
+    const fetchSettings = async (type: string) => {
+        setIsLoading(true);
         try {
-            const response = await axios.get(`${serverURL}/api/certificate-settings`);
+            const response = await axios.get(`${serverURL}/api/certificate-settings?type=${type}`);
             setFormData(response.data);
             setIsLoading(false);
         } catch (error) {
@@ -108,7 +110,8 @@ const AdminCertificate = () => {
         e.preventDefault();
         setIsSaving(true);
         try {
-            const response = await axios.post(`${serverURL}/api/admin/certificate-settings`, formData);
+            const payload = { ...formData, type: activeTab };
+            const response = await axios.post(`${serverURL}/api/admin/certificate-settings`, payload);
             if (response.data.success) {
                 toast({
                     title: "Success",
@@ -145,9 +148,23 @@ const AdminCertificate = () => {
         <div className="space-y-6 animate-fade-in">
             <div>
                 <h2 className="text-3xl font-bold tracking-tight">Certificate Settings</h2>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground mb-4">
                     Manage the signatures and details that appear on course certificates.
                 </p>
+                <div className="flex gap-4 border-b pb-4">
+                    <Button 
+                        variant={activeTab === 'regular' ? 'default' : 'outline'} 
+                        onClick={() => setActiveTab('regular')}
+                    >
+                        Regular User Certificates
+                    </Button>
+                    <Button 
+                        variant={activeTab === 'org' ? 'default' : 'outline'} 
+                        onClick={() => setActiveTab('org')}
+                    >
+                        Organization Certificates
+                    </Button>
+                </div>
             </div>
 
             <Card>
@@ -177,7 +194,10 @@ const AdminCertificate = () => {
                                     <Label htmlFor="ceoSignature">Signature</Label>
                                     <div className="flex items-center gap-4">
                                         {formData.ceoSignature && (
-                                            <img src={formData.ceoSignature} alt="CEO Signature" className="h-12 object-contain border rounded p-1" />
+                                            <div className="flex flex-col items-center gap-1">
+                                                <img src={formData.ceoSignature} alt="CEO Signature" className="h-12 object-contain border rounded p-1" />
+                                                <Button type="button" variant="ghost" size="sm" className="h-6 text-xs text-red-500 hover:text-red-700" onClick={() => setFormData(prev => ({ ...prev, ceoSignature: '' }))}>Remove</Button>
+                                            </div>
                                         )}
                                         <Input
                                             id="ceoSignature"
@@ -206,7 +226,10 @@ const AdminCertificate = () => {
                                     <Label htmlFor="vpSignature">Signature</Label>
                                     <div className="flex items-center gap-4">
                                         {formData.vpSignature && (
-                                            <img src={formData.vpSignature} alt="VP Signature" className="h-12 object-contain border rounded p-1" />
+                                            <div className="flex flex-col items-center gap-1">
+                                                <img src={formData.vpSignature} alt="VP Signature" className="h-12 object-contain border rounded p-1" />
+                                                <Button type="button" variant="ghost" size="sm" className="h-6 text-xs text-red-500 hover:text-red-700" onClick={() => setFormData(prev => ({ ...prev, vpSignature: '' }))}>Remove</Button>
+                                            </div>
                                         )}
                                         <Input
                                             id="vpSignature"
@@ -235,7 +258,10 @@ const AdminCertificate = () => {
                                     <Label htmlFor="organizationLogo">Organization Logo</Label>
                                     <div className="flex items-center gap-4">
                                         {formData.organizationLogo && (
-                                            <img src={formData.organizationLogo} alt="Organization Logo" className="h-12 object-contain border rounded p-1" />
+                                            <div className="flex flex-col items-center gap-1">
+                                                <img src={formData.organizationLogo} alt="Organization Logo" className="h-12 object-contain border rounded p-1" />
+                                                <Button type="button" variant="ghost" size="sm" className="h-6 text-xs text-red-500 hover:text-red-700" onClick={() => setFormData(prev => ({ ...prev, organizationLogo: '' }))}>Remove</Button>
+                                            </div>
                                         )}
                                         <Input
                                             id="organizationLogo"
@@ -263,7 +289,10 @@ const AdminCertificate = () => {
                                     <Label htmlFor="partnerLogo">Partner Logo</Label>
                                     <div className="flex items-center gap-4">
                                         {formData.partnerLogo && (
-                                            <img src={formData.partnerLogo} alt="Partner Logo" className="h-12 object-contain border rounded p-1" />
+                                            <div className="flex flex-col items-center gap-1">
+                                                <img src={formData.partnerLogo} alt="Partner Logo" className="h-12 object-contain border rounded p-1" />
+                                                <Button type="button" variant="ghost" size="sm" className="h-6 text-xs text-red-500 hover:text-red-700" onClick={() => setFormData(prev => ({ ...prev, partnerLogo: '' }))}>Remove</Button>
+                                            </div>
                                         )}
                                         <Input
                                             id="partnerLogo"
@@ -286,7 +315,10 @@ const AdminCertificate = () => {
                                     <Label htmlFor="backgroundImage">Background Image</Label>
                                     <div className="flex items-center gap-4">
                                         {formData.backgroundImage && (
-                                            <img src={formData.backgroundImage} alt="Background" className="h-12 object-contain border rounded p-1" />
+                                            <div className="flex flex-col items-center gap-1">
+                                                <img src={formData.backgroundImage} alt="Background" className="h-12 object-contain border rounded p-1" />
+                                                <Button type="button" variant="ghost" size="sm" className="h-6 text-xs text-red-500 hover:text-red-700" onClick={() => setFormData(prev => ({ ...prev, backgroundImage: '' }))}>Remove</Button>
+                                            </div>
                                         )}
                                         <Input
                                             id="backgroundImage"
@@ -332,7 +364,10 @@ const AdminCertificate = () => {
                                     <Label htmlFor="logo">Company Logo (Bottom)</Label>
                                     <div className="flex items-center gap-4">
                                         {formData.logo && (
-                                            <img src={formData.logo} alt="Company Logo" className="h-12 object-contain border rounded p-1" />
+                                            <div className="flex flex-col items-center gap-1">
+                                                <img src={formData.logo} alt="Company Logo" className="h-12 object-contain border rounded p-1" />
+                                                <Button type="button" variant="ghost" size="sm" className="h-6 text-xs text-red-500 hover:text-red-700" onClick={() => setFormData(prev => ({ ...prev, logo: '' }))}>Remove</Button>
+                                            </div>
                                         )}
                                         <Input
                                             id="logo"
@@ -497,11 +532,11 @@ const AdminCertificate = () => {
                                                 />
                                             </div>
                                             <div>
-                                                <Label className="text-xs">Right</Label>
+                                                <Label className="text-xs">Left</Label>
                                                 <Input
-                                                    value={(formData.positions as any).organizationLogo?.right || ''}
-                                                    onChange={(e) => handlePositionChange('organizationLogo', 'right', e.target.value)}
-                                                    placeholder="e.g., 10%"
+                                                    value={(formData.positions as any).organizationLogo?.left || ''}
+                                                    onChange={(e) => handlePositionChange('organizationLogo', 'left', e.target.value)}
+                                                    placeholder="e.g., 50%"
                                                     className="text-sm"
                                                 />
                                             </div>
