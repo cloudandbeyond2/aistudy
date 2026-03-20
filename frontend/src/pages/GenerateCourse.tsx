@@ -86,10 +86,17 @@
 //   const canUseVideo = planLimits.allowVideo;
 //   const canUseMultiLang = planLimits.allowMultiLang;
 //   const maxSubtopics = planLimits.maxSubtopics;
+//   
+//   const orgId = sessionStorage.getItem('orgId');
+//   const orgLimit = orgPlan?.aiCourseSlots || 20;
+//   
+//   const displayLimit = orgId ? orgLimit : planLimits.maxCourses;
+//   const currentCount = orgId ? orgCourseCount : courseCount;
+//  
 //   const remainingCourses =
-//     planLimits.maxCourses === Infinity
+//     displayLimit === Infinity
 //       ? Infinity
-//       : Math.max(planLimits.maxCourses - courseCount, 0);
+//       : Math.max(displayLimit - currentCount, 0);
 
 //   // Calculate login percentage (if logged in, show 100%)
 //   const loginProgress = isAuthenticated ? 100 : 0;
@@ -149,16 +156,33 @@
 //     async function fetchCourseCount() {
 //       try {
 //         const uid = sessionStorage.getItem('uid');
+//         const orgId = sessionStorage.getItem('orgId');
 //         if (!uid) return;
-
+// 
 //         const courseRes = await axios.get(`${serverURL}/api/getcourses`);
-//         const myCourses = courseRes.data.filter((course: { user: string }) => course.user === uid);
+//         const allCourses = Array.isArray(courseRes.data) ? courseRes.data : [];
+//         
+//         const myCourses = allCourses.filter((course: { user: string }) => course.user === uid);
 //         setCourseCount(myCourses.length);
+// 
+//         if (orgId) {
+//           try {
+//             const planRes = await axios.get(`${serverURL}/api/admin/org-plan?organizationId=${orgId}`);
+//             if (planRes.data.success) {
+//               setOrgPlan(planRes.data.plan);
+//             }
+// 
+//             const organizationCourses = allCourses.filter((course: { organizationId: string }) => course.organizationId === orgId);
+//             setOrgCourseCount(organizationCourses.length);
+//           } catch (err) {
+//             console.error('Error fetching org-specific data:', err);
+//           }
+//         }
 //       } catch (error) {
 //         console.error('Error fetching course count:', error);
 //       }
 //     }
-
+// 
 //     if (isAuthenticated) {
 //       fetchCourseCount();
 //     }
@@ -580,13 +604,16 @@
 //               <div className="flex items-start gap-3 p-4 rounded-xl border bg-primary/5 text-sm text-muted-foreground shadow-sm">
 //                 <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
 //                 <div className="space-y-1">
-//                    <p className="font-semibold text-foreground capitalize">{userType} Plan Active</p>
+//                    <p className="font-semibold text-foreground capitalize">{orgId ? 'Organization Plan' : `${userType} Plan`} Active</p>
 //                    <p>
-//                     <strong>{planLimits.maxCourses === Infinity ? 'Unlimited' : planLimits.maxCourses}</strong> course generation{planLimits.maxCourses === 1 ? '' : 's'}. 
+//                     <strong>{displayLimit === Infinity ? 'Unlimited' : displayLimit}</strong> course generation{displayLimit === 1 ? '' : 's'}. 
 //                     <strong>{maxSubtopics}</strong> custom subtopics allowed per generation.
 //                    </p>
-//                    {subscriptionEndStr && userType !== 'forever' && (
+//                    {subscriptionEndStr && userType !== 'forever' && !orgId && (
 //                     <p className="text-xs opacity-70 italic mt-1">Plan expires on {new Date(subscriptionEndStr).toLocaleDateString()}</p>
+//                    )}
+//                    {orgPlan?.endDate && (
+//                     <p className="text-xs opacity-70 italic mt-1">Organization plan expires on {new Date(orgPlan.endDate).toLocaleDateString()}</p>
 //                    )}
 //                 </div>
 //               </div>
@@ -597,11 +624,11 @@
 //               <div className="flex items-center justify-between gap-4 p-4 rounded-xl border bg-muted/20 text-sm">
 //                 <div className="flex items-center gap-2">
 //                   <Layers className="h-4 w-4 text-indigo-500" />
-//                   <span className="font-medium">Courses Created: <span className="text-foreground">{courseCount}</span></span>
+//                   <span className="font-medium">Courses Created: <span className="text-foreground">{currentCount}</span></span>
 //                 </div>
 //                 <div className="flex items-center gap-2">
 //                   <Sparkles className="h-4 w-4 text-amber-500" />
-//                   <span className="font-medium">Remaining: <span className="text-foreground">{planLimits.maxCourses === Infinity ? '∞' : remainingCourses}</span></span>
+//                   <span className="font-medium">Remaining: <span className="text-foreground">{displayLimit === Infinity ? '∞' : remainingCourses}</span></span>
 //                 </div>
 //               </div>
 //             )}
@@ -993,6 +1020,8 @@ const GenerateCourse = () => {
   const [generationProgress, setGenerationProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState('');
   const [formProgress, setFormProgress] = useState(0);
+  const [orgPlan, setOrgPlan] = useState<any>(null);
+  const [orgCourseCount, setOrgCourseCount] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -1029,10 +1058,17 @@ const GenerateCourse = () => {
   const canUseVideo = planLimits.allowVideo;
   const canUseMultiLang = planLimits.allowMultiLang;
   const maxSubtopics = planLimits.maxSubtopics;
+  
+  const orgId = sessionStorage.getItem('orgId');
+  const orgLimit = orgPlan?.aiCourseSlots || 20;
+  
+  const displayLimit = orgId ? orgLimit : planLimits.maxCourses;
+  const currentCount = orgId ? orgCourseCount : courseCount;
+ 
   const remainingCourses =
-    planLimits.maxCourses === Infinity
+    displayLimit === Infinity
       ? Infinity
-      : Math.max(planLimits.maxCourses - courseCount, 0);
+      : Math.max(displayLimit - currentCount, 0);
 
   // Calculate login percentage (if logged in, show 100%)
   const loginProgress = isAuthenticated ? 100 : 0;
@@ -1092,11 +1128,28 @@ const GenerateCourse = () => {
     async function fetchCourseCount() {
       try {
         const uid = sessionStorage.getItem('uid');
+        const orgId = sessionStorage.getItem('orgId');
         if (!uid) return;
-
+ 
         const courseRes = await axios.get(`${serverURL}/api/getcourses`);
-        const myCourses = courseRes.data.filter((course: { user: string }) => course.user === uid);
+        const allCourses = Array.isArray(courseRes.data) ? courseRes.data : [];
+        
+        const myCourses = allCourses.filter((course: { user: string }) => course.user === uid);
         setCourseCount(myCourses.length);
+ 
+        if (orgId) {
+          try {
+            const planRes = await axios.get(`${serverURL}/api/admin/org-plan?organizationId=${orgId}`);
+            if (planRes.data.success) {
+              setOrgPlan(planRes.data.plan);
+            }
+ 
+            const organizationCourses = allCourses.filter((course: { organizationId: string }) => course.organizationId === orgId);
+            setOrgCourseCount(organizationCourses.length);
+          } catch (err) {
+            console.error('Error fetching org-specific data:', err);
+          }
+        }
       } catch (error) {
         console.error('Error fetching course count:', error);
       }
@@ -1589,13 +1642,16 @@ const GenerateCourse = () => {
               <div className="flex items-start gap-3 p-4 rounded-xl border bg-primary/5 text-sm text-muted-foreground shadow-sm">
                 <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                   <p className="font-semibold text-foreground capitalize">{userType} Plan Active</p>
+                   <p className="font-semibold text-foreground capitalize">{orgId ? 'Organization Plan' : `${userType} Plan`} Active</p>
                    <p>
-                    <strong>{planLimits.maxCourses === Infinity ? 'Unlimited' : planLimits.maxCourses}</strong> course generation{planLimits.maxCourses === 1 ? '' : 's'}. 
+                    <strong>{displayLimit === Infinity ? 'Unlimited' : displayLimit}</strong> course generation{displayLimit === 1 ? '' : 's'}. 
                     <strong>{maxSubtopics}</strong> custom subtopics allowed per generation.
                    </p>
-                   {subscriptionEndStr && userType !== 'forever' && (
+                   {subscriptionEndStr && userType !== 'forever' && !orgId && (
                     <p className="text-xs opacity-70 italic mt-1">Plan expires on {new Date(subscriptionEndStr).toLocaleDateString()}</p>
+                   )}
+                   {orgPlan?.endDate && (
+                    <p className="text-xs opacity-70 italic mt-1">Organization plan expires on {new Date(orgPlan.endDate).toLocaleDateString()}</p>
                    )}
                 </div>
               </div>
@@ -1606,11 +1662,11 @@ const GenerateCourse = () => {
               <div className="flex items-center justify-between gap-4 p-4 rounded-xl border bg-muted/20 text-sm">
                 <div className="flex items-center gap-2">
                   <Layers className="h-4 w-4 text-indigo-500" />
-                  <span className="font-medium">Courses Created: <span className="text-foreground">{courseCount}</span></span>
+                  <span className="font-medium">Courses Created: <span className="text-foreground">{currentCount}</span></span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-amber-500" />
-                  <span className="font-medium">Remaining: <span className="text-foreground">{planLimits.maxCourses === Infinity ? '∞' : remainingCourses}</span></span>
+                  <span className="font-medium">Remaining: <span className="text-foreground">{displayLimit === Infinity ? '∞' : remainingCourses}</span></span>
                 </div>
               </div>
             )}

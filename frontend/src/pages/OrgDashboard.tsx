@@ -16,6 +16,7 @@ import * as XLSX from 'xlsx';
 import RichTextEditor from '@/components/RichTextEditor';
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Swal from 'sweetalert2';
 const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [], role }: any) => {
     if (!course) return null;
@@ -369,6 +370,7 @@ const [previewProject, setPreviewProject] = useState<any>(null);
     const [meetings, setMeetings] = useState<any[]>([]);
     const [projects, setProjects] = useState<any[]>([]);
     const [materials, setMaterials] = useState<any[]>([]);
+    const [orgPlan, setOrgPlan] = useState<any>(null);
     const [openMeetingDialog, setOpenMeetingDialog] = useState(false);
     const [openProjectDialog, setOpenProjectDialog] = useState(false);
 
@@ -446,6 +448,7 @@ const resetProjectForm = () => {
         fetchOrgDepartments();
         fetchOrgDeptAdmins();
         fetchNotices();
+        fetchOrgPlan();
     }, [orgId]);
 
     useEffect(() => {
@@ -493,7 +496,18 @@ const resetProjectForm = () => {
             console.error("Failed to fetch departments", e);
         }
     };
-
+ 
+    const fetchOrgPlan = async () => {
+        try {
+            const res = await axios.get(`${serverURL}/api/admin/org-plan?organizationId=${orgId}`);
+            if (res.data.success) {
+                setOrgPlan(res.data.plan);
+            }
+        } catch (e) {
+            console.error("Failed to fetch org plan", e);
+        }
+    };
+ 
     const fetchOrgDeptAdmins = async () => {
         try {
             const res = await axios.get(`${serverURL}/api/org/dept-admins?organizationId=${orgId}`);
@@ -1617,9 +1631,24 @@ const formatGuidanceText = (text: string) => {
         }
     };
 
+    const daysRemaining = orgPlan?.endDate ? Math.ceil((new Date(orgPlan.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+    const isExpiring = daysRemaining !== null && daysRemaining <= 10 && daysRemaining >= 0;
+
     return (
         <div className="container mx-auto py-10 space-y-8 animate-fade-in">
             <SEO title="Organization Dashboard" description="Manage your organization, students, and curriculum." />
+
+            {isExpiring && (
+                <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive mb-6">
+                    <Bell className="h-4 w-4" />
+                    <AlertTitle>Plan Expiring Soon</AlertTitle>
+                    <AlertDescription>
+                        Your organization plan "{orgPlan.planName}" will expire in {daysRemaining} days. 
+                        Please contact the super admin to renew your plan and avoid service interruption.
+                    </AlertDescription>
+                </Alert>
+            )}
+
 
             <div className="p-8 rounded-3xl bg-gradient-to-br from-blue-600/10 via-indigo-600/5 to-transparent border border-blue-600/10 shadow-sm relative overflow-hidden group transition-all duration-500 hover:shadow-md hover:border-blue-600/20">
                 <div className="absolute -right-12 -top-12 w-48 h-48 bg-blue-600/5 rounded-full blur-3xl group-hover:bg-blue-600/10 transition-colors" />

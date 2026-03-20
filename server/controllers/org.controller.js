@@ -154,10 +154,10 @@ const getOrgStudentLimit = async (organizationId) => {
     if (org.customStudentLimit > 0) return org.customStudentLimit;
 
     const slotLimits = {
-        1: 50,
-        2: 100,
-        3: 150,
-        4: 200
+        1: 20,
+        2: 40,
+        3: 60,
+        4: 80
     };
 
     return slotLimits[org.studentSlot] || 50;

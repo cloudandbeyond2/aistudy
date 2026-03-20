@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt';
 import Course from '../models/Course.js';
 import Admin from '../models/Admin.js';
 import Subscription from '../models/Subscription.js';
+import OrganizationPlan from '../models/OrganizationPlan.js';
 
 import { addOneMonthSafe } from '../utils/date.utils.js';
 import { sendMail } from './mail.service.js';
@@ -281,9 +282,25 @@ export const getDashboardStatsWithOrgs = async () => {
 };
 
 export const getAllOrganizations = async () => {
-  return User.find({ isOrganization: true });
+  const orgs = await User.find({ isOrganization: true }).lean();
+  
+  return Promise.all(
+    orgs.map(async (org) => {
+      const plan = await OrganizationPlan.findOne({ organization: org.organization, isActive: true }).lean();
+      return { 
+        ...org, 
+        planName: plan?.planName || 'No Plan',
+        planEndDate: plan?.endDate || null
+      };
+    })
+  );
 };
-
+ 
+export const getOrgPlan = async (organizationId) => {
+  const plan = await OrganizationPlan.findOne({ organization: organizationId }).lean();
+  return plan;
+};
+ 
 export const updateOrganization = async (id, data) => {
   const user = await User.findById(id);
   if (!user) throw new Error('Organization not found');
