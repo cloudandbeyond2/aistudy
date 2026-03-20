@@ -237,14 +237,16 @@ const isPaidUser =
                         </SidebarMenuButton>
                       </SidebarMenuItem>
 
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Pricing" isActive={isActive('/dashboard/pricing')}>
-                          <Link to="/dashboard/pricing" className={cn(isActive('/dashboard/pricing') && "text-primary")}>
-                            <DollarSign />
-                            <span>Pricing</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
+                      {sessionStorage.getItem('isOrganization') !== 'true' && sessionStorage.getItem('role') !== 'dept_admin' && (
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild tooltip="Pricing" isActive={isActive('/dashboard/pricing')}>
+                            <Link to="/dashboard/pricing" className={cn(isActive('/dashboard/pricing') && "text-primary")}>
+                              <DollarSign />
+                              <span>Pricing</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
 
                       {/* Resume Builder — restricted by settings */}
                       {resumeEnabled[sessionStorage.getItem('role') === 'org_admin' ? 'org_admin' : (sessionStorage.getItem('type') as keyof typeof resumeEnabled)] && (

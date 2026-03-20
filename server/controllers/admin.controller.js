@@ -131,7 +131,17 @@ export const getOrganizations = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
-
+ 
+export const getOrgPlan = async (req, res) => {
+  try {
+    const { organizationId } = req.query;
+    const plan = await adminService.getOrgPlan(organizationId);
+    res.json({ success: true, plan });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+ 
 export const updateOrganization = async (req, res) => {
   try {
     const { id } = req.params;

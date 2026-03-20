@@ -6,6 +6,7 @@ import IssuedCertificate from '../models/IssuedCertificate.js';
 import Notification from '../models/Notification.js';
 import StudentProgress from '../models/StudentProgress.js';
 import { getPlanLimits, isPlanActive } from '../config/planLimits.js';
+import OrganizationPlan from '../models/OrganizationPlan.js';
 
 /**
  * CHECK COURSE EXISTS
@@ -79,6 +80,31 @@ export const createCourse = async (req, res) => {
     }
     // ──────────────────────────────────────────────────────────────────────
 
+    // Find the user to get their organizationId if creator wasn't enough context for limits
+    let resolvedCreator = creator;
+    if (!resolvedCreator) {
+      const UserModel = (await import('../models/User.js')).default;
+      resolvedCreator = await UserModel.findById(user);
+    }
+
+    // ── ORGANIZATION AI COURSE LIMIT CHECK ────────────────────────────────
+    const organizationId = resolvedCreator?.organization;
+    if (organizationId) {
+      const orgPlan = await OrganizationPlan.findOne({ organization: organizationId });
+      const aiCourseLimit = orgPlan?.aiCourseSlots || 20;
+
+      const orgAICourseCount = await Course.countDocuments({ organizationId });
+
+      if (orgAICourseCount >= aiCourseLimit) {
+        return res.status(403).json({
+          success: false,
+          message: `Your organization has reached the AI course generation limit (${aiCourseLimit}). Please contact admin to increase the limit.`,
+          courseLimitReached: true
+        });
+      }
+    }
+    // ──────────────────────────────────────────────────────────────────────
+
     // Safeguard: Check if course already exists for this user
     const existingCourse = await Course.findOne({
       user,
@@ -113,13 +139,6 @@ export const createCourse = async (req, res) => {
     } catch (err) {
       console.log('Unsplash failed, using default image');
     }
-
-    // Find the user to get their organizationId (already fetched above for plan check, re-fetch if needed)
-    if (!creator) {
-      const UserModel = (await import('../models/User.js')).default;
-      var creatorFallback = await UserModel.findById(user);
-    }
-    const resolvedCreator = creator || creatorFallback;
 
     const newCourse = new Course({
       user,
