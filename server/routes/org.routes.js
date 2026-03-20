@@ -45,7 +45,12 @@ import {
     updateAssignment,
     deleteAssignment,
     requestLimitIncrease,
-    generateProjectContent
+    generateProjectContent,
+    createOrgPlan,
+    getOrgPlan,
+    getAllOrgPlans,
+    updateOrgPlanFeatures,
+    deleteOrgPlan
 } from '../controllers/org.controller.js';
 import Organization from '../models/Organization.js';
 import { uploadAssignment, uploadCourseImage, uploadMaterial } from '../config/upload.config.js';
@@ -139,5 +144,12 @@ router.post('/org/limit-increase/request', requestLimitIncrease);
 
 // Project AI Generation
 router.post('/org/project/generate', generateProjectContent);
+
+// Organization Plans (ADMIN)
+router.post('/admin/org-plan/create', createOrgPlan);
+router.get('/admin/org-plan', getOrgPlan);
+router.get('/admin/org-plans', getAllOrgPlans);
+router.put('/admin/org-plan/:organizationId/features', updateOrgPlanFeatures);
+router.delete('/admin/org-plan/:organizationId', deleteOrgPlan);
 
 export default router;

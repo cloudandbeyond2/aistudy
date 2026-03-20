@@ -5,6 +5,7 @@ import Submission from '../models/Submission.js';
 import Notice from '../models/Notice.js';
 import OrgCourse from '../models/OrgCourse.js';
 import Course from '../models/Course.js';
+import OrganizationPlan from '../models/OrganizationPlan.js';
 import bcrypt from 'bcrypt';
 import Meeting from '../models/Meeting.js';
 import Department from '../models/Department.js';
@@ -1475,6 +1476,222 @@ export const requestLimitIncrease = async (req, res) => {
         res.json({ success: true, message: 'Limit increase request submitted successfully' });
     } catch (error) {
         console.error('requestLimitIncrease error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * HELPER: GET PLAN DURATION IN DAYS
+ */
+function getPlanDuration(planName) {
+    const durations = {
+        '1months': 30,
+        '3months': 90,
+        '6months': 180
+    };
+    return durations[planName] || 30;
+}
+
+/**
+ * CREATE OR UPDATE ORGANIZATION PLAN (ADMIN)
+ */
+export const createOrgPlan = async (req, res) => {
+    const { organizationId, planName, additionalRequestSlots, studentSlotPrice } = req.body;
+
+    try {
+        console.log('🔍 Creating plan for org:', organizationId, 'Plan:', planName);
+
+        // Validate plan name
+        const validPlans = ['1months', '3months', '6months'];
+        if (!validPlans.includes(planName)) {
+            return res.json({
+                success: false,
+                message: 'Invalid plan. Choose: 1months, 3months, or 6months'
+            });
+        }
+
+        // Check if organization exists
+        const org = await Organization.findById(organizationId);
+        if (!org) {
+            return res.status(404).json({
+                success: false,
+                message: 'Organization not found'
+            });
+        }
+
+        console.log('✅ Organization found:', org.name);
+
+        // Check if plan already exists for this organization
+        let plan = await OrganizationPlan.findOne({ organization: organizationId });
+
+        if (plan) {
+            // Update existing plan
+            console.log('📝 Updating existing plan');
+            plan.planName = planName;
+            plan.additionalRequestSlots = additionalRequestSlots || 0;
+            plan.studentSlotPrice = studentSlotPrice || 1000;
+            plan.isActive = true;
+            plan.startDate = new Date();
+        } else {
+            // Create new plan
+            console.log('✨ Creating new plan');
+            plan = new OrganizationPlan({
+                organization: organizationId,
+                planName,
+                additionalRequestSlots: additionalRequestSlots || 0,
+                studentSlotPrice: studentSlotPrice || 1000,
+                features: {
+                    allowAICreation: org.allowAICreation,
+                    allowManualCreation: org.allowManualCreation,
+                    allowCareerPlacement: org.allowCareerPlacement
+                },
+                startDate: new Date()
+            });
+        }
+
+        await plan.save();
+        console.log('💾 Plan saved to database');
+
+        // Update organization with the selected plan
+        org.plan = planName;
+        await org.save();
+        console.log('✅ Organization updated with plan:', planName);
+
+        res.json({
+            success: true,
+            message: 'Organization plan created/updated successfully',
+            plan: {
+                ...plan.toObject(),
+                planDuration: getPlanDuration(planName),
+                daysRemaining: Math.ceil((new Date(plan.endDate) - new Date()) / (1000 * 60 * 60 * 24))
+            }
+        });
+    } catch (error) {
+        console.error('❌ Create org plan error:', error);
+        res.status(500).json({ success: false, message: 'Server error: ' + error.message });
+    }
+};
+
+/**
+ * GET ORGANIZATION PLAN (ADMIN)
+ */
+export const getOrgPlan = async (req, res) => {
+    const { organizationId } = req.query;
+
+    try {
+        const plan = await OrganizationPlan.findOne({ organization: organizationId })
+            .populate('organization', 'name email plan allowAICreation allowManualCreation');
+
+        if (!plan) {
+            return res.json({
+                success: true,
+                message: 'No plan assigned yet',
+                plan: null
+            });
+        }
+
+        res.json({
+            success: true,
+            plan: {
+                ...plan.toObject(),
+                planDuration: getPlanDuration(plan.planName),
+                daysRemaining: Math.ceil((new Date(plan.endDate) - new Date()) / (1000 * 60 * 60 * 24))
+            }
+        });
+    } catch (error) {
+        console.error('Get org plan error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * GET ALL ORGANIZATION PLANS (ADMIN DASHBOARD)
+ */
+export const getAllOrgPlans = async (req, res) => {
+    try {
+        const plans = await OrganizationPlan.find({ isActive: true })
+            .populate('organization', 'name email plan')
+            .sort({ createdAt: -1 });
+
+        const plansWithDetails = plans.map(plan => ({
+            ...plan.toObject(),
+            planDuration: getPlanDuration(plan.planName),
+            daysRemaining: Math.ceil((new Date(plan.endDate) - new Date()) / (1000 * 60 * 60 * 24))
+        }));
+
+        res.json({
+            success: true,
+            plans: plansWithDetails,
+            totalCount: plans.length
+        });
+    } catch (error) {
+        console.error('Get all org plans error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * UPDATE ORGANIZATION PLAN FEATURES (ADMIN)
+ */
+export const updateOrgPlanFeatures = async (req, res) => {
+    const { organizationId } = req.params;
+    const { features } = req.body;
+
+    try {
+        const plan = await OrganizationPlan.findOne({ organization: organizationId });
+
+        if (!plan) {
+            return res.status(404).json({
+                success: false,
+                message: 'Plan not found for this organization'
+            });
+        }
+
+        // Update features
+        plan.features = {
+            ...plan.features,
+            ...features
+        };
+
+        await plan.save();
+
+        res.json({
+            success: true,
+            message: 'Plan features updated successfully',
+            plan: plan.toObject()
+        });
+    } catch (error) {
+        console.error('Update org plan features error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * DELETE ORGANIZATION PLAN (ADMIN)
+ */
+export const deleteOrgPlan = async (req, res) => {
+    const { organizationId } = req.params;
+
+    try {
+        const plan = await OrganizationPlan.findOneAndUpdate(
+            { organization: organizationId },
+            { isActive: false },
+            { new: true }
+        );
+
+        if (!plan) {
+            return res.status(404).json({
+                success: false,
+                message: 'Plan not found for this organization'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Organization plan deactivated successfully'
+        });
+    } catch (error) {
+        console.error('Delete org plan error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };

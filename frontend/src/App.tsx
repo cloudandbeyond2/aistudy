@@ -80,6 +80,7 @@ import AdminOrganizations from "./pages/admin/AdminOrganizations";
 import AdminCreateOrganization from "./pages/admin/AdminCreateOrganization";
 import AdminOrganizationDetails from "./pages/admin/AdminOrganizationDetails";
 import AdminOrganizationEnquiries from "./pages/admin/AdminOrganizationEnquiries";
+import AdminOrgPlan from "./pages/admin/AdminOrgPlan";
 import AdminSubscribers from "./pages/admin/AdminSubscribers";
 import AdminTickets from "./pages/admin/AdminTickets";
 import SupportTickets from "./pages/SupportTickets";
@@ -222,6 +223,7 @@ const App = () => (
                     <Route path="orders" element={<AdminOrders />} />
                     <Route path="payment-settings" element={<AdminPaymentSettings />} />
                     <Route path="organizations" element={<AdminOrganizations />} />
+                    <Route path="org-plans" element={<AdminOrgPlan />} />
                     <Route path="create-organization" element={<AdminCreateOrganization />} />
                     <Route path="organization/:id" element={<AdminOrganizationDetails />} />
                     <Route path="settings" element={<AdminSettings />} />
