@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,11 +27,12 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
-import { Building2, Search, Edit, Ban, CheckCircle, Eye, Phone, Mail, MapPin, FileText } from 'lucide-react';
+import { Building2, Search, Edit, Ban, CheckCircle, Eye, Phone, Mail, MapPin, FileText, Trash2, Loader2 } from 'lucide-react';
 import { serverURL } from '@/constants';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 const AdminOrganizations = () => {
     const [organizations, setOrganizations] = useState([]);
@@ -42,6 +42,7 @@ const AdminOrganizations = () => {
     const [isViewOpen, setIsViewOpen] = useState(false);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [orgToToggle, setOrgToToggle] = useState(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const { toast } = useToast();
     const navigate = useNavigate();
 
@@ -51,12 +52,14 @@ const AdminOrganizations = () => {
 
     const fetchOrganizations = async () => {
         try {
+            setLoading(true);
             const response = await axios.get(`${serverURL}/api/organizations`);
             setOrganizations(response.data);
         } catch (error) {
+            console.error('Fetch organizations error:', error);
             toast({
                 title: "Error",
-                description: "Failed to fetch organizations",
+                description: error.response?.data?.message || "Failed to fetch organizations",
                 variant: "destructive"
             });
         } finally {
@@ -66,21 +69,32 @@ const AdminOrganizations = () => {
 
     const toggleBlock = async (id, currentStatus) => {
         try {
-            await axios.post(`${serverURL}/api/organization/${id}/block`, {
+            const response = await axios.post(`${serverURL}/api/organization/${id}/block`, {
                 isBlocked: !currentStatus
             });
-            toast({
-                title: "Success",
-                description: `Organization ${!currentStatus ? 'blocked' : 'unblocked'} successfully`
+            
+            // Show success message with SweetAlert
+            await Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: `Organization ${!currentStatus ? 'blocked' : 'unblocked'} successfully`,
+                timer: 2000,
+                showConfirmButton: false,
+                background: 'hsl(var(--background))',
+                color: 'hsl(var(--foreground))'
             });
+            
             setIsConfirmOpen(false);
             setOrgToToggle(null);
             fetchOrganizations();
         } catch (error) {
-            toast({
-                title: "Error",
-                description: "Failed to update status",
-                variant: "destructive"
+            console.error('Toggle block error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.response?.data?.message || 'Failed to update status',
+                background: 'hsl(var(--background))',
+                color: 'hsl(var(--foreground))'
             });
         }
     };
@@ -96,6 +110,100 @@ const AdminOrganizations = () => {
         }
     };
 
+const handleDelete = async (orgId, orgName) => {
+    if (deleteLoading) return;
+    
+    try {
+        console.log('Attempting to delete organization with ID:', orgId);
+        
+        // Show SweetAlert confirmation
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            html: `
+                <div class="text-left">
+                    <p class="mb-2">You are about to delete <strong>${orgName}</strong>.</p>
+                    <p class="text-red-500 font-semibold">This action cannot be undone!</p>
+                    <p class="mt-2 text-sm text-muted-foreground">This will permanently delete:</p>
+                    <ul class="list-disc list-inside text-sm text-muted-foreground mt-1">
+                        <li>The organization admin account</li>
+                        <li>All associated users and their data</li>
+                        <li>All courses and content</li>
+                        <li>All records and history</li>
+                    </ul>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete everything!',
+            cancelButtonText: 'Cancel',
+            background: 'hsl(var(--background))',
+            color: 'hsl(var(--foreground))',
+            iconColor: '#d33',
+            reverseButtons: true,
+            showLoaderOnConfirm: true,
+            preConfirm: async () => {
+                setDeleteLoading(true);
+                try {
+                    // Based on your routes, use the deleteuser endpoint
+                    const response = await axios.post(`${serverURL}/api/admin/deleteuser`, {
+                        userId: orgId  // Send the organization ID as userId
+                    });
+                    
+                    console.log('Delete response:', response?.data);
+                    return response;
+                } catch (error) {
+                    Swal.showValidationMessage(
+                        error.response?.data?.message || 'Failed to delete organization'
+                    );
+                    throw error;
+                } finally {
+                    setDeleteLoading(false);
+                }
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        });
+
+        if (result.isConfirmed) {
+            // Show success message
+            await Swal.fire({
+                icon: 'success',
+                title: 'Deleted!',
+                text: 'Organization has been deleted successfully.',
+                timer: 2000,
+                showConfirmButton: false,
+                background: 'hsl(var(--background))',
+                color: 'hsl(var(--foreground))'
+            });
+
+            // Refresh the list
+            fetchOrganizations();
+        }
+    } catch (error) {
+        console.error('Full delete error:', error);
+        console.error('Error response:', error.response);
+        console.error('Error data:', error.response?.data);
+        
+        // Show error message with more details
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            html: `
+                <div class="text-left">
+                    <p class="mb-2">${error.response?.data?.message || 'Failed to delete organization'}</p>
+                    ${error.response?.data?.details ? `<p class="text-sm text-muted-foreground">${error.response.data.details}</p>` : ''}
+                </div>
+            `,
+            confirmButtonColor: '#3085d6',
+            background: 'hsl(var(--background))',
+            color: 'hsl(var(--foreground))'
+        });
+    } finally {
+        setDeleteLoading(false);
+    }
+};
+
     const handleViewOrg = (org) => {
         setSelectedOrg(org);
         setIsViewOpen(true);
@@ -103,11 +211,16 @@ const AdminOrganizations = () => {
 
     const filteredOrgs = organizations.filter(org =>
         org.organizationDetails?.institutionName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        org.email.toLowerCase().includes(searchTerm.toLowerCase())
+        org.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // Get current admin ID from localStorage or context
+    const getCurrentAdminId = () => {
+        return localStorage.getItem('adminId') || localStorage.getItem('userId') || 'admin';
+    };
+
     return (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-6 animate-fade-in p-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Organizations</h1>
@@ -144,7 +257,12 @@ const AdminOrganizations = () => {
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-8">Loading...</TableCell>
+                                <TableCell colSpan={5} className="text-center py-8">
+                                    <div className="flex items-center justify-center">
+                                        <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                                        Loading organizations...
+                                    </div>
+                                </TableCell>
                             </TableRow>
                         ) : filteredOrgs.length === 0 ? (
                             <TableRow>
@@ -172,18 +290,41 @@ const AdminOrganizations = () => {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button variant="outline" size="sm" onClick={() => handleViewOrg(org)}>
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                onClick={() => handleViewOrg(org)}
+                                                title="View Details"
+                                            >
                                                 <Eye className="h-4 w-4" />
                                             </Button>
-                                            <Button variant="outline" size="sm" onClick={() => navigate(`/admin/organization/${org._id}`)}>
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                onClick={() => navigate(`/admin/organization/${org._id}`)}
+                                                title="Edit Organization"
+                                            >
                                                 <Edit className="h-4 w-4" />
                                             </Button>
                                             <Button
                                                 variant={org.organizationDetails?.isBlocked ? "outline" : "destructive"}
                                                 size="sm"
-                                                onClick={() => handleToggleClick(org.organization, org.organizationDetails?.isBlocked)}
+                                                onClick={() => handleToggleClick(org._id, org.organizationDetails?.isBlocked)}
+                                                title={org.organizationDetails?.isBlocked ? "Unblock" : "Block"}
                                             >
-                                                {org.organizationDetails?.isBlocked ? <CheckCircle className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
+                                                {org.organizationDetails?.isBlocked ? 
+                                                    <CheckCircle className="h-4 w-4" /> : 
+                                                    <Ban className="h-4 w-4" />
+                                                }
+                                            </Button>
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onClick={() => handleDelete(org._id, org.organizationDetails?.institutionName || 'this organization')}
+                                                disabled={deleteLoading}
+                                                title="Delete Organization"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </div>
                                     </TableCell>
@@ -194,6 +335,7 @@ const AdminOrganizations = () => {
                 </Table>
             </div>
 
+            {/* View Organization Dialog */}
             <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
@@ -290,6 +432,7 @@ const AdminOrganizations = () => {
                 </DialogContent>
             </Dialog>
 
+            {/* Block Confirmation Dialog */}
             <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -313,6 +456,7 @@ const AdminOrganizations = () => {
     );
 };
 
+// User Icon Component
 function UserIcon(props) {
     return (
         <svg
