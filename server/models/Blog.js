@@ -10,6 +10,7 @@ const blogSchema = new mongoose.Schema({
     type: Buffer,
     required: true
   },
+  imageContentType: String,
   popular: { type: Boolean, default: false },
   featured: { type: Boolean, default: false },
   date: { type: Date, default: Date.now }
