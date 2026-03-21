@@ -1,4 +1,5 @@
 import { getGenAI } from '../config/gemini.js';
+import { generateAIText } from '../config/aiProvider.js';
 import retryWithBackoff from '../utils/retryWithBackoff.js';
 import { getPlanLimits, isPlanActive } from '../config/planLimits.js';
 import {
@@ -60,34 +61,13 @@ export const generatePrompt = async (req, res) => {
   const { prompt, systemInstruction, responseMimeType, responseSchema } = req.body;
 
   try {
-    const genAI = await getGenAI();
-    const modelOptions = {
-      model: 'gemini-2.5-flash',
-    };
-
-    if (systemInstruction) {
-      modelOptions.systemInstruction = systemInstruction;
-    }
-
-    const generationConfig = {
-      maxOutputTokens: 8192,
-    };
-
-    if (responseMimeType) {
-      generationConfig.responseMimeType = responseMimeType;
-    }
-    if (responseSchema) {
-      generationConfig.responseSchema = responseSchema;
-    }
-
-    if (Object.keys(generationConfig).length > 1) {
-      modelOptions.generationConfig = generationConfig;
-    }
-
-    const model = genAI.getGenerativeModel(modelOptions);
-
-    const result = await retryWithBackoff(() => model.generateContent(prompt));
-    const generatedText = await result.response.text();
+    const generatedText = await generateAIText({
+      prompt,
+      systemInstruction,
+      responseMimeType,
+      responseSchema,
+      maxOutputTokens: 8192
+    });
 
     console.log('--- AI RESPONSE SUCCESS ---');
     console.log('Generated Text length:', generatedText?.length || 0);
@@ -98,8 +78,12 @@ export const generatePrompt = async (req, res) => {
     });
   } catch (error) {
     const isRateLimit =
+      error.status === 429 ||
       error.message?.includes('429') ||
-      error.message?.includes('quota');
+      error.message?.includes('quota') ||
+      error.message?.toLowerCase?.().includes('rate limit') ||
+      error.message?.toLowerCase?.().includes('too many requests') ||
+      error.message?.toLowerCase?.().includes('exceeded your current quota');
 
     const isMissingKey = error.status === 401;
     const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
@@ -109,7 +93,7 @@ export const generatePrompt = async (req, res) => {
 
     if (isMissingKey || isInvalidKey) {
       status = isMissingKey ? 401 : 403;
-      message = error.message ? `Gemini API Error: ${error.message}` : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
+      message = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
     } else if (isRateLimit) {
       status = 429;
       message = 'API rate limit or quota exceeded.';
@@ -182,16 +166,23 @@ export const generateBatchSubtopics = async (req, res) => {
     return `Chapter ${i + 1}: "${t.topicTitle}"\nSubtopics:\n- ${subList}`;
   }).join('\n\n');
 
-  const systemInstruction = `Strictly in ${lang || 'English'}, you are a specialized educational content writer. 
+const systemInstruction = `Strictly in ${lang || 'English'}, you are a specialized educational content writer. 
 Your goal is to provide thorough, in-depth, and "large" explanations for course subtopics.
 IMPORTANT: You MUST explicitly translate the 'topicTitle' and subtopic 'title' fields into ${lang || 'English'}, alongside the 'theory' content.
 For each subtopic, provide a detailed explanation (approx 500-1000 words if possible) with rich examples and clear definitions.
 Ensure every sentence is complete and the content doesn't cut off abruptly.
 If providing code examples, ensure they are properly formatted with correct line breaks and indentation.
 Use valid HTML formatting for the "theory" field (paragraphs, bold text, lists).
+For business, sales, CRM, analytics, HR, marketing, operations, or management topics, include practical product-style examples such as dashboard concepts, KPI cards, pipeline views, report widgets, filters, tables, and workflow scenarios.
+When relevant, explain what a dashboard would show, why each metric matters, and how a team would use it in real work.
 When the lesson includes programming, commands, configuration, queries, or terminal examples, format them as proper multi-line HTML code blocks using <pre><code class="language-...">...</code></pre>.
 Preserve indentation and line breaks inside code blocks.
 Never place full code examples inside <p>, <li>, or inline <code> tags.
+Do not overuse code examples for non-technical business topics unless the code is essential to the explanation.
+Never output an empty <pre><code></code></pre> block.
+If you mention an example, provide the full example content immediately after the label.
+For conceptual business validation logic, CRM workflows, or dashboard rules, prefer readable pseudocode or numbered rule logic instead of SQL unless SQL is specifically necessary.
+Do not truncate a section halfway through an example.
 Do NOT include images, external links, or additional resource suggestions.
 ONLY respond with a valid JSON object matching the requested schema.`;
 
@@ -213,46 +204,40 @@ Response Format (JSON):
 }`;
 
   try {
-    const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      safetySettings,
+    const rawText = await generateAIText({
+      prompt,
       systemInstruction,
-      generationConfig: {
-        maxOutputTokens: 8192,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: "object",
-          properties: {
-            topics: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  topicTitle: { type: "string" },
-                  subtopics: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        title: { type: "string" },
-                        theory: { type: "string" }
-                      },
-                      required: ["title", "theory"]
-                    }
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: "object",
+        properties: {
+          topics: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                topicTitle: { type: "string" },
+                subtopics: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      title: { type: "string" },
+                      theory: { type: "string" }
+                    },
+                    required: ["title", "theory"]
                   }
-                },
-                required: ["topicTitle", "subtopics"]
-              }
+                }
+              },
+              required: ["topicTitle", "subtopics"]
             }
-          },
-          required: ["topics"]
-        }
-      }
+          }
+        },
+        required: ["topics"]
+      },
+      maxOutputTokens: 8192,
+      safetySettings
     });
-
-    const result = await retryWithBackoff(() => model.generateContent(prompt));
-    const rawText = await result.response.text();
     const parsed = JSON.parse(rawText);
 
     res.status(200).json({
@@ -271,7 +256,7 @@ Response Format (JSON):
 
     if (isMissingKey || isInvalidKey) {
       status = isMissingKey ? 401 : 403;
-      message = 'Invalid Gemini API Key or Model unavailable.';
+      message = 'Invalid AI provider configuration.';
     } else if (isRateLimitError) {
       status = 429;
       message = 'API rate limit or quota exceeded.';
@@ -324,7 +309,7 @@ export const generateHtml = async (req, res) => {
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
       safetySettings,
-      systemInstruction: 'You are a helpful educational assistant. Provide thorough and interesting explanations with examples. Use markdown formatting. Ensure every sentence is complete and the content does not cut off abruptly. If providing code examples, ensure they are properly formatted with correct line breaks.'
+      systemInstruction: 'You are a helpful educational assistant. Provide thorough and interesting explanations with examples. Use markdown formatting.'
     });
 
     const result = await retryWithBackoff(() =>
@@ -344,9 +329,12 @@ export const generateHtml = async (req, res) => {
     console.log('Generate HTML error:', error);
 
     const isRateLimitError =
+      error.status === 429 ||
       error.message?.includes('429') ||
       error.message?.includes('Too Many Requests') ||
-      error.message?.includes('quota');
+      error.message?.includes('quota') ||
+      error.message?.toLowerCase?.().includes('rate limit') ||
+      error.message?.toLowerCase?.().includes('exceeded your current quota');
 
     const isMissingKey = error.status === 401;
     const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
@@ -356,7 +344,7 @@ export const generateHtml = async (req, res) => {
 
     if (isMissingKey || isInvalidKey) {
       status = isMissingKey ? 401 : 403;
-      message = error.message ? `Gemini API Error: ${error.message}` : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
+      message = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
     } else if (isRateLimitError) {
       status = 429;
       message = 'API rate limit or quota exceeded. Please try again later.';
@@ -632,7 +620,6 @@ export const generateAIExam = async (req, res) => {
       }
     ];
 
-    const genAI = await getGenAI();
     const systemInstruction = `Strictly in ${lang || 'English'}, you are an academic assessor.
 Generate 10 high-quality multiple choice questions (MCQs) for the given course material.
 Ensure questions cover all provided subtopics.
@@ -651,38 +638,30 @@ Generate 10 MCQs in JSON format:
   }
 ]`;
 
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      safetySettings,
+    const text = await generateAIText({
+      prompt,
       systemInstruction,
-      generationConfig: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              question: { type: "string" },
-              options: {
-                type: "array",
-                items: { type: "string" },
-                minItems: 4,
-                maxItems: 4
-              },
-              correctAnswer: { type: "number" }
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            question: { type: "string" },
+            options: {
+              type: "array",
+              items: { type: "string" },
+              minItems: 4,
+              maxItems: 4
             },
-            required: ["question", "options", "correctAnswer"]
-          }
+            correctAnswer: { type: "number" }
+          },
+          required: ["question", "options", "correctAnswer"]
         }
-      }
+      },
+      maxOutputTokens: 4096,
+      safetySettings
     });
-
-    const result = await retryWithBackoff(() =>
-      model.generateContent(prompt)
-    );
-
-    const response = result.response;
-    const text = await response.text();
 
     const cleanedText = text.trim();
 
@@ -695,9 +674,12 @@ Generate 10 MCQs in JSON format:
     console.log('AI Exam Error:', error);
 
     const isRateLimitError =
+      error.status === 429 ||
       error.message?.includes('429') ||
       error.message?.includes('Too Many Requests') ||
-      error.message?.includes('quota');
+      error.message?.includes('quota') ||
+      error.message?.toLowerCase?.().includes('rate limit') ||
+      error.message?.toLowerCase?.().includes('exceeded your current quota');
 
     const isMissingKey = error.status === 401;
     const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
@@ -707,7 +689,7 @@ Generate 10 MCQs in JSON format:
 
     if (isMissingKey || isInvalidKey) {
       status = isMissingKey ? 401 : 403;
-      message = error.message ? `Gemini API Error: ${error.message}` : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
+      message = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
     } else if (isRateLimitError) {
       status = 429;
       message = 'API rate limit or quota exceeded. Please try again later.';

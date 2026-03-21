@@ -527,7 +527,11 @@ export const createOrganization = async ({ email, password, institutionName, inc
 export const getAdminSettings = async () => {
   const admin = await Admin.findOne({ type: 'main' });
   return {
+    aiProvider: admin?.aiProvider || 'gemini',
     geminiApiKey: admin?.geminiApiKey || '',
+    geminiModel: admin?.geminiModel || 'gemini-2.5-flash',
+    openaiApiKey: admin?.openaiApiKey || '',
+    openaiModel: admin?.openaiModel || 'gpt-4.1-mini',
     unsplashApiKey: admin?.unsplashApiKey || '',
     websiteName: admin?.websiteName || 'Colossus IQ',
     websiteLogo: admin?.websiteLogo || '/logo.png',
@@ -576,16 +580,29 @@ export const updateAdminSettings = async (data) => {
     }
   }
 
-  admin.geminiApiKey = data.geminiApiKey;
-  admin.unsplashApiKey = data.unsplashApiKey;
-  admin.websiteName = data.websiteName;
-  admin.websiteLogo = data.websiteLogo;
-  admin.taxPercentage = data.taxPercentage;
-  admin.notebookEnabled = data.notebookEnabled;
-  admin.resumeEnabled = data.resumeEnabled;
-  admin.careerEnabled = data.careerEnabled;
+  const updatePayload = {
+    aiProvider: data.aiProvider || 'gemini',
+    geminiApiKey: data.geminiApiKey || '',
+    geminiModel: data.geminiModel || 'gemini-2.5-flash',
+    openaiApiKey: data.openaiApiKey || '',
+    openaiModel: data.openaiModel || 'gpt-4.1-mini',
+    unsplashApiKey: data.unsplashApiKey || '',
+    websiteName: data.websiteName,
+    websiteLogo: data.websiteLogo,
+    taxPercentage: data.taxPercentage,
+    notebookEnabled: data.notebookEnabled,
+    resumeEnabled: data.resumeEnabled,
+    careerEnabled: data.careerEnabled
+  };
 
+  Object.assign(admin, updatePayload);
   await admin.save();
+
+  await Admin.updateOne(
+    { _id: admin._id },
+    { $set: updatePayload },
+    { strict: false }
+  );
 };
 export const toggleBlockOrganization = async (id, isBlocked) => {
   // Update Organization document

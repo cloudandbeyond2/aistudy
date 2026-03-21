@@ -1,5 +1,5 @@
 import Blog from '../models/Blog.js';
-import { getGenAI } from '../config/gemini.js';
+import { generateAIText } from '../config/aiProvider.js';
 
 /**
  * GET ALL BLOGS
@@ -178,9 +178,8 @@ export const generateBlogContent = async (req, res) => {
       return res.json({ success: false, message: 'Prompt is required' });
     }
 
-    const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash",
+    const text = await generateAIText({
+      prompt,
       systemInstruction: `You are a professional blog writer. Given a topic or prompt, generate a high-quality blog post.
       Return the response in JSON format with the following keys:
       "title": A catchy title for the blog post.
@@ -188,14 +187,9 @@ export const generateBlogContent = async (req, res) => {
       "content": The full blog post content in HTML format (using semantic tags like <h2>, <p>, <strong>, <em>, <ul>, <li>, etc.).
       "category": A suitable category (one of: technology, education, ai, programming, design, business).
       "tags": A string of 5-8 comma-separated tags.`,
-      generationConfig: {
-        responseMimeType: "application/json",
-      }
+      responseMimeType: "application/json",
+      maxOutputTokens: 4096
     });
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
 
     try {
       const data = JSON.parse(text);
@@ -220,23 +214,17 @@ export const suggestBlogTags = async (req, res) => {
       return res.json({ success: false, message: 'Title or content is required' });
     }
 
-    const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash",
-      systemInstruction: "You are an SEO expert. Based on the following blog details, suggest 5-8 relevant SEO tags.",
-      generationConfig: {
-        responseMimeType: "application/json",
-      }
-    });
-
     const prompt = `Title: ${title || 'N/A'}
     Content Snippet: ${(content || '').substring(0, 1000)}
     
     Return the tags in JSON format with a single key "tags" containing a comma-separated string.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = await generateAIText({
+      prompt,
+      systemInstruction: "You are an SEO expert. Based on the following blog details, suggest 5-8 relevant SEO tags.",
+      responseMimeType: "application/json",
+      maxOutputTokens: 1024
+    });
     
     try {
       const { tags } = JSON.parse(text);

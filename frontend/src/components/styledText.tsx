@@ -149,16 +149,15 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
 
         /* Code blocks - Enhanced separation */
         .styled-content pre {
-          background: hsl(var(--muted));
-          border: 2px solid hsl(var(--primary) / 0.2);
-          border-left: 5px solid hsl(var(--primary));
+          background: linear-gradient(135deg, #0f172a 0%, #111827 100%);
+          border: 1px solid rgba(59, 130, 246, 0.35);
+          border-left: 5px solid #3b82f6;
           border-radius: 0.75rem;
           padding: 1.5rem;
           margin: 2.5rem 0;
           overflow-x: auto;
-          box-shadow: 0 8px 16px -4px rgb(0 0 0 / 0.15);
+          box-shadow: 0 12px 24px -8px rgb(15 23 42 / 0.35);
           position: relative;
-          background-image: linear-gradient(to bottom right, hsl(var(--muted)), hsl(var(--muted) / 0.8));
           white-space: pre;
         }
 
@@ -169,7 +168,7 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
           right: 0.75rem;
           font-size: 0.65rem;
           font-weight: 700;
-          color: hsl(var(--primary) / 0.5);
+          color: rgba(148, 163, 184, 0.75);
           letter-spacing: 0.1em;
         }
 
@@ -179,7 +178,7 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
           font-size: 0.9rem;
           line-height: 1.6;
           font-family: 'Fira Code', 'Courier New', Courier, monospace;
-          color: hsl(var(--foreground));
+          color: #e5eefb;
           display: block;
           white-space: pre;
           word-break: normal;
