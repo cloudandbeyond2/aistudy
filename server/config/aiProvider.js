@@ -2,7 +2,7 @@ import { getGenAI } from './gemini.js';
 import Admin from '../models/Admin.js';
 import retryWithBackoff from '../utils/retryWithBackoff.js';
 
-const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+const DEFAULT_GEMINI_MODEL = 'gemini-1.5-flash';
 const DEFAULT_OPENAI_MODEL = 'gpt-4.1-mini';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
@@ -81,12 +81,51 @@ export const getAISettings = async () => {
 
 const buildOpenAIResponseFormat = (responseMimeType, responseSchema) => {
   if (responseMimeType === 'application/json' && responseSchema) {
+    const sanitizeSchemaForOpenAI = (schema) => {
+      if (!schema || typeof schema !== 'object' || Array.isArray(schema)) {
+        return schema;
+      }
+
+      const normalized = { ...schema };
+
+      if (normalized.type === 'object') {
+        normalized.additionalProperties = false;
+      }
+
+      if (normalized.properties && typeof normalized.properties === 'object') {
+        normalized.properties = Object.fromEntries(
+          Object.entries(normalized.properties).map(([key, value]) => [
+            key,
+            sanitizeSchemaForOpenAI(value)
+          ])
+        );
+      }
+
+      if (normalized.items) {
+        normalized.items = sanitizeSchemaForOpenAI(normalized.items);
+      }
+
+      if (Array.isArray(normalized.anyOf)) {
+        normalized.anyOf = normalized.anyOf.map(sanitizeSchemaForOpenAI);
+      }
+
+      if (Array.isArray(normalized.oneOf)) {
+        normalized.oneOf = normalized.oneOf.map(sanitizeSchemaForOpenAI);
+      }
+
+      if (Array.isArray(normalized.allOf)) {
+        normalized.allOf = normalized.allOf.map(sanitizeSchemaForOpenAI);
+      }
+
+      return normalized;
+    };
+
     return {
       type: 'json_schema',
       json_schema: {
         name: 'structured_output',
         strict: true,
-        schema: responseSchema
+        schema: sanitizeSchemaForOpenAI(responseSchema)
       }
     };
   }
@@ -126,7 +165,7 @@ const generateWithOpenAI = async ({
     body.response_format = responseFormat;
   }
 
-  const response = await fetch(OPENAI_API_URL, {
+  let response = await fetch(OPENAI_API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -135,7 +174,39 @@ const generateWithOpenAI = async ({
     body: JSON.stringify(body)
   });
 
-  const data = await parseJsonSafely(response);
+  let data = await parseJsonSafely(response);
+  if (!response.ok) {
+    const message = data?.error?.message || data?.raw || 'OpenAI API request failed.';
+    const canRetryWithoutSchema =
+      response.status === 400 &&
+      responseMimeType === 'application/json' &&
+      !!responseSchema &&
+      (
+        message.toLowerCase().includes('json_schema') ||
+        message.toLowerCase().includes('response_format') ||
+        message.toLowerCase().includes('schema') ||
+        message.toLowerCase().includes('additionalproperties')
+      );
+
+    if (canRetryWithoutSchema) {
+      const fallbackBody = {
+        ...body,
+        response_format: { type: 'json_object' }
+      };
+
+      response = await fetch(OPENAI_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${settings.openaiApiKey}`
+        },
+        body: JSON.stringify(fallbackBody)
+      });
+
+      data = await parseJsonSafely(response);
+    }
+  }
+
   if (!response.ok) {
     const error = new Error(data?.error?.message || data?.raw || 'OpenAI API request failed.');
     error.status = response.status;
