@@ -2428,7 +2428,10 @@ const formatGuidanceText = (text: string) => {
                                 <DialogTrigger asChild onClick={() => setOpenMeetingDialog(true)}>
                                     <Button><Plus className="w-4 h-4 mr-2" /> Schedule Meeting</Button>
                                 </DialogTrigger>
-                                <DialogContent>
+                                <DialogContent
+  className="z-[9999]"
+  onOpenAutoFocus={(e) => e.preventDefault()}
+>
                                     <DialogHeader>
                                         <DialogTitle>Schedule New Meeting</DialogTitle>
                                     </DialogHeader>
