@@ -161,12 +161,7 @@ export const generateBatchSubtopics = async (req, res) => {
     { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }
   ];
 
-  const topicsPromptString = topicsList.map((t, i) => {
-    const subList = t.subtopics.join('\n- ');
-    return `Chapter ${i + 1}: "${t.topicTitle}"\nSubtopics:\n- ${subList}`;
-  }).join('\n\n');
-
-const systemInstruction = `Strictly in ${lang || 'English'}, you are a specialized educational content writer. 
+  const systemInstruction = `Strictly in ${lang || 'English'}, you are a specialized educational content writer. 
 Your goal is to provide thorough, in-depth, and "large" explanations for course subtopics.
 IMPORTANT: You MUST explicitly translate the 'topicTitle' and subtopic 'title' fields into ${lang || 'English'}, alongside the 'theory' content.
 For each subtopic, provide a detailed explanation (approx 500-1000 words if possible) with rich examples and clear definitions.
@@ -186,63 +181,132 @@ Do not truncate a section halfway through an example.
 Do NOT include images, external links, or additional resource suggestions.
 ONLY respond with a valid JSON object matching the requested schema.`;
 
-  const prompt = `Course: "${mainTopic}"
+  const responseSchema = {
+    type: "object",
+    properties: {
+      topics: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            topicTitle: { type: "string" },
+            subtopics: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  theory: { type: "string" }
+                },
+                required: ["title", "theory"]
+              }
+            }
+          },
+          required: ["topicTitle", "subtopics"]
+        }
+      }
+    },
+    required: ["topics"]
+  };
 
-Generate comprehensive educational content for these chapters and subtopics:
-${topicsPromptString}
+  const parseGeneratedJson = (rawText) => {
+    const normalizedText = rawText?.trim();
+    if (!normalizedText) {
+      throw new Error('Empty JSON response from AI provider.');
+    }
+
+    const withoutCodeFence = normalizedText
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/\s*```$/i, '');
+
+    const jsonStart = withoutCodeFence.indexOf('{');
+    const jsonEnd = withoutCodeFence.lastIndexOf('}');
+    const jsonCandidate =
+      jsonStart >= 0 && jsonEnd >= jsonStart
+        ? withoutCodeFence.slice(jsonStart, jsonEnd + 1)
+        : withoutCodeFence;
+
+    try {
+      return JSON.parse(jsonCandidate);
+    } catch (parseError) {
+      const preview = jsonCandidate.slice(0, 500);
+      throw new Error(
+        `Invalid JSON returned from AI provider. ${parseError.message}. Preview: ${preview}`
+      );
+    }
+  };
+
+  const buildSingleSubtopicPrompt = (topicTitle, subtopicTitle) => {
+    return `Course: "${mainTopic}"
+
+Generate comprehensive educational content for exactly one chapter and one subtopic.
+
+Chapter: "${topicTitle}"
+Subtopic: "${subtopicTitle}"
+
+Requirements:
+- Return content only for this one chapter and this one subtopic.
+- Keep the same chapter title and subtopic title, translated into ${lang || 'English'} when needed.
+- The "theory" field must contain complete HTML content and must not be cut off.
 
 Response Format (JSON):
 {
   "topics": [
     {
-      "topicTitle": "Topic Title",
+      "topicTitle": "${topicTitle}",
       "subtopics": [
-        { "title": "Subtopic Title", "theory": "Detailed HTML Content" }
+        { "title": "${subtopicTitle}", "theory": "Detailed HTML Content" }
       ]
     }
   ]
 }`;
+  };
 
   try {
-    const rawText = await generateAIText({
-      prompt,
-      systemInstruction,
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: "object",
-        properties: {
-          topics: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                topicTitle: { type: "string" },
-                subtopics: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      title: { type: "string" },
-                      theory: { type: "string" }
-                    },
-                    required: ["title", "theory"]
-                  }
-                }
-              },
-              required: ["topicTitle", "subtopics"]
-            }
-          }
-        },
-        required: ["topics"]
-      },
-      maxOutputTokens: 8192,
-      safetySettings
-    });
-    const parsed = JSON.parse(rawText);
+    const combinedTopics = [];
+
+    for (const topic of topicsList) {
+      const normalizedSubtopics = Array.isArray(topic?.subtopics)
+        ? topic.subtopics.filter(Boolean)
+        : [];
+
+      const generatedTopic = {
+        topicTitle: topic?.topicTitle || 'Untitled Topic',
+        subtopics: []
+      };
+
+      for (const subtopicTitle of normalizedSubtopics) {
+        const rawText = await generateAIText({
+          prompt: buildSingleSubtopicPrompt(generatedTopic.topicTitle, subtopicTitle),
+          systemInstruction,
+          responseMimeType: 'application/json',
+          responseSchema,
+          maxOutputTokens: 8192,
+          safetySettings
+        });
+
+        const parsed = parseGeneratedJson(rawText);
+        const parsedTopic = Array.isArray(parsed?.topics) ? parsed.topics[0] : null;
+        const parsedSubtopic = Array.isArray(parsedTopic?.subtopics)
+          ? parsedTopic.subtopics[0]
+          : null;
+
+        generatedTopic.topicTitle =
+          parsedTopic?.topicTitle?.trim() || generatedTopic.topicTitle;
+
+        generatedTopic.subtopics.push({
+          title: parsedSubtopic?.title?.trim() || subtopicTitle,
+          theory: parsedSubtopic?.theory?.trim() || ''
+        });
+      }
+
+      combinedTopics.push(generatedTopic);
+    }
 
     res.status(200).json({
       success: true,
-      topics: parsed.topics
+      topics: combinedTopics
     });
 
   } catch (error) {
