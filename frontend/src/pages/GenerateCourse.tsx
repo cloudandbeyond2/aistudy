@@ -1607,8 +1607,8 @@ Return only valid JSON that matches the schema.`;
           keywords="course generation, preview, AI learning"
         />
         {isLoading && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-            <div className="max-w-md w-full mx-auto p-8 space-y-6 bg-card rounded-2xl shadow-2xl border border-primary/20">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 px-4 backdrop-blur-sm">
+            <div className="mx-auto w-full max-w-md space-y-6 rounded-2xl border border-primary/20 bg-card p-5 shadow-2xl sm:p-8">
               <div className="text-center space-y-2">
                 <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
                 <h3 className="text-xl font-semibold">Generating Your Course</h3>
@@ -1624,7 +1624,7 @@ Return only valid JSON that matches the schema.`;
                   <Progress value={generationProgress} className="h-3" />
                 </div>
 
-                <div className="grid grid-cols-5 gap-2 text-xs text-center">
+                <div className="grid grid-cols-5 gap-1.5 text-[11px] text-center sm:gap-2 sm:text-xs">
                   <div className={`p-2 rounded-lg ${generationProgress >= 20 ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
                     <div className="font-bold">1</div>
                     <div className="truncate">Prep</div>
@@ -1673,33 +1673,33 @@ Return only valid JSON that matches the schema.`;
         description="Create a customized AI-generated course"
         keywords="course generation, AI learning, custom education"
       />
-      <div className="animate-fade-in max-w-[1400px] mx-auto px-4 py-8 md:py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gradient bg-gradient-to-r from-primary via-indigo-500 to-purple-600 mb-4 pb-2">
+      <div className="mx-auto max-w-[1400px] animate-fade-in px-3 py-6 sm:px-4 md:py-10 lg:px-6">
+        <div className="mb-8 text-center sm:mb-10 md:mb-12">
+          <h1 className="mb-4 bg-gradient-to-r from-primary via-indigo-500 to-purple-600 bg-clip-text pb-2 text-3xl font-extrabold tracking-tight text-transparent sm:text-4xl md:text-5xl">
             AI Course Generator
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+          <p className="mx-auto max-w-2xl text-base text-muted-foreground sm:text-lg">
             Harness the power of AI to create structured, comprehensive learning paths in seconds.
           </p>
         </div>
 
         {/* Login Status and Progress Bar */}
-        <div className="max-w-3xl mx-auto mb-8 space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-xl border bg-card">
-            <div className="flex items-center gap-3">
+        <div className="mx-auto mb-8 max-w-4xl space-y-4">
+          <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3 sm:items-center">
               {isAuthenticated ? (
                 <>
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
                     <User className="h-5 w-5 text-primary" />
                   </div>
-                  <div>
-                    <p className="font-semibold">Welcome back, {userName}!</p>
+                  <div className="min-w-0">
+                    <p className="break-words font-semibold">Welcome back, {userName}!</p>
                     <p className="text-sm text-muted-foreground">You're logged in and ready to create</p>
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/10">
                     <LogIn className="h-5 w-5 text-amber-500" />
                   </div>
                   <div>
@@ -1710,7 +1710,7 @@ Return only valid JSON that matches the schema.`;
               )}
             </div>
             {!isAuthenticated && (
-              <Button onClick={handleLogin} variant="default" size="sm">
+              <Button onClick={handleLogin} variant="default" size="sm" className="w-full sm:w-auto">
                 <LogIn className="h-4 w-4 mr-2" />
                 Login
               </Button>
@@ -1724,18 +1724,18 @@ Return only valid JSON that matches the schema.`;
               <span className="text-primary font-mono">{totalProgress}%</span>
             </div>
             <Progress value={totalProgress} className="h-2" />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span className={isAuthenticated ? "text-primary" : ""}>✓ Login</span>
-              <span className={formProgress >= 20 ? "text-primary" : ""}>✓ Topic</span>
-              <span className={formProgress >= 40 ? "text-primary" : ""}>✓ Subtopics</span>
-              <span className={formProgress >= 60 ? "text-primary" : ""}>✓ Modules</span>
-              <span className={formProgress >= 80 ? "text-primary" : ""}>✓ Format</span>
-              <span className={formProgress >= 100 ? "text-primary" : ""}>✓ Language</span>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground sm:grid-cols-3 lg:grid-cols-6">
+              <span className={isAuthenticated ? "text-primary" : ""}>Login</span>
+              <span className={formProgress >= 20 ? "text-primary" : ""}>Topic</span>
+              <span className={formProgress >= 40 ? "text-primary" : ""}>Subtopics</span>
+              <span className={formProgress >= 60 ? "text-primary" : ""}>Modules</span>
+              <span className={formProgress >= 80 ? "text-primary" : ""}>Format</span>
+              <span className={formProgress >= 100 ? "text-primary" : ""}>Language</span>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 gap-6 items-start lg:grid-cols-12 lg:gap-8">
           {/* Left Column: Instructions */}
           <div className="lg:col-span-5 space-y-6">
             <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden border-l-4 border-primary">
@@ -1799,7 +1799,7 @@ Return only valid JSON that matches the schema.`;
 
             {/* Stats Check - Only show if authenticated */}
             {isAuthenticated && (
-              <div className="flex items-center justify-between gap-4 p-4 rounded-xl border bg-muted/20 text-sm">
+              <div className="flex flex-col gap-3 rounded-xl border bg-muted/20 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
                   <Layers className="h-4 w-4 text-indigo-500" />
                   <span className="font-medium">Courses Created: <span className="text-foreground">{currentCount}</span></span>
@@ -1839,7 +1839,7 @@ Return only valid JSON that matches the schema.`;
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <Dialog open={isSuggestionDialogOpen} onOpenChange={setIsSuggestionDialogOpen}>
-                  <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+                  <DialogContent className="max-h-[90vh] w-[calc(100vw-1.5rem)] overflow-y-auto rounded-2xl p-4 sm:max-w-3xl sm:p-6">
                     <DialogHeader>
                       <DialogTitle className="flex items-center gap-2">
                         <Sparkles className="h-5 w-5 text-primary" />
@@ -1902,8 +1902,8 @@ Return only valid JSON that matches the schema.`;
                         />
                       </div>
 
-                      <div className="flex flex-wrap gap-3">
-                        <Button type="button" onClick={generateTopicSuggestions} disabled={isGeneratingSuggestions}>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                        <Button type="button" onClick={generateTopicSuggestions} disabled={isGeneratingSuggestions} className="w-full sm:w-auto">
                           {isGeneratingSuggestions ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1917,14 +1917,14 @@ Return only valid JSON that matches the schema.`;
                           )}
                         </Button>
                         {!!topicSuggestions.length && (
-                          <Button type="button" variant="outline" onClick={generateTopicSuggestions} disabled={isGeneratingSuggestions}>
+                          <Button type="button" variant="outline" onClick={generateTopicSuggestions} disabled={isGeneratingSuggestions} className="w-full sm:w-auto">
                             Refresh Suggestions
                           </Button>
                         )}
                       </div>
 
                       {!!topicSuggestions.length && (
-                        <div className="grid gap-4 md:grid-cols-2">
+                        <div className="grid gap-4 sm:grid-cols-2">
                           {topicSuggestions.map((suggestion) => {
                             const isActive = selectedSuggestion === suggestion.title;
 
@@ -1959,11 +1959,11 @@ Return only valid JSON that matches the schema.`;
                       )}
                     </div>
 
-                    <DialogFooter>
-                      <Button type="button" variant="ghost" onClick={() => setIsSuggestionDialogOpen(false)}>
+                    <DialogFooter className="flex-col gap-2 sm:flex-row">
+                      <Button type="button" variant="ghost" onClick={() => setIsSuggestionDialogOpen(false)} className="w-full sm:w-auto">
                         Skip for now
                       </Button>
-                      <Button type="button" onClick={applySelectedSuggestion} disabled={!topicSuggestions.length}>
+                      <Button type="button" onClick={applySelectedSuggestion} disabled={!topicSuggestions.length} className="w-full sm:w-auto">
                         Use Selected Topic
                       </Button>
                     </DialogFooter>
@@ -1986,7 +1986,7 @@ Return only valid JSON that matches the schema.`;
                             Use intelligent suggestions based on learner type and department or profession.
                           </p>
                         </div>
-                        <Button type="button" variant="outline" onClick={() => setIsSuggestionDialogOpen(true)}>
+                        <Button type="button" variant="outline" onClick={() => setIsSuggestionDialogOpen(true)} className="w-full md:w-auto">
                           <Sparkles className="mr-2 h-4 w-4" />
                           Open Suggestions
                         </Button>
@@ -2013,15 +2013,15 @@ Return only valid JSON that matches the schema.`;
                       />
 
                       <div className="space-y-3">
-                        <FormLabel className="text-base flex justify-between items-center group">
-                          <span>Advanced Subtopics <span className="text-muted-foreground font-normal text-sm ml-1">(Optional, max {maxSubtopics})</span></span>
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        <FormLabel className="group flex flex-col gap-2 text-base sm:flex-row sm:items-center sm:justify-between">
+                          <span>Advanced Subtopics <span className="ml-1 text-sm font-normal text-muted-foreground">(Optional, max {maxSubtopics})</span></span>
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                             {subtopics.length}/{maxSubtopics} Added
                           </span>
                         </FormLabel>
-                        <div className="flex gap-2 relative">
+                        <div className="flex flex-col gap-2 sm:flex-row">
                           <Input
-                            className="h-12 pl-4 shadow-sm bg-background pr-[120px] focus-visible:ring-primary/30"
+                            className="h-12 bg-background pl-4 shadow-sm focus-visible:ring-primary/30"
                             placeholder="e.g., Data structures, React hooks..."
                             value={subtopicInput}
                             onChange={(e) => setSubtopicInput(e.target.value)}
@@ -2036,7 +2036,7 @@ Return only valid JSON that matches the schema.`;
                           <Button
                             type="button"
                             onClick={addSubtopic}
-                            className="absolute right-1.5 top-1.5 bottom-1.5 h-9"
+                            className="h-12 w-full sm:h-auto sm:w-auto"
                             variant="secondary"
                             disabled={!isAuthenticated}
                           >
@@ -2048,8 +2048,8 @@ Return only valid JSON that matches the schema.`;
                         {subtopics.length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-3 animate-in fade-in slide-in-from-top-2">
                             {subtopics.map((topic, index) => (
-                              <div key={index} className="flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-primary/10 border border-primary/20 text-primary rounded-full text-sm font-medium">
-                                <span>{topic}</span>
+                              <div key={index} className="flex max-w-full items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 py-1.5 pl-3 pr-1.5 text-sm font-medium text-primary">
+                                <span className="break-words">{topic}</span>
                                 <Button
                                   type="button"
                                   variant="ghost"
@@ -2083,7 +2083,7 @@ Return only valid JSON that matches the schema.`;
                     </div>
                   </div>
                   <CardContent className="p-4 md:p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
                       {/* Number of Modules */}
                       <div className="space-y-3">
                         <FormLabel className="text-base font-medium flex items-center gap-2">
@@ -2207,7 +2207,7 @@ Return only valid JSON that matches the schema.`;
                     </div>
                   </div>
                   <CardContent className="p-4 md:p-6 text-pretty">
-                    <div className="max-w-md">
+                    <div className="w-full max-w-md">
                       <FormField
                         control={form.control}
                         name="language"
