@@ -13,7 +13,7 @@ const adminSchema = new mongoose.Schema({
   billing: { type: String, default: '' },
   aiProvider: { type: String, enum: ['gemini', 'openai'], default: 'gemini' },
   geminiApiKey: { type: String, default: '' },
-  geminiModel: { type: String, default: 'gemini-1.5-flash' },
+  geminiModel: { type: String, default: 'gemini-2.5-flash' },
   openaiApiKey: { type: String, default: '' },
   openaiModel: { type: String, default: 'gpt-4.1-mini' },
   unsplashApiKey: { type: String, default: '' },

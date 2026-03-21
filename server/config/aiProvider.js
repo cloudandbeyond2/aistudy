@@ -2,7 +2,7 @@ import { getGenAI } from './gemini.js';
 import Admin from '../models/Admin.js';
 import retryWithBackoff from '../utils/retryWithBackoff.js';
 
-const DEFAULT_GEMINI_MODEL = 'gemini-1.5-flash';
+const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
 const DEFAULT_OPENAI_MODEL = 'gpt-4.1-mini';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';

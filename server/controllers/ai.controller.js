@@ -478,7 +478,7 @@ export const generateHtml = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       safetySettings,
       systemInstruction: 'You are a helpful educational assistant. Provide thorough and interesting explanations with examples. Use markdown formatting.'
     });
@@ -546,7 +546,7 @@ export const generateImage = async (req, res) => {
     let searchPrompt = prompt;
     try {
       const genAI = await getGenAI();
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
       const transResult = await model.generateContent(`Translate the following search query into brief English keywords for an image search engine. Give me only the translated keywords, with no extra text or explanation: "${prompt}"`);
       const engPrompt = await transResult.response.text();
       if (engPrompt && engPrompt.trim()) {

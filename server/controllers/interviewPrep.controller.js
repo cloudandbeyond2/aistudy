@@ -338,7 +338,7 @@ export const generateCategoryQuiz = async (req, res) => {
       { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }
     ];
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', safetySettings });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', safetySettings });
 
     const result = await retryWithBackoff(() => model.generateContent(prompt));
     
