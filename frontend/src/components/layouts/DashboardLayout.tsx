@@ -522,6 +522,22 @@ const isPaidUser =
                         </SidebarMenuButton>
                       </SidebarMenuItem>
 
+                      <SidebarMenuItem>
+  <SidebarMenuButton
+    asChild
+    tooltip="Departments"
+    isActive={location.search === '?tab=departments'}
+  >
+    <Link
+      to="/dashboard/org?tab=departments"
+      className={cn(location.search === '?tab=departments' && "text-primary")}
+    >
+      <Building2 className="ml-4" />
+      <span>Departments</span>
+    </Link>
+  </SidebarMenuButton>
+</SidebarMenuItem>
+
                       {/* Organization Management Sub-menu */}
                       <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Students" isActive={location.pathname === '/dashboard/org' && location.search === '?tab=students'}>
