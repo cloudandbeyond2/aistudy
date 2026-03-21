@@ -3,7 +3,7 @@ import { serverURL } from '@/constants';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Newspaper, Target, Network, Lock, Sparkles, Brain, CheckCircle2, XCircle } from 'lucide-react';
+import { Loader2, Newspaper, Target, Network, Lock, Sparkles, Brain, CheckCircle2, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,16 @@ const AptitudeTestViewer = ({ test }: { test: any }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const questions = test.questions?.slice(0, 15) || [];
 
@@ -39,28 +49,29 @@ const AptitudeTestViewer = ({ test }: { test: any }) => {
   };
 
   return (
-    <div className="mb-8">
-      <div className="flex items-baseline justify-between mb-4">
+    <div className="mb-6 md:mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-3 mb-4">
         <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" /> {test.title}
+          <h2 className="text-lg md:text-xl font-bold flex items-center gap-2 flex-wrap">
+            <Brain className="h-4 w-4 md:h-5 md:w-5 text-primary flex-shrink-0" /> 
+            <span className="break-words">{test.title}</span>
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">{test.description}</p>
+          <p className="text-xs md:text-sm text-muted-foreground mt-1">{test.description}</p>
         </div>
-        <span className="text-xs font-semibold px-3 py-1.5 bg-primary/10 text-primary rounded-full shrink-0">
-          Question {currentIndex + 1} of {questions.length}
+        <span className="text-xs font-semibold px-2 py-1 md:px-3 md:py-1.5 bg-primary/10 text-primary rounded-full shrink-0 self-start sm:self-auto">
+          Q{currentIndex + 1}/{questions.length}
         </span>
       </div>
 
-      <Card className="border-l-4 border-l-primary/50 hover:shadow-md transition-shadow">
-        <CardHeader className="py-4">
-          <CardTitle className="text-lg leading-snug">
-            <span className="text-muted-foreground mr-2 font-mono">Q{currentIndex + 1}.</span>
-            {q.question}
+      <Card className="border-l-2 md:border-l-4 border-l-primary/50 hover:shadow-md transition-shadow">
+        <CardHeader className="py-3 md:py-4 px-4 md:px-6">
+          <CardTitle className="text-base md:text-lg leading-relaxed md:leading-snug">
+            <span className="text-muted-foreground mr-2 font-mono text-sm md:text-base">Q{currentIndex + 1}.</span>
+            <span className="break-words">{q.question}</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="pb-4">
-          <div className="grid sm:grid-cols-2 gap-3 mb-6">
+        <CardContent className="pb-4 px-4 md:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 mb-4 md:mb-6">
             {q.options.map((opt: string, j: number) => {
               const isSelected = selectedAnswer === opt;
               const isCorrect = q.answer === opt;
@@ -71,10 +82,10 @@ const AptitudeTestViewer = ({ test }: { test: any }) => {
               if (showAnswer) {
                 if (isCorrect) {
                   optionStyle = "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-500 text-emerald-800 dark:text-emerald-400 font-medium";
-                  indicator = <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />;
+                  indicator = <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />;
                 } else if (isSelected && !isCorrect) {
                   optionStyle = "bg-red-100 dark:bg-red-900/30 border-red-500 text-red-800 dark:text-red-400 font-medium";
-                  indicator = <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" />;
+                  indicator = <XCircle className="w-4 h-4 md:w-5 md:h-5 text-red-600 dark:text-red-400 shrink-0" />;
                 } else {
                   optionStyle = "bg-muted/20 border-border/20 text-muted-foreground opacity-60";
                 }
@@ -86,43 +97,51 @@ const AptitudeTestViewer = ({ test }: { test: any }) => {
                 <div
                   key={j}
                   onClick={() => !showAnswer && setSelectedAnswer(opt)}
-                  className={`p-3 rounded-lg border transition-all text-sm flex items-center gap-3 ${!showAnswer ? 'cursor-pointer hover:border-primary/50 hover:bg-muted/60' : ''} ${optionStyle}`}
+                  className={`p-2 md:p-3 rounded-lg border transition-all text-xs md:text-sm flex items-center gap-2 md:gap-3 ${!showAnswer ? 'cursor-pointer hover:border-primary/50 hover:bg-muted/60' : ''} ${optionStyle}`}
                 >
                   {indicator}
-                  {opt}
+                  <span className="break-words flex-1">{opt}</span>
                 </div>
               );
             })}
           </div>
 
-          <div className="space-y-6">
-            <div className="min-h-[40px] flex items-center">
+          <div className="space-y-4 md:space-y-6">
+            <div className="min-h-[36px] md:min-h-[40px] flex items-center">
               {showAnswer ? (
                 <div className="animate-in fade-in slide-in-from-left-2">
-                  <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 rounded-md inline-flex items-center">
-                    <Target className="w-4 h-4 mr-2" /> Correct Answer: {q.answer}
+                  <span className="text-xs md:text-sm font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 md:px-3 md:py-1.5 rounded-md inline-flex items-center gap-1 md:gap-2">
+                    <Target className="w-3 h-3 md:w-4 md:h-4" /> 
+                    <span>Correct Answer: {q.answer}</span>
                   </span>
                 </div>
               ) : (
-                <Button variant="outline" size="sm" onClick={() => setShowAnswer(true)}>
+                <Button variant="outline" size={isMobile ? "sm" : "default"} onClick={() => setShowAnswer(true)}>
                   Show Answer
                 </Button>
               )}
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-border/50">
+            <div className="flex items-center justify-between gap-2 pt-3 md:pt-4 border-t border-border/50">
               <Button
                 variant="ghost"
+                size={isMobile ? "sm" : "default"}
                 onClick={handlePrev}
                 disabled={currentIndex === 0}
+                className="gap-1"
               >
-                Previous
+                <ChevronLeft className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="hidden sm:inline">Previous</span>
               </Button>
               <Button
+                size={isMobile ? "sm" : "default"}
                 onClick={handleNext}
                 disabled={currentIndex === questions.length - 1}
+                className="gap-1"
               >
-                {currentIndex === questions.length - 1 ? 'Finish' : 'Next Question'}
+                <span className="hidden sm:inline">{currentIndex === questions.length - 1 ? 'Finish' : 'Next Question'}</span>
+                <span className="sm:hidden">{currentIndex === questions.length - 1 ? 'Finish' : 'Next'}</span>
+                <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
               </Button>
             </div>
           </div>
@@ -136,6 +155,16 @@ const AiQuizViewer = ({ questions, category }: { questions: any[], category: str
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   if (questions.length === 0) return null;
 
@@ -158,25 +187,26 @@ const AiQuizViewer = ({ questions, category }: { questions: any[], category: str
   };
 
   return (
-    <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-baseline justify-between mb-4">
-        <h3 className="text-xl font-bold flex items-center">
-          <Network className="mr-2 h-5 w-5 text-primary" /> Generated Quiz on "<span className="capitalize">{category}</span>"
+    <div className="space-y-4 md:space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-3 mb-4">
+        <h3 className="text-lg md:text-xl font-bold flex items-center flex-wrap">
+          <Network className="mr-2 h-4 w-4 md:h-5 md:w-5 text-primary flex-shrink-0" /> 
+          <span className="break-words">Generated Quiz on "<span className="capitalize">{category}</span>"</span>
         </h3>
-        <span className="text-xs font-semibold px-3 py-1.5 bg-primary/10 text-primary rounded-full shrink-0">
-          Question {currentIndex + 1} of {questions.length}
+        <span className="text-xs font-semibold px-2 py-1 md:px-3 md:py-1.5 bg-primary/10 text-primary rounded-full shrink-0 self-start sm:self-auto">
+          Q{currentIndex + 1}/{questions.length}
         </span>
       </div>
 
-      <Card className="border-l-4 border-l-primary/60 hover:shadow-md transition-shadow">
-        <CardHeader className="py-4">
-          <CardTitle className="text-lg leading-snug">
-            <span className="text-muted-foreground mr-2 font-mono">Q{currentIndex + 1}.</span>
-            {q.question}
+      <Card className="border-l-2 md:border-l-4 border-l-primary/60 hover:shadow-md transition-shadow">
+        <CardHeader className="py-3 md:py-4 px-4 md:px-6">
+          <CardTitle className="text-base md:text-lg leading-relaxed md:leading-snug">
+            <span className="text-muted-foreground mr-2 font-mono text-sm md:text-base">Q{currentIndex + 1}.</span>
+            <span className="break-words">{q.question}</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="pb-4">
-          <div className="grid sm:grid-cols-2 gap-3 mb-6">
+        <CardContent className="pb-4 px-4 md:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 mb-4 md:mb-6">
             {q.options.map((opt: string, oi: number) => {
               const isSelected = selectedAnswer === opt;
               const isCorrect = q.answer === opt;
@@ -187,10 +217,10 @@ const AiQuizViewer = ({ questions, category }: { questions: any[], category: str
               if (showAnswer) {
                 if (isCorrect) {
                   optionStyle = "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-500 text-emerald-800 dark:text-emerald-400 font-medium";
-                  indicator = <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />;
+                  indicator = <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />;
                 } else if (isSelected && !isCorrect) {
                   optionStyle = "bg-red-100 dark:bg-red-900/30 border-red-500 text-red-800 dark:text-red-400 font-medium";
-                  indicator = <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" />;
+                  indicator = <XCircle className="w-4 h-4 md:w-5 md:h-5 text-red-600 dark:text-red-400 shrink-0" />;
                 } else {
                   optionStyle = "bg-muted/20 border-border/20 text-muted-foreground opacity-60";
                 }
@@ -202,43 +232,51 @@ const AiQuizViewer = ({ questions, category }: { questions: any[], category: str
                 <div
                   key={oi}
                   onClick={() => !showAnswer && setSelectedAnswer(opt)}
-                  className={`p-3 rounded-lg border transition-all text-sm flex items-center gap-3 ${!showAnswer ? 'cursor-pointer hover:border-primary/50 hover:bg-muted/60' : ''} ${optionStyle}`}
+                  className={`p-2 md:p-3 rounded-lg border transition-all text-xs md:text-sm flex items-center gap-2 md:gap-3 ${!showAnswer ? 'cursor-pointer hover:border-primary/50 hover:bg-muted/60' : ''} ${optionStyle}`}
                 >
                   {indicator}
-                  {opt}
+                  <span className="break-words flex-1">{opt}</span>
                 </div>
               );
             })}
           </div>
 
-          <div className="space-y-6">
-            <div className="min-h-[40px] flex items-center">
+          <div className="space-y-4 md:space-y-6">
+            <div className="min-h-[36px] md:min-h-[40px] flex items-center">
               {showAnswer ? (
                 <div className="animate-in fade-in slide-in-from-left-2">
-                  <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 rounded-md inline-flex items-center">
-                    <Target className="w-4 h-4 mr-2" /> Correct Answer: {q.answer}
+                  <span className="text-xs md:text-sm font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 md:px-3 md:py-1.5 rounded-md inline-flex items-center gap-1 md:gap-2">
+                    <Target className="w-3 h-3 md:w-4 md:h-4" /> 
+                    <span>Correct Answer: {q.answer}</span>
                   </span>
                 </div>
               ) : (
-                <Button variant="outline" size="sm" onClick={() => setShowAnswer(true)}>
+                <Button variant="outline" size={isMobile ? "sm" : "default"} onClick={() => setShowAnswer(true)}>
                   Show Answer
                 </Button>
               )}
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-border/50">
+            <div className="flex items-center justify-between gap-2 pt-3 md:pt-4 border-t border-border/50">
               <Button
                 variant="ghost"
+                size={isMobile ? "sm" : "default"}
                 onClick={handlePrev}
                 disabled={currentIndex === 0}
+                className="gap-1"
               >
-                Previous
+                <ChevronLeft className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="hidden sm:inline">Previous</span>
               </Button>
               <Button
+                size={isMobile ? "sm" : "default"}
                 onClick={handleNext}
                 disabled={currentIndex === questions.length - 1}
+                className="gap-1"
               >
-                {currentIndex === questions.length - 1 ? 'Finish' : 'Next Question'}
+                <span className="hidden sm:inline">{currentIndex === questions.length - 1 ? 'Finish' : 'Next Question'}</span>
+                <span className="sm:hidden">{currentIndex === questions.length - 1 ? 'Finish' : 'Next'}</span>
+                <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
               </Button>
             </div>
           </div>
@@ -260,12 +298,19 @@ const InterviewPreparation = () => {
   const [aiCategory, setAiCategory] = useState('');
   const [generatingQuiz, setGeneratingQuiz] = useState(false);
   const [selectedNewsItem, setSelectedNewsItem] = useState<any | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
     checkUserAccess();
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const checkUserAccess = async () => {
@@ -377,17 +422,17 @@ const InterviewPreparation = () => {
     return (
       <>
         <SEO title="Interview Preparation" description="Premium interview preparation tools" />
-        <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-2xl mx-auto text-center px-4">
-          <div className="bg-primary/10 p-6 rounded-full mb-6">
-            <Lock className="h-16 w-16 text-primary" />
+        <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-2xl mx-auto text-center px-4 py-8">
+          <div className="bg-primary/10 p-4 md:p-6 rounded-full mb-4 md:mb-6">
+            <Lock className="h-12 w-12 md:h-16 md:w-16 text-primary" />
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-indigo-500 bg-clip-text text-transparent mb-4">
+          <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary to-indigo-500 bg-clip-text text-transparent mb-3 md:mb-4">
             Unlock Advanced Interview Prep
           </h1>
-          <p className="text-muted-foreground text-lg mb-8">
+          <p className="text-sm md:text-lg text-muted-foreground mb-6 md:mb-8 px-2">
             Access daily current affairs, aptitude tests, and AI-powered custom quizzes tailored to your dream career. Upgrade to a premium plan to gain an edge in your interviews.
           </p>
-          <Button size="lg" onClick={() => navigate('/dashboard/pricing')} className="px-8 shadow-lg">
+          <Button size={isMobile ? "default" : "lg"} onClick={() => navigate('/dashboard/pricing')} className="px-6 md:px-8 shadow-lg">
             <Sparkles className="h-4 w-4 mr-2" /> Upgrade Now
           </Button>
         </div>
@@ -398,14 +443,14 @@ const InterviewPreparation = () => {
   return (
     <>
       <SEO title="Interview Preparation" description="Master your interviews with daily tests and AI quizzes" />
-      <div className="space-y-8 animate-fade-in max-w-6xl mx-auto pb-10">
+      <div className="space-y-6 md:space-y-8 animate-fade-in max-w-6xl mx-auto pb-6 md:pb-10 px-4 md:px-6 lg:px-8">
 
         {/* Banner Section */}
-        <div className="p-8 rounded-3xl bg-gradient-to-br from-indigo-500/10 via-primary/5 to-transparent border border-primary/20 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[80px] -z-10" />
+        <div className="p-4 md:p-6 lg:p-8 rounded-2xl md:rounded-3xl bg-gradient-to-br from-indigo-500/10 via-primary/5 to-transparent border border-primary/20 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-[200px] md:w-[300px] lg:w-[400px] h-[200px] md:h-[300px] lg:h-[400px] bg-primary/10 rounded-full blur-[60px] md:blur-[80px] -z-10" />
           <div>
-            <h1 className="text-3xl font-bold mb-2">Interview Preparation Hub</h1>
-            <p className="text-muted-foreground max-w-2xl text-lg">
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-1 md:mb-2">Interview Preparation Hub</h1>
+            <p className="text-xs md:text-sm lg:text-base text-muted-foreground max-w-2xl">
               Stay ahead with curated current affairs, sharpen your logic with daily aptitude tests, and generate infinite quizzes on any category with AI.
             </p>
           </div>
@@ -413,40 +458,54 @@ const InterviewPreparation = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="news" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8 h-12 bg-muted/50 rounded-xl p-1">
-            <TabsTrigger value="news" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"><Newspaper className="h-4 w-4 mr-2" /> Current Affairs & News</TabsTrigger>
-            <TabsTrigger value="aptitude" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"><Target className="h-4 w-4 mr-2" /> Daily Aptitude Test</TabsTrigger>
-            <TabsTrigger value="quiz" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"><Network className="h-4 w-4 mr-2" /> Categorized AI Quiz</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-6 md:mb-8 h-auto bg-muted/50 rounded-xl p-1 gap-1">
+            <TabsTrigger value="news" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all text-xs md:text-sm py-2 md:py-3">
+              <Newspaper className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> 
+              <span className="hidden xs:inline">Current Affairs & News</span>
+              <span className="xs:hidden">News</span>
+            </TabsTrigger>
+            <TabsTrigger value="aptitude" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all text-xs md:text-sm py-2 md:py-3">
+              <Target className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> 
+              <span className="hidden xs:inline">Daily Aptitude Test</span>
+              <span className="xs:hidden">Aptitude</span>
+            </TabsTrigger>
+            <TabsTrigger value="quiz" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all text-xs md:text-sm py-2 md:py-3">
+              <Network className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> 
+              <span className="hidden xs:inline">Categorized AI Quiz</span>
+              <span className="xs:hidden">AI Quiz</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Current Affairs Content */}
           <TabsContent value="news" className="space-y-4 outline-none">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <Newspaper className="h-5 w-5 text-primary" /> Today's News
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+              <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
+                <Newspaper className="h-4 w-4 md:h-5 md:w-5 text-primary" /> Today's News
               </h2>
-              <span className="text-sm text-muted-foreground font-medium">
+              <span className="text-xs md:text-sm text-muted-foreground font-medium">
                 {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </span>
             </div>
             {currentAffairs.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground bg-card/50 rounded-2xl border border-dashed">
-                <Newspaper className="h-10 w-10 mx-auto text-muted-foreground/50 mb-4" />
-                <p>No news available for today. Check back later!</p>
+              <div className="text-center py-8 md:py-12 text-muted-foreground bg-card/50 rounded-xl md:rounded-2xl border border-dashed">
+                <Newspaper className="h-8 w-8 md:h-10 md:w-10 mx-auto text-muted-foreground/50 mb-3 md:mb-4" />
+                <p className="text-sm md:text-base">No news available for today. Check back later!</p>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {currentAffairs.map((item: any) => (
                   <Card
                     key={item._id}
                     className="cursor-pointer hover:shadow-md transition-all h-full flex flex-col group border-border/50"
                     onClick={() => setSelectedNewsItem(item)}
                   >
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg leading-snug group-hover:text-primary transition-colors line-clamp-2">{item.title}</CardTitle>
+                    <CardHeader className="pb-2 px-3 md:px-6 pt-3 md:pt-6">
+                      <CardTitle className="text-sm md:text-base lg:text-lg leading-snug group-hover:text-primary transition-colors line-clamp-2 break-words">
+                        {item.title}
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent className="flex-1 pt-0">
-                      <div className="text-muted-foreground text-sm leading-relaxed line-clamp-3 prose dark:prose-invert" dangerouslySetInnerHTML={{ __html: item.content }} />
+                    <CardContent className="flex-1 pt-0 px-3 md:px-6 pb-3 md:pb-6">
+                      <div className="text-muted-foreground text-xs md:text-sm leading-relaxed line-clamp-3 prose dark:prose-invert" dangerouslySetInnerHTML={{ __html: item.content }} />
                     </CardContent>
                   </Card>
                 ))}
@@ -454,17 +513,19 @@ const InterviewPreparation = () => {
             )}
 
             <Dialog open={!!selectedNewsItem} onOpenChange={(open) => !open && setSelectedNewsItem(null)}>
-              <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+              <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[85vh] overflow-y-auto p-4 md:p-6">
                 <DialogHeader>
-                  <DialogTitle className="text-2xl leading-relaxed">{selectedNewsItem?.title}</DialogTitle>
+                  <DialogTitle className="text-lg md:text-xl lg:text-2xl leading-relaxed break-words">
+                    {selectedNewsItem?.title}
+                  </DialogTitle>
                 </DialogHeader>
-                <div className="mt-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6 pb-4 border-b">
-                    <Newspaper className="h-4 w-4" />
+                <div className="mt-3 md:mt-4">
+                  <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground mb-4 md:mb-6 pb-3 md:pb-4 border-b">
+                    <Newspaper className="h-3 w-3 md:h-4 md:w-4" />
                     {selectedNewsItem?.createdAt && <span>{new Date(selectedNewsItem.createdAt).toLocaleDateString()}</span>}
                   </div>
                   <div
-                    className="text-base text-foreground/90 leading-relaxed prose dark:prose-invert max-w-none"
+                    className="text-sm md:text-base text-foreground/90 leading-relaxed prose dark:prose-invert max-w-none"
                     dangerouslySetInnerHTML={{ __html: selectedNewsItem?.content || '' }}
                   />
                 </div>
@@ -475,17 +536,17 @@ const InterviewPreparation = () => {
           {/* Daily Aptitude Content */}
           <TabsContent value="aptitude" className="space-y-4 outline-none">
             {loadingAptitude ? (
-              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-                <p className="text-sm">Generating today's aptitude questions...</p>
+              <div className="flex flex-col items-center justify-center py-12 md:py-16 text-muted-foreground">
+                <Loader2 className="h-8 w-8 md:h-10 md:w-10 animate-spin text-primary mb-3 md:mb-4" />
+                <p className="text-xs md:text-sm">Generating today's aptitude questions...</p>
               </div>
             ) : dailyAptitudes.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground bg-card/50 rounded-2xl border border-dashed">
-                <Target className="h-10 w-10 mx-auto text-muted-foreground/50 mb-4" />
-                <p>No daily aptitude tests available today.</p>
+              <div className="text-center py-8 md:py-12 text-muted-foreground bg-card/50 rounded-xl md:rounded-2xl border border-dashed">
+                <Target className="h-8 w-8 md:h-10 md:w-10 mx-auto text-muted-foreground/50 mb-3 md:mb-4" />
+                <p className="text-sm md:text-base">No daily aptitude tests available today.</p>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4 md:space-y-6">
                 {dailyAptitudes.map((test: any) => (
                   <AptitudeTestViewer key={test._id} test={test} />
                 ))}
@@ -495,29 +556,31 @@ const InterviewPreparation = () => {
 
           {/* Categorized Quiz Builder */}
           <TabsContent value="quiz" className="outline-none">
-            <Card className="border-border/50 shadow-sm overflow-hidden mb-8">
-              <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 p-8 border-b border-border/40">
-                <div className="max-w-2xl mx-auto text-center space-y-4">
-                  <Brain className="h-12 w-12 mx-auto text-primary" />
-                  <h2 className="text-2xl font-bold">AI Quiz Generator</h2>
-                  <p className="text-muted-foreground text-sm">Create tailored interview questions by entering any specific topic or industry below. Let the AI build a custom test for you instantly.</p>
+            <Card className="border-border/50 shadow-sm overflow-hidden mb-6 md:mb-8">
+              <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 p-4 md:p-6 lg:p-8 border-b border-border/40">
+                <div className="max-w-2xl mx-auto text-center space-y-3 md:space-y-4">
+                  <Brain className="h-8 w-8 md:h-10 md:w-12 mx-auto text-primary" />
+                  <h2 className="text-lg md:text-xl lg:text-2xl font-bold">AI Quiz Generator</h2>
+                  <p className="text-xs md:text-sm text-muted-foreground">
+                    Create tailored interview questions by entering any specific topic or industry below. Let the AI build a custom test for you instantly.
+                  </p>
 
-                  <div className="flex w-full items-center space-x-2 mt-6">
+                  <div className="flex w-full flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 mt-4 md:mt-6">
                     <Input
                       type="text"
-                      placeholder="e.g. History, ReactJS, Machine Learning, Geography..."
+                      placeholder="e.g. History, ReactJS, Machine Learning..."
                       value={aiCategory}
                       onChange={(e) => setAiCategory(e.target.value)}
-                      className="bg-background shadow-sm h-12"
+                      className="bg-background shadow-sm h-10 md:h-12 w-full"
                       onKeyDown={(e) => e.key === 'Enter' && generateQuiz()}
                     />
                     <Button
                       type="submit"
                       onClick={generateQuiz}
                       disabled={generatingQuiz}
-                      className="h-12 px-6 shadow-sm"
+                      className="h-10 md:h-12 px-4 md:px-6 shadow-sm w-full sm:w-auto"
                     >
-                      {generatingQuiz ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                      {generatingQuiz ? <Loader2 className="mr-2 h-3 w-3 md:h-4 md:w-4 animate-spin" /> : <Sparkles className="mr-2 h-3 w-3 md:h-4 md:w-4" />}
                       Generate
                     </Button>
                   </div>
