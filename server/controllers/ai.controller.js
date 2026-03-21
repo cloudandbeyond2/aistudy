@@ -186,6 +186,8 @@ export const generateBatchSubtopics = async (req, res) => {
 Your goal is to provide thorough, in-depth, and "large" explanations for course subtopics.
 IMPORTANT: You MUST explicitly translate the 'topicTitle' and subtopic 'title' fields into ${lang || 'English'}, alongside the 'theory' content.
 For each subtopic, provide a detailed explanation (approx 500-1000 words if possible) with rich examples and clear definitions.
+Ensure every sentence is complete and the content doesn't cut off abruptly.
+If providing code examples, ensure they are properly formatted with correct line breaks and indentation.
 Use valid HTML formatting for the "theory" field (paragraphs, bold text, lists).
 Do NOT include images, external links, or additional resource suggestions.
 ONLY respond with a valid JSON object matching the requested schema.`;
@@ -319,7 +321,7 @@ export const generateHtml = async (req, res) => {
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
       safetySettings,
-      systemInstruction: 'You are a helpful educational assistant. Provide thorough and interesting explanations with examples. Use markdown formatting.'
+      systemInstruction: 'You are a helpful educational assistant. Provide thorough and interesting explanations with examples. Use markdown formatting. Ensure every sentence is complete and the content does not cut off abruptly. If providing code examples, ensure they are properly formatted with correct line breaks.'
     });
 
     const result = await retryWithBackoff(() =>

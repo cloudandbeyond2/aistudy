@@ -52,6 +52,7 @@ import {
     updateOrgPlanFeatures,
     deleteOrgPlan
 } from '../controllers/org.controller.js';
+import { getOrgCourseCount } from '../controllers/course.controller.js';
 import Organization from '../models/Organization.js';
 import { uploadAssignment, uploadCourseImage, uploadMaterial } from '../config/upload.config.js';
 
@@ -101,6 +102,7 @@ router.put('/admin/org/:orgId', updateOrganization);
 // Courses
 router.post('/org/course/create', createCourse);
 router.get('/org/courses', getCourses);
+router.get('/org/course-count', getOrgCourseCount);
 router.get('/student/courses', getStudentCourses);
 router.put('/org/course/:courseId', updateCourse);
 router.delete('/org/course/:courseId', deleteCourse);
