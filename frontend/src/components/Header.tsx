@@ -622,7 +622,7 @@ const Header = () => {
                         to="/signup"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        <Button className="w-full h-12 rounded-xl font-bold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30">
+                        <Button className="w-full h-12 rounded-xl font-bold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30  mt-[10px]">
                           <span className="mr-2">🚀</span>
                           Get Started
                         </Button>
