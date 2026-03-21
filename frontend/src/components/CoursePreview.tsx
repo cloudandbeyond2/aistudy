@@ -1205,7 +1205,7 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
 }) => {
   const navigate = useNavigate();
   const [isLoadingCourse, setIsLoadingCourse] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState('Preparing full course content...');
+  const [loadingMessage, setLoadingMessage] = useState('Preparing your course...');
   const { toast } = useToast();
 
   /* ---------------- HELPERS ---------------- */
@@ -1245,58 +1245,6 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
     return courseTopics;
   };
 
-  const buildTopicsPayload = () => {
-    const courseTopics = normalizeAllSubtopics();
-    if (!Array.isArray(courseTopics)) return [];
-
-    return courseTopics.map((topic: any) => ({
-      topicTitle: topic.title,
-      subtopics: Array.isArray(topic.subtopics)
-        ? topic.subtopics.map((sub: any) => sub.title).filter(Boolean)
-        : []
-    }));
-  };
-
-  const mergeGeneratedTheory = (generatedTopics: any[]) => {
-    const courseTopics = getCourseTopics();
-    if (!Array.isArray(courseTopics) || !Array.isArray(generatedTopics)) return;
-
-    generatedTopics.forEach((generatedTopic: any, topicIndex: number) => {
-      const localTopic = courseTopics[topicIndex];
-      if (!localTopic || !Array.isArray(localTopic.subtopics)) return;
-
-      generatedTopic?.subtopics?.forEach((generatedSubtopic: any, subtopicIndex: number) => {
-        const localSubtopic = localTopic.subtopics[subtopicIndex];
-        if (!localSubtopic) return;
-
-        localSubtopic.theory = generatedSubtopic?.theory || localSubtopic.theory || '';
-        localSubtopic.title = localSubtopic.title || generatedSubtopic?.title || `Subtopic ${subtopicIndex + 1}`;
-      });
-    });
-  };
-
-  async function generateFullCourseContent() {
-    const topicsList = buildTopicsPayload();
-    if (!topicsList.length) {
-      throw new Error('Topics payload is empty.');
-    }
-
-    setLoadingMessage('Generating complete lesson content for all subtopics...');
-
-    const res = await axios.post(serverURL + '/api/generate-batch', {
-      mainTopic: courseName,
-      topicsList,
-      lang,
-      userId: sessionStorage.getItem('uid')
-    });
-
-    if (!res.data?.success || !Array.isArray(res.data.topics)) {
-      throw new Error(res.data?.message || 'Failed to generate full course content.');
-    }
-
-    mergeGeneratedTheory(res.data.topics);
-  }
-
   /* ---------------- CREATE COURSE ---------------- */
 
   async function handleCreateCourse() {
@@ -1312,8 +1260,7 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
 
     setIsLoadingCourse(true);
     try {
-      await generateFullCourseContent();
-      setLoadingMessage('Saving generated course...');
+      setLoadingMessage('Saving course structure...');
       await saveCourse();
     } catch (error: any) {
       toast({
@@ -1321,7 +1268,7 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
         description:
           error?.response?.data?.message ||
           error?.message ||
-          'Failed to generate full course content.'
+          'Failed to create course.'
       });
       setIsLoadingCourse(false);
     }

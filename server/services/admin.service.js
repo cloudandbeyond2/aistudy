@@ -251,7 +251,7 @@ export const getDashboardStatsWithOrgs = async () => {
     organizations,
     orgStudents,
     admin: {
-      email: stats.admin.email,
+      email: stats.admin?.email,
       websiteName: admin?.websiteName || 'Colossus IQ',
       websiteLogo: admin?.websiteLogo || '/logo.png',
       notebookEnabled: admin?.notebookEnabled || {
@@ -529,7 +529,7 @@ export const getAdminSettings = async () => {
   return {
     aiProvider: admin?.aiProvider || 'gemini',
     geminiApiKey: admin?.geminiApiKey || '',
-    geminiModel: admin?.geminiModel || 'gemini-2.5-flash',
+    geminiModel: admin?.geminiModel || 'gemini-1.5-flash',
     openaiApiKey: admin?.openaiApiKey || '',
     openaiModel: admin?.openaiModel || 'gpt-4.1-mini',
     unsplashApiKey: admin?.unsplashApiKey || '',
@@ -583,7 +583,7 @@ export const updateAdminSettings = async (data) => {
   const updatePayload = {
     aiProvider: data.aiProvider || 'gemini',
     geminiApiKey: data.geminiApiKey || '',
-    geminiModel: data.geminiModel || 'gemini-2.5-flash',
+    geminiModel: data.geminiModel || 'gemini-1.5-flash',
     openaiApiKey: data.openaiApiKey || '',
     openaiModel: data.openaiModel || 'gpt-4.1-mini',
     unsplashApiKey: data.unsplashApiKey || '',

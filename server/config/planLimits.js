@@ -30,6 +30,20 @@ export const PLAN_LIMITS = {
         allowVideo: true,
         allowMultiLang: true,
         durationDays: Infinity
+    },
+    org_admin: {
+        maxCourses: Infinity,
+        maxSubtopics: 10,
+        allowVideo: true,
+        allowMultiLang: true,
+        durationDays: Infinity
+    },
+    dept_admin: {
+        maxCourses: Infinity,
+        maxSubtopics: 10,
+        allowVideo: true,
+        allowMultiLang: true,
+        durationDays: Infinity
     }
 };
 

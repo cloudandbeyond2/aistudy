@@ -161,12 +161,7 @@ export const generateBatchSubtopics = async (req, res) => {
     { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }
   ];
 
-  const topicsPromptString = topicsList.map((t, i) => {
-    const subList = t.subtopics.join('\n- ');
-    return `Chapter ${i + 1}: "${t.topicTitle}"\nSubtopics:\n- ${subList}`;
-  }).join('\n\n');
-
-const systemInstruction = `Strictly in ${lang || 'English'}, you are a specialized educational content writer. 
+  const systemInstruction = `Strictly in ${lang || 'English'}, you are a specialized educational content writer. 
 Your goal is to provide thorough, in-depth, and "large" explanations for course subtopics.
 IMPORTANT: You MUST explicitly translate the 'topicTitle' and subtopic 'title' fields into ${lang || 'English'}, alongside the 'theory' content.
 For each subtopic, provide a detailed explanation (approx 500-1000 words if possible) with rich examples and clear definitions.
@@ -186,63 +181,239 @@ Do not truncate a section halfway through an example.
 Do NOT include images, external links, or additional resource suggestions.
 ONLY respond with a valid JSON object matching the requested schema.`;
 
-  const prompt = `Course: "${mainTopic}"
+  const responseSchema = {
+    type: "object",
+    properties: {
+      topics: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            topicTitle: { type: "string" },
+            subtopics: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  theory: { type: "string" }
+                },
+                required: ["title", "theory"]
+              }
+            }
+          },
+          required: ["topicTitle", "subtopics"]
+        }
+      }
+    },
+    required: ["topics"]
+  };
 
-Generate comprehensive educational content for these chapters and subtopics:
-${topicsPromptString}
+  const parseGeneratedJson = (rawText) => {
+    const normalizedText = rawText?.trim();
+    if (!normalizedText) {
+      throw new Error('Empty JSON response from AI provider.');
+    }
+
+    const withoutCodeFence = normalizedText
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/\s*```$/i, '');
+
+    const jsonStart = withoutCodeFence.indexOf('{');
+    const jsonEnd = withoutCodeFence.lastIndexOf('}');
+    const jsonCandidate =
+      jsonStart >= 0 && jsonEnd >= jsonStart
+        ? withoutCodeFence.slice(jsonStart, jsonEnd + 1)
+        : withoutCodeFence;
+
+    try {
+      return JSON.parse(jsonCandidate);
+    } catch (parseError) {
+      const preview = jsonCandidate.slice(0, 500);
+      throw new Error(
+        `Invalid JSON returned from AI provider. ${parseError.message}. Preview: ${preview}`
+      );
+    }
+  };
+
+  const normalizeGeneratedSubtopic = ({
+    topicTitle,
+    subtopicTitle,
+    parsedTopic,
+    parsedSubtopic
+  }) => ({
+    topicTitle: parsedTopic?.topicTitle?.trim() || topicTitle,
+    subtopic: {
+      title: parsedSubtopic?.title?.trim() || subtopicTitle,
+      theory: parsedSubtopic?.theory?.trim() || ''
+    }
+  });
+
+  const buildSingleSubtopicPrompt = (
+    topicTitle,
+    subtopicTitle,
+    detailLevel = 'detailed'
+  ) => {
+    const isCompact = detailLevel === 'compact';
+
+    return `Course: "${mainTopic}"
+
+Generate comprehensive educational content for exactly one chapter and one subtopic.
+
+Chapter: "${topicTitle}"
+Subtopic: "${subtopicTitle}"
+
+Requirements:
+- Return content only for this one chapter and this one subtopic.
+- Keep the same chapter title and subtopic title, translated into ${lang || 'English'} when needed.
+- The "theory" field must contain complete HTML content and must not be cut off.
+- Write ${isCompact ? 'a concise but complete lesson of about 220 to 400 words' : 'a detailed lesson of about 350 to 700 words'}.
+- Use short paragraphs and lists where useful, but keep the HTML clean.
 
 Response Format (JSON):
 {
   "topics": [
     {
-      "topicTitle": "Topic Title",
+      "topicTitle": "${topicTitle}",
       "subtopics": [
-        { "title": "Subtopic Title", "theory": "Detailed HTML Content" }
+        { "title": "${subtopicTitle}", "theory": "Detailed HTML Content" }
       ]
     }
   ]
 }`;
+  };
 
-  try {
+  const buildFallbackTheoryPrompt = (topicTitle, subtopicTitle) => `Course: "${mainTopic}"
+
+Write a complete HTML lesson for this one chapter and one subtopic.
+
+Chapter: "${topicTitle}"
+Subtopic: "${subtopicTitle}"
+Language: ${lang || 'English'}
+
+Rules:
+- Return HTML only, not JSON.
+- Start with a short introductory paragraph.
+- Include a few useful details or examples.
+- Keep the lesson complete and readable.
+- Use <p>, <strong>, <ul>, <li>, and <pre><code> only when appropriate.
+- Do not include images, links, markdown fences, or notes about being an AI.`;
+
+  const generateStructuredSubtopic = async ({
+    topicTitle,
+    subtopicTitle,
+    detailLevel = 'detailed',
+    maxOutputTokens = 4096
+  }) => {
     const rawText = await generateAIText({
-      prompt,
+      prompt: buildSingleSubtopicPrompt(topicTitle, subtopicTitle, detailLevel),
       systemInstruction,
       responseMimeType: 'application/json',
-      responseSchema: {
-        type: "object",
-        properties: {
-          topics: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                topicTitle: { type: "string" },
-                subtopics: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      title: { type: "string" },
-                      theory: { type: "string" }
-                    },
-                    required: ["title", "theory"]
-                  }
-                }
-              },
-              required: ["topicTitle", "subtopics"]
-            }
-          }
-        },
-        required: ["topics"]
-      },
-      maxOutputTokens: 8192,
+      responseSchema,
+      maxOutputTokens,
       safetySettings
     });
-    const parsed = JSON.parse(rawText);
+
+    const parsed = parseGeneratedJson(rawText);
+    const parsedTopic = Array.isArray(parsed?.topics) ? parsed.topics[0] : null;
+    const parsedSubtopic = Array.isArray(parsedTopic?.subtopics)
+      ? parsedTopic.subtopics[0]
+      : null;
+
+    return normalizeGeneratedSubtopic({
+      topicTitle,
+      subtopicTitle,
+      parsedTopic,
+      parsedSubtopic
+    });
+  };
+
+  const generateFallbackTheory = async ({ topicTitle, subtopicTitle }) => {
+    const theory = await generateAIText({
+      prompt: buildFallbackTheoryPrompt(topicTitle, subtopicTitle),
+      systemInstruction: `Strictly in ${lang || 'English'}, you are a specialized educational content writer. Return only valid HTML for one lesson.`,
+      maxOutputTokens: 3072,
+      safetySettings
+    });
+
+    const normalizedTheory = theory?.trim();
+    if (!normalizedTheory) {
+      throw new Error('Fallback lesson generation returned empty content.');
+    }
+
+    return {
+      topicTitle,
+      subtopic: {
+        title: subtopicTitle,
+        theory: normalizedTheory
+      }
+    };
+  };
+
+  const buildEmergencyTheory = ({ topicTitle, subtopicTitle }) => ({
+    topicTitle,
+    subtopic: {
+      title: subtopicTitle,
+      theory: `<div class="prose max-w-none"><h2>${subtopicTitle}</h2><p>We could not fully generate this lesson right now, but this section is reserved for <strong>${subtopicTitle}</strong> under <strong>${topicTitle}</strong>.</p><p>Please reopen this lesson in a moment to retry the full content generation.</p></div>`
+    }
+  });
+
+  const generateSubtopicWithFallback = async ({ topicTitle, subtopicTitle }) => {
+    try {
+      return await generateStructuredSubtopic({ topicTitle, subtopicTitle });
+    } catch (error) {
+      console.warn(`Structured lesson generation failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);
+    }
+
+    try {
+      return await generateStructuredSubtopic({
+        topicTitle,
+        subtopicTitle,
+        detailLevel: 'compact',
+        maxOutputTokens: 3072
+      });
+    } catch (error) {
+      console.warn(`Compact structured retry failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);
+    }
+
+    try {
+      return await generateFallbackTheory({ topicTitle, subtopicTitle });
+    } catch (error) {
+      console.warn(`HTML fallback failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);
+      return buildEmergencyTheory({ topicTitle, subtopicTitle });
+    }
+  };
+
+  try {
+    const combinedTopics = [];
+
+    for (const topic of topicsList) {
+      const normalizedSubtopics = Array.isArray(topic?.subtopics)
+        ? topic.subtopics.filter(Boolean)
+        : [];
+
+      const generatedTopic = {
+        topicTitle: topic?.topicTitle || 'Untitled Topic',
+        subtopics: []
+      };
+
+      for (const subtopicTitle of normalizedSubtopics) {
+        const generatedSubtopic = await generateSubtopicWithFallback({
+          topicTitle: generatedTopic.topicTitle,
+          subtopicTitle
+        });
+
+        generatedTopic.topicTitle = generatedSubtopic.topicTitle || generatedTopic.topicTitle;
+        generatedTopic.subtopics.push(generatedSubtopic.subtopic);
+      }
+
+      combinedTopics.push(generatedTopic);
+    }
 
     res.status(200).json({
       success: true,
-      topics: parsed.topics
+      topics: combinedTopics
     });
 
   } catch (error) {
@@ -307,7 +478,7 @@ export const generateHtml = async (req, res) => {
   try {
     const genAI = await getGenAI();
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       safetySettings,
       systemInstruction: 'You are a helpful educational assistant. Provide thorough and interesting explanations with examples. Use markdown formatting.'
     });
@@ -375,7 +546,7 @@ export const generateImage = async (req, res) => {
     let searchPrompt = prompt;
     try {
       const genAI = await getGenAI();
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       const transResult = await model.generateContent(`Translate the following search query into brief English keywords for an image search engine. Give me only the translated keywords, with no extra text or explanation: "${prompt}"`);
       const engPrompt = await transResult.response.text();
       if (engPrompt && engPrompt.trim()) {

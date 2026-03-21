@@ -863,6 +863,42 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
     }
   };
 
+  const isSubtopicReadyForDisplay = (subtopic) => {
+    if (!subtopic?.theory) return false;
+    return type === 'video & text course'
+      ? !!subtopic.youtube
+      : !!subtopic.image;
+  };
+
+  const startSubtopicPreparation = (topicTitle, subtopicTitle, subtopicData) => {
+    setShowLoadingPopup(true);
+    setLoadingSubtopic(subtopicTitle);
+    setLoadingProgress(0);
+    setSelected(subtopicTitle);
+
+    if (subtopicData?.theory) {
+      setTheory(subtopicData.theory);
+      setMedia(type === 'video & text course' ? subtopicData.youtube || '' : subtopicData.image || '');
+    } else {
+      setTheory(`<div class="prose dark:prose-invert max-w-none">
+        <h2>${subtopicTitle}</h2>
+        <p>AI is crafting personalized content for you...</p>
+        <div class="flex items-center justify-center p-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>`);
+      setMedia(null);
+    }
+
+    if (type === 'video & text course') {
+      sendVideo(`${subtopicTitle} ${mainTopic}`, topicTitle, subtopicTitle, subtopicTitle);
+    } else if (subtopicData?.theory) {
+      sendImageForBatch(`${subtopicTitle} in ${mainTopic}`, topicTitle, subtopicTitle, subtopicData.theory);
+    } else {
+      sendBulkCourseContent(topicTitle, subtopicTitle);
+    }
+  };
+
 async function sendBulkCourseContent(clickedTopic, clickedSub) {
   setShowLoadingPopup(true);
   setLoadingSubtopic(clickedSub);
@@ -1097,6 +1133,11 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
 
   async function sendImageForBatch(promptImage: string, topics: string, sub: string, theory: string) {
   try {
+    setShowLoadingPopup(true);
+    setLoadingSubtopic(sub);
+    setLoadingProgress(0);
+    simulateProgress('image');
+
     // Show theory immediately
     setSelected(sub);
     setTheory(theory);
@@ -1160,6 +1201,15 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
       newMap.delete(sub);
       return newMap;
     });
+
+    simulateProgress('complete');
+    setLoadingProgress(100);
+    setTimeout(() => {
+      setShowLoadingPopup(false);
+      if (window.progressInterval) {
+        clearInterval(window.progressInterval);
+      }
+    }, 1500);
     
     setIsLoading(false);
     
@@ -1190,6 +1240,11 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
       newMap.delete(sub);
       return newMap;
     });
+
+    setShowLoadingPopup(false);
+    if (window.progressInterval) {
+      clearInterval(window.progressInterval);
+    }
     
     setIsLoading(false);
   }
@@ -1211,21 +1266,12 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
     // INSTANT: Change the title
     setSelected(subtopicTitle);
 
-    if (mSubTopic.theory) {
+    if (isSubtopicReadyForDisplay(mSubTopic)) {
       // CACHE HIT: Show immediately
       setTheory(mSubTopic.theory);
       setMedia(type === 'video & text course' ? mSubTopic.youtube : mSubTopic.image);
     } else {
-      // CACHE MISS: Show loading popup and start generation
-      setShowLoadingPopup(true);
-      setLoadingSubtopic(subtopicTitle);
-      setLoadingProgress(0); // Reset progress
-      
-      if (type === 'video & text course') {
-        sendVideo(`${subtopicTitle} ${mainTopic}`, topicTitle, subtopicTitle, subtopicTitle);
-      } else {
-        sendBulkCourseContent(topicTitle, subtopicTitle);
-      }
+      startSubtopicPreparation(topicTitle, subtopicTitle, mSubTopic);
     }
   }, [jsonData, mainTopic, type]);
 
@@ -1959,51 +2005,13 @@ Please ensure the content is strictly educational and about the subtopic "${subt
           setSelected(firstSubtopic.title);
           
           // Check if content exists
-          if (firstSubtopic.theory) {
+          if (isSubtopicReadyForDisplay(firstSubtopic)) {
             setTheory(firstSubtopic.theory);
+            setMedia(type === 'video & text course' ? firstSubtopic.youtube : firstSubtopic.image);
           } else {
-            // Show loading message and trigger generation
-            setTheory(`<div class="prose dark:prose-invert max-w-none">
-              <h2>${firstSubtopic.title}</h2>
-              <p>AI is crafting personalized content for you...</p>
-              <div class="flex items-center justify-center p-8">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            </div>`);
-            
-            // Show loading popup
-            setShowLoadingPopup(true);
-            setLoadingSubtopic(firstSubtopic.title);
-            setLoadingProgress(0);
-            simulateProgress('theory');
-            
-            // Trigger content generation
             setTimeout(() => {
-              if (type === 'video & text course') {
-                const query = `${firstSubtopic.title} ${mainTopic} in english`;
-                sendVideo(query, mainTopicData.title, firstSubtopic.title, firstSubtopic.title);
-              } else {
-                sendBulkCourseContent(mainTopicData.title, firstSubtopic.title);
-              }
+              startSubtopicPreparation(mainTopicData.title, firstSubtopic.title, firstSubtopic);
             }, 100);
-          }
-          
-          // Handle image
-          if (type === 'video & text course') {
-            if (firstSubtopic.youtube) {
-              setMedia(firstSubtopic.youtube);
-            }
-          } else {
-            if (firstSubtopic.image) {
-              setMedia(firstSubtopic.image);
-              preloadImageWithCache(firstSubtopic.image, firstSubtopic.title);
-            } else {
-              // Generate image in background
-              setTimeout(() => {
-                const promptImage = `Example of ${firstSubtopic.title} in ${mainTopic}`;
-                sendImageForBatch(promptImage, mainTopicData.title, firstSubtopic.title, firstSubtopic.theory || '');
-              }, 200);
-            }
           }
         }
       }
