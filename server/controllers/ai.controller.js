@@ -237,18 +237,160 @@ ONLY respond with a valid JSON object matching the requested schema.`;
     }
   };
 
-  const normalizeGeneratedSubtopic = ({
+  const stripHtmlToText = (html = '') =>
+    html
+      .replace(/<pre[\s\S]*?<\/pre>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const hasCompleteSentenceEnding = (html = '') => {
+    const text = stripHtmlToText(html);
+    if (!text) return false;
+
+    return /[.!?]["')\]]?\s*$/.test(text);
+  };
+
+  const trimIncompleteTrailingFragment = (html = '') => {
+    const trimmed = html.trim();
+    if (!trimmed) return trimmed;
+    if (hasCompleteSentenceEnding(trimmed)) return trimmed;
+
+    const sentenceEndMatches = [...trimmed.matchAll(/[.!?](?=(?:[^<]*<[^>]*>)*[^<]*$)/g)];
+    const lastSentenceEnd = sentenceEndMatches.at(-1)?.index;
+
+    if (typeof lastSentenceEnd === 'number') {
+      const truncated = trimmed.slice(0, lastSentenceEnd + 1).trim();
+      if (stripHtmlToText(truncated).length >= 80) {
+        return truncated;
+      }
+    }
+
+    return trimmed;
+  };
+
+  const appendClosingLessonParagraph = ({ html, topicTitle, subtopicTitle }) => {
+    const safeHtml = trimIncompleteTrailingFragment(html);
+    const closingParagraph = `<p>Overall, ${subtopicTitle} is an important part of ${topicTitle} because it helps the learner apply the main ideas with clarity and confidence.</p>`;
+
+    if (!safeHtml) {
+      return `<div class="prose max-w-none"><h2>${subtopicTitle}</h2>${closingParagraph}</div>`;
+    }
+
+    if (/<\/div>\s*$/i.test(safeHtml)) {
+      return safeHtml.replace(/<\/div>\s*$/i, `${closingParagraph}</div>`);
+    }
+
+    return `${safeHtml}\n${closingParagraph}`;
+  };
+
+  const needsLessonRepair = (html = '') => {
+    const text = stripHtmlToText(html);
+    if (!text) return true;
+    if (text.length < 120) return true;
+    if (!hasCompleteSentenceEnding(html)) return true;
+
+    const lowered = text.toLowerCase();
+    return (
+      lowered.endsWith(' and') ||
+      lowered.endsWith(' or') ||
+      lowered.endsWith(' because') ||
+      lowered.endsWith(' so') ||
+      lowered.endsWith(' which') ||
+      lowered.endsWith(' such as') ||
+      lowered.endsWith(' for example')
+    );
+  };
+
+  const buildLessonRepairPrompt = ({ topicTitle, subtopicTitle, theory }) => `Course: "${mainTopic}"
+
+Chapter: "${topicTitle}"
+Subtopic: "${subtopicTitle}"
+Language: ${lang || 'English'}
+
+Task:
+Rewrite the following lesson into clean, valid HTML.
+Every sentence must be complete and meaningful.
+Remove any truncated phrase, dangling clause, or cut-off ending.
+Preserve the lesson's meaning and structure, but make the final result read naturally from start to finish.
+Return HTML only.
+
+Original lesson:
+${theory}`;
+
+  const repairIncompleteLesson = async ({ topicTitle, subtopicTitle, theory }) => {
+    const repaired = await generateAIText({
+      prompt: buildLessonRepairPrompt({ topicTitle, subtopicTitle, theory }),
+      systemInstruction: `Strictly in ${lang || 'English'}, you are a careful educational editor. Return only valid HTML. Every sentence must be complete, natural, and meaningful.`,
+      maxOutputTokens: 3072,
+      safetySettings
+    });
+
+    return repaired?.trim() || '';
+  };
+
+  const finalizeLessonTheory = async ({ topicTitle, subtopicTitle, theory }) => {
+    const normalizedTheory = theory?.trim() || '';
+    if (!normalizedTheory) {
+      throw new Error('Lesson content is empty.');
+    }
+
+    if (!needsLessonRepair(normalizedTheory)) {
+      return normalizedTheory;
+    }
+
+    try {
+      const repairedTheory = await repairIncompleteLesson({
+        topicTitle,
+        subtopicTitle,
+        theory: normalizedTheory
+      });
+
+      if (repairedTheory && !needsLessonRepair(repairedTheory)) {
+        return repairedTheory;
+      }
+
+      if (repairedTheory) {
+        return appendClosingLessonParagraph({
+          html: repairedTheory,
+          topicTitle,
+          subtopicTitle
+        });
+      }
+    } catch (repairError) {
+      console.warn(`Lesson repair failed for "${topicTitle}" -> "${subtopicTitle}":`, repairError.message);
+    }
+
+    return appendClosingLessonParagraph({
+      html: normalizedTheory,
+      topicTitle,
+      subtopicTitle
+    });
+  };
+
+  const normalizeGeneratedSubtopic = async ({
     topicTitle,
     subtopicTitle,
     parsedTopic,
     parsedSubtopic
-  }) => ({
-    topicTitle: parsedTopic?.topicTitle?.trim() || topicTitle,
-    subtopic: {
-      title: parsedSubtopic?.title?.trim() || subtopicTitle,
+  }) => {
+    const normalizedTopicTitle = parsedTopic?.topicTitle?.trim() || topicTitle;
+    const normalizedSubtopicTitle = parsedSubtopic?.title?.trim() || subtopicTitle;
+    const normalizedTheory = await finalizeLessonTheory({
+      topicTitle: normalizedTopicTitle,
+      subtopicTitle: normalizedSubtopicTitle,
       theory: parsedSubtopic?.theory?.trim() || ''
-    }
-  });
+    });
+
+    return {
+      topicTitle: normalizedTopicTitle,
+      subtopic: {
+        title: normalizedSubtopicTitle,
+        theory: normalizedTheory
+      }
+    };
+  };
 
   const buildSingleSubtopicPrompt = (
     topicTitle,
@@ -321,7 +463,7 @@ Rules:
       ? parsedTopic.subtopics[0]
       : null;
 
-    return normalizeGeneratedSubtopic({
+    return await normalizeGeneratedSubtopic({
       topicTitle,
       subtopicTitle,
       parsedTopic,
@@ -337,10 +479,11 @@ Rules:
       safetySettings
     });
 
-    const normalizedTheory = theory?.trim();
-    if (!normalizedTheory) {
-      throw new Error('Fallback lesson generation returned empty content.');
-    }
+    const normalizedTheory = await finalizeLessonTheory({
+      topicTitle,
+      subtopicTitle,
+      theory
+    });
 
     return {
       topicTitle,
