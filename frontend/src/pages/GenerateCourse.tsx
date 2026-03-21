@@ -976,7 +976,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { Sparkles, Plus, Lock, AlertTriangle, BookOpen, Layers, Type, Globe, CheckCircle2, Info, Lightbulb, Award, CheckCircle, User, LogIn, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sparkles, Plus, Lock, AlertTriangle, BookOpen, Layers, Type, Globe, CheckCircle2, Info, Lightbulb, Award, CheckCircle, User, LogIn, Loader2, Briefcase, GraduationCap } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import CoursePreview from '@/components/CoursePreview';
@@ -1005,6 +1006,14 @@ const courseFormSchema = z.object({
 
 type CourseFormValues = z.infer<typeof courseFormSchema>;
 
+type LearnerType = 'student' | 'employee' | 'other';
+
+interface TopicSuggestion {
+  title: string;
+  reason: string;
+  recommendedSubtopics?: string[];
+}
+
 const GenerateCourse = () => {
   const [subtopicInput, setSubtopicInput] = useState('');
   const [subtopics, setSubtopics] = useState<string[]>([]);
@@ -1022,6 +1031,12 @@ const GenerateCourse = () => {
   const [formProgress, setFormProgress] = useState(0);
   const [orgPlan, setOrgPlan] = useState<any>(null);
   const [orgCourseCount, setOrgCourseCount] = useState(0);
+  const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = useState(false);
+  const [learnerType, setLearnerType] = useState<LearnerType>('student');
+  const [learnerFocus, setLearnerFocus] = useState('');
+  const [topicSuggestions, setTopicSuggestions] = useState<TopicSuggestion[]>([]);
+  const [selectedSuggestion, setSelectedSuggestion] = useState<string>('');
+  const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -1123,6 +1138,12 @@ const GenerateCourse = () => {
       return;
     }
   }, []);
+
+  useEffect(() => {
+    if (!isCheckingAuth && !isSubmitted) {
+      setIsSuggestionDialogOpen(true);
+    }
+  }, [isCheckingAuth, isSubmitted]);
 
   useEffect(() => {
     async function fetchCourseCount() {
@@ -1255,6 +1276,117 @@ const GenerateCourse = () => {
     form.setValue('subtopics', updated);
   };
 
+  const focusLabel =
+    learnerType === 'student' ? 'Department or field of study' : 'Department, profession, or domain';
+
+  const buildSuggestionPrompt = () => `You are helping a user choose a course topic.
+
+Learner type: ${learnerType}
+Background: ${learnerFocus.trim() || 'General'}
+
+Generate exactly 4 intelligent course topic suggestions tailored to this learner.
+Each suggestion must:
+- have a practical and specific title
+- explain briefly why it fits this learner
+- include 5 or 6 short recommended subtopics
+
+Return only valid JSON that matches the schema.`;
+
+  const generateTopicSuggestions = async () => {
+    if (!learnerFocus.trim()) {
+      toast({
+        title: 'More detail needed',
+        description: `Enter ${focusLabel.toLowerCase()} to generate targeted suggestions.`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsGeneratingSuggestions(true);
+
+    try {
+      const res = await axios.post(serverURL + '/api/prompt', {
+        prompt: buildSuggestionPrompt(),
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'object',
+          properties: {
+            suggestions: {
+              type: 'array',
+              minItems: 4,
+              maxItems: 4,
+              items: {
+                type: 'object',
+                properties: {
+                  title: { type: 'string' },
+                  reason: { type: 'string' },
+                  recommendedSubtopics: {
+                    type: 'array',
+                    minItems: 5,
+                    maxItems: 6,
+                    items: { type: 'string' }
+                  }
+                },
+                required: ['title', 'reason', 'recommendedSubtopics']
+              }
+            }
+          },
+          required: ['suggestions']
+        }
+      });
+
+      const parsed = JSON.parse(res.data.generatedText || '{}');
+      const suggestions = Array.isArray(parsed.suggestions) ? parsed.suggestions.slice(0, 4) : [];
+
+      if (!suggestions.length) {
+        throw new Error('No suggestions returned');
+      }
+
+      setTopicSuggestions(suggestions);
+      setSelectedSuggestion(suggestions[0]?.title || '');
+    } catch (error: any) {
+      console.error('Error generating topic suggestions:', error);
+      toast({
+        title: 'Suggestion generation failed',
+        description: error?.response?.data?.message || error?.message || 'Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsGeneratingSuggestions(false);
+    }
+  };
+
+  const applySuggestion = (suggestion: TopicSuggestion) => {
+    const recommendedSubtopics = Array.isArray(suggestion.recommendedSubtopics)
+      ? suggestion.recommendedSubtopics.slice(0, maxSubtopics)
+      : [];
+
+    form.setValue('topic', suggestion.title, { shouldValidate: true, shouldDirty: true });
+    form.setValue('subtopics', recommendedSubtopics, { shouldValidate: true, shouldDirty: true });
+    setSubtopics(recommendedSubtopics);
+    setSubtopicInput('');
+    setIsSuggestionDialogOpen(false);
+
+    toast({
+      title: 'Suggestion applied',
+      description: `"${suggestion.title}" is ready for course generation.`
+    });
+  };
+
+  const applySelectedSuggestion = () => {
+    const suggestion = topicSuggestions.find((item) => item.title === selectedSuggestion);
+    if (!suggestion) {
+      toast({
+        title: 'Select a topic',
+        description: 'Choose one suggested topic to continue.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    applySuggestion(suggestion);
+  };
+
   const onSubmit = async (data: CourseFormValues) => {
     // Check authentication first
     if (!isAuthenticated) {
@@ -1315,7 +1447,9 @@ const GenerateCourse = () => {
     Chapters: ${number}
     Required Subtopics: ${subtopicsList.join(', ')}
 
-    Generate a detailed course structure in JSON with exactly ${number} chapters.`;
+    Generate a detailed course structure in JSON with exactly ${number} chapters.
+    Each chapter must include 3 to 5 subtopics.
+    Use the required subtopics where relevant and expand them into a fuller lesson path.`;
 
     setGenerationProgress(30);
     setProgressMessage("Sending request to AI...");
@@ -1337,6 +1471,8 @@ const GenerateCourse = () => {
                 title: { type: "string" },
                 subtopics: {
                   type: "array",
+                  minItems: 3,
+                  maxItems: 5,
                   items: {
                     type: "object",
                     properties: {
@@ -1698,6 +1834,138 @@ const GenerateCourse = () => {
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <Dialog open={isSuggestionDialogOpen} onOpenChange={setIsSuggestionDialogOpen}>
+                  <DialogContent className="sm:max-w-3xl">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                        Intelligent Topic Suggestions
+                      </DialogTitle>
+                      <DialogDescription>
+                        Tell us who this course is for. We will suggest 4 strong topics and prefill the course generator.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-6">
+                      <div className="space-y-3">
+                        <FormLabel className="text-base font-medium">Learner Type</FormLabel>
+                        <RadioGroup
+                          value={learnerType}
+                          onValueChange={(value) => setLearnerType(value as LearnerType)}
+                          className="grid gap-3 md:grid-cols-3"
+                        >
+                          <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${learnerType === 'student' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                            <RadioGroupItem value="student" id="learner-student" className="mt-1" />
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 font-medium">
+                                <GraduationCap className="h-4 w-4 text-primary" />
+                                Student
+                              </div>
+                              <p className="text-sm text-muted-foreground">Suggestions based on study area and academic direction.</p>
+                            </div>
+                          </label>
+
+                          <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${learnerType === 'employee' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                            <RadioGroupItem value="employee" id="learner-employee" className="mt-1" />
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 font-medium">
+                                <Briefcase className="h-4 w-4 text-primary" />
+                                Employee
+                              </div>
+                              <p className="text-sm text-muted-foreground">Suggestions tied to job role, department, and skills growth.</p>
+                            </div>
+                          </label>
+
+                          <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${learnerType === 'other' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                            <RadioGroupItem value="other" id="learner-other" className="mt-1" />
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 font-medium">
+                                <User className="h-4 w-4 text-primary" />
+                                Other
+                              </div>
+                              <p className="text-sm text-muted-foreground">Suggestions for self-learners, founders, and general users.</p>
+                            </div>
+                          </label>
+                        </RadioGroup>
+                      </div>
+
+                      <div className="space-y-3">
+                        <FormLabel className="text-base font-medium">{focusLabel}</FormLabel>
+                        <Input
+                          value={learnerFocus}
+                          onChange={(e) => setLearnerFocus(e.target.value)}
+                          placeholder={learnerType === 'student' ? 'Example: Computer Science, Mechanical, Biotechnology' : 'Example: HR, Sales, Full Stack Developer, Finance'}
+                        />
+                      </div>
+
+                      <div className="flex flex-wrap gap-3">
+                        <Button type="button" onClick={generateTopicSuggestions} disabled={isGeneratingSuggestions}>
+                          {isGeneratingSuggestions ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Generating Suggestions
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="mr-2 h-4 w-4" />
+                              Generate 4 Suggestions
+                            </>
+                          )}
+                        </Button>
+                        {!!topicSuggestions.length && (
+                          <Button type="button" variant="outline" onClick={generateTopicSuggestions} disabled={isGeneratingSuggestions}>
+                            Refresh Suggestions
+                          </Button>
+                        )}
+                      </div>
+
+                      {!!topicSuggestions.length && (
+                        <div className="grid gap-4 md:grid-cols-2">
+                          {topicSuggestions.map((suggestion) => {
+                            const isActive = selectedSuggestion === suggestion.title;
+
+                            return (
+                              <button
+                                key={suggestion.title}
+                                type="button"
+                                onClick={() => setSelectedSuggestion(suggestion.title)}
+                                className={`rounded-xl border p-4 text-left transition-colors ${isActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'}`}
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <h4 className="font-semibold text-foreground">{suggestion.title}</h4>
+                                    <p className="mt-2 text-sm text-muted-foreground">{suggestion.reason}</p>
+                                  </div>
+                                  <div className={`mt-1 h-4 w-4 rounded-full border ${isActive ? 'border-primary bg-primary' : 'border-muted-foreground/30'}`} />
+                                </div>
+
+                                {!!suggestion.recommendedSubtopics?.length && (
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    {suggestion.recommendedSubtopics.slice(0, 4).map((item) => (
+                                      <span key={item} className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                                        {item}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    <DialogFooter>
+                      <Button type="button" variant="ghost" onClick={() => setIsSuggestionDialogOpen(false)}>
+                        Skip for now
+                      </Button>
+                      <Button type="button" onClick={applySelectedSuggestion} disabled={!topicSuggestions.length}>
+                        Use Selected Topic
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
                 <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden">
                   <div className="bg-primary/5 p-4 md:p-6 border-b">
                     <h2 className="text-xl font-semibold flex items-center gap-2">
@@ -1706,6 +1974,21 @@ const GenerateCourse = () => {
                     <p className="text-sm text-muted-foreground mt-1">What would you like the AI to teach you?</p>
                   </div>
                   <CardContent className="p-4 md:p-6 space-y-8">
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <p className="font-semibold text-foreground">Need help choosing a topic?</p>
+                          <p className="text-sm text-muted-foreground">
+                            Use intelligent suggestions based on learner type and department or profession.
+                          </p>
+                        </div>
+                        <Button type="button" variant="outline" onClick={() => setIsSuggestionDialogOpen(true)}>
+                          <Sparkles className="mr-2 h-4 w-4" />
+                          Open Suggestions
+                        </Button>
+                      </div>
+                    </div>
+
                     <div className="space-y-6">
                       <FormField
                         control={form.control}

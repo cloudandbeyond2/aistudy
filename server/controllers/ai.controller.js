@@ -189,6 +189,9 @@ For each subtopic, provide a detailed explanation (approx 500-1000 words if poss
 Ensure every sentence is complete and the content doesn't cut off abruptly.
 If providing code examples, ensure they are properly formatted with correct line breaks and indentation.
 Use valid HTML formatting for the "theory" field (paragraphs, bold text, lists).
+When the lesson includes programming, commands, configuration, queries, or terminal examples, format them as proper multi-line HTML code blocks using <pre><code class="language-...">...</code></pre>.
+Preserve indentation and line breaks inside code blocks.
+Never place full code examples inside <p>, <li>, or inline <code> tags.
 Do NOT include images, external links, or additional resource suggestions.
 ONLY respond with a valid JSON object matching the requested schema.`;
 

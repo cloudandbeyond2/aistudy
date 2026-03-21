@@ -348,6 +348,14 @@ const isPaidUser =
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem> */}
+                        <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Profile" isActive={isActive('/dashboard/profile')}>
+                          <Link to="/dashboard/profile" className={cn(isActive('/dashboard/profile') && "text-primary")}>
+                            <User />
+                            <span>My Profile</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
                       {notebookEnabled.student && (
                         <SidebarMenuItem>
                           <SidebarMenuButton asChild tooltip="AI Notebook" isActive={isActive('/dashboard/notebook')}>

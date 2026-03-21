@@ -705,7 +705,8 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
       });
 
       if (res.data.success) {
-        setCompletedSubtopics(res.data.progress.completedSubtopics);
+        const updatedCompletedSubtopics = res.data.progress.completedSubtopics || [];
+        setCompletedSubtopics(updatedCompletedSubtopics);
         setPercentage(res.data.progress.percentage);
 
         // --- LOGIC TO MOVE TO NEXT SUBTOPIC ---
@@ -720,8 +721,8 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
         
         if (currentIndex < allSubtopics.length - 1) {
           const next = allSubtopics[currentIndex + 1];
-          // Move to next subtopic immediately
-          handleSelect(next.topicTitle, next.subtopicTitle);
+          // Advance immediately without waiting for React to flush updated progress state.
+          selectSubtopic(next.topicTitle, next.subtopicTitle);
           
           // Scroll to top for the new lesson
           if (mainContentRef.current) {
@@ -1193,7 +1194,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
     setIsLoading(false);
   }
 }
-  const handleSelect = useCallback((topicTitle, subtopicTitle) => {
+  const selectSubtopic = useCallback((topicTitle, subtopicTitle) => {
     if (!jsonData) return;
 
     const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
@@ -1201,11 +1202,6 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
     const mSubTopic = mTopic?.subtopics.find(subtopic => subtopic.title === subtopicTitle);
 
     if (!mSubTopic) return;
-
-    if (!isSubtopicUnlocked(topicTitle, subtopicTitle)) {
-      toast({ title: "Lesson Locked", description: "Complete previous lessons to unlock this one." });
-      return;
-    }
 
     // Clear any existing intervals
     if (window.progressInterval) {
@@ -1231,7 +1227,16 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
         sendBulkCourseContent(topicTitle, subtopicTitle);
       }
     }
-  }, [jsonData, mainTopic, isSubtopicUnlocked, type]);
+  }, [jsonData, mainTopic, type]);
+
+  const handleSelect = useCallback((topicTitle, subtopicTitle) => {
+    if (!isSubtopicUnlocked(topicTitle, subtopicTitle)) {
+      toast({ title: "Lesson Locked", description: "Complete previous lessons to unlock this one." });
+      return;
+    }
+
+    selectSubtopic(topicTitle, subtopicTitle);
+  }, [isSubtopicUnlocked, selectSubtopic]);
 
   async function sendPrompt(prompt, promptImage, topics, sub) {
     const dataToSend = {
