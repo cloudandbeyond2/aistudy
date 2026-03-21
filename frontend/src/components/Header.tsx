@@ -121,6 +121,68 @@ const Header = () => {
   // Check if user has premium access
   const hasPremium = ['monthly', 'yearly', 'forever'].includes(userType);
 
+  // Icon components for menu items
+  const HomeIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+    </svg>
+  );
+
+  const FeaturesIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+    </svg>
+  );
+
+  const HowItWorksIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+
+  const PricingIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+
+  const DashboardIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+    </svg>
+  );
+
+  const ProfileIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+  );
+
+  const SettingsIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  );
+
+  const ResumeBuilderIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  );
+
+  const AdminPanelIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+
+  const LogoutIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+    </svg>
+  );
+
   return (
     <>
       <motion.header
@@ -200,26 +262,67 @@ const Header = () => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden z-[60]"
+                      className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden z-[60]"
                     >
-                      <div className="py-1">
+                      <div className="py-2">
+                        {/* User Info Header */}
+                        <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <span className="text-primary font-semibold text-lg">
+                                {userName?.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                {userName}
+                              </p>
+                              <p className="text-xs text-slate-400">
+                                {hasPremium ? "Premium Member" : "Free Member"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
                         {/* Menu Section */}
-                        <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                           Menu
                         </div>
-                        {['Home', 'Features', 'How It Works', 'Pricing'].map((item) => (
-                          <a
-                            key={item}
-                            href={item === 'Home' ? '/' : `#${item.toLowerCase().replace(/\s+/g, '-')}`}
-                            onClick={() => setOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-                          >
-                            {item}
-                          </a>
-                        ))}
+                        <a
+                          href="/"
+                          onClick={() => setOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                        >
+                          <HomeIcon />
+                          Home
+                        </a>
+                        <a
+                          href="#features"
+                          onClick={() => setOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                        >
+                          <FeaturesIcon />
+                          Features
+                        </a>
+                        <a
+                          href="#how-it-works"
+                          onClick={() => setOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                        >
+                          <HowItWorksIcon />
+                          How It Works
+                        </a>
+                        <a
+                          href="#pricing"
+                          onClick={() => setOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                        >
+                          <PricingIcon />
+                          Pricing
+                        </a>
 
                         {/* Account Section */}
-                        <div className="px-4 py-2 mt-2 text-xs font-semibold text-slate-400 uppercase tracking-wider border-t border-slate-100 dark:border-slate-800 pt-2">
+                        <div className="px-3 py-2 mt-2 text-xs font-semibold text-slate-400 uppercase tracking-wider border-t border-slate-100 dark:border-slate-800 pt-2">
                           Account
                         </div>
                         <Link
@@ -227,9 +330,7 @@ const Header = () => {
                           onClick={() => setOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                          </svg>
+                          <DashboardIcon />
                           Dashboard
                         </Link>
                         {userRole !== 'student' && (
@@ -238,9 +339,7 @@ const Header = () => {
                             onClick={() => setOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
+                            <ProfileIcon />
                             Profile
                           </Link>
                         )}
@@ -249,21 +348,23 @@ const Header = () => {
                           onClick={() => setOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
+                          <SettingsIcon />
                           Settings
                         </Link>
 
                         {/* Plan Indicator */}
                         <div className="px-4 py-2 mt-1">
                           <div className={cn(
-                            "text-xs font-medium px-2 py-1 rounded-full inline-block",
+                            "text-xs font-medium px-3 py-1.5 rounded-full inline-flex items-center gap-2",
                             hasPremium ? "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                           )}>
-                            {hasPremium ? "Premium Plan" : "Free Plan"}
+                            {hasPremium ? "⭐ Premium Plan" : "📋 Free Plan"}
                           </div>
+                          {hasPremium && (
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                              Access to all premium features
+                            </p>
+                          )}
                         </div>
 
                         {hasPremium && (
@@ -272,9 +373,7 @@ const Header = () => {
                             onClick={() => setOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
+                            <ResumeBuilderIcon />
                             Resume Builder (LIFETIME)
                           </Link>
                         )}
@@ -285,9 +384,7 @@ const Header = () => {
                             onClick={() => setOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <AdminPanelIcon />
                             Admin Panel
                           </Link>
                         )}
@@ -298,9 +395,7 @@ const Header = () => {
                           onClick={handleLogout}
                           className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                          </svg>
+                          <LogoutIcon />
                           Logout
                         </button>
                       </div>
@@ -354,7 +449,7 @@ const Header = () => {
         </div>
       </motion.header>
 
-      {/* Mobile Menu - Full screen overlay from left side with proper z-index */}
+      {/* Mobile Menu - Full screen overlay from left side with icons */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -382,54 +477,92 @@ const Header = () => {
               className="absolute left-0 top-0 bottom-0 w-[280px] sm:w-80 bg-white dark:bg-slate-900 shadow-2xl overflow-y-auto"
             >
               <div className="flex flex-col min-h-full">
-                {/* Menu Header */}
-                <div className="sticky top-0 bg-white dark:bg-slate-900 z-10 flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <img src={appLogo} alt="Logo" className="h-7 w-7" />
-                    <span className="font-bold text-lg text-slate-800 dark:text-white">
-                      {appName}
-                    </span>
+                {/* Menu Header with User Info */}
+                <div className="sticky top-0 bg-white dark:bg-slate-900 z-10 border-b border-slate-100 dark:border-slate-800">
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <img src={appLogo} alt="Logo" className="h-7 w-7" />
+                        <span className="font-bold text-lg text-slate-800 dark:text-white">
+                          {appName}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="h-8 w-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    {/* User Info */}
+                    {isAuth && (
+                      <div className="flex items-center gap-3 pt-2">
+                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-primary font-semibold text-lg">
+                            {userName?.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            {userName}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {userRole === 'student' ? 'Student Account' : 'User Account'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <button
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="h-8 w-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
                 </div>
 
                 {/* Menu Content */}
-                <div className="flex-1 py-4">
+                <div className="flex-1 py-2">
                   {/* Menu Section */}
-                  <div className="mb-4">
+                  <div className="mb-2">
                     <div className="px-5 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                       Menu
                     </div>
-                    {['Home', 'Features', 'How It Works', 'Pricing'].map((item) => {
-                      const href = item === 'Home' ? '/' : `#${item.toLowerCase().replace(/\s+/g, '-')}`;
-                      return (
-                        <a
-                          key={item}
-                          href={href}
-                          className="block px-5 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-                          onClick={(e) => {
-                            if (href !== '/') {
-                              handleMobileNavClick(e, href);
-                            } else {
-                              setIsMobileMenuOpen(false);
-                            }
-                          }}
-                        >
-                          {item}
-                        </a>
-                      );
-                    })}
+                    <a
+                      href="/"
+                      className="flex items-center gap-3 px-5 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                      onClick={(e) => {
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      <HomeIcon />
+                      Home
+                    </a>
+                    <a
+                      href="#features"
+                      className="flex items-center gap-3 px-5 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                      onClick={(e) => handleMobileNavClick(e, '#features')}
+                    >
+                      <FeaturesIcon />
+                      Features
+                    </a>
+                    <a
+                      href="#how-it-works"
+                      className="flex items-center gap-3 px-5 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                      onClick={(e) => handleMobileNavClick(e, '#how-it-works')}
+                    >
+                      <HowItWorksIcon />
+                      How It Works
+                    </a>
+                    <a
+                      href="#pricing"
+                      className="flex items-center gap-3 px-5 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                      onClick={(e) => handleMobileNavClick(e, '#pricing')}
+                    >
+                      <PricingIcon />
+                      Pricing
+                    </a>
                   </div>
 
                   {/* Account Section */}
-                  <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
+                  <div className="border-t border-slate-100 dark:border-slate-800 pt-2">
                     <div className="px-5 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                       Account
                     </div>
@@ -438,41 +571,50 @@ const Header = () => {
                         <Link
                           to={dashboardPath}
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block px-5 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                          className="flex items-center gap-3 px-5 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                         >
+                          <DashboardIcon />
                           Dashboard
                         </Link>
                         <Link
                           to="/dashboard/profile"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block px-5 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                          className="flex items-center gap-3 px-5 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                         >
+                          <ProfileIcon />
                           Profile
                         </Link>
-                        {/* <Link
+                        <Link
                           to="/dashboard/settings"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block px-5 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                          className="flex items-center gap-3 px-5 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                         >
+                          <SettingsIcon />
                           Settings
-                        </Link> */}
+                        </Link>
 
                         {/* Plan Indicator */}
                         <div className="px-5 py-3">
                           <div className={cn(
-                            "text-xs font-medium px-3 py-1.5 rounded-full inline-flex items-center gap-1",
+                            "text-xs font-medium px-3 py-1.5 rounded-full inline-flex items-center gap-2",
                             hasPremium ? "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                           )}>
-                            {hasPremium ? "Premium Plan" : "Free Plan"}
+                            {hasPremium ? "⭐ Premium Plan" : "📋 Free Plan"}
                           </div>
+                          {hasPremium && (
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                              Access to all premium features
+                            </p>
+                          )}
                         </div>
 
                         {hasPremium && (
                           <Link
                             to="/dashboard/resume-builder"
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="block px-5 py-3 text-base font-semibold text-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition"
+                            className="flex items-center gap-3 px-5 py-3 text-base font-semibold text-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition"
                           >
+                            <ResumeBuilderIcon />
                             Resume Builder (LIFETIME)
                           </Link>
                         )}
@@ -481,8 +623,9 @@ const Header = () => {
                           <Link
                             to="/admin"
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="block px-5 py-3 text-base font-medium text-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition"
+                            className="flex items-center gap-3 px-5 py-3 text-base font-medium text-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition"
                           >
+                            <AdminPanelIcon />
                             Admin Panel
                           </Link>
                         )}
@@ -492,8 +635,9 @@ const Header = () => {
                             handleLogout();
                             setIsMobileMenuOpen(false);
                           }}
-                          className="w-full text-left px-5 py-3 mt-2 text-base font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+                          className="w-full text-left flex items-center gap-3 px-5 py-3 mt-2 text-base font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
                         >
+                          <LogoutIcon />
                           Logout
                         </button>
                       </>
@@ -505,7 +649,7 @@ const Header = () => {
                           </Button>
                         </Link>
                         <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)}>
-                          <Button className="w-full rounded-full h-11 text-base font-medium bg-primary shadow-md">
+                          <Button className="w-full rounded-full h-11 text-base font-medium bg-primary shadow-md mt-[10px]">
                             Get Started
                           </Button>
                         </Link>
