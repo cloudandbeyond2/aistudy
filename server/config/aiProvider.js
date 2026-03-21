@@ -12,6 +12,35 @@ const cleanText = (value) =>
     ? value.replace(/```json/g, '').replace(/```/g, '').trim()
     : '';
 
+const normalizeGeminiModel = (model) => {
+  const normalized = typeof model === 'string' ? model.trim().replace(/^models\//i, '') : '';
+  if (!normalized) return DEFAULT_GEMINI_MODEL;
+
+  const legacyAliases = new Set([
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
+    'gemini-pro',
+    'gemini-pro-latest'
+  ]);
+
+  return legacyAliases.has(normalized) ? DEFAULT_GEMINI_MODEL : normalized;
+};
+
+const isGeminiModelNotFoundError = (error) => {
+  const message = error?.message?.toLowerCase?.() || '';
+  const status = error?.status;
+
+  return (
+    status === 404 ||
+    (message.includes('404') &&
+      (message.includes('model') || message.includes('generatecontent'))) ||
+    message.includes('model is not found') ||
+    message.includes('models/') ||
+    message.includes('not found') ||
+    message.includes('unsupported model')
+  );
+};
+
 const parseJsonSafely = async (response) => {
   const raw = await response.text();
 
@@ -32,6 +61,7 @@ const shouldFallbackToOpenAI = (settings, error) => {
   return (
     status === 401 ||
     status === 403 ||
+    status === 404 ||
     status === 429 ||
     status >= 500 ||
     message.includes('quota') ||
@@ -39,6 +69,8 @@ const shouldFallbackToOpenAI = (settings, error) => {
     message.includes('too many requests') ||
     message.includes('api key') ||
     message.includes('model unavailable') ||
+    message.includes('not found') ||
+    message.includes('unsupported model') ||
     message.includes('missing gemini') ||
     message.includes('network') ||
     message.includes('fetch')
@@ -231,8 +263,9 @@ const generateWithGemini = async ({
 }) => {
   const settings = await getAISettings();
   const genAI = await getGenAI();
+  const configuredModel = normalizeGeminiModel(settings.geminiModel);
   const modelOptions = {
-    model: settings.geminiModel || DEFAULT_GEMINI_MODEL
+    model: configuredModel
   };
 
   if (systemInstruction) {
@@ -250,9 +283,27 @@ const generateWithGemini = async ({
     modelOptions.generationConfig = generationConfig;
   }
 
-  const model = genAI.getGenerativeModel(modelOptions);
-  const result = await retryWithBackoff(() => model.generateContent(prompt));
-  return cleanText(await result.response.text());
+  const runWithModel = async (modelName) => {
+    const model = genAI.getGenerativeModel({
+      ...modelOptions,
+      model: modelName
+    });
+    const result = await retryWithBackoff(() => model.generateContent(prompt));
+    return cleanText(await result.response.text());
+  };
+
+  try {
+    return await runWithModel(configuredModel);
+  } catch (error) {
+    if (configuredModel !== DEFAULT_GEMINI_MODEL && isGeminiModelNotFoundError(error)) {
+      console.warn(
+        `Gemini model "${configuredModel}" is unavailable. Retrying with fallback "${DEFAULT_GEMINI_MODEL}".`
+      );
+      return runWithModel(DEFAULT_GEMINI_MODEL);
+    }
+
+    throw error;
+  }
 };
 
 export const generateAIText = async (options) => {
