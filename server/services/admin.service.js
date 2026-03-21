@@ -434,6 +434,7 @@ export const createOrganization = async ({ email, password, institutionName, inc
 <ul style="list-style:none;padding:0;">
 <li><strong>Login URL:</strong> <a href="${loginUrl}">${loginUrl}</a></li>
 <li><strong>Email:</strong> ${email}</li>
+<li><strong>Password:</strong> ${password}</li>
 </ul>
 <p>For security reasons, your password is not included in this email. Please use the password provided by your administrator.</p>
 <div style="text-align:center;margin:35px 0;">
