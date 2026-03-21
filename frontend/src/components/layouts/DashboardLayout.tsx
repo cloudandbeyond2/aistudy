@@ -404,14 +404,14 @@ const isPaidUser =
                         </SidebarMenuButton>
                       </SidebarMenuItem>
 
-                      <SidebarMenuItem>
+                      {/* <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Blogs" isActive={isActive('/dashboard/student/blogs')}>
                           <Link to="/dashboard/student/blogs" className={cn(isActive('/dashboard/student/blogs') && "text-primary")}>
                             <Sparkles />
                             <span>Blogs</span>
                           </Link>
                         </SidebarMenuButton>
-                      </SidebarMenuItem>
+                      </SidebarMenuItem> */}
 
                      <SidebarMenuItem>
   <SidebarMenuButton 

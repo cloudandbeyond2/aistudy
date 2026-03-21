@@ -72,7 +72,7 @@ const SupportTickets = () => {
 
     fetchTickets();
   };
-  
+
   const sendReply = async () => {
     if (!reply.trim() || !selectedTicket) return;
 
@@ -83,28 +83,35 @@ const SupportTickets = () => {
       });
 
       setReply("");
+
+      // refresh ticket list
       await fetchTickets();
+
+      // AUTO CLOSE CHAT
       setSelectedTicket(null);
 
     } catch (error) {
       console.error("Send reply error:", error);
     }
   };
-  
+
   const closeTicket = async (ticketId) => {
     try {
       await axios.put(`${serverURL}/api/tickets/${ticketId}/status`, {
         status: "Resolved",
       });
 
+      // close modal immediately
       setSelectedTicket(null);
+
+      // refresh ticket list
       fetchTickets();
 
     } catch (error) {
       console.error("Error closing ticket:", error);
     }
   };
-  
+
   const handleSubmit = async () => {
     if (!subject || !description) return;
 
@@ -146,7 +153,7 @@ const SupportTickets = () => {
   );
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
+    <div className="space-y-6 p-3 sm:p-4 md:p-6">
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b pb-4">
         <div className="space-y-1">
@@ -170,7 +177,12 @@ const SupportTickets = () => {
       {/* TICKETS TABLE */}
       <Card>
         <CardHeader className="flex flex-col space-y-4 lg:space-y-0 lg:flex-row lg:items-center lg:justify-between gap-4">
-          <CardTitle className="text-base sm:text-lg md:text-xl">My Support Tickets</CardTitle>
+          <CardTitle className="text-base sm:text-lg md:text-xl">
+            My Support Tickets
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              ({filteredTickets.length})
+            </span>
+          </CardTitle>
           
           {/* Desktop & Laptop View (lg and above) */}
           <div className="hidden lg:flex gap-3">
@@ -275,15 +287,14 @@ const SupportTickets = () => {
                 onClick={() => setShowMobileFilters(!showMobileFilters)}
                 className="shrink-0 px-3"
               >
-                <Filter className="h-4 w-4 mr-1" />
-                <span className="text-xs">Filter</span>
+                <Filter className="h-4 w-4" />
               </Button>
             </div>
             
             {/* Mobile Filter Dropdown */}
             {showMobileFilters && (
               <div className="flex flex-col gap-2 p-3 bg-muted rounded-lg">
-                <label className="text-xs font-medium text-muted-foreground">Status</label>
+                <label className="text-xs font-medium text-muted-foreground">Filter by Status</label>
                 <select
                   className="border rounded-md px-3 py-2 text-sm bg-background text-foreground"
                   value={statusFilter}
@@ -325,7 +336,7 @@ const SupportTickets = () => {
         </CardHeader>
 
         <CardContent>
-          {/* Responsive Table Container with Horizontal Scroll */}
+          {/* Responsive Table Container */}
           <div className="relative w-full overflow-x-auto">
             <div className="min-w-[800px] lg:min-w-full">
               <Table>
@@ -333,10 +344,10 @@ const SupportTickets = () => {
                   <TableRow>
                     <TableHead className="w-[100px]">Ticket</TableHead>
                     <TableHead className="w-[100px]">Subject</TableHead>
-                    <TableHead className="w-[100px]">Status</TableHead>
-                    <TableHead className="w-[100px]">Date</TableHead>
-                    <TableHead className="w-[80px]">Updates</TableHead>
-                    <TableHead className="w-[80px] text-right">Action</TableHead>
+                    <TableHead className="w-[120px]">Status</TableHead>
+                    <TableHead className="w-[120px]">Date</TableHead>
+                    <TableHead className="w-[100px]">Updates</TableHead>
+                    <TableHead className="w-[100px] text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
 
@@ -350,17 +361,17 @@ const SupportTickets = () => {
 
                       return (
                         <TableRow key={ticket._id}>
-                          <TableCell className="font-mono text-xs text-gray-500 whitespace-nowrap">
+                          <TableCell className="font-mono text-xs text-gray-500">
                             #{ticket._id.slice(-6).toUpperCase()}
                           </TableCell>
 
                           <TableCell className="font-medium">
-                         
+                        
                               {ticket.subject}
-                       
+                   
                           </TableCell>
 
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell>
                             <Badge
                               variant="outline"
                               className={getStatusColor(ticket.status)}
@@ -377,7 +388,7 @@ const SupportTickets = () => {
                             })}
                           </TableCell>
 
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell>
                             {unreadCount > 0 ? (
                               <Badge className="bg-blue-600 text-white">
                                 🔔 {unreadCount}
@@ -387,7 +398,7 @@ const SupportTickets = () => {
                             )}
                           </TableCell>
 
-                          <TableCell className="text-right whitespace-nowrap">
+                          <TableCell className="text-right">
                             <Button
                               size="sm"
                               variant="outline"
@@ -516,7 +527,7 @@ const SupportTickets = () => {
                     }`}
                   >
                     <p className="break-words">{msg.message}</p>
-                    <div className="text-[9px] sm:text-[10px] opacity-60 mt-1 text-right">
+                    <div className={`text-[9px] sm:text-[10px] opacity-60 mt-1 text-right`}>
                       {new Date(msg.createdAt).toLocaleString()}
                     </div>
                   </div>
