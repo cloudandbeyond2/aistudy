@@ -85,14 +85,14 @@ export const orgSignup = async (req, res) => {
 <td style="padding:35px 40px; color:#333;">
 <h2 style="text-align:center;margin-top:0;margin-bottom:25px;color:#333;">Organization Registered Successfully!</h2>
 <p>Hello <strong>${name}</strong>,</p>
-<p>Congratulations! Your organization has been successfully registered on <strong>${process.env.COMPANY || "Traininglabs Ai Solutions"}</strong>.</p>
+<p>Congratulations! Your organization has been successfully registered on <strong>${process.env.COMPANY || "Colossus IQ Ai Solutions"}</strong>.</p>
 <p>You can now log in to manage your students, courses, and assignments from the dashboard.</p>
 <div style="text-align:center;margin:35px 0;">
 <a href="${process.env.WEBSITE_URL}/login" style="background:#1a73e8;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:bold;display:inline-block;font-size:15px;">Login to Dashboard</a>
 </div>
 <hr style="border:none;border-top:1px solid #cfcfcf;margin:30px 0;">
 <p style="text-align:center;font-size:12px;color:#666;margin-bottom:0;">
-© ${new Date().getFullYear()} ${process.env.COMPANY || "Traininglabs Ai Solutions"}. All rights reserved.
+© ${new Date().getFullYear()} ${process.env.COMPANY || "Colossus IQ Ai Solutions"}. All rights reserved.
 </p>
 </td>
 </tr>
@@ -232,7 +232,7 @@ export const addStudent = async (req, res) => {
 <td style="padding:35px 40px; color:#333;">
 <h2 style="text-align:center;margin-top:0;margin-bottom:25px;color:#333;">Welcome to the Platform!</h2>
 <p>Hello <strong>${name}</strong>,</p>
-<p>An account has been created for you on <strong>${process.env.COMPANY || "Traininglabs Ai Solutions"}</strong> by your organization.</p>
+<p>An account has been created for you on <strong>${process.env.COMPANY || "Colossus IQ Ai Solutions"}</strong> by your organization.</p>
 <p>You can now log in using the following details:</p>
 <ul style="list-style:none;padding:0;">
 <li><strong>Login URL:</strong> <a href="${process.env.WEBSITE_URL}/login">${process.env.WEBSITE_URL}/login</a></li>
@@ -244,7 +244,7 @@ export const addStudent = async (req, res) => {
 </div>
 <hr style="border:none;border-top:1px solid #cfcfcf;margin:30px 0;">
 <p style="text-align:center;font-size:12px;color:#666;margin-bottom:0;">
-© ${new Date().getFullYear()} ${process.env.COMPANY || "Traininglabs Ai Solutions"}. All rights reserved.
+© ${new Date().getFullYear()} ${process.env.COMPANY || "Colossus IQ Ai Solutions"}. All rights reserved.
 </p>
 </td>
 </tr>

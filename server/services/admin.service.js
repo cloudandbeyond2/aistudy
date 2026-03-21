@@ -429,7 +429,7 @@ export const createOrganization = async ({ email, password, institutionName, inc
 <td style="padding:35px 40px; color:#333;">
 <h2 style="text-align:center;margin-top:0;margin-bottom:25px;color:#333;">Organization Account Created</h2>
 <p>Hello <strong>${institutionName}</strong>,</p>
-<p>An institutional account has been created for you on <strong>${process.env.COMPANY || "Traininglabs Ai Solutions"}</strong>.</p>
+<p>An institutional account has been created for you on <strong>${process.env.COMPANY || "Colossus IQ Ai Solutions"}</strong>.</p>
 <p>You can now log in using the following details:</p>
 <ul style="list-style:none;padding:0;">
 <li><strong>Login URL:</strong> <a href="${loginUrl}">${loginUrl}</a></li>
@@ -441,7 +441,7 @@ export const createOrganization = async ({ email, password, institutionName, inc
 </div>
 <hr style="border:none;border-top:1px solid #cfcfcf;margin:30px 0;">
 <p style="text-align:center;font-size:12px;color:#666;margin-bottom:0;">
-© ${new Date().getFullYear()} ${process.env.COMPANY || "Traininglabs Ai Solutions"}. All rights reserved.
+© ${new Date().getFullYear()} ${process.env.COMPANY || "Colossus IQ Ai Solutions"}. All rights reserved.
 </p>
 </td>
 </tr>
