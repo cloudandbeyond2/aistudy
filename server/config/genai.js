@@ -1,9 +1,8 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
   HarmCategory,
   HarmBlockThreshold
 } from '@google/generative-ai';
-import Admin from '../models/Admin.js';
+import { getChatModel as getUnifiedChatModel } from './aiProvider.js';
 
 export const safetySettings = [
   {
@@ -24,14 +23,7 @@ export const safetySettings = [
   }
 ];
 
-export const getChatModel = async () => {
-  const admin = await Admin.findOne({ type: 'main' });
-  const key = admin?.geminiApiKey || process.env.API_KEY;
-  const genAI = new GoogleGenerativeAI(key);
-
-  return genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
-    safetySettings,
-    systemInstruction: 'You are an AI assistant for an educational platform. You answer questions about course materials (theory, videos, images) in a concise, accurate, and teaching manner. Use markdown.'
-  });
-};
+export const getChatModel = async () =>
+  getUnifiedChatModel(
+    'You are an AI assistant for an educational platform. You answer questions about course materials (theory, videos, images) in a concise, accurate, and teaching manner. Use markdown.'
+  );

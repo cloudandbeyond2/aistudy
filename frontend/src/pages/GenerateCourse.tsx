@@ -1566,9 +1566,13 @@ Return only valid JSON that matches the schema.`;
       }
 
       console.error(error);
+      const status = error.response?.status;
       toast({
-        title: "Error",
-        description: errData?.message || error.message || "Internal Server Error",
+        title: status === 429 ? "AI Rate Limit Reached" : "Error",
+        description:
+          status === 429
+            ? errData?.message || "The active AI provider is temporarily rate-limited. Please retry in a moment."
+            : errData?.message || error.message || "Internal Server Error",
       });
     }
   }
@@ -1835,7 +1839,7 @@ Return only valid JSON that matches the schema.`;
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <Dialog open={isSuggestionDialogOpen} onOpenChange={setIsSuggestionDialogOpen}>
-                  <DialogContent className="sm:max-w-3xl">
+                  <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle className="flex items-center gap-2">
                         <Sparkles className="h-5 w-5 text-primary" />
