@@ -16,13 +16,14 @@ import MaterialModel from '../models/Material.js';
 import { createNotification } from './notification.controller.js';
 import { getChatModel } from '../config/genai.js';
 import { sendMail } from '../services/mail.service.js';
+import { getOrgPlanDurationDays, getUserAccessFromOrgPlan } from '../utils/orgPlanAccess.js';
 // import { generateAssignments } from './ai.controller.js'; // Will implement this export next
 
 /**
  * ORGANIZATION SIGNUP
  */
 export const orgSignup = async (req, res) => {
-    const { name, email, password, address, contactNumber, allowAICreation, allowManualCreation } = req.body;
+    const { name, email, password, address, contactNumber, allowAICreation, allowManualCreation, planDuration, planName } = req.body;
 
     try {
         // Check if Org exists
@@ -38,12 +39,15 @@ export const orgSignup = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        const selectedPlan = planDuration || planName || 'free';
+        const userAccess = getUserAccessFromOrgPlan(selectedPlan);
         const newOrg = new Organization({
             name,
             email,
             password: hashedPassword,
             address,
             contactNumber,
+            plan: selectedPlan,
             allowAICreation: allowAICreation !== undefined ? allowAICreation : true,
             allowManualCreation: allowManualCreation !== undefined ? allowManualCreation : true
         });
@@ -57,10 +61,12 @@ export const orgSignup = async (req, res) => {
             phone: contactNumber,
             password: hashedPassword,
             role: 'org_admin',
-            type: 'forever',
+            type: userAccess.type,
             organization: newOrg._id,
             isEmailVerified: true,
-            isOrganization: true
+            isOrganization: true,
+            subscriptionStart: userAccess.subscriptionStart,
+            subscriptionEnd: userAccess.subscriptionEnd
         });
         await adminUser.save();
 
@@ -457,7 +463,7 @@ export const getDashboardStats = async (req, res) => {
 
  
         const studentLimit = await getOrgStudentLimit(organizationId);
- 
+
         res.json({
             success: true,
             studentCount,
@@ -790,6 +796,19 @@ export const updateOrganization = async (req, res) => {
 export const createCourse = async (req, res) => {
     const { organizationId, title, description, type, department, topics, quizzes, assignedTo, createdBy } = req.body;
     try {
+        // Enforce course limit for dept_admin
+        if (createdBy) {
+            const creator = await User.findById(createdBy);
+            if (creator && creator.role === 'dept_admin') {
+                if (creator.coursesCreatedCount >= creator.courseLimit) {
+                    return res.status(403).json({
+                        success: false,
+                        message: `Course creation limit reached (${creator.courseLimit}). Please contact your organization administrator.`
+                    });
+                }
+            }
+        }
+
         const parsedDepartment = department && department !== 'all' ? department : undefined;
         const course = new OrgCourse({
             organizationId,
@@ -803,6 +822,12 @@ export const createCourse = async (req, res) => {
             createdBy
         });
         await course.save();
+
+        // Increment coursesCreatedCount for creator if they are dept_admin
+        if (createdBy) {
+            await User.findByIdAndUpdate(createdBy, { $inc: { coursesCreatedCount: 1 } });
+        }
+
         res.json({ success: true, message: 'Course created successfully', course });
     } catch (error) {
         console.error('Create course error:', error);
@@ -1383,12 +1408,17 @@ export const deleteDepartment = async (req, res) => {
  * DEPARTMENT ADMINS
  */
 export const addDeptAdmin = async (req, res) => {
-    const { organizationId, departmentId, name, email, password, phone } = req.body;
+    const { organizationId, departmentId, name, email, password, phone, courseLimit } = req.body;
     try {
         let user = await User.findOne({ email });
         if (user) {
             return res.json({ success: false, message: 'User with this email already exists' });
         }
+
+        const organization = await Organization.findById(organizationId).select('plan');
+        const orgPlan = await OrganizationPlan.findOne({ organization: organizationId, isActive: true }).select('planName startDate endDate');
+        const effectivePlan = orgPlan?.planName || organization?.plan || 'free';
+        const userAccess = getUserAccessFromOrgPlan(effectivePlan, orgPlan?.startDate || new Date());
 
         const hashedPassword = await bcrypt.hash(password, 10);
         user = new User({
@@ -1399,8 +1429,12 @@ export const addDeptAdmin = async (req, res) => {
             role: 'dept_admin',
             organization: organizationId,
             department: departmentId,
+            courseLimit: courseLimit || 0,
             isEmailVerified: true,
-            isOrganization: false
+            isOrganization: false,
+            type: userAccess.type,
+            subscriptionStart: orgPlan?.startDate || userAccess.subscriptionStart,
+            subscriptionEnd: orgPlan?.endDate || userAccess.subscriptionEnd
         });
 
         await user.save();
@@ -1421,6 +1455,7 @@ export const getDeptAdmins = async (req, res) => {
             .populate('department', 'name')
             .select('-password')
             .sort({ createdAt: -1 });
+
         res.json({ success: true, admins });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error' });
@@ -1484,12 +1519,7 @@ export const requestLimitIncrease = async (req, res) => {
  * HELPER: GET PLAN DURATION IN DAYS
  */
 function getPlanDuration(planName) {
-    const durations = {
-        '1months': 30,
-        '3months': 90,
-        '6months': 180
-    };
-    return durations[planName] || 30;
+    return getOrgPlanDurationDays(planName) || 30;
 }
 
 /**
@@ -1555,6 +1585,17 @@ export const createOrgPlan = async (req, res) => {
         // Update organization with the selected plan
         org.plan = planName;
         await org.save();
+        const userAccess = getUserAccessFromOrgPlan(planName, plan.startDate || new Date());
+        await User.updateMany(
+            { organization: organizationId, role: { $in: ['org_admin', 'dept_admin'] } },
+            {
+                $set: {
+                    type: userAccess.type,
+                    subscriptionStart: plan.startDate || userAccess.subscriptionStart,
+                    subscriptionEnd: plan.endDate || userAccess.subscriptionEnd
+                }
+            }
+        );
         console.log('✅ Organization updated with plan:', planName);
 
         res.json({

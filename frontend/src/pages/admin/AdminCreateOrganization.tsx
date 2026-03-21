@@ -26,6 +26,7 @@ const AdminCreateOrganization = () => {
         address: '',
         studentSlot: 1,
         customStudentLimit: 0,
+        planDuration: '1months',
     });
 
     const handleChange = (field, value) => {
@@ -175,6 +176,24 @@ const AdminCreateOrganization = () => {
                                     onChange={(e) => handleChange('customStudentLimit', parseInt(e.target.value))}
                                     placeholder="0 for default"
                                 />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 border-t pt-4">
+                        <Label className="text-lg font-semibold">Plan Details</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Plan Duration</Label>
+                                <select 
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                    value={formData.planDuration}
+                                    onChange={(e) => handleChange('planDuration', e.target.value)}
+                                >
+                                    <option value="1months">1 Month (20 AI Courses)</option>
+                                    <option value="3months">3 Months (60 AI Courses)</option>
+                                    <option value="6months">6 Months (120 AI Courses)</option>
+                                </select>
                             </div>
                         </div>
                     </div>

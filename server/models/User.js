@@ -35,6 +35,8 @@ const userSchema = new mongoose.Schema({
   userType: { type: String, enum: ['individual', 'organization'], default: 'individual' },
   profession: { type: String, default: null },
   experienceLevel: { type: String, default: 'beginner' },
+  courseLimit: { type: Number, default: 0 },
+  coursesCreatedCount: { type: Number, default: 0 },
   studentDetails: {
     department: String,
     section: String,

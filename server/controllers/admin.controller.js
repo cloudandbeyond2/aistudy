@@ -32,7 +32,7 @@ export const updateUser = async (req, res) => {
 /* COURSES */
 export const getCourses = async (req, res) => {
   const courses = await adminService.getAllCourses();
-  res.set('Cache-Control', 'public, max-age=3600');
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.json(courses);
 };
 

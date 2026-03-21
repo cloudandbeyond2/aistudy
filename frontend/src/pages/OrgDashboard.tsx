@@ -385,7 +385,7 @@ const [previewProject, setPreviewProject] = useState<any>(null);
     const [departmentsList, setDepartmentsList] = useState<any[]>([]);
     const [deptAdmins, setDeptAdmins] = useState<any[]>([]);
     const [newDept, setNewDept] = useState({ name: '', description: '' });
-    const [newDeptAdmin, setNewDeptAdmin] = useState({ name: '', email: '', password: '', phone: '', departmentId: '' });
+    const [newDeptAdmin, setNewDeptAdmin] = useState({ name: '', email: '', password: '', phone: '', departmentId: '', courseLimit: 0 });
     // const [newMaterial, setNewMaterial] = useState({ title: '', description: '', fileUrl: '', type: 'PDF', department: '' });
     const [newMaterial, setNewMaterial] = useState({
         title: '',
@@ -566,7 +566,8 @@ const resetProjectForm = () => {
                     email: '',
                     password: '',
                     phone: '',
-                    departmentId: ''
+                    departmentId: '',
+                    courseLimit: 0
                 });
 
                 setOpenDeptAdminDialog(false);   // ⭐ CLOSE POPUP
@@ -1883,6 +1884,15 @@ const formatGuidanceText = (text: string) => {
                                                     ))}
                                                 </select>
                                             </div>
+                                            <div className="grid gap-2">
+                                                <Label>Course Creation Limit</Label>
+                                                <Input 
+                                                    type="number" 
+                                                    value={newDeptAdmin.courseLimit} 
+                                                    onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, courseLimit: parseInt(e.target.value) || 0 })} 
+                                                    placeholder="Max courses this admin can create"
+                                                />
+                                            </div>
                                             <Button onClick={handleAddDeptAdmin}>Add Admin</Button>
                                         </div>
                                     </DialogContent>
@@ -1897,6 +1907,22 @@ const formatGuidanceText = (text: string) => {
                                                 <div className="flex gap-2 items-center">
                                                     <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-bold uppercase tracking-wider">{admin.department?.name || 'No Dept'}</span>
                                                     <p className="text-xs text-muted-foreground">{admin.email}</p>
+                                                </div>
+                                                <div className="flex gap-4 mt-2">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] text-muted-foreground uppercase font-semibold">Courses Created</span>
+                                                        <span className="text-xs font-bold text-blue-600">{admin.coursesCreatedCount || 0}</span>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] text-muted-foreground uppercase font-semibold">Courses Left</span>
+                                                        <span className={`text-xs font-bold ${((admin.courseLimit || 0) - (admin.coursesCreatedCount || 0)) <= 0 ? 'text-destructive' : 'text-emerald-600'}`}>
+                                                            {Math.max(0, (admin.courseLimit || 0) - (admin.coursesCreatedCount || 0))}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] text-muted-foreground uppercase font-semibold">Total Limit</span>
+                                                        <span className="text-xs font-bold">{admin.courseLimit || 0}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDeleteDeptAdmin(admin._id)}>
