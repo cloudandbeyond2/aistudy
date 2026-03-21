@@ -170,6 +170,8 @@ const systemInstruction = `Strictly in ${lang || 'English'}, you are a specializ
 Your goal is to provide thorough, in-depth, and "large" explanations for course subtopics.
 IMPORTANT: You MUST explicitly translate the 'topicTitle' and subtopic 'title' fields into ${lang || 'English'}, alongside the 'theory' content.
 For each subtopic, provide a detailed explanation (approx 500-1000 words if possible) with rich examples and clear definitions.
+Ensure every sentence is complete and the content doesn't cut off abruptly.
+If providing code examples, ensure they are properly formatted with correct line breaks and indentation.
 Use valid HTML formatting for the "theory" field (paragraphs, bold text, lists).
 For business, sales, CRM, analytics, HR, marketing, operations, or management topics, include practical product-style examples such as dashboard concepts, KPI cards, pipeline views, report widgets, filters, tables, and workflow scenarios.
 When relevant, explain what a dashboard would show, why each metric matters, and how a team would use it in real work.
@@ -303,12 +305,18 @@ export const generateHtml = async (req, res) => {
   ];
 
   try {
-    const markdown = await generateAIText({
-      prompt,
-      systemInstruction: 'You are a helpful educational assistant. Provide thorough and interesting explanations with examples. Use markdown formatting.',
-      maxOutputTokens: 8192,
-      safetySettings
+    const genAI = await getGenAI();
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      safetySettings,
+      systemInstruction: 'You are a helpful educational assistant. Provide thorough and interesting explanations with examples. Use markdown formatting.'
     });
+
+    const result = await retryWithBackoff(() =>
+      model.generateContent(prompt)
+    );
+
+    const markdown = await result.response.text();
 
     const converter = new showdown.Converter();
     const html = converter.makeHtml(markdown);

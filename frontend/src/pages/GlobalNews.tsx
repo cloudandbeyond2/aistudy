@@ -1,35 +1,3 @@
-// import { useEffect, useState } from "react";
-// import axios from "axios";
-// import { serverURL } from "@/constants";
-
-// const GlobalNews = () => {
-//   const [news, setNews] = useState([]);
-
-//   useEffect(() => {
-//     fetchNews();
-//   }, []);
-
-//   const fetchNews = async () => {
-//     const res = await axios.get(`${serverURL}/api/global-news`);
-//     setNews(res.data);
-//   };
-
-//   return (
-//     <div className="p-6">
-//       <h1 className="text-2xl font-bold mb-6">Global News</h1>
-
-//       {news.map((item: any) => (
-//         <div key={item._id} className="border p-4 mb-4 rounded bg-white">
-//           <h2 className="font-bold text-lg">{item.title}</h2>
-//           <p className="text-gray-600">{item.content}</p>
-//         </div>
-//       ))}
-//     </div>
-//   );
-// };
-
-// export default GlobalNews;
-
 import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { Card, CardContent } from "@/components/ui/card";
@@ -91,129 +59,156 @@ const GlobalNews = () => {
   }, [searchQuery]);
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8 max-w-7xl">
+        <div className="space-y-4 sm:space-y-6 lg:space-y-8">
 
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+          {/* HEADER - Responsive */}
+          <div className="flex flex-col sm:flex-row sm:items-start md:items-center justify-between gap-4 sm:gap-6">
+            
+            {/* Logo and Title Section */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-r from-primary to-indigo-500 text-white shadow-lg flex-shrink-0">
+                <Megaphone className="h-5 w-5 sm:h-6 sm:w-6" />
+              </div>
 
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-gradient-to-r from-primary to-indigo-500 text-white shadow-lg">
-            <Megaphone className="h-6 w-6" />
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold truncate">
+                  Global Announcements
+                </h1>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
+                  Latest platform updates and important announcements
+                </p>
+              </div>
+            </div>
+
+            {/* SEARCH - Responsive */}
+            <div className="relative w-full sm:w-72 md:w-80 lg:w-96">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search news..."
+                className="pl-9 sm:pl-10 bg-background border-border focus:ring-2 focus:ring-primary text-sm sm:text-base"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
 
-          <div>
-            <h1 className="text-3xl font-bold">Global Announcements</h1>
-            <p className="text-muted-foreground text-md">
-              Latest platform updates and important announcements
-            </p>
-          </div>
-        </div>
+          {/* NEWS LIST */}
+          {loading ? (
+            <div className="space-y-3 sm:space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-24 sm:h-28 lg:h-32 rounded-xl" />
+              ))}
+            </div>
+          ) : paginatedNews.length > 0 ? (
+            <div className="space-y-3 sm:space-y-4">
+              
+              {paginatedNews.map((item: any) => (
+                <Card
+                  key={item._id}
+                  className="border-l-4 border-l-primary hover:shadow-lg hover:scale-[1.01] transition-all duration-300 bg-background/80 backdrop-blur border border-border"
+                >
+                  <CardContent className="p-4 sm:p-5 lg:p-6">
+                    
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4">
+                      
+                      {/* Content Section */}
+                      <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
+                        <h2 className="text-base sm:text-lg md:text-xl font-semibold text-foreground hover:text-primary transition line-clamp-2 sm:line-clamp-1">
+                          {item.title}
+                        </h2>
+                        
+                        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-2 sm:line-clamp-3 lg:line-clamp-2">
+                          {item.content}
+                        </p>
+                      </div>
 
-        {/* SEARCH */}
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-         <Input
-  placeholder="Search news..."
-  className="pl-10 bg-background border-border focus:ring-2 focus:ring-primary"
-  value={searchQuery}
-  onChange={(e) => setSearchQuery(e.target.value)}
-/>
-        </div>
+                      {/* Date Badge - Responsive */}
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center gap-1 text-xs whitespace-nowrap self-start sm:self-center flex-shrink-0"
+                      >
+                        <Calendar className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                        <span className="text-[10px] sm:text-xs">
+                          {formatDistanceToNow(new Date(item.createdAt), {
+                            addSuffix: true,
+                          })}
+                        </span>
+                      </Badge>
 
-      </div>
+                    </div>
 
-      {/* NEWS LIST */}
-      {loading ? (
-        <div className="space-y-4">
-          {[1,2,3].map((i)=>(
-            <Skeleton key={i} className="h-28 rounded-xl"/>
-          ))}
-        </div>
-      ) : paginatedNews.length > 0 ? (
-        <div className="space-y-4">
+                  </CardContent>
+                </Card>
+              ))}
 
-          {paginatedNews.map((item:any)=>(
-            <Card
-              key={item._id}
-           className="border-l-4 border-l-primary hover:shadow-lg hover:scale-[1.01] transition-all duration-300 bg-background/80 backdrop-blur border border-border"
-            >
-              <CardContent className="p-5">
-
-                <div className="flex justify-between items-start gap-4">
-
-                  <div className="space-y-2">
-                 <h2 className="text-lg font-semibold text-foreground hover:text-primary transition">
-                      {item.title}
-                    </h2>
-
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                      {item.content}
-                    </p>
-                  </div>
-
-                  <Badge
-                    variant="secondary"
-                    className="flex items-center gap-1 text-xs whitespace-nowrap"
+              {/* PAGINATION - Responsive */}
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 pt-4 sm:pt-6">
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1}
+                    className="w-28 sm:w-auto"
                   >
-                    <Calendar className="h-3 w-3" />
-                    {formatDistanceToNow(new Date(item.createdAt), {
-                      addSuffix: true,
-                    })}
-                  </Badge>
+                    <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
+                    <span className="text-xs sm:text-sm">Previous</span>
+                  </Button>
+
+                  <span className="text-xs sm:text-sm font-medium px-3 py-1.5 bg-muted rounded-md">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="w-28 sm:w-auto"
+                  >
+                    <span className="text-xs sm:text-sm">Next</span>
+                    <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-1" />
+                  </Button>
 
                 </div>
-
-              </CardContent>
-            </Card>
-          ))}
-
-          {/* PAGINATION */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-4 pt-4">
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setCurrentPage((prev) => Math.max(prev - 1, 1))
-                }
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Previous
-              </Button>
-
-              <span className="text-sm font-medium">
-                Page {currentPage} / {totalPages}
-              </span>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
+              )}
 
             </div>
+          ) : (
+            // Empty State - Responsive
+            <div className="flex flex-col items-center justify-center py-12 sm:py-16 lg:py-20 text-center">
+              <div className="bg-muted p-4 sm:p-5 rounded-full mb-3 sm:mb-4">
+                <Inbox className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
+              </div>
+              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1">
+                No announcements found
+              </h3>
+              <p className="text-xs sm:text-sm text-muted-foreground max-w-xs sm:max-w-md">
+                {searchQuery 
+                  ? `No results found for "${searchQuery}". Try a different keyword.`
+                  : "No announcements available at the moment. Check back later!"}
+              </p>
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery("")}
+                  className="mt-3 sm:mt-4 text-xs sm:text-sm"
+                >
+                  Clear search
+                </Button>
+              )}
+            </div>
           )}
-
         </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-    <div className="bg-muted p-5 rounded-full mb-4">
-            <Inbox className="h-10 w-10 text-gray-400"/>
-          </div>
-        <h3 className="text-lg font-semibold text-foreground">No announcements found</h3>
-<p className="text-muted-foreground text-sm">
-            Try searching with another keyword
-          </p>
-        </div>
-      )}
+      </div>
     </div>
   );
 };

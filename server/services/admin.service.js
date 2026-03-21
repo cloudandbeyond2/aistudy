@@ -8,6 +8,7 @@ import Subscription from '../models/Subscription.js';
 import OrganizationPlan from '../models/OrganizationPlan.js';
 
 import { addOneMonthSafe } from '../utils/date.utils.js';
+import { getUserAccessFromOrgPlan } from '../utils/orgPlanAccess.js';
 import { sendMail } from './mail.service.js';
 /* ---------------- DASHBOARD ---------------- */
 export const getDashboardStats = async () => {
@@ -117,7 +118,7 @@ export const deleteUser = async (userId) => {
 /* ---------------- COURSES ---------------- */
 export const getAllCourses = async () => {
   return Course.find({})
-    .select('_id user mainTopic type photo date end completed restricted')
+    .select('_id user organizationId mainTopic type photo date end completed restricted')
     .lean()
     .sort({ date: -1 });
 };
@@ -316,12 +317,50 @@ export const updateOrganization = async (id, data) => {
   await user.save();
 
   // Also update the Organization model document
-  await Organization.findByIdAndUpdate(user.organization, {
+  const organizationUpdates = {
       studentSlot: data.studentSlot,
       customStudentLimit: data.customStudentLimit,
       name: data.institutionName || undefined,
       address: data.address || undefined
-  });
+  };
+
+  if (data.planDuration) {
+    organizationUpdates.plan = data.planDuration;
+  }
+
+  await Organization.findByIdAndUpdate(user.organization, organizationUpdates);
+ 
+  // Update OrganizationPlan if planDuration is provided
+  if (data.planDuration) {
+    const slotsMap = {
+      '1months': 20,
+      '3months': 60,
+      '6months': 120
+    };
+    const aiCourseSlots = slotsMap[data.planDuration] || 20;
+
+    const updatedPlan = await OrganizationPlan.findOneAndUpdate(
+      { organization: user.organization },
+      { 
+        planName: data.planDuration,
+        aiCourseSlots: aiCourseSlots,
+        isActive: true
+      },
+      { upsert: true, new: true }
+    );
+
+    const userAccess = getUserAccessFromOrgPlan(data.planDuration, updatedPlan?.startDate || new Date());
+    await User.updateMany(
+      { organization: user.organization, role: { $in: ['org_admin', 'dept_admin'] } },
+      {
+        $set: {
+          type: userAccess.type,
+          subscriptionStart: updatedPlan?.startDate || userAccess.subscriptionStart,
+          subscriptionEnd: updatedPlan?.endDate || userAccess.subscriptionEnd
+        }
+      }
+    );
+  }
 
   return user;
 };
@@ -364,11 +403,13 @@ export const processLimitRequest = async (requestId, status, adminComment) => {
 };
 
 
-export const createOrganization = async ({ email, password, institutionName, inchargeName, inchargeEmail, inchargePhone, address, studentSlot, customStudentLimit }) => {
+export const createOrganization = async ({ email, password, institutionName, inchargeName, inchargeEmail, inchargePhone, address, studentSlot, customStudentLimit, planDuration }) => {
   const existingUser = await User.findOne({ email });
   if (existingUser) throw new Error('User already exists');
 
   const hashedPassword = await bcrypt.hash(password, 10);
+  const selectedPlan = planDuration || '1months';
+  const userAccess = getUserAccessFromOrgPlan(selectedPlan);
 
   // 1. Create Organization document
   const newOrgDoc = new Organization({
@@ -377,6 +418,7 @@ export const createOrganization = async ({ email, password, institutionName, inc
     password: hashedPassword,
     address,
     contactNumber: inchargePhone,
+    plan: selectedPlan,
     studentSlot: studentSlot || 1,
     customStudentLimit: customStudentLimit || 0
   });
@@ -387,11 +429,13 @@ export const createOrganization = async ({ email, password, institutionName, inc
     email,
     mName: institutionName,
     password: hashedPassword,
-    type: 'forever',
+    type: userAccess.type,
     role: 'org_admin',
     isOrganization: true,
     organization: newOrgDoc._id,
     isEmailVerified: true,
+    subscriptionStart: userAccess.subscriptionStart,
+    subscriptionEnd: userAccess.subscriptionEnd,
     organizationDetails: {
       institutionName,
       inchargeName,
@@ -406,6 +450,24 @@ export const createOrganization = async ({ email, password, institutionName, inc
   });
 
   await newUser.save();
+ 
+  // 3. Create OrganizationPlan document
+  const slotsMap = {
+    '1months': 20,
+    '3months': 60,
+    '6months': 120
+  };
+  
+  const aiCourseSlots = slotsMap[selectedPlan] || 20;
+
+  const newPlan = new OrganizationPlan({
+    organization: newOrgDoc._id,
+    planName: selectedPlan,
+    aiCourseSlots: aiCourseSlots,
+    startDate: new Date(),
+    isActive: true
+  });
+  await newPlan.save();
 
   // Send account creation email to Org
   try {
