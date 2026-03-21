@@ -584,14 +584,14 @@ const Header = () => {
                           <ProfileIcon />
                           Profile
                         </Link>
-                        <Link
+                        {/* <Link
                           to="/dashboard/settings"
                           onClick={() => setIsMobileMenuOpen(false)}
                           className="flex items-center gap-3 px-5 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                         >
                           <SettingsIcon />
                           Settings
-                        </Link>
+                        </Link> */}
 
                         {/* Plan Indicator */}
                         <div className="px-5 py-3">
