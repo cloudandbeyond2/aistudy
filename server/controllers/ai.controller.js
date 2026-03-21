@@ -187,6 +187,9 @@ Your goal is to provide thorough, in-depth, and "large" explanations for course 
 IMPORTANT: You MUST explicitly translate the 'topicTitle' and subtopic 'title' fields into ${lang || 'English'}, alongside the 'theory' content.
 For each subtopic, provide a detailed explanation (approx 500-1000 words if possible) with rich examples and clear definitions.
 Use valid HTML formatting for the "theory" field (paragraphs, bold text, lists).
+When the lesson includes programming, commands, configuration, queries, or terminal examples, format them as proper multi-line HTML code blocks using <pre><code class="language-...">...</code></pre>.
+Preserve indentation and line breaks inside code blocks.
+Never place full code examples inside <p>, <li>, or inline <code> tags.
 Do NOT include images, external links, or additional resource suggestions.
 ONLY respond with a valid JSON object matching the requested schema.`;
 
