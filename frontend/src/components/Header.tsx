@@ -266,7 +266,7 @@ const Header = () => {
                     >
                       <div className="py-2">
                         {/* User Info Header */}
-                        <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                        <div className="px-4 py-3 ">
                           <div className="flex items-center gap-3">
                             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                               <span className="text-primary font-semibold text-lg">
@@ -285,10 +285,10 @@ const Header = () => {
                         </div>
 
                         {/* Menu Section */}
-                        <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        {/* <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                           Menu
-                        </div>
-                        <a
+                        </div> */}
+                        {/* <a
                           href="/"
                           onClick={() => setOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
@@ -319,7 +319,7 @@ const Header = () => {
                         >
                           <PricingIcon />
                           Pricing
-                        </a>
+                        </a> */}
 
                         {/* Account Section */}
                         <div className="px-3 py-2 mt-2 text-xs font-semibold text-slate-400 uppercase tracking-wider border-t border-slate-100 dark:border-slate-800 pt-2">
