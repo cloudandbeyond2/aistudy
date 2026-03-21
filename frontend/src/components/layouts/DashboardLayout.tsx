@@ -340,11 +340,19 @@ const isPaidUser =
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
-                      <SidebarMenuItem>
+                      {/* <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Attendance" isActive={isActive('/dashboard/student/attendance')}>
                           <Link to="/dashboard/student/attendance" className={cn(isActive('/dashboard/student/attendance') && "text-primary")}>
                             <Calendar />
                             <span>Attendance</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem> */}
+                        <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Profile" isActive={isActive('/dashboard/profile')}>
+                          <Link to="/dashboard/profile" className={cn(isActive('/dashboard/profile') && "text-primary")}>
+                            <User />
+                            <span>My Profile</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -521,6 +529,22 @@ const isPaidUser =
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+
+                      <SidebarMenuItem>
+  <SidebarMenuButton
+    asChild
+    tooltip="Departments"
+    isActive={location.search === '?tab=departments'}
+  >
+    <Link
+      to="/dashboard/org?tab=departments"
+      className={cn(location.search === '?tab=departments' && "text-primary")}
+    >
+      <Building2 className="ml-4" />
+      <span>Departments</span>
+    </Link>
+  </SidebarMenuButton>
+</SidebarMenuItem>
 
                       {/* Organization Management Sub-menu */}
                       <SidebarMenuItem>

@@ -320,7 +320,9 @@ const AdminCreateBlog = () => {
         setContent(blog.content || '');
         setCategory(blog.category || '');
         setTags(blog.tags || '');
-        if (blog.imageUrl) setPreview(blog.imageUrl);
+        if (blog.image) {
+          setPreview(getImage(blog.image, blog.imageContentType));
+        }
 
       } catch (error) {
         toast({
@@ -397,6 +399,25 @@ const AdminCreateBlog = () => {
     } finally {
       setIsSuggestingTags(false);
     }
+  };
+
+  function getImage(image: any, imageContentType?: string) {
+    if (!image) return null;
+    const byteArray = image.data?.data || image.data || image;
+    if (!byteArray || (Array.isArray(byteArray) && byteArray.length === 0)) return null;
+    
+    const base64String = byteArrayToBase64(byteArray);
+    const mimeType = imageContentType || 'image/jpeg';
+    return `data:${mimeType};base64,${base64String}`;
+  }
+
+  const byteArrayToBase64 = (byteArray: any) => {
+    let binary = '';
+    const bytes = new Uint8Array(byteArray);
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
   };
 
   // =========================

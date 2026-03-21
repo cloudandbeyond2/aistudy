@@ -97,7 +97,7 @@ const GlobalNews = () => {
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
 
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg">
+          <div className="p-3 rounded-xl bg-gradient-to-r from-primary to-indigo-500 text-white shadow-lg">
             <Megaphone className="h-6 w-6" />
           </div>
 
@@ -112,12 +112,12 @@ const GlobalNews = () => {
         {/* SEARCH */}
         <div className="relative w-full md:w-80">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search news..."
-            className="pl-10 bg-white shadow-sm border-gray-200 focus:ring-2 focus:ring-blue-500"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+         <Input
+  placeholder="Search news..."
+  className="pl-10 bg-background border-border focus:ring-2 focus:ring-primary"
+  value={searchQuery}
+  onChange={(e) => setSearchQuery(e.target.value)}
+/>
         </div>
 
       </div>
@@ -135,18 +135,18 @@ const GlobalNews = () => {
           {paginatedNews.map((item:any)=>(
             <Card
               key={item._id}
-              className="border-l-4 border-l-blue-600 hover:shadow-lg hover:scale-[1.01] transition-all duration-300 bg-white/80 backdrop-blur"
+           className="border-l-4 border-l-primary hover:shadow-lg hover:scale-[1.01] transition-all duration-300 bg-background/80 backdrop-blur border border-border"
             >
               <CardContent className="p-5">
 
                 <div className="flex justify-between items-start gap-4">
 
                   <div className="space-y-2">
-                    <h2 className="text-lg font-semibold text-gray-800 hover:text-blue-600 transition">
+                 <h2 className="text-lg font-semibold text-foreground hover:text-primary transition">
                       {item.title}
                     </h2>
 
-                    <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                       {item.content}
                     </p>
                   </div>
@@ -205,11 +205,11 @@ const GlobalNews = () => {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="bg-gray-100 p-5 rounded-full mb-4">
+    <div className="bg-muted p-5 rounded-full mb-4">
             <Inbox className="h-10 w-10 text-gray-400"/>
           </div>
-          <h3 className="text-lg font-semibold">No announcements found</h3>
-          <p className="text-gray-500 text-sm">
+        <h3 className="text-lg font-semibold text-foreground">No announcements found</h3>
+<p className="text-muted-foreground text-sm">
             Try searching with another keyword
           </p>
         </div>

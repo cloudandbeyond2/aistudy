@@ -24,13 +24,16 @@ export const createBlog = async (req, res) => {
   try {
     const { title, excerpt, content, image, category, tags } = req.body;
 
-    const buffer = Buffer.from(image.split(',')[1], 'base64');
+    const [mimePart, base64Part] = image.split(',');
+    const buffer = Buffer.from(base64Part || image, 'base64');
+    const imageContentType = mimePart ? mimePart.split(':')[1].split(';')[0] : 'image/jpeg';
 
     const blog = new Blog({
       title,
       excerpt,
       content,
       image: buffer,
+      imageContentType,
       category,
       tags
     });
@@ -120,8 +123,12 @@ export const updateBlog = async (req, res) => {
 
     // Update image only if new one is sent
     if (image) {
-      const buffer = Buffer.from(image.split(',')[1], 'base64');
+      const [mimePart, base64Part] = image.split(',');
+      const buffer = Buffer.from(base64Part || image, 'base64');
+      const imageContentType = mimePart ? mimePart.split(':')[1].split(';')[0] : 'image/jpeg';
+      
       updateData.image = buffer;
+      updateData.imageContentType = imageContentType;
     }
 
     await Blog.findByIdAndUpdate(id, updateData);

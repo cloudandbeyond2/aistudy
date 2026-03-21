@@ -17,7 +17,7 @@ import { jwtDecode } from "jwt-decode";
 import { motion, AnimatePresence } from 'framer-motion';
 import ReCAPTCHA from "react-google-recaptcha";
 import { recaptchaSiteKey } from '@/constants';
-
+import Swal from 'sweetalert2';
 const Signup = () => {
   const [mName, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -45,83 +45,115 @@ useEffect(() => {
     navigate("/dashboard");
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
 
-    // Simple validation
-    if (!mName || !email || !password || !confirmPassword) {
-      setError('Please fill out all fields');
-      return;
-    }
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
+  // Validation
+  if (!mName || !email || !password || !confirmPassword) {
+    setError('Please fill out all fields');
+    return;
+  }
 
-    if (!agreeToTerms) {
-      setError('You must agree to the terms and conditions');
-      return;
-    }
+  if (password !== confirmPassword) {
+    setError('Passwords do not match');
+    return;
+  }
 
-    if (password.length < 9) {
-      setError('Password should be at least 9 characters');
-      return;
-    }
+  if (!agreeToTerms) {
+    setError('You must agree to the terms and conditions');
+    return;
+  }
 
-    if (!captchaToken) {
-      setError('Please complete the reCAPTCHA');
-      return;
-    }
+  if (password.length < 9) {
+    setError('Password should be at least 9 characters');
+    return;
+  }
 
-    setIsLoading(true);
+  if (!captchaToken) {
+    setError('Please complete the reCAPTCHA');
+    return;
+  }
 
-    // This is where you would integrate signup logic
-    try {
-      const postURL = serverURL + '/api/signup';
-      const type = 'free';
+  setIsLoading(true);
 
-      const response = await axios.post(postURL, { email, mName: mName, password, type, phone, captchaToken });
+  try {
+    const postURL = serverURL + '/api/signup';
+    const type = 'free';
 
-      if (response.data.success) {
-        if (response.data.autoLogin) {
-          sessionStorage.setItem('email', email);
-          sessionStorage.setItem('mName', mName);
-          sessionStorage.setItem('auth', 'true');
-          sessionStorage.setItem('uid', response.data.userId);
-          sessionStorage.setItem('type', 'forever');
-          toast({
-            title: "Account created!",
-            description: "Welcome to " + appName + ".",
-          });
-          sendEmail(email);
-        } else {
-          setSuccess(response.data.message);
-          if (response.data.mailError) {
-            toast({
-              variant: "destructive",
-              title: "Account Created with Warning",
-              description: "Your account was created, but we couldn't send the verification email. Please contact support.",
-            });
-          } else {
-            toast({
-              title: "Account Created",
-              description: "Please check your email to verify your account.",
-            });
-          }
-        }
-      } else {
-        setError(response.data.message);
-        setIsLoading(false);
+    const response = await axios.post(postURL, {
+      email,
+      mName,
+      password,
+      type,
+      phone,
+      captchaToken
+    });
+
+    if (response.data.success) {
+
+      // ✅ AUTO LOGIN CASE
+      if (response.data.autoLogin) {
+        sessionStorage.setItem('email', email);
+        sessionStorage.setItem('mName', mName);
+        sessionStorage.setItem('auth', 'true');
+        sessionStorage.setItem('uid', response.data.userId);
+        sessionStorage.setItem('type', 'forever');
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'Account Created!',
+          text: `Welcome to ${appName}. Your account is ready to use.`,
+          confirmButtonColor: '#3085d6',
+        });
+
+        sendEmail(email);
+
+        // Optional redirect
+        window.location.href = '/dashboard';
       }
-    } catch (err) {
-      setError('Failed to create account. Please try again.');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
+
+      // ✅ EMAIL VERIFICATION CASE
+      else {
+        if (response.data.mailError) {
+          await Swal.fire({
+            icon: 'warning',
+            title: 'Account Created (Email Issue)',
+            text: "Your account was created, but we couldn't send the verification email. Please contact support.",
+            confirmButtonColor: '#d33',
+          });
+        } else {
+          await Swal.fire({
+            icon: 'success',
+            title: 'Verify Your Email',
+            text: 'Your account has been created successfully. Please check your email inbox (and spam folder) to verify your account before logging in.',
+            confirmButtonColor: '#3085d6',
+          });
+        }
+
+        // Optional redirect after alert
+        window.location.href = '/login';
+      }
+
+    } else {
+      setError(response.data.message);
     }
-  };
+
+  } catch (err) {
+    console.error(err);
+
+    await Swal.fire({
+      icon: 'error',
+      title: 'Signup Failed',
+      text: 'Failed to create account. Please try again.',
+      confirmButtonColor: '#d33',
+    });
+
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   async function sendEmail(mEmail: string, name?: string) {
     const userName = name || name;
