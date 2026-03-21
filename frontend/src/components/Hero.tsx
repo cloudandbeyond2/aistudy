@@ -157,7 +157,7 @@ const Hero = () => {
       <div className="absolute top-0 right-0 w-[600px] md:w-[800px] h-[400px] md:h-[600px] bg-primary/20 rounded-full blur-[120px] opacity-50" />
       <div className="absolute bottom-0 left-0 w-[400px] md:w-[600px] h-[350px] md:h-[500px] bg-blue-600/20 rounded-full blur-[100px] opacity-50" />
 
-      <div className="max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-24 relative z-10 w-full grid lg:grid-cols-2 gap-10 items-center">
+      <div className="max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-24 relative z-10 w-full grid lg:grid-cols-2 gap-10 items-center ">
 
         {/* LEFT CONTENT */}
         <motion.div
@@ -168,7 +168,7 @@ const Hero = () => {
         >
 
           {/* Badge */}
-          <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 py-1.5 px-3 text-xs md:text-sm text-white/80 backdrop-blur-sm self-start">
+          <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 py-1.5 px-3 text-xs md:text-sm text-white/80 backdrop-blur-sm self-start mt-[10px]">
             <span className="flex h-2 w-2 rounded-full bg-primary mr-2 animate-pulse"></span>
             Next-Gen Learning & Placement Platform
           </div>
