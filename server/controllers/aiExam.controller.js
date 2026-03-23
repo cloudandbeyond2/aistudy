@@ -1,5 +1,4 @@
-import retryWithBackoff from '../utils/retryWithBackoff.js';
-import { getGenAI } from '../config/gemini.js';
+import { generateAIText } from '../config/aiProvider.js';
 import {
   HarmCategory,
   HarmBlockThreshold
@@ -11,9 +10,6 @@ import {
 export const generateAIExam = async (req, res) => {
   const { mainTopic, subtopicsString, lang } = req.body;
 
-  const genAI = await getGenAI();
-
-  // (Optional) Debug logging – safe to remove later
   try {
     const fs = await import('fs');
     fs.writeFileSync(
@@ -24,11 +20,10 @@ export const generateAIExam = async (req, res) => {
     console.error('Log error', e);
   }
 
-  const prompt = `Generate 20 multiple choice questions about ${mainTopic} including these subtopics: ${subtopicsString}. The language should be ${lang || 'English'
-    }. 
-  CRITICAL: Randomize the correct answer position.
-  
-  Return ONLY a raw JSON array (no markdown, no code blocks) with this exact format:
+  const prompt = `Generate 20 multiple choice questions about ${mainTopic} including these subtopics: ${subtopicsString}. The language should be ${lang || 'English'}. 
+CRITICAL: Randomize the correct answer position.
+
+Return ONLY a raw JSON array (no markdown, no code blocks) with this exact format:
 [
   {
     "question": "Question text",
@@ -58,19 +53,12 @@ IMPORTANT: "correctAnswer" must match exactly one of the strings in "options".`;
   ];
 
   try {
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+    let text = await generateAIText({
+      prompt,
+      maxOutputTokens: 4096,
       safetySettings
     });
 
-    // ✅ reuse retryWithBackoff (important)
-    const result = await retryWithBackoff(() =>
-      model.generateContent(prompt)
-    );
-
-    let text = result.response.text();
-
-    // Clean markdown if AI leaks it
     text = text
       .replace(/```json/g, '')
       .replace(/```/g, '')
@@ -80,22 +68,18 @@ IMPORTANT: "correctAnswer" must match exactly one of the strings in "options".`;
     try {
       examData = JSON.parse(text);
     } catch (e) {
-      console.error("JSON Parse Error:", text);
+      console.error('JSON Parse Error:', text);
       throw new Error('Invalid JSON format received from AI');
     }
 
-    // Process questions: Shuffle options and ensure answer key is set
     examData = examData.map((q, index) => {
-      // Normalize options to objects for internal consistency (optional, but good for id assignment later in frontend)
-      // Actually frontend handles strings. Let's just shuffle the strings.
-
       const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
 
       return {
         id: index + 1,
         question: q.question,
-        options: shuffledOptions, // Frontend will map these to {id: 'a', text: '...'}
-        answer: q.correctAnswer // Pass the text directly
+        options: shuffledOptions,
+        answer: q.correctAnswer
       };
     });
 

@@ -9,6 +9,16 @@ interface StyledTextProps {
 const StyledText: React.FC<StyledTextProps> = ({ text }) => {
   const contentRef = useRef<HTMLDivElement>(null);
 
+  const normalizedText = text
+    ?.replace(/```([a-zA-Z0-9_-]+)?\n([\s\S]*?)```/g, (_match, lang, code) => {
+      const languageClass = lang ? ` class="language-${lang}"` : '';
+      const escapedCode = code
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      return `<pre><code${languageClass}>${escapedCode}</code></pre>`;
+    });
+
   useEffect(() => {
     if (contentRef.current) {
       // Apply syntax highlighting to all code blocks
@@ -16,7 +26,7 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
         hljs.highlightElement(block as HTMLElement);
       });
     }
-  }, [text]);
+  }, [normalizedText]);
 
   return (
     <div ref={contentRef} className="styled-content">
@@ -139,16 +149,16 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
 
         /* Code blocks - Enhanced separation */
         .styled-content pre {
-          background: hsl(var(--muted));
-          border: 2px solid hsl(var(--primary) / 0.2);
-          border-left: 5px solid hsl(var(--primary));
+          background: linear-gradient(135deg, #0f172a 0%, #111827 100%);
+          border: 1px solid rgba(59, 130, 246, 0.35);
+          border-left: 5px solid #3b82f6;
           border-radius: 0.75rem;
           padding: 1.5rem;
           margin: 2.5rem 0;
           overflow-x: auto;
-          box-shadow: 0 8px 16px -4px rgb(0 0 0 / 0.15);
+          box-shadow: 0 12px 24px -8px rgb(15 23 42 / 0.35);
           position: relative;
-          background-image: linear-gradient(to bottom right, hsl(var(--muted)), hsl(var(--muted) / 0.8));
+          white-space: pre;
         }
 
         .styled-content pre::before {
@@ -158,7 +168,7 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
           right: 0.75rem;
           font-size: 0.65rem;
           font-weight: 700;
-          color: hsl(var(--primary) / 0.5);
+          color: rgba(148, 163, 184, 0.75);
           letter-spacing: 0.1em;
         }
 
@@ -166,10 +176,70 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
           background: transparent;
           padding: 0;
           font-size: 0.9rem;
-          line-height: 1.8;
+          line-height: 1.6;
           font-family: 'Fira Code', 'Courier New', Courier, monospace;
-          color: hsl(var(--foreground));
+          color: #e5eefb;
           display: block;
+          white-space: pre;
+          word-break: normal;
+          overflow-wrap: normal;
+          tab-size: 2;
+        }
+
+        .styled-content pre .hljs {
+          background: transparent;
+          color: #e5eefb;
+        }
+
+        .styled-content pre .hljs-keyword,
+        .styled-content pre .hljs-selector-tag,
+        .styled-content pre .hljs-literal,
+        .styled-content pre .hljs-section,
+        .styled-content pre .hljs-link {
+          color: #ff7ab6;
+        }
+
+        .styled-content pre .hljs-title,
+        .styled-content pre .hljs-title.function_,
+        .styled-content pre .hljs-function .hljs-title,
+        .styled-content pre .hljs-attr,
+        .styled-content pre .hljs-selector-id,
+        .styled-content pre .hljs-selector-class {
+          color: #82aaff;
+        }
+
+        .styled-content pre .hljs-string,
+        .styled-content pre .hljs-meta .hljs-string,
+        .styled-content pre .hljs-regexp,
+        .styled-content pre .hljs-template-string {
+          color: #c3e88d;
+        }
+
+        .styled-content pre .hljs-number,
+        .styled-content pre .hljs-symbol,
+        .styled-content pre .hljs-bullet,
+        .styled-content pre .hljs-variable,
+        .styled-content pre .hljs-template-variable {
+          color: #f78c6c;
+        }
+
+        .styled-content pre .hljs-comment,
+        .styled-content pre .hljs-quote {
+          color: #7f8c98;
+          font-style: italic;
+        }
+
+        .styled-content pre .hljs-built_in,
+        .styled-content pre .hljs-type,
+        .styled-content pre .hljs-class .hljs-title {
+          color: #ffd166;
+        }
+
+        .styled-content pre .hljs-params,
+        .styled-content pre .hljs-property,
+        .styled-content pre .hljs-operator,
+        .styled-content pre .hljs-punctuation {
+          color: #d6deeb;
         }
 
         /* Inline code - Better distinction */
@@ -190,7 +260,7 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
           background: transparent;
           padding: 0;
           border: none;
-          white-space: pre-wrap;
+          white-space: pre;
         }
 
         /* Blockquotes */
@@ -299,7 +369,7 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
           border-radius: 0.25rem;
         }
       `}</style>
-      <div dangerouslySetInnerHTML={{ __html: text }} />
+      <div dangerouslySetInnerHTML={{ __html: normalizedText }} />
     </div>
   );
 };

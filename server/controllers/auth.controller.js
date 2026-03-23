@@ -579,7 +579,7 @@ Email Verification
 <p>Hello <strong>${mName}</strong>,</p>
 
 <p>
-Thank you for signing up for <strong>${process.env.COMPANY || "Traininglabs Ai Solutions"}</strong>.
+Thank you for signing up for <strong>${process.env.COMPANY || "Colossus IQ Ai Solutions"}</strong>.
 Please click the button below to verify your email address and activate your account.
 </p>
 
@@ -607,7 +607,7 @@ Verify Email Address
 
 <!-- FOOTER -->
 <p style="text-align:center;font-size:12px;color:#666;margin-bottom:0;">
-© ${new Date().getFullYear()} ${process.env.COMPANY || "Traininglabs Ai Solutions"}. All rights reserved.
+© ${new Date().getFullYear()} ${process.env.COMPANY || "Colossus IQ"}. All rights reserved.
 </p>
 
 </td>
@@ -826,13 +826,13 @@ export const verifyEmail = async (req, res) => {
 <h2 style="text-align:center;margin-top:0;margin-bottom:25px;color:#333;">Account Verified Successfully!</h2>
 <p>Hello <strong>${user.mName}</strong>,</p>
 <p>Your email has been verified successfully. Your account is now fully active.</p>
-<p>You can now log in to access all the features of <strong>${process.env.COMPANY || "Traininglabs Ai Solutions"}</strong>.</p>
+<p>You can now log in to access all the features of <strong>${process.env.COMPANY || "Colossus IQ Ai Solutions"}</strong>.</p>
 <div style="text-align:center;margin:35px 0;">
 <a href="${baseUrl}/login" style="background:#1a73e8;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:bold;display:inline-block;font-size:15px;">Login to Your Account</a>
 </div>
 <hr style="border:none;border-top:1px solid #cfcfcf;margin:30px 0;">
 <p style="text-align:center;font-size:12px;color:#666;margin-bottom:0;">
-© ${new Date().getFullYear()} ${process.env.COMPANY || "Traininglabs Ai Solutions"}. All rights reserved.
+© ${new Date().getFullYear()} ${process.env.COMPANY || "Colossus IQ Ai Solutions"}. All rights reserved.
 </p>
 </td>
 </tr>
@@ -931,14 +931,14 @@ export const socialLogin = async (req, res) => {
 <td style="padding:35px 40px; color:#333;">
 <h2 style="text-align:center;margin-top:0;margin-bottom:25px;color:#333;">Welcome to the Platform!</h2>
 <p>Hello <strong>${mName}</strong>,</p>
-<p>Thank you for joining <strong>${process.env.COMPANY || "Traininglabs Ai Solutions"}</strong> via social login.</p>
+<p>Thank you for joining <strong>${process.env.COMPANY || "Colossus IQ Ai Solutions"}</strong> via social login.</p>
 <p>Your account is now ready. You can explore all our courses and features immediately.</p>
 <div style="text-align:center;margin:35px 0;">
 <a href="${baseUrl}/dashboard" style="background:#1a73e8;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:bold;display:inline-block;font-size:15px;">Go to Your Dashboard</a>
 </div>
 <hr style="border:none;border-top:1px solid #cfcfcf;margin:30px 0;">
 <p style="text-align:center;font-size:12px;color:#666;margin-bottom:0;">
-© ${new Date().getFullYear()} ${process.env.COMPANY || "Traininglabs Ai Solutions"}. All rights reserved.
+© ${new Date().getFullYear()} ${process.env.COMPANY || "Colossus IQ Ai Solutions"}. All rights reserved.
 </p>
 </td>
 </tr>
@@ -986,7 +986,7 @@ export const forgotPassword = async (req, res) => {
 
   // Fallbacks for email template variables
   const appName = name || process.env.COMPANY || "Colossus IQ";
-  const orgCompany = company || process.env.COMPANY || "Traininglabs Ai Solutions";
+  const orgCompany = company || process.env.COMPANY || "Colossus IQ Ai Solutions";
 
   try {
     const user = await User.findOne({ email });

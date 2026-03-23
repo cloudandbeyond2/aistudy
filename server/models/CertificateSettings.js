@@ -8,6 +8,7 @@ const positionSchema = new mongoose.Schema({
 }, { _id: false });
 
 const certificateSettingsSchema = new mongoose.Schema({
+  type: { type: String, default: 'regular', enum: ['regular', 'org'] },
   ceoName: { type: String, default: 'Anandaraj' },
   ceoSignature: { type: String, default: '' }, // Base64
   vpName: { type: String, default: 'Mr. Ananda raj' },

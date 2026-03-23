@@ -250,6 +250,8 @@ const handleDelete = async (orgId, orgName) => {
                             <TableHead>Institution Name</TableHead>
                             <TableHead>Incharge</TableHead>
                             <TableHead>Email</TableHead>
+                            <TableHead>Plan</TableHead>
+                            <TableHead>Expires</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -281,6 +283,14 @@ const handleDelete = async (orgId, orgName) => {
                                     </TableCell>
                                     <TableCell>{org.organizationDetails?.inchargeName || 'N/A'}</TableCell>
                                     <TableCell>{org.email}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className="capitalize">
+                                            {org.planName || 'No Plan'}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        {org.planEndDate ? new Date(org.planEndDate).toLocaleDateString() : 'N/A'}
+                                    </TableCell>
                                     <TableCell>
                                         {org.organizationDetails?.isBlocked ? (
                                             <Badge variant="destructive">Blocked</Badge>

@@ -5,8 +5,10 @@ import bcrypt from 'bcrypt';
 import Course from '../models/Course.js';
 import Admin from '../models/Admin.js';
 import Subscription from '../models/Subscription.js';
+import OrganizationPlan from '../models/OrganizationPlan.js';
 
 import { addOneMonthSafe } from '../utils/date.utils.js';
+import { getUserAccessFromOrgPlan } from '../utils/orgPlanAccess.js';
 import { sendMail } from './mail.service.js';
 /* ---------------- DASHBOARD ---------------- */
 export const getDashboardStats = async () => {
@@ -116,7 +118,7 @@ export const deleteUser = async (userId) => {
 /* ---------------- COURSES ---------------- */
 export const getAllCourses = async () => {
   return Course.find({})
-    .select('_id user mainTopic type photo date end completed restricted')
+    .select('_id user organizationId mainTopic type photo date end completed restricted')
     .lean()
     .sort({ date: -1 });
 };
@@ -249,7 +251,7 @@ export const getDashboardStatsWithOrgs = async () => {
     organizations,
     orgStudents,
     admin: {
-      email: stats.admin.email,
+      email: stats.admin?.email,
       websiteName: admin?.websiteName || 'Colossus IQ',
       websiteLogo: admin?.websiteLogo || '/logo.png',
       notebookEnabled: admin?.notebookEnabled || {
@@ -281,9 +283,25 @@ export const getDashboardStatsWithOrgs = async () => {
 };
 
 export const getAllOrganizations = async () => {
-  return User.find({ isOrganization: true });
+  const orgs = await User.find({ isOrganization: true }).lean();
+  
+  return Promise.all(
+    orgs.map(async (org) => {
+      const plan = await OrganizationPlan.findOne({ organization: org.organization, isActive: true }).lean();
+      return { 
+        ...org, 
+        planName: plan?.planName || 'No Plan',
+        planEndDate: plan?.endDate || null
+      };
+    })
+  );
 };
-
+ 
+export const getOrgPlan = async (organizationId) => {
+  const plan = await OrganizationPlan.findOne({ organization: organizationId }).lean();
+  return plan;
+};
+ 
 export const updateOrganization = async (id, data) => {
   const user = await User.findById(id);
   if (!user) throw new Error('Organization not found');
@@ -299,12 +317,50 @@ export const updateOrganization = async (id, data) => {
   await user.save();
 
   // Also update the Organization model document
-  await Organization.findByIdAndUpdate(user.organization, {
+  const organizationUpdates = {
       studentSlot: data.studentSlot,
       customStudentLimit: data.customStudentLimit,
       name: data.institutionName || undefined,
       address: data.address || undefined
-  });
+  };
+
+  if (data.planDuration) {
+    organizationUpdates.plan = data.planDuration;
+  }
+
+  await Organization.findByIdAndUpdate(user.organization, organizationUpdates);
+ 
+  // Update OrganizationPlan if planDuration is provided
+  if (data.planDuration) {
+    const slotsMap = {
+      '1months': 20,
+      '3months': 60,
+      '6months': 120
+    };
+    const aiCourseSlots = slotsMap[data.planDuration] || 20;
+
+    const updatedPlan = await OrganizationPlan.findOneAndUpdate(
+      { organization: user.organization },
+      { 
+        planName: data.planDuration,
+        aiCourseSlots: aiCourseSlots,
+        isActive: true
+      },
+      { upsert: true, new: true }
+    );
+
+    const userAccess = getUserAccessFromOrgPlan(data.planDuration, updatedPlan?.startDate || new Date());
+    await User.updateMany(
+      { organization: user.organization, role: { $in: ['org_admin', 'dept_admin'] } },
+      {
+        $set: {
+          type: userAccess.type,
+          subscriptionStart: updatedPlan?.startDate || userAccess.subscriptionStart,
+          subscriptionEnd: updatedPlan?.endDate || userAccess.subscriptionEnd
+        }
+      }
+    );
+  }
 
   return user;
 };
@@ -347,11 +403,13 @@ export const processLimitRequest = async (requestId, status, adminComment) => {
 };
 
 
-export const createOrganization = async ({ email, password, institutionName, inchargeName, inchargeEmail, inchargePhone, address, studentSlot, customStudentLimit }) => {
+export const createOrganization = async ({ email, password, institutionName, inchargeName, inchargeEmail, inchargePhone, address, studentSlot, customStudentLimit, planDuration }) => {
   const existingUser = await User.findOne({ email });
   if (existingUser) throw new Error('User already exists');
 
   const hashedPassword = await bcrypt.hash(password, 10);
+  const selectedPlan = planDuration || '1months';
+  const userAccess = getUserAccessFromOrgPlan(selectedPlan);
 
   // 1. Create Organization document
   const newOrgDoc = new Organization({
@@ -360,6 +418,7 @@ export const createOrganization = async ({ email, password, institutionName, inc
     password: hashedPassword,
     address,
     contactNumber: inchargePhone,
+    plan: selectedPlan,
     studentSlot: studentSlot || 1,
     customStudentLimit: customStudentLimit || 0
   });
@@ -370,11 +429,13 @@ export const createOrganization = async ({ email, password, institutionName, inc
     email,
     mName: institutionName,
     password: hashedPassword,
-    type: 'forever',
+    type: userAccess.type,
     role: 'org_admin',
     isOrganization: true,
     organization: newOrgDoc._id,
     isEmailVerified: true,
+    subscriptionStart: userAccess.subscriptionStart,
+    subscriptionEnd: userAccess.subscriptionEnd,
     organizationDetails: {
       institutionName,
       inchargeName,
@@ -389,6 +450,24 @@ export const createOrganization = async ({ email, password, institutionName, inc
   });
 
   await newUser.save();
+ 
+  // 3. Create OrganizationPlan document
+  const slotsMap = {
+    '1months': 20,
+    '3months': 60,
+    '6months': 120
+  };
+  
+  const aiCourseSlots = slotsMap[selectedPlan] || 20;
+
+  const newPlan = new OrganizationPlan({
+    organization: newOrgDoc._id,
+    planName: selectedPlan,
+    aiCourseSlots: aiCourseSlots,
+    startDate: new Date(),
+    isActive: true
+  });
+  await newPlan.save();
 
   // Send account creation email to Org
   try {
@@ -412,11 +491,12 @@ export const createOrganization = async ({ email, password, institutionName, inc
 <td style="padding:35px 40px; color:#333;">
 <h2 style="text-align:center;margin-top:0;margin-bottom:25px;color:#333;">Organization Account Created</h2>
 <p>Hello <strong>${institutionName}</strong>,</p>
-<p>An institutional account has been created for you on <strong>${process.env.COMPANY || "Traininglabs Ai Solutions"}</strong>.</p>
+<p>An institutional account has been created for you on <strong>${process.env.COMPANY || "Colossus IQ Ai Solutions"}</strong>.</p>
 <p>You can now log in using the following details:</p>
 <ul style="list-style:none;padding:0;">
 <li><strong>Login URL:</strong> <a href="${loginUrl}">${loginUrl}</a></li>
 <li><strong>Email:</strong> ${email}</li>
+<li><strong>Password:</strong> ${password}</li>
 </ul>
 <p>For security reasons, your password is not included in this email. Please use the password provided by your administrator.</p>
 <div style="text-align:center;margin:35px 0;">
@@ -424,7 +504,7 @@ export const createOrganization = async ({ email, password, institutionName, inc
 </div>
 <hr style="border:none;border-top:1px solid #cfcfcf;margin:30px 0;">
 <p style="text-align:center;font-size:12px;color:#666;margin-bottom:0;">
-© ${new Date().getFullYear()} ${process.env.COMPANY || "Traininglabs Ai Solutions"}. All rights reserved.
+© ${new Date().getFullYear()} ${process.env.COMPANY || "Colossus IQ Ai Solutions"}. All rights reserved.
 </p>
 </td>
 </tr>
@@ -447,7 +527,11 @@ export const createOrganization = async ({ email, password, institutionName, inc
 export const getAdminSettings = async () => {
   const admin = await Admin.findOne({ type: 'main' });
   return {
+    aiProvider: admin?.aiProvider || 'gemini',
     geminiApiKey: admin?.geminiApiKey || '',
+    geminiModel: admin?.geminiModel || 'gemini-2.5-flash',
+    openaiApiKey: admin?.openaiApiKey || '',
+    openaiModel: admin?.openaiModel || 'gpt-4.1-mini',
     unsplashApiKey: admin?.unsplashApiKey || '',
     websiteName: admin?.websiteName || 'Colossus IQ',
     websiteLogo: admin?.websiteLogo || '/logo.png',
@@ -496,16 +580,29 @@ export const updateAdminSettings = async (data) => {
     }
   }
 
-  admin.geminiApiKey = data.geminiApiKey;
-  admin.unsplashApiKey = data.unsplashApiKey;
-  admin.websiteName = data.websiteName;
-  admin.websiteLogo = data.websiteLogo;
-  admin.taxPercentage = data.taxPercentage;
-  admin.notebookEnabled = data.notebookEnabled;
-  admin.resumeEnabled = data.resumeEnabled;
-  admin.careerEnabled = data.careerEnabled;
+  const updatePayload = {
+    aiProvider: data.aiProvider || 'gemini',
+    geminiApiKey: data.geminiApiKey || '',
+    geminiModel: data.geminiModel || 'gemini-2.5-flash',
+    openaiApiKey: data.openaiApiKey || '',
+    openaiModel: data.openaiModel || 'gpt-4.1-mini',
+    unsplashApiKey: data.unsplashApiKey || '',
+    websiteName: data.websiteName,
+    websiteLogo: data.websiteLogo,
+    taxPercentage: data.taxPercentage,
+    notebookEnabled: data.notebookEnabled,
+    resumeEnabled: data.resumeEnabled,
+    careerEnabled: data.careerEnabled
+  };
 
+  Object.assign(admin, updatePayload);
   await admin.save();
+
+  await Admin.updateOne(
+    { _id: admin._id },
+    { $set: updatePayload },
+    { strict: false }
+  );
 };
 export const toggleBlockOrganization = async (id, isBlocked) => {
   // Update Organization document

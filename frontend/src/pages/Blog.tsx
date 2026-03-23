@@ -26,6 +26,7 @@ interface BlogPost {
     };
     contentType: string;
   };
+  imageContentType: string;
   imageUrl: string;
   content: string;
   tags: string;
@@ -54,7 +55,7 @@ const Blog = () => {
         const response = await axios.get(postURL);
         const processedData = response.data.map((post: BlogPost) => ({
           ...post,
-          imageUrl: getImage(post.image)
+          imageUrl: getImage(post.image, post.imageContentType)
         }));
 
         setData(processedData);
@@ -73,11 +74,13 @@ const Blog = () => {
     dashboardData();
   }, []);
 
-  function getImage(image: { data: any; contentType: any; }) {
+  function getImage(image: { data: any; contentType: any; }, imageContentType?: string) {
     if (!image || !image.data) return '/placeholder.svg';
     const byteArray = image.data.data || image.data;
     const base64String = byteArrayToBase64(byteArray);
-    return `data:${image.contentType};base64,${base64String}`;
+    // Use stored imageContentType first, then image.contentType, then fallback to image/jpeg
+    const mimeType = imageContentType || image.contentType || 'image/jpeg';
+    return `data:${mimeType};base64,${base64String}`;
   }
 
   const byteArrayToBase64 = (byteArray: Uint8Array | number[]) => {

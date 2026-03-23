@@ -6,11 +6,15 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { serverURL } from '@/constants';
 import axios from 'axios';
-import { Key, Save, AlertCircle, Upload, Image as ImageIcon, HandCoins, Sparkles } from 'lucide-react';
+import { Key, Save, AlertCircle, Upload, HandCoins, Sparkles } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const AdminSettings = () => {
+    const [aiProvider, setAiProvider] = useState<'gemini' | 'openai'>('gemini');
     const [geminiApiKey, setGeminiApiKey] = useState('');
+    const [geminiModel, setGeminiModel] = useState('gemini-2.5-flash');
+    const [openaiApiKey, setOpenaiApiKey] = useState('');
+    const [openaiModel, setOpenaiModel] = useState('gpt-4.1-mini');
     const [unsplashApiKey, setUnsplashApiKey] = useState('');
     const [websiteName, setWebsiteName] = useState('');
     const [websiteLogo, setWebsiteLogo] = useState('');
@@ -51,7 +55,11 @@ const AdminSettings = () => {
     const fetchSettings = async () => {
         try {
             const res = await axios.get(`${serverURL}/api/settings`);
+            setAiProvider(res.data.aiProvider || 'gemini');
             setGeminiApiKey(res.data.geminiApiKey || '');
+            setGeminiModel(res.data.geminiModel || 'gemini-2.5-flash');
+            setOpenaiApiKey(res.data.openaiApiKey || '');
+            setOpenaiModel(res.data.openaiModel || 'gpt-4.1-mini');
             setUnsplashApiKey(res.data.unsplashApiKey || '');
             setWebsiteName(res.data.websiteName || 'Colossus IQ');
             setWebsiteLogo(res.data.websiteLogo || '/logo.png');
@@ -137,7 +145,11 @@ const AdminSettings = () => {
         setIsSaving(true);
         try {
             const res = await axios.post(`${serverURL}/api/settings`, {
+                aiProvider,
                 geminiApiKey,
+                geminiModel,
+                openaiApiKey,
+                openaiModel,
                 unsplashApiKey,
                 websiteName,
                 websiteLogo,
@@ -323,13 +335,29 @@ const AdminSettings = () => {
                                 <CardHeader>
                                     <div className="flex items-center gap-2">
                                         <Key className="h-5 w-5 text-primary" />
-                                        <CardTitle>AI Configuration</CardTitle>
+                                    <CardTitle>AI Configuration</CardTitle>
                                     </div>
                                     <CardDescription>
-                                        Manage your Google Gemini API settings for course generation and AI features.
+                                        Choose the platform-wide AI provider for course generation, notebook, exams, and other text AI features.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="ai-provider">Active AI Provider</Label>
+                                        <select
+                                            id="ai-provider"
+                                            value={aiProvider}
+                                            onChange={(e) => setAiProvider(e.target.value as 'gemini' | 'openai')}
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                        >
+                                            <option value="gemini">Google Gemini</option>
+                                            <option value="openai">OpenAI GPT</option>
+                                        </select>
+                                        <p className="text-xs text-muted-foreground">
+                                            Admin can switch the whole platform between Gemini and OpenAI without changing the frontend course flow.
+                                        </p>
+                                    </div>
+
                                     <div className="space-y-2">
                                         <Label htmlFor="gemini-api-key">Gemini API Key</Label>
                                         <div className="relative">
@@ -344,15 +372,61 @@ const AdminSettings = () => {
                                             <Key className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         </div>
                                         <p className="text-xs text-muted-foreground">
-                                            This key is used for all AI-powered features including course and exam generation.
+                                            Used when the active provider is Gemini.
                                         </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="gemini-model">Gemini Model</Label>
+                                        <Input
+                                            id="gemini-model"
+                                            placeholder="e.g. gemini-2.5-flash"
+                                            value={geminiModel}
+                                            onChange={(e) => setGeminiModel(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2 pt-3 border-t border-border/30">
+                                        <Label htmlFor="openai-api-key">OpenAI API Key</Label>
+                                        <div className="relative">
+                                            <Input
+                                                id="openai-api-key"
+                                                type="password"
+                                                placeholder="Enter your OpenAI API key"
+                                                value={openaiApiKey}
+                                                onChange={(e) => setOpenaiApiKey(e.target.value)}
+                                                className="pr-10"
+                                            />
+                                            <Key className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            Optional backup key. If Gemini is the active provider and Gemini fails, the system can continue on OpenAI.
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="openai-model">OpenAI Model</Label>
+                                        <Input
+                                            id="openai-model"
+                                            placeholder="e.g. gpt-4.1-mini"
+                                            value={openaiModel}
+                                            onChange={(e) => setOpenaiModel(e.target.value)}
+                                        />
                                     </div>
 
                                     <Alert className="bg-primary/5 border-primary/20">
                                         <AlertCircle className="h-4 w-4 text-primary" />
                                         <AlertTitle className="text-primary">Important</AlertTitle>
                                         <AlertDescription className="text-xs">
-                                            If left empty, the system will fallback to the key defined in the server's environment variables.
+                                            If a key is left empty, the system will fallback to the matching server environment variable when available.
+                                        </AlertDescription>
+                                    </Alert>
+
+                                    <Alert className="bg-muted/40 border-border/50">
+                                        <AlertCircle className="h-4 w-4 text-primary" />
+                                        <AlertTitle>Implementation Idea</AlertTitle>
+                                        <AlertDescription className="text-xs">
+                                            Recommended setup: keep Gemini as the primary provider and configure OpenAI as backup continuity when Gemini is down or rate-limited.
                                         </AlertDescription>
                                     </Alert>
                                 </CardContent>

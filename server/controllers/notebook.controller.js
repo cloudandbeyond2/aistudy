@@ -1,5 +1,4 @@
-import { getGenAI } from '../config/gemini.js';
-import retryWithBackoff from '../utils/retryWithBackoff.js';
+import { chatWithAI, generateAIText } from '../config/aiProvider.js';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
@@ -59,27 +58,11 @@ export const chat = async (req, res) => {
   }
 
   try {
-    const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
-    let prompt = '';
-    if (context) {
-      prompt += `Use the following sources as context to answer the user's questions. If the answer is not in the context, you can use your general knowledge, but prioritize the provided context.\n\nContext:\n${context}\n\n`;
-    }
-
-    // Convert messages to Gemini format
-    const history = messages.slice(0, -1).map(msg => ({
-      role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.content }]
-    }));
-
-    const chatSession = model.startChat({ history });
-
-    const latestMessage = messages[messages.length - 1].content;
-    const finalPrompt = prompt + latestMessage;
-
-    const result = await retryWithBackoff(() => chatSession.sendMessage(finalPrompt));
-    const responseText = await result.response.text();
+    const responseText = await chatWithAI({
+      messages,
+      context,
+      systemInstruction: 'You are the Colossus IQ Assistant. Answer clearly, accurately, and helpfully based on the uploaded sources.'
+    });
 
     res.status(200).json({
       success: true,
@@ -99,9 +82,6 @@ export const generateAction = async (req, res) => {
   }
 
   try {
-    const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
     let prompt = `Based strictly on the following context, generate a detailed ${action}.\n\nContext:\n${context}\n\n`;
 
     if (action === "Study Guide") {
@@ -118,8 +98,10 @@ export const generateAction = async (req, res) => {
       prompt += "Write a script for a 2-person podcast discussing the key themes of these sources in an engaging, conversational way.";
     }
 
-    const result = await retryWithBackoff(() => model.generateContent(prompt));
-    const responseText = await result.response.text();
+    const responseText = await generateAIText({
+      prompt,
+      maxOutputTokens: 4096
+    });
 
     res.status(200).json({
       success: true,

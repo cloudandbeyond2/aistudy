@@ -1205,6 +1205,7 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
 }) => {
   const navigate = useNavigate();
   const [isLoadingCourse, setIsLoadingCourse] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('Preparing your course...');
   const { toast } = useToast();
 
   /* ---------------- HELPERS ---------------- */
@@ -1258,7 +1259,19 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
     }
 
     setIsLoadingCourse(true);
-    await saveCourse();
+    try {
+      setLoadingMessage('Saving course structure...');
+      await saveCourse();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description:
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to create course.'
+      });
+      setIsLoadingCourse(false);
+    }
   }
 
   /* ---------------- SAVE ---------------- */
@@ -1359,6 +1372,12 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
           </Button>
         )}
       </div>
+
+      {isLoadingCourse && (
+        <p className="text-center text-sm text-muted-foreground">
+          {loadingMessage}
+        </p>
+      )}
     </div>
   );
 };

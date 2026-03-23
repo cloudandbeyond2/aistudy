@@ -86,10 +86,17 @@
 //   const canUseVideo = planLimits.allowVideo;
 //   const canUseMultiLang = planLimits.allowMultiLang;
 //   const maxSubtopics = planLimits.maxSubtopics;
+//   
+//   const orgId = sessionStorage.getItem('orgId');
+//   const orgLimit = orgPlan?.aiCourseSlots || 20;
+//   
+//   const displayLimit = orgId ? orgLimit : planLimits.maxCourses;
+//   const currentCount = orgId ? orgCourseCount : courseCount;
+//  
 //   const remainingCourses =
-//     planLimits.maxCourses === Infinity
+//     displayLimit === Infinity
 //       ? Infinity
-//       : Math.max(planLimits.maxCourses - courseCount, 0);
+//       : Math.max(displayLimit - currentCount, 0);
 
 //   // Calculate login percentage (if logged in, show 100%)
 //   const loginProgress = isAuthenticated ? 100 : 0;
@@ -149,16 +156,33 @@
 //     async function fetchCourseCount() {
 //       try {
 //         const uid = sessionStorage.getItem('uid');
+//         const orgId = sessionStorage.getItem('orgId');
 //         if (!uid) return;
-
+// 
 //         const courseRes = await axios.get(`${serverURL}/api/getcourses`);
-//         const myCourses = courseRes.data.filter((course: { user: string }) => course.user === uid);
+//         const allCourses = Array.isArray(courseRes.data) ? courseRes.data : [];
+//         
+//         const myCourses = allCourses.filter((course: { user: string }) => course.user === uid);
 //         setCourseCount(myCourses.length);
+// 
+//         if (orgId) {
+//           try {
+//             const planRes = await axios.get(`${serverURL}/api/admin/org-plan?organizationId=${orgId}`);
+//             if (planRes.data.success) {
+//               setOrgPlan(planRes.data.plan);
+//             }
+// 
+//             const organizationCourses = allCourses.filter((course: { organizationId: string }) => course.organizationId === orgId);
+//             setOrgCourseCount(organizationCourses.length);
+//           } catch (err) {
+//             console.error('Error fetching org-specific data:', err);
+//           }
+//         }
 //       } catch (error) {
 //         console.error('Error fetching course count:', error);
 //       }
 //     }
-
+// 
 //     if (isAuthenticated) {
 //       fetchCourseCount();
 //     }
@@ -580,13 +604,16 @@
 //               <div className="flex items-start gap-3 p-4 rounded-xl border bg-primary/5 text-sm text-muted-foreground shadow-sm">
 //                 <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
 //                 <div className="space-y-1">
-//                    <p className="font-semibold text-foreground capitalize">{userType} Plan Active</p>
+//                    <p className="font-semibold text-foreground capitalize">{orgId ? 'Organization Plan' : `${userType} Plan`} Active</p>
 //                    <p>
-//                     <strong>{planLimits.maxCourses === Infinity ? 'Unlimited' : planLimits.maxCourses}</strong> course generation{planLimits.maxCourses === 1 ? '' : 's'}. 
+//                     <strong>{displayLimit === Infinity ? 'Unlimited' : displayLimit}</strong> course generation{displayLimit === 1 ? '' : 's'}. 
 //                     <strong>{maxSubtopics}</strong> custom subtopics allowed per generation.
 //                    </p>
-//                    {subscriptionEndStr && userType !== 'forever' && (
+//                    {subscriptionEndStr && userType !== 'forever' && !orgId && (
 //                     <p className="text-xs opacity-70 italic mt-1">Plan expires on {new Date(subscriptionEndStr).toLocaleDateString()}</p>
+//                    )}
+//                    {orgPlan?.endDate && (
+//                     <p className="text-xs opacity-70 italic mt-1">Organization plan expires on {new Date(orgPlan.endDate).toLocaleDateString()}</p>
 //                    )}
 //                 </div>
 //               </div>
@@ -597,11 +624,11 @@
 //               <div className="flex items-center justify-between gap-4 p-4 rounded-xl border bg-muted/20 text-sm">
 //                 <div className="flex items-center gap-2">
 //                   <Layers className="h-4 w-4 text-indigo-500" />
-//                   <span className="font-medium">Courses Created: <span className="text-foreground">{courseCount}</span></span>
+//                   <span className="font-medium">Courses Created: <span className="text-foreground">{currentCount}</span></span>
 //                 </div>
 //                 <div className="flex items-center gap-2">
 //                   <Sparkles className="h-4 w-4 text-amber-500" />
-//                   <span className="font-medium">Remaining: <span className="text-foreground">{planLimits.maxCourses === Infinity ? '∞' : remainingCourses}</span></span>
+//                   <span className="font-medium">Remaining: <span className="text-foreground">{displayLimit === Infinity ? '∞' : remainingCourses}</span></span>
 //                 </div>
 //               </div>
 //             )}
@@ -949,7 +976,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { Sparkles, Plus, Lock, AlertTriangle, BookOpen, Layers, Type, Globe, CheckCircle2, Info, Lightbulb, Award, CheckCircle, User, LogIn, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sparkles, Plus, Lock, AlertTriangle, BookOpen, Layers, Type, Globe, CheckCircle2, Info, Lightbulb, Award, CheckCircle, User, LogIn, Loader2, Briefcase, GraduationCap } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import CoursePreview from '@/components/CoursePreview';
@@ -978,6 +1006,14 @@ const courseFormSchema = z.object({
 
 type CourseFormValues = z.infer<typeof courseFormSchema>;
 
+type LearnerType = 'student' | 'employee' | 'other';
+
+interface TopicSuggestion {
+  title: string;
+  reason: string;
+  recommendedSubtopics?: string[];
+}
+
 const GenerateCourse = () => {
   const [subtopicInput, setSubtopicInput] = useState('');
   const [subtopics, setSubtopics] = useState<string[]>([]);
@@ -993,6 +1029,14 @@ const GenerateCourse = () => {
   const [generationProgress, setGenerationProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState('');
   const [formProgress, setFormProgress] = useState(0);
+  const [orgPlan, setOrgPlan] = useState<any>(null);
+  const [orgCourseCount, setOrgCourseCount] = useState(0);
+  const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = useState(false);
+  const [learnerType, setLearnerType] = useState<LearnerType>('student');
+  const [learnerFocus, setLearnerFocus] = useState('');
+  const [topicSuggestions, setTopicSuggestions] = useState<TopicSuggestion[]>([]);
+  const [selectedSuggestion, setSelectedSuggestion] = useState<string>('');
+  const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -1029,10 +1073,17 @@ const GenerateCourse = () => {
   const canUseVideo = planLimits.allowVideo;
   const canUseMultiLang = planLimits.allowMultiLang;
   const maxSubtopics = planLimits.maxSubtopics;
+  
+  const orgId = sessionStorage.getItem('orgId');
+  const orgLimit = orgPlan?.aiCourseSlots || 20;
+  
+  const displayLimit = orgId ? orgLimit : planLimits.maxCourses;
+  const currentCount = orgId ? orgCourseCount : courseCount;
+ 
   const remainingCourses =
-    planLimits.maxCourses === Infinity
+    displayLimit === Infinity
       ? Infinity
-      : Math.max(planLimits.maxCourses - courseCount, 0);
+      : Math.max(displayLimit - currentCount, 0);
 
   // Calculate login percentage (if logged in, show 100%)
   const loginProgress = isAuthenticated ? 100 : 0;
@@ -1089,14 +1140,37 @@ const GenerateCourse = () => {
   }, []);
 
   useEffect(() => {
+    if (!isCheckingAuth && !isSubmitted) {
+      setIsSuggestionDialogOpen(true);
+    }
+  }, [isCheckingAuth, isSubmitted]);
+
+  useEffect(() => {
     async function fetchCourseCount() {
       try {
         const uid = sessionStorage.getItem('uid');
+        const orgId = sessionStorage.getItem('orgId');
         if (!uid) return;
-
+ 
         const courseRes = await axios.get(`${serverURL}/api/getcourses`);
-        const myCourses = courseRes.data.filter((course: { user: string }) => course.user === uid);
+        const allCourses = Array.isArray(courseRes.data) ? courseRes.data : [];
+        
+        const myCourses = allCourses.filter((course: { user: string }) => course.user === uid);
         setCourseCount(myCourses.length);
+ 
+        if (orgId) {
+          try {
+            const planRes = await axios.get(`${serverURL}/api/admin/org-plan?organizationId=${orgId}`);
+            if (planRes.data.success) {
+              setOrgPlan(planRes.data.plan);
+            }
+ 
+            const organizationCourses = allCourses.filter((course: { organizationId: string }) => course.organizationId === orgId);
+            setOrgCourseCount(organizationCourses.length);
+          } catch (err) {
+            console.error('Error fetching org-specific data:', err);
+          }
+        }
       } catch (error) {
         console.error('Error fetching course count:', error);
       }
@@ -1202,6 +1276,117 @@ const GenerateCourse = () => {
     form.setValue('subtopics', updated);
   };
 
+  const focusLabel =
+    learnerType === 'student' ? 'Department or field of study' : 'Department, profession, or domain';
+
+  const buildSuggestionPrompt = () => `You are helping a user choose a course topic.
+
+Learner type: ${learnerType}
+Background: ${learnerFocus.trim() || 'General'}
+
+Generate exactly 4 intelligent course topic suggestions tailored to this learner.
+Each suggestion must:
+- have a practical and specific title
+- explain briefly why it fits this learner
+- include 5 or 6 short recommended subtopics
+
+Return only valid JSON that matches the schema.`;
+
+  const generateTopicSuggestions = async () => {
+    if (!learnerFocus.trim()) {
+      toast({
+        title: 'More detail needed',
+        description: `Enter ${focusLabel.toLowerCase()} to generate targeted suggestions.`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsGeneratingSuggestions(true);
+
+    try {
+      const res = await axios.post(serverURL + '/api/prompt', {
+        prompt: buildSuggestionPrompt(),
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'object',
+          properties: {
+            suggestions: {
+              type: 'array',
+              minItems: 4,
+              maxItems: 4,
+              items: {
+                type: 'object',
+                properties: {
+                  title: { type: 'string' },
+                  reason: { type: 'string' },
+                  recommendedSubtopics: {
+                    type: 'array',
+                    minItems: 5,
+                    maxItems: 6,
+                    items: { type: 'string' }
+                  }
+                },
+                required: ['title', 'reason', 'recommendedSubtopics']
+              }
+            }
+          },
+          required: ['suggestions']
+        }
+      });
+
+      const parsed = JSON.parse(res.data.generatedText || '{}');
+      const suggestions = Array.isArray(parsed.suggestions) ? parsed.suggestions.slice(0, 4) : [];
+
+      if (!suggestions.length) {
+        throw new Error('No suggestions returned');
+      }
+
+      setTopicSuggestions(suggestions);
+      setSelectedSuggestion(suggestions[0]?.title || '');
+    } catch (error: any) {
+      console.error('Error generating topic suggestions:', error);
+      toast({
+        title: 'Suggestion generation failed',
+        description: error?.response?.data?.message || error?.message || 'Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsGeneratingSuggestions(false);
+    }
+  };
+
+  const applySuggestion = (suggestion: TopicSuggestion) => {
+    const recommendedSubtopics = Array.isArray(suggestion.recommendedSubtopics)
+      ? suggestion.recommendedSubtopics.slice(0, maxSubtopics)
+      : [];
+
+    form.setValue('topic', suggestion.title, { shouldValidate: true, shouldDirty: true });
+    form.setValue('subtopics', recommendedSubtopics, { shouldValidate: true, shouldDirty: true });
+    setSubtopics(recommendedSubtopics);
+    setSubtopicInput('');
+    setIsSuggestionDialogOpen(false);
+
+    toast({
+      title: 'Suggestion applied',
+      description: `"${suggestion.title}" is ready for course generation.`
+    });
+  };
+
+  const applySelectedSuggestion = () => {
+    const suggestion = topicSuggestions.find((item) => item.title === selectedSuggestion);
+    if (!suggestion) {
+      toast({
+        title: 'Select a topic',
+        description: 'Choose one suggested topic to continue.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    applySuggestion(suggestion);
+  };
+
   const onSubmit = async (data: CourseFormValues) => {
     // Check authentication first
     if (!isAuthenticated) {
@@ -1262,7 +1447,9 @@ const GenerateCourse = () => {
     Chapters: ${number}
     Required Subtopics: ${subtopicsList.join(', ')}
 
-    Generate a detailed course structure in JSON with exactly ${number} chapters.`;
+    Generate a detailed course structure in JSON with exactly ${number} chapters.
+    Each chapter must include 3 to 5 subtopics.
+    Use the required subtopics where relevant and expand them into a fuller lesson path.`;
 
     setGenerationProgress(30);
     setProgressMessage("Sending request to AI...");
@@ -1284,6 +1471,8 @@ const GenerateCourse = () => {
                 title: { type: "string" },
                 subtopics: {
                   type: "array",
+                  minItems: 3,
+                  maxItems: 5,
                   items: {
                     type: "object",
                     properties: {
@@ -1377,9 +1566,13 @@ const GenerateCourse = () => {
       }
 
       console.error(error);
+      const status = error.response?.status;
       toast({
-        title: "Error",
-        description: errData?.message || error.message || "Internal Server Error",
+        title: status === 429 ? "AI Rate Limit Reached" : "Error",
+        description:
+          status === 429
+            ? errData?.message || "The active AI provider is temporarily rate-limited. Please retry in a moment."
+            : errData?.message || error.message || "Internal Server Error",
       });
     }
   }
@@ -1414,8 +1607,8 @@ const GenerateCourse = () => {
           keywords="course generation, preview, AI learning"
         />
         {isLoading && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-            <div className="max-w-md w-full mx-auto p-8 space-y-6 bg-card rounded-2xl shadow-2xl border border-primary/20">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 px-4 backdrop-blur-sm">
+            <div className="mx-auto w-full max-w-md space-y-6 rounded-2xl border border-primary/20 bg-card p-5 shadow-2xl sm:p-8">
               <div className="text-center space-y-2">
                 <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
                 <h3 className="text-xl font-semibold">Generating Your Course</h3>
@@ -1431,7 +1624,7 @@ const GenerateCourse = () => {
                   <Progress value={generationProgress} className="h-3" />
                 </div>
 
-                <div className="grid grid-cols-5 gap-2 text-xs text-center">
+                <div className="grid grid-cols-5 gap-1.5 text-[11px] text-center sm:gap-2 sm:text-xs">
                   <div className={`p-2 rounded-lg ${generationProgress >= 20 ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
                     <div className="font-bold">1</div>
                     <div className="truncate">Prep</div>
@@ -1480,33 +1673,33 @@ const GenerateCourse = () => {
         description="Create a customized AI-generated course"
         keywords="course generation, AI learning, custom education"
       />
-      <div className="animate-fade-in max-w-[1400px] mx-auto px-4 py-8 md:py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gradient bg-gradient-to-r from-primary via-indigo-500 to-purple-600 mb-4 pb-2">
+      <div className="mx-auto max-w-[1400px] animate-fade-in px-3 py-6 sm:px-4 md:py-10 lg:px-6">
+        <div className="mb-8 text-center sm:mb-10 md:mb-12">
+          <h1 className="mb-4 bg-gradient-to-r from-primary via-indigo-500 to-purple-600 bg-clip-text pb-2 text-3xl font-extrabold tracking-tight text-transparent sm:text-4xl md:text-5xl">
             AI Course Generator
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+          <p className="mx-auto max-w-2xl text-base text-muted-foreground sm:text-lg">
             Harness the power of AI to create structured, comprehensive learning paths in seconds.
           </p>
         </div>
 
         {/* Login Status and Progress Bar */}
-        <div className="max-w-3xl mx-auto mb-8 space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-xl border bg-card">
-            <div className="flex items-center gap-3">
+        <div className="mx-auto mb-8 max-w-4xl space-y-4">
+          <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3 sm:items-center">
               {isAuthenticated ? (
                 <>
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
                     <User className="h-5 w-5 text-primary" />
                   </div>
-                  <div>
-                    <p className="font-semibold">Welcome back, {userName}!</p>
+                  <div className="min-w-0">
+                    <p className="break-words font-semibold">Welcome back, {userName}!</p>
                     <p className="text-sm text-muted-foreground">You're logged in and ready to create</p>
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/10">
                     <LogIn className="h-5 w-5 text-amber-500" />
                   </div>
                   <div>
@@ -1517,7 +1710,7 @@ const GenerateCourse = () => {
               )}
             </div>
             {!isAuthenticated && (
-              <Button onClick={handleLogin} variant="default" size="sm">
+              <Button onClick={handleLogin} variant="default" size="sm" className="w-full sm:w-auto">
                 <LogIn className="h-4 w-4 mr-2" />
                 Login
               </Button>
@@ -1531,18 +1724,18 @@ const GenerateCourse = () => {
               <span className="text-primary font-mono">{totalProgress}%</span>
             </div>
             <Progress value={totalProgress} className="h-2" />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span className={isAuthenticated ? "text-primary" : ""}>✓ Login</span>
-              <span className={formProgress >= 20 ? "text-primary" : ""}>✓ Topic</span>
-              <span className={formProgress >= 40 ? "text-primary" : ""}>✓ Subtopics</span>
-              <span className={formProgress >= 60 ? "text-primary" : ""}>✓ Modules</span>
-              <span className={formProgress >= 80 ? "text-primary" : ""}>✓ Format</span>
-              <span className={formProgress >= 100 ? "text-primary" : ""}>✓ Language</span>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground sm:grid-cols-3 lg:grid-cols-6">
+              <span className={isAuthenticated ? "text-primary" : ""}>Login</span>
+              <span className={formProgress >= 20 ? "text-primary" : ""}>Topic</span>
+              <span className={formProgress >= 40 ? "text-primary" : ""}>Subtopics</span>
+              <span className={formProgress >= 60 ? "text-primary" : ""}>Modules</span>
+              <span className={formProgress >= 80 ? "text-primary" : ""}>Format</span>
+              <span className={formProgress >= 100 ? "text-primary" : ""}>Language</span>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 gap-6 items-start lg:grid-cols-12 lg:gap-8">
           {/* Left Column: Instructions */}
           <div className="lg:col-span-5 space-y-6">
             <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden border-l-4 border-primary">
@@ -1589,13 +1782,16 @@ const GenerateCourse = () => {
               <div className="flex items-start gap-3 p-4 rounded-xl border bg-primary/5 text-sm text-muted-foreground shadow-sm">
                 <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                   <p className="font-semibold text-foreground capitalize">{userType} Plan Active</p>
+                   <p className="font-semibold text-foreground capitalize">{orgId ? 'Organization Plan' : `${userType} Plan`} Active</p>
                    <p>
-                    <strong>{planLimits.maxCourses === Infinity ? 'Unlimited' : planLimits.maxCourses}</strong> course generation{planLimits.maxCourses === 1 ? '' : 's'}. 
+                    <strong>{displayLimit === Infinity ? 'Unlimited' : displayLimit}</strong> course generation{displayLimit === 1 ? '' : 's'}. 
                     <strong>{maxSubtopics}</strong> custom subtopics allowed per generation.
                    </p>
-                   {subscriptionEndStr && userType !== 'forever' && (
+                   {subscriptionEndStr && userType !== 'forever' && !orgId && (
                     <p className="text-xs opacity-70 italic mt-1">Plan expires on {new Date(subscriptionEndStr).toLocaleDateString()}</p>
+                   )}
+                   {orgPlan?.endDate && (
+                    <p className="text-xs opacity-70 italic mt-1">Organization plan expires on {new Date(orgPlan.endDate).toLocaleDateString()}</p>
                    )}
                 </div>
               </div>
@@ -1603,14 +1799,14 @@ const GenerateCourse = () => {
 
             {/* Stats Check - Only show if authenticated */}
             {isAuthenticated && (
-              <div className="flex items-center justify-between gap-4 p-4 rounded-xl border bg-muted/20 text-sm">
+              <div className="flex flex-col gap-3 rounded-xl border bg-muted/20 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
                   <Layers className="h-4 w-4 text-indigo-500" />
-                  <span className="font-medium">Courses Created: <span className="text-foreground">{courseCount}</span></span>
+                  <span className="font-medium">Courses Created: <span className="text-foreground">{currentCount}</span></span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-amber-500" />
-                  <span className="font-medium">Remaining: <span className="text-foreground">{planLimits.maxCourses === Infinity ? '∞' : remainingCourses}</span></span>
+                  <span className="font-medium">Remaining: <span className="text-foreground">{displayLimit === Infinity ? '∞' : remainingCourses}</span></span>
                 </div>
               </div>
             )}
@@ -1642,6 +1838,138 @@ const GenerateCourse = () => {
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <Dialog open={isSuggestionDialogOpen} onOpenChange={setIsSuggestionDialogOpen}>
+                  <DialogContent className="max-h-[90vh] w-[calc(100vw-1.5rem)] overflow-y-auto rounded-2xl p-4 sm:max-w-3xl sm:p-6">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                        Intelligent Topic Suggestions
+                      </DialogTitle>
+                      <DialogDescription>
+                        Tell us who this course is for. We will suggest 4 strong topics and prefill the course generator.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-6">
+                      <div className="space-y-3">
+                        <FormLabel className="text-base font-medium">Learner Type</FormLabel>
+                        <RadioGroup
+                          value={learnerType}
+                          onValueChange={(value) => setLearnerType(value as LearnerType)}
+                          className="grid gap-3 md:grid-cols-3"
+                        >
+                          <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${learnerType === 'student' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                            <RadioGroupItem value="student" id="learner-student" className="mt-1" />
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 font-medium">
+                                <GraduationCap className="h-4 w-4 text-primary" />
+                                Student
+                              </div>
+                              <p className="text-sm text-muted-foreground">Suggestions based on study area and academic direction.</p>
+                            </div>
+                          </label>
+
+                          <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${learnerType === 'employee' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                            <RadioGroupItem value="employee" id="learner-employee" className="mt-1" />
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 font-medium">
+                                <Briefcase className="h-4 w-4 text-primary" />
+                                Employee
+                              </div>
+                              <p className="text-sm text-muted-foreground">Suggestions tied to job role, department, and skills growth.</p>
+                            </div>
+                          </label>
+
+                          <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${learnerType === 'other' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                            <RadioGroupItem value="other" id="learner-other" className="mt-1" />
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 font-medium">
+                                <User className="h-4 w-4 text-primary" />
+                                Other
+                              </div>
+                              <p className="text-sm text-muted-foreground">Suggestions for self-learners, founders, and general users.</p>
+                            </div>
+                          </label>
+                        </RadioGroup>
+                      </div>
+
+                      <div className="space-y-3">
+                        <FormLabel className="text-base font-medium">{focusLabel}</FormLabel>
+                        <Input
+                          value={learnerFocus}
+                          onChange={(e) => setLearnerFocus(e.target.value)}
+                          placeholder={learnerType === 'student' ? 'Example: Computer Science, Mechanical, Biotechnology' : 'Example: HR, Sales, Full Stack Developer, Finance'}
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                        <Button type="button" onClick={generateTopicSuggestions} disabled={isGeneratingSuggestions} className="w-full sm:w-auto">
+                          {isGeneratingSuggestions ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Generating Suggestions
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="mr-2 h-4 w-4" />
+                              Generate 4 Suggestions
+                            </>
+                          )}
+                        </Button>
+                        {!!topicSuggestions.length && (
+                          <Button type="button" variant="outline" onClick={generateTopicSuggestions} disabled={isGeneratingSuggestions} className="w-full sm:w-auto">
+                            Refresh Suggestions
+                          </Button>
+                        )}
+                      </div>
+
+                      {!!topicSuggestions.length && (
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          {topicSuggestions.map((suggestion) => {
+                            const isActive = selectedSuggestion === suggestion.title;
+
+                            return (
+                              <button
+                                key={suggestion.title}
+                                type="button"
+                                onClick={() => setSelectedSuggestion(suggestion.title)}
+                                className={`rounded-xl border p-4 text-left transition-colors ${isActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'}`}
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <h4 className="font-semibold text-foreground">{suggestion.title}</h4>
+                                    <p className="mt-2 text-sm text-muted-foreground">{suggestion.reason}</p>
+                                  </div>
+                                  <div className={`mt-1 h-4 w-4 rounded-full border ${isActive ? 'border-primary bg-primary' : 'border-muted-foreground/30'}`} />
+                                </div>
+
+                                {!!suggestion.recommendedSubtopics?.length && (
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    {suggestion.recommendedSubtopics.slice(0, 4).map((item) => (
+                                      <span key={item} className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                                        {item}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    <DialogFooter className="flex-col gap-2 sm:flex-row">
+                      <Button type="button" variant="ghost" onClick={() => setIsSuggestionDialogOpen(false)} className="w-full sm:w-auto">
+                        Skip for now
+                      </Button>
+                      <Button type="button" onClick={applySelectedSuggestion} disabled={!topicSuggestions.length} className="w-full sm:w-auto">
+                        Use Selected Topic
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
                 <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden">
                   <div className="bg-primary/5 p-4 md:p-6 border-b">
                     <h2 className="text-xl font-semibold flex items-center gap-2">
@@ -1650,6 +1978,21 @@ const GenerateCourse = () => {
                     <p className="text-sm text-muted-foreground mt-1">What would you like the AI to teach you?</p>
                   </div>
                   <CardContent className="p-4 md:p-6 space-y-8">
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <p className="font-semibold text-foreground">Need help choosing a topic?</p>
+                          <p className="text-sm text-muted-foreground">
+                            Use intelligent suggestions based on learner type and department or profession.
+                          </p>
+                        </div>
+                        <Button type="button" variant="outline" onClick={() => setIsSuggestionDialogOpen(true)} className="w-full md:w-auto">
+                          <Sparkles className="mr-2 h-4 w-4" />
+                          Open Suggestions
+                        </Button>
+                      </div>
+                    </div>
+
                     <div className="space-y-6">
                       <FormField
                         control={form.control}
@@ -1670,15 +2013,15 @@ const GenerateCourse = () => {
                       />
 
                       <div className="space-y-3">
-                        <FormLabel className="text-base flex justify-between items-center group">
-                          <span>Advanced Subtopics <span className="text-muted-foreground font-normal text-sm ml-1">(Optional, max {maxSubtopics})</span></span>
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        <FormLabel className="group flex flex-col gap-2 text-base sm:flex-row sm:items-center sm:justify-between">
+                          <span>Advanced Subtopics <span className="ml-1 text-sm font-normal text-muted-foreground">(Optional, max {maxSubtopics})</span></span>
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                             {subtopics.length}/{maxSubtopics} Added
                           </span>
                         </FormLabel>
-                        <div className="flex gap-2 relative">
+                        <div className="flex flex-col gap-2 sm:flex-row">
                           <Input
-                            className="h-12 pl-4 shadow-sm bg-background pr-[120px] focus-visible:ring-primary/30"
+                            className="h-12 bg-background pl-4 shadow-sm focus-visible:ring-primary/30"
                             placeholder="e.g., Data structures, React hooks..."
                             value={subtopicInput}
                             onChange={(e) => setSubtopicInput(e.target.value)}
@@ -1693,7 +2036,7 @@ const GenerateCourse = () => {
                           <Button
                             type="button"
                             onClick={addSubtopic}
-                            className="absolute right-1.5 top-1.5 bottom-1.5 h-9"
+                            className="h-12 w-full sm:h-auto sm:w-auto"
                             variant="secondary"
                             disabled={!isAuthenticated}
                           >
@@ -1705,8 +2048,8 @@ const GenerateCourse = () => {
                         {subtopics.length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-3 animate-in fade-in slide-in-from-top-2">
                             {subtopics.map((topic, index) => (
-                              <div key={index} className="flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-primary/10 border border-primary/20 text-primary rounded-full text-sm font-medium">
-                                <span>{topic}</span>
+                              <div key={index} className="flex max-w-full items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 py-1.5 pl-3 pr-1.5 text-sm font-medium text-primary">
+                                <span className="break-words">{topic}</span>
                                 <Button
                                   type="button"
                                   variant="ghost"
@@ -1740,7 +2083,7 @@ const GenerateCourse = () => {
                     </div>
                   </div>
                   <CardContent className="p-4 md:p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
                       {/* Number of Modules */}
                       <div className="space-y-3">
                         <FormLabel className="text-base font-medium flex items-center gap-2">
@@ -1864,7 +2207,7 @@ const GenerateCourse = () => {
                     </div>
                   </div>
                   <CardContent className="p-4 md:p-6 text-pretty">
-                    <div className="max-w-md">
+                    <div className="w-full max-w-md">
                       <FormField
                         control={form.control}
                         name="language"

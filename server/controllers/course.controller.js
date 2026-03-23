@@ -6,6 +6,7 @@ import IssuedCertificate from '../models/IssuedCertificate.js';
 import Notification from '../models/Notification.js';
 import StudentProgress from '../models/StudentProgress.js';
 import { getPlanLimits, isPlanActive } from '../config/planLimits.js';
+import OrganizationPlan from '../models/OrganizationPlan.js';
 
 /**
  * CHECK COURSE EXISTS
@@ -79,6 +80,43 @@ export const createCourse = async (req, res) => {
     }
     // ──────────────────────────────────────────────────────────────────────
 
+    // ── DEPT_ADMIN COURSE LIMIT CHECK ───────────────────────────────────────
+    if (creator && creator.role === 'dept_admin') {
+      if (creator.coursesCreatedCount >= (creator.courseLimit || 0)) {
+        return res.status(403).json({
+          success: false,
+          message: `Your course creation limit (${creator.courseLimit || 0}) has been reached. Please contact your organization administrator to increase this limit.`,
+          courseLimitReached: true
+        });
+      }
+    }
+    // ──────────────────────────────────────────────────────────────────────
+
+    // Find the user to get their organizationId if creator wasn't enough context for limits
+    let resolvedCreator = creator;
+    if (!resolvedCreator) {
+      const UserModel = (await import('../models/User.js')).default;
+      resolvedCreator = await UserModel.findById(user);
+    }
+
+    // ── ORGANIZATION AI COURSE LIMIT CHECK ────────────────────────────────
+    const organizationId = resolvedCreator?.organization;
+    if (organizationId) {
+      const orgPlan = await OrganizationPlan.findOne({ organization: organizationId });
+      const aiCourseLimit = orgPlan?.aiCourseSlots || 20;
+
+      const orgAICourseCount = await Course.countDocuments({ organizationId });
+
+      if (orgAICourseCount >= aiCourseLimit) {
+        return res.status(403).json({
+          success: false,
+          message: `Your organization has reached the AI course generation limit (${aiCourseLimit}). Please contact admin to increase the limit.`,
+          courseLimitReached: true
+        });
+      }
+    }
+    // ──────────────────────────────────────────────────────────────────────
+
     // Safeguard: Check if course already exists for this user
     const existingCourse = await Course.findOne({
       user,
@@ -114,13 +152,6 @@ export const createCourse = async (req, res) => {
       console.log('Unsplash failed, using default image');
     }
 
-    // Find the user to get their organizationId (already fetched above for plan check, re-fetch if needed)
-    if (!creator) {
-      const UserModel = (await import('../models/User.js')).default;
-      var creatorFallback = await UserModel.findById(user);
-    }
-    const resolvedCreator = creator || creatorFallback;
-
     const newCourse = new Course({
       user,
       organizationId: resolvedCreator?.organization || null,
@@ -131,6 +162,12 @@ export const createCourse = async (req, res) => {
     });
 
     await newCourse.save();
+
+    // Increment coursesCreatedCount for creator if they are dept_admin
+    if (resolvedCreator && resolvedCreator.role === 'dept_admin') {
+      const UserUpdate = (await import('../models/User.js')).default;
+      await UserUpdate.findByIdAndUpdate(user, { $inc: { coursesCreatedCount: 1 } });
+    }
 
     const newLang = new Lang({
       course: newCourse._id,
@@ -490,5 +527,34 @@ export const getBatchStudentProgress = async (req, res) => {
   } catch (error) {
     console.error('getBatchStudentProgress error:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+/**
+ * GET ORGANIZATION COURSE COUNT
+ */
+export const getOrgCourseCount = async (req, res) => {
+  console.log('HIT getOrgCourseCount with orgId:', req.query.orgId);
+  const { orgId } = req.query;
+
+  if (!orgId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Organization ID is required'
+    });
+  }
+
+  try {
+    const count = await Course.countDocuments({ organizationId: orgId });
+    res.json({
+      success: true,
+      count
+    });
+  } catch (error) {
+    console.error('Get org course count error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal Server Error'
+    });
   }
 };

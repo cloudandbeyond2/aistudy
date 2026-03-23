@@ -32,7 +32,7 @@ export const updateUser = async (req, res) => {
 /* COURSES */
 export const getCourses = async (req, res) => {
   const courses = await adminService.getAllCourses();
-  res.set('Cache-Control', 'public, max-age=3600');
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.json(courses);
 };
 
@@ -131,7 +131,17 @@ export const getOrganizations = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
-
+ 
+export const getOrgPlan = async (req, res) => {
+  try {
+    const { organizationId } = req.query;
+    const plan = await adminService.getOrgPlan(organizationId);
+    res.json({ success: true, plan });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+ 
 export const updateOrganization = async (req, res) => {
   try {
     const { id } = req.params;

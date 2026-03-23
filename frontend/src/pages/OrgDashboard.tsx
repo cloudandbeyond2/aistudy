@@ -16,6 +16,7 @@ import * as XLSX from 'xlsx';
 import RichTextEditor from '@/components/RichTextEditor';
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Swal from 'sweetalert2';
 const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [], role }: any) => {
     if (!course) return null;
@@ -369,6 +370,7 @@ const [previewProject, setPreviewProject] = useState<any>(null);
     const [meetings, setMeetings] = useState<any[]>([]);
     const [projects, setProjects] = useState<any[]>([]);
     const [materials, setMaterials] = useState<any[]>([]);
+    const [orgPlan, setOrgPlan] = useState<any>(null);
     const [openMeetingDialog, setOpenMeetingDialog] = useState(false);
     const [openProjectDialog, setOpenProjectDialog] = useState(false);
 
@@ -383,7 +385,7 @@ const [previewProject, setPreviewProject] = useState<any>(null);
     const [departmentsList, setDepartmentsList] = useState<any[]>([]);
     const [deptAdmins, setDeptAdmins] = useState<any[]>([]);
     const [newDept, setNewDept] = useState({ name: '', description: '' });
-    const [newDeptAdmin, setNewDeptAdmin] = useState({ name: '', email: '', password: '', phone: '', departmentId: '' });
+    const [newDeptAdmin, setNewDeptAdmin] = useState({ name: '', email: '', password: '', phone: '', departmentId: '', courseLimit: 0 });
     // const [newMaterial, setNewMaterial] = useState({ title: '', description: '', fileUrl: '', type: 'PDF', department: '' });
     const [newMaterial, setNewMaterial] = useState({
         title: '',
@@ -446,6 +448,7 @@ const resetProjectForm = () => {
         fetchOrgDepartments();
         fetchOrgDeptAdmins();
         fetchNotices();
+        fetchOrgPlan();
     }, [orgId]);
 
     useEffect(() => {
@@ -493,7 +496,18 @@ const resetProjectForm = () => {
             console.error("Failed to fetch departments", e);
         }
     };
-
+ 
+    const fetchOrgPlan = async () => {
+        try {
+            const res = await axios.get(`${serverURL}/api/admin/org-plan?organizationId=${orgId}`);
+            if (res.data.success) {
+                setOrgPlan(res.data.plan);
+            }
+        } catch (e) {
+            console.error("Failed to fetch org plan", e);
+        }
+    };
+ 
     const fetchOrgDeptAdmins = async () => {
         try {
             const res = await axios.get(`${serverURL}/api/org/dept-admins?organizationId=${orgId}`);
@@ -552,7 +566,8 @@ const resetProjectForm = () => {
                     email: '',
                     password: '',
                     phone: '',
-                    departmentId: ''
+                    departmentId: '',
+                    courseLimit: 0
                 });
 
                 setOpenDeptAdminDialog(false);   // ⭐ CLOSE POPUP
@@ -1617,9 +1632,24 @@ const formatGuidanceText = (text: string) => {
         }
     };
 
+    const daysRemaining = orgPlan?.endDate ? Math.ceil((new Date(orgPlan.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+    const isExpiring = daysRemaining !== null && daysRemaining <= 10 && daysRemaining >= 0;
+
     return (
         <div className="container mx-auto py-10 space-y-8 animate-fade-in">
             <SEO title="Organization Dashboard" description="Manage your organization, students, and curriculum." />
+
+            {isExpiring && (
+                <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive mb-6">
+                    <Bell className="h-4 w-4" />
+                    <AlertTitle>Plan Expiring Soon</AlertTitle>
+                    <AlertDescription>
+                        Your organization plan "{orgPlan.planName}" will expire in {daysRemaining} days. 
+                        Please contact the super admin to renew your plan and avoid service interruption.
+                    </AlertDescription>
+                </Alert>
+            )}
+
 
             <div className="p-8 rounded-3xl bg-gradient-to-br from-blue-600/10 via-indigo-600/5 to-transparent border border-blue-600/10 shadow-sm relative overflow-hidden group transition-all duration-500 hover:shadow-md hover:border-blue-600/20">
                 <div className="absolute -right-12 -top-12 w-48 h-48 bg-blue-600/5 rounded-full blur-3xl group-hover:bg-blue-600/10 transition-colors" />
@@ -1854,6 +1884,15 @@ const formatGuidanceText = (text: string) => {
                                                     ))}
                                                 </select>
                                             </div>
+                                            <div className="grid gap-2">
+                                                <Label>Course Creation Limit</Label>
+                                                <Input 
+                                                    type="number" 
+                                                    value={newDeptAdmin.courseLimit} 
+                                                    onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, courseLimit: parseInt(e.target.value) || 0 })} 
+                                                    placeholder="Max courses this admin can create"
+                                                />
+                                            </div>
                                             <Button onClick={handleAddDeptAdmin}>Add Admin</Button>
                                         </div>
                                     </DialogContent>
@@ -1868,6 +1907,22 @@ const formatGuidanceText = (text: string) => {
                                                 <div className="flex gap-2 items-center">
                                                     <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-bold uppercase tracking-wider">{admin.department?.name || 'No Dept'}</span>
                                                     <p className="text-xs text-muted-foreground">{admin.email}</p>
+                                                </div>
+                                                <div className="flex gap-4 mt-2">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] text-muted-foreground uppercase font-semibold">Courses Created</span>
+                                                        <span className="text-xs font-bold text-blue-600">{admin.coursesCreatedCount || 0}</span>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] text-muted-foreground uppercase font-semibold">Courses Left</span>
+                                                        <span className={`text-xs font-bold ${((admin.courseLimit || 0) - (admin.coursesCreatedCount || 0)) <= 0 ? 'text-destructive' : 'text-emerald-600'}`}>
+                                                            {Math.max(0, (admin.courseLimit || 0) - (admin.coursesCreatedCount || 0))}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] text-muted-foreground uppercase font-semibold">Total Limit</span>
+                                                        <span className="text-xs font-bold">{admin.courseLimit || 0}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDeleteDeptAdmin(admin._id)}>
@@ -2399,7 +2454,10 @@ const formatGuidanceText = (text: string) => {
                                 <DialogTrigger asChild onClick={() => setOpenMeetingDialog(true)}>
                                     <Button><Plus className="w-4 h-4 mr-2" /> Schedule Meeting</Button>
                                 </DialogTrigger>
-                                <DialogContent>
+                                <DialogContent
+  className="z-[9999]"
+  onOpenAutoFocus={(e) => e.preventDefault()}
+>
                                     <DialogHeader>
                                         <DialogTitle>Schedule New Meeting</DialogTitle>
                                     </DialogHeader>

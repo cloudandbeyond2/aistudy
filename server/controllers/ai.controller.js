@@ -1,4 +1,5 @@
 import { getGenAI } from '../config/gemini.js';
+import { generateAIText } from '../config/aiProvider.js';
 import retryWithBackoff from '../utils/retryWithBackoff.js';
 import { getPlanLimits, isPlanActive } from '../config/planLimits.js';
 import {
@@ -60,34 +61,13 @@ export const generatePrompt = async (req, res) => {
   const { prompt, systemInstruction, responseMimeType, responseSchema } = req.body;
 
   try {
-    const genAI = await getGenAI();
-    const modelOptions = {
-      model: 'gemini-2.5-flash',
-    };
-
-    if (systemInstruction) {
-      modelOptions.systemInstruction = systemInstruction;
-    }
-
-    const generationConfig = {
-      maxOutputTokens: 8192,
-    };
-
-    if (responseMimeType) {
-      generationConfig.responseMimeType = responseMimeType;
-    }
-    if (responseSchema) {
-      generationConfig.responseSchema = responseSchema;
-    }
-
-    if (Object.keys(generationConfig).length > 1) {
-      modelOptions.generationConfig = generationConfig;
-    }
-
-    const model = genAI.getGenerativeModel(modelOptions);
-
-    const result = await retryWithBackoff(() => model.generateContent(prompt));
-    const generatedText = await result.response.text();
+    const generatedText = await generateAIText({
+      prompt,
+      systemInstruction,
+      responseMimeType,
+      responseSchema,
+      maxOutputTokens: 8192
+    });
 
     console.log('--- AI RESPONSE SUCCESS ---');
     console.log('Generated Text length:', generatedText?.length || 0);
@@ -98,8 +78,12 @@ export const generatePrompt = async (req, res) => {
     });
   } catch (error) {
     const isRateLimit =
+      error.status === 429 ||
       error.message?.includes('429') ||
-      error.message?.includes('quota');
+      error.message?.includes('quota') ||
+      error.message?.toLowerCase?.().includes('rate limit') ||
+      error.message?.toLowerCase?.().includes('too many requests') ||
+      error.message?.toLowerCase?.().includes('exceeded your current quota');
 
     const isMissingKey = error.status === 401;
     const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
@@ -109,7 +93,7 @@ export const generatePrompt = async (req, res) => {
 
     if (isMissingKey || isInvalidKey) {
       status = isMissingKey ? 401 : 403;
-      message = error.message ? `Gemini API Error: ${error.message}` : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
+      message = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
     } else if (isRateLimit) {
       status = 429;
       message = 'API rate limit or quota exceeded.';
@@ -177,82 +161,402 @@ export const generateBatchSubtopics = async (req, res) => {
     { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }
   ];
 
-  const topicsPromptString = topicsList.map((t, i) => {
-    const subList = t.subtopics.join('\n- ');
-    return `Chapter ${i + 1}: "${t.topicTitle}"\nSubtopics:\n- ${subList}`;
-  }).join('\n\n');
-
   const systemInstruction = `Strictly in ${lang || 'English'}, you are a specialized educational content writer. 
 Your goal is to provide thorough, in-depth, and "large" explanations for course subtopics.
 IMPORTANT: You MUST explicitly translate the 'topicTitle' and subtopic 'title' fields into ${lang || 'English'}, alongside the 'theory' content.
 For each subtopic, provide a detailed explanation (approx 500-1000 words if possible) with rich examples and clear definitions.
+Ensure every sentence is complete and the content doesn't cut off abruptly.
+If providing code examples, ensure they are properly formatted with correct line breaks and indentation.
 Use valid HTML formatting for the "theory" field (paragraphs, bold text, lists).
+For business, sales, CRM, analytics, HR, marketing, operations, or management topics, include practical product-style examples such as dashboard concepts, KPI cards, pipeline views, report widgets, filters, tables, and workflow scenarios.
+When relevant, explain what a dashboard would show, why each metric matters, and how a team would use it in real work.
+When the lesson includes programming, commands, configuration, queries, or terminal examples, format them as proper multi-line HTML code blocks using <pre><code class="language-...">...</code></pre>.
+Preserve indentation and line breaks inside code blocks.
+Never place full code examples inside <p>, <li>, or inline <code> tags.
+Do not overuse code examples for non-technical business topics unless the code is essential to the explanation.
+Never output an empty <pre><code></code></pre> block.
+If you mention an example, provide the full example content immediately after the label.
+For conceptual business validation logic, CRM workflows, or dashboard rules, prefer readable pseudocode or numbered rule logic instead of SQL unless SQL is specifically necessary.
+Do not truncate a section halfway through an example.
 Do NOT include images, external links, or additional resource suggestions.
 ONLY respond with a valid JSON object matching the requested schema.`;
 
-  const prompt = `Course: "${mainTopic}"
+  const responseSchema = {
+    type: "object",
+    properties: {
+      topics: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            topicTitle: { type: "string" },
+            subtopics: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  theory: { type: "string" }
+                },
+                required: ["title", "theory"]
+              }
+            }
+          },
+          required: ["topicTitle", "subtopics"]
+        }
+      }
+    },
+    required: ["topics"]
+  };
 
-Generate comprehensive educational content for these chapters and subtopics:
-${topicsPromptString}
+  const parseGeneratedJson = (rawText) => {
+    const normalizedText = rawText?.trim();
+    if (!normalizedText) {
+      throw new Error('Empty JSON response from AI provider.');
+    }
+
+    const withoutCodeFence = normalizedText
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/\s*```$/i, '');
+
+    const jsonStart = withoutCodeFence.indexOf('{');
+    const jsonEnd = withoutCodeFence.lastIndexOf('}');
+    const jsonCandidate =
+      jsonStart >= 0 && jsonEnd >= jsonStart
+        ? withoutCodeFence.slice(jsonStart, jsonEnd + 1)
+        : withoutCodeFence;
+
+    try {
+      return JSON.parse(jsonCandidate);
+    } catch (parseError) {
+      const preview = jsonCandidate.slice(0, 500);
+      throw new Error(
+        `Invalid JSON returned from AI provider. ${parseError.message}. Preview: ${preview}`
+      );
+    }
+  };
+
+  const stripHtmlToText = (html = '') =>
+    html
+      .replace(/<pre[\s\S]*?<\/pre>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const hasCompleteSentenceEnding = (html = '') => {
+    const text = stripHtmlToText(html);
+    if (!text) return false;
+
+    return /[.!?]["')\]]?\s*$/.test(text);
+  };
+
+  const trimIncompleteTrailingFragment = (html = '') => {
+    const trimmed = html.trim();
+    if (!trimmed) return trimmed;
+    if (hasCompleteSentenceEnding(trimmed)) return trimmed;
+
+    const sentenceEndMatches = [...trimmed.matchAll(/[.!?](?=(?:[^<]*<[^>]*>)*[^<]*$)/g)];
+    const lastSentenceEnd = sentenceEndMatches.at(-1)?.index;
+
+    if (typeof lastSentenceEnd === 'number') {
+      const truncated = trimmed.slice(0, lastSentenceEnd + 1).trim();
+      if (stripHtmlToText(truncated).length >= 80) {
+        return truncated;
+      }
+    }
+
+    return trimmed;
+  };
+
+  const appendClosingLessonParagraph = ({ html, topicTitle, subtopicTitle }) => {
+    const safeHtml = trimIncompleteTrailingFragment(html);
+    const closingParagraph = `<p>Overall, ${subtopicTitle} is an important part of ${topicTitle} because it helps the learner apply the main ideas with clarity and confidence.</p>`;
+
+    if (!safeHtml) {
+      return `<div class="prose max-w-none"><h2>${subtopicTitle}</h2>${closingParagraph}</div>`;
+    }
+
+    if (/<\/div>\s*$/i.test(safeHtml)) {
+      return safeHtml.replace(/<\/div>\s*$/i, `${closingParagraph}</div>`);
+    }
+
+    return `${safeHtml}\n${closingParagraph}`;
+  };
+
+  const needsLessonRepair = (html = '') => {
+    const text = stripHtmlToText(html);
+    if (!text) return true;
+    if (text.length < 120) return true;
+    if (!hasCompleteSentenceEnding(html)) return true;
+
+    const lowered = text.toLowerCase();
+    return (
+      lowered.endsWith(' and') ||
+      lowered.endsWith(' or') ||
+      lowered.endsWith(' because') ||
+      lowered.endsWith(' so') ||
+      lowered.endsWith(' which') ||
+      lowered.endsWith(' such as') ||
+      lowered.endsWith(' for example')
+    );
+  };
+
+  const buildLessonRepairPrompt = ({ topicTitle, subtopicTitle, theory }) => `Course: "${mainTopic}"
+
+Chapter: "${topicTitle}"
+Subtopic: "${subtopicTitle}"
+Language: ${lang || 'English'}
+
+Task:
+Rewrite the following lesson into clean, valid HTML.
+Every sentence must be complete and meaningful.
+Remove any truncated phrase, dangling clause, or cut-off ending.
+Preserve the lesson's meaning and structure, but make the final result read naturally from start to finish.
+Return HTML only.
+
+Original lesson:
+${theory}`;
+
+  const repairIncompleteLesson = async ({ topicTitle, subtopicTitle, theory }) => {
+    const repaired = await generateAIText({
+      prompt: buildLessonRepairPrompt({ topicTitle, subtopicTitle, theory }),
+      systemInstruction: `Strictly in ${lang || 'English'}, you are a careful educational editor. Return only valid HTML. Every sentence must be complete, natural, and meaningful.`,
+      maxOutputTokens: 3072,
+      safetySettings
+    });
+
+    return repaired?.trim() || '';
+  };
+
+  const finalizeLessonTheory = async ({ topicTitle, subtopicTitle, theory }) => {
+    const normalizedTheory = theory?.trim() || '';
+    if (!normalizedTheory) {
+      throw new Error('Lesson content is empty.');
+    }
+
+    if (!needsLessonRepair(normalizedTheory)) {
+      return normalizedTheory;
+    }
+
+    try {
+      const repairedTheory = await repairIncompleteLesson({
+        topicTitle,
+        subtopicTitle,
+        theory: normalizedTheory
+      });
+
+      if (repairedTheory && !needsLessonRepair(repairedTheory)) {
+        return repairedTheory;
+      }
+
+      if (repairedTheory) {
+        return appendClosingLessonParagraph({
+          html: repairedTheory,
+          topicTitle,
+          subtopicTitle
+        });
+      }
+    } catch (repairError) {
+      console.warn(`Lesson repair failed for "${topicTitle}" -> "${subtopicTitle}":`, repairError.message);
+    }
+
+    return appendClosingLessonParagraph({
+      html: normalizedTheory,
+      topicTitle,
+      subtopicTitle
+    });
+  };
+
+  const normalizeGeneratedSubtopic = async ({
+    topicTitle,
+    subtopicTitle,
+    parsedTopic,
+    parsedSubtopic
+  }) => {
+    const normalizedTopicTitle = parsedTopic?.topicTitle?.trim() || topicTitle;
+    const normalizedSubtopicTitle = parsedSubtopic?.title?.trim() || subtopicTitle;
+    const normalizedTheory = await finalizeLessonTheory({
+      topicTitle: normalizedTopicTitle,
+      subtopicTitle: normalizedSubtopicTitle,
+      theory: parsedSubtopic?.theory?.trim() || ''
+    });
+
+    return {
+      topicTitle: normalizedTopicTitle,
+      subtopic: {
+        title: normalizedSubtopicTitle,
+        theory: normalizedTheory
+      }
+    };
+  };
+
+  const buildSingleSubtopicPrompt = (
+    topicTitle,
+    subtopicTitle,
+    detailLevel = 'detailed'
+  ) => {
+    const isCompact = detailLevel === 'compact';
+
+    return `Course: "${mainTopic}"
+
+Generate comprehensive educational content for exactly one chapter and one subtopic.
+
+Chapter: "${topicTitle}"
+Subtopic: "${subtopicTitle}"
+
+Requirements:
+- Return content only for this one chapter and this one subtopic.
+- Keep the same chapter title and subtopic title, translated into ${lang || 'English'} when needed.
+- The "theory" field must contain complete HTML content and must not be cut off.
+- Write ${isCompact ? 'a concise but complete lesson of about 220 to 400 words' : 'a detailed lesson of about 350 to 700 words'}.
+- Use short paragraphs and lists where useful, but keep the HTML clean.
 
 Response Format (JSON):
 {
   "topics": [
     {
-      "topicTitle": "Topic Title",
+      "topicTitle": "${topicTitle}",
       "subtopics": [
-        { "title": "Subtopic Title", "theory": "Detailed HTML Content" }
+        { "title": "${subtopicTitle}", "theory": "Detailed HTML Content" }
       ]
     }
   ]
 }`;
+  };
 
-  try {
-    const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      safetySettings,
+  const buildFallbackTheoryPrompt = (topicTitle, subtopicTitle) => `Course: "${mainTopic}"
+
+Write a complete HTML lesson for this one chapter and one subtopic.
+
+Chapter: "${topicTitle}"
+Subtopic: "${subtopicTitle}"
+Language: ${lang || 'English'}
+
+Rules:
+- Return HTML only, not JSON.
+- Start with a short introductory paragraph.
+- Include a few useful details or examples.
+- Keep the lesson complete and readable.
+- Use <p>, <strong>, <ul>, <li>, and <pre><code> only when appropriate.
+- Do not include images, links, markdown fences, or notes about being an AI.`;
+
+  const generateStructuredSubtopic = async ({
+    topicTitle,
+    subtopicTitle,
+    detailLevel = 'detailed',
+    maxOutputTokens = 4096
+  }) => {
+    const rawText = await generateAIText({
+      prompt: buildSingleSubtopicPrompt(topicTitle, subtopicTitle, detailLevel),
       systemInstruction,
-      generationConfig: {
-        maxOutputTokens: 8192,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: "object",
-          properties: {
-            topics: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  topicTitle: { type: "string" },
-                  subtopics: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        title: { type: "string" },
-                        theory: { type: "string" }
-                      },
-                      required: ["title", "theory"]
-                    }
-                  }
-                },
-                required: ["topicTitle", "subtopics"]
-              }
-            }
-          },
-          required: ["topics"]
-        }
-      }
+      responseMimeType: 'application/json',
+      responseSchema,
+      maxOutputTokens,
+      safetySettings
     });
 
-    const result = await retryWithBackoff(() => model.generateContent(prompt));
-    const rawText = await result.response.text();
-    const parsed = JSON.parse(rawText);
+    const parsed = parseGeneratedJson(rawText);
+    const parsedTopic = Array.isArray(parsed?.topics) ? parsed.topics[0] : null;
+    const parsedSubtopic = Array.isArray(parsedTopic?.subtopics)
+      ? parsedTopic.subtopics[0]
+      : null;
+
+    return await normalizeGeneratedSubtopic({
+      topicTitle,
+      subtopicTitle,
+      parsedTopic,
+      parsedSubtopic
+    });
+  };
+
+  const generateFallbackTheory = async ({ topicTitle, subtopicTitle }) => {
+    const theory = await generateAIText({
+      prompt: buildFallbackTheoryPrompt(topicTitle, subtopicTitle),
+      systemInstruction: `Strictly in ${lang || 'English'}, you are a specialized educational content writer. Return only valid HTML for one lesson.`,
+      maxOutputTokens: 3072,
+      safetySettings
+    });
+
+    const normalizedTheory = await finalizeLessonTheory({
+      topicTitle,
+      subtopicTitle,
+      theory
+    });
+
+    return {
+      topicTitle,
+      subtopic: {
+        title: subtopicTitle,
+        theory: normalizedTheory
+      }
+    };
+  };
+
+  const buildEmergencyTheory = ({ topicTitle, subtopicTitle }) => ({
+    topicTitle,
+    subtopic: {
+      title: subtopicTitle,
+      theory: `<div class="prose max-w-none"><h2>${subtopicTitle}</h2><p>We could not fully generate this lesson right now, but this section is reserved for <strong>${subtopicTitle}</strong> under <strong>${topicTitle}</strong>.</p><p>Please reopen this lesson in a moment to retry the full content generation.</p></div>`
+    }
+  });
+
+  const generateSubtopicWithFallback = async ({ topicTitle, subtopicTitle }) => {
+    try {
+      return await generateStructuredSubtopic({ topicTitle, subtopicTitle });
+    } catch (error) {
+      console.warn(`Structured lesson generation failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);
+    }
+
+    try {
+      return await generateStructuredSubtopic({
+        topicTitle,
+        subtopicTitle,
+        detailLevel: 'compact',
+        maxOutputTokens: 3072
+      });
+    } catch (error) {
+      console.warn(`Compact structured retry failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);
+    }
+
+    try {
+      return await generateFallbackTheory({ topicTitle, subtopicTitle });
+    } catch (error) {
+      console.warn(`HTML fallback failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);
+      return buildEmergencyTheory({ topicTitle, subtopicTitle });
+    }
+  };
+
+  try {
+    const combinedTopics = [];
+
+    for (const topic of topicsList) {
+      const normalizedSubtopics = Array.isArray(topic?.subtopics)
+        ? topic.subtopics.filter(Boolean)
+        : [];
+
+      const generatedTopic = {
+        topicTitle: topic?.topicTitle || 'Untitled Topic',
+        subtopics: []
+      };
+
+      for (const subtopicTitle of normalizedSubtopics) {
+        const generatedSubtopic = await generateSubtopicWithFallback({
+          topicTitle: generatedTopic.topicTitle,
+          subtopicTitle
+        });
+
+        generatedTopic.topicTitle = generatedSubtopic.topicTitle || generatedTopic.topicTitle;
+        generatedTopic.subtopics.push(generatedSubtopic.subtopic);
+      }
+
+      combinedTopics.push(generatedTopic);
+    }
 
     res.status(200).json({
       success: true,
-      topics: parsed.topics
+      topics: combinedTopics
     });
 
   } catch (error) {
@@ -266,7 +570,7 @@ Response Format (JSON):
 
     if (isMissingKey || isInvalidKey) {
       status = isMissingKey ? 401 : 403;
-      message = 'Invalid Gemini API Key or Model unavailable.';
+      message = 'Invalid AI provider configuration.';
     } else if (isRateLimitError) {
       status = 429;
       message = 'API rate limit or quota exceeded.';
@@ -339,9 +643,12 @@ export const generateHtml = async (req, res) => {
     console.log('Generate HTML error:', error);
 
     const isRateLimitError =
+      error.status === 429 ||
       error.message?.includes('429') ||
       error.message?.includes('Too Many Requests') ||
-      error.message?.includes('quota');
+      error.message?.includes('quota') ||
+      error.message?.toLowerCase?.().includes('rate limit') ||
+      error.message?.toLowerCase?.().includes('exceeded your current quota');
 
     const isMissingKey = error.status === 401;
     const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
@@ -351,7 +658,7 @@ export const generateHtml = async (req, res) => {
 
     if (isMissingKey || isInvalidKey) {
       status = isMissingKey ? 401 : 403;
-      message = error.message ? `Gemini API Error: ${error.message}` : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
+      message = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
     } else if (isRateLimitError) {
       status = 429;
       message = 'API rate limit or quota exceeded. Please try again later.';
@@ -627,7 +934,6 @@ export const generateAIExam = async (req, res) => {
       }
     ];
 
-    const genAI = await getGenAI();
     const systemInstruction = `Strictly in ${lang || 'English'}, you are an academic assessor.
 Generate 10 high-quality multiple choice questions (MCQs) for the given course material.
 Ensure questions cover all provided subtopics.
@@ -646,38 +952,30 @@ Generate 10 MCQs in JSON format:
   }
 ]`;
 
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      safetySettings,
+    const text = await generateAIText({
+      prompt,
       systemInstruction,
-      generationConfig: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              question: { type: "string" },
-              options: {
-                type: "array",
-                items: { type: "string" },
-                minItems: 4,
-                maxItems: 4
-              },
-              correctAnswer: { type: "number" }
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            question: { type: "string" },
+            options: {
+              type: "array",
+              items: { type: "string" },
+              minItems: 4,
+              maxItems: 4
             },
-            required: ["question", "options", "correctAnswer"]
-          }
+            correctAnswer: { type: "number" }
+          },
+          required: ["question", "options", "correctAnswer"]
         }
-      }
+      },
+      maxOutputTokens: 4096,
+      safetySettings
     });
-
-    const result = await retryWithBackoff(() =>
-      model.generateContent(prompt)
-    );
-
-    const response = result.response;
-    const text = await response.text();
 
     const cleanedText = text.trim();
 
@@ -690,9 +988,12 @@ Generate 10 MCQs in JSON format:
     console.log('AI Exam Error:', error);
 
     const isRateLimitError =
+      error.status === 429 ||
       error.message?.includes('429') ||
       error.message?.includes('Too Many Requests') ||
-      error.message?.includes('quota');
+      error.message?.includes('quota') ||
+      error.message?.toLowerCase?.().includes('rate limit') ||
+      error.message?.toLowerCase?.().includes('exceeded your current quota');
 
     const isMissingKey = error.status === 401;
     const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
@@ -702,7 +1003,7 @@ Generate 10 MCQs in JSON format:
 
     if (isMissingKey || isInvalidKey) {
       status = isMissingKey ? 401 : 403;
-      message = error.message ? `Gemini API Error: ${error.message}` : 'Invalid Gemini API Key or Model unavailable. Please verify it in settings.';
+      message = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
     } else if (isRateLimitError) {
       status = 429;
       message = 'API rate limit or quota exceeded. Please try again later.';

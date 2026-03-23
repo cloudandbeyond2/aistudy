@@ -237,14 +237,16 @@ const isPaidUser =
                         </SidebarMenuButton>
                       </SidebarMenuItem>
 
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Pricing" isActive={isActive('/dashboard/pricing')}>
-                          <Link to="/dashboard/pricing" className={cn(isActive('/dashboard/pricing') && "text-primary")}>
-                            <DollarSign />
-                            <span>Pricing</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
+                      {sessionStorage.getItem('isOrganization') !== 'true' && sessionStorage.getItem('role') !== 'dept_admin' && (
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild tooltip="Pricing" isActive={isActive('/dashboard/pricing')}>
+                            <Link to="/dashboard/pricing" className={cn(isActive('/dashboard/pricing') && "text-primary")}>
+                              <DollarSign />
+                              <span>Pricing</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
 
                       {/* Resume Builder — restricted by settings */}
                       {resumeEnabled[sessionStorage.getItem('role') === 'org_admin' ? 'org_admin' : (sessionStorage.getItem('type') as keyof typeof resumeEnabled)] && (
@@ -338,11 +340,19 @@ const isPaidUser =
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
-                      <SidebarMenuItem>
+                      {/* <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Attendance" isActive={isActive('/dashboard/student/attendance')}>
                           <Link to="/dashboard/student/attendance" className={cn(isActive('/dashboard/student/attendance') && "text-primary")}>
                             <Calendar />
                             <span>Attendance</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem> */}
+                        <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Profile" isActive={isActive('/dashboard/profile')}>
+                          <Link to="/dashboard/profile" className={cn(isActive('/dashboard/profile') && "text-primary")}>
+                            <User />
+                            <span>My Profile</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -394,14 +404,14 @@ const isPaidUser =
                         </SidebarMenuButton>
                       </SidebarMenuItem>
 
-                      <SidebarMenuItem>
+                      {/* <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Blogs" isActive={isActive('/dashboard/student/blogs')}>
                           <Link to="/dashboard/student/blogs" className={cn(isActive('/dashboard/student/blogs') && "text-primary")}>
                             <Sparkles />
                             <span>Blogs</span>
                           </Link>
                         </SidebarMenuButton>
-                      </SidebarMenuItem>
+                      </SidebarMenuItem> */}
 
                      <SidebarMenuItem>
   <SidebarMenuButton 
@@ -519,6 +529,22 @@ const isPaidUser =
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+
+                      <SidebarMenuItem>
+  <SidebarMenuButton
+    asChild
+    tooltip="Departments"
+    isActive={location.search === '?tab=departments'}
+  >
+    <Link
+      to="/dashboard/org?tab=departments"
+      className={cn(location.search === '?tab=departments' && "text-primary")}
+    >
+      <Building2 className="ml-4" />
+      <span>Departments</span>
+    </Link>
+  </SidebarMenuButton>
+</SidebarMenuItem>
 
                       {/* Organization Management Sub-menu */}
                       <SidebarMenuItem>

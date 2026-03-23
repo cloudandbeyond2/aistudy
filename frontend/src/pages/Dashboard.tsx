@@ -17,13 +17,7 @@ import StatsCard from '@/components/dashboard/StatsCard';
 import NotificationBell from '@/components/NotificationBell';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, Legend, CartesianGrid,
-  LineChart, Line
-} from 'recharts';
 import Pagination from './Pagination';
-
 
 const ITEMS_PER_PAGE = 9;
 
@@ -60,7 +54,6 @@ const Dashboard = () => {
   });
 
   const totalPages = Math.ceil(totalCourses / ITEMS_PER_PAGE);
-
 
   function redirectCreate() {
     navigate("/dashboard/generate-course");
@@ -216,17 +209,13 @@ const Dashboard = () => {
     try {
       const response = await axios.get(postURL);
 
-      // Support both { courses, total } shape and plain array (backwards compat)
       let coursesData = [];
       let total = 0;
       if (Array.isArray(response.data)) {
         coursesData = response.data;
-        // If fewer results than the page limit came back, we're on the last page.
-        // Reconstruct an approximate total from what we know.
         if (coursesData.length < ITEMS_PER_PAGE) {
           total = (page - 1) * ITEMS_PER_PAGE + coursesData.length;
         } else {
-          // More pages may exist — set total high enough to show Next
           total = page * ITEMS_PER_PAGE + 1;
         }
       } else {
@@ -284,13 +273,12 @@ const Dashboard = () => {
     fetchUserCourses();
   }, [fetchUserCourses]);
 
-  // ✅ ADD HERE
-useEffect(() => {
-  if (courses.length > 0) {
-    sessionStorage.setItem("courses", JSON.stringify(courses));
-  }
-}, [courses]);
-  // Reset to page 1 when search or year filter changes
+  useEffect(() => {
+    if (courses.length > 0) {
+      sessionStorage.setItem("courses", JSON.stringify(courses));
+    }
+  }, [courses]);
+  
   useEffect(() => {
     setPage(1);
   }, [searchTerm, selectedYear]);
@@ -372,6 +360,11 @@ useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Responsive grid breakpoints
+  const getGridCols = () => {
+    return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6";
+  };
+
   return (
     <>
       <SEO
@@ -379,32 +372,39 @@ useEffect(() => {
         description="View and manage your CourseGenie AI-generated courses"
         keywords="dashboard, courses, learning, education, AI-generated courses"
       />
-      <div className="space-y-8 animate-fade-in">
-        <div className="p-8 rounded-3xl bg-gradient-to-br from-primary/10 via-indigo-500/5 to-transparent border border-primary/10 shadow-sm relative overflow-hidden group transition-all duration-500 hover:shadow-md hover:border-primary/20">
-          <div className="absolute -right-12 -top-12 w-48 h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
+      <div className="space-y-6 sm:space-y-8 animate-fade-in px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto">
+        
+        {/* Welcome Section - Responsive padding and text sizes */}
+        <div className="p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary/10 via-indigo-500/5 to-transparent border border-primary/10 shadow-sm relative overflow-hidden group transition-all duration-500 hover:shadow-md hover:border-primary/20">
+          <div className="absolute -right-12 -top-12 w-32 sm:w-48 h-32 sm:h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
           <div className="relative z-10">
-            <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-              Welcome back, {sessionStorage.getItem('mName') || 'Learner'}! <Sparkles className="h-6 w-6 text-yellow-500 animate-pulse" />
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2 sm:gap-3 flex-wrap">
+              Welcome back, {sessionStorage.getItem('mName') || 'Learner'}! 
+              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500 animate-pulse" />
             </h2>
-            <p className="text-muted-foreground mt-2 text-lg">
+            <p className="text-sm sm:text-base md:text-lg text-muted-foreground mt-1 sm:mt-2">
               Ready to continue your learning journey? You're doing a great job!
             </p>
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        {/* Header Section - Responsive flex direction */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gradient bg-gradient-to-r from-primary to-indigo-500">My Courses</h1>
-            <p className="text-muted-foreground mt-1">Continue learning where you left off</p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gradient bg-gradient-to-r from-primary to-indigo-500">
+              My Courses
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">
+              Continue learning where you left off
+            </p>
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
+          
+          {/* Action Buttons - Responsive wrap and sizing */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <h6
               onClick={redirectPricing}
+              className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 cursor-pointer rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap"
               style={{
-                display: "inline-block",
-                padding: "8px 14px",
-                cursor: "pointer",
-                borderRadius: "20px",
                 backgroundColor:
                   plan === "free"
                     ? "#E0E7FF"
@@ -421,8 +421,6 @@ useEffect(() => {
                       : daysleftRaw === "EXPIRED"
                         ? "#DC2626"
                         : "#065F46",
-                fontWeight: 600,
-                fontSize: "14px",
               }}
             >
               {plan === "free"
@@ -437,7 +435,8 @@ useEffect(() => {
             <Button
               onClick={() => (window.location.href = websiteURL)}
               variant="outline"
-              className="shadow-md"
+              size="sm"
+              className="hidden sm:inline-flex shadow-md text-sm"
             >
               View Website
             </Button>
@@ -448,33 +447,35 @@ useEffect(() => {
                   ? redirectPricing()
                   : redirectCreate()
               }
-              className="shadow-md bg-gradient-to-r from-primary to-indigo-500 hover:from-indigo-500 hover:to-primary"
+              size="sm"
+              className="shadow-md bg-gradient-to-r from-primary to-indigo-500 hover:from-indigo-500 hover:to-primary text-sm whitespace-nowrap"
             >
-              <Sparkles className="mr-2 h-4 w-4" />
-              Generate New Course
+              <Sparkles className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              Generate Course
             </Button>
 
             <NotificationBell />
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-4 shadow-sm">
-          <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
+        {/* Search and Filter Section - Responsive layout */}
+        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-3 sm:p-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
             <div className="flex flex-col sm:flex-row gap-3 flex-1">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 h-3 w-3 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search courses by topic or type"
-                  className="pl-10"
+                  className="pl-8 sm:pl-10 text-sm sm:text-base"
                 />
               </div>
-              <div className="w-full sm:w-52">
+              <div className="w-full sm:w-48 md:w-52">
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-sm">
                     <div className="flex items-center gap-2">
-                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                      <CalendarDays className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                       <SelectValue placeholder="Filter by year" />
                     </div>
                   </SelectTrigger>
@@ -489,15 +490,15 @@ useEffect(() => {
                 </Select>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-right">
               Showing {filteredCourses.length} of {totalCourses} course{totalCourses === 1 ? '' : 's'}
             </p>
           </div>
         </div>
 
-        {/* Stats Cards Section */}
+        {/* Stats Cards Section - Responsive grid */}
         {!isLoading && (courses.length > 0 || isOrgAdmin) && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 animate-fade-in">
             <StatsCard
               title="Total Courses"
               value={isOrgAdmin ? orgStats.totalCourses : totalCourses}
@@ -522,27 +523,27 @@ useEffect(() => {
           </div>
         )}
 
+        {/* Loading Skeletons - Responsive */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
+          <div className={getGridCols()}>
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <Card key={i} className="overflow-hidden border-border/50">
                 <div className="aspect-video relative overflow-hidden">
                   <Skeleton className="w-full h-full" />
                 </div>
                 <CardHeader className="pb-2">
-                  <Skeleton className="w-3/4 h-6 mb-2" />
-                  <Skeleton className="w-full h-4" />
+                  <Skeleton className="w-3/4 h-5 sm:h-6 mb-2" />
+                  <Skeleton className="w-full h-3 sm:h-4" />
                 </CardHeader>
                 <CardContent className="pb-2">
                   <Skeleton className="w-full h-2 mb-4" />
                   <div className="flex items-center justify-between">
-                    <Skeleton className="w-1/4 h-4" />
-                    <Skeleton className="w-1/4 h-4" />
-                    <Skeleton className="w-1/4 h-4" />
+                    <Skeleton className="w-1/4 h-3 sm:h-4" />
+                    <Skeleton className="w-1/4 h-3 sm:h-4" />
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Skeleton className="w-full h-10" />
+                  <Skeleton className="w-full h-9 sm:h-10" />
                 </CardFooter>
               </Card>
             ))}
@@ -551,28 +552,33 @@ useEffect(() => {
           <>
             {courses.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Courses Grid - Responsive grid with proper spacing */}
+                <div className={getGridCols()}>
                   {filteredCourses.map((course) => (
-                    <Card key={course._id} className="overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 group">
-                      <div className="aspect-video relative overflow-hidden">
+                    <Card 
+                      key={course._id} 
+                      className="overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 group flex flex-col h-full"
+                    >
+                      {/* Thumbnail Section */}
+                      <div className="aspect-video relative overflow-hidden flex-shrink-0">
                         <img
                           src={getCourseThumbnail(course)}
                           alt={course.mainTopic}
                           className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
                         />
                         <div className="absolute top-2 right-2">
-                          <Badge variant={course.status === 'Completed' ? 'destructive' : 'secondary'}>
+                          <Badge variant={course.status === 'Completed' ? 'destructive' : 'secondary'} className="text-xs">
                             {course.completed === true ? 'Completed' : 'Pending'}
                           </Badge>
                         </div>
                         <div className="absolute top-2 left-2">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 bg-background/80 backdrop-blur-sm">
-                                <MoreVertical className="h-4 w-4" />
+                              <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 bg-background/80 backdrop-blur-sm">
+                                <MoreVertical className="h-3 w-3 sm:h-4 sm:w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-40">
+                            <DropdownMenuContent className="w-36 sm:w-40">
                               <ShareOnSocial
                                 textToShare={sessionStorage.getItem('mName') + " shared you course on " + course.mainTopic}
                                 link={websiteURL + '/shareable?id=' + course._id}
@@ -581,22 +587,22 @@ useEffect(() => {
                                 linkFavicon={appLogo}
                                 noReferer
                               >
-                                <DropdownMenuItem>
-                                  <Share className="h-4 w-4 mr-2" />
+                                <DropdownMenuItem className="text-xs sm:text-sm">
+                                  <Share className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                                   Share
                                 </DropdownMenuItem>
                               </ShareOnSocial>
-                              <DropdownMenuItem onClick={() => handleDeleteCourse(course._id)}>
-                                <Trash2 className="h-4 w-4 mr-2" />
+                              <DropdownMenuItem onClick={() => handleDeleteCourse(course._id)} className="text-xs sm:text-sm">
+                                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                                 Delete
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleCompleteCourse(course._id)}>
-                                <CheckCircle className="h-4 w-4 mr-2" />
+                              <DropdownMenuItem onClick={() => handleCompleteCourse(course._id)} className="text-xs sm:text-sm">
+                                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                                 Mark as Complete
                               </DropdownMenuItem>
                               {course.certificateId && (
-                                <DropdownMenuItem onClick={() => navigate(`/verify-certificate?id=${course.certificateId}`)}>
-                                  <Medal className="h-4 w-4 mr-2" />
+                                <DropdownMenuItem onClick={() => navigate(`/verify-certificate?id=${course.certificateId}`)} className="text-xs sm:text-sm">
+                                  <Medal className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                                   View Certificate
                                 </DropdownMenuItem>
                               )}
@@ -604,63 +610,74 @@ useEffect(() => {
                           </DropdownMenu>
                         </div>
                       </div>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-xl leading-tight capitalize">{course.mainTopic}</CardTitle>
-                        <CardDescription className="line-clamp-2 capitalize">{course.type}</CardDescription>
+
+                      {/* Content Section - Flexible */}
+                      <CardHeader className="pb-2 flex-shrink-0">
+                        <CardTitle className="text-base sm:text-lg md:text-xl leading-tight capitalize line-clamp-2">
+                          {course.mainTopic}
+                        </CardTitle>
+                        <CardDescription className="text-xs sm:text-sm capitalize line-clamp-2">
+                          {course.type}
+                        </CardDescription>
                       </CardHeader>
-                      <CardContent className="pb-2">
+
+                      {/* Progress Section */}
+                      <CardContent className="pb-2 flex-grow">
                         {!isOrgAdmin && (
                           <div className="mb-3">
-                            <div className="h-2 bg-secondary rounded-full">
+                            <div className="h-1.5 sm:h-2 bg-secondary rounded-full">
                               <div
-                                className="h-2 bg-gradient-to-r from-primary to-indigo-500 rounded-full"
+                                className="h-1.5 sm:h-2 bg-gradient-to-r from-primary to-indigo-500 rounded-full transition-all duration-300"
                                 style={{ width: `${courseProgress[course._id] || 0}%` }}
                               ></div>
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1">{courseProgress[course._id] || 0}% complete</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {courseProgress[course._id] || 0}% complete
+                            </p>
                           </div>
                         )}
-                        <div className="flex items-center justify-between text-sm text-muted-foreground">
-                          <div className="flex items-center">
-                            <BookOpen className="mr-1 h-4 w-4" />
-                            {modules[course._id] || 0} modules
-                          </div>
+                        <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+                          <BookOpen className="mr-1 h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                          <span className="truncate">{modules[course._id] || 0} modules</span>
                         </div>
                       </CardContent>
-                      <CardFooter>
+
+                      {/* Footer Button */}
+                      <CardFooter className="pt-2 flex-shrink-0">
                         <Button
                           onClick={() => redirectCourse(course.content, course.mainTopic, course.type, course._id, course.completed, course.end)}
                           variant="ghost"
-                          className="w-full group-hover:bg-primary/10 transition-colors justify-between"
-                          asChild
+                          className="w-full group-hover:bg-primary/10 transition-colors justify-between text-sm sm:text-base"
                         >
-                          <div>
+                          <span className="truncate">
                             {courseProgress[course._id] === 100 ? "View Course" : "Continue Learning"}
-                            <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                          </div>
+                          </span>
+                          <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-2 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                         </Button>
                       </CardFooter>
                     </Card>
                   ))}
                 </div>
 
-                {/* Pagination */}
+                {/* Pagination - Responsive */}
                 {!searchTerm && selectedYear === 'all' && (
-                  <Pagination
-                    currentPage={page}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                  />
+                  <div className="mt-6 sm:mt-8">
+                    <Pagination
+                      currentPage={page}
+                      totalPages={totalPages}
+                      onPageChange={handlePageChange}
+                    />
+                  </div>
                 )}
 
-                {/* When filters are active, show a clear filters nudge instead of pagination */}
+                {/* No Results State - Responsive */}
                 {(searchTerm || selectedYear !== 'all') && filteredCourses.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="bg-muted/50 rounded-full p-8 mb-6">
-                      <Search className="h-16 w-16 text-muted-foreground/60" />
+                  <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center px-4">
+                    <div className="bg-muted/50 rounded-full p-6 sm:p-8 mb-4 sm:mb-6">
+                      <Search className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground/60" />
                     </div>
-                    <h2 className="text-2xl font-bold mb-2">No Matching Courses</h2>
-                    <p className="text-muted-foreground max-w-md mb-6">
+                    <h2 className="text-xl sm:text-2xl font-bold mb-2">No Matching Courses</h2>
+                    <p className="text-sm sm:text-base text-muted-foreground max-w-md mb-4 sm:mb-6 px-4">
                       Try a different keyword or switch the year filter to view more courses.
                     </p>
                     <Button
@@ -669,6 +686,7 @@ useEffect(() => {
                         setSearchTerm('');
                         setSelectedYear('all');
                       }}
+                      size="sm"
                     >
                       Clear Filters
                     </Button>
@@ -676,17 +694,18 @@ useEffect(() => {
                 )}
               </>
             ) : (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="bg-muted/50 rounded-full p-8 mb-6">
-                  <FileQuestion className="h-16 w-16 text-muted-foreground/60" />
+              /* Empty State - Responsive */
+              <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center px-4">
+                <div className="bg-muted/50 rounded-full p-6 sm:p-8 mb-4 sm:mb-6">
+                  <FileQuestion className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground/60" />
                 </div>
-                <h2 className="text-2xl font-bold mb-2">No Courses Created Yet</h2>
-                <p className="text-muted-foreground max-w-md mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold mb-2">No Courses Created Yet</h2>
+                <p className="text-sm sm:text-base text-muted-foreground max-w-md mb-4 sm:mb-6 px-4">
                   You haven't created any courses yet. Generate your first AI-powered course to start learning.
                 </p>
-                <Button size="lg" className="shadow-lg" asChild>
+                <Button size="default" className="shadow-lg" asChild>
                   <Link to="/dashboard/generate-course">
-                    <BookPlus className="mr-2 h-5 w-5" />
+                    <BookPlus className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                     Create Your First Course
                   </Link>
                 </Button>
@@ -694,104 +713,6 @@ useEffect(() => {
             )}
           </>
         )}
-
-        {/* Advanced Analytics Section */}
-        {/* <div className="mt-12 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold tracking-tight text-gradient bg-gradient-to-r from-primary to-indigo-500">Advanced Analytics</h2>
-            {!isPaid && (
-              <Badge variant="secondary" className="gap-1 px-3 py-1">
-                <Lock className="h-3 w-3" /> Premium Feature
-              </Badge>
-            )}
-          </div>
-
-          <div className="relative">
-            {!isPaid && (
-              <div className="absolute inset-0 z-20 backdrop-blur-[6px] bg-background/40 flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-primary/20 p-8 text-center">
-                <div className="bg-primary/10 p-4 rounded-full mb-4">
-                  <Sparkles className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">Unlock Advanced Insights</h3>
-                <p className="text-muted-foreground max-w-sm mb-6">
-                  Get detailed visualizations of your learning patterns, topic distribution, and progress tracking with our premium analytics.
-                </p>
-                <Button onClick={redirectPricing} className="rounded-full px-8 shadow-lg shadow-primary/20">
-                  Upgrade to Paid Plan
-                </Button>
-              </div>
-            )}
-
-            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 ${!isPaid ? 'opacity-40 grayscale-[0.5] pointer-events-none select-none' : ''}`}>
-              <Card className="rounded-3xl border-border/50 shadow-sm overflow-hidden">
-                <CardHeader>
-                  <CardTitle className="text-lg">Topic Distribution</CardTitle>
-                  <CardDescription>Courses categorized by subject matter</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={(() => {
-                          const counts = {};
-                          courses.forEach(c => {
-                            const topic = c.mainTopic?.split(' ')[0] || 'Genie';
-                            counts[topic] = (counts[topic] || 0) + 1;
-                          });
-                          return Object.entries(counts).map(([name, value]) => ({ name, value }));
-                        })()}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {[0, 1, 2, 3, 4].map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'][index % 5]} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                      />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-3xl border-border/50 shadow-sm overflow-hidden">
-                <CardHeader>
-                  <CardTitle className="text-lg">Learning Progress</CardTitle>
-                  <CardDescription>Completion status across all courses</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={[
-                        { name: 'Completed', value: courses.filter(c => c.completed).length },
-                        { name: 'In Progress', value: courses.filter(c => !c.completed).length },
-                      ]}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                      <YAxis axisLine={false} tickLine={false} />
-                      <Tooltip
-                        cursor={{ fill: 'transparent' }}
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                      />
-                      <Bar dataKey="value" radius={[10, 10, 0, 0]}>
-                        <Cell fill="#10B981" />
-                        <Cell fill="#4F46E5" />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div> */}
-
       </div>
     </>
   );
