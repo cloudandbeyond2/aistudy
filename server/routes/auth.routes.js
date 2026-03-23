@@ -6,7 +6,8 @@ import {
   forgotPassword,
   resetPassword,
   updateProfile,
-  verifyEmail
+  verifyEmail,
+  notifyAdmin        
 } from '../controllers/auth.controller.js';
 import User from '../models/User.js'; // make sure you import your User model
 
@@ -19,7 +20,7 @@ router.post('/forgot', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.post('/profile', updateProfile);
 router.get('/verify-email/:token', verifyEmail);
-
+router.post('/notify-admin', notifyAdmin);
 // Change app.get to router.get
 router.get('/getuser/:uid', async (req, res) => {
   try {
