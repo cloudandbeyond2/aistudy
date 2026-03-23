@@ -51,7 +51,8 @@ import {
   Zap,
   Sun,
   Moon,
-  Laptop
+  Laptop,
+  X
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -197,7 +198,7 @@ const DashboardLayout = () => {
   const [admin, setAdmin] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false); // For mobile sidebar
+  const [sidebarOpen, setSidebarOpen] = useState(false); // For mobile/tablet sidebar
   
   const plan = sessionStorage.getItem("type")?.toLowerCase()?.trim();
   const role = sessionStorage.getItem("role");
@@ -234,6 +235,13 @@ const DashboardLayout = () => {
     org_admin: true,
     student: false
   });
+
+  // Close sidebar on route change for mobile/tablet
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname, isMobile]);
 
   useEffect(() => {
     if (sessionStorage.getItem('uid') === null) {
@@ -336,16 +344,28 @@ const DashboardLayout = () => {
     window.location.href = "/dashboard/generate-course";
   };
 
-  // Determine if sidebar should be expanded
+  // Determine if sidebar should be expanded (desktop only)
   const isExpanded = (!isCollapsed || hovered) && !isMobile;
+
+  // Check if device is tablet (between 768px and 1024px)
+  const [isTablet, setIsTablet] = useState(false);
+  
+  useEffect(() => {
+    const checkTablet = () => {
+      setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1024);
+    };
+    checkTablet();
+    window.addEventListener('resize', checkTablet);
+    return () => window.removeEventListener('resize', checkTablet);
+  }, []);
 
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/20">
-        {/* Mobile Overlay */}
-        {isMobile && sidebarOpen && (
+        {/* Mobile/Tablet Overlay */}
+        {(isMobile || isTablet) && sidebarOpen && (
           <div 
-            className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
+            className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 animate-in fade-in"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -353,25 +373,27 @@ const DashboardLayout = () => {
         <Sidebar 
           className={cn(
             "border-r border-border/40 bg-card/95 backdrop-blur-sm shadow-xl transition-all duration-300 ease-in-out z-50",
-            isMobile ? (
-              sidebarOpen ? "fixed left-0 top-0 h-full w-[260px]" : "fixed -left-full top-0 h-full w-[260px]"
+            (isMobile || isTablet) ? (
+              sidebarOpen 
+                ? "fixed left-0 top-0 h-full w-[280px] shadow-2xl animate-in slide-in-from-left" 
+                : "fixed -left-full top-0 h-full w-[280px]"
             ) : (
               isCollapsed && !hovered ? "w-[70px]" : "w-[260px]"
             )
           )}
-          onMouseEnter={() => !isMobile && setHovered(true)}
-          onMouseLeave={() => !isMobile && setHovered(false)}
+          onMouseEnter={() => !isMobile && !isTablet && setHovered(true)}
+          onMouseLeave={() => !isMobile && !isTablet && setHovered(false)}
         >
-          {/* Header with Collapse Toggle */}
+          {/* Header with Close Button for Mobile/Tablet */}
           <SidebarHeader className="border-b border-border/40 py-4 px-3">
             <div className="flex items-center justify-between">
               <Link 
                 to="/dashboard" 
                 className={cn(
                   "flex items-center space-x-3 group relative transition-all duration-300",
-                  !isMobile && isCollapsed && !hovered && "justify-center w-full"
+                  !isMobile && !isTablet && isCollapsed && !hovered && "justify-center w-full"
                 )}
-                onClick={() => isMobile && setSidebarOpen(false)}
+                onClick={() => (isMobile || isTablet) && setSidebarOpen(false)}
               >
                 <div className="relative">
                   <div className="absolute inset-0 bg-primary/20 rounded-xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
@@ -379,7 +401,7 @@ const DashboardLayout = () => {
                     <img src={appLogo} alt="Logo" className='h-5 w-5' />
                   </div>
                 </div>
-                {(isExpanded || isMobile) && (
+                {(isExpanded || isMobile || isTablet) && (
                   <span className="font-display text-lg font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent group-hover:scale-105 transition-transform whitespace-nowrap">
                     {appName}
                   </span>
@@ -387,7 +409,7 @@ const DashboardLayout = () => {
               </Link>
               
               {/* Collapse Toggle Button - Desktop only */}
-              {!isMobile && (
+              {!isMobile && !isTablet && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -402,21 +424,21 @@ const DashboardLayout = () => {
                 </Button>
               )}
               
-              {/* Close button for mobile */}
-              {isMobile && sidebarOpen && (
+              {/* Close button for mobile/tablet */}
+              {(isMobile || isTablet) && sidebarOpen && (
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 rounded-lg hover:bg-muted/50 transition-all"
+                  className="h-8 w-8 rounded-lg hover:bg-muted/50 transition-all"
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 </Button>
               )}
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="py-4">
+          <SidebarContent className="py-4 overflow-y-auto">
             {/* Main Menu Section */}
             <SidebarGroup>
               <SidebarGroupContent>
@@ -497,7 +519,7 @@ const DashboardLayout = () => {
                   {/* Student Menu Section */}
                   {sessionStorage.getItem('role') === 'student' && (
                     <>
-                      <SectionHeader title="Overview" icon={LayoutDashboard} isExpanded={isExpanded || isMobile} />
+                      <SectionHeader title="Overview" icon={LayoutDashboard} isExpanded={isExpanded || isMobile || isTablet} />
                       <MenuItem 
                         icon={LayoutDashboard} 
                         label="Dashboard" 
@@ -511,7 +533,7 @@ const DashboardLayout = () => {
                         isActive={isActive('/dashboard/profile')}
                       />
                       
-                      <SectionHeader title="Learning Tools" icon={Zap} isExpanded={isExpanded || isMobile} />
+                      <SectionHeader title="Learning Tools" icon={Zap} isExpanded={isExpanded || isMobile || isTablet} />
                       {notebookEnabled.student && (
                         <MenuItem 
                           icon={BrainCircuit} 
@@ -536,7 +558,7 @@ const DashboardLayout = () => {
                         />
                       )}
                       
-                      <SectionHeader title="Academics" icon={BookOpen} isExpanded={isExpanded || isMobile} />
+                      <SectionHeader title="Academics" icon={BookOpen} isExpanded={isExpanded || isMobile || isTablet} />
                       <MenuItem 
                         icon={BookOpen} 
                         label="Assignments" 
@@ -562,7 +584,7 @@ const DashboardLayout = () => {
                         isActive={isActive('/dashboard/student/materials')}
                       />
                       
-                      <SectionHeader title="Community" icon={Users} isExpanded={isExpanded || isMobile} />
+                      <SectionHeader title="Community" icon={Users} isExpanded={isExpanded || isMobile || isTablet} />
                       <MenuItem 
                         icon={Menu} 
                         label="Meetings" 
@@ -584,11 +606,11 @@ const DashboardLayout = () => {
                     </>
                   )}
 
-                  {/* Admin Panel - Hide when collapsed */}
-                  {admin && (isExpanded || isMobile) && (
+                  {/* Admin Panel - Show on mobile/tablet when expanded */}
+                  {admin && (isExpanded || isMobile || isTablet) && (
                     <>
                       <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                      <SectionHeader title="Administration" icon={Settings2Icon} isExpanded={isExpanded || isMobile} />
+                      <SectionHeader title="Administration" icon={Settings2Icon} isExpanded={isExpanded || isMobile || isTablet} />
                       <MenuItem 
                         icon={Settings2Icon} 
                         label="Admin Panel" 
@@ -613,7 +635,7 @@ const DashboardLayout = () => {
                   {sessionStorage.getItem('isOrganization') === 'true' && (
                     <>
                       <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                      <SectionHeader title="Organization" icon={Building2} isExpanded={isExpanded || isMobile} />
+                      <SectionHeader title="Organization" icon={Building2} isExpanded={isExpanded || isMobile || isTablet} />
                       <MenuItem 
                         icon={Building2} 
                         label="Organization Portal" 
@@ -695,7 +717,7 @@ const DashboardLayout = () => {
                   {sessionStorage.getItem('role') === 'dept_admin' && (
                     <>
                       <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                      <SectionHeader title="Staff Dashboard" icon={LayoutDashboard} isExpanded={isExpanded || isMobile} />
+                      <SectionHeader title="Staff Dashboard" icon={LayoutDashboard} isExpanded={isExpanded || isMobile || isTablet} />
                       <MenuItem 
                         icon={LayoutDashboard} 
                         label="Dashboard" 
@@ -721,7 +743,7 @@ const DashboardLayout = () => {
                         isActive={isActive('/dashboard/staff/support')}
                       />
                       
-                      <SectionHeader title="Management" icon={Settings2Icon} isExpanded={isExpanded || isMobile} />
+                      <SectionHeader title="Management" icon={Settings2Icon} isExpanded={isExpanded || isMobile || isTablet} />
                       <MenuItem 
                         icon={BookOpen} 
                         label="Courses" 
@@ -771,7 +793,7 @@ const DashboardLayout = () => {
             </SidebarGroup>
 
             {/* Generate Course Button */}
-            {sessionStorage.getItem('role') !== 'student' && (isExpanded || isMobile) && (
+            {sessionStorage.getItem('role') !== 'student' && (isExpanded || isMobile || isTablet) && (
               <SidebarGroup className="mt-4">
                 <SidebarGroupContent>
                   <div className="px-3">
@@ -789,7 +811,7 @@ const DashboardLayout = () => {
             )}
 
             {/* Compact Generate Button for Collapsed State - Desktop only */}
-            {!isMobile && sessionStorage.getItem('role') !== 'student' && !isExpanded && (
+            {!isMobile && !isTablet && sessionStorage.getItem('role') !== 'student' && !isExpanded && (
               <SidebarGroup className="mt-4">
                 <SidebarGroupContent>
                   <div className="px-2">
@@ -810,26 +832,26 @@ const DashboardLayout = () => {
           <SidebarFooter className="border-t border-border/40 bg-gradient-to-b from-background to-muted/5">
             <div className={cn(
               "grid gap-2 px-2",
-              (isExpanded || isMobile) ? "grid-cols-1" : "grid-cols-1"
+              (isExpanded || isMobile || isTablet) ? "grid-cols-1" : "grid-cols-1"
             )}>
-              {/* Install App Button - Removed background color */}
+              {/* Install App Button */}
               {installPrompt && (
                 <button
                   onClick={handleInstallClick}
                   className={cn(
                     "group relative overflow-hidden rounded-xl transition-all duration-300",
                     "hover:shadow-md active:scale-[0.98]",
-                    (isExpanded || isMobile) ? "p-2" : "p-2.5"
+                    (isExpanded || isMobile || isTablet) ? "p-2" : "p-2.5"
                   )}
                 >
                   <div className={cn(
                     "flex items-center gap-3",
-                    !(isExpanded || isMobile) && "justify-center"
+                    !(isExpanded || isMobile || isTablet) && "justify-center"
                   )}>
                     <div className="rounded-lg p-1.5 transition-all duration-300">
                       <DownloadIcon className="h-5 w-5 text-blue-500" />
                     </div>
-                    {(isExpanded || isMobile) && (
+                    {(isExpanded || isMobile || isTablet) && (
                       <div className="flex-1 text-left">
                         <p className="text-sm font-medium">Install App</p>
                         <p className="text-xs text-muted-foreground">Desktop experience</p>
@@ -839,30 +861,30 @@ const DashboardLayout = () => {
                 </button>
               )}
 
-              {/* Theme Toggle Button - Using custom component */}
+              {/* Theme Toggle Button */}
               <ThemeToggleButton 
-                isExpanded={isExpanded || isMobile} 
+                isExpanded={isExpanded || isMobile || isTablet} 
                 theme={theme} 
                 toggleTheme={toggleTheme} 
               />
 
-              {/* Logout Button - Removed background color */}
+              {/* Logout Button */}
               <button
                 onClick={Logout}
                 className={cn(
                   "group relative overflow-hidden rounded-xl transition-all duration-300",
                   "hover:shadow-md active:scale-[0.98]",
-                  (isExpanded || isMobile) ? "p-2" : "p-2.5"
+                  (isExpanded || isMobile || isTablet) ? "p-2" : "p-2.5"
                 )}
               >
                 <div className={cn(
                   "flex items-center gap-3",
-                  !(isExpanded || isMobile) && "justify-center"
+                  !(isExpanded || isMobile || isTablet) && "justify-center"
                 )}>
                   <div className="rounded-lg p-1.5 transition-all duration-300">
                     <LogOut className="h-5 w-5 text-red-500" />
                   </div>
-                  {(isExpanded || isMobile) && (
+                  {(isExpanded || isMobile || isTablet) && (
                     <div className="flex-1 text-left">
                       <p className="text-sm font-medium">Logout</p>
                       <p className="text-xs text-muted-foreground">Sign out</p>
@@ -873,7 +895,7 @@ const DashboardLayout = () => {
             </div>
 
             {/* Version Info */}
-            {(isExpanded || isMobile) && (
+            {(isExpanded || isMobile || isTablet) && (
               <div className="px-3 pt-3 mt-2 text-center">
                 <p className="text-[10px] text-muted-foreground">
                   Version 2.0.0 • © 2024
@@ -886,37 +908,37 @@ const DashboardLayout = () => {
 
         {/* Main Content */}
         <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 relative">
-          {/* Mobile Header */}
-          {isMobile && (
-            <div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm sticky top-0 z-10">
+          {/* Mobile/Tablet Header with Menu Button */}
+          {(isMobile || isTablet) && (
+            <div className="flex items-center mb-4 md:mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 md:p-3 shadow-sm sticky top-0 z-10">
               <Button
                 variant="ghost"
                 size="icon"
-                className="mr-2"
+                className="mr-2 md:mr-3 hover:bg-muted/50 transition-all"
                 onClick={() => setSidebarOpen(true)}
               >
-                <Menu className="h-6 w-6" />
+                <Menu className="h-5 w-5 md:h-6 md:w-6" />
               </Button>
-              <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-indigo-500 bg-clip-text text-transparent">
+              <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-primary to-indigo-500 bg-clip-text text-transparent">
                 {appName}
               </h1>
               <div className="ml-auto flex items-center gap-2">
                 <NotificationBell />
-                {/* Mobile theme button */}
+                {/* Mobile/Tablet theme button */}
                 <button
                   onClick={toggleTheme}
-                  className="p-2 rounded-lg hover:bg-muted/50 transition-all"
+                  className="p-1.5 md:p-2 rounded-lg hover:bg-muted/50 transition-all"
                 >
-                  {theme === 'light' && <Sun className="h-5 w-5 text-yellow-500" />}
-                  {theme === 'dark' && <Moon className="h-5 w-5 text-blue-400" />}
-                  {theme === 'system' && <Laptop className="h-5 w-5 text-purple-500" />}
+                  {theme === 'light' && <Sun className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />}
+                  {theme === 'dark' && <Moon className="h-4 w-4 md:h-5 md:w-5 text-blue-400" />}
+                  {theme === 'system' && <Laptop className="h-4 w-4 md:h-5 md:w-5 text-purple-500" />}
                 </button>
               </div>
             </div>
           )}
           
           {/* Desktop Header */}
-          {!isMobile && (location.pathname.startsWith("/dashboard/org") || location.pathname.startsWith("/dashboard/student")) && (
+          {!isMobile && !isTablet && (location.pathname.startsWith("/dashboard/org") || location.pathname.startsWith("/dashboard/student")) && (
             <div className="absolute top-4 right-8 z-10 flex items-center gap-4">
               <NotificationBell />
             </div>
