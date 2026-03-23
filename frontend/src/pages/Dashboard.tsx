@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, Users, BookOpen, Sparkles, ArrowRight, BookPlus, FileQuestion, Loader, MoreVertical, Share, Trash2, CheckCircle, Medal, Search, CalendarDays, Lock } from 'lucide-react';
+import { Clock, Users, BookOpen, Sparkles, ArrowRight, BookPlus, FileQuestion, Loader, MoreVertical, Share, Trash2, CheckCircle, Medal, Search, CalendarDays, Lock, Brain, Zap, TrendingUp, Award, Star, Rocket, Cpu, Globe, BarChart3, Target } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Link, useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
@@ -18,8 +18,28 @@ import NotificationBell from '@/components/NotificationBell';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Pagination from './Pagination';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ITEMS_PER_PAGE = 9;
+
+// Animated gradient background component
+const AnimatedGradient = () => (
+  <div className="fixed inset-0 -z-10 overflow-hidden">
+    <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5" />
+    <div className="absolute top-0 -left-4 w-96 h-96 bg-purple-300/20 rounded-full blur-3xl animate-pulse" />
+    <div className="absolute bottom-0 -right-4 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-pulse delay-1000" />
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
+  </div>
+);
+
+// AI Pulse Effect Component
+const AIPulse = () => (
+  <div className="relative">
+    <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+    <div className="absolute inset-0 animate-pulse rounded-full bg-primary/10" />
+    <Sparkles className="relative h-5 w-5 text-primary animate-spin-slow" />
+  </div>
+);
 
 const Dashboard = () => {
   const daysleftRaw = sessionStorage.getItem("daysLeft");
@@ -310,7 +330,7 @@ const Dashboard = () => {
       for (const topic of topicsData) {
         for (const subtopic of topic?.subtopics || []) {
           if (course.type?.toLowerCase() === 'video & text course' && subtopic?.youtube) {
-            return `https://img.youtube.com/vi/${subtopic.youtube}/hqdefault.jpg`;
+            return `https://img.youtube.com/vi/${subtopic.youtube}/maxresdefault.jpg`;
           }
           if (subtopic?.image) {
             return subtopic.image;
@@ -320,7 +340,7 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Failed to resolve course thumbnail:', error);
     }
-    return course.photo || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
+    return course.photo || `https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80`;
   };
 
   const availableYears = Array.from(
@@ -360,122 +380,207 @@ const Dashboard = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Responsive grid breakpoints
-  const getGridCols = () => {
-    return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6";
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100
+      }
+    }
   };
 
   return (
     <>
       <SEO
-        title="My Courses"
-        description="View and manage your CourseGenie AI-generated courses"
-        keywords="dashboard, courses, learning, education, AI-generated courses"
+        title="My Courses - AI Learning Dashboard"
+        description="Experience the future of learning with AI-powered courses"
+        keywords="dashboard, AI courses, learning, education, AI-generated courses"
       />
-      <div className="space-y-6 sm:space-y-8 animate-fade-in px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto">
+      <AnimatedGradient />
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="space-y-6 sm:space-y-8 animate-fade-in px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto relative z-10"
+      >
         
-        {/* Welcome Section - Responsive padding and text sizes */}
-        <div className="p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary/10 via-indigo-500/5 to-transparent border border-primary/10 shadow-sm relative overflow-hidden group transition-all duration-500 hover:shadow-md hover:border-primary/20">
-          <div className="absolute -right-12 -top-12 w-32 sm:w-48 h-32 sm:h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
-          <div className="relative z-10">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2 sm:gap-3 flex-wrap">
-              Welcome back, {sessionStorage.getItem('mName') || 'Learner'}! 
-              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500 animate-pulse" />
-            </h2>
-            <p className="text-sm sm:text-base md:text-lg text-muted-foreground mt-1 sm:mt-2">
-              Ready to continue your learning journey? You're doing a great job!
-            </p>
+        {/* AI-Powered Welcome Section with Glow Effect */}
+ <motion.div 
+          variants={itemVariants}
+          className="relative group"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-indigo-500/20 to-purple-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="relative p-6 rounded-2xl bg-gradient-to-br from-primary/5 via-indigo-500/5 to-purple-500/5 backdrop-blur-sm border border-primary/20 shadow-lg overflow-hidden">
+            {/* Animated particles - Reduced count */}
+            <div className="absolute inset-0">
+              {[...Array(12)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute animate-float"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                    animationDelay: `${Math.random() * 5}s`,
+                    animationDuration: `${3 + Math.random() * 4}s`
+                  }}
+                >
+                  <div className="w-1 h-1 bg-primary/30 rounded-full" />
+                </div>
+              ))}
+            </div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="relative">
+                  <div className="absolute inset-0 animate-ping rounded-full bg-primary/40" />
+                  <Brain className="relative h-6 w-6 text-primary" />
+                </div>
+                <Badge className="bg-gradient-to-r from-primary to-indigo-500 text-white border-0 px-2 py-0.5 text-xs">
+                  AI-Powered Learning
+                </Badge>
+              </div>
+              
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight bg-gradient-to-r from-primary via-indigo-500 to-purple-500 bg-clip-text text-transparent">
+                Welcome back, {sessionStorage.getItem('mName') || 'Learner'}!
+              </h2>
+              
+              <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+                Your AI learning assistant is ready. Continue your journey with personalized course recommendations and real-time progress tracking.
+              </p>
+              
+              <div className="flex flex-wrap gap-2 mt-3">
+                <Badge variant="outline" className="gap-1 bg-primary/5 text-xs py-0">
+                  <Zap className="h-3 w-3" />
+                  AI Generated
+                </Badge>
+                <Badge variant="outline" className="gap-1 bg-primary/5 text-xs py-0">
+                  <TrendingUp className="h-3 w-3" />
+                  Smart Progress
+                </Badge>
+                <Badge variant="outline" className="gap-1 bg-primary/5 text-xs py-0">
+                  <Award className="h-3 w-3" />
+                  Certifications
+                </Badge>
+              </div>
+            </div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Header Section - Responsive flex direction */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+        {/* Header Section with Glassmorphism */}
+        <motion.div 
+          variants={itemVariants}
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6"
+        >
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gradient bg-gradient-to-r from-primary to-indigo-500">
-              My Courses
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-indigo-500 bg-clip-text text-transparent flex items-center gap-2">
+              My Learning Hub
+              <Sparkles className="h-5 w-5 text-yellow-500 animate-pulse" />
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-1">
-              Continue learning where you left off
+              {courses.length} {courses.length === 1 ? 'course' : 'courses'} crafted by AI for you
             </p>
           </div>
           
-          {/* Action Buttons - Responsive wrap and sizing */}
+          {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
-            <h6
-              onClick={redirectPricing}
-              className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 cursor-pointer rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap"
-              style={{
-                backgroundColor:
-                  plan === "free"
-                    ? "#E0E7FF"
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <div
+                onClick={redirectPricing}
+                className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold cursor-pointer transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+                style={{
+                  background: plan === "free"
+                    ? "linear-gradient(135deg, #E0E7FF, #C7D2FE)"
                     : isUnlimited
-                      ? "#FEF3C7"
+                      ? "linear-gradient(135deg, #FEF3C7, #FDE68A)"
                       : daysleftRaw === "EXPIRED"
-                        ? "#FEE2E2"
-                        : "#ECFDF5",
-                color:
-                  plan === "free"
+                        ? "linear-gradient(135deg, #FEE2E2, #FECACA)"
+                        : "linear-gradient(135deg, #ECFDF5, #D1FAE5)",
+                  color: plan === "free"
                     ? "#3730A3"
                     : isUnlimited
                       ? "#92400E"
                       : daysleftRaw === "EXPIRED"
                         ? "#DC2626"
                         : "#065F46",
-              }}
-            >
-              {plan === "free"
-                ? "🧪 Free Plan"
-                : isUnlimited
-                  ? "👑 Unlimited Access"
-                  : daysleftRaw === "EXPIRED"
-                    ? "Expired"
-                    : `📅 ${daysleft} days left`}
-            </h6>
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+                }}
+              >
+                {plan === "free"
+                  ? "🧪 Free Plan"
+                  : isUnlimited
+                    ? "👑 Unlimited Access"
+                    : daysleftRaw === "EXPIRED"
+                      ? "⚠️ Expired"
+                      : `📅 ${daysleft} days left`}
+              </div>
+            </motion.div>
 
-            <Button
-              onClick={() => (window.location.href = websiteURL)}
-              variant="outline"
-              size="sm"
-              className="hidden sm:inline-flex shadow-md text-sm"
-            >
-              View Website
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                onClick={() => (window.location.href = websiteURL)}
+                variant="outline"
+                size="sm"
+                className="hidden sm:inline-flex shadow-md backdrop-blur-sm bg-background/50"
+              >
+                <Globe className="mr-2 h-4 w-4" />
+                View Website
+              </Button>
+            </motion.div>
 
-            <Button
-              onClick={() =>
-                courses.length === 1 && (plan === "free" || daysleftRaw === "EXPIRED")
-                  ? redirectPricing()
-                  : redirectCreate()
-              }
-              size="sm"
-              className="shadow-md bg-gradient-to-r from-primary to-indigo-500 hover:from-indigo-500 hover:to-primary text-sm whitespace-nowrap"
-            >
-              <Sparkles className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              Generate Course
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                onClick={() =>
+                  courses.length === 1 && (plan === "free" || daysleftRaw === "EXPIRED")
+                    ? redirectPricing()
+                    : redirectCreate()
+                }
+                size="sm"
+                className="shadow-lg bg-gradient-to-r from-primary to-indigo-500 hover:from-indigo-500 hover:to-primary text-white"
+              >
+                <Rocket className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                Create New Course
+              </Button>
+            </motion.div>
 
             <NotificationBell />
           </div>
-        </div>
+        </motion.div>
 
-        {/* Search and Filter Section - Responsive layout */}
-        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-3 sm:p-4 shadow-sm">
+        {/* Search and Filter with Glass Effect */}
+        <motion.div 
+          variants={itemVariants}
+          className="rounded-2xl border border-border/60 bg-card/50 backdrop-blur-md p-4 shadow-lg"
+        >
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
             <div className="flex flex-col sm:flex-row gap-3 flex-1">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-3 w-3 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search courses by topic or type"
-                  className="pl-8 sm:pl-10 text-sm sm:text-base"
+                  placeholder="Search courses by topic or type..."
+                  className="pl-10 text-sm bg-background/50 backdrop-blur-sm border-border/50 focus:border-primary/50"
                 />
               </div>
-              <div className="w-full sm:w-48 md:w-52">
+              <div className="w-full sm:w-48">
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger className="text-sm">
+                  <SelectTrigger className="text-sm bg-background/50 backdrop-blur-sm border-border/50">
                     <div className="flex items-center gap-2">
-                      <CalendarDays className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
                       <SelectValue placeholder="Filter by year" />
                     </div>
                   </SelectTrigger>
@@ -494,226 +599,330 @@ const Dashboard = () => {
               Showing {filteredCourses.length} of {totalCourses} course{totalCourses === 1 ? '' : 's'}
             </p>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Stats Cards Section - Responsive grid */}
+        {/* Stats Cards with Neumorphic Design */}
         {!isLoading && (courses.length > 0 || isOrgAdmin) && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 animate-fade-in">
-            <StatsCard
-              title="Total Courses"
-              value={isOrgAdmin ? orgStats.totalCourses : totalCourses}
-              icon={BookOpen}
-              description={isOrgAdmin ? "Total organization courses" : "Courses in your library"}
-              gradient="from-blue-500 to-indigo-600"
-            />
-            <StatsCard
-              title="Completed"
-              value={isOrgAdmin ? orgStats.completedCourses : courses.filter(c => c.completed === true).length}
-              icon={CheckCircle}
-              description={isOrgAdmin ? "Student completions" : "Finished courses"}
-              gradient="from-green-500 to-emerald-600"
-            />
-            <StatsCard
-              title="In Progress"
-              value={isOrgAdmin ? orgStats.inProgressCourses : courses.filter(c => c.completed !== true).length}
-              icon={Clock}
-              description={isOrgAdmin ? "Current student learnings" : "Currently learning"}
-              gradient="from-purple-500 to-pink-600"
-            />
-          </div>
+          <motion.div 
+            variants={containerVariants}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+          >
+            <motion.div variants={itemVariants}>
+              <StatsCard
+                title="Total Courses"
+                value={isOrgAdmin ? orgStats.totalCourses : totalCourses}
+                icon={BookOpen}
+                description={isOrgAdmin ? "Total organization courses" : "Courses in your library"}
+                gradient="from-blue-500 to-indigo-600"
+              />
+            </motion.div>
+            <motion.div variants={itemVariants}>
+              <StatsCard
+                title="Completed"
+                value={isOrgAdmin ? orgStats.completedCourses : courses.filter(c => c.completed === true).length}
+                icon={CheckCircle}
+                description={isOrgAdmin ? "Student completions" : "Finished courses"}
+                gradient="from-green-500 to-emerald-600"
+              />
+            </motion.div>
+            <motion.div variants={itemVariants}>
+              <StatsCard
+                title="In Progress"
+                value={isOrgAdmin ? orgStats.inProgressCourses : courses.filter(c => c.completed !== true).length}
+                icon={Clock}
+                description={isOrgAdmin ? "Current student learnings" : "Currently learning"}
+                gradient="from-purple-500 to-pink-600"
+              />
+            </motion.div>
+          </motion.div>
         )}
 
-        {/* Loading Skeletons - Responsive */}
-        {isLoading ? (
-          <div className={getGridCols()}>
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="overflow-hidden border-border/50">
-                <div className="aspect-video relative overflow-hidden">
-                  <Skeleton className="w-full h-full" />
+        {/* AI Learning Tip Banner */}
+        {courses.length > 0 && !isLoading && (
+          <motion.div 
+            variants={itemVariants}
+            className="rounded-2xl bg-gradient-to-r from-primary/10 via-indigo-500/10 to-purple-500/10 p-4 border border-primary/20"
+          >
+            <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+              <div className="flex-shrink-0">
+                <div className="p-2 rounded-xl bg-primary/20">
+                  <Cpu className="h-5 w-5 text-primary" />
                 </div>
-                <CardHeader className="pb-2">
-                  <Skeleton className="w-3/4 h-5 sm:h-6 mb-2" />
-                  <Skeleton className="w-full h-3 sm:h-4" />
-                </CardHeader>
-                <CardContent className="pb-2">
-                  <Skeleton className="w-full h-2 mb-4" />
-                  <div className="flex items-center justify-between">
-                    <Skeleton className="w-1/4 h-3 sm:h-4" />
-                    <Skeleton className="w-1/4 h-3 sm:h-4" />
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Skeleton className="w-full h-9 sm:h-10" />
-                </CardFooter>
-              </Card>
-            ))}
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">🤖 AI Learning Tip</p>
+                <p className="text-xs text-muted-foreground">
+                  Based on your learning patterns, we recommend focusing on courses with 70% completion rate to maximize retention. 
+                  Your average completion rate is <span className="text-primary font-semibold">
+                    {Math.round(courses.reduce((acc, c) => acc + (courseProgress[c._id] || 0), 0) / courses.length)}%
+                  </span>
+                </p>
+              </div>
+              <Button variant="ghost" size="sm" className="text-xs">
+                <Target className="h-3 w-3 mr-1" />
+                View Insights
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
+   {/* Courses Grid with Modern Cards */}
+{isLoading ? (
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    {[1, 2, 3, 4, 5, 6].map((i) => (
+      <Card key={i} className="overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
+        <div className="aspect-video relative overflow-hidden">
+          <Skeleton className="w-full h-full" />
+        </div>
+        <CardHeader className="pb-2">
+          <Skeleton className="w-3/4 h-6 mb-2" />
+          <Skeleton className="w-full h-4" />
+        </CardHeader>
+        <CardContent className="pb-2">
+          <Skeleton className="w-full h-2 mb-4" />
+          <div className="flex items-center justify-between">
+            <Skeleton className="w-1/4 h-4" />
+            <Skeleton className="w-1/4 h-4" />
           </div>
-        ) : (
-          <>
-            {courses.length > 0 ? (
-              <>
-                {/* Courses Grid - Responsive grid with proper spacing */}
-                <div className={getGridCols()}>
-                  {filteredCourses.map((course) => (
-                    <Card 
-                      key={course._id} 
-                      className="overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/20 group flex flex-col h-full"
-                    >
-                      {/* Thumbnail Section */}
-                      <div className="aspect-video relative overflow-hidden flex-shrink-0">
-                        <img
-                          src={getCourseThumbnail(course)}
-                          alt={course.mainTopic}
-                          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <div className="absolute top-2 right-2">
-                          <Badge variant={course.status === 'Completed' ? 'destructive' : 'secondary'} className="text-xs">
-                            {course.completed === true ? 'Completed' : 'Pending'}
-                          </Badge>
+        </CardContent>
+        <CardFooter>
+          <Skeleton className="w-full h-10" />
+        </CardFooter>
+      </Card>
+    ))}
+  </div>
+) : (
+  <>
+    {courses.length > 0 ? (
+      <>
+        <motion.div 
+          variants={containerVariants}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+        >
+          <AnimatePresence>
+            {filteredCourses.map((course, index) => (
+              <motion.div
+                key={course._id}
+                variants={itemVariants}
+                initial="hidden"
+                animate="visible"
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ delay: index * 0.05 }}
+                whileHover={{ y: -8 }}
+                className="group"
+              >
+                <Card className="overflow-hidden hover:shadow-2xl transition-all duration-500 border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 relative">
+                  {/* Rest of your card content remains the same */}
+                  {/* Glow effect on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:via-primary/10 group-hover:to-primary/5 rounded-2xl transition-all duration-700 pointer-events-none" />
+                  
+                  {/* Thumbnail Section */}
+                  <div className="aspect-video relative overflow-hidden">
+                    <img
+                      src={getCourseThumbnail(course)}
+                      alt={course.mainTopic}
+                      className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    
+                    <div className="absolute top-3 right-3">
+                      <Badge className={`text-xs font-semibold ${
+                        course.completed === true 
+                          ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
+                          : 'bg-gradient-to-r from-orange-500 to-red-500'
+                      } text-white border-0 shadow-lg`}>
+                        {course.completed === true ? 'Completed ✓' : 'In Progress'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="absolute top-3 left-3">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-40 bg-background/95 backdrop-blur-md">
+                          <ShareOnSocial
+                            textToShare={sessionStorage.getItem('mName') + " shared you course on " + course.mainTopic}
+                            link={websiteURL + '/shareable?id=' + course._id}
+                            linkTitle={sessionStorage.getItem('mName') + " shared you course on " + course.mainTopic}
+                            linkMetaDesc={sessionStorage.getItem('mName') + " shared you course on " + course.mainTopic}
+                            linkFavicon={appLogo}
+                            noReferer
+                          >
+                            <DropdownMenuItem className="text-sm">
+                              <Share className="h-4 w-4 mr-2" />
+                              Share
+                            </DropdownMenuItem>
+                          </ShareOnSocial>
+                          <DropdownMenuItem onClick={() => handleDeleteCourse(course._id)} className="text-sm">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleCompleteCourse(course._id)} className="text-sm">
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Mark Complete
+                          </DropdownMenuItem>
+                          {course.certificateId && (
+                            <DropdownMenuItem onClick={() => navigate(`/verify-certificate?id=${course.certificateId}`)} className="text-sm">
+                              <Medal className="h-4 w-4 mr-2" />
+                              Certificate
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+
+                  {/* Content Section */}
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg md:text-xl leading-tight capitalize line-clamp-2 group-hover:text-primary transition-colors">
+                      {course.mainTopic}
+                    </CardTitle>
+                    <CardDescription className="text-xs capitalize flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs bg-primary/5">
+                        {course.type}
+                      </Badge>
+                    </CardDescription>
+                  </CardHeader>
+
+                  {/* Progress Section */}
+                  <CardContent className="pb-2">
+                    {!isOrgAdmin && (
+                      <div className="mb-3">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-muted-foreground">Progress</span>
+                          <span className="font-semibold text-primary">{courseProgress[course._id] || 0}%</span>
                         </div>
-                        <div className="absolute top-2 left-2">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 bg-background/80 backdrop-blur-sm">
-                                <MoreVertical className="h-3 w-3 sm:h-4 sm:w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-36 sm:w-40">
-                              <ShareOnSocial
-                                textToShare={sessionStorage.getItem('mName') + " shared you course on " + course.mainTopic}
-                                link={websiteURL + '/shareable?id=' + course._id}
-                                linkTitle={sessionStorage.getItem('mName') + " shared you course on " + course.mainTopic}
-                                linkMetaDesc={sessionStorage.getItem('mName') + " shared you course on " + course.mainTopic}
-                                linkFavicon={appLogo}
-                                noReferer
-                              >
-                                <DropdownMenuItem className="text-xs sm:text-sm">
-                                  <Share className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                                  Share
-                                </DropdownMenuItem>
-                              </ShareOnSocial>
-                              <DropdownMenuItem onClick={() => handleDeleteCourse(course._id)} className="text-xs sm:text-sm">
-                                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleCompleteCourse(course._id)} className="text-xs sm:text-sm">
-                                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                                Mark as Complete
-                              </DropdownMenuItem>
-                              {course.certificateId && (
-                                <DropdownMenuItem onClick={() => navigate(`/verify-certificate?id=${course.certificateId}`)} className="text-xs sm:text-sm">
-                                  <Medal className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                                  View Certificate
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                        <div className="h-2 bg-secondary/50 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${courseProgress[course._id] || 0}%` }}
+                            transition={{ duration: 1, delay: 0.2 }}
+                            className="h-full bg-gradient-to-r from-primary to-indigo-500 rounded-full"
+                          />
                         </div>
                       </div>
-
-                      {/* Content Section - Flexible */}
-                      <CardHeader className="pb-2 flex-shrink-0">
-                        <CardTitle className="text-base sm:text-lg md:text-xl leading-tight capitalize line-clamp-2">
-                          {course.mainTopic}
-                        </CardTitle>
-                        <CardDescription className="text-xs sm:text-sm capitalize line-clamp-2">
-                          {course.type}
-                        </CardDescription>
-                      </CardHeader>
-
-                      {/* Progress Section */}
-                      <CardContent className="pb-2 flex-grow">
-                        {!isOrgAdmin && (
-                          <div className="mb-3">
-                            <div className="h-1.5 sm:h-2 bg-secondary rounded-full">
-                              <div
-                                className="h-1.5 sm:h-2 bg-gradient-to-r from-primary to-indigo-500 rounded-full transition-all duration-300"
-                                style={{ width: `${courseProgress[course._id] || 0}%` }}
-                              ></div>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {courseProgress[course._id] || 0}% complete
-                            </p>
-                          </div>
-                        )}
-                        <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
-                          <BookOpen className="mr-1 h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                          <span className="truncate">{modules[course._id] || 0} modules</span>
-                        </div>
-                      </CardContent>
-
-                      {/* Footer Button */}
-                      <CardFooter className="pt-2 flex-shrink-0">
-                        <Button
-                          onClick={() => redirectCourse(course.content, course.mainTopic, course.type, course._id, course.completed, course.end)}
-                          variant="ghost"
-                          className="w-full group-hover:bg-primary/10 transition-colors justify-between text-sm sm:text-base"
-                        >
-                          <span className="truncate">
-                            {courseProgress[course._id] === 100 ? "View Course" : "Continue Learning"}
-                          </span>
-                          <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-2 group-hover:translate-x-1 transition-transform flex-shrink-0" />
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
-                </div>
-
-                {/* Pagination - Responsive */}
-                {!searchTerm && selectedYear === 'all' && (
-                  <div className="mt-6 sm:mt-8">
-                    <Pagination
-                      currentPage={page}
-                      totalPages={totalPages}
-                      onPageChange={handlePageChange}
-                    />
-                  </div>
-                )}
-
-                {/* No Results State - Responsive */}
-                {(searchTerm || selectedYear !== 'all') && filteredCourses.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center px-4">
-                    <div className="bg-muted/50 rounded-full p-6 sm:p-8 mb-4 sm:mb-6">
-                      <Search className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground/60" />
+                    )}
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <BookOpen className="h-3 w-3" />
+                        <span>{modules[course._id] || 0} modules</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-3 w-3" />
+                        <span>AI Curated</span>
+                      </div>
                     </div>
-                    <h2 className="text-xl sm:text-2xl font-bold mb-2">No Matching Courses</h2>
-                    <p className="text-sm sm:text-base text-muted-foreground max-w-md mb-4 sm:mb-6 px-4">
-                      Try a different keyword or switch the year filter to view more courses.
-                    </p>
+                  </CardContent>
+
+                  {/* Footer Button */}
+                  <CardFooter className="pt-2">
                     <Button
-                      variant="outline"
-                      onClick={() => {
-                        setSearchTerm('');
-                        setSelectedYear('all');
-                      }}
-                      size="sm"
+                      onClick={() => redirectCourse(course.content, course.mainTopic, course.type, course._id, course.completed, course.end)}
+                      variant="ghost"
+                      className="w-full group-hover:bg-gradient-to-r group-hover:from-primary/10 group-hover:to-indigo-500/10 transition-all duration-300 justify-between"
                     >
-                      Clear Filters
+                      <span>
+                        {courseProgress[course._id] === 100 ? "Review Course" : "Continue Learning"}
+                      </span>
+                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </Button>
-                  </div>
-                )}
-              </>
-            ) : (
-              /* Empty State - Responsive */
-              <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center px-4">
-                <div className="bg-muted/50 rounded-full p-6 sm:p-8 mb-4 sm:mb-6">
-                  <FileQuestion className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground/60" />
-                </div>
-                <h2 className="text-xl sm:text-2xl font-bold mb-2">No Courses Created Yet</h2>
-                <p className="text-sm sm:text-base text-muted-foreground max-w-md mb-4 sm:mb-6 px-4">
-                  You haven't created any courses yet. Generate your first AI-powered course to start learning.
-                </p>
-                <Button size="default" className="shadow-lg" asChild>
-                  <Link to="/dashboard/generate-course">
-                    <BookPlus className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                    Create Your First Course
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </>
+                  </CardFooter>
+                </Card>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Pagination */}
+        {!searchTerm && selectedYear === 'all' && filteredCourses.length > 0 && (
+          <motion.div 
+            variants={itemVariants}
+            className="mt-8"
+          >
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </motion.div>
         )}
-      </div>
+
+        {/* No Results State */}
+        {(searchTerm || selectedYear !== 'all') && filteredCourses.length === 0 && (
+          <motion.div 
+            variants={itemVariants}
+            className="flex flex-col items-center justify-center py-16 text-center"
+          >
+            <div className="bg-muted/30 rounded-full p-8 mb-6 backdrop-blur-sm">
+              <Search className="h-16 w-16 text-muted-foreground/60" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">No Matching Courses</h2>
+            <p className="text-muted-foreground max-w-md mb-6">
+              Try a different keyword or switch the year filter to view more courses.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedYear('all');
+              }}
+            >
+              Clear Filters
+            </Button>
+          </motion.div>
+        )}
+      </>
+    ) : (
+      /* Empty State */
+      <motion.div 
+        variants={itemVariants}
+        className="flex flex-col items-center justify-center py-20 text-center"
+      >
+        <div className="relative mb-8">
+          <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+          <div className="relative bg-gradient-to-br from-primary/10 to-indigo-500/10 rounded-full p-8 backdrop-blur-sm">
+            <Brain className="h-20 w-20 text-primary/60" />
+          </div>
+        </div>
+        <h2 className="text-3xl font-bold mb-3 bg-gradient-to-r from-primary to-indigo-500 bg-clip-text text-transparent">
+          Start Your AI Learning Journey
+        </h2>
+        <p className="text-muted-foreground max-w-md mb-8">
+          You haven't created any courses yet. Generate your first AI-powered course to begin learning with smart recommendations.
+        </p>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Button size="lg" className="shadow-xl bg-gradient-to-r from-primary to-indigo-500 hover:from-indigo-500 hover:to-primary text-white" asChild>
+            <Link to="/dashboard/generate-course">
+              <BookPlus className="mr-2 h-5 w-5" />
+              Create Your First Course
+            </Link>
+          </Button>
+        </motion.div>
+      </motion.div>
+    )}
+  </>
+)}
+      </motion.div>
+
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) translateX(0px); }
+          50% { transform: translateY(-20px) translateX(10px); }
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+        .animate-spin-slow {
+          animation: spin 3s linear infinite;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </>
   );
 };

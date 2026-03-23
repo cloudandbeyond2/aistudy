@@ -8,11 +8,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { PenLine, Save, ShieldCheck, CreditCard, Loader, User, Settings, MessageSquare, Linkedin, Twitter, Globe, BookOpen, Award, Ticket, Bell, AlertTriangle } from "lucide-react";
+import { 
+  PenLine, Save, ShieldCheck, CreditCard, Loader, User, Settings, 
+  MessageSquare, Linkedin, Twitter, Globe, BookOpen, Award, Ticket, 
+  Bell, AlertTriangle, Sparkles, Crown, Calendar, MapPin, Mail, 
+  Phone, Briefcase, Building, Heart, TrendingUp, Star, Gift,
+  Moon, Sun, Monitor, Download, LogOut, Trash2, CheckCircle2,
+  ArrowRight, CircleUser, Layers, Zap, Brain, Target, Rocket
+} from "lucide-react";
 import { Switch } from '@/components/ui/switch';
 import { MonthCost, MonthType, serverURL, YearCost, websiteURL } from '@/constants';
 import axios from 'axios';
-import { DownloadIcon, TrashIcon } from '@radix-ui/react-icons';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +32,7 @@ import { useNavigate } from 'react-router-dom';
 import TestimonialSubmission from '@/components/TestimonialSubmission';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const PLAN_ORDER: Record<string, number> = {
   free: 0,
@@ -34,30 +41,33 @@ const PLAN_ORDER: Record<string, number> = {
 };
 
 const PLAN_FEATURES: Record<string, string[]> = {
-  free: ["Basic access"],
-  monthly: ["All features", "Priority support"],
-  yearly: ["All features", "Priority support", "Discounted price"],
+  free: ["Basic access", "Community support"],
+  monthly: ["All premium features", "Priority support", "Advanced analytics", "Certification"],
+  yearly: ["All premium features", "24/7 Priority support", "Advanced analytics", "Certification", "Save 20%"],
 };
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
-
+  const [activeTab, setActiveTab] = useState("account");
   const [stats, setStats] = useState({
     courses: 0,
     certifications: 0,
     tickets: 0,
+    streak: 0,
+    completed: 0,
   });
   const [notifications, setNotifications] = useState({
     mail: true,
     payments: true,
     chat: true,
+    marketing: false,
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [requestingDeletion, setRequestingDeletion] = useState(false);
   const [deletionReason, setDeletionReason] = useState('');
   const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
-   
+  const [theme, setTheme] = useState('light');
 
   const [formData, setFormData] = useState({
     mName: sessionStorage.getItem('mName') || "",
@@ -65,42 +75,29 @@ const Profile = () => {
     phone: sessionStorage.getItem('phone') || "",
     dob: sessionStorage.getItem('dob') ? new Date(sessionStorage.getItem('dob')).toISOString().split('T')[0] : "",
     password: "",
-
     userType: sessionStorage.getItem('userType') || "",
     profession: sessionStorage.getItem('profession') || "",
     experienceLevel: sessionStorage.getItem('experienceLevel') || "beginner",
     organizationName: sessionStorage.getItem('organizationName') || "",
-
-
     gender: sessionStorage.getItem('gender') || "",
     country: sessionStorage.getItem('country') || "",
     state: sessionStorage.getItem('state') || "",
     city: sessionStorage.getItem('city') || "",
     pin: sessionStorage.getItem('pin') || "",
     address: sessionStorage.getItem('address') || "",
+    bio: sessionStorage.getItem('bio') || "",
   });
 
   const [originalData, setOriginalData] = useState(formData);
   const [plans, setPlans] = useState<any[]>([]);
   const [activeType, setActiveType] = useState<"free" | "monthly" | "yearly">("free");
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
-
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingPlans, setLoadingPlans] = useState(true);
-
   const loading = loadingUser || loadingPlans;
-
-  const activePlan = plans.find(
-    (plan) => plan.planType === activeType
-  );
-
-
+  const activePlan = plans.find((plan) => plan.planType === activeType);
   const navigate = useNavigate();
   const [processing, setProcessing] = useState(false);
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
   const [processingDelete, setProcessingDelete] = useState(false);
   const [processingCancel, setProcessingCancel] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
@@ -112,47 +109,27 @@ const Profile = () => {
     linkedin: "",
     twitter: "",
     website: "",
+    github: "",
   });
+
+  // Animation variants
+  const fadeInUp = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
+    transition: { duration: 0.3 }
+  };
+
+  const staggerContainer = {
+    animate: { transition: { staggerChildren: 0.1 } }
+  };
+
   useEffect(() => {
     window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault()
-      setInstallPrompt(e)
-    })
+      e.preventDefault();
+      setInstallPrompt(e);
+    });
   }, []);
-
-  // useEffect(() => {
-  //   async function fetchProfile() {
-  //     const uid = sessionStorage.getItem("uid");
-  //     if (!uid) return;
-
-  //     try {
-  //       const response = await axios.get(`${serverURL}/api/getuser/${uid}`);
-
-  //       if (response.data.success) {
-  //         const user = response.data.user;
-
-  //         setFormData({
-  //           mName: user.mName || "",
-  //           email: user.email || "",
-  //           userType: user.userType || "",
-  //           city: user.city || "",
-  //           country: user.country || "",
-  //         });
-
-  //         // 🔥 ADD THIS
-  //         setSocialLinks({
-  //           linkedin: user.linkedin || "",
-  //           twitter: user.twitter || "",
-  //           website: user.website || "",
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error(error);
-  //     }
-  //   }
-
-  //   fetchProfile();
-  // }, []);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -170,7 +147,6 @@ const Profile = () => {
     fetchStats();
   }, []);
 
-  // Fetch notification settings
   useEffect(() => {
     const fetchSettings = async () => {
       const uid = sessionStorage.getItem("uid");
@@ -222,10 +198,7 @@ const Profile = () => {
         reason,
       });
       if (response.data.success) {
-        toast({
-          title: "Request Submitted",
-          description: response.data.message,
-        });
+        toast({ title: "Request Submitted", description: response.data.message });
       } else {
         toast({ title: "Notice", description: response.data.message });
       }
@@ -237,94 +210,59 @@ const Profile = () => {
     }
   };
 
-  // star bala
   const currentDate = new Date();
-  const currentDay = currentDate.getDay(); // 0 = Sunday, 1 = Monday ...
-
-
-  const days = [
-    { label: "Sun", value: 0 },
-    { label: "Mon", value: 1 },
-    { label: "Tue", value: 2 },
-    { label: "Wed", value: 3 },
-    { label: "Thu", value: 4 },
-    { label: "Fri", value: 5 },
-    { label: "Sat", value: 6 },
-  ];
   const fullDate = currentDate.toLocaleDateString("en-IN", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+
   useEffect(() => {
-  const email = sessionStorage.getItem("email");
-  if (!email) return;
+    const email = sessionStorage.getItem("email");
+    if (!email) return;
 
-  axios.get(`${serverURL}/api/getusers`)
-    .then((res) => {
+    axios.get(`${serverURL}/api/getusers`)
+      .then((res) => {
+        const user = res.data.find((u) => u.email === email);
+        if (!user) return;
 
-      const user = res.data.find((u) => u.email === email);
-
-      if (!user) return;
-
-      if (user.subscriptionEnd) {
-
-        const expiryDate = new Date(user.subscriptionEnd);
-        const today = new Date();
-
-        if (expiryDate > today) {
-          setActiveType(user.type);
-          setSubscriptionEnd(user.subscriptionEnd);
-          setIsExpired(false);
+        if (user.subscriptionEnd) {
+          const expiryDate = new Date(user.subscriptionEnd);
+          const today = new Date();
+          if (expiryDate > today) {
+            setActiveType(user.type);
+            setSubscriptionEnd(user.subscriptionEnd);
+            setIsExpired(false);
+          } else {
+            setActiveType("free");
+            setSubscriptionEnd(user.subscriptionEnd);
+            setIsExpired(true);
+          }
         } else {
           setActiveType("free");
-          setSubscriptionEnd(user.subscriptionEnd);
-          setIsExpired(true);
+          setIsExpired(false);
         }
+      })
+      .catch(() => setActiveType("free"))
+      .finally(() => setLoadingUser(false));
+  }, []);
 
-      } else {
-        setActiveType("free");
-        setIsExpired(false);
-      }
-
-    })
-    .catch(() => {
-      setActiveType("free");
-    })
-    .finally(() => {
-      setLoadingUser(false);
-    });
-
-}, []);
-
-  /* ---------------- GET PRICING ---------------- */
   useEffect(() => {
     axios.get(`${serverURL}/api/pricing`)
       .then((res) => {
         const formatted = res.data.pricing.map((p: any) => ({
           planType: p.planType,
-          name:
-            p.planType === "free"
-              ? "Free"
-              : p.planType === "monthly"
-                ? "Monthly"
-                : "Yearly",
+          name: p.planType === "free" ? "Free" : p.planType === "monthly" ? "Monthly" : "Yearly",
           price: p.price,
           currency: p.currency,
           features: PLAN_FEATURES[p.planType],
         }));
-
-        formatted.sort(
-          (a: any, b: any) => PLAN_ORDER[a.planType] - PLAN_ORDER[b.planType]
-        );
-
+        formatted.sort((a: any, b: any) => PLAN_ORDER[a.planType] - PLAN_ORDER[b.planType]);
         setPlans(formatted);
       })
       .catch(console.error)
-      .finally(() => {
-        setLoadingPlans(false);
-      });
+      .finally(() => setLoadingPlans(false));
   }, []);
 
   function redirectPricing() {
@@ -333,10 +271,7 @@ const Profile = () => {
 
   async function deleteProfile() {
     if (sessionStorage.getItem('adminEmail') === sessionStorage.getItem('email')) {
-      toast({
-        title: "Access Denied",
-        description: "Admin profile cannot be deleted."
-      });
+      toast({ title: "Access Denied", description: "Admin profile cannot be deleted." });
     } else {
       startDeletion();
     }
@@ -354,39 +289,30 @@ const Profile = () => {
     try {
       const response = await axios.post(postURL, { userId: uid });
       if (response.data.success) {
-        toast({
-          title: "Profile Deleted",
-          description: "Your profile has been deleted successfully"
-        });
+        toast({ title: "Profile Deleted", description: "Your profile has been deleted successfully" });
         setProcessingDelete(false);
         redirectLogin();
       } else {
         setProcessingDelete(false);
-        toast({
-          title: "Error",
-          description: response.data.message,
-        });
+        toast({ title: "Error", description: response.data.message });
       }
     } catch (error) {
       setProcessingDelete(false);
       console.error(error);
-      toast({
-        title: "Error",
-        description: "Internal Server Error",
-      });
+      toast({ title: "Error", description: "Internal Server Error" });
     }
   }
 
   const handleInstallClick = () => {
-    if (!installPrompt) return
-    installPrompt.prompt()
+    if (!installPrompt) return;
+    installPrompt.prompt();
     installPrompt.userChoice.then((choice) => {
       if (choice.outcome === 'accepted') {
-        console.log('User accepted install')
+        console.log('User accepted install');
       }
-      setInstallPrompt(null)
-    })
-  }
+      setInstallPrompt(null);
+    });
+  };
 
   useEffect(() => {
     async function fetchProfile() {
@@ -397,32 +323,34 @@ const Profile = () => {
         const response = await axios.get(`${serverURL}/api/getuser/${uid}`);
         if (response.data.success) {
           const user = response.data.user;
-
-          // Update form data with fetched user info
           setFormData({
             mName: user.mName || "",
             email: user.email || "",
             phone: user.phone || "",
             dob: user.dob ? new Date(user.dob).toISOString().split('T')[0] : "",
             password: "",
-           //role: user.role || "",
             userType: user.userType || "",
             profession: user.profession || "",
             experienceLevel: user.experienceLevel || "beginner",
             organizationName: user.organizationName || "",
-
             gender: user.gender || "",
             country: user.country || "",
             state: user.state || "",
             city: user.city || "",
             pin: user.pin || "",
             address: user.address || "",
+            bio: user.bio || "",
           });
 
-          // Update sessionStorage if needed
+          setSocialLinks({
+            linkedin: user.linkedin || "",
+            twitter: user.twitter || "",
+            website: user.website || "",
+            github: user.github || "",
+          });
+
           sessionStorage.setItem('mName', user.mName || "");
           sessionStorage.setItem('email', user.email || "");
-          //sessionStorage.setItem('role', user.role);
           sessionStorage.setItem('userType', user.userType || "");
           sessionStorage.setItem('dob', user.dob || "");
           sessionStorage.setItem('gender', user.gender || "");
@@ -434,76 +362,53 @@ const Profile = () => {
           sessionStorage.setItem('address', user.address || "");
           sessionStorage.setItem('profession', user.profession || "");
           sessionStorage.setItem('organizationName', user.organizationName || "");
+          sessionStorage.setItem('bio', user.bio || "");
         }
       } catch (error) {
         console.error("Failed to fetch profile:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch profile data."
-        });
+        toast({ title: "Error", description: "Failed to fetch profile data." });
       }
     }
-
     fetchProfile();
   }, []);
 
-
   const handleSubmit = async () => {
     if (!formData.mName || !formData.email) {
-      toast({
-        title: "Couldn't update profile",
-        description: "Please fill in all required fields."
-      });
+      toast({ title: "Couldn't update profile", description: "Please fill in all required fields." });
       return;
     }
 
     setProcessing(true);
-
     const uid = sessionStorage.getItem("uid");
     const postURL = serverURL + "/api/profile";
 
     try {
       const response = await axios.post(postURL, {
         uid,
-
-        // BASIC
         mName: formData.mName,
         email: formData.email,
         password: formData.password,
-
-        // PROFILE
         phone: formData.phone,
         dob: formData.dob || null,
         gender: formData.gender,
-
-        // LOCATION
         country: formData.country,
         state: formData.state,
         city: formData.city,
         pin: formData.pin,
         address: formData.address,
-
-        // USER TYPE
         userType: formData.userType,
-        // CONDITIONAL
-        profession:
-          formData.userType === "individual" ? formData.profession : "",
-        experienceLevel:
-          formData.userType === "individual"
-            ? formData.experienceLevel
-            : "beginner",
-        organizationName:
-          formData.userType === "organization"
-            ? formData.organizationName
-            : "",
+        profession: formData.userType === "individual" ? formData.profession : "",
+        experienceLevel: formData.userType === "individual" ? formData.experienceLevel : "beginner",
+        organizationName: formData.userType === "organization" ? formData.organizationName : "",
+        bio: formData.bio,
+        linkedin: socialLinks.linkedin,
+        twitter: socialLinks.twitter,
+        website: socialLinks.website,
+        github: socialLinks.github,
       });
 
       if (response.data.success) {
-        toast({
-          title: "Profile updated",
-          description: "Your profile information has been updated successfully."
-        });
-
+        toast({ title: "Profile updated", description: "Your profile information has been updated successfully." });
         sessionStorage.setItem("mName", formData.mName);
         sessionStorage.setItem("email", formData.email);
         sessionStorage.setItem("userType", formData.userType);
@@ -517,13 +422,11 @@ const Profile = () => {
         sessionStorage.setItem('address', formData.address);
         sessionStorage.setItem("profession", formData.profession);
         sessionStorage.setItem("organizationName", formData.organizationName);
+        sessionStorage.setItem("bio", formData.bio);
         setIsEditing(false);
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Internal Server Error"
-      });
+      toast({ title: "Error", description: "Internal Server Error" });
     } finally {
       setProcessing(false);
     }
@@ -531,10 +434,7 @@ const Profile = () => {
 
   async function getDetails() {
     if (sessionStorage.getItem('type') !== 'free') {
-      const dataToSend = {
-        uid: sessionStorage.getItem('uid'),
-        email: sessionStorage.getItem('email'),
-      };
+      const dataToSend = { uid: sessionStorage.getItem('uid'), email: sessionStorage.getItem('email') };
       try {
         const postURL = serverURL + '/api/subscriptiondetail';
         await axios.post(postURL, dataToSend).then(res => {
@@ -545,29 +445,20 @@ const Profile = () => {
         });
       } catch (error) {
         console.error(error);
-        toast({
-          title: "Error",
-          description: "Internal Server Error",
-        });
+        toast({ title: "Error", description: "Internal Server Error" });
       }
     }
   }
 
   async function cancelSubscription() {
     setProcessingCancel(true);
-    const dataToSend = {
-      id: jsonData.id,
-      email: sessionStorage.getItem('email')
-    };
+    const dataToSend = { id: jsonData.id, email: sessionStorage.getItem('email') };
     try {
       if (method === 'stripe') {
         const postURL = serverURL + '/api/stripecancel';
         await axios.post(postURL, dataToSend).then(res => {
           setProcessingCancel(false);
-          toast({
-            title: "Subscription Cancelled",
-            description: "Your subscription has been cancelled.",
-          });
+          toast({ title: "Subscription Cancelled", description: "Your subscription has been cancelled." });
           sessionStorage.setItem('type', 'free');
           window.location.href = websiteURL + '/dashboard/profile';
         });
@@ -575,56 +466,33 @@ const Profile = () => {
         const postURL = serverURL + '/api/paypalcancel';
         await axios.post(postURL, dataToSend).then(res => {
           setProcessingCancel(false);
-          toast({
-            title: "Subscription Cancelled",
-            description: "Your subscription has been cancelled.",
-          });
+          toast({ title: "Subscription Cancelled", description: "Your subscription has been cancelled." });
           sessionStorage.setItem('type', 'free');
           window.location.href = websiteURL + '/dashboard/profile';
         });
       } else if (method === 'paystack') {
-        const dataToSends = {
-          code: jsonData.subscription_code,
-          token: jsonData.email_token,
-          email: sessionStorage.getItem('email')
-        };
+        const dataToSends = { code: jsonData.subscription_code, token: jsonData.email_token, email: sessionStorage.getItem('email') };
         const postURL = serverURL + '/api/paystackcancel';
         await axios.post(postURL, dataToSends).then(res => {
           setProcessingCancel(false);
-          toast({
-            title: "Subscription Cancelled",
-            description: "Your subscription has been cancelled.",
-          });
+          toast({ title: "Subscription Cancelled", description: "Your subscription has been cancelled." });
           sessionStorage.setItem('type', 'free');
           window.location.href = websiteURL + '/dashboard/profile';
         });
-
-      }
-      else if (method === 'flutterwave') {
-        const dataToSends = {
-          code: jsonData.id,
-          token: jsonData.plan,
-          email: sessionStorage.getItem('email')
-        };
+      } else if (method === 'flutterwave') {
+        const dataToSends = { code: jsonData.id, token: jsonData.plan, email: sessionStorage.getItem('email') };
         const postURL = serverURL + '/api/flutterwavecancel';
         await axios.post(postURL, dataToSends).then(res => {
           setProcessingCancel(false);
-          toast({
-            title: "Subscription Cancelled",
-            description: "Your subscription has been cancelled.",
-          });
+          toast({ title: "Subscription Cancelled", description: "Your subscription has been cancelled." });
           sessionStorage.setItem('type', 'free');
           window.location.href = websiteURL + '/dashboard/profile';
         });
-      }
-      else {
+      } else {
         const postURL = serverURL + '/api/razorpaycancel';
         await axios.post(postURL, dataToSend).then(res => {
           setProcessingCancel(false);
-          toast({
-            title: "Subscription Cancelled",
-            description: "Your subscription has been cancelled.",
-          });
+          toast({ title: "Subscription Cancelled", description: "Your subscription has been cancelled." });
           sessionStorage.setItem('type', 'free');
           window.location.href = websiteURL + '/dashboard/profile';
         });
@@ -635,199 +503,227 @@ const Profile = () => {
     }
   }
 
+  const handleSocialChange = (platform: string, value: string) => {
+    setSocialLinks(prev => ({ ...prev, [platform]: value }));
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const getPlanIcon = () => {
+    if (isExpired) return <AlertTriangle className="h-5 w-5 text-red-500" />;
+    if (activeType !== "free") return <Crown className="h-5 w-5 text-yellow-500" />;
+    return <Sparkles className="h-5 w-5 text-purple-500" />;
+  };
+
+  const getPlanColor = () => {
+    if (isExpired) return "from-red-500 to-orange-500";
+    if (activeType !== "free") return "from-yellow-500 to-amber-500";
+    return "from-purple-500 to-pink-500";
+  };
+
   return (
-    <div className="space-y-6 animate-fade-in">
-
-      {/* ================= HEADER BAR ================= */}
-      <Card className="shadow-md rounded-2xl border bg-background">
-        <CardContent className="p-6">
-
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-
-            {/* Left Section */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Header Section */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h2 className="text-xl font-semibold tracking-tight">
+              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
                 My Profile
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Manage your personal information and account settings
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Manage your account, preferences, and learning journey
               </p>
             </div>
-
-          </div>
-
-        </CardContent>
-      </Card>
-
-
-      {/* ================= COVER SECTION ================= */}
- <div className="bg-background rounded-2xl shadow-sm overflow-hidden">
-
-        {/* Cover */}
-        <div className="h-64 bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-400" />
-
-        {/* Profile Info */}
-        <div className="relative px-6 pb-6">
-
-          {/* Avatar */}
-          <div className="absolute left-1/2 -top-14 -translate-x-1/2">
-            <div className="w-28 h-28 rounded-full border-4 border-white shadow-lg bg-purple-600 flex items-center justify-center text-white text-3xl font-bold">
-              {formData.mName?.charAt(0)?.toUpperCase()}
+            <div className="flex gap-2">
+              {installPrompt && (
+                <Button variant="outline" onClick={handleInstallClick} className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Install App
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => navigate("/dashboard")} className="gap-2">
+                <ArrowRight className="h-4 w-4" />
+                Back to Dashboard
+              </Button>
             </div>
           </div>
+        </motion.div>
 
-          <div className="pt-16 text-center">
-  <h3 className="text-lg font-semibold">{formData.mName}</h3>
+        {/* Hero Profile Card */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="relative mb-8"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-2xl blur-3xl" />
+          <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/20">
+            <div className={`h-48 bg-gradient-to-r ${getPlanColor()}`} />
+            <div className="relative px-6 pb-6">
+              <div className="absolute left-6 -top-12">
+                <div className="w-28 h-28 rounded-2xl border-4 border-white shadow-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  <span className="text-4xl font-bold text-white">
+                    {formData.mName?.charAt(0)?.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+              <div className="pt-16 pl-36">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h2 className="text-2xl font-bold">{formData.mName}</h2>
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                    isExpired 
+                      ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                      : activeType !== "free"
+                      ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                      : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                  }`}>
+                    {getPlanIcon()}
+                    <span>
+                      {isExpired 
+                        ? "Expired Plan" 
+                        : activeType !== "free" 
+                        ? `${activeType === "monthly" ? "Monthly" : "Yearly"} Pro` 
+                        : "Free Member"}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-muted-foreground text-sm mt-1 flex items-center gap-2">
+                  <Calendar className="h-3 w-3" />
+                  Member since {fullDate}
+                </p>
+                {formData.bio && (
+                  <p className="text-sm text-muted-foreground mt-2 max-w-md">{formData.bio}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
-  {isExpired ? (
+        {/* Stats Grid */}
+        <motion.div
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+          className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8"
+        >
+          {[
+            { icon: BookOpen, label: "Courses", value: stats.courses, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
+            { icon: Award, label: "Certificates", value: stats.certifications, color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/20" },
+            { icon: Target, label: "Completed", value: stats.completed || 0, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-900/20" },
+            { icon: TrendingUp, label: "Streak", value: stats.streak || 0, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/20" },
+            { icon: Ticket, label: "Tickets", value: stats.tickets, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/20" },
+          ].map((stat, idx) => (
+            <motion.div
+              key={idx}
+              variants={fadeInUp}
+              className={`${stat.bg} rounded-xl p-4 text-center transition-all hover:scale-105 cursor-pointer`}
+            >
+              <stat.icon className={`h-6 w-6 ${stat.color} mx-auto mb-2`} />
+              <p className="text-2xl font-bold">{stat.value}</p>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+            </motion.div>
+          ))}
+        </motion.div>
 
-   <div className="bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-xs rounded px-2 py-1 inline-flex items-center">
-  <ShieldCheck className="h-3 w-3 mr-1" />
-  Expired Plan
-</div>
+        {/* Main Content Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <Tabs defaultValue="account" className="w-full" onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-5 mb-8 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+              {[
+                { value: "account", icon: User, label: "Account" },
+                { value: "settings", icon: Settings, label: "Settings" },
+                { value: "billing", icon: CreditCard, label: "Billing" },
+                { value: "social", icon: Globe, label: "Social" },
+                { value: "testimonial", icon: MessageSquare, label: "Feedback" },
+              ].map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-sm rounded-lg py-2 transition-all"
+                >
+                  <tab.icon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
-  ) : activeType !== "free" ? (
-
-   <div className="bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 text-xs rounded px-2 py-1 inline-flex items-center">
-  <ShieldCheck className="h-3 w-3 mr-1" />
-  Active Paid Plan
-</div>
-  ) : (
-
-  <div className="bg-gray-200 dark:bg-gray-700 text-black dark:text-gray-200 text-xs rounded px-2 py-1 inline-flex items-center">
-  <ShieldCheck className="h-3 w-3 mr-1" />
-  Active Free Plan
-</div>
-
-  )}
-
-</div>
-
-        </div>
-      </div>
-
-      {/* ================= MAIN 2 COLUMN SECTION ================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* ================= LEFT SIDE (MAIN CONTENT) ================= */}
-        <div className="lg:col-span-2 space-y-6">
-
-          {/* ===== TABS CARD ===== */}
-          <Card className="rounded-2xl shadow-sm">
-            <CardContent className="p-0">
-
-
-              <Tabs
-                defaultValue="account"
-                className="w-full"
-                onValueChange={(value) => {
-                  if (value === "billing") {
-                    getDetails();
-                  }
-                }}
-              >
-
-                {/* ================= TAB HEADER ================= */}
-                <TabsList className="grid w-full grid-cols-4 border-b rounded-none bg-muted/30 p-1">
-
-                  <TabsTrigger
-                    value="account"
-                    className="flex items-center justify-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg py-2 transition-all"
-                  >
-                    <User className="h-4 w-4" />
-                    <span>Account</span>
-                  </TabsTrigger>
-
-                  <TabsTrigger
-                    value="notifications"
-                    className="flex items-center justify-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg py-2 transition-all"
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>Settings</span>
-                  </TabsTrigger>
-
-                  <TabsTrigger
-                    value="billing"
-                    className="flex items-center justify-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg py-2 transition-all"
-                  >
-                    <CreditCard className="h-4 w-4" />
-                    <span>Billing</span>
-                  </TabsTrigger>
-
-                  <TabsTrigger
-                    value="testimonial"
-                    className="flex items-center justify-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg py-2 transition-all"
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    <span>Testimonial</span>
-                  </TabsTrigger>
-
-                </TabsList>
-
-
-                {/* ================= ACCOUNT TAB ================= */}
-                <TabsContent value="account" className="p-6">
-                   <div className="flex gap-3 mb-6 justify-end">
-    {!isEditing && (
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => {
-          setOriginalData(formData);
-          setIsEditing(true);
-        }}
-      >
-        <PenLine className="mr-2 h-4 w-4" />
-        Edit Profile
-      </Button>
-    )}
-  </div>
-
-
+            {/* Account Tab */}
+            <TabsContent value="account">
+              <Card className="rounded-xl shadow-lg border-0">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="h-5 w-5 text-purple-500" />
+                      Personal Information
+                    </CardTitle>
+                    <CardDescription>Manage your personal details and preferences</CardDescription>
+                  </div>
+                  {!isEditing && (
+                    <Button variant="outline" onClick={() => { setOriginalData(formData); setIsEditing(true); }}>
+                      <PenLine className="mr-2 h-4 w-4" />
+                      Edit Profile
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent>
                   <form onSubmit={handleSubmit}>
                     <div className="space-y-6">
-
-                      {/* NAME + EMAIL */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Basic Info Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                          <Label htmlFor="name">Full Name</Label>
+                          <Label className="flex items-center gap-2">
+                            <CircleUser className="h-4 w-4" />
+                            Full Name
+                          </Label>
                           <Input
-                            id="mName"
                             name="mName"
                             value={formData.mName}
                             onChange={handleChange}
                             disabled={!isEditing}
+                            className="transition-all focus:ring-2 focus:ring-purple-500"
                           />
                         </div>
-
                         <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
+                          <Label className="flex items-center gap-2">
+                            <Mail className="h-4 w-4" />
+                            Email Address
+                          </Label>
                           <Input
-                            id="email"
                             name="email"
                             type="email"
                             value={formData.email}
                             onChange={handleChange}
                             disabled={!isEditing}
+                            className="transition-all focus:ring-2 focus:ring-purple-500"
                           />
                         </div>
-                      </div>
-
-                      {/* PASSWORD */}
-                      <div className="space-y-2">
-                        <Label htmlFor="password">New Password</Label>
-                        <Input
-                          id="password"
-                          name="password"
-                          type="password"
-                          value={formData.password}
-                          onChange={handleChange}
-                          disabled={!isEditing}
-                        />
-                      </div>
-
-                      {/* DOB + PHONE */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2">
+                            <Phone className="h-4 w-4" />
+                            Phone Number
+                          </Label>
+                          <Input
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            placeholder="+91 XXXXX XXXXX"
+                            className="transition-all focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
                         <div className="space-y-2">
                           <Label>Date of Birth</Label>
                           <Input
@@ -836,55 +732,81 @@ const Profile = () => {
                             value={formData.dob}
                             onChange={handleChange}
                             disabled={!isEditing}
+                            className="transition-all focus:ring-2 focus:ring-purple-500"
                           />
                         </div>
-
                         <div className="space-y-2">
-                          <Label>Phone Number</Label>
+                          <Label>Gender</Label>
+                          <Select
+                            value={formData.gender}
+                            onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}
+                            disabled={!isEditing}
+                          >
+                            <SelectTrigger className="transition-all focus:ring-2 focus:ring-purple-500">
+                              <SelectValue placeholder="Select gender" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="male">Male</SelectItem>
+                              <SelectItem value="female">Female</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>New Password</Label>
                           <Input
-                            name="phone"
-                            value={formData.phone}
+                            name="password"
+                            type="password"
+                            value={formData.password}
                             onChange={handleChange}
                             disabled={!isEditing}
-                            placeholder="+91 XXXXX XXXXX"
+                            placeholder="Leave blank to keep current"
+                            className="transition-all focus:ring-2 focus:ring-purple-500"
                           />
                         </div>
                       </div>
 
-                      {/* GENDER */}
+                      {/* Bio */}
                       <div className="space-y-2">
-                        <Label>Gender</Label>
-                        <Select
-                          value={formData.gender}
-                          onValueChange={(value) =>
-                            setFormData((prev) => ({ ...prev, gender: value }))
-                          }
+                        <Label>Bio</Label>
+                        <Textarea
+                          name="bio"
+                          value={formData.bio}
+                          onChange={handleChange}
                           disabled={!isEditing}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select gender" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="male">Male</SelectItem>
-                            <SelectItem value="female">Female</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          placeholder="Tell us a little about yourself..."
+                          rows={3}
+                          className="transition-all focus:ring-2 focus:ring-purple-500"
+                        />
                       </div>
 
-                      {/* LOCATION */}
+                      {/* Location */}
                       <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label>Country</Label>
-                          <Input
-                            name="country"
-                            value={formData.country}
-                            onChange={handleChange}
-                            disabled={!isEditing}
-                          />
-                        </div>
-
+                        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          Location
+                        </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Country</Label>
+                            <Input
+                              name="country"
+                              value={formData.country}
+                              onChange={handleChange}
+                              disabled={!isEditing}
+                              className="transition-all focus:ring-2 focus:ring-purple-500"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>State</Label>
+                            <Input
+                              name="state"
+                              value={formData.state}
+                              onChange={handleChange}
+                              disabled={!isEditing}
+                              className="transition-all focus:ring-2 focus:ring-purple-500"
+                            />
+                          </div>
                           <div className="space-y-2">
                             <Label>City</Label>
                             <Input
@@ -892,9 +814,9 @@ const Profile = () => {
                               value={formData.city}
                               onChange={handleChange}
                               disabled={!isEditing}
+                              className="transition-all focus:ring-2 focus:ring-purple-500"
                             />
                           </div>
-
                           <div className="space-y-2">
                             <Label>PIN Code</Label>
                             <Input
@@ -903,431 +825,373 @@ const Profile = () => {
                               onChange={handleChange}
                               disabled={!isEditing}
                               placeholder="e.g. 600001"
-                              inputMode="numeric"
-                              maxLength={6}
+                              className="transition-all focus:ring-2 focus:ring-purple-500"
                             />
                           </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Address</Label>
-                          <Input
-                            name="address"
-                            value={formData.address}
-                            onChange={handleChange}
-                            disabled={!isEditing}
-                            placeholder="Street, Area, Landmark"
-                          />
-                        </div>
-                      </div>
-
-                      {/* USER TYPE */}
-                      <div className="space-y-2">
-                        <Label>User Type</Label>
-                        <Select
-                          value={formData.userType}
-                          disabled={true}   // ALWAYS readonly
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select user type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="individual">Individual</SelectItem>
-                            <SelectItem value="organization">Organization</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* INDIVIDUAL */}
-                      {formData.userType === "individual" && (
-                        <>
-                          <div className="space-y-2">
-                            <Label>Profession</Label>
+                          <div className="md:col-span-2 space-y-2">
+                            <Label>Address</Label>
                             <Input
-                              name="profession"
-                              value={formData.profession}
+                              name="address"
+                              value={formData.address}
                               onChange={handleChange}
                               disabled={!isEditing}
-                              placeholder="e.g. Software Developer"
+                              placeholder="Street, Area, Landmark"
+                              className="transition-all focus:ring-2 focus:ring-purple-500"
                             />
                           </div>
+                        </div>
+                      </div>
 
+                      {/* User Type Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                          <Briefcase className="h-4 w-4" />
+                          Professional Information
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label>Experience Level</Label>
-                            <Select
-                              value={formData.experienceLevel}
-                              onValueChange={(value) =>
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  experienceLevel: value,
-                                }))
-                              }
-                              disabled={!isEditing}
-                            >
+                            <Label>User Type</Label>
+                            <Select value={formData.userType} disabled={true}>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select experience level" />
+                                <SelectValue placeholder="Select user type" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="beginner">Beginner</SelectItem>
-                                <SelectItem value="intermediate">Intermediate</SelectItem>
-                                <SelectItem value="advanced">Advanced</SelectItem>
+                                <SelectItem value="individual">Individual</SelectItem>
+                                <SelectItem value="organization">Organization</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
-                        </>
-                      )}
 
-                      {/* ORGANIZATION */}
-                      {formData.userType === "organization" && (
-                        <div className="space-y-2">
-                          <Label>Organization Name</Label>
-                          <Input
-                            name="organizationName"
-                            value={formData.organizationName}
-                            onChange={handleChange}
-                            disabled={!isEditing}
-                            placeholder="Company / Institute name"
-                          />
-                        </div>
-                      )}
-{/* ================= BOTTOM ACTION BUTTONS ================= */}
-      {isEditing && (
-        <div className="flex gap-3 justify-end pt-6 border-t">
-          
-          {/* SAVE */}
-          <Button
-            type="submit"
-            disabled={processing}
-          >
-            {processing && (
-              <Loader className="animate-spin mr-2 h-4 w-4" />
-            )}
-            <Save className="mr-2 h-4 w-4" />
-            {processing ? "Saving..." : "Save"}
-          </Button>
+                          {formData.userType === "individual" && (
+                            <>
+                              <div className="space-y-2">
+                                <Label>Profession</Label>
+                                <Input
+                                  name="profession"
+                                  value={formData.profession}
+                                  onChange={handleChange}
+                                  disabled={!isEditing}
+                                  placeholder="e.g. Software Developer"
+                                  className="transition-all focus:ring-2 focus:ring-purple-500"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Experience Level</Label>
+                                <Select
+                                  value={formData.experienceLevel}
+                                  onValueChange={(value) => setFormData(prev => ({ ...prev, experienceLevel: value }))}
+                                  disabled={!isEditing}
+                                >
+                                  <SelectTrigger className="transition-all focus:ring-2 focus:ring-purple-500">
+                                    <SelectValue placeholder="Select experience level" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="beginner">Beginner</SelectItem>
+                                    <SelectItem value="intermediate">Intermediate</SelectItem>
+                                    <SelectItem value="advanced">Advanced</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </>
+                          )}
 
-          {/* CANCEL */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setFormData(originalData);
-              setIsEditing(false);
-            }}
-          >
-            Cancel
-          </Button>
-
-        </div>
-      )}
-                    </div>
-                  </form>
-                </TabsContent>
-
-                {/* ================= SETTINGS TAB ================= */}
-                <TabsContent value="notifications" className="p-6">
-                  <div className="space-y-6">
-                    <h3 className="text-lg font-semibold">Settings</h3>
-
-                    {/* Notification Toggles */}
-                    <div className="space-y-4">
-                      <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                        <Bell className="h-4 w-4" /> Notification Preferences
-                      </h4>
-
-                      {/* Mail Notification */}
-                      <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div>
-                          <Label className="font-medium">Mail Notifications</Label>
-                          <p className="text-sm text-muted-foreground">Receive email updates about your courses and account</p>
-                        </div>
-                        <Switch
-                          checked={notifications.mail}
-                          disabled={savingSettings}
-                          onCheckedChange={() => handleToggle('mail')}
-                        />
-                      </div>
-
-                      {/* Payment Alerts */}
-                      <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div>
-                          <Label className="font-medium">Payment Alerts</Label>
-                          <p className="text-sm text-muted-foreground">Get notified about subscription renewals and billing</p>
-                        </div>
-                        <Switch
-                          checked={notifications.payments}
-                          disabled={savingSettings}
-                          onCheckedChange={() => handleToggle('payments')}
-                        />
-                      </div>
-
-                      {/* Chat Notifications */}
-                      <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div>
-                          <Label className="font-medium">Chat Notifications</Label>
-                          <p className="text-sm text-muted-foreground">Receive notifications from the course assistant</p>
-                        </div>
-                        <Switch
-                          checked={notifications.chat}
-                          disabled={savingSettings}
-                          onCheckedChange={() => handleToggle('chat')}
-                        />
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Danger Zone */}
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-medium text-red-500 uppercase tracking-wider flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4" /> Danger Zone
-                      </h4>
-
-
-
-                      <div className="flex items-center justify-between rounded-lg border border-red-200 p-4 bg-red-50/30">
-                        <div>
-                          <Label className="font-medium">Request Account Deletion</Label>
-                          <p className="text-sm text-muted-foreground">
-                            Submit a request to permanently remove your account. An admin will review and process it.
-                          </p>
-                        </div>
-
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="destructive">
-                              Request Deletion
-                            </Button>
-                          </DialogTrigger>
-
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Request Account Deletion</DialogTitle>
-                              <DialogDescription>
-                                Your account will not be deleted immediately. An admin will review your request. You may optionally provide a reason below.
-                              </DialogDescription>
-                            </DialogHeader>
-
-                            <div className="space-y-3 py-2">
-                              <Label htmlFor="deletion-reason">Reason (optional)</Label>
+                          {formData.userType === "organization" && (
+                            <div className="space-y-2">
+                              <Label>Organization Name</Label>
                               <Input
-                                id="deletion-reason"
-                                placeholder="Why do you want to delete your account?"
-                                value={deletionReason}
-                                onChange={(e) => setDeletionReason(e.target.value)}
+                                name="organizationName"
+                                value={formData.organizationName}
+                                onChange={handleChange}
+                                disabled={!isEditing}
+                                placeholder="Company / Institute name"
+                                className="transition-all focus:ring-2 focus:ring-purple-500"
                               />
                             </div>
+                          )}
+                        </div>
+                      </div>
 
-                            <DialogFooter>
-                              <DialogTrigger asChild>
-                                <Button variant="outline" className="w-40">
-                                  Cancel
-                                </Button>
-                              </DialogTrigger>
+                      {/* Action Buttons */}
+                      {isEditing && (
+                        <div className="flex gap-3 justify-end pt-6 border-t">
+                          <Button type="submit" disabled={processing} className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                            {processing && <Loader className="animate-spin h-4 w-4" />}
+                            <Save className="h-4 w-4" />
+                            {processing ? "Saving..." : "Save Changes"}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => { setFormData(originalData); setIsEditing(false); }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                              <Button
-                                onClick={() => requestDeletion(deletionReason)}
-                                variant="destructive"
-                                className="w-40"
-                                disabled={requestingDeletion}
-                              >
-                                {requestingDeletion && (
-                                  <Loader className="animate-spin mr-2 h-4 w-4" />
-                                )}
-                                {requestingDeletion ? "Submitting..." : "Submit Request"}
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
+            {/* Settings Tab */}
+            <TabsContent value="settings">
+              <Card className="rounded-xl shadow-lg border-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5 text-purple-500" />
+                    Preferences & Notifications
+                  </CardTitle>
+                  <CardDescription>Customize your experience and notification preferences</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Notification Preferences */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                      <Bell className="h-4 w-4" />
+                      Notification Preferences
+                    </h3>
+                    {[
+                      { key: "mail", label: "Email Notifications", desc: "Receive email updates about your courses and account" },
+                      { key: "payments", label: "Payment Alerts", desc: "Get notified about subscription renewals and billing" },
+                      { key: "chat", label: "Chat Notifications", desc: "Receive notifications from the course assistant" },
+                      { key: "marketing", label: "Marketing Updates", desc: "Get updates about new courses and features" },
+                    ].map((item) => (
+                      <div key={item.key} className="flex items-center justify-between rounded-lg border p-4 transition-all hover:shadow-sm">
+                        <div>
+                          <Label className="font-medium">{item.label}</Label>
+                          <p className="text-sm text-muted-foreground">{item.desc}</p>
+                        </div>
+                        <Switch
+                          checked={notifications[item.key]}
+                          disabled={savingSettings}
+                          onCheckedChange={() => handleToggle(item.key as keyof typeof notifications)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <Separator />
+
+                  {/* Theme Preference */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                      <Layers className="h-4 w-4" />
+                      Appearance
+                    </h3>
+                    <div className="grid grid-cols-3 gap-4">
+                      {[
+                        { value: "light", icon: Sun, label: "Light" },
+                        { value: "dark", icon: Moon, label: "Dark" },
+                        { value: "system", icon: Monitor, label: "System" },
+                      ].map((themeOption) => (
+                        <button
+                          key={themeOption.value}
+                          onClick={() => setTheme(themeOption.value)}
+                          className={`p-4 rounded-lg border-2 transition-all ${theme === themeOption.value ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20" : "border-gray-200 dark:border-gray-700"}`}
+                        >
+                          <themeOption.icon className="h-6 w-6 mx-auto mb-2" />
+                          <p className="text-sm font-medium">{themeOption.label}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Danger Zone */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-red-500 uppercase tracking-wider flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      Danger Zone
+                    </h3>
+                    <div className="flex items-center justify-between rounded-lg border border-red-200 p-4 bg-red-50/30 dark:bg-red-900/10">
+                      <div>
+                        <Label className="font-medium">Request Account Deletion</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Submit a request to permanently remove your account. An admin will review and process it.
+                        </p>
+                      </div>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="destructive" className="gap-2">
+                            <Trash2 className="h-4 w-4" />
+                            Request Deletion
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Request Account Deletion</DialogTitle>
+                            <DialogDescription>
+                              Your account will not be deleted immediately. An admin will review your request.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-3 py-2">
+                            <Label htmlFor="deletion-reason">Reason (optional)</Label>
+                            <Input
+                              id="deletion-reason"
+                              placeholder="Why do you want to delete your account?"
+                              value={deletionReason}
+                              onChange={(e) => setDeletionReason(e.target.value)}
+                            />
+                          </div>
+                          <DialogFooter>
+                            <DialogTrigger asChild>
+                              <Button variant="outline">Cancel</Button>
+                            </DialogTrigger>
+                            <Button onClick={() => requestDeletion(deletionReason)} variant="destructive" disabled={requestingDeletion}>
+                              {requestingDeletion && <Loader className="animate-spin mr-2 h-4 w-4" />}
+                              Submit Request
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Billing Tab */}
+            <TabsContent value="billing">
+              <Card className="rounded-xl shadow-lg border-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-purple-500" />
+                    Subscription & Billing
+                  </CardTitle>
+                  <CardDescription>Manage your subscription plan and payment methods</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="flex justify-center py-8">
+                      <Loader className="animate-spin h-8 w-8 text-purple-500" />
+                    </div>
+                  ) : activeType === "free" ? (
+                    <div className="text-center py-8">
+                      <Sparkles className="h-16 w-16 text-purple-500 mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold mb-2">Free Plan</h3>
+                      <p className="text-muted-foreground mb-6">
+                        {activePlan?.currency} {activePlan?.price} / 7 days
+                      </p>
+                      <Button onClick={redirectPricing} className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600">
+                        Upgrade to Pro
+                        <Rocket className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div className={`p-6 rounded-xl bg-gradient-to-r ${getPlanColor()}`}>
+                        <div className="flex items-center gap-2 text-white mb-2">
+                          <Crown className="h-6 w-6" />
+                          <h3 className="text-xl font-semibold">{activePlan?.name} Plan</h3>
+                        </div>
+                        <p className="text-white/90 text-2xl font-bold mb-4">
+                          {activePlan?.currency} {activePlan?.price} / {activePlan?.planType === "monthly" ? "month" : "year"}
+                        </p>
+                        <ul className="space-y-2 text-white/90">
+                          {activePlan?.features.map((feature: string, idx: number) => (
+                            <li key={idx} className="flex items-center gap-2">
+                              <CheckCircle2 className="h-4 w-4" />
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      {subscriptionEnd && (
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                          <p className="text-sm text-muted-foreground">Your subscription will renew on:</p>
+                          <p className="font-semibold">{new Date(subscriptionEnd).toLocaleDateString()}</p>
+                        </div>
+                      )}
+                      <Button variant="destructive" onClick={cancelSubscription} disabled={processingCancel} className="w-full">
+                        {processingCancel && <Loader className="animate-spin mr-2 h-4 w-4" />}
+                        Cancel Subscription
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Social Tab */}
+            <TabsContent value="social">
+              <Card className="rounded-xl shadow-lg border-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5 text-purple-500" />
+                    Social Connections
+                  </CardTitle>
+                  <CardDescription>Connect your social profiles to enhance your learning network</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {[
+                    { platform: "linkedin", icon: Linkedin, color: "text-blue-600", placeholder: "https://linkedin.com/in/username" },
+                    { platform: "twitter", icon: Twitter, color: "text-blue-400", placeholder: "https://twitter.com/username" },
+                    { platform: "github", icon: "Github", color: "text-gray-800 dark:text-gray-200", placeholder: "https://github.com/username" },
+                    { platform: "website", icon: Globe, color: "text-green-600", placeholder: "https://yourwebsite.com" },
+                  ].map((social) => (
+                    <div key={social.platform} className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
+                      <div className={`w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center ${social.color}`}>
+                        {social.icon === "Github" ? (
+                          <span className="text-xl font-bold">GH</span>
+                        ) : (
+                          <social.icon className="h-5 w-5" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <Label className="capitalize">{social.platform}</Label>
+                        <Input
+                          value={socialLinks[social.platform]}
+                          onChange={(e) => handleSocialChange(social.platform, e.target.value)}
+                          placeholder={social.placeholder}
+                          disabled={!isEditing}
+                          className="mt-1 transition-all focus:ring-2 focus:ring-purple-500"
+                        />
                       </div>
                     </div>
+                  ))}
+                  {!isEditing && (
+                    <Button variant="outline" onClick={() => { setOriginalData(formData); setIsEditing(true); }} className="w-full">
+                      <PenLine className="mr-2 h-4 w-4" />
+                      Edit Social Links
+                    </Button>
+                  )}
+                  {isEditing && (
+                    <div className="flex gap-3 justify-end pt-4">
+                      <Button onClick={handleSubmit} className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600">
+                        <Save className="h-4 w-4" />
+                        Save Social Links
+                      </Button>
+                      <Button variant="outline" onClick={() => { setIsEditing(false); }}>
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                  </div>
-                </TabsContent>
-
-                {/* ================= BILLING TAB ================= */}
-                <TabsContent value="billing" className="p-6">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">
-                      Subscription Plan
-                    </h3>
-
-                    {loading ? (
-                      <p>Loading...</p>
-                    ) : activeType === "free" ? (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Free Plan</CardTitle>
-                          <CardDescription>
-                            {activePlan?.currency} {activePlan?.price} / 7 days
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-muted-foreground">
-                            This plan is completely free.
-                          </p>
-                        </CardContent>
-                        <CardFooter>
-                          <Button size="sm" onClick={redirectPricing}>
-                            Upgrade Plan
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    ) : activePlan ? (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>{activePlan.name} Plan</CardTitle>
-                          <CardDescription>
-                            {activePlan.currency} {activePlan.price} /
-                            {activePlan.planType === "monthly"
-                              ? " month"
-                              : " year"}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-muted-foreground">
-                            Your subscription is active.
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ) : null}
-                  </div>
-                </TabsContent>
-
-                {/* ================= TESTIMONIAL TAB ================= */}
-                <TabsContent value="testimonial" className="p-6">
+            {/* Testimonial Tab */}
+            <TabsContent value="testimonial">
+              <Card className="rounded-xl shadow-lg border-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-purple-500" />
+                    Share Your Experience
+                  </CardTitle>
+                  <CardDescription>Help others by sharing your learning journey</CardDescription>
+                </CardHeader>
+                <CardContent>
                   <TestimonialSubmission />
-                </TabsContent>
-              </Tabs>
-
-
-
-            </CardContent>
-          </Card>
-
-        </div>
-
-        {/* ================= RIGHT SIDE (STATS + SOCIAL) ================= */}
-        <div className="space-y-6">
-
-          {/* ===== ACTIVITY STATS ===== */}
-          <Card className="rounded-2xl shadow-sm">
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-lg mb-4">Your Activity</h3>
-
-              <div className="grid grid-cols-3 gap-4 text-center">
-
-                <div className="bg-muted rounded-xl p-4">
-                  <BookOpen className="h-5 w-5 mx-auto mb-1" />
-                  <p className="text-2xl font-bold">{stats.courses}</p>
-                  <p className="text-xs text-muted-foreground">Courses</p>
-                </div>
-
-                <div className="bg-muted rounded-xl p-4">
-                  <Award className="h-5 w-5 mx-auto mb-1" />
-                  <p className="text-2xl font-bold">{stats.certifications}</p>
-                  <p className="text-xs text-muted-foreground">Certificates</p>
-                </div>
-
-                <div className="bg-muted rounded-xl p-4">
-                  <Ticket className="h-5 w-5 mx-auto mb-1" />
-                  <p className="text-2xl font-bold">{stats.tickets}</p>
-                  <p className="text-xs text-muted-foreground">Tickets</p>
-                </div>
-
-              </div>
-
-            </CardContent>
-          </Card>
-
-          {/* ===== SOCIAL LINKS (BOTTOM) ===== */}
-
-          {formData.userType === "individual" && (
-            <Card className="rounded-2xl shadow-sm">
-              <CardContent className="p-6 space-y-4">
-                <h3 className="font-semibold text-lg">Social Links</h3>
-                <Separator />
-
-                <div className="space-y-4 text-sm">
-
-                  {/* LinkedIn */}
-                  <div className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted/40 transition">
-                    <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-xl shrink-0">
-                      <Linkedin className="h-5 w-5 text-blue-600" />
-                    </div>
-
-                    {socialLinks.linkedin ? (
-                      <a
-                        href={socialLinks.linkedin}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium text-blue-600 break-all"
-                      >
-                        {socialLinks.linkedin}
-                      </a>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        LinkedIn not added
-                      </span>
-                    )}
-                  </div>
-
-                  {/* X */}
-                  <div className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted/40 transition">
-                    <div className="flex items-center justify-center w-10 h-10 bg-black rounded-xl shrink-0">
-                      <span className="text-white font-semibold text-sm">X</span>
-                    </div>
-
-                    {socialLinks.twitter ? (
-                      <a
-                        href={socialLinks.twitter}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium text-black break-all"
-                      >
-                        {socialLinks.twitter}
-                      </a>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        X not added
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Website */}
-                  <div className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted/40 transition">
-                    <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-xl shrink-0">
-                      <Globe className="h-5 w-5 text-green-600" />
-                    </div>
-
-                    {socialLinks.website ? (
-                      <a
-                        href={socialLinks.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium text-green-600 break-all"
-                      >
-                        {socialLinks.website}
-                      </a>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        Website not added
-                      </span>
-                    )}
-                  </div>
-
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-        </div>
-
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </motion.div>
       </div>
-
     </div>
   );
-
 };
 
 export default Profile;
