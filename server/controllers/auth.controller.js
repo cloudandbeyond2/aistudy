@@ -1299,15 +1299,17 @@ export const notifyAdmin = async (req, res) => {
 </p>
 
 <!-- TICKET -->
-<p style="margin:0; font-size:13px; color:#64748b;">Ticket</p>
+
 <p style="margin:4px 0 20px; font-size:15px; color:#111827;">
   <span style="background:#eef2ff; color:#4f46e5; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600;">
     #${ticketRef}
   </span>
+  <p style="margin:0; font-size:13px; color:#64748b;">Issue Title</p>
   <span style="margin-left:8px; font-weight:600;">${subject}</span>
 </p>
 
 <!-- MESSAGE -->
+<p style="margin:0; font-size:13px; color:#64748b;">Issue</p>
 <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:20px; margin-bottom:24px;">
   <p style="margin:0; font-size:15px; color:#334155; line-height:1.6;">
     ${message}
@@ -1315,8 +1317,11 @@ export const notifyAdmin = async (req, res) => {
 </div>
 
 <!-- CTA BUTTON -->
+
 <div style="text-align:center; margin-bottom:20px;">
-  <a href="#" style="display:inline-block; padding:12px 24px; background:#6366f1; color:#ffffff; text-decoration:none; border-radius:10px; font-size:14px; font-weight:600;">
+  <a href="https://mail.google.com/mail/?view=cm&to=${fromEmail}&su=Re:%20[Ticket%20%23${ticketRef}]%20${encodeURIComponent(subject)}&body=Hello%20${encodeURIComponent(fromName)},%0D%0A%0D%0AThank%20you%20for%20contacting%20support.%0D%0A%0D%0A----%0D%0ATicket:%20%23${ticketRef}%0D%0ASubject:%20${encodeURIComponent(subject)}%0D%0A----"
+    target="_blank"
+    style="display:inline-block; padding:12px 24px; background:#6366f1; color:#ffffff; text-decoration:none; border-radius:10px; font-size:14px; font-weight:600;">
     Reply to Customer
   </a>
 </div>
