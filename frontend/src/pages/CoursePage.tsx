@@ -15,6 +15,7 @@ import YouTube from 'react-youtube';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2, Loader2, Sparkles, BookOpen, Image as ImageIcon, Brain, Video, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getCoursePresentationMeta } from '@/lib/coursePresentation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -215,6 +216,12 @@ const CoursePage = () => {
   const end = courseData?.end;
   const pass = courseData?.pass;
   const lang = courseData?.lang || 'English';
+  const contentProfileId =
+    jsonData?.course_meta?.contentProfile ||
+    courseData?.jsonData?.course_meta?.contentProfile ||
+    'learn_format';
+  const contentProfileMeta = getCoursePresentationMeta(contentProfileId);
+  const ContentProfileIcon = contentProfileMeta.icon;
 
   const [selected, setSelected] = useState('');
   const [theory, setTheory] = useState('');
@@ -431,7 +438,8 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
                 subtopics: [next.subtopicTitle]
               }],
               lang,
-              userId
+              userId,
+              contentProfile: contentProfileId
             });
             
             if (res.data.success && res.data.topics[0]) {
@@ -455,7 +463,7 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
         preloadImageWithCache(next.subtopic.image, next.subtopicTitle);
       }
     }
-  }, [jsonData, selected, mainTopic, lang, userId, preloadImageWithCache]);
+  }, [contentProfileId, jsonData, selected, mainTopic, lang, userId, preloadImageWithCache]);
 
   // Cached API call
   const cachedApiCall = async (url, data, cacheKey) => {
@@ -467,6 +475,25 @@ const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') 
     apiCache.current.set(cacheKey, response);
     return response;
   };
+
+  const buildStyledTheoryPrompt = useCallback((subtopicTitle, transcriptText = '') => {
+    const transcriptSection = transcriptText
+      ? `Use the following transcript as supporting context and ignore any intro, outro, like, subscribe, or sponsor filler:\n${transcriptText}\n`
+      : '';
+
+    return `Strictly in ${lang}, you are creating lesson content for the course "${mainTopic}".
+Presentation style: ${contentProfileMeta.label}
+Style guidance: ${contentProfileMeta.promptInstruction}
+
+Create a complete lesson for the subtopic "${subtopicTitle}".
+${transcriptSection}
+Requirements:
+- Keep the content focused on "${subtopicTitle}".
+- Use natural, human teaching language instead of generic AI-style phrasing.
+- Return clean educational HTML only.
+- Include examples in the selected presentation style.
+- Do not include external links, image links, or AI disclaimers.`;
+  }, [contentProfileMeta.label, contentProfileMeta.promptInstruction, lang, mainTopic]);
 
   // OPTIMIZATION: Preload when selected changes
   useEffect(() => {
@@ -925,7 +952,8 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
       mainTopic,
       topicsList: [{ topicTitle: clickedTopic, subtopics: [clickedSub] }],
       lang,
-      userId
+      userId,
+      contentProfile: contentProfileId
     };
     
     const theoryRes = await axios.post(serverURL + '/api/generate-batch', theoryPayload);
@@ -1492,22 +1520,19 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
       const generatedText = res.data.transcript;
       const allText = generatedText.map(item => item.text);
       const concatenatedText = allText.join(' ');
-      const prompt = `Strictly in ${lang}, you are an educational instructor creating content for a course on "${mainTopic}". Explain the subtopic "${subtop}" in detail with examples.
-Use the following video transcript as a reference/context for your explanation (ignore any YouTube intro/outro/like/subscribe talk):
-${concatenatedText}
-Please ensure the content is strictly educational and about the subtopic "${subtop}". Do not include additional external resources or image links.`;
+      const prompt = buildStyledTheoryPrompt(subtop, concatenatedText);
       stopSim();
       sendSummery(prompt, url, mTopic, mSubTopic);
     } catch (error) {
       console.error(error)
-      const prompt = `Strictly in ${lang}, Explain me about this subtopic of ${mainTopic} with examples :- ${subtop}. Please Strictly Don't Give Additional Resources And Images.`;
+      const prompt = buildStyledTheoryPrompt(subtop);
       stopSim();
       sendSummery(prompt, url, mTopic, mSubTopic);
     }
 
   } catch (error) {
     console.error(error)
-    const prompt = `Strictly in ${lang}, Explain me about this subtopic of ${mainTopic} with examples :- ${subtop}.  Please Strictly Don't Give Additional Resources And Images.`;
+    const prompt = buildStyledTheoryPrompt(subtop);
     stopSim();
     sendSummery(prompt, url, mTopic, mSubTopic);
   }
@@ -1827,42 +1852,131 @@ Please ensure the content is strictly educational and about the subtopic "${subt
       <Accordion
         type="single"
         collapsible
-        className="w-full"
-        defaultValue={topics[0]?.title}
+        className="w-full space-y-3"
+        defaultValue={topics.find((topic) => topic.subtopics?.some((subtopic) => subtopic.title === selected))?.title || topics[0]?.title}
       >
-        {topics.map((topic) => (
-          <AccordionItem key={topic.title} value={topic.title} className="border-none">
-            <AccordionTrigger className="py-2 text-left px-3 hover:bg-accent/50 rounded-md w-full">
-              {topic.title}
-            </AccordionTrigger>
-            <AccordionContent className="pl-2">
-              {topic.subtopics.map((subtopic) => (
-                <div
-                  onClick={() => {
-                    if (isSubtopicUnlocked(topic.title, subtopic.title)) {
-                      handleSelect(topic.title, subtopic.title);
-                    } else {
-                      toast({ title: "Locked", description: "Complete previous lessons to unlock this one." });
-                    }
-                  }}
-                  key={subtopic.title}
-                  className={cn(
-                    "flex items-center px-4 py-2 rounded-md transition-colors",
-                    isSubtopicUnlocked(topic.title, subtopic.title) ? "cursor-pointer hover:bg-accent/50" : "opacity-50 cursor-not-allowed",
-                    selected === subtopic.title && "bg-accent/50 font-medium text-primary"
-                  )}
-                >
-                  {completedSubtopics.some(s => s.topicTitle === topic.title && s.subtopicTitle === subtopic.title) ? (
-                    <span className="mr-2 text-primary">✓</span>
-                  ) : !isSubtopicUnlocked(topic.title, subtopic.title) && (
-                    <Lock className="w-3 h-3 mr-2 opacity-50" />
-                  )}
-                  <span className="text-sm">{subtopic.title}</span>
+        {topics.map((topic, topicIndex) => {
+          const topicSubtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
+          const topicCompletedCount = topicSubtopics.filter((subtopic) =>
+            completedSubtopics.some(
+              (entry) => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title
+            )
+          ).length;
+          const topicProgress = topicSubtopics.length
+            ? Math.round((topicCompletedCount / topicSubtopics.length) * 100)
+            : 0;
+          const isTopicActive = topicSubtopics.some((subtopic) => subtopic.title === selected);
+
+          return (
+            <AccordionItem
+              key={topic.title}
+              value={topic.title}
+              className={cn(
+                "overflow-hidden rounded-2xl border bg-background/90 shadow-sm transition-colors",
+                isTopicActive ? "border-primary/35 shadow-primary/10" : "border-border/60"
+              )}
+            >
+              <AccordionTrigger
+                className={cn(
+                  "px-4 py-4 text-left hover:no-underline",
+                  isTopicActive ? "bg-primary/[0.07]" : "hover:bg-muted/60"
+                )}
+              >
+                <div className="flex min-w-0 flex-1 items-start gap-3">
+                  <div
+                    className={cn(
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold",
+                      isTopicActive
+                        ? "bg-primary text-primary-foreground"
+                        : "border border-border bg-muted text-foreground"
+                    )}
+                  >
+                    {topicIndex + 1}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                        Chapter {topicIndex + 1}
+                      </span>
+                      <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                        {topicCompletedCount}/{topicSubtopics.length} done
+                      </span>
+                    </div>
+                    <p className="mt-2 line-clamp-2 text-sm font-semibold leading-6 text-foreground">
+                      {topic.title}
+                    </p>
+                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-border/70">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${topicProgress}%` }}
+                      />
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </AccordionContent>
-          </AccordionItem>
-        ))}
+              </AccordionTrigger>
+              <AccordionContent className="px-3 pb-3 pt-1">
+                <div className="space-y-2">
+                  {topicSubtopics.map((subtopic, subtopicIndex) => {
+                    const isUnlocked = isSubtopicUnlocked(topic.title, subtopic.title);
+                    const isActive = selected === subtopic.title;
+                    const isCompleted = completedSubtopics.some(
+                      (entry) => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title
+                    );
+
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isUnlocked) {
+                            handleSelect(topic.title, subtopic.title);
+                          } else {
+                            toast({ title: "Locked", description: "Complete previous lessons to unlock this one." });
+                          }
+                        }}
+                        key={subtopic.title}
+                        className={cn(
+                          "group flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition-all",
+                          isUnlocked
+                            ? "cursor-pointer hover:border-primary/30 hover:bg-primary/[0.05]"
+                            : "cursor-not-allowed opacity-60",
+                          isActive
+                            ? "border-primary/35 bg-primary/[0.08] shadow-sm"
+                            : "border-transparent bg-muted/50"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
+                            isCompleted
+                              ? "bg-emerald-500 text-white"
+                              : isActive
+                                ? "bg-primary text-primary-foreground"
+                                : isUnlocked
+                                  ? "border border-border bg-background text-muted-foreground"
+                                  : "bg-muted-foreground/15 text-muted-foreground"
+                          )}
+                        >
+                          {isCompleted ? "✓" : subtopicIndex + 1}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-medium leading-5 text-foreground">
+                            {subtopic.title}
+                          </span>
+                          <span className="mt-1 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                            <span>
+                              {isCompleted ? "Completed" : isActive ? "Current lesson" : isUnlocked ? "Open lesson" : "Locked"}
+                            </span>
+                            {!isCompleted && !isUnlocked && <Lock className="h-3 w-3" />}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
       </Accordion>
     );
   }
@@ -2022,6 +2136,32 @@ Please ensure the content is strictly educational and about the subtopic "${subt
     CountDoneTopics(isQuizPassed);
   }, [courseData, jsonData, completedSubtopics, isOrgAdmin, isQuizPassed, preloadImageWithCache, simulateProgress]);
 
+  const rawCourseTopics = jsonData?.course_topics || (mainTopic ? jsonData?.[mainTopic.toLowerCase()] : []);
+  const courseTopics = Array.isArray(rawCourseTopics) ? rawCourseTopics : [];
+  const orderedLessons = courseTopics.flatMap((topic, topicIndex) =>
+    (Array.isArray(topic.subtopics) ? topic.subtopics : []).map((subtopic, subtopicIndex) => ({
+      topicTitle: topic.title,
+      subtopicTitle: subtopic.title,
+      topicIndex,
+      subtopicIndex,
+    }))
+  );
+  const completedLessonCount = orderedLessons.filter((lesson) =>
+    completedSubtopics.some(
+      (entry) => entry.topicTitle === lesson.topicTitle && entry.subtopicTitle === lesson.subtopicTitle
+    )
+  ).length;
+  const currentLessonIndex = orderedLessons.findIndex((lesson) => lesson.subtopicTitle === selected);
+  const currentLesson = currentLessonIndex >= 0 ? orderedLessons[currentLessonIndex] : orderedLessons[0];
+  const currentTopicTitle = currentLesson?.topicTitle || courseTopics[0]?.title || '';
+  const currentTopic = courseTopics.find((topic) => topic.title === currentTopicTitle);
+  const currentTopicCompletedCount = (Array.isArray(currentTopic?.subtopics) ? currentTopic.subtopics : []).filter((subtopic) =>
+    completedSubtopics.some(
+      (entry) => entry.topicTitle === currentTopicTitle && entry.subtopicTitle === subtopic.title
+    )
+  ).length;
+  const nextLesson = currentLessonIndex >= 0 ? orderedLessons[currentLessonIndex + 1] : orderedLessons[1];
+
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       {/* Loading Popup */}
@@ -2046,11 +2186,43 @@ Please ensure the content is strictly educational and about the subtopic "${subt
             </DrawerTrigger>
             <DrawerContent className="max-h-[80vh]">
               <div className="p-4">
-                <h2 className="text-xl font-bold mb-4">Course Content</h2>
+                <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-background via-background to-muted/60 p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+                        Course Navigation
+                      </p>
+                      <h2 className="mt-2 text-lg font-semibold">Course Content</h2>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {completedLessonCount}/{orderedLessons.length} lessons completed
+                      </p>
+                    </div>
+                    <div className="rounded-2xl bg-primary/10 px-3 py-2 text-right text-primary">
+                      <div className="text-lg font-semibold leading-none">{percentage}%</div>
+                      <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary/70">
+                        Progress
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <ScrollArea className="h-[60vh]">
-                  <div className="pr-4">
-                    {jsonData && renderTopicsList(jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()])}
-                    <p onClick={redirectExam} className='py-2 text-left px-3 hover:bg-accent/50 rounded-md cursor-pointer'>{pass === true ? <span className="mr-2 text-primary">✓</span> : <></>}{mainTopic} Quiz</p>
+                  <div className="pr-4 pt-4">
+                    {courseTopics.length > 0 && renderTopicsList(courseTopics)}
+                    <button
+                      type="button"
+                      onClick={redirectExam}
+                      className="mt-4 flex w-full items-center justify-between rounded-2xl border border-border/60 bg-background px-4 py-3 text-left transition-colors hover:bg-muted/60"
+                    >
+                      <span>
+                        <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                          Final Assessment
+                        </span>
+                        <span className="mt-1 block text-sm font-semibold text-foreground">
+                          {mainTopic} Quiz
+                        </span>
+                      </span>
+                      {pass === true ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <BookOpen className="h-4 w-4 text-muted-foreground" />}
+                    </button>
                   </div>
                 </ScrollArea>
               </div>
@@ -2142,38 +2314,262 @@ Please ensure the content is strictly educational and about the subtopic "${subt
 
       <div className="flex flex-1 overflow-hidden">
         <div className={cn(
-          "bg-sidebar border-r border-border/40 transition-all duration-300 overflow-hidden hidden md:block",
-          isMenuOpen ? "w-64" : "w-0"
+          "hidden overflow-hidden border-r border-border/40 bg-gradient-to-b from-slate-50 via-background to-background transition-all duration-300 dark:from-slate-950/30 md:block",
+          isMenuOpen ? "w-[22rem]" : "w-0"
         )}>
           <ScrollArea className="h-full">
             <div className="p-4">
-              {jsonData && renderTopicsList(jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()])}
-              <p onClick={redirectExam} className='py-2 text-left px-3 hover:bg-accent/50 rounded-md cursor-pointer'>{pass === true ? <span className="mr-2 text-primary">✓</span> : <></>}{mainTopic} Quiz</p>
+              <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-background via-background to-muted/60 p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+                      Course Navigation
+                    </p>
+                    <h2 className="mt-2 text-lg font-semibold">Course Content</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {completedLessonCount}/{orderedLessons.length} lessons completed
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-primary/10 px-3 py-2 text-right text-primary">
+                    <div className="text-lg font-semibold leading-none">{percentage}%</div>
+                    <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary/70">
+                      Progress
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4">
+                {courseTopics.length > 0 && renderTopicsList(courseTopics)}
+              </div>
+              <button
+                type="button"
+                onClick={redirectExam}
+                className="mt-4 flex w-full items-center justify-between rounded-2xl border border-border/60 bg-background px-4 py-3 text-left transition-colors hover:bg-muted/60"
+              >
+                <span>
+                  <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                    Final Assessment
+                  </span>
+                  <span className="mt-1 block text-sm font-semibold text-foreground">
+                    {mainTopic} Quiz
+                  </span>
+                </span>
+                {pass === true ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <BookOpen className="h-4 w-4 text-muted-foreground" />}
+              </button>
             </div>
           </ScrollArea>
         </div>
 
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full" viewportRef={mainContentRef}>
-            <main className="p-6 max-w-5xl mx-auto">
+            <main className="mx-auto max-w-6xl p-4 md:p-6">
               {isLoading ? (
                 <CourseContentSkeleton />
               ) : (
                 <>
-                  <h1 className="text-3xl font-bold mb-6">{selected}</h1>
+                  <div className="mb-6 overflow-hidden rounded-[30px] border border-slate-800/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/80 p-6 text-white shadow-xl">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                      <div className="max-w-3xl">
+                        <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.26em] text-white/80 backdrop-blur">
+                          {currentLesson ? `Chapter ${currentLesson.topicIndex + 1}` : 'Lesson overview'}
+                        </span>
+                        <h1 className="mt-4 text-3xl font-semibold leading-tight md:text-4xl">{selected}</h1>
+                        <p className="mt-3 text-sm leading-6 text-white/75 md:text-base">
+                          {currentTopicTitle && `Inside ${currentTopicTitle}. `}
+                          {currentLesson ? `Lesson ${currentLessonIndex + 1} of ${orderedLessons.length}. ` : ''}
+                          Continue through the roadmap below or jump directly from the side menu.
+                        </p>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-2xl border border-white/12 bg-white/10 px-4 py-3 backdrop-blur">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">
+                            Current Chapter
+                          </div>
+                          <div className="mt-2 text-lg font-semibold">
+                            {currentTopic ? `${currentLesson?.topicIndex + 1}. ${currentTopic.title}` : 'Course lesson'}
+                          </div>
+                          <div className="mt-1 text-xs text-white/65">
+                            {currentTopicCompletedCount}/{currentTopic?.subtopics?.length || 0} lessons done
+                          </div>
+                        </div>
+                        <div className="rounded-2xl border border-white/12 bg-white/10 px-4 py-3 backdrop-blur">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">
+                            Up Next
+                          </div>
+                          <div className="mt-2 text-sm font-semibold leading-5">
+                            {nextLesson ? nextLesson.subtopicTitle : 'Final quiz after completion'}
+                          </div>
+                          <div className="mt-1 text-xs text-white/65">
+                            {nextLesson ? nextLesson.topicTitle : `${mainTopic} quiz`}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className={`mb-6 rounded-2xl border p-4 ${contentProfileMeta.surfaceClass}`}>
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${contentProfileMeta.badgeClass}`}>
+                            <ContentProfileIcon className="mr-1.5 h-3.5 w-3.5" />
+                            {contentProfileMeta.label}
+                          </span>
+                          <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                            {type === 'video & text course' ? 'Video + Text' : 'Text + Images'}
+                          </span>
+                          <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                            {lang}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {contentProfileMeta.summary}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  {courseTopics.length > 0 && (
+                    <section className="mb-6 rounded-[28px] border border-border/60 bg-gradient-to-br from-background via-background to-muted/50 p-5 shadow-sm">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+                            Course Roadmap
+                          </p>
+                          <h2 className="mt-2 text-2xl font-semibold">All chapters and lesson flow</h2>
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            Review the full structure here and jump into any unlocked lesson without relying only on the sidebar.
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                            {courseTopics.length} chapters
+                          </span>
+                          <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                            {orderedLessons.length} lessons
+                          </span>
+                          <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                            {completedLessonCount} completed
+                          </span>
+                        </div>
+                      </div>
+                      <Accordion
+                        type="single"
+                        collapsible
+                        className="mt-5 space-y-3"
+                        defaultValue={currentTopicTitle || courseTopics[0]?.title}
+                      >
+                        {courseTopics.map((topic, topicIndex) => {
+                          const topicSubtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
+                          const topicCompletedCount = topicSubtopics.filter((subtopic) =>
+                            completedSubtopics.some(
+                              (entry) => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title
+                            )
+                          ).length;
+                          const isTopicActive = topic.title === currentTopicTitle;
+
+                          return (
+                            <AccordionItem
+                              key={topic.title}
+                              value={topic.title}
+                              className={cn(
+                                "overflow-hidden rounded-3xl border transition-colors",
+                                isTopicActive
+                                  ? "border-primary/30 bg-primary/[0.05]"
+                                  : "border-border/60 bg-background/90"
+                              )}
+                            >
+                              <AccordionTrigger className="px-4 py-4 text-left hover:no-underline">
+                                <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <span className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                                      Chapter {topicIndex + 1}
+                                    </span>
+                                    <h3 className="mt-3 text-lg font-semibold leading-6">{topic.title}</h3>
+                                    <p className="mt-2 text-sm text-muted-foreground">
+                                      Click to view lessons in this chapter
+                                    </p>
+                                  </div>
+                                  <div className="rounded-2xl bg-muted px-3 py-2 text-right">
+                                    <div className="text-base font-semibold">{topicCompletedCount}/{topicSubtopics.length}</div>
+                                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                                      done
+                                    </div>
+                                  </div>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="px-4 pb-4 pt-0">
+                                <div className="grid gap-2 md:grid-cols-2">
+                                  {topicSubtopics.map((subtopic, subtopicIndex) => {
+                                    const isUnlocked = isSubtopicUnlocked(topic.title, subtopic.title);
+                                    const isActive = selected === subtopic.title;
+                                    const isCompleted = completedSubtopics.some(
+                                      (entry) => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title
+                                    );
+
+                                    return (
+                                      <button
+                                        type="button"
+                                        key={subtopic.title}
+                                        onClick={() => {
+                                          if (isUnlocked) {
+                                            handleSelect(topic.title, subtopic.title);
+                                          } else {
+                                            toast({ title: "Locked", description: "Complete previous lessons to unlock this one." });
+                                          }
+                                        }}
+                                        className={cn(
+                                          "flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition-all",
+                                          isUnlocked
+                                            ? "hover:border-primary/30 hover:bg-primary/[0.04]"
+                                            : "cursor-not-allowed opacity-60",
+                                          isActive
+                                            ? "border-primary/35 bg-primary/[0.08]"
+                                            : "border-border/50 bg-background"
+                                        )}
+                                      >
+                                        <span
+                                          className={cn(
+                                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                                            isCompleted
+                                              ? "bg-emerald-500 text-white"
+                                              : isActive
+                                                ? "bg-primary text-primary-foreground"
+                                                : "bg-muted text-muted-foreground"
+                                          )}
+                                        >
+                                          {isCompleted ? "✓" : subtopicIndex + 1}
+                                        </span>
+                                        <span className="min-w-0 flex-1">
+                                          <span className="block truncate text-sm font-medium text-foreground">
+                                            {subtopic.title}
+                                          </span>
+                                          <span className="mt-1 block text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                                            {isCompleted ? "Completed" : isActive ? "Current lesson" : isUnlocked ? "Available now" : "Locked"}
+                                          </span>
+                                        </span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          );
+                        })}
+                      </Accordion>
+                    </section>
+                  )}
                   <div className="space-y-4">
                     {type === 'video & text course' ? (
                       media ? (
-                        <div>
+                        <div className="overflow-hidden rounded-[28px] border border-border/60 bg-background p-3 shadow-sm">
                           <YouTube key={media} className='mb-5' videoId={media} opts={opts} />
                         </div>
                       ) : (
-                        <div className="h-96 bg-muted flex items-center justify-center rounded-lg">
+                        <div className="flex h-96 items-center justify-center rounded-[28px] border border-border/60 bg-muted">
                           <p className="text-muted-foreground">Loading video...</p>
                         </div>
                       )
                     ) : (
-                      <div className="relative w-full h-96 max-md:h-64 overflow-hidden rounded-lg bg-muted">
+                      <div className="relative h-96 w-full overflow-hidden rounded-[28px] border border-border/60 bg-muted shadow-sm max-md:h-64">
                         {media ? (
                           <img 
                             key={media}
@@ -2234,7 +2630,11 @@ Please ensure the content is strictly educational and about the subtopic "${subt
                         )}
                       </div>
                     )}
-                    {theory && <StyledText text={theory} />}
+                    {theory && (
+                      <div className="rounded-[28px] border border-border/60 bg-background p-5 shadow-sm md:p-7">
+                        <StyledText text={theory} />
+                      </div>
+                    )}
 
                     {!isOrgAdmin && (
                       <div className="pt-8 border-t border-border mt-8 flex justify-center">

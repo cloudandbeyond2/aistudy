@@ -1180,11 +1180,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Loader } from 'lucide-react';
+import { CheckCircle, Loader, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { serverURL } from '@/constants';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
+import { getCoursePresentationMeta } from '@/lib/coursePresentation';
 
 interface CoursePreviewProps {
   isLoading: boolean;
@@ -1192,6 +1193,7 @@ interface CoursePreviewProps {
   topics: any;
   type: string;
   lang: string;
+  contentProfile?: string;
   onClose?: () => void;
 }
 
@@ -1201,12 +1203,17 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
   topics,
   type,
   lang,
+  contentProfile,
   onClose
 }) => {
   const navigate = useNavigate();
   const [isLoadingCourse, setIsLoadingCourse] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Preparing your course...');
   const { toast } = useToast();
+  const presentationMeta = getCoursePresentationMeta(
+    contentProfile || topics?.course_meta?.contentProfile
+  );
+  const PresentationIcon = presentationMeta.icon;
 
   /* ---------------- HELPERS ---------------- */
 
@@ -1278,6 +1285,14 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
 
   async function saveCourse() {
     try {
+      topics.course_meta = {
+        ...(topics.course_meta || {}),
+        contentProfile: presentationMeta.id,
+        contentProfileLabel: presentationMeta.label,
+        language: lang,
+        courseType: type,
+      };
+
       const res = await axios.post(serverURL + '/api/course', {
         user: sessionStorage.getItem('uid'),
         content: JSON.stringify(topics),
@@ -1319,45 +1334,90 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
 
   return (
     <div className="space-y-6 py-8">
-      <h1 className="text-3xl font-bold text-center">
-        {courseName.toUpperCase()}
-      </h1>
-
-      <ScrollArea className="h-[70vh]">
-        <div className="max-w-3xl mx-auto space-y-8 px-2">
-          {getCourseTopics()?.map((topic: any, i: number) => (
-            <div key={i} className="space-y-4">
-              {/* TOPIC */}
-              <Card className="bg-black text-white rounded-md">
-                <CardContent className="px-6 py-3 text-base font-semibold">
-                  {topic.title}
-                </CardContent>
-              </Card>
-
-              {/* SUBTOPICS */}
-              <div className="ml-6 space-y-2">
-                {topic.subtopics?.map((s: any, j: number) => (
-                  <div
-                    key={j}
-                    className="
-                flex items-center
-                px-4 py-2
-                border border-gray-300
-                rounded-md
-                text-sm text-gray-700
-                bg-white
-              "
-                  >
-                    {s.title}
-                  </div>
-                ))}
+      <div className="mx-auto max-w-5xl space-y-4 px-2">
+        <div className="rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-indigo-500/10 p-6 shadow-lg">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${presentationMeta.badgeClass}`}>
+                  <PresentationIcon className="mr-1.5 h-3.5 w-3.5" />
+                  {presentationMeta.label}
+                </span>
+                <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                  {type === 'video & text course' ? 'Video + Text' : 'Text + Images'}
+                </span>
+                <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                  {lang}
+                </span>
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">{courseName.toUpperCase()}</h1>
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                  Preview the generated structure before saving. The selected presentation style will shape how each lesson reads inside the course page.
+                </p>
               </div>
             </div>
-          ))}
+            <div className={`max-w-sm rounded-2xl border p-4 ${presentationMeta.surfaceClass}`}>
+              <div className="flex items-start gap-3">
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${presentationMeta.badgeClass}`}>
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold">Selected writing pattern</p>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {presentationMeta.summary}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </ScrollArea>
 
-      <div className="flex justify-center gap-4">
+        <ScrollArea className="h-[70vh] rounded-3xl border bg-card/60 p-4 shadow-sm">
+          <div className="mx-auto max-w-4xl space-y-5 pb-2">
+            {getCourseTopics()?.map((topic: any, i: number) => (
+              <Card key={i} className="overflow-hidden border-border/70 shadow-sm">
+                <CardContent className="p-0">
+                  <div className="border-b bg-muted/40 px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-9 w-9 items-center justify-center rounded-xl text-sm font-semibold ${presentationMeta.badgeClass}`}>
+                        {i + 1}
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                          Module {i + 1}
+                        </p>
+                        <h2 className="text-lg font-semibold">{topic.title}</h2>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 px-5 py-4">
+                    {topic.subtopics?.map((subtopic: any, j: number) => (
+                      <div
+                        key={j}
+                        className="flex items-start gap-3 rounded-2xl border border-border/70 bg-background px-4 py-3"
+                      >
+                        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                          {j + 1}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{subtopic.title}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            This lesson will follow the {presentationMeta.shortLabel.toLowerCase()} pattern after generation.
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+
+      <div className="flex flex-col justify-center gap-3 sm:flex-row">
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>

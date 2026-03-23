@@ -111,7 +111,13 @@ export const generatePrompt = async (req, res) => {
  * GENERATE BATCH SUBTOPIC CONTENT (multiple topics and their subtopics in ONE API call)
  */
 export const generateBatchSubtopics = async (req, res) => {
-  const { mainTopic, topicsList, lang, userId } = req.body;
+  const {
+    mainTopic,
+    topicsList,
+    lang,
+    userId,
+    contentProfile = 'learn_format'
+  } = req.body;
 
   if (!mainTopic || !topicsList || !Array.isArray(topicsList) || !topicsList.length) {
     return res.status(400).json({
@@ -161,6 +167,47 @@ export const generateBatchSubtopics = async (req, res) => {
     { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }
   ];
 
+  const contentProfileMap = {
+    textbook_notes: {
+      label: 'Textbook Notes',
+      instruction:
+        'Write like textbook notes with concept-first explanation, definitions, organized sections, and recap-friendly flow.'
+    },
+    lecturer_notes: {
+      label: 'Lecturer Notes',
+      instruction:
+        'Write like lecturer notes with teachable explanations, emphasis points, and examples a trainer could present live.'
+    },
+    exam_pattern: {
+      label: 'Exam Pattern',
+      instruction:
+        'Write in an exam-focused style with key points, likely answer angles, revision cues, and concise high-yield explanation.'
+    },
+    student_friendly: {
+      label: 'Student Format',
+      instruction:
+        'Write in simple, student-friendly language with shorter paragraphs, approachable examples, and clear explanations.'
+    },
+    professional_format: {
+      label: 'Professional Format',
+      instruction:
+        'Write in a polished professional tone with frameworks, applied decision context, and workplace-ready examples.'
+    },
+    business_format: {
+      label: 'Business Format',
+      instruction:
+        'Write in a business format using KPI, workflow, stakeholder, operations, and product or process examples where relevant.'
+    },
+    learn_format: {
+      label: 'Learn Format',
+      instruction:
+        'Write in a learn-by-doing format with step-by-step progression, mini checkpoints, and action-oriented examples.'
+    }
+  };
+
+  const selectedContentProfile =
+    contentProfileMap[contentProfile] || contentProfileMap.learn_format;
+
   const systemInstruction = `Strictly in ${lang || 'English'}, you are a specialized educational content writer. 
 Your goal is to provide thorough, in-depth, and "large" explanations for course subtopics.
 IMPORTANT: You MUST explicitly translate the 'topicTitle' and subtopic 'title' fields into ${lang || 'English'}, alongside the 'theory' content.
@@ -178,6 +225,9 @@ Never output an empty <pre><code></code></pre> block.
 If you mention an example, provide the full example content immediately after the label.
 For conceptual business validation logic, CRM workflows, or dashboard rules, prefer readable pseudocode or numbered rule logic instead of SQL unless SQL is specifically necessary.
 Do not truncate a section halfway through an example.
+Presentation style: ${selectedContentProfile.label}.
+Style guidance: ${selectedContentProfile.instruction}
+Avoid generic AI-sounding filler. The lesson should read like it was intentionally prepared in the selected presentation style.
 Do NOT include images, external links, or additional resource suggestions.
 ONLY respond with a valid JSON object matching the requested schema.`;
 
@@ -405,6 +455,8 @@ Generate comprehensive educational content for exactly one chapter and one subto
 
 Chapter: "${topicTitle}"
 Subtopic: "${subtopicTitle}"
+Presentation Style: ${selectedContentProfile.label}
+Style Guidance: ${selectedContentProfile.instruction}
 
 Requirements:
 - Return content only for this one chapter and this one subtopic.
@@ -433,6 +485,8 @@ Write a complete HTML lesson for this one chapter and one subtopic.
 Chapter: "${topicTitle}"
 Subtopic: "${subtopicTitle}"
 Language: ${lang || 'English'}
+Presentation Style: ${selectedContentProfile.label}
+Style Guidance: ${selectedContentProfile.instruction}
 
 Rules:
 - Return HTML only, not JSON.

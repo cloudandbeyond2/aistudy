@@ -984,6 +984,11 @@ import CoursePreview from '@/components/CoursePreview';
 import SEO from '@/components/SEO';
 import { useToast } from '@/hooks/use-toast';
 import { serverURL } from '@/constants';
+import {
+  COURSE_PRESENTATION_IDS,
+  COURSE_PRESENTATIONS,
+  getCoursePresentationMeta,
+} from '@/lib/coursePresentation';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress';
@@ -1001,6 +1006,7 @@ const courseFormSchema = z.object({
   subtopics: z.array(z.string()),
   topicsLimit: z.enum(["5", "10"]),
   courseType: z.enum(["image & text course", "video & text course"]),
+  contentProfile: z.enum(COURSE_PRESENTATION_IDS),
   language: z.string().min(1, { message: "Please select a language" })
 });
 
@@ -1188,6 +1194,7 @@ const GenerateCourse = () => {
       subtopics: [],
       topicsLimit: "5",
       courseType: "image & text course",
+      contentProfile: "learn_format",
       language: "English"
     }
   });
@@ -1208,7 +1215,7 @@ const GenerateCourse = () => {
       if (values.topicsLimit) progress += 20;
       
       // Course Type (20%)
-      if (values.courseType) progress += 20;
+      if (values.courseType && values.contentProfile) progress += 20;
       
       // Language (20%)
       if (values.language) progress += 20;
@@ -1217,7 +1224,7 @@ const GenerateCourse = () => {
     };
 
     calculateProgress();
-  }, [form.watch('topic'), form.watch('topicsLimit'), form.watch('courseType'), form.watch('language'), subtopics]);
+  }, [form.watch('topic'), form.watch('topicsLimit'), form.watch('courseType'), form.watch('contentProfile'), form.watch('language'), subtopics]);
 
   // Watch form values to update progress on changes
   useEffect(() => {
@@ -1228,7 +1235,7 @@ const GenerateCourse = () => {
       if (values.topic?.length >= 3) progress += 20;
       if (subtopics.length > 0) progress += 20;
       if (values.topicsLimit) progress += 20;
-      if (values.courseType) progress += 20;
+      if (values.courseType && values.contentProfile) progress += 20;
       if (values.language) progress += 20;
       
       setFormProgress(progress);
@@ -1415,6 +1422,7 @@ Return only valid JSON that matches the schema.`;
 
     const mainTopic = data.topic;
     const language = data.language;
+    const contentProfileMeta = getCoursePresentationMeta(data.contentProfile);
     const number = data.topicsLimit;
 
     // Check if course already exists
@@ -1444,19 +1452,24 @@ Return only valid JSON that matches the schema.`;
 
     const prompt = `Course: "${mainTopic}"
     Language: ${language}
+    Presentation Style: ${contentProfileMeta.label}
+    Style Guidance: ${contentProfileMeta.promptInstruction}
     Chapters: ${number}
     Required Subtopics: ${subtopicsList.join(', ')}
 
     Generate a detailed course structure in JSON with exactly ${number} chapters.
     Each chapter must include 3 to 5 subtopics.
-    Use the required subtopics where relevant and expand them into a fuller lesson path.`;
+    Use the required subtopics where relevant and expand them into a fuller lesson path.
+    Make the chapter flow and subtopic naming suitable for the chosen presentation style.`;
 
     setGenerationProgress(30);
     setProgressMessage("Sending request to AI...");
-    sendPrompt(prompt);
+    sendPrompt(prompt, data);
   };
 
-  async function sendPrompt(promptText: string) {
+  async function sendPrompt(promptText: string, courseOptions: CourseFormValues) {
+    const previewPresentationMeta = getCoursePresentationMeta(courseOptions.contentProfile);
+    const selectedLanguage = courseOptions.language;
     const dataToSend = { 
       prompt: promptText,
       responseMimeType: "application/json",
@@ -1518,12 +1531,22 @@ Return only valid JSON that matches the schema.`;
 
       try {
         const parsedJson = JSON.parse(generatedText);
+        const coursePreviewPayload = {
+          ...parsedJson,
+          course_meta: {
+            ...(parsedJson?.course_meta || {}),
+            contentProfile: courseOptions.contentProfile,
+            contentProfileLabel: previewPresentationMeta.label,
+            language: selectedLanguage,
+            courseType: courseOptions.courseType,
+          },
+        };
         
         setGenerationProgress(95);
         setProgressMessage("Finalizing course...");
         
         setTimeout(() => {
-          setGeneratedTopics(parsedJson);
+          setGeneratedTopics(coursePreviewPayload);
           setGenerationProgress(100);
           setProgressMessage("Course generated successfully!");
           
@@ -1659,7 +1682,8 @@ Return only valid JSON that matches the schema.`;
           courseName={form.getValues('topic').toLowerCase()}
           topics={generatedTopics}
           type={selectedType}
-          lang={lang.toLowerCase()}
+          lang={lang}
+          contentProfile={form.getValues('contentProfile')}
           onClose={handleEditTopics}
         />
       </>
@@ -2194,6 +2218,73 @@ Return only valid JSON that matches the schema.`;
                         />
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden">
+                  <div className="bg-primary/5 p-4 md:p-6 border-b flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-semibold flex items-center gap-2">
+                        <Type className="w-5 h-5 text-primary" /> Presentation Style
+                      </h2>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Choose how the lesson content should read. This changes the writing style, not the course flow.
+                      </p>
+                    </div>
+                  </div>
+                  <CardContent className="p-4 md:p-6">
+                    <FormField
+                      control={form.control}
+                      name="contentProfile"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-medium">Course Writing Pattern</FormLabel>
+                          <FormControl>
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                              {COURSE_PRESENTATIONS.map((presentation) => {
+                                const Icon = presentation.icon;
+                                const isSelected = field.value === presentation.id;
+
+                                return (
+                                  <button
+                                    key={presentation.id}
+                                    type="button"
+                                    className={`rounded-2xl border p-4 text-left transition-all duration-200 ${
+                                      isSelected
+                                        ? `${presentation.surfaceClass} ring-2 ring-primary/40 shadow-sm`
+                                        : 'border-border bg-background hover:border-primary/30 hover:bg-primary/5'
+                                    } ${!isAuthenticated ? 'cursor-not-allowed opacity-50' : ''}`}
+                                    onClick={() => {
+                                      if (!isAuthenticated) return;
+                                      field.onChange(presentation.id);
+                                    }}
+                                  >
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${presentation.badgeClass}`}>
+                                        <Icon className="h-5 w-5" />
+                                      </div>
+                                      <div className={`flex h-6 w-6 items-center justify-center rounded-full border ${
+                                        isSelected
+                                          ? 'border-primary bg-primary text-primary-foreground'
+                                          : 'border-muted-foreground/30 text-transparent'
+                                      }`}>
+                                        <CheckCircle2 className="h-3.5 w-3.5" />
+                                      </div>
+                                    </div>
+                                    <div className="mt-4 space-y-1.5">
+                                      <p className="font-semibold text-foreground">{presentation.label}</p>
+                                      <p className="text-xs leading-relaxed text-muted-foreground">
+                                        {presentation.summary}
+                                      </p>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
                   </CardContent>
                 </Card>
 
