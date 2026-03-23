@@ -9,15 +9,45 @@ interface StyledTextProps {
 const StyledText: React.FC<StyledTextProps> = ({ text }) => {
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const normalizedText = text
-    ?.replace(/```([a-zA-Z0-9_-]+)?\n([\s\S]*?)```/g, (_match, lang, code) => {
+  const createCalloutBlock = (label: string, body: string) => {
+    const normalizedLabel = label.trim();
+    const tone = /warning|alert/i.test(normalizedLabel)
+      ? 'warning'
+      : /important/i.test(normalizedLabel)
+        ? 'important'
+        : /tip|remember/i.test(normalizedLabel)
+          ? 'success'
+          : 'info';
+
+    return `
+      <div class="content-callout content-callout-${tone}">
+        <div class="content-callout-label">${normalizedLabel}</div>
+        <div class="content-callout-body">${body.trim()}</div>
+      </div>
+    `;
+  };
+
+  const normalizeCallouts = (html = '') =>
+    html
+      .replace(
+        /<p>\s*(?:<strong>|<b>)(Note|Important|Warning|Tip|Info|Remember|Key Point|Takeaway|Alert)\s*:?\s*(?:<\/strong>|<\/b>)\s*([\s\S]*?)<\/p>/gi,
+        (_match, label, body) => createCalloutBlock(label, body)
+      )
+      .replace(
+        /<p>\s*(Note|Important|Warning|Tip|Info|Remember|Key Point|Takeaway|Alert)\s*:\s*([\s\S]*?)<\/p>/gi,
+        (_match, label, body) => createCalloutBlock(label, body)
+      );
+
+  const normalizedText = normalizeCallouts(
+    text?.replace(/```([a-zA-Z0-9_-]+)?\n([\s\S]*?)```/g, (_match, lang, code) => {
       const languageClass = lang ? ` class="language-${lang}"` : '';
       const escapedCode = code
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
       return `<pre><code${languageClass}>${escapedCode}</code></pre>`;
-    });
+    })
+  );
 
   useEffect(() => {
     if (contentRef.current) {
@@ -34,6 +64,11 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
         .styled-content {
           line-height: 1.8;
           color: hsl(var(--foreground));
+          font-size: 1.02rem;
+        }
+
+        .styled-content > *:first-child {
+          margin-top: 0 !important;
         }
 
         /* Headings */
@@ -56,8 +91,12 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
           margin-top: 2.5rem;
           margin-bottom: 1.25rem;
           color: hsl(var(--primary));
-          padding-left: 1rem;
-          border-left: 4px solid hsl(var(--primary));
+          padding: 1rem 1.25rem;
+          border: 1px solid hsl(var(--primary) / 0.18);
+          border-left: 6px solid hsl(var(--primary));
+          border-radius: 1rem;
+          background: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--background)));
+          box-shadow: 0 10px 30px -24px hsl(var(--primary) / 0.55);
         }
 
         .styled-content h3 {
@@ -67,13 +106,18 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
           margin-bottom: 1rem;
           color: hsl(var(--foreground));
           position: relative;
-          padding-left: 1.5rem;
+          padding: 0.9rem 1rem 0.9rem 2.8rem;
+          border: 1px solid hsl(var(--border));
+          border-radius: 0.9rem;
+          background: hsl(var(--muted) / 0.35);
         }
 
         .styled-content h3::before {
           content: '▶';
           position: absolute;
-          left: 0;
+          left: 1rem;
+          top: 50%;
+          transform: translateY(-50%);
           color: hsl(var(--primary));
           font-size: 0.875rem;
         }
@@ -90,6 +134,12 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
         .styled-content p {
           margin-bottom: 1.25rem;
           line-height: 1.8;
+        }
+
+        .styled-content h2 + p,
+        .styled-content h3 + p,
+        .styled-content h4 + p {
+          padding-left: 0.25rem;
         }
 
         /* Lists */
@@ -275,6 +325,92 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
 
         .styled-content blockquote p {
           margin: 0;
+        }
+
+        .styled-content .content-callout {
+          margin: 1.75rem 0;
+          border-radius: 1rem;
+          border: 1px solid hsl(var(--border));
+          border-left-width: 5px;
+          padding: 1rem 1.1rem;
+          background: linear-gradient(135deg, hsl(var(--muted) / 0.55), hsl(var(--background)));
+          box-shadow: 0 18px 32px -26px hsl(var(--foreground) / 0.3);
+        }
+
+        .styled-content .content-callout-label {
+          display: inline-flex;
+          align-items: center;
+          margin-bottom: 0.7rem;
+          padding: 0.35rem 0.65rem;
+          border-radius: 9999px;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .styled-content .content-callout-body > :last-child {
+          margin-bottom: 0;
+        }
+
+        .styled-content .content-callout-info {
+          border-color: hsl(206 90% 60% / 0.28);
+          border-left-color: hsl(204 94% 44%);
+          background: linear-gradient(135deg, hsl(204 100% 97%), hsl(var(--background)));
+        }
+
+        .styled-content .content-callout-info .content-callout-label {
+          background: hsl(204 94% 44% / 0.12);
+          color: hsl(204 94% 34%);
+        }
+
+        .dark .styled-content .content-callout-info {
+          background: linear-gradient(135deg, hsl(217 54% 11%), hsl(var(--background)));
+        }
+
+        .styled-content .content-callout-important {
+          border-color: hsl(32 95% 56% / 0.28);
+          border-left-color: hsl(32 95% 44%);
+          background: linear-gradient(135deg, hsl(38 100% 96%), hsl(var(--background)));
+        }
+
+        .styled-content .content-callout-important .content-callout-label {
+          background: hsl(32 95% 44% / 0.14);
+          color: hsl(25 95% 32%);
+        }
+
+        .dark .styled-content .content-callout-important {
+          background: linear-gradient(135deg, hsl(30 45% 12%), hsl(var(--background)));
+        }
+
+        .styled-content .content-callout-warning {
+          border-color: hsl(0 84% 60% / 0.22);
+          border-left-color: hsl(0 72% 51%);
+          background: linear-gradient(135deg, hsl(0 86% 97%), hsl(var(--background)));
+        }
+
+        .styled-content .content-callout-warning .content-callout-label {
+          background: hsl(0 72% 51% / 0.12);
+          color: hsl(0 72% 41%);
+        }
+
+        .dark .styled-content .content-callout-warning {
+          background: linear-gradient(135deg, hsl(0 42% 13%), hsl(var(--background)));
+        }
+
+        .styled-content .content-callout-success {
+          border-color: hsl(158 64% 40% / 0.24);
+          border-left-color: hsl(158 84% 32%);
+          background: linear-gradient(135deg, hsl(151 81% 96%), hsl(var(--background)));
+        }
+
+        .styled-content .content-callout-success .content-callout-label {
+          background: hsl(158 84% 32% / 0.12);
+          color: hsl(158 84% 24%);
+        }
+
+        .dark .styled-content .content-callout-success {
+          background: linear-gradient(135deg, hsl(158 42% 12%), hsl(var(--background)));
         }
 
         /* Links */
