@@ -2287,6 +2287,44 @@ const formatGuidanceText = (text: string) => {
                                                         <Button variant="ghost" size="sm" onClick={() => setPreviewCourse({ ...course })}>
                                                             <Eye className="w-4 h-4" />
                                                         </Button>
+                                                        <Button variant="ghost" size="sm" onClick={async () => {
+                                                            const initialDescription = "Generating assignment description...";
+                                                            
+                                                            setNewAssignment({
+                                                                topic: title,
+                                                                description: initialDescription,
+                                                                dueDate: '',
+                                                                department: course.department || ''
+                                                            });
+                                                            setOpenAssignmentDialog(true);
+
+                                                            try {
+                                                                const res = await axios.post(`${serverURL}/api/prompt`, {
+                                                                    prompt: `Write a professional 1-2 sentence assignment description for a course titled "${title}". The description should encourage the student to complete the assignment to test their understanding. Return strictly the text.`,
+                                                                    systemInstruction: "You are an educational assistant. Return only the 1-2 sentence assignment description text. No quotes, no conversational filler."
+                                                                });
+
+                                                                if (res.data.success && res.data.generatedText) {
+                                                                    setNewAssignment(prev => ({
+                                                                        ...prev,
+                                                                        description: res.data.generatedText
+                                                                    }));
+                                                                } else {
+                                                                    setNewAssignment(prev => ({
+                                                                        ...prev,
+                                                                        description: description
+                                                                    }));
+                                                                }
+                                                            } catch (e) {
+                                                                console.error("Failed to generate assignment description:", e);
+                                                                setNewAssignment(prev => ({
+                                                                    ...prev,
+                                                                    description: description
+                                                                }));
+                                                            }
+                                                        }}>
+                                                            Create Assignment
+                                                        </Button>
                                                         {course.topics ? (
                                                             <Button variant="ghost" size="sm" onClick={() => setEditCourse({ ...course })}>Edit</Button>
                                                         ) : course.content ? (
@@ -2320,40 +2358,7 @@ const formatGuidanceText = (text: string) => {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex justify-end">
-                                <Dialog open={openAssignmentDialog} onOpenChange={setOpenAssignmentDialog}>
-                                    <DialogTrigger asChild onClick={() => setOpenAssignmentDialog(true)}>
-                                        <Button><Plus className="w-4 h-4 mr-2" /> New Assignment</Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                        <DialogHeader><DialogTitle>Create Assignment</DialogTitle></DialogHeader>
-                                        <div className="grid gap-4 py-4">
-                                            <Label>Topic</Label>
-                                            <Input value={newAssignment.topic} onChange={(e) => setNewAssignment({ ...newAssignment, topic: e.target.value })} />
-                                            <Label>Description</Label>
-                                            <RichTextEditor
-                                                value={newAssignment.description || ''}
-                                                onChange={(content) => setNewAssignment({ ...newAssignment, description: content })}
-                                                placeholder="Assignment instructions..."
-                                                className="min-h-[150px]"
-                                            />
-                                            <Label>Due Date</Label>
-                                            <Input type="date" value={newAssignment.dueDate} onChange={(e) => setNewAssignment({ ...newAssignment, dueDate: e.target.value })} />
-                                            <Label>Department (Optional)</Label>
-                                            <select
-                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                value={newAssignment.department}
-                                                onChange={(e) => setNewAssignment({ ...newAssignment, department: e.target.value })}
-                                                disabled={role === 'dept_admin'}
-                                            >
-                                                {role !== 'dept_admin' && <option value="">All Students</option>}
-                                                {departmentsList.map((d: any) => (
-                                                    <option key={d._id} value={d._id}>{d.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <Button onClick={handleCreateAssignment}>Create</Button>
-                                    </DialogContent>
-                                </Dialog>
+                                <Button onClick={() => setOpenAssignmentDialog(true)}><Plus className="w-4 h-4 mr-2" /> New Assignment</Button>
                             </div>
                             <div className="space-y-4">
                                 {assignments.length > 0 ? (
@@ -3294,6 +3299,39 @@ Login:
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            {/* Create Assignment Dialog - Moved outside loop for global access */}
+            <Dialog open={openAssignmentDialog} onOpenChange={setOpenAssignmentDialog}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Create Assignment</DialogTitle></DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <Label>Topic</Label>
+                        <Input value={newAssignment.topic} onChange={(e) => setNewAssignment({ ...newAssignment, topic: e.target.value })} />
+                        <Label>Description</Label>
+                        <RichTextEditor
+                            value={newAssignment.description || ''}
+                            onChange={(content) => setNewAssignment({ ...newAssignment, description: content })}
+                            placeholder="Assignment instructions..."
+                            className="min-h-[150px]"
+                        />
+                        <Label>Due Date</Label>
+                        <Input type="date" value={newAssignment.dueDate} onChange={(e) => setNewAssignment({ ...newAssignment, dueDate: e.target.value })} />
+                        <Label>Department (Optional)</Label>
+                        <select
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            value={newAssignment.department}
+                            onChange={(e) => setNewAssignment({ ...newAssignment, department: e.target.value })}
+                            disabled={role === 'dept_admin'}
+                        >
+                            {role !== 'dept_admin' && <option value="">All Students</option>}
+                            {departmentsList.map((d: any) => (
+                                <option key={d._id} value={d._id}>{d.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <Button onClick={handleCreateAssignment}>Create</Button>
+                </DialogContent>
+            </Dialog>
 
             {/* Edit Course Dialog - Moved outside loop for stability */}
             <Dialog open={!!editCourse} onOpenChange={(open) => !open && setEditCourse(null)}>
