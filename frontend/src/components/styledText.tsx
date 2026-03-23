@@ -65,6 +65,8 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
           line-height: 1.8;
           color: hsl(var(--foreground));
           font-size: 1.02rem;
+          word-break: break-word;
+          overflow-wrap: break-word;
         }
 
         .styled-content > *:first-child {
@@ -73,43 +75,74 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
 
         /* Headings */
         .styled-content h1 {
-          font-size: 2.25rem;
+          font-size: 1.75rem;
           font-weight: 800;
-          margin-top: 3rem;
-          margin-bottom: 1.5rem;
+          margin-top: 2rem;
+          margin-bottom: 1.25rem;
           background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--primary) / 0.6));
           -webkit-background-clip: text;
           background-clip: text;
           -webkit-text-fill-color: transparent;
-          padding-bottom: 0.75rem;
-          border-bottom: 3px solid hsl(var(--primary) / 0.2);
+          padding-bottom: 0.5rem;
+          border-bottom: 2px solid hsl(var(--primary) / 0.2);
+        }
+
+        @media (min-width: 768px) {
+          .styled-content h1 {
+            font-size: 2.25rem;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 3px solid hsl(var(--primary) / 0.2);
+          }
         }
 
         .styled-content h2 {
-          font-size: 1.875rem;
+          font-size: 1.5rem;
           font-weight: 700;
-          margin-top: 2.5rem;
-          margin-bottom: 1.25rem;
+          margin-top: 1.5rem;
+          margin-bottom: 1rem;
           color: hsl(var(--primary));
-          padding: 1rem 1.25rem;
+          padding: 0.75rem 1rem;
           border: 1px solid hsl(var(--primary) / 0.18);
-          border-left: 6px solid hsl(var(--primary));
-          border-radius: 1rem;
+          border-left: 4px solid hsl(var(--primary));
+          border-radius: 0.75rem;
           background: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--background)));
-          box-shadow: 0 10px 30px -24px hsl(var(--primary) / 0.55);
+          box-shadow: 0 8px 24px -18px hsl(var(--primary) / 0.55);
+        }
+
+        @media (min-width: 768px) {
+          .styled-content h2 {
+            font-size: 1.875rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1.25rem;
+            padding: 1rem 1.25rem;
+            border-left: 6px solid hsl(var(--primary));
+            border-radius: 1rem;
+          }
         }
 
         .styled-content h3 {
-          font-size: 1.5rem;
+          font-size: 1.25rem;
           font-weight: 600;
-          margin-top: 2rem;
-          margin-bottom: 1rem;
+          margin-top: 1.5rem;
+          margin-bottom: 0.75rem;
           color: hsl(var(--foreground));
           position: relative;
-          padding: 0.9rem 1rem 0.9rem 2.8rem;
+          padding: 0.7rem 0.75rem 0.7rem 2.2rem;
           border: 1px solid hsl(var(--border));
-          border-radius: 0.9rem;
+          border-radius: 0.75rem;
           background: hsl(var(--muted) / 0.35);
+        }
+
+        @media (min-width: 768px) {
+          .styled-content h3 {
+            font-size: 1.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding: 0.9rem 1rem 0.9rem 2.8rem;
+            border-radius: 0.9rem;
+          }
         }
 
         .styled-content h3::before {
@@ -302,7 +335,8 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
           font-family: 'Fira Code', 'Courier New', Courier, monospace;
           font-weight: 600;
           border: 1px solid hsl(var(--primary) / 0.3);
-          white-space: nowrap;
+          white-space: pre-wrap;
+          word-break: break-all;
         }
 
         /* Prevent inline code inside pre from getting double styling */
@@ -429,12 +463,14 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
 
         /* Tables */
         .styled-content table {
+          display: block;
           width: 100%;
           border-collapse: collapse;
           margin: 1.5rem 0;
           border: 1px solid hsl(var(--border));
           border-radius: 0.5rem;
-          overflow: hidden;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
         }
 
         .styled-content th {

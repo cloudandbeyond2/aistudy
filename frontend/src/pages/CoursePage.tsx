@@ -2302,8 +2302,8 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
         progress={loadingProgress}
       />
 
-      <header className="border-b border-border/40 py-2 px-4 flex justify-between items-center sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
-        <div className="flex items-center gap-4">
+      <header className="border-b border-border/40 py-2 px-2 md:px-4 flex justify-between items-center sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
+        <div className="flex items-center gap-2 md:gap-4 shrink min-w-0">
           <Drawer>
             <DrawerTrigger asChild>
               <Button
@@ -2387,7 +2387,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                 </svg>
               </div>
             )}
-            <h1 className="text-xl font-bold">{mainTopic}</h1>
+            <h1 className="text-lg md:text-xl font-bold truncate max-w-[120px] sm:max-w-none">{mainTopic}</h1>
           </div>
         </div>
 
@@ -2497,21 +2497,21 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                 <CourseContentSkeleton />
               ) : (
                 <>
-                  <div className="mb-6 overflow-hidden rounded-[30px] border border-slate-800/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/80 p-6 text-white shadow-xl">
+                  <div className="mb-6 overflow-hidden rounded-[20px] md:rounded-[30px] border border-slate-800/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/80 p-3 md:p-6 text-white shadow-xl">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                       <div className="max-w-3xl">
                         <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.26em] text-white/80 backdrop-blur">
                           {currentLesson ? `Chapter ${currentLesson.topicIndex + 1}` : 'Lesson overview'}
                         </span>
-                        <h1 className="mt-4 text-3xl font-semibold leading-tight md:text-4xl">{selected}</h1>
+                        <h1 className="mt-4 break-words text-2xl font-semibold leading-tight md:text-4xl">{selected}</h1>
                         <p className="mt-3 text-sm leading-6 text-white/75 md:text-base">
                           {currentTopicTitle && `Inside ${currentTopicTitle}. `}
                           {currentLesson ? `Lesson ${currentLessonIndex + 1} of ${orderedLessons.length}. ` : ''}
                           Continue through the roadmap below or jump directly from the side menu.
                         </p>
                       </div>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="rounded-2xl border border-white/12 bg-white/10 px-4 py-3 backdrop-blur">
+                      <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
+                        <div className="rounded-xl border border-white/12 bg-white/10 px-3 py-2 md:px-4 md:py-3 backdrop-blur">
                           <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">
                             Current Chapter
                           </div>
@@ -2522,7 +2522,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                             {currentTopicCompletedCount}/{currentTopic?.subtopics?.length || 0} lessons done
                           </div>
                         </div>
-                        <div className="rounded-2xl border border-white/12 bg-white/10 px-4 py-3 backdrop-blur">
+                        <div className="rounded-xl border border-white/12 bg-white/10 px-3 py-2 md:px-4 md:py-3 backdrop-blur">
                           <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">
                             Up Next
                           </div>
@@ -2639,7 +2639,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                       </div>
                     )}
                     {theory && (
-                      <div className="rounded-[28px] border border-border/60 bg-background p-5 shadow-sm md:p-7">
+                      <div className="rounded-[20px] md:rounded-[28px] border border-border/60 bg-background p-3.5 md:p-7 shadow-sm">
                         <StyledText text={theory} />
                       </div>
                     )}
@@ -2650,7 +2650,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                       <div className="pt-8 border-t border-border mt-8 flex justify-center">
                         <Button
                           onClick={handleMarkAsComplete}
-                          className="px-8 py-6 text-lg gap-2"
+                          className="px-6 py-5 md:px-8 md:py-6 text-base md:text-lg gap-2"
                         >
                           {completedSubtopics.some(s => s.subtopicTitle === selected) ? (
                             <>Next Lesson <CheckCircle2 className="w-5 h-5" /></>
