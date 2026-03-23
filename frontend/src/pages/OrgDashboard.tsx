@@ -3303,11 +3303,11 @@ Login:
             {/* Create Assignment Dialog - Moved outside loop for global access */}
             <Dialog open={openAssignmentDialog} onOpenChange={setOpenAssignmentDialog}>
                 <DialogContent>
-                    <DialogHeader><DialogTitle>Create Assignment</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle>Create Assignment/ Assessment</DialogTitle></DialogHeader>
                     <div className="grid gap-4 py-4">
                         <Label>Topic</Label>
                         <Input value={newAssignment.topic} onChange={(e) => setNewAssignment({ ...newAssignment, topic: e.target.value })} />
-                        <Label>Description</Label>
+                        <Label>Description (Auto-generated – editable after creation)</Label>                        
                         <RichTextEditor
                             value={newAssignment.description || ''}
                             onChange={(content) => setNewAssignment({ ...newAssignment, description: content })}
