@@ -32,7 +32,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 }
             }
         } catch (error) {
-            console.error('Failed to fetch branding:', error);
+            // Keep default branding when the optional settings request is unavailable.
         } finally {
             setIsLoading(false);
         }

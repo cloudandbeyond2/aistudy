@@ -551,26 +551,67 @@ ${jobDescription}`,
             </div>
 
             {/* Step Indicator */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2">
-                {STEPS.map((s, idx) => {
-                    const Icon = s.icon;
-                    const active = step === s.id;
-                    const done = step > s.id;
-                    return (
-                        <React.Fragment key={s.id}>
-                            <button
-                                onClick={() => setStep(s.id)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap
-                  ${active ? 'bg-primary text-white shadow-lg shadow-primary/30' : done ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}
-                            >
-                                {done ? <CheckCircle className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
-                                {s.label}
-                            </button>
-                            {idx < STEPS.length - 1 && <div className="h-px w-4 bg-border flex-shrink-0" />}
-                        </React.Fragment>
-                    );
-                })}
-            </div>
+            <div className="w-full px-3 sm:px-8">
+  <div className="relative flex items-center justify-between">
+
+    {/* Background Line */}
+    <div className="absolute left-0 right-0 h-1 bg-gray-200 rounded-full top-4 sm:top-6" />
+
+    {/* Progress Line */}
+    <div
+      className="absolute left-0 h-1 bg-blue-500 rounded-full transition-all duration-500 top-4 sm:top-6"
+      style={{
+        width: `${((step - 1) / (STEPS.length - 1)) * 100}%`,
+      }}
+    />
+
+    {STEPS.map((s) => {
+      const Icon = s.icon;
+      const active = step === s.id;
+      const done = step > s.id;
+
+      return (
+        <div key={s.id} className="flex flex-col items-center z-10">
+
+          {/* Circle */}
+          <button
+            onClick={() => setStep(s.id)}
+            className={`flex items-center justify-center 
+              w-8 h-8 sm:w-12 sm:h-12 
+              rounded-full border-2 transition-all duration-300
+              ${
+                active
+                  ? "bg-blue-500 text-white border-blue-500 scale-110 shadow-md"
+                  : done
+                  ? "bg-blue-500 text-white border-blue-500"
+                  : "bg-white border-gray-300 text-gray-400"
+              }`}
+          >
+            {done ? (
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+            ) : (
+              <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+            )}
+          </button>
+
+          {/* Label (hidden on mobile) */}
+          <span
+            className={`hidden sm:block mt-2 text-sm font-medium text-center
+              ${
+                active
+                  ? "text-blue-600 font-semibold"
+                  : done
+                  ? "text-blue-500"
+                  : "text-gray-400"
+              }`}
+          >
+            {s.label}
+          </span>
+        </div>
+      );
+    })}
+  </div>
+</div>
 
             {/* Step Content */}
             <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-2xl p-6 shadow-sm">
