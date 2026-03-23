@@ -65,7 +65,7 @@ const Header = () => {
           setIsAdmin(true);
         }
       } catch (error) {
-        console.error("Error checking admin status:", error);
+        setIsAdmin(false);
       }
     }
     if (isAuth) {

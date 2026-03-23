@@ -436,7 +436,6 @@ const Login = () => {
           });
         }
       } catch (error) {
-        console.error("Error fetching stats:", error);
         // Fallback to static numbers if API is down
         setStats({ totalUsers: 98, totalCourses: 59 });
       }
