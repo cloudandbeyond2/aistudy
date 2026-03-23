@@ -216,7 +216,7 @@ const Testimonials = () => {
           setTestimonials(approvedTestimonials);
         }
       } catch (error) {
-        console.error("Error fetching testimonials:", error);
+        setTestimonials([]);
       } finally {
         setIsLoading(false);
       }

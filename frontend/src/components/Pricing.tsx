@@ -107,7 +107,6 @@ const Pricing = () => {
           setPlans(getDefaultPlans());
         }
       } catch (err) {
-        console.error('Pricing API error:', err);
         setPlans(getDefaultPlans());
       } finally {
         setIsLoading(false);
