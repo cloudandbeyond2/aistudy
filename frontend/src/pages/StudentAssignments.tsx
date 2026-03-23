@@ -47,12 +47,12 @@ const StudentAssignments = () => {
                             <CardDescription>Due: {new Date(assign.dueDate).toLocaleDateString()}</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex justify-between items-center mb-4">
-                                <p className="border-b pb-2 line-clamp-3 text-sm text-muted-foreground flex-1">
-                                    {(assign.description || '').replace(/<[^>]*>?/gm, '')}
-                                </p>
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="border-b pb-2 text-sm text-muted-foreground flex-1 max-h-[90px] overflow-y-auto pr-2">
+                                    <p className="whitespace-pre-wrap">{(assign.description || '').replace(/<[^>]*>?/gm, '')}</p>
+                                </div>
                                 {assign.latestGrade && (
-                                    <div className="ml-2 flex flex-col items-end">
+                                    <div className="ml-3 flex flex-col items-end shrink-0">
                                         <span className="text-xs font-semibold text-muted-foreground uppercase">Grade</span>
                                         <span className={`text-lg font-bold ${assign.latestGrade === 'A' ? 'text-green-600' : assign.latestGrade === 'B' ? 'text-blue-600' : assign.latestGrade === 'E' ? 'text-red-600' : 'text-gray-700'}`}>
                                             {assign.latestGrade}
