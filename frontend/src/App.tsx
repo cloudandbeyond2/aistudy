@@ -111,6 +111,7 @@ import StaffStudents from './pages/staff/StaffStudents';
 import StaffGrading from './pages/staff/StaffGrading';
 import StaffSchedule from './pages/staff/StaffSchedule';
 import StaffGlobalNews from "./pages/staff/StaffAnnouncements";
+import StudentProfile from "./pages/StudentProfile";
 import StaffResources from './pages/staff/StaffResources';
 import StaffSupport from './pages/staff/StaffSupport';
 import InterviewPreparation from "./pages/InterviewPreparation";
@@ -168,6 +169,7 @@ const App = () => (
                     <Route path="student/support-tickets" element={<StudentSupportTickets />} />
 
                     <Route path="org/student-tickets" element={<OrgStudentTickets />} />
+                    <Route path="student/profile" element={<StudentProfile />} />
                     <Route path="dept" element={<DeptDashboard />} />
                     <Route path="interview-prep" element={<InterviewPreparation />} />
                   </Route>
