@@ -467,8 +467,8 @@ const DashboardLayout = () => {
                       <MenuItem 
                         icon={User} 
                         label="My Profile" 
-                        to="/dashboard/profile" 
-                        isActive={isActive('/dashboard/profile')}
+                        to="/dashboard/student/profile" 
+                        isActive={isActive('/dashboard/student/profile')}
                         isExpanded={isExpanded}
                       />
                       
