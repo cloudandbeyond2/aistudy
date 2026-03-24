@@ -1225,3 +1225,153 @@ export const updateProfile = async (req, res) => {
     });
   }
 };
+
+
+/**
+ * NOTIFY ADMIN - New Ticket / Reply
+ */
+export const notifyAdmin = async (req, res) => {
+  const { fromEmail, fromName, ticketId, subject, message, type } = req.body;
+
+  const isNew = type === "new";
+  const ticketRef = ticketId?.slice(-6).toUpperCase();
+
+  try {
+    await transporter.sendMail({
+      from:process.env.EMAIL,                      // your existing sender
+      to: process.env.EMAIL,                       // admin email in .env
+      replyTo: fromEmail,                               // clicking Reply goes to user
+      subject: isNew
+        ? `[New Ticket] ${subject}`
+        : `[Reply] Ticket #${ticketRef} – ${subject}`,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Support Notification</title>
+
+<style>
+  @media screen and (max-width: 600px) {
+    .container { width: 100% !important; }
+    .content { padding: 24px !important; }
+  }
+</style>
+</head>
+
+<body style="margin:0; padding:0; background:#f1f5f9; font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr>
+<td align="center" style="padding:40px 12px;">
+
+<!-- CARD -->
+<table class="container" width="560" style="background:#ffffff; border-radius:20px; overflow:hidden; border:1px solid #e5e7eb;">
+
+<!-- HEADER -->
+<tr>
+<td style="padding:32px; text-align:center; background:linear-gradient(135deg, #6366f1, #7c3aed);">
+
+<div style="width:52px; height:52px; margin:auto; border-radius:14px; background:rgba(255,255,255,0.15); line-height:52px; font-size:24px;">
+  ${isNew ? '📨' : '💬'}
+</div>
+
+<h2 style="margin:16px 0 4px; color:#fff; font-size:22px; font-weight:700;">
+  ${isNew ? 'New Support Ticket' : 'New Reply Received'}
+</h2>
+
+<p style="margin:0; color:rgba(255,255,255,0.85); font-size:14px;">
+  ${isNew ? 'A customer needs your help.' : 'Customer responded to your ticket.'}
+</p>
+
+</td>
+</tr>
+
+<!-- BODY -->
+<tr>
+<td class="content" style="padding:32px;">
+
+<!-- USER -->
+<p style="margin:0; font-size:13px; color:#64748b;">Customer</p>
+<p style="margin:4px 0 20px; font-size:16px; font-weight:600; color:#0f172a;">
+  ${fromName || fromEmail}
+</p>
+
+<!-- TICKET -->
+
+<p style="margin:4px 0 20px; font-size:15px; color:#111827;">
+  <span style="background:#eef2ff; color:#4f46e5; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600;">
+    #${ticketRef}
+  </span>
+  <p style="margin:0; font-size:13px; color:#64748b;">Issue Title</p>
+  <span style="margin-left:8px; font-weight:600;">${subject}</span>
+</p>
+
+<!-- MESSAGE -->
+<p style="margin:0; font-size:13px; color:#64748b;">Issue</p>
+<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:20px; margin-bottom:24px;">
+  <p style="margin:0; font-size:15px; color:#334155; line-height:1.6;">
+    ${message}
+  </p>
+</div>
+
+<!-- CTA BUTTON -->
+
+<div style="text-align:center; margin-bottom:20px;">
+  <a href="https://mail.google.com/mail/?view=cm&to=${fromEmail}&su=Re:%20[Ticket%20%23${ticketRef}]%20${encodeURIComponent(subject)}&body=Hello%20${encodeURIComponent(fromName)},%0D%0A%0D%0AThank%20you%20for%20contacting%20support.%0D%0A%0D%0A----%0D%0ATicket:%20%23${ticketRef}%0D%0ASubject:%20${encodeURIComponent(subject)}%0D%0A----"
+    target="_blank"
+    style="display:inline-block; padding:12px 24px; background:#6366f1; color:#ffffff; text-decoration:none; border-radius:10px; font-size:14px; font-weight:600;">
+    Reply to Customer
+  </a>
+</div>
+
+<!-- INFO -->
+<div style="background:#ecfdf5; border:1px solid #bbf7d0; border-radius:10px; padding:14px;">
+  <p style="margin:0; font-size:13px; color:#166534;">
+    💡 You can also reply directly to this email.
+  </p>
+</div>
+
+</td>
+</tr>
+
+</table>
+
+<!-- FOOTER -->
+<table width="560" style="margin-top:20px;">
+<tr>
+<td align="center">
+
+<p style="margin:0; font-size:13px; color:#6366f1; font-weight:600;">
+  ${process.env.COMPANY || "Colossus IQ"}
+</p>
+
+<p style="margin:6px 0 0; font-size:12px; color:#94a3b8;">
+  © ${new Date().getFullYear()} · Support System
+</p>
+
+</td>
+</tr>
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
+      `,
+    });
+
+    return res.json({ success: true, message: "Admin notified successfully." });
+
+  } catch (mailErr) {
+    console.error("Admin Mail Notify Error:", mailErr);
+    return res.json({
+      success: false,
+      message: "Ticket saved, but admin notification email could not be sent.",
+      mailError: true,
+    });
+  }
+};

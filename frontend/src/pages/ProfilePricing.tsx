@@ -2427,7 +2427,6 @@ const ProfilePricing = () => {
                   <Gift className="h-6 w-6 text-green-600 dark:text-green-400 animate-bounce" />
                   <span className="font-semibold text-green-700 dark:text-green-400">🎉 Limited Time Offer</span>
                   <span className="text-green-700 dark:text-green-400">Save {savings.percentage}% (₹{savings.savings.toLocaleString()}) when you choose the Yearly Plan!</span>
-                  <Heart className="h-5 w-5 text-red-500 animate-pulse" />
                 </div>
               </div>
             </motion.div>
