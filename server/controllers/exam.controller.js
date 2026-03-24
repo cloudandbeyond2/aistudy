@@ -862,7 +862,7 @@ export const startLegacyQuizRetakeAttempt = async (req, res) => {
     });
   } catch (error) {
     console.error('startLegacyQuizRetakeAttempt error:', error);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+    return res.status(500).json({ success: false, message: error?.message || 'Internal server error' });
   }
 };
 
@@ -1182,16 +1182,28 @@ export const startOrgQuizAttempt = async (req, res) => {
 
     const activeAttempt = attempts.find((attempt) => attempt.status === 'in_progress');
     if (activeAttempt) {
-      const storedQuestions = JSON.parse(activeAttempt.exam || '[]');
-      return res.json({
-        success: true,
-        resumed: true,
-        attemptId: activeAttempt._id,
-        attemptNumber: activeAttempt.attemptNumber || 1,
-        quizSettings: settings,
-        questions: sanitizeAttemptQuestions(storedQuestions),
-        summary: buildOrgQuizSummary(attempts, settings)
+      const storedQuestions = parseStoredExamQuestions(activeAttempt.exam || '[]');
+      if (storedQuestions.length > 0) {
+        return res.json({
+          success: true,
+          resumed: true,
+          attemptId: activeAttempt._id,
+          attemptNumber: activeAttempt.attemptNumber || 1,
+          quizSettings: settings,
+          questions: sanitizeAttemptQuestions(storedQuestions),
+          summary: buildOrgQuizSummary(attempts, settings)
+        });
+      }
+
+      activeAttempt.status = 'abandoned';
+      activeAttempt.submittedAt = new Date();
+      activeAttempt.malpracticeFlag = true;
+      activeAttempt.securityEvents.push({
+        type: 'invalid_attempt_payload',
+        severity: 'high',
+        details: 'Stored attempt payload was invalid and the attempt was auto-closed before restart.'
       });
+      await activeAttempt.save();
     }
 
     if (attempts.length >= settings.attemptLimit) {
@@ -1248,7 +1260,7 @@ export const startOrgQuizAttempt = async (req, res) => {
     });
   } catch (error) {
     console.error('startOrgQuizAttempt error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    res.status(500).json({ success: false, message: error?.message || 'Internal server error' });
   }
 };
 
@@ -1409,7 +1421,10 @@ export const submitOrgQuizAttempt = async (req, res) => {
 
     const orgCourse = await OrgCourse.findById(attempt.course).select('quizSettings title organizationId');
     const settings = mergeQuizSettings(orgCourse?.quizSettings || {});
-    const storedQuestions = JSON.parse(attempt.exam || '[]');
+    const storedQuestions = parseStoredExamQuestions(attempt.exam || '[]');
+    if (storedQuestions.length === 0) {
+      return res.status(400).json({ success: false, message: 'Quiz questions are unavailable for this attempt.' });
+    }
     const evaluatedAnswers = storedQuestions.map((question) => {
       const selectedOptionId = answers[question.id] || '';
       const correctOptionId = question.correctAnswer;
@@ -1509,7 +1524,7 @@ export const submitOrgQuizAttempt = async (req, res) => {
     });
   } catch (error) {
     console.error('submitOrgQuizAttempt error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    res.status(500).json({ success: false, message: error?.message || 'Internal server error' });
   }
 };
 

@@ -76,16 +76,18 @@ const buildFallbackExam = (
 
   const items = [];
   let index = 0;
-  while (items.length < questionCount) {
+  let safetyCounter = 0;
+  while (items.length < questionCount && safetyCounter < questionCount * 50) {
     const subtopic = fallbackTopics[index % fallbackTopics.length];
     const template = templates[index % templates.length](subtopic);
     const questionText =
-      items.length < fallbackTopics.length
+      index < fallbackTopics.length
         ? template.question
         : `${template.question} Variant ${Math.floor(index / fallbackTopics.length) + 1}`;
 
     if (blockedQuestions.has(questionText.trim().toLowerCase())) {
       index += 1;
+      safetyCounter += 1;
       continue;
     }
 
@@ -97,6 +99,20 @@ const buildFallbackExam = (
       answer: template.correct
     });
     index += 1;
+    safetyCounter += 1;
+  }
+
+  if (items.length === 0) {
+    throw new Error('Fallback exam generation failed');
+  }
+
+  while (items.length < questionCount) {
+    const baseItem = items[items.length % items.length];
+    items.push({
+      ...baseItem,
+      id: items.length + 1,
+      question: `${baseItem.question} Extra ${items.length + 1}`
+    });
   }
 
   return items;
