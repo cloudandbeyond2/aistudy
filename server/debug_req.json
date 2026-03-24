@@ -1,6 +1,6 @@
 {
-  "courseId": "69a166f75ff34e23a07e6b27",
-  "mainTopic": "PYTHON",
-  "subtopicsString": "Introduction to Python and Installation, Variables, Identifiers, and Keywords, Basic Data Types: Integers, Floats, and Strings, Python Syntax and the Importance of Indentation, Basic Input and Output Operations, Arithmetic and Logical Operators",
+  "courseId": "69a16cbcf73b0f044c031045",
+  "mainTopic": "ANGULAR",
+  "subtopicsString": "Introduction to Components and Decorators, Template Syntax and Data Binding, Directives: Structural and Attribute, Component Communication with @Input and @Output, Lifecycle Hooks",
   "lang": "english"
 }

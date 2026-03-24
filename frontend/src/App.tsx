@@ -142,6 +142,7 @@ const App = () => (
                     <Route path="profile" element={<Profile />} />
                       <Route path="analytics" element={<Analytics />} />
                     <Route path="org" element={<OrgDashboard />} />
+                    <Route path="org/quiz-retake-requests" element={<AdminQuizRetakeRequests />} />
                     <Route path="org/career" element={<OrgCareerPlacement />} />
                     <Route path="org/reports" element={<OrgKpiReports />} />
                     <Route path="org/assignment/:assignmentId/submissions" element={<OrgAssignmentSubmissions />} />

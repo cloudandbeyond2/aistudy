@@ -6,6 +6,8 @@ import User from '../models/User.js';
 import Lang from '../models/Lang.js';
 import IssuedCertificate from '../models/IssuedCertificate.js';
 import QuizRetakeRequest from '../models/QuizRetakeRequest.js';
+import Admin from '../models/Admin.js';
+import Organization from '../models/Organization.js';
 import { sendMail } from '../services/mail.service.js';
 import { createNotification } from './notification.controller.js';
 import { generateQuizQuestionSet } from './aiExam.controller.js';
@@ -196,6 +198,64 @@ const extractCourseSubtopics = (course) => {
   }
 };
 
+const parsePreparedQuestions = (rawQuestions = '') => {
+  try {
+    const parsed = JSON.parse(rawQuestions || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+};
+
+const prepareLegacyRetakeQuestions = async ({ course, lang = 'English', attempts = [] }) => {
+  const subtopics = extractCourseSubtopics(course);
+  const excludedQuestionTexts = collectLegacyExcludedQuestions(attempts);
+
+  return generateQuizQuestionSet({
+    mainTopic: course?.mainTopic || 'Course',
+    subtopicsString: subtopics.join(', '),
+    lang,
+    excludeQuestionTexts,
+    questionCount: 30
+  });
+};
+
+const resolveRetakeRequestAccess = async ({ requesterId = '', requesterEmail = '', organizationId = '' }) => {
+  const normalizedEmail = String(requesterEmail || '').trim().toLowerCase();
+  const normalizedOrganizationId = String(organizationId || '').trim();
+
+  if (normalizedEmail) {
+    const platformAdmin = await Admin.findOne({ email: normalizedEmail }).select('_id email');
+    if (platformAdmin) {
+      return { ok: true, scope: 'platform', platformAdmin };
+    }
+  }
+
+  let requesterUser = null;
+  if (requesterId && mongoose.Types.ObjectId.isValid(requesterId)) {
+    requesterUser = await User.findById(requesterId).select('_id role organization email');
+  }
+  if (!requesterUser && normalizedEmail) {
+    requesterUser = await User.findOne({ email: normalizedEmail }).select('_id role organization email');
+  }
+
+  if (
+    requesterUser &&
+    ['org_admin', 'dept_admin'].includes(requesterUser.role) &&
+    requesterUser.organization &&
+    (!normalizedOrganizationId || String(requesterUser.organization) === normalizedOrganizationId)
+  ) {
+    return {
+      ok: true,
+      scope: 'organization',
+      requesterUser,
+      organizationId: String(requesterUser.organization)
+    };
+  }
+
+  return { ok: false, status: 403, message: 'Access denied' };
+};
+
 const notifyOrgAdminsOfMalpractice = async (attempt, details) => {
   if (!attempt?.organizationId) return;
 
@@ -265,19 +325,27 @@ const buildLegacyQuizSummary = ({ attempts = [], latestRequest = null, certifica
   };
 };
 
-const notifyPlatformAdminsOfRetakeRequest = async (requestDoc, courseTitle, studentName) => {
-  const admins = await User.find({ role: 'admin' }).select('_id');
+const notifyRetakeApprovers = async ({ course, courseTitle, studentName }) => {
+  if (course?.organizationId) {
+    const orgApprovers = await User.find({
+      organization: course.organizationId,
+      role: { $in: ['org_admin', 'dept_admin'] }
+    }).select('_id');
 
-  await Promise.all(
-    admins.map((admin) =>
-      createNotification({
-        user: admin._id,
-        type: 'info',
-        message: `Retake request submitted for ${courseTitle || 'course quiz'} by ${studentName || 'a student'}.`,
-        link: '/admin/quiz-retake-requests'
-      })
-    )
-  );
+    await Promise.all(
+      orgApprovers.map((admin) =>
+        createNotification({
+          user: admin._id,
+          type: 'info',
+          message: `Retake request submitted for ${courseTitle || 'course quiz'} by ${studentName || 'a student'}.`,
+          link: '/dashboard/org/quiz-retake-requests'
+        })
+      )
+    );
+    return;
+  }
+
+  // Platform admin users are stored separately, so keep the request in the admin panel list.
 };
 
 /**
@@ -702,14 +770,16 @@ export const startLegacyQuizRetakeAttempt = async (req, res) => {
     }
 
     const langObj = await Lang.findOne({ course: courseId }).select('lang');
-    const subtopics = extractCourseSubtopics(course);
-    const excludedQuestionTexts = collectLegacyExcludedQuestions(attempts);
-    const questions = await generateQuizQuestionSet({
-      mainTopic: course.mainTopic || 'Course',
-      subtopicsString: subtopics.join(', '),
-      lang: langObj?.lang || 'English',
-      excludeQuestionTexts: excludedQuestionTexts
-    });
+    const preparedQuestions = latestRequest?.status === 'approved'
+      ? parsePreparedQuestions(latestRequest.preparedQuestions)
+      : [];
+    const questions = preparedQuestions.length > 0
+      ? preparedQuestions
+      : await prepareLegacyRetakeQuestions({
+          course,
+          lang: langObj?.lang || 'English',
+          attempts
+        });
 
     return res.json({
       success: true,
@@ -717,7 +787,8 @@ export const startLegacyQuizRetakeAttempt = async (req, res) => {
       questions,
       quizStatus,
       regenerated: attempts.length > 0,
-      excludedQuestionCount: excludedQuestionTexts.length
+      preparedByAdmin: preparedQuestions.length > 0,
+      excludedQuestionCount: collectLegacyExcludedQuestions(attempts).length
     });
   } catch (error) {
     console.error('startLegacyQuizRetakeAttempt error:', error);
@@ -729,7 +800,7 @@ export const createLegacyQuizRetakeRequest = async (req, res) => {
   const { courseId, userId: providedUserId, requestReason = '' } = req.body;
 
   try {
-    const course = await Course.findById(courseId).select('_id mainTopic');
+    const course = await Course.findById(courseId).select('_id mainTopic organizationId');
     if (!course) {
       return res.status(404).json({ success: false, message: 'Course not found' });
     }
@@ -785,7 +856,11 @@ export const createLegacyQuizRetakeRequest = async (req, res) => {
     });
 
     const student = await User.findById(userId).select('mName');
-    await notifyPlatformAdminsOfRetakeRequest(requestDoc, course.mainTopic, student?.mName || 'Student');
+    await notifyRetakeApprovers({
+      course,
+      courseTitle: course.mainTopic,
+      studentName: student?.mName || 'Student'
+    });
 
     return res.json({
       success: true,
@@ -805,6 +880,15 @@ export const createLegacyQuizRetakeRequest = async (req, res) => {
 
 export const getLegacyQuizRetakeRequests = async (req, res) => {
   try {
+    const access = await resolveRetakeRequestAccess({
+      requesterId: req.query.requesterId || '',
+      requesterEmail: req.query.requesterEmail || '',
+      organizationId: req.query.organizationId || ''
+    });
+    if (!access.ok) {
+      return res.status(access.status).json({ success: false, message: access.message });
+    }
+
     const requests = await QuizRetakeRequest.find()
       .sort({ createdAt: -1 })
       .lean();
@@ -812,18 +896,39 @@ export const getLegacyQuizRetakeRequests = async (req, res) => {
     const userIds = [...new Set(requests.map((request) => request.userId).filter(Boolean))];
     const courseIds = [...new Set(requests.map((request) => request.course).filter(Boolean))];
     const users = await User.find({ _id: { $in: userIds } }).select('_id mName email').lean();
-    const courses = await Course.find({ _id: { $in: courseIds } }).select('_id mainTopic').lean();
+    const courses = await Course.find({ _id: { $in: courseIds } }).select('_id mainTopic organizationId').lean();
+    const organizationIds = [...new Set(courses.map((course) => course.organizationId).filter(Boolean))];
+    const organizations = await Organization.find({ _id: { $in: organizationIds } }).select('_id name').lean();
     const userMap = new Map(users.map((user) => [String(user._id), user]));
     const courseMap = new Map(courses.map((course) => [String(course._id), course]));
+    const organizationMap = new Map(organizations.map((org) => [String(org._id), org]));
+
+    const visibleRequests =
+      access.scope === 'organization'
+        ? requests.filter((request) => {
+            const course = courseMap.get(String(request.course));
+            return course?.organizationId && String(course.organizationId) === String(access.organizationId);
+          })
+        : requests;
 
     return res.json({
       success: true,
-      requests: requests.map((request) => ({
+      requests: visibleRequests.map((request) => {
+        const mappedCourse = courseMap.get(String(request.course));
+        const orgId = mappedCourse?.organizationId ? String(mappedCourse.organizationId) : '';
+        const organizationName = orgId ? organizationMap.get(orgId)?.name || 'Organization' : '';
+        return ({
         ...request,
         studentName: userMap.get(String(request.userId))?.mName || 'Student',
         studentEmail: userMap.get(String(request.userId))?.email || '',
-        courseTitle: courseMap.get(String(request.course))?.mainTopic || 'Course'
-      }))
+        courseTitle: mappedCourse?.mainTopic || 'Course',
+        organizationId: orgId,
+        organizationName,
+        approvalScope: orgId ? 'organization' : 'platform',
+        generatedQuestionCount: request.generatedQuestionCount || 0,
+        regeneratedAt: request.regeneratedAt || null
+      });
+      })
     });
   } catch (error) {
     console.error('getLegacyQuizRetakeRequests error:', error);
@@ -832,7 +937,15 @@ export const getLegacyQuizRetakeRequests = async (req, res) => {
 };
 
 export const reviewLegacyQuizRetakeRequest = async (req, res) => {
-  const { requestId, status, adminComment = '', reviewerId = '' } = req.body;
+  const {
+    requestId,
+    status,
+    adminComment = '',
+    reviewerId = '',
+    requesterEmail = '',
+    organizationId = '',
+    regenerateQuiz = false
+  } = req.body;
 
   try {
     if (!['approved', 'rejected'].includes(status)) {
@@ -844,16 +957,54 @@ export const reviewLegacyQuizRetakeRequest = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Retake request not found' });
     }
 
+    const course = await Course.findById(requestDoc.course).select('mainTopic organizationId');
+    const access = await resolveRetakeRequestAccess({
+      requesterId: reviewerId,
+      requesterEmail,
+      organizationId: organizationId || String(course?.organizationId || '')
+    });
+    if (!access.ok) {
+      return res.status(access.status).json({ success: false, message: access.message });
+    }
+
+    if (
+      access.scope === 'organization' &&
+      String(course?.organizationId || '') !== String(access.organizationId || '')
+    ) {
+      return res.status(403).json({ success: false, message: 'You can review only your organization retake requests.' });
+    }
+
+    if (status === 'approved' && regenerateQuiz) {
+      const langObj = await Lang.findOne({ course: requestDoc.course }).select('lang');
+      const attempts = await Exam.find({
+        course: requestDoc.course,
+        userId: requestDoc.userId,
+        examType: 'legacy'
+      }).sort({ submittedAt: -1, date: -1 });
+      const regeneratedQuestions = await prepareLegacyRetakeQuestions({
+        course,
+        lang: langObj?.lang || 'English',
+        attempts
+      });
+
+      requestDoc.preparedQuestions = JSON.stringify(regeneratedQuestions);
+      requestDoc.generatedQuestionCount = regeneratedQuestions.length;
+      requestDoc.regeneratedAt = new Date();
+    }
+
     requestDoc.status = status;
     requestDoc.adminComment = String(adminComment || '').trim();
     requestDoc.reviewedBy = String(reviewerId || '').trim();
     requestDoc.reviewedAt = new Date();
     if (status === 'approved') {
       requestDoc.consumedAt = null;
+    } else {
+      requestDoc.preparedQuestions = '';
+      requestDoc.generatedQuestionCount = 0;
+      requestDoc.regeneratedAt = null;
     }
     await requestDoc.save();
 
-    const course = await Course.findById(requestDoc.course).select('mainTopic');
     await createNotification({
       user: requestDoc.userId,
       type: status === 'approved' ? 'success' : 'warning',

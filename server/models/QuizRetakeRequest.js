@@ -16,7 +16,10 @@ const quizRetakeRequestSchema = new mongoose.Schema(
     adminComment: { type: String, default: '' },
     reviewedBy: { type: String, default: '' },
     reviewedAt: { type: Date },
-    consumedAt: { type: Date }
+    consumedAt: { type: Date },
+    preparedQuestions: { type: String, default: '' },
+    generatedQuestionCount: { type: Number, default: 0 },
+    regeneratedAt: { type: Date }
   },
   {
     timestamps: true

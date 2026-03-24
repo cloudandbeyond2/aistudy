@@ -43,6 +43,7 @@ import {
   LifeBuoy,
   Award,
   BarChart3,
+  RotateCcw,
   ChevronLeft,
   ChevronRight,
   Star,
@@ -672,6 +673,13 @@ const DashboardLayout = () => {
                         isActive={isActive('/dashboard/org/reports')}
                         isExpanded={isExpanded}
                       />
+                      <MenuItem 
+                        icon={RotateCcw} 
+                        label="Quiz Retakes" 
+                        to="/dashboard/org/quiz-retake-requests" 
+                        isActive={isActive('/dashboard/org/quiz-retake-requests')}
+                        isExpanded={isExpanded}
+                      />
                     </>
                   )}
 
@@ -757,6 +765,13 @@ const DashboardLayout = () => {
                         label="Noticeboard" 
                         to="/dashboard/org?tab=notices" 
                         isActive={location.search === '?tab=notices'}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={RotateCcw} 
+                        label="Quiz Retakes" 
+                        to="/dashboard/org/quiz-retake-requests" 
+                        isActive={isActive('/dashboard/org/quiz-retake-requests')}
                         isExpanded={isExpanded}
                       />
                     </>
