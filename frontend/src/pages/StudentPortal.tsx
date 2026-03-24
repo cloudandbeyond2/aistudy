@@ -6,6 +6,10 @@ import SEO from '@/components/SEO';
 import axios from 'axios';
 import { serverURL } from '@/constants';
 import { useNavigate } from 'react-router-dom';
+const toTitleCase = (str) =>
+  str?.replace(/\w\S*/g, (txt) =>
+    txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+  );
 
 const StudentPortal = () => {
     const [courses, setCourses] = useState([]);
@@ -13,6 +17,24 @@ const StudentPortal = () => {
     const [notifications, setNotifications] = useState<any[]>([]);
     const [quizSummaries, setQuizSummaries] = useState<Record<string, any>>({});
     const navigate = useNavigate();
+
+    const getCourseThumbnail = (course) => {
+  try {
+    const jsonData = JSON.parse(course.content);
+   const topics =
+  jsonData.course_topics ||
+  jsonData?.[course.mainTopic?.toLowerCase()] ||
+  [];
+
+    for (const topic of topics) {
+      for (const sub of topic.subtopics || []) {
+        if (sub.image) return sub.image;
+      }
+    }
+  } catch (e) {}
+
+  return "https://images.unsplash.com/photo-1516321318423-f06f85e504b3";
+};
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -91,20 +113,50 @@ const StudentPortal = () => {
         <div className="container mx-auto py-8 animate-fade-in space-y-6">
             <SEO title="Student Portal" description="Access your courses and learning materials." />
 
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gradient bg-gradient-to-r from-primary to-purple-600">My Courses</h1>
-                    <p className="text-muted-foreground mt-1">
-                        Welcome back, <span className="font-medium text-foreground">{studentInfo?.mName || 'Scholar'}</span>!
-                        {studentInfo?.studentDetails?.department && (
-                            <span className="ml-2 text-primary font-medium">
-                                • {studentInfo.studentDetails.department}
-                                {studentInfo.studentDetails.section && ` - Section ${studentInfo.studentDetails.section}`}
-                            </span>
-                        )}
-                    </p>
-                </div>
-            </div>
+           <div className="relative group">
+  
+  {/* Glow background */}
+  <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-purple-500/10 to-indigo-500/10 blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-xl" />
+
+  <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 rounded-xl border border-border/50 bg-card/50 backdrop-blur-md">
+
+    {/* LEFT CONTENT */}
+    <div>
+      <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary via-indigo-500 to-purple-500 bg-clip-text text-transparent flex items-center gap-2">
+        My Courses
+        <Sparkles className="w-5 h-5 text-yellow-500 animate-pulse" />
+      </h1>
+
+      <p className="text-muted-foreground mt-1 text-sm">
+        Welcome back,{" "}
+        <span className="font-semibold text-primary">
+          {studentInfo?.mName || "Scholar"}
+        </span>{" "}
+        👋
+      </p>
+    </div>
+
+    {/* RIGHT SIDE STATS (NEW 🔥) */}
+    <div className="flex gap-3 text-xs">
+
+      <div className="px-3 py-2 rounded-lg bg-primary/10 border border-primary/20">
+        <span className="block font-semibold text-primary">
+          {courses.length}
+        </span>
+        <span className="text-muted-foreground">Courses</span>
+      </div>
+
+      <div className="px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/20">
+        <span className="block font-semibold text-green-600">
+          {courses.filter(c => c.progressPercentage === 100).length}
+        </span>
+        <span className="text-muted-foreground">Completed</span>
+      </div>
+
+    </div>
+
+  </div>
+</div>
 
             {/* Notifications Section */}
             {notifications.length > 0 && (
@@ -140,96 +192,99 @@ const StudentPortal = () => {
                     })}
                 </div>
             )}
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+  {courses.map((course: any, index) => {
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.length > 0 ? courses.map((course: any) => {
-                    const title = course.title || course.mainTopic;
-                    const rawDescription = course.description || (course.content ? "AI Generated Course" : "");
-                    const description = rawDescription.replace(/<[^>]*>?/gm, '');
-                    const quizSummary = quizSummaries[String(course._id)];
-                    const hasQuiz = (course.quizzes?.length || 0) > 0;
+  const progress = course.progressPercentage || 0;
+  const thumbnail = getCourseThumbnail(course);
 
-                    const nextAttemptAt = quizSummary?.nextAttemptAvailableAt ? new Date(quizSummary.nextAttemptAvailableAt) : null;
-                    const cooldownActive = !!nextAttemptAt && nextAttemptAt > new Date();
+  return (
+    <div
+      key={course._id}
+      className="group"
+      style={{ transitionDelay: `${index * 50}ms` }}
+    >
+      <Card className="overflow-hidden hover:shadow-2xl transition-all duration-500 border border-border/50 bg-card/60 backdrop-blur-md hover:border-primary/30 relative hover:-translate-y-1 cursor-pointer">
 
-                    let quizLabel = '';
-                    let quizClass = 'text-muted-foreground';
-                    if (hasQuiz) {
-                        if (quizSummary?.passed) {
-                            quizLabel = 'Exam passed';
-                            quizClass = 'text-emerald-600';
-                        } else if (quizSummary?.maxAttemptsReached) {
-                            quizLabel = 'Exam locked (max attempts reached)';
-                            quizClass = 'text-red-600';
-                        } else if (cooldownActive) {
-                            quizLabel = `Retry after ${nextAttemptAt!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-                            quizClass = 'text-amber-600';
-                        } else if ((quizSummary?.attemptCount || 0) > 0) {
-                            quizLabel = `Attempt ${quizSummary.attemptCount}/${quizSummary.attemptLimit || 2}`;
-                            quizClass = 'text-blue-600';
-                        } else {
-                            quizLabel = 'Exam not started';
-                        }
-                    }
+        {/* Glow Effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:via-primary/10 group-hover:to-primary/5 rounded-xl transition-all duration-700 pointer-events-none" />
 
-                    let topicCount = 0;
-                    if (course.topics) {
-                        topicCount = course.topics.length;
-                    } else if (course.content) {
-                        try {
-                            const content = JSON.parse(course.content);
-                            topicCount = content.course_topics?.length || 0;
-                        } catch (e) {
-                            console.error("Error parsing course content", e);
-                        }
-                    }
+        {/* Thumbnail */}
+        <div className="aspect-video relative overflow-hidden">
+          <img
+            src={thumbnail}
+            className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700"
+          />
 
-                    return (
-                        <Card key={course._id} className="hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-primary group" onClick={() => window.location.href = `/course/${course._id}`}>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors">
-                                    <BookOpen className="w-5 h-5 text-primary" />
-                                    {title}
-                                </CardTitle>
-                                <CardDescription className="line-clamp-2">{description}</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                        <span className="flex items-center gap-1">
-                                            <FileText className="w-4 h-4" />
-                                            {topicCount} topics
-                                        </span>
-                                        <span className="font-medium text-primary">{course.progressPercentage || 0}% Complete</span>
-                                    </div>
-                                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                                        <div
-                                            className="bg-primary h-full transition-all duration-500"
-                                            style={{ width: `${course.progressPercentage || 0}%` }}
-                                        />
-                                    </div>
-                                    {hasQuiz && (
-                                        <div className={`text-xs font-medium ${quizClass}`}>
-                                            {quizLabel}
-                                        </div>
-                                    )}
-                                    <div className="flex justify-end pt-2">
-                                        <Button size="sm" variant="outline" className="group-hover:bg-primary group-hover:text-primary-foreground">
-                                            {course.progressPercentage >= 100 ? 'View Course' : course.progressPercentage > 0 ? 'Continue Learning' : 'Start Learning'}
-                                        </Button>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    );
-                }) : (
-                    <div className="col-span-full flex flex-col items-center justify-center py-16 bg-muted/30 rounded-lg border-2 border-dashed">
-                        <BookOpen className="w-16 h-16 text-muted-foreground mb-4 opacity-50" />
-                        <h3 className="text-xl font-medium text-foreground">No Courses Assigned</h3>
-                        <p className="text-muted-foreground mt-2">Your organization hasn't assigned any courses yet.</p>
-                    </div>
-                )}
+          {/* Dark Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+          {/* Status Badge */}
+          <div className="absolute top-3 right-3">
+            <span className={`text-xs px-2 py-1 rounded text-white shadow-lg ${
+              progress === 100
+                ? "bg-gradient-to-r from-green-500 to-emerald-500"
+                : "bg-gradient-to-r from-orange-500 to-red-500"
+            }`}>
+              {progress === 100 ? "Completed ✓" : "In Progress"}
+            </span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg leading-tight capitalize line-clamp-2 group-hover:text-primary transition-colors">
+            {course.title || course.mainTopic}
+          </CardTitle>
+
+          <CardDescription className="text-xs">
+            {course.type || "AI Generated Course"}
+          </CardDescription>
+        </CardHeader>
+
+        {/* Progress */}
+        <CardContent className="pb-2">
+          <div className="mb-3">
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-muted-foreground">Progress</span>
+              <span className="font-semibold text-primary">{progress}%</span>
             </div>
+
+            <div className="h-2 bg-secondary/50 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-primary to-indigo-500 transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span>{course.topics?.length || 0} topics</span>
+            <span>AI Curated</span>
+          </div>
+        </CardContent>
+
+        {/* Button */}
+        <div className="p-4">
+          <Button
+            onClick={() => navigate(`/course/${course._id}`)}
+            variant="ghost"
+            className="w-full justify-between group-hover:bg-gradient-to-r group-hover:from-primary/10 group-hover:to-indigo-500/10 transition-all"
+          >
+            <span>
+              {progress === 0
+                ? "Start Learning"
+                : progress === 100
+                ? "Review Course"
+                : "Continue Learning"}
+            </span>
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+})}
+</div>
 
             <div className="mt-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden group">
                 <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl group-hover:bg-white/20 transition-all duration-500" />
