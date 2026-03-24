@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import Swal from "sweetalert2";
 import { serverURL } from "@/constants";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -11,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
-import { Search, ChevronLeft, ChevronRight, PlusCircle, X, Filter } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, PlusCircle, X, Filter, Loader2 } from "lucide-react";
 
 const getStatusColor = (status) => {
   switch (status?.toLowerCase()) {
@@ -41,6 +42,10 @@ const SupportTickets = () => {
   const [statusFilter, setStatusFilter] = useState("All");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
+  // ── Loading states ────────────────────────────────────────────────────────────
+  const [submitting, setSubmitting] = useState(false);   // Create Ticket button
+  const [sending, setSending] = useState(false);         // Send Reply button
+
   const itemsPerPage = 10;
   const scrollRef = useRef(null);
 
@@ -57,18 +62,15 @@ const SupportTickets = () => {
   const fetchTickets = async () => {
     const userId = sessionStorage.getItem("uid");
     if (!userId) return;
-
     const res = await axios.get(`${serverURL}/api/tickets/user/${userId}`);
     setTickets(res.data.tickets || []);
   };
 
   const openChat = async (ticket) => {
     setSelectedTicket(ticket);
-
     await axios.put(`${serverURL}/api/tickets/${ticket._id}/mark-read`, {
       role: "user",
     });
-
     fetchTickets();
   };
 
@@ -79,14 +81,13 @@ const SupportTickets = () => {
     const userEmail = sessionStorage.getItem("email");
     const userName  = sessionStorage.getItem("name") || "User";
 
+    setSending(true); // ← start spinner
     try {
-      // 1. Save the reply
       await axios.post(`${serverURL}/api/tickets/${selectedTicket._id}/reply`, {
         sender:  "user",
         message: reply,
       });
 
-      // 2. Notify admin via email
       await axios.post(`${serverURL}/api/notify-admin`, {
         fromEmail: userEmail,
         fromName:  userName,
@@ -96,7 +97,15 @@ const SupportTickets = () => {
         type:      "reply",
       });
 
-      alert("✅ Reply sent successfully! Admin has been notified.");
+      Swal.fire({
+        icon:              "success",
+        title:             "Reply Sent!",
+        text:              "Your message has been sent and admin has been notified.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#2563eb",
+        timer:             3000,
+        timerProgressBar:  true,
+      });
 
       setReply("");
       await fetchTickets();
@@ -104,7 +113,15 @@ const SupportTickets = () => {
 
     } catch (error) {
       console.error("Send reply error:", error);
-      alert("❌ Failed to send reply. Please try again.");
+      Swal.fire({
+        icon:              "error",
+        title:             "Failed to Send",
+        text:              "Something went wrong. Please try again.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#dc2626",
+      });
+    } finally {
+      setSending(false); // ← stop spinner always
     }
   };
 
@@ -113,10 +130,8 @@ const SupportTickets = () => {
       await axios.put(`${serverURL}/api/tickets/${ticketId}/status`, {
         status: "Resolved",
       });
-
       setSelectedTicket(null);
       fetchTickets();
-
     } catch (error) {
       console.error("Error closing ticket:", error);
     }
@@ -131,8 +146,8 @@ const SupportTickets = () => {
     const userId    = sessionStorage.getItem("uid");
     const userType  = sessionStorage.getItem("type");
 
+    setSubmitting(true); // ← start spinner
     try {
-      // 1. Create the ticket
       const res = await axios.post(`${serverURL}/api/tickets`, {
         subject,
         description,
@@ -142,7 +157,6 @@ const SupportTickets = () => {
 
       const newTicketId = res.data.ticket?._id || res.data._id;
 
-      // 2. Notify admin via email
       await axios.post(`${serverURL}/api/notify-admin`, {
         fromEmail: userEmail,
         fromName:  userName,
@@ -152,7 +166,15 @@ const SupportTickets = () => {
         type:      "new",
       });
 
-      alert("✅ Ticket submitted successfully! Our team will get back to you shortly.");
+      Swal.fire({
+        icon:              "success",
+        title:             "Ticket Submitted!",
+        text:              "Your ticket has been created. Our team will get back to you shortly.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#2563eb",
+        timer:             3000,
+        timerProgressBar:  true,
+      });
 
       setSubject("");
       setDescription("");
@@ -161,7 +183,15 @@ const SupportTickets = () => {
 
     } catch (error) {
       console.error("Create ticket error:", error);
-      alert("❌ Failed to create ticket. Please try again.");
+      Swal.fire({
+        icon:              "error",
+        title:             "Failed to Submit",
+        text:              "Something went wrong. Please try again.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#dc2626",
+      });
+    } finally {
+      setSubmitting(false); // ← stop spinner always
     }
   };
 
@@ -237,9 +267,7 @@ const SupportTickets = () => {
               <option value="In Progress">In Progress</option>
               <option value="Resolved">Resolved</option>
             </select>
-            <Button
-              variant="outline"
-              size="sm"
+            <Button variant="outline" size="sm"
               onClick={() => { setSearchTerm(""); setStatusFilter("All"); }}
             >
               Clear
@@ -267,9 +295,7 @@ const SupportTickets = () => {
               <option value="In Progress">In Progress</option>
               <option value="Resolved">Resolved</option>
             </select>
-            <Button
-              variant="outline"
-              size="sm"
+            <Button variant="outline" size="sm"
               onClick={() => { setSearchTerm(""); setStatusFilter("All"); }}
             >
               Clear
@@ -288,9 +314,7 @@ const SupportTickets = () => {
                   onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                 />
               </div>
-              <Button
-                variant="outline"
-                size="sm"
+              <Button variant="outline" size="sm"
                 onClick={() => setShowMobileFilters(!showMobileFilters)}
                 className="shrink-0 px-3"
               >
@@ -314,20 +338,13 @@ const SupportTickets = () => {
                   <option value="Resolved">Resolved</option>
                 </select>
                 <div className="flex gap-2 mt-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSearchTerm("");
-                      setStatusFilter("All");
-                      setShowMobileFilters(false);
-                    }}
+                  <Button variant="outline" size="sm"
+                    onClick={() => { setSearchTerm(""); setStatusFilter("All"); setShowMobileFilters(false); }}
                     className="flex-1"
                   >
                     Clear All
                   </Button>
-                  <Button
-                    size="sm"
+                  <Button size="sm"
                     onClick={() => setShowMobileFilters(false)}
                     className="flex-1 bg-blue-600 hover:bg-blue-700"
                   >
@@ -367,44 +384,26 @@ const SupportTickets = () => {
                           <TableCell className="font-mono text-xs text-gray-500">
                             #{ticket._id.slice(-6).toUpperCase()}
                           </TableCell>
-
-                          <TableCell className="font-medium">
-                            {ticket.subject}
-                          </TableCell>
-
+                          <TableCell className="font-medium">{ticket.subject}</TableCell>
                           <TableCell>
-                            <Badge
-                              variant="outline"
-                              className={getStatusColor(ticket.status)}
-                            >
+                            <Badge variant="outline" className={getStatusColor(ticket.status)}>
                               {ticket.status || "Open"}
                             </Badge>
                           </TableCell>
-
                           <TableCell className="whitespace-nowrap text-sm">
                             {new Date(ticket.createdAt).toLocaleDateString("en-GB", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
+                              day: "2-digit", month: "short", year: "numeric",
                             })}
                           </TableCell>
-
                           <TableCell>
                             {unreadCount > 0 ? (
-                              <Badge className="bg-blue-600 text-white">
-                                🔔 {unreadCount}
-                              </Badge>
+                              <Badge className="bg-blue-600 text-white">🔔 {unreadCount}</Badge>
                             ) : (
                               <span className="opacity-30">🔔</span>
                             )}
                           </TableCell>
-
                           <TableCell className="text-right">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openChat(ticket)}
-                            >
+                            <Button size="sm" variant="outline" onClick={() => openChat(ticket)}>
                               View
                             </Button>
                           </TableCell>
@@ -413,10 +412,7 @@ const SupportTickets = () => {
                     })
                   ) : (
                     <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className="text-center py-8 text-gray-500"
-                      >
+                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                         No tickets found
                       </TableCell>
                     </TableRow>
@@ -435,9 +431,7 @@ const SupportTickets = () => {
                 {filteredTickets.length} tickets
               </div>
               <div className="flex items-center space-x-2 order-1 sm:order-2">
-                <Button
-                  variant="outline"
-                  size="sm"
+                <Button variant="outline" size="sm"
                   onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
                   className="h-8 w-8 sm:h-9 sm:w-auto"
@@ -445,17 +439,11 @@ const SupportTickets = () => {
                   <ChevronLeft className="h-4 w-4" />
                   <span className="hidden sm:inline ml-1">Previous</span>
                 </Button>
-
                 <span className="text-xs sm:text-sm whitespace-nowrap">
                   Page {currentPage} of {totalPages || 1}
                 </span>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
+                <Button variant="outline" size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages || totalPages === 0}
                   className="h-8 w-8 sm:h-9 sm:w-auto"
                 >
@@ -477,10 +465,7 @@ const SupportTickets = () => {
                 <DialogTitle className="text-base sm:text-lg font-semibold break-words flex-1">
                   {selectedTicket?.subject}
                 </DialogTitle>
-                <Badge
-                  variant="outline"
-                  className={getStatusColor(selectedTicket?.status)}
-                >
+                <Badge variant="outline" className={getStatusColor(selectedTicket?.status)}>
                   {selectedTicket?.status}
                 </Badge>
               </div>
@@ -506,22 +491,12 @@ const SupportTickets = () => {
           </DialogHeader>
 
           <div className="flex flex-col h-[50vh] sm:h-[450px] bg-muted">
-            <div
-              ref={scrollRef}
-              className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4"
-            >
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
               {selectedTicket?.messages?.map((msg, i) => (
-                <div
-                  key={i}
-                  className={`flex ${
-                    msg.sender === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
+                <div key={i} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
                   <div
                     className={`max-w-[85%] sm:max-w-[80%] px-3 sm:px-4 py-2 rounded-2xl text-xs sm:text-sm ${
-                      msg.sender === "user"
-                        ? "bg-blue-600 text-white"
-                        : "bg-background border"
+                      msg.sender === "user" ? "bg-blue-600 text-white" : "bg-background border"
                     }`}
                   >
                     <p className="break-words">{msg.message}</p>
@@ -533,21 +508,31 @@ const SupportTickets = () => {
               ))}
             </div>
 
+            {/* ── SEND BUTTON with spinner ── */}
             <div className="p-3 sm:p-4 bg-background border-t flex gap-2">
               <Input
                 className="bg-background text-sm"
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
                 placeholder="Type a message..."
+                disabled={sending}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    sendReply();
-                  }
+                  if (e.key === "Enter" && !sending) { e.preventDefault(); sendReply(); }
                 }}
               />
-              <Button onClick={sendReply} className="bg-blue-600 shrink-0">
-                Send
+              <Button
+                onClick={sendReply}
+                disabled={sending}
+                className="bg-blue-600 shrink-0 min-w-[72px]"
+              >
+                {sending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                    Sending
+                  </>
+                ) : (
+                  "Send"
+                )}
               </Button>
             </div>
           </div>
@@ -570,6 +555,7 @@ const SupportTickets = () => {
                 placeholder="Brief title of your issue"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
+                disabled={submitting}
                 className="text-sm"
               />
             </div>
@@ -580,6 +566,7 @@ const SupportTickets = () => {
                 className="min-h-[100px] sm:min-h-[120px] text-sm"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                disabled={submitting}
               />
             </div>
           </div>
@@ -588,15 +575,26 @@ const SupportTickets = () => {
             <Button
               variant="outline"
               onClick={() => setOpen(false)}
+              disabled={submitting}
               className="w-full sm:w-auto"
             >
               Cancel
             </Button>
+
+            {/* ── SUBMIT BUTTON with spinner ── */}
             <Button
               onClick={handleSubmit}
-              className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+              disabled={submitting}
+              className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto min-w-[130px]"
             >
-              Submit Ticket
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Ticket"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
