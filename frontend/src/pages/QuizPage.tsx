@@ -36,6 +36,7 @@ enum QuizState {
 
 const defaultManualQuizSettings = {
     examMode: true,
+    quizMode: 'secure',
     attemptLimit: 2,
     cooldownMinutes: 60,
     passPercentage: 50,
@@ -43,6 +44,16 @@ const defaultManualQuizSettings = {
     difficultyMode: 'mixed',
     shuffleQuestions: true,
     shuffleOptions: true,
+    reviewMode: 'after_submit_with_answers',
+    positiveMarkPerCorrect: 1,
+    negativeMarkingEnabled: false,
+    negativeMarkPerWrong: 0.25,
+    sectionPatternEnabled: false,
+    sections: {
+        easy: 0,
+        medium: 0,
+        difficult: 0
+    },
     proctoring: {
         requireCamera: true,
         requireMicrophone: true,
@@ -239,6 +250,25 @@ const QuizPage = () => {
         return false;
     };
 
+    const getEffectiveProctoring = (settings: any) => {
+        if ((settings?.quizMode || 'secure') === 'practice') {
+            return {
+                requireCamera: false,
+                requireMicrophone: false,
+                detectFullscreenExit: false,
+                detectTabSwitch: false,
+                detectCopyPaste: false,
+                detectContextMenu: false,
+                detectNoise: false
+            };
+        }
+
+        return {
+            ...defaultManualQuizSettings.proctoring,
+            ...(settings?.proctoring || {})
+        };
+    };
+
     function init() {
         try {
             console.log('Quiz Init - Raw questions:', questions);
@@ -341,6 +371,10 @@ const QuizPage = () => {
                 setQuizSettings({
                     ...defaultManualQuizSettings,
                     ...(response.data.quizSettings || {}),
+                    sections: {
+                        ...defaultManualQuizSettings.sections,
+                        ...(response.data.quizSettings?.sections || {})
+                    },
                     proctoring: {
                         ...defaultManualQuizSettings.proctoring,
                         ...(response.data.quizSettings?.proctoring || {})
@@ -420,13 +454,14 @@ const QuizPage = () => {
             ? {
                 ...defaultManualQuizSettings,
                 ...settingsOverride,
-                proctoring: {
-                    ...defaultManualQuizSettings.proctoring,
-                    ...(settingsOverride?.proctoring || {})
-                }
+                sections: {
+                    ...defaultManualQuizSettings.sections,
+                    ...(settingsOverride?.sections || {})
+                },
+                proctoring: getEffectiveProctoring(settingsOverride)
             }
             : quizSettings;
-        const proctoring = mergedSettings.proctoring || defaultManualQuizSettings.proctoring;
+        const proctoring = getEffectiveProctoring(mergedSettings);
         stopMonitoringDevices();
 
         try {
@@ -524,7 +559,7 @@ const QuizPage = () => {
     useEffect(() => {
         if (quizState !== QuizState.InProgress) return;
 
-        const proctoring = quizSettings.proctoring || defaultManualQuizSettings.proctoring;
+        const proctoring = getEffectiveProctoring(quizSettings);
         const onVisibilityChange = () => {
             if (document.hidden && proctoring.detectTabSwitch) {
                 setSecuritySummary((prev: any) => ({ ...prev, tabWarnings: prev.tabWarnings + 1 }));
@@ -598,6 +633,10 @@ const QuizPage = () => {
                 const nextQuizSettings = {
                     ...defaultManualQuizSettings,
                     ...(response.data.quizSettings || {}),
+                    sections: {
+                        ...defaultManualQuizSettings.sections,
+                        ...(response.data.quizSettings?.sections || {})
+                    },
                     proctoring: {
                         ...defaultManualQuizSettings.proctoring,
                         ...(response.data.quizSettings?.proctoring || {})
@@ -713,7 +752,7 @@ const QuizPage = () => {
     const handleConfirmStartQuiz = async () => {
         const fullscreenEnabled = await requestSecureFullscreen();
         setStartDialogOpen(false);
-        if (!fullscreenEnabled && (quizSettings?.proctoring?.detectFullscreenExit ?? defaultManualQuizSettings.proctoring.detectFullscreenExit)) {
+        if (!fullscreenEnabled && getEffectiveProctoring(quizSettings).detectFullscreenExit) {
             toast({
                 title: 'Fullscreen required',
                 description: 'Allow fullscreen mode to start this secure quiz.',
@@ -911,6 +950,8 @@ const QuizPage = () => {
     const manualPercentage = submittedResult?.percentage ?? Math.round((getScore() / (quizQuestions.length || 1)) * 100);
     const legacyCertificateThreshold = legacyQuizStatus?.certificateThreshold || 70;
     const showLegacyRetakeButton = !manualQuizExam && !passedQuiz && legacyQuizStatus.canStart && legacyQuizStatus.attemptCount > 0;
+    const showDetailedManualReview = manualQuizExam && submittedResult?.reviewMode === 'after_submit_with_answers';
+    const showSummaryOnlyManualReview = manualQuizExam && submittedResult?.reviewMode === 'score_only';
     const showLegacyRetakeRequestButton =
         !manualQuizExam &&
         !passedQuiz &&
@@ -921,6 +962,14 @@ const QuizPage = () => {
         !retakeRequestSubmitting &&
         legacyQuizStatus?.retakeRequest?.status !== 'pending';
     const canConfirmStart = Object.values(startChecklist).every(Boolean);
+    const effectiveQuizMode = manualQuizExam ? (quizSettings?.quizMode || 'secure') : 'secure';
+    const effectiveProctoring = getEffectiveProctoring(quizSettings);
+    const quizModeDescription =
+        effectiveQuizMode === 'practice'
+            ? 'Practice quiz mode with reduced restrictions and guided learning.'
+            : effectiveQuizMode === 'assessment'
+                ? 'Assessment mode with timed attempts, controlled review, and structured scoring.'
+                : 'Secure quiz mode with camera, microphone, and malpractice checks.';
 
     const renderLegacyRetakeRequestComposer = () => (
         <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-background via-primary/5 to-indigo-500/5 p-5 text-left shadow-sm">
@@ -1114,7 +1163,7 @@ const QuizPage = () => {
                                         <CardTitle className="relative text-2xl capitalize">{topic} Quiz</CardTitle>
                                         <CardDescription>
                                             {manualQuizExam
-                                                ? 'Secure organization exam mode with attempt controls and malpractice monitoring.'
+                                                ? quizModeDescription
                                                 : `Secure quiz mode for ${topic} with camera, microphone, and malpractice checks.`}
                                         </CardDescription>
                                     </CardHeader>
@@ -1154,25 +1203,40 @@ const QuizPage = () => {
                                                 <div className="mt-3 space-y-3">
                                             <div className="flex items-center gap-2 text-sm">
                                                 <Camera className="h-5 w-5 text-muted-foreground" />
-                                                <span>Camera: {permissionState.camera}</span>
+                                                <span>Camera: {effectiveProctoring.requireCamera ? permissionState.camera : 'not required'}</span>
                                             </div>
                                             <div className="flex items-center gap-2 text-sm">
                                                 <Mic className="h-5 w-5 text-muted-foreground" />
-                                                <span>Microphone: {permissionState.microphone}</span>
+                                                <span>Microphone: {effectiveProctoring.requireMicrophone || effectiveProctoring.detectNoise ? permissionState.microphone : 'not required'}</span>
                                             </div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-left">
-                                            <p className="text-sm font-semibold text-amber-700">Secure exam policy</p>
+                                            <p className="text-sm font-semibold text-amber-700">
+                                                {effectiveQuizMode === 'practice' ? 'Practice mode policy' : effectiveQuizMode === 'assessment' ? 'Assessment mode policy' : 'Secure exam policy'}
+                                            </p>
                                             <p className="mt-2 text-sm text-muted-foreground">
-                                                Camera, microphone, tab switching, fullscreen exit, clipboard, and context-menu checks are monitored during the quiz.
+                                                {effectiveQuizMode === 'practice'
+                                                    ? 'This mode is designed for learning. Secure monitoring is reduced, but timing and quiz structure still apply.'
+                                                    : `Camera ${effectiveProctoring.requireCamera ? 'required' : 'optional'}, microphone ${effectiveProctoring.requireMicrophone || effectiveProctoring.detectNoise ? 'required' : 'optional'}, tab switching ${effectiveProctoring.detectTabSwitch ? 'tracked' : 'not tracked'}, fullscreen ${effectiveProctoring.detectFullscreenExit ? 'required' : 'optional'}, clipboard ${effectiveProctoring.detectCopyPaste ? 'blocked' : 'allowed'}, and context-menu ${effectiveProctoring.detectContextMenu ? 'blocked' : 'allowed'} during the quiz.`}
                                             </p>
                                             {manualQuizExam ? (
                                                 <>
                                                     <p className="mt-2 text-sm text-muted-foreground">
-                                                        Pass mark {quizSettings.passPercentage}%, max {quizSettings.attemptLimit} attempts, cooldown {quizSettings.cooldownMinutes} minutes after a failed attempt.
+                                                        Mode {quizSettings.quizMode}, pass mark {quizSettings.passPercentage}%, max {quizSettings.attemptLimit} attempts, cooldown {quizSettings.cooldownMinutes} minutes after a failed attempt.
                                                     </p>
+                                                    <p className="mt-2 text-sm text-muted-foreground">
+                                                        Review mode: {String(quizSettings.reviewMode || '').replace(/_/g, ' ')}.
+                                                        {quizSettings.negativeMarkingEnabled
+                                                            ? ` Negative marking: -${quizSettings.negativeMarkPerWrong} per wrong answer.`
+                                                            : ' Negative marking is off.'}
+                                                    </p>
+                                                    {quizSettings.sectionPatternEnabled && (
+                                                        <p className="mt-2 text-sm text-muted-foreground">
+                                                            Section pattern: Easy {quizSettings.sections.easy}, Medium {quizSettings.sections.medium}, Difficult {quizSettings.sections.difficult}.
+                                                        </p>
+                                                    )}
                                                     {cooldownActive && (
                                                         <p className="mt-2 text-sm text-destructive">
                                                             Next attempt available at {new Date(effectiveAttemptSummary.nextAttemptAvailableAt).toLocaleString()}.
@@ -1325,7 +1389,9 @@ const QuizPage = () => {
                                             </div>
                                             <CardTitle className="text-2xl">Quiz {passedQuiz ? "Passed" : "Failed"}</CardTitle>
                                             <CardDescription>
-                                                You scored {getScore()} out of {quizQuestions.length}
+                                                {manualQuizExam && submittedResult
+                                                    ? `Net score ${submittedResult.score} from ${submittedResult.correctCount || 0} correct answers out of ${quizQuestions.length}`
+                                                    : `You scored ${getScore()} out of ${quizQuestions.length}`}
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent>
@@ -1370,7 +1436,26 @@ const QuizPage = () => {
                                                         <p className="text-sm"><span className="font-semibold">Pass mark:</span> {quizSettings.passPercentage}%</p>
                                                         <p className="text-sm"><span className="font-semibold">Malpractice flag:</span> {submittedResult?.malpracticeFlag ? 'Yes' : 'No'}</p>
                                                         <p className="text-sm"><span className="font-semibold">Remaining attempts:</span> {effectiveAttemptSummary?.remainingAttempts ?? 0}</p>
+                                                        <p className="text-sm"><span className="font-semibold">Correct:</span> {submittedResult?.correctCount ?? 0}</p>
+                                                        <p className="text-sm"><span className="font-semibold">Wrong:</span> {submittedResult?.wrongCount ?? 0}</p>
+                                                        <p className="text-sm"><span className="font-semibold">Unanswered:</span> {submittedResult?.unansweredCount ?? 0}</p>
+                                                        <p className="text-sm"><span className="font-semibold">Review mode:</span> {String(submittedResult?.reviewMode || quizSettings.reviewMode || '').replace(/_/g, ' ')}</p>
+                                                        <p className="text-sm"><span className="font-semibold">Positive marks:</span> {submittedResult?.positiveMarks ?? 0}</p>
+                                                        <p className="text-sm"><span className="font-semibold">Negative marks:</span> {submittedResult?.negativeMarks ?? 0}</p>
                                                     </div>
+                                                    {submittedResult?.sectionStats && (
+                                                        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                                                            {Object.entries(submittedResult.sectionStats).map(([sectionName, stats]: any) => (
+                                                                <div key={sectionName} className="rounded-lg border border-border/60 bg-background p-3 text-sm">
+                                                                    <p className="font-semibold capitalize">{sectionName}</p>
+                                                                    <p className="text-muted-foreground">Total {stats.total}</p>
+                                                                    <p className="text-green-700">Correct {stats.correct}</p>
+                                                                    <p className="text-destructive">Wrong {stats.wrong}</p>
+                                                                    <p className="text-muted-foreground">Unanswered {stats.unanswered}</p>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                     {cooldownActive && (
                                                         <p className="mt-2 text-sm text-destructive">
                                                             Retry available at {new Date(effectiveAttemptSummary.nextAttemptAvailableAt).toLocaleString()}.
@@ -1407,54 +1492,54 @@ const QuizPage = () => {
 
                                             {!manualQuizExam && showLegacyRetakeRequestButton && renderLegacyRetakeRequestComposer()}
 
-                                            <ScrollArea className="h-[300px] pr-4">
-                                                <div className="space-y-6">
-                                                    {quizQuestions.map((question, idx) => (
-                                                        <div key={question.id} className="border border-border rounded-lg p-4">
-                                                            <p className="font-medium mb-3">{idx + 1}. {question.question}</p>
-                                                            <div className="space-y-2">
-                                                                {question.options.map((option) => (
-                                                                    (() => {
-                                                                        const reviewedAnswer = submittedResult?.answers?.find((item: any) => item.questionId === question.id);
-                                                                        const correctOptionId = reviewedAnswer?.correctOptionId || question.correctAnswer;
-                                                                        const selectedOptionId = reviewedAnswer?.selectedOptionId || answers[question.id];
-                                                                        return (
-                                                                    <div
-                                                                        key={option.id}
-                                                                        className={cn(
-                                                                            "p-2 rounded-md text-sm flex items-center",
-                                                                            option.id === correctOptionId && "bg-green-500/10 border border-green-500/30",
-                                                                            selectedOptionId === option.id && option.id !== correctOptionId && "bg-destructive/10 border border-destructive/30"
-                                                                        )}
-                                                                    >
-                                                                        <div className="mr-2">
-                                                                            {option.id === correctOptionId ? (
-                                                                                <div className="h-5 w-5 rounded-full bg-green-500/20 flex items-center justify-center">
-                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500">
-                                                                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                                                                    </svg>
+                                            {!showSummaryOnlyManualReview && (
+                                                <ScrollArea className="h-[300px] pr-4">
+                                                    <div className="space-y-6">
+                                                        {quizQuestions.map((question, idx) => (
+                                                            <div key={question.id} className="border border-border rounded-lg p-4">
+                                                                <p className="font-medium mb-3">{idx + 1}. {question.question}</p>
+                                                                <div className="space-y-2">
+                                                                    {question.options.map((option) => (
+                                                                        (() => {
+                                                                            const reviewedAnswer = submittedResult?.answers?.find((item: any) => item.questionId === question.id);
+                                                                            const correctOptionId = reviewedAnswer?.correctOptionId || question.correctAnswer;
+                                                                            const selectedOptionId = reviewedAnswer?.selectedOptionId || answers[question.id];
+                                                                            const showCorrectAnswer = !manualQuizExam || showDetailedManualReview;
+                                                                            return (
+                                                                                <div
+                                                                                    key={option.id}
+                                                                                    className={cn(
+                                                                                        "p-2 rounded-md text-sm flex items-center",
+                                                                                        showCorrectAnswer && option.id === correctOptionId && "bg-green-500/10 border border-green-500/30",
+                                                                                        selectedOptionId === option.id && (!showCorrectAnswer || option.id !== correctOptionId) && "bg-primary/10 border border-primary/30"
+                                                                                    )}
+                                                                                >
+                                                                                    <div className="mr-2">
+                                                                                        {showCorrectAnswer && option.id === correctOptionId ? (
+                                                                                            <div className="h-5 w-5 rounded-full bg-green-500/20 flex items-center justify-center">
+                                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500">
+                                                                                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                                                                                </svg>
+                                                                                            </div>
+                                                                                        ) : selectedOptionId === option.id ? (
+                                                                                            <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center">
+                                                                                                <span className="text-[10px] font-bold text-primary">You</span>
+                                                                                            </div>
+                                                                                        ) : (
+                                                                                            <div className="h-5 w-5 rounded-full border border-muted-foreground/30"></div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                    <span>{option.text}</span>
                                                                                 </div>
-                                                                            ) : selectedOptionId === option.id ? (
-                                                                                <div className="h-5 w-5 rounded-full bg-destructive/20 flex items-center justify-center">
-                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-destructive">
-                                                                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                                                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                                                                    </svg>
-                                                                                </div>
-                                                                            ) : (
-                                                                                <div className="h-5 w-5 rounded-full border border-muted-foreground/30"></div>
-                                                                            )}
-                                                                        </div>
-                                                                        <span>{option.text}</span>
-                                                                    </div>
-                                                                        );
-                                                                    })()
-                                                                ))}
+                                                                            );
+                                                                        })()
+                                                                    ))}
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </ScrollArea>
+                                                        ))}
+                                                    </div>
+                                                </ScrollArea>
+                                            )}
                                         </CardContent>
                                         <CardFooter className="flex justify-center gap-4 flex-wrap">
                                             <Button onClick={() => window.history.back()} variant="outline">

@@ -16,6 +16,7 @@ const CERTIFICATE_PASS_PERCENTAGE = 70;
 
 const DEFAULT_QUIZ_SETTINGS = {
   examMode: true,
+  quizMode: 'secure',
   attemptLimit: 2,
   cooldownMinutes: 60,
   passPercentage: 50,
@@ -23,6 +24,16 @@ const DEFAULT_QUIZ_SETTINGS = {
   difficultyMode: 'mixed',
   shuffleQuestions: true,
   shuffleOptions: true,
+  reviewMode: 'after_submit_with_answers',
+  positiveMarkPerCorrect: 1,
+  negativeMarkingEnabled: false,
+  negativeMarkPerWrong: 0.25,
+  sectionPatternEnabled: false,
+  sections: {
+    easy: 0,
+    medium: 0,
+    difficult: 0
+  },
   proctoring: {
     requireCamera: true,
     requireMicrophone: true,
@@ -34,14 +45,39 @@ const DEFAULT_QUIZ_SETTINGS = {
   }
 };
 
-const mergeQuizSettings = (settings = {}) => ({
-  ...DEFAULT_QUIZ_SETTINGS,
-  ...settings,
-  proctoring: {
-    ...DEFAULT_QUIZ_SETTINGS.proctoring,
-    ...(settings?.proctoring || {})
+const mergeQuizSettings = (settings = {}) => {
+  const merged = {
+    ...DEFAULT_QUIZ_SETTINGS,
+    ...settings,
+    sections: {
+      ...DEFAULT_QUIZ_SETTINGS.sections,
+      ...(settings?.sections || {})
+    },
+    proctoring: {
+      ...DEFAULT_QUIZ_SETTINGS.proctoring,
+      ...(settings?.proctoring || {})
+    }
+  };
+
+  if (merged.quizMode === 'practice') {
+    merged.examMode = false;
+    merged.proctoring = {
+      requireCamera: false,
+      requireMicrophone: false,
+      detectFullscreenExit: false,
+      detectTabSwitch: false,
+      detectCopyPaste: false,
+      detectContextMenu: false,
+      detectNoise: false
+    };
+  } else if (merged.quizMode === 'assessment') {
+    merged.examMode = false;
+  } else {
+    merged.examMode = true;
   }
-});
+
+  return merged;
+};
 
 const shuffleArray = (items = []) => {
   const copy = [...items];
@@ -132,15 +168,48 @@ const pickQuestionsFromBank = (quizBank, settings) => {
         }))
     : [];
 
-  let pool = normalizedQuestions;
-  if (settings.difficultyMode && settings.difficultyMode !== 'mixed') {
-    const filtered = normalizedQuestions.filter((question) => question.difficulty === settings.difficultyMode);
-    pool = filtered.length > 0 ? filtered : normalizedQuestions;
+  const sectionQuestionCount = ['easy', 'medium', 'difficult'].reduce(
+    (sum, key) => sum + Number(settings?.sections?.[key] || 0),
+    0
+  );
+  const targetCount = settings.sectionPatternEnabled
+    ? Math.min(sectionQuestionCount || settings.questionCount || normalizedQuestions.length, normalizedQuestions.length)
+    : Math.min(settings.questionCount || normalizedQuestions.length, normalizedQuestions.length);
+
+  let selectedPool = [];
+
+  if (settings.sectionPatternEnabled) {
+    const chosenIds = new Set();
+    ['easy', 'medium', 'difficult'].forEach((difficultyKey) => {
+      const desiredCount = Number(settings?.sections?.[difficultyKey] || 0);
+      if (!desiredCount) return;
+
+      const matchingPool = normalizedQuestions.filter(
+        (question) => question.difficulty === difficultyKey && !chosenIds.has(question.sourceId)
+      );
+      const orderedMatchingPool = settings.shuffleQuestions ? shuffleArray(matchingPool) : matchingPool;
+      orderedMatchingPool.slice(0, desiredCount).forEach((question) => {
+        chosenIds.add(question.sourceId);
+        selectedPool.push(question);
+      });
+    });
+
+    if (selectedPool.length < targetCount) {
+      const remainingPool = normalizedQuestions.filter((question) => !chosenIds.has(question.sourceId));
+      const orderedRemainingPool = settings.shuffleQuestions ? shuffleArray(remainingPool) : remainingPool;
+      selectedPool = [...selectedPool, ...orderedRemainingPool.slice(0, targetCount - selectedPool.length)];
+    }
+  } else {
+    let pool = normalizedQuestions;
+    if (settings.difficultyMode && settings.difficultyMode !== 'mixed') {
+      const filtered = normalizedQuestions.filter((question) => question.difficulty === settings.difficultyMode);
+      pool = filtered.length > 0 ? filtered : normalizedQuestions;
+    }
+    const orderedPool = settings.shuffleQuestions ? shuffleArray(pool) : pool;
+    selectedPool = orderedPool.slice(0, targetCount);
   }
 
-  const orderedPool = settings.shuffleQuestions ? shuffleArray(pool) : pool;
-  const targetCount = Math.min(settings.questionCount || orderedPool.length, orderedPool.length);
-  const selected = orderedPool.slice(0, targetCount).map((question, index) => {
+  const selected = selectedPool.map((question, index) => {
     const options = settings.shuffleOptions ? shuffleArray(question.options) : question.options;
     const rawAnswer = String(question.answer || '').trim().toLowerCase();
     const correctOption =
@@ -154,6 +223,7 @@ const pickQuestionsFromBank = (quizBank, settings) => {
       question: question.question,
       explanation: question.explanation,
       difficulty: question.difficulty,
+      sectionLabel: settings.sectionPatternEnabled ? question.difficulty : settings.difficultyMode,
       options,
       correctAnswer: correctOption?.id || options[0]?.id || 'a'
     };
@@ -1345,16 +1415,41 @@ export const submitOrgQuizAttempt = async (req, res) => {
       const correctOptionId = question.correctAnswer;
       return {
         questionId: question.id,
+        difficulty: question.difficulty || 'medium',
+        sectionLabel: question.sectionLabel || question.difficulty || 'mixed',
         selectedOptionId,
         correctOptionId,
-        isCorrect: String(selectedOptionId) === String(correctOptionId)
+        isCorrect: String(selectedOptionId) === String(correctOptionId),
+        isAttempted: !!selectedOptionId
       };
     });
 
-    const score = evaluatedAnswers.filter((answer) => answer.isCorrect).length;
+    const correctCount = evaluatedAnswers.filter((answer) => answer.isCorrect).length;
+    const wrongCount = evaluatedAnswers.filter((answer) => answer.isAttempted && !answer.isCorrect).length;
+    const unansweredCount = evaluatedAnswers.filter((answer) => !answer.isAttempted).length;
+    const positiveMarks = correctCount * Number(settings.positiveMarkPerCorrect || 1);
+    const negativeMarks = settings.negativeMarkingEnabled ? wrongCount * Number(settings.negativeMarkPerWrong || 0) : 0;
+    const score = Number((positiveMarks - negativeMarks).toFixed(2));
     const totalQuestions = storedQuestions.length;
-    const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
+    const maxScore = totalQuestions * Number(settings.positiveMarkPerCorrect || 1);
+    const percentage = maxScore > 0 ? Math.max(0, Math.round((score / maxScore) * 100)) : 0;
     const passed = percentage >= settings.passPercentage;
+
+    const sectionStats = evaluatedAnswers.reduce((acc, answer) => {
+      const sectionKey = answer.sectionLabel || 'mixed';
+      if (!acc[sectionKey]) {
+        acc[sectionKey] = { total: 0, correct: 0, wrong: 0, unanswered: 0 };
+      }
+      acc[sectionKey].total += 1;
+      if (answer.isCorrect) {
+        acc[sectionKey].correct += 1;
+      } else if (answer.isAttempted) {
+        acc[sectionKey].wrong += 1;
+      } else {
+        acc[sectionKey].unanswered += 1;
+      }
+      return acc;
+    }, {});
 
     attempt.answers = evaluatedAnswers;
     attempt.score = score;
@@ -1395,11 +1490,19 @@ export const submitOrgQuizAttempt = async (req, res) => {
       result: {
         passed,
         score,
+        correctCount,
+        wrongCount,
+        unansweredCount,
+        positiveMarks,
+        negativeMarks,
+        maxScore,
         totalQuestions,
         percentage,
         attemptNumber: attempt.attemptNumber,
         nextAttemptAvailableAt: attempt.nextAttemptAvailableAt,
         malpracticeFlag: attempt.malpracticeFlag,
+        reviewMode: settings.reviewMode,
+        sectionStats,
         answers: evaluatedAnswers
       },
       summary: buildOrgQuizSummary(allAttempts, settings)

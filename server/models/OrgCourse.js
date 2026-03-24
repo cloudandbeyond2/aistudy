@@ -26,6 +26,7 @@ const orgCourseSchema = new mongoose.Schema({
     }],
     quizSettings: {
         examMode: { type: Boolean, default: false },
+        quizMode: { type: String, enum: ['practice', 'assessment', 'secure'], default: 'secure' },
         attemptLimit: { type: Number, default: 2 },
         cooldownMinutes: { type: Number, default: 60 },
         passPercentage: { type: Number, default: 50 },
@@ -33,6 +34,20 @@ const orgCourseSchema = new mongoose.Schema({
         difficultyMode: { type: String, enum: ['easy', 'medium', 'difficult', 'mixed'], default: 'mixed' },
         shuffleQuestions: { type: Boolean, default: true },
         shuffleOptions: { type: Boolean, default: true },
+        reviewMode: {
+            type: String,
+            enum: ['after_submit_with_answers', 'after_submit_without_answers', 'score_only'],
+            default: 'after_submit_with_answers'
+        },
+        positiveMarkPerCorrect: { type: Number, default: 1 },
+        negativeMarkingEnabled: { type: Boolean, default: false },
+        negativeMarkPerWrong: { type: Number, default: 0.25 },
+        sectionPatternEnabled: { type: Boolean, default: false },
+        sections: {
+            easy: { type: Number, default: 0 },
+            medium: { type: Number, default: 0 },
+            difficult: { type: Number, default: 0 }
+        },
         proctoring: {
             requireCamera: { type: Boolean, default: true },
             requireMicrophone: { type: Boolean, default: true },

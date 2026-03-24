@@ -794,7 +794,7 @@ export const updateOrganization = async (req, res) => {
  * CREATE COURSE (Organization)
  */
 export const createCourse = async (req, res) => {
-    const { organizationId, title, description, type, department, topics, quizzes, assignedTo, createdBy } = req.body;
+    const { organizationId, title, description, type, department, topics, quizzes, quizSettings, assignedTo, createdBy } = req.body;
     try {
         // Enforce course limit for dept_admin
         if (createdBy) {
@@ -818,6 +818,7 @@ export const createCourse = async (req, res) => {
             department: parsedDepartment,
             topics: topics || [],
             quizzes: quizzes || [],
+            quizSettings: quizSettings || {},
             assignedTo: assignedTo || [], // Specific students or empty for all
             createdBy
         });
