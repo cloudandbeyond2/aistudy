@@ -158,7 +158,7 @@ const ThemeToggleButton = ({ isExpanded = false }: { isExpanded?: boolean }) => 
           <div className="flex-1 text-left">
             <p className="text-sm font-medium">Theme</p>
             <p className="text-xs text-muted-foreground">
-              {theme === 'light' ? 'Switch to Light' : 'Switch to Dark'}
+              {theme === 'light' ? 'Switch to Dark' : 'Switch to Light'}
             </p>
           </div>
         )}
