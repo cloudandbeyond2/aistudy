@@ -514,14 +514,14 @@ const Profile = () => {
 
   const getPlanIcon = () => {
     if (isExpired) return <AlertTriangle className="h-5 w-5 text-red-500" />;
-    if (activeType !== "free") return <Crown className="h-5 w-5 text-yellow-500" />;
+    if (activeType !== "free") return <Crown className="h-5 w-5 text-blue-500" />;
     return <Sparkles className="h-5 w-5 text-purple-500" />;
   };
 
   const getPlanColor = () => {
     if (isExpired) return "from-red-500 to-orange-500";
-    if (activeType !== "free") return "from-yellow-500 to-amber-500";
-    return "from-purple-500 to-pink-500";
+    if (activeType !== "free") return "from-blue-500 to-indigo-600";
+    return "from-purple-500 to-blue-500";
   };
 
   return (
@@ -536,7 +536,7 @@ const Profile = () => {
         >
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
+              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 My Profile
               </h1>
               <p className="text-muted-foreground mt-1">
@@ -565,12 +565,12 @@ const Profile = () => {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="relative mb-8"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-2xl blur-3xl" />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-2xl blur-3xl" />
           <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/20">
             <div className={`h-48 bg-gradient-to-r ${getPlanColor()}`} />
             <div className="relative px-6 pb-6">
               <div className="absolute left-6 -top-12">
-                <div className="w-28 h-28 rounded-2xl border-4 border-white shadow-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <div className="w-28 h-28 rounded-2xl border-4 border-white shadow-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                   <span className="text-4xl font-bold text-white">
                     {formData.mName?.charAt(0)?.toUpperCase()}
                   </span>
@@ -583,7 +583,7 @@ const Profile = () => {
                     isExpired 
                       ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                       : activeType !== "free"
-                      ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
                       : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
                   }`}>
                     {getPlanIcon()}
@@ -596,10 +596,10 @@ const Profile = () => {
                     </span>
                   </div>
                 </div>
-                <p className="text-muted-foreground text-sm mt-1 flex items-center gap-2">
+                {/* <p className="text-muted-foreground text-sm mt-1 flex items-center gap-2">
                   <Calendar className="h-3 w-3" />
                   Member since {fullDate}
-                </p>
+                </p> */}
                 {formData.bio && (
                   <p className="text-sm text-muted-foreground mt-2 max-w-md">{formData.bio}</p>
                 )}
@@ -613,14 +613,14 @@ const Profile = () => {
           variants={staggerContainer}
           initial="initial"
           animate="animate"
-          className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
         >
           {[
             { icon: BookOpen, label: "Courses", value: stats.courses, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
-            { icon: Award, label: "Certificates", value: stats.certifications, color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/20" },
-            { icon: Target, label: "Completed", value: stats.completed || 0, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-900/20" },
-            { icon: TrendingUp, label: "Streak", value: stats.streak || 0, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/20" },
-            { icon: Ticket, label: "Tickets", value: stats.tickets, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/20" },
+            { icon: Award, label: "Certificates", value: stats.certifications, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-900/20" },
+            { icon: Target, label: "Completed", value: stats.completed || 0, color: "text-indigo-500", bg: "bg-indigo-50 dark:bg-indigo-900/20" },
+            // { icon: TrendingUp, label: "Streak", value: stats.streak || 0, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/20" },
+            { icon: Ticket, label: "Tickets", value: stats.tickets, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
           ].map((stat, idx) => (
             <motion.div
               key={idx}
@@ -666,7 +666,7 @@ const Profile = () => {
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle className="flex items-center gap-2">
-                      <User className="h-5 w-5 text-purple-500" />
+                      <User className="h-5 w-5 text-blue-500" />
                       Personal Information
                     </CardTitle>
                     <CardDescription>Manage your personal details and preferences</CardDescription>
@@ -693,7 +693,7 @@ const Profile = () => {
                             value={formData.mName}
                             onChange={handleChange}
                             disabled={!isEditing}
-                            className="transition-all focus:ring-2 focus:ring-purple-500"
+                            className="transition-all focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
                         <div className="space-y-2">
@@ -707,7 +707,7 @@ const Profile = () => {
                             value={formData.email}
                             onChange={handleChange}
                             disabled={!isEditing}
-                            className="transition-all focus:ring-2 focus:ring-purple-500"
+                            className="transition-all focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
                         <div className="space-y-2">
@@ -721,7 +721,7 @@ const Profile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             placeholder="+91 XXXXX XXXXX"
-                            className="transition-all focus:ring-2 focus:ring-purple-500"
+                            className="transition-all focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
                         <div className="space-y-2">
@@ -732,7 +732,7 @@ const Profile = () => {
                             value={formData.dob}
                             onChange={handleChange}
                             disabled={!isEditing}
-                            className="transition-all focus:ring-2 focus:ring-purple-500"
+                            className="transition-all focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
                         <div className="space-y-2">
@@ -742,7 +742,7 @@ const Profile = () => {
                             onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}
                             disabled={!isEditing}
                           >
-                            <SelectTrigger className="transition-all focus:ring-2 focus:ring-purple-500">
+                            <SelectTrigger className="transition-all focus:ring-2 focus:ring-blue-500">
                               <SelectValue placeholder="Select gender" />
                             </SelectTrigger>
                             <SelectContent>
@@ -761,7 +761,7 @@ const Profile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             placeholder="Leave blank to keep current"
-                            className="transition-all focus:ring-2 focus:ring-purple-500"
+                            className="transition-all focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
                       </div>
@@ -776,7 +776,7 @@ const Profile = () => {
                           disabled={!isEditing}
                           placeholder="Tell us a little about yourself..."
                           rows={3}
-                          className="transition-all focus:ring-2 focus:ring-purple-500"
+                          className="transition-all focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
 
@@ -794,7 +794,7 @@ const Profile = () => {
                               value={formData.country}
                               onChange={handleChange}
                               disabled={!isEditing}
-                              className="transition-all focus:ring-2 focus:ring-purple-500"
+                              className="transition-all focus:ring-2 focus:ring-blue-500"
                             />
                           </div>
                           <div className="space-y-2">
@@ -804,7 +804,7 @@ const Profile = () => {
                               value={formData.state}
                               onChange={handleChange}
                               disabled={!isEditing}
-                              className="transition-all focus:ring-2 focus:ring-purple-500"
+                              className="transition-all focus:ring-2 focus:ring-blue-500"
                             />
                           </div>
                           <div className="space-y-2">
@@ -814,7 +814,7 @@ const Profile = () => {
                               value={formData.city}
                               onChange={handleChange}
                               disabled={!isEditing}
-                              className="transition-all focus:ring-2 focus:ring-purple-500"
+                              className="transition-all focus:ring-2 focus:ring-blue-500"
                             />
                           </div>
                           <div className="space-y-2">
@@ -825,7 +825,7 @@ const Profile = () => {
                               onChange={handleChange}
                               disabled={!isEditing}
                               placeholder="e.g. 600001"
-                              className="transition-all focus:ring-2 focus:ring-purple-500"
+                              className="transition-all focus:ring-2 focus:ring-blue-500"
                             />
                           </div>
                           <div className="md:col-span-2 space-y-2">
@@ -836,7 +836,7 @@ const Profile = () => {
                               onChange={handleChange}
                               disabled={!isEditing}
                               placeholder="Street, Area, Landmark"
-                              className="transition-all focus:ring-2 focus:ring-purple-500"
+                              className="transition-all focus:ring-2 focus:ring-blue-500"
                             />
                           </div>
                         </div>
@@ -872,7 +872,7 @@ const Profile = () => {
                                   onChange={handleChange}
                                   disabled={!isEditing}
                                   placeholder="e.g. Software Developer"
-                                  className="transition-all focus:ring-2 focus:ring-purple-500"
+                                  className="transition-all focus:ring-2 focus:ring-blue-500"
                                 />
                               </div>
                               <div className="space-y-2">
@@ -882,7 +882,7 @@ const Profile = () => {
                                   onValueChange={(value) => setFormData(prev => ({ ...prev, experienceLevel: value }))}
                                   disabled={!isEditing}
                                 >
-                                  <SelectTrigger className="transition-all focus:ring-2 focus:ring-purple-500">
+                                  <SelectTrigger className="transition-all focus:ring-2 focus:ring-blue-500">
                                     <SelectValue placeholder="Select experience level" />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -904,7 +904,7 @@ const Profile = () => {
                                 onChange={handleChange}
                                 disabled={!isEditing}
                                 placeholder="Company / Institute name"
-                                className="transition-all focus:ring-2 focus:ring-purple-500"
+                                className="transition-all focus:ring-2 focus:ring-blue-500"
                               />
                             </div>
                           )}
@@ -914,7 +914,7 @@ const Profile = () => {
                       {/* Action Buttons */}
                       {isEditing && (
                         <div className="flex gap-3 justify-end pt-6 border-t">
-                          <Button type="submit" disabled={processing} className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                          <Button type="submit" disabled={processing} className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
                             {processing && <Loader className="animate-spin h-4 w-4" />}
                             <Save className="h-4 w-4" />
                             {processing ? "Saving..." : "Save Changes"}
@@ -939,7 +939,7 @@ const Profile = () => {
               <Card className="rounded-xl shadow-lg border-0">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5 text-purple-500" />
+                    <Settings className="h-5 w-5 text-blue-500" />
                     Preferences & Notifications
                   </CardTitle>
                   <CardDescription>Customize your experience and notification preferences</CardDescription>
@@ -973,31 +973,9 @@ const Profile = () => {
 
                   <Separator />
 
-                  {/* Theme Preference */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                      <Layers className="h-4 w-4" />
-                      Appearance
-                    </h3>
-                    <div className="grid grid-cols-3 gap-4">
-                      {[
-                        { value: "light", icon: Sun, label: "Light" },
-                        { value: "dark", icon: Moon, label: "Dark" },
-                        { value: "system", icon: Monitor, label: "System" },
-                      ].map((themeOption) => (
-                        <button
-                          key={themeOption.value}
-                          onClick={() => setTheme(themeOption.value)}
-                          className={`p-4 rounded-lg border-2 transition-all ${theme === themeOption.value ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20" : "border-gray-200 dark:border-gray-700"}`}
-                        >
-                          <themeOption.icon className="h-6 w-6 mx-auto mb-2" />
-                          <p className="text-sm font-medium">{themeOption.label}</p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+               
 
-                  <Separator />
+                 
 
                   {/* Danger Zone */}
                   <div className="space-y-3">
@@ -1057,7 +1035,7 @@ const Profile = () => {
               <Card className="rounded-xl shadow-lg border-0">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-purple-500" />
+                    <CreditCard className="h-5 w-5 text-blue-500" />
                     Subscription & Billing
                   </CardTitle>
                   <CardDescription>Manage your subscription plan and payment methods</CardDescription>
@@ -1065,7 +1043,7 @@ const Profile = () => {
                 <CardContent>
                   {loading ? (
                     <div className="flex justify-center py-8">
-                      <Loader className="animate-spin h-8 w-8 text-purple-500" />
+                      <Loader className="animate-spin h-8 w-8 text-blue-500" />
                     </div>
                   ) : activeType === "free" ? (
                     <div className="text-center py-8">
@@ -1074,7 +1052,7 @@ const Profile = () => {
                       <p className="text-muted-foreground mb-6">
                         {activePlan?.currency} {activePlan?.price} / 7 days
                       </p>
-                      <Button onClick={redirectPricing} className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600">
+                      <Button onClick={redirectPricing} className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600">
                         Upgrade to Pro
                         <Rocket className="h-4 w-4" />
                       </Button>
@@ -1119,7 +1097,7 @@ const Profile = () => {
               <Card className="rounded-xl shadow-lg border-0">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Globe className="h-5 w-5 text-purple-500" />
+                    <Globe className="h-5 w-5 text-blue-500" />
                     Social Connections
                   </CardTitle>
                   <CardDescription>Connect your social profiles to enhance your learning network</CardDescription>
@@ -1146,7 +1124,7 @@ const Profile = () => {
                           onChange={(e) => handleSocialChange(social.platform, e.target.value)}
                           placeholder={social.placeholder}
                           disabled={!isEditing}
-                          className="mt-1 transition-all focus:ring-2 focus:ring-purple-500"
+                          className="mt-1 transition-all focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
                     </div>
@@ -1159,7 +1137,7 @@ const Profile = () => {
                   )}
                   {isEditing && (
                     <div className="flex gap-3 justify-end pt-4">
-                      <Button onClick={handleSubmit} className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600">
+                      <Button onClick={handleSubmit} className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600">
                         <Save className="h-4 w-4" />
                         Save Social Links
                       </Button>
@@ -1177,7 +1155,7 @@ const Profile = () => {
               <Card className="rounded-xl shadow-lg border-0">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-purple-500" />
+                    <MessageSquare className="h-5 w-5 text-blue-500" />
                     Share Your Experience
                   </CardTitle>
                   <CardDescription>Help others by sharing your learning journey</CardDescription>
