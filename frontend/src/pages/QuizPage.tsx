@@ -628,21 +628,52 @@ const QuizPage = () => {
             return;
         }
 
-        const permissionsOkay = await requestDevices(undefined, quizSettings);
-        if (!permissionsOkay) {
-            return;
+        setIsLoading(true);
+        try {
+            const userId = sessionStorage.getItem('uid');
+            const response = await axios.post(`${serverURL}/api/quiz-retake/start`, { courseId, userId });
+            if (!response.data?.success) {
+                throw new Error(response.data?.message || 'Failed to prepare quiz');
+            }
+
+            const nextQuestions = normalizeQuizQuestions(response.data.questions || questions);
+            const permissionsOkay = await requestDevices(undefined, quizSettings);
+            if (!permissionsOkay) {
+                setIsLoading(false);
+                return;
+            }
+
+            setExamJSON(nextQuestions);
+            setAnswers({});
+            setSubmittedResult(null);
+            setCurrentQuestionIndex(0);
+            setQuizState(QuizState.InProgress);
+            setTimerActive(true);
+            setTimeRemaining(60 * nextQuestions.length);
+            setLegacyQuizStatus({
+                ...defaultLegacyQuizStatus,
+                ...(response.data.quizStatus || legacyQuizStatus),
+                canStart: true
+            });
+
+            toast({
+                title: response.data.regenerated ? 'Fresh retake quiz ready' : 'Quiz started',
+                description: response.data.regenerated
+                    ? 'A new quiz set was generated for this approved retake attempt.'
+                    : `Good luck! You have ${nextQuestions.length} minutes to complete the quiz.`,
+            });
+        } catch (error: any) {
+            console.error('Failed to start legacy quiz', error);
+            const message = error?.response?.data?.message || error?.message || 'Failed to prepare quiz';
+            toast({
+                title: 'Quiz unavailable',
+                description: message,
+                variant: 'destructive'
+            });
+            await loadLegacyQuizStatus();
+        } finally {
+            setIsLoading(false);
         }
-
-        setQuizState(QuizState.InProgress);
-        setTimerActive(true);
-        setAnswers({});
-        setCurrentQuestionIndex(0);
-        setTimeRemaining(60 * quizQuestions.length);
-
-        toast({
-            title: "Quiz started",
-            description: "Good luck! You have " + quizQuestions.length + " minutes to complete the quiz.",
-        });
     };
 
     const handleStartQuiz = async () => {
@@ -763,7 +794,9 @@ const QuizPage = () => {
                 userId,
                 score: correct,
                 totalQuestions,
-                percentage
+                percentage,
+                questions: quizQuestions,
+                answers
             });
             if (response.data.success) {
                 setPassed(!!response.data.passed);

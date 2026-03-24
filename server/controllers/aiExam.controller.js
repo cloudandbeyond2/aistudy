@@ -7,7 +7,7 @@ import {
 /**
  * AI EXAM GENERATION
  */
-const buildFallbackExam = (mainTopic, subtopicsString, lang = 'English') => {
+const buildFallbackExam = (mainTopic, subtopicsString, lang = 'English', excludeQuestionTexts = []) => {
   const topics = String(subtopicsString || '')
     .split(',')
     .map((item) => item.trim())
@@ -15,6 +15,11 @@ const buildFallbackExam = (mainTopic, subtopicsString, lang = 'English') => {
 
   const uniqueTopics = [...new Set(topics)];
   const fallbackTopics = uniqueTopics.length > 0 ? uniqueTopics : [mainTopic || 'Core topic'];
+  const blockedQuestions = new Set(
+    (Array.isArray(excludeQuestionTexts) ? excludeQuestionTexts : [])
+      .map((item) => String(item || '').trim().toLowerCase())
+      .filter(Boolean)
+  );
   const templates = [
     (subtopic) => ({
       question: `Which option best represents the main focus of "${subtopic}" in ${mainTopic}?`,
@@ -45,35 +50,64 @@ const buildFallbackExam = (mainTopic, subtopicsString, lang = 'English') => {
     })
   ];
 
-  const items = fallbackTopics.slice(0, 20).map((subtopic, index) => {
+  const items = [];
+  let index = 0;
+  while (items.length < 20) {
+    const subtopic = fallbackTopics[index % fallbackTopics.length];
     const template = templates[index % templates.length](subtopic);
+    const questionText =
+      items.length < fallbackTopics.length
+        ? template.question
+        : `${template.question} Variant ${Math.floor(index / fallbackTopics.length) + 1}`;
+
+    if (blockedQuestions.has(questionText.trim().toLowerCase())) {
+      index += 1;
+      continue;
+    }
+
     const options = [template.correct, ...template.distractors].sort(() => Math.random() - 0.5);
-    return {
-      id: index + 1,
-      question: `${template.question} (${lang})`,
+    items.push({
+      id: items.length + 1,
+      question: `${questionText} (${lang})`,
       options,
       answer: template.correct
-    };
-  });
+    });
+    index += 1;
+  }
 
   return items;
 };
 
-export const generateAIExam = async (req, res) => {
-  const { mainTopic, subtopicsString, lang } = req.body;
+const normalizeGeneratedExam = (examData = []) =>
+  (Array.isArray(examData) ? examData : []).map((q, index) => {
+    const shuffledOptions = Array.isArray(q?.options) ? [...q.options].sort(() => Math.random() - 0.5) : [];
 
-  try {
-    const fs = await import('fs');
-    fs.writeFileSync(
-      'debug_req.json',
-      JSON.stringify(req.body, null, 2)
-    );
-  } catch (e) {
-    console.error('Log error', e);
-  }
+    return {
+      id: index + 1,
+      question: q?.question || `Question ${index + 1}`,
+      options: shuffledOptions,
+      answer: q?.correctAnswer || q?.answer || shuffledOptions[0] || ''
+    };
+  });
+
+export const generateQuizQuestionSet = async ({
+  mainTopic,
+  subtopicsString,
+  lang = 'English',
+  excludeQuestionTexts = []
+}) => {
+  const cleanedExcludedQuestions = (Array.isArray(excludeQuestionTexts) ? excludeQuestionTexts : [])
+    .map((item) => String(item || '').trim())
+    .filter(Boolean)
+    .slice(0, 30);
 
   const prompt = `Generate 20 multiple choice questions about ${mainTopic} including these subtopics: ${subtopicsString}. The language should be ${lang || 'English'}. 
 CRITICAL: Randomize the correct answer position.
+CRITICAL: Do not repeat or closely paraphrase any previous question from the blocked list.
+CRITICAL: Prefer fresh scenarios, new wording, and different correct-answer phrasing for each retake.
+
+Blocked previous questions:
+${cleanedExcludedQuestions.length > 0 ? cleanedExcludedQuestions.map((item, index) => `${index + 1}. ${item}`).join('\n') : 'None'}
 
 Return ONLY a raw JSON array (no markdown, no code blocks) with this exact format:
 [
@@ -104,35 +138,47 @@ IMPORTANT: "correctAnswer" must match exactly one of the strings in "options".`;
     }
   ];
 
+  let text = await generateAIText({
+    prompt,
+    maxOutputTokens: 4096,
+    safetySettings
+  });
+
+  text = text
+    .replace(/```json/g, '')
+    .replace(/```/g, '')
+    .trim();
+
+  let examData;
   try {
-    let text = await generateAIText({
-      prompt,
-      maxOutputTokens: 4096,
-      safetySettings
-    });
+    examData = JSON.parse(text);
+  } catch (e) {
+    console.error('JSON Parse Error:', text);
+    throw new Error('Invalid JSON format received from AI');
+  }
 
-    text = text
-      .replace(/```json/g, '')
-      .replace(/```/g, '')
-      .trim();
+  return normalizeGeneratedExam(examData);
+};
 
-    let examData;
-    try {
-      examData = JSON.parse(text);
-    } catch (e) {
-      console.error('JSON Parse Error:', text);
-      throw new Error('Invalid JSON format received from AI');
-    }
+export const generateAIExam = async (req, res) => {
+  const { mainTopic, subtopicsString, lang, excludeQuestionTexts = [] } = req.body;
 
-    examData = examData.map((q, index) => {
-      const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+  try {
+    const fs = await import('fs');
+    fs.writeFileSync(
+      'debug_req.json',
+      JSON.stringify(req.body, null, 2)
+    );
+  } catch (e) {
+    console.error('Log error', e);
+  }
 
-      return {
-        id: index + 1,
-        question: q.question,
-        options: shuffledOptions,
-        answer: q.correctAnswer
-      };
+  try {
+    const examData = await generateQuizQuestionSet({
+      mainTopic,
+      subtopicsString,
+      lang,
+      excludeQuestionTexts
     });
 
     res.json({
@@ -141,7 +187,7 @@ IMPORTANT: "correctAnswer" must match exactly one of the strings in "options".`;
     });
   } catch (error) {
     console.error('AI exam error:', error);
-    const fallbackExam = buildFallbackExam(mainTopic, subtopicsString, lang);
+    const fallbackExam = buildFallbackExam(mainTopic, subtopicsString, lang, excludeQuestionTexts);
     if (fallbackExam.length > 0) {
       return res.json({
         success: true,

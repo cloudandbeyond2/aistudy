@@ -8,6 +8,7 @@ import IssuedCertificate from '../models/IssuedCertificate.js';
 import QuizRetakeRequest from '../models/QuizRetakeRequest.js';
 import { sendMail } from '../services/mail.service.js';
 import { createNotification } from './notification.controller.js';
+import { generateQuizQuestionSet } from './aiExam.controller.js';
 
 const CERTIFICATE_PASS_PERCENTAGE = 70;
 
@@ -167,6 +168,34 @@ const sanitizeAttemptQuestions = (questions = []) =>
     options: question.options
   }));
 
+const parseStoredExamQuestions = (rawExam = '') => {
+  try {
+    const parsed = JSON.parse(rawExam || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+};
+
+const collectLegacyExcludedQuestions = (attempts = []) =>
+  attempts.flatMap((attempt) =>
+    parseStoredExamQuestions(attempt.exam).map((question) => String(question?.question || '').trim()).filter(Boolean)
+  );
+
+const extractCourseSubtopics = (course) => {
+  try {
+    const parsedContent = JSON.parse(course?.content || '{}');
+    const topics = parsedContent?.course_topics || parsedContent?.[(course?.mainTopic || '').toLowerCase()] || [];
+    return (Array.isArray(topics) ? topics : []).flatMap((topic) =>
+      Array.isArray(topic?.subtopics)
+        ? topic.subtopics.map((subtopic) => String(subtopic?.title || '').trim()).filter(Boolean)
+        : []
+    );
+  } catch (error) {
+    return [];
+  }
+};
+
 const notifyOrgAdminsOfMalpractice = async (attempt, details) => {
   if (!attempt?.organizationId) return;
 
@@ -261,7 +290,9 @@ export const updateResult = async (req, res) => {
     userId: providedUserId,
     score = 0,
     totalQuestions = 0,
-    percentage: providedPercentage
+    percentage: providedPercentage,
+    questions = [],
+    answers = {}
   } = req.body;
 
   try {
@@ -274,6 +305,24 @@ export const updateResult = async (req, res) => {
       ? Number(providedPercentage)
       : normalizedMarks;
     const passed = normalizedPercentage >= CERTIFICATE_PASS_PERCENTAGE;
+    const sanitizedQuestions = (Array.isArray(questions) ? questions : []).map((question, index) => ({
+      id: String(question?.id || `q${index + 1}`),
+      question: String(question?.question || `Question ${index + 1}`),
+      difficulty: String(question?.difficulty || 'medium'),
+      options: Array.isArray(question?.options)
+        ? question.options.map((option, optionIndex) => ({
+            id: String(option?.id || String.fromCharCode(97 + optionIndex)),
+            text: String(typeof option === 'string' ? option : option?.text || option?.value || '')
+          }))
+        : [],
+      correctAnswer: String(question?.correctAnswer || '')
+    }));
+    const normalizedAnswers = sanitizedQuestions.map((question) => ({
+      questionId: question.id,
+      selectedOptionId: String(answers?.[question.id] || ''),
+      correctOptionId: question.correctAnswer,
+      isCorrect: String(answers?.[question.id] || '') === String(question.correctAnswer || '')
+    }));
 
     const newExam = new Exam({
       course: courseId,
@@ -285,7 +334,10 @@ export const updateResult = async (req, res) => {
       totalQuestions: normalizedTotalQuestions,
       percentage: normalizedPercentage,
       passPercentage: CERTIFICATE_PASS_PERCENTAGE,
-      submittedAt: new Date()
+      submittedAt: new Date(),
+      exam: JSON.stringify(sanitizedQuestions),
+      questionOrder: sanitizedQuestions.map((question) => question.id),
+      answers: normalizedAnswers
     });
     await newExam.save();
 
@@ -593,6 +645,82 @@ export const getLegacyQuizRetakeStatus = async (req, res) => {
     });
   } catch (error) {
     console.error('getLegacyQuizRetakeStatus error:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+export const startLegacyQuizRetakeAttempt = async (req, res) => {
+  const { courseId, userId: providedUserId } = req.body;
+
+  try {
+    const course = await Course.findById(courseId).select('_id mainTopic content');
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    const userId = await normalizeUserId(providedUserId, course);
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'Valid userId is required' });
+    }
+
+    const attempts = await Exam.find({
+      course: courseId,
+      userId,
+      examType: 'legacy'
+    }).sort({ submittedAt: -1, date: -1 });
+    const latestRequest = await QuizRetakeRequest.findOne({
+      course: courseId,
+      userId
+    }).sort({ createdAt: -1 });
+    const certificate = await IssuedCertificate.findOne({
+      course: courseId,
+      user: userId
+    }).select('certificateId');
+    const quizStatus = buildLegacyQuizSummary({
+      attempts,
+      latestRequest,
+      certificateId: certificate?.certificateId || null
+    });
+
+    if (quizStatus.passed) {
+      return res.status(403).json({
+        success: false,
+        message: 'Quiz already passed. Further attempts are locked.',
+        quizStatus
+      });
+    }
+
+    if (!quizStatus.canStart) {
+      return res.status(403).json({
+        success: false,
+        message:
+          latestRequest?.status === 'pending'
+            ? 'Your retake request is pending admin approval.'
+            : 'Retake approval is required before starting another quiz attempt.',
+        quizStatus
+      });
+    }
+
+    const langObj = await Lang.findOne({ course: courseId }).select('lang');
+    const subtopics = extractCourseSubtopics(course);
+    const excludedQuestionTexts = collectLegacyExcludedQuestions(attempts);
+    const questions = await generateQuizQuestionSet({
+      mainTopic: course.mainTopic || 'Course',
+      subtopicsString: subtopics.join(', '),
+      lang: langObj?.lang || 'English',
+      excludeQuestionTexts: excludedQuestionTexts
+    });
+
+    return res.json({
+      success: true,
+      topic: course.mainTopic,
+      questions,
+      quizStatus,
+      regenerated: attempts.length > 0,
+      excludedQuestionCount: excludedQuestionTexts.length
+    });
+  } catch (error) {
+    console.error('startLegacyQuizRetakeAttempt error:', error);
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };

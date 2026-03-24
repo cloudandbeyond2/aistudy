@@ -13,6 +13,7 @@ import {
   submitOrgQuizAttempt,
   getOrgQuizReports,
   getLegacyQuizRetakeStatus,
+  startLegacyQuizRetakeAttempt,
   createLegacyQuizRetakeRequest,
   getLegacyQuizRetakeRequests,
   reviewLegacyQuizRetakeRequest,
@@ -24,6 +25,7 @@ router.post("/updateresult", updateResult);
 router.post("/getmyresult", getMyResult);
 router.post("/getmyresults-batch", getMyResultsBatch);
 router.post("/quiz-retake/status", getLegacyQuizRetakeStatus);
+router.post("/quiz-retake/start", startLegacyQuizRetakeAttempt);
 router.post("/quiz-retake/request", createLegacyQuizRetakeRequest);
 router.get("/quiz-retake-requests", getLegacyQuizRetakeRequests);
 router.post("/quiz-retake-requests/review", reviewLegacyQuizRetakeRequest);
