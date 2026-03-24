@@ -56,6 +56,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { websiteURL, serverURL } from '@/constants';
 import { useBranding } from '@/contexts/BrandingContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { DownloadIcon } from '@radix-ui/react-icons';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
@@ -128,7 +129,7 @@ const SectionHeader = ({ title, icon: Icon, isExpanded }: any) => {
 // Theme Toggle Button Component
 // Theme Toggle Button Component - Always show Sun icon with different text
 // Theme Toggle Button Component - Show appropriate icon for the action
-const ThemeToggleButton = ({ isExpanded }: { isExpanded: boolean }) => {
+const ThemeToggleButton = ({ isExpanded = false }: { isExpanded?: boolean }) => {
   const { theme, toggleTheme } = useTheme();
   
   return (
@@ -825,33 +826,6 @@ const DashboardLayout = () => {
 
               {/* Theme Toggle Button */}
               <ThemeToggleButton isExpanded={isExpanded} />
-    {/* Theme Toggle Button */}
-    <div
-      className={cn(
-        "group relative overflow-hidden rounded-xl transition-all duration-300",
-        "hover:shadow-md",
-        isExpanded ? "p-2" : "p-2.5"
-      )}
-    >
-      <div className={cn(
-        "flex items-center gap-3",
-        !isExpanded && "justify-center"
-      )}>
-        <div className={cn(
-          "rounded-lg p-1.5 transition-all duration-300",
-          "bg-gradient-to-br from-purple-500/10 to-pink-500/10",
-          "group-hover:from-purple-500/20 group-hover:to-pink-500/20"
-        )}>
-          <ThemeToggle />
-        </div>
-        {isExpanded && (
-          <div className="flex-1 text-left">
-            <p className="text-sm font-medium">Theme</p>
-            <p className="text-xs text-muted-foreground">Light / Dark mode</p>
-          </div>
-        )}
-      </div>
-    </div>
 
               {/* Logout Button */}
               <button
