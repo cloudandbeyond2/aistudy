@@ -176,6 +176,11 @@ const QuizPage = () => {
     const submissionLockRef = useRef(false);
     const abandonmentSentRef = useRef(false);
 
+    const logQuizError = (label: string, error: any) => {
+        const message = error?.response?.data?.message || error?.message || 'Unknown error';
+        console.error(label, message);
+    };
+
     const fetchCertificateSettings = async () => {
         try {
             const response = await axios.get(`${serverURL}/api/certificate-settings`);
@@ -192,7 +197,7 @@ const QuizPage = () => {
                 setCertificateSettings(safeSettings);
             }
         } catch (error) {
-            console.error('Error fetching certificate settings:', error);
+            logQuizError('Error fetching certificate settings', error);
         }
     };
 
@@ -244,7 +249,7 @@ const QuizPage = () => {
                 return true;
             }
         } catch (error) {
-            console.error('Fullscreen request failed', error);
+            logQuizError('Fullscreen request failed', error);
         }
 
         return false;
@@ -271,8 +276,6 @@ const QuizPage = () => {
 
     function init() {
         try {
-            console.log('Quiz Init - Raw questions:', questions);
-
             let parsedQuestions: any[] = [];
             if (Array.isArray(questions)) {
                 parsedQuestions = questions;
@@ -287,17 +290,14 @@ const QuizPage = () => {
             }
 
             if (!Array.isArray(parsedQuestions)) {
-                console.error('Quiz Init - parsedQuestions is not an array:', parsedQuestions);
                 setExamJSON([]);
                 return;
             }
 
             const formattedQuestions = normalizeQuizQuestions(parsedQuestions);
-
-            console.log('Quiz Init - Formatted questions:', formattedQuestions);
             setExamJSON(formattedQuestions);
         } catch (error) {
-            console.error('Quiz Init Error:', error);
+            logQuizError('Quiz Init Error', error);
             toast({
                 title: "Error loading quiz",
                 description: "There was a problem preparing the quiz questions.",
@@ -383,7 +383,7 @@ const QuizPage = () => {
                 setPassed(!!response.data.passed);
             }
         } catch (error) {
-            console.error('Failed to load manual quiz status', error);
+            logQuizError('Failed to load manual quiz status', error);
             toast({
                 title: 'Quiz unavailable',
                 description: 'Failed to load quiz status.',
@@ -416,7 +416,7 @@ const QuizPage = () => {
                 }
             }
         } catch (error) {
-            console.error('Failed to load legacy quiz status', error);
+            logQuizError('Failed to load legacy quiz status', error);
             toast({
                 title: 'Quiz unavailable',
                 description: 'Failed to load quiz status.',
@@ -445,7 +445,7 @@ const QuizPage = () => {
                 details
             });
         } catch (error) {
-            console.error('Failed to log security event', error);
+            logQuizError('Failed to log security event', error);
         }
     };
 
@@ -511,7 +511,7 @@ const QuizPage = () => {
             setPermissionState({ camera: 'optional', microphone: 'optional' });
             return true;
         } catch (error) {
-            console.error('Device access failed', error);
+            logQuizError('Device access failed', error);
             const cameraDenied = proctoring.requireCamera;
             const micDenied = proctoring.requireMicrophone || proctoring.detectNoise;
             setPermissionState({
@@ -663,7 +663,7 @@ const QuizPage = () => {
                     description: `Attempt ${response.data.attemptNumber} started with secure monitoring enabled.`
                 });
             } catch (error: any) {
-                console.error('Failed to start org quiz', error);
+                logQuizError('Failed to start org quiz', error);
                 const message = error?.response?.data?.message || error.message || 'Failed to start quiz';
                 toast({
                     title: 'Quiz locked',
@@ -726,7 +726,7 @@ const QuizPage = () => {
                     : `Good luck! You have ${nextQuestions.length} minutes to complete the quiz.`,
             });
         } catch (error: any) {
-            console.error('Failed to start legacy quiz', error);
+            logQuizError('Failed to start legacy quiz', error);
             const isMissingRetakeRoute =
                 error?.response?.status === 404 &&
                 String(error?.config?.url || '').includes('/api/quiz-retake/start');
@@ -826,7 +826,7 @@ const QuizPage = () => {
                     setPassed(!!response.data.result?.passed);
                 }
             } catch (error) {
-                console.error('Failed to submit org quiz', error);
+                logQuizError('Failed to submit org quiz', error);
                 toast({
                     title: 'Submit failed',
                     description: 'Failed to submit your quiz attempt.',
@@ -893,7 +893,7 @@ const QuizPage = () => {
                 });
             }
         } catch (error) {
-            console.error('Error updating result:', error);
+            logQuizError('Error updating result', error);
         }
     }
 
@@ -1078,22 +1078,8 @@ const QuizPage = () => {
                     description: "Your certificate has been saved successfully.",
                 });
             } catch (error) {
-                console.error('Certificate Generation Error:', error);
-
-                // Detailed error extraction
-                let errorMessage = "Failed to generate certificate.";
-                if (error instanceof Error) {
-                    errorMessage += " " + error.message;
-                } else if (typeof error === 'object' && error !== null) {
-                    // Check for DOM Exception or Event object
-                    if ('type' in error && error.type === 'error') {
-                        errorMessage += " Network error loading images (CORS issue).";
-                    } else {
-                        errorMessage += " " + String(error);
-                    }
-                } else {
-                    errorMessage += " " + String(error);
-                }
+                logQuizError('Certificate Generation Error', error);
+                const errorMessage = "Failed to generate certificate.";
 
                 toast({
                     title: "Download Failed",

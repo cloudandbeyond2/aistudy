@@ -221,16 +221,6 @@ export const generateAIExam = async (req, res) => {
   const { mainTopic, subtopicsString, lang, excludeQuestionTexts = [], questionCount = 20 } = req.body;
 
   try {
-    const fs = await import('fs');
-    fs.writeFileSync(
-      'debug_req.json',
-      JSON.stringify(req.body, null, 2)
-    );
-  } catch (e) {
-    console.error('Log error', e);
-  }
-
-  try {
     const examData = await generateQuizQuestionSet({
       mainTopic,
       subtopicsString,
