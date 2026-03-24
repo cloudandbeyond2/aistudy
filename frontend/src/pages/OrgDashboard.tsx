@@ -21,6 +21,7 @@ import Swal from 'sweetalert2';
 
 const defaultQuizSettings = {
     examMode: true,
+    quizMode: 'secure',
     attemptLimit: 2,
     cooldownMinutes: 60,
     passPercentage: 50,
@@ -28,6 +29,16 @@ const defaultQuizSettings = {
     difficultyMode: 'mixed',
     shuffleQuestions: true,
     shuffleOptions: true,
+    reviewMode: 'after_submit_with_answers',
+    positiveMarkPerCorrect: 1,
+    negativeMarkingEnabled: false,
+    negativeMarkPerWrong: 0.25,
+    sectionPatternEnabled: false,
+    sections: {
+        easy: 0,
+        medium: 0,
+        difficult: 0
+    },
     proctoring: {
         requireCamera: true,
         requireMicrophone: true,
@@ -68,6 +79,10 @@ const normalizeCourseForEdit = (course: any) => {
     const quizSettings = {
         ...defaultQuizSettings,
         ...(course?.quizSettings || {}),
+        sections: {
+            ...defaultQuizSettings.sections,
+            ...(course?.quizSettings?.sections || {})
+        },
         proctoring: {
             ...defaultQuizSettings.proctoring,
             ...(course?.quizSettings?.proctoring || {})
@@ -87,6 +102,10 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
     const quizSettings = {
         ...defaultQuizSettings,
         ...(course.quizSettings || {}),
+        sections: {
+            ...defaultQuizSettings.sections,
+            ...(course.quizSettings?.sections || {})
+        },
         proctoring: {
             ...defaultQuizSettings.proctoring,
             ...(course.quizSettings?.proctoring || {})
@@ -159,6 +178,19 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
                 ...quizSettings,
                 proctoring: {
                     ...quizSettings.proctoring,
+                    [field]: value
+                }
+            }
+        });
+    };
+
+    const updateSectionSetting = (field: string, value: number) => {
+        setCourse({
+            ...course,
+            quizSettings: {
+                ...quizSettings,
+                sections: {
+                    ...quizSettings.sections,
                     [field]: value
                 }
             }
@@ -335,14 +367,25 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
                 <div className="grid gap-4 p-5 border rounded-xl bg-card shadow-sm">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label className="text-sm font-medium">Exam Mode</Label>
+                            <Label className="text-sm font-medium">Quiz Mode</Label>
                             <select
                                 className="flex h-11 w-full rounded-md border border-input bg-muted/50 focus:bg-background px-3 py-2 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                value={quizSettings.examMode ? 'secure' : 'standard'}
-                                onChange={(e) => updateQuizSetting('examMode', e.target.value === 'secure')}
+                                value={quizSettings.quizMode}
+                                onChange={(e) => {
+                                    const nextMode = e.target.value;
+                                    setCourse({
+                                        ...course,
+                                        quizSettings: {
+                                            ...quizSettings,
+                                            quizMode: nextMode,
+                                            examMode: nextMode === 'secure'
+                                        }
+                                    });
+                                }}
                             >
+                                <option value="practice">Practice Mode</option>
+                                <option value="assessment">Assessment Mode</option>
                                 <option value="secure">Secure Exam Mode</option>
-                                <option value="standard">Standard Quiz Mode</option>
                             </select>
                         </div>
                         <div className="grid gap-2">
@@ -398,6 +441,28 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
                                 onChange={(e) => updateQuizSetting('questionCount', Number(e.target.value) || 1)}
                             />
                         </div>
+                        <div className="grid gap-2">
+                            <Label className="text-sm font-medium">Review Mode</Label>
+                            <select
+                                className="flex h-11 w-full rounded-md border border-input bg-muted/50 focus:bg-background px-3 py-2 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                value={quizSettings.reviewMode}
+                                onChange={(e) => updateQuizSetting('reviewMode', e.target.value)}
+                            >
+                                <option value="after_submit_with_answers">Show answers after submit</option>
+                                <option value="after_submit_without_answers">Show summary without answers</option>
+                                <option value="score_only">Score only</option>
+                            </select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label className="text-sm font-medium">Positive Mark Per Correct Answer</Label>
+                            <Input
+                                type="number"
+                                min={0.25}
+                                step={0.25}
+                                value={quizSettings.positiveMarkPerCorrect}
+                                onChange={(e) => updateQuizSetting('positiveMarkPerCorrect', Number(e.target.value) || 1)}
+                            />
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -409,7 +474,53 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
                             <span className="text-sm font-medium">Shuffle options per attempt</span>
                             <input type="checkbox" checked={quizSettings.shuffleOptions} onChange={(e) => updateQuizSetting('shuffleOptions', e.target.checked)} />
                         </label>
+                        <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-muted/20">
+                            <span className="text-sm font-medium">Enable negative marking</span>
+                            <input type="checkbox" checked={quizSettings.negativeMarkingEnabled} onChange={(e) => updateQuizSetting('negativeMarkingEnabled', e.target.checked)} />
+                        </label>
+                        <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-muted/20">
+                            <span className="text-sm font-medium">Enable section pattern</span>
+                            <input type="checkbox" checked={quizSettings.sectionPatternEnabled} onChange={(e) => updateQuizSetting('sectionPatternEnabled', e.target.checked)} />
+                        </label>
                     </div>
+
+                    {quizSettings.negativeMarkingEnabled && (
+                        <div className="grid gap-2 md:max-w-xs">
+                            <Label className="text-sm font-medium">Negative Mark Per Wrong Answer</Label>
+                            <Input
+                                type="number"
+                                min={0}
+                                step={0.25}
+                                value={quizSettings.negativeMarkPerWrong}
+                                onChange={(e) => updateQuizSetting('negativeMarkPerWrong', Number(e.target.value) || 0)}
+                            />
+                        </div>
+                    )}
+
+                    {quizSettings.sectionPatternEnabled && (
+                        <div className="rounded-xl border border-primary/10 bg-primary/5 p-4">
+                            <div className="mb-3">
+                                <h4 className="text-sm font-semibold">Section Pattern</h4>
+                                <p className="text-xs text-muted-foreground">
+                                    Configure how many questions should be picked from each difficulty bucket.
+                                </p>
+                            </div>
+                            <div className="grid gap-4 md:grid-cols-3">
+                                <div className="grid gap-2">
+                                    <Label className="text-sm font-medium">Easy</Label>
+                                    <Input type="number" min={0} value={quizSettings.sections.easy} onChange={(e) => updateSectionSetting('easy', Number(e.target.value) || 0)} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label className="text-sm font-medium">Medium</Label>
+                                    <Input type="number" min={0} value={quizSettings.sections.medium} onChange={(e) => updateSectionSetting('medium', Number(e.target.value) || 0)} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label className="text-sm font-medium">Difficult</Label>
+                                    <Input type="number" min={0} value={quizSettings.sections.difficult} onChange={(e) => updateSectionSetting('difficult', Number(e.target.value) || 0)} />
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
                         <div className="flex items-center gap-2 text-sm font-semibold text-amber-700">

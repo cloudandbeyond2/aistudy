@@ -7,7 +7,13 @@ import {
 /**
  * AI EXAM GENERATION
  */
-const buildFallbackExam = (mainTopic, subtopicsString, lang = 'English') => {
+const buildFallbackExam = (
+  mainTopic,
+  subtopicsString,
+  lang = 'English',
+  excludeQuestionTexts = [],
+  questionCount = 30
+) => {
   const topics = String(subtopicsString || '')
     .split(',')
     .map((item) => item.trim())
@@ -15,6 +21,11 @@ const buildFallbackExam = (mainTopic, subtopicsString, lang = 'English') => {
 
   const uniqueTopics = [...new Set(topics)];
   const fallbackTopics = uniqueTopics.length > 0 ? uniqueTopics : [mainTopic || 'Core topic'];
+  const blockedQuestions = new Set(
+    (Array.isArray(excludeQuestionTexts) ? excludeQuestionTexts : [])
+      .map((item) => String(item || '').trim().toLowerCase())
+      .filter(Boolean)
+  );
   const templates = [
     (subtopic) => ({
       question: `Which option best represents the main focus of "${subtopic}" in ${mainTopic}?`,
@@ -42,38 +53,86 @@ const buildFallbackExam = (mainTopic, subtopicsString, lang = 'English') => {
         `The learner focuses only on unrelated tools`,
         `The learner skips examples and practice`
       ]
+    }),
+    (subtopic) => ({
+      question: `In a real exam situation, why is "${subtopic}" important within ${mainTopic}?`,
+      correct: `${subtopic} supports practical reasoning and applied problem solving in ${mainTopic}`,
+      distractors: [
+        `${subtopic} is useful only for course marketing`,
+        `${subtopic} has no connection to practical understanding`,
+        `${subtopic} should be ignored during revision`
+      ]
+    }),
+    (subtopic) => ({
+      question: `Which revision method is best for mastering "${subtopic}" in ${mainTopic}?`,
+      correct: `Reviewing concepts, practicing examples, and testing applied understanding of ${subtopic}`,
+      distractors: [
+        `Skipping all exercises related to ${subtopic}`,
+        `Studying only unrelated external trivia`,
+        `Memorizing random definitions without context`
+      ]
     })
   ];
 
-  const items = fallbackTopics.slice(0, 20).map((subtopic, index) => {
+  const items = [];
+  let index = 0;
+  while (items.length < questionCount) {
+    const subtopic = fallbackTopics[index % fallbackTopics.length];
     const template = templates[index % templates.length](subtopic);
+    const questionText =
+      items.length < fallbackTopics.length
+        ? template.question
+        : `${template.question} Variant ${Math.floor(index / fallbackTopics.length) + 1}`;
+
+    if (blockedQuestions.has(questionText.trim().toLowerCase())) {
+      index += 1;
+      continue;
+    }
+
     const options = [template.correct, ...template.distractors].sort(() => Math.random() - 0.5);
-    return {
-      id: index + 1,
-      question: `${template.question} (${lang})`,
+    items.push({
+      id: items.length + 1,
+      question: `${questionText} (${lang})`,
       options,
       answer: template.correct
-    };
-  });
+    });
+    index += 1;
+  }
 
   return items;
 };
 
-export const generateAIExam = async (req, res) => {
-  const { mainTopic, subtopicsString, lang } = req.body;
+const normalizeGeneratedExam = (examData = []) =>
+  (Array.isArray(examData) ? examData : []).map((q, index) => {
+    const shuffledOptions = Array.isArray(q?.options) ? [...q.options].sort(() => Math.random() - 0.5) : [];
 
-  try {
-    const fs = await import('fs');
-    fs.writeFileSync(
-      'debug_req.json',
-      JSON.stringify(req.body, null, 2)
-    );
-  } catch (e) {
-    console.error('Log error', e);
-  }
+    return {
+      id: index + 1,
+      question: q?.question || `Question ${index + 1}`,
+      options: shuffledOptions,
+      answer: q?.correctAnswer || q?.answer || shuffledOptions[0] || ''
+    };
+  });
 
-  const prompt = `Generate 20 multiple choice questions about ${mainTopic} including these subtopics: ${subtopicsString}. The language should be ${lang || 'English'}. 
+export const generateQuizQuestionSet = async ({
+  mainTopic,
+  subtopicsString,
+  lang = 'English',
+  excludeQuestionTexts = [],
+  questionCount = 30
+}) => {
+  const cleanedExcludedQuestions = (Array.isArray(excludeQuestionTexts) ? excludeQuestionTexts : [])
+    .map((item) => String(item || '').trim())
+    .filter(Boolean)
+    .slice(0, 30);
+
+  const prompt = `Generate ${questionCount} multiple choice questions about ${mainTopic} including these subtopics: ${subtopicsString}. The language should be ${lang || 'English'}. 
 CRITICAL: Randomize the correct answer position.
+CRITICAL: Do not repeat or closely paraphrase any previous question from the blocked list.
+CRITICAL: Prefer fresh scenarios, new wording, and different correct-answer phrasing for each retake.
+
+Blocked previous questions:
+${cleanedExcludedQuestions.length > 0 ? cleanedExcludedQuestions.map((item, index) => `${index + 1}. ${item}`).join('\n') : 'None'}
 
 Return ONLY a raw JSON array (no markdown, no code blocks) with this exact format:
 [
@@ -116,23 +175,52 @@ IMPORTANT: "correctAnswer" must match exactly one of the strings in "options".`;
       .replace(/```/g, '')
       .trim();
 
-    let examData;
-    try {
-      examData = JSON.parse(text);
-    } catch (e) {
-      console.error('JSON Parse Error:', text);
-      throw new Error('Invalid JSON format received from AI');
+    const examData = normalizeGeneratedExam(JSON.parse(text));
+    if (examData.length >= questionCount) {
+      return examData.slice(0, questionCount);
     }
 
-    examData = examData.map((q, index) => {
-      const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+    const generatedQuestionTexts = examData.map((item) => item.question);
+    const fallbackSupplement = buildFallbackExam(
+      mainTopic,
+      subtopicsString,
+      lang,
+      [...excludeQuestionTexts, ...generatedQuestionTexts],
+      questionCount - examData.length
+    );
 
-      return {
-        id: index + 1,
-        question: q.question,
-        options: shuffledOptions,
-        answer: q.correctAnswer
-      };
+    return [...examData, ...fallbackSupplement].slice(0, questionCount);
+  } catch (e) {
+    console.error('generateQuizQuestionSet fallback triggered:', e);
+    const fallbackExam = buildFallbackExam(mainTopic, subtopicsString, lang, excludeQuestionTexts, questionCount);
+    if (fallbackExam.length > 0) {
+      return fallbackExam;
+    }
+
+    throw new Error('Failed to generate quiz question set');
+  }
+};
+
+export const generateAIExam = async (req, res) => {
+  const { mainTopic, subtopicsString, lang, excludeQuestionTexts = [], questionCount = 30 } = req.body;
+
+  try {
+    const fs = await import('fs');
+    fs.writeFileSync(
+      'debug_req.json',
+      JSON.stringify(req.body, null, 2)
+    );
+  } catch (e) {
+    console.error('Log error', e);
+  }
+
+  try {
+    const examData = await generateQuizQuestionSet({
+      mainTopic,
+      subtopicsString,
+      lang,
+      excludeQuestionTexts,
+      questionCount
     });
 
     res.json({
@@ -141,7 +229,7 @@ IMPORTANT: "correctAnswer" must match exactly one of the strings in "options".`;
     });
   } catch (error) {
     console.error('AI exam error:', error);
-    const fallbackExam = buildFallbackExam(mainTopic, subtopicsString, lang);
+    const fallbackExam = buildFallbackExam(mainTopic, subtopicsString, lang, excludeQuestionTexts, questionCount);
     if (fallbackExam.length > 0) {
       return res.json({
         success: true,

@@ -6,13 +6,17 @@ import User from '../models/User.js';
 import Lang from '../models/Lang.js';
 import IssuedCertificate from '../models/IssuedCertificate.js';
 import QuizRetakeRequest from '../models/QuizRetakeRequest.js';
+import Admin from '../models/Admin.js';
+import Organization from '../models/Organization.js';
 import { sendMail } from '../services/mail.service.js';
 import { createNotification } from './notification.controller.js';
+import { generateQuizQuestionSet } from './aiExam.controller.js';
 
 const CERTIFICATE_PASS_PERCENTAGE = 70;
 
 const DEFAULT_QUIZ_SETTINGS = {
   examMode: true,
+  quizMode: 'secure',
   attemptLimit: 2,
   cooldownMinutes: 60,
   passPercentage: 50,
@@ -20,6 +24,16 @@ const DEFAULT_QUIZ_SETTINGS = {
   difficultyMode: 'mixed',
   shuffleQuestions: true,
   shuffleOptions: true,
+  reviewMode: 'after_submit_with_answers',
+  positiveMarkPerCorrect: 1,
+  negativeMarkingEnabled: false,
+  negativeMarkPerWrong: 0.25,
+  sectionPatternEnabled: false,
+  sections: {
+    easy: 0,
+    medium: 0,
+    difficult: 0
+  },
   proctoring: {
     requireCamera: true,
     requireMicrophone: true,
@@ -31,14 +45,39 @@ const DEFAULT_QUIZ_SETTINGS = {
   }
 };
 
-const mergeQuizSettings = (settings = {}) => ({
-  ...DEFAULT_QUIZ_SETTINGS,
-  ...settings,
-  proctoring: {
-    ...DEFAULT_QUIZ_SETTINGS.proctoring,
-    ...(settings?.proctoring || {})
+const mergeQuizSettings = (settings = {}) => {
+  const merged = {
+    ...DEFAULT_QUIZ_SETTINGS,
+    ...settings,
+    sections: {
+      ...DEFAULT_QUIZ_SETTINGS.sections,
+      ...(settings?.sections || {})
+    },
+    proctoring: {
+      ...DEFAULT_QUIZ_SETTINGS.proctoring,
+      ...(settings?.proctoring || {})
+    }
+  };
+
+  if (merged.quizMode === 'practice') {
+    merged.examMode = false;
+    merged.proctoring = {
+      requireCamera: false,
+      requireMicrophone: false,
+      detectFullscreenExit: false,
+      detectTabSwitch: false,
+      detectCopyPaste: false,
+      detectContextMenu: false,
+      detectNoise: false
+    };
+  } else if (merged.quizMode === 'assessment') {
+    merged.examMode = false;
+  } else {
+    merged.examMode = true;
   }
-});
+
+  return merged;
+};
 
 const shuffleArray = (items = []) => {
   const copy = [...items];
@@ -129,15 +168,48 @@ const pickQuestionsFromBank = (quizBank, settings) => {
         }))
     : [];
 
-  let pool = normalizedQuestions;
-  if (settings.difficultyMode && settings.difficultyMode !== 'mixed') {
-    const filtered = normalizedQuestions.filter((question) => question.difficulty === settings.difficultyMode);
-    pool = filtered.length > 0 ? filtered : normalizedQuestions;
+  const sectionQuestionCount = ['easy', 'medium', 'difficult'].reduce(
+    (sum, key) => sum + Number(settings?.sections?.[key] || 0),
+    0
+  );
+  const targetCount = settings.sectionPatternEnabled
+    ? Math.min(sectionQuestionCount || settings.questionCount || normalizedQuestions.length, normalizedQuestions.length)
+    : Math.min(settings.questionCount || normalizedQuestions.length, normalizedQuestions.length);
+
+  let selectedPool = [];
+
+  if (settings.sectionPatternEnabled) {
+    const chosenIds = new Set();
+    ['easy', 'medium', 'difficult'].forEach((difficultyKey) => {
+      const desiredCount = Number(settings?.sections?.[difficultyKey] || 0);
+      if (!desiredCount) return;
+
+      const matchingPool = normalizedQuestions.filter(
+        (question) => question.difficulty === difficultyKey && !chosenIds.has(question.sourceId)
+      );
+      const orderedMatchingPool = settings.shuffleQuestions ? shuffleArray(matchingPool) : matchingPool;
+      orderedMatchingPool.slice(0, desiredCount).forEach((question) => {
+        chosenIds.add(question.sourceId);
+        selectedPool.push(question);
+      });
+    });
+
+    if (selectedPool.length < targetCount) {
+      const remainingPool = normalizedQuestions.filter((question) => !chosenIds.has(question.sourceId));
+      const orderedRemainingPool = settings.shuffleQuestions ? shuffleArray(remainingPool) : remainingPool;
+      selectedPool = [...selectedPool, ...orderedRemainingPool.slice(0, targetCount - selectedPool.length)];
+    }
+  } else {
+    let pool = normalizedQuestions;
+    if (settings.difficultyMode && settings.difficultyMode !== 'mixed') {
+      const filtered = normalizedQuestions.filter((question) => question.difficulty === settings.difficultyMode);
+      pool = filtered.length > 0 ? filtered : normalizedQuestions;
+    }
+    const orderedPool = settings.shuffleQuestions ? shuffleArray(pool) : pool;
+    selectedPool = orderedPool.slice(0, targetCount);
   }
 
-  const orderedPool = settings.shuffleQuestions ? shuffleArray(pool) : pool;
-  const targetCount = Math.min(settings.questionCount || orderedPool.length, orderedPool.length);
-  const selected = orderedPool.slice(0, targetCount).map((question, index) => {
+  const selected = selectedPool.map((question, index) => {
     const options = settings.shuffleOptions ? shuffleArray(question.options) : question.options;
     const rawAnswer = String(question.answer || '').trim().toLowerCase();
     const correctOption =
@@ -151,6 +223,7 @@ const pickQuestionsFromBank = (quizBank, settings) => {
       question: question.question,
       explanation: question.explanation,
       difficulty: question.difficulty,
+      sectionLabel: settings.sectionPatternEnabled ? question.difficulty : settings.difficultyMode,
       options,
       correctAnswer: correctOption?.id || options[0]?.id || 'a'
     };
@@ -166,6 +239,92 @@ const sanitizeAttemptQuestions = (questions = []) =>
     difficulty: question.difficulty,
     options: question.options
   }));
+
+const parseStoredExamQuestions = (rawExam = '') => {
+  try {
+    const parsed = JSON.parse(rawExam || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+};
+
+const collectLegacyExcludedQuestions = (attempts = []) =>
+  attempts.flatMap((attempt) =>
+    parseStoredExamQuestions(attempt.exam).map((question) => String(question?.question || '').trim()).filter(Boolean)
+  );
+
+const extractCourseSubtopics = (course) => {
+  try {
+    const parsedContent = JSON.parse(course?.content || '{}');
+    const topics = parsedContent?.course_topics || parsedContent?.[(course?.mainTopic || '').toLowerCase()] || [];
+    return (Array.isArray(topics) ? topics : []).flatMap((topic) =>
+      Array.isArray(topic?.subtopics)
+        ? topic.subtopics.map((subtopic) => String(subtopic?.title || '').trim()).filter(Boolean)
+        : []
+    );
+  } catch (error) {
+    return [];
+  }
+};
+
+const parsePreparedQuestions = (rawQuestions = '') => {
+  try {
+    const parsed = JSON.parse(rawQuestions || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+};
+
+const prepareLegacyRetakeQuestions = async ({ course, lang = 'English', attempts = [] }) => {
+  const subtopics = extractCourseSubtopics(course);
+  const excludedQuestionTexts = collectLegacyExcludedQuestions(attempts);
+
+  return generateQuizQuestionSet({
+    mainTopic: course?.mainTopic || 'Course',
+    subtopicsString: subtopics.join(', '),
+    lang,
+    excludeQuestionTexts,
+    questionCount: 30
+  });
+};
+
+const resolveRetakeRequestAccess = async ({ requesterId = '', requesterEmail = '', organizationId = '' }) => {
+  const normalizedEmail = String(requesterEmail || '').trim().toLowerCase();
+  const normalizedOrganizationId = String(organizationId || '').trim();
+
+  if (normalizedEmail) {
+    const platformAdmin = await Admin.findOne({ email: normalizedEmail }).select('_id email');
+    if (platformAdmin) {
+      return { ok: true, scope: 'platform', platformAdmin };
+    }
+  }
+
+  let requesterUser = null;
+  if (requesterId && mongoose.Types.ObjectId.isValid(requesterId)) {
+    requesterUser = await User.findById(requesterId).select('_id role organization email');
+  }
+  if (!requesterUser && normalizedEmail) {
+    requesterUser = await User.findOne({ email: normalizedEmail }).select('_id role organization email');
+  }
+
+  if (
+    requesterUser &&
+    ['org_admin', 'dept_admin'].includes(requesterUser.role) &&
+    requesterUser.organization &&
+    (!normalizedOrganizationId || String(requesterUser.organization) === normalizedOrganizationId)
+  ) {
+    return {
+      ok: true,
+      scope: 'organization',
+      requesterUser,
+      organizationId: String(requesterUser.organization)
+    };
+  }
+
+  return { ok: false, status: 403, message: 'Access denied' };
+};
 
 const notifyOrgAdminsOfMalpractice = async (attempt, details) => {
   if (!attempt?.organizationId) return;
@@ -236,19 +395,27 @@ const buildLegacyQuizSummary = ({ attempts = [], latestRequest = null, certifica
   };
 };
 
-const notifyPlatformAdminsOfRetakeRequest = async (requestDoc, courseTitle, studentName) => {
-  const admins = await User.find({ role: 'admin' }).select('_id');
+const notifyRetakeApprovers = async ({ course, courseTitle, studentName }) => {
+  if (course?.organizationId) {
+    const orgApprovers = await User.find({
+      organization: course.organizationId,
+      role: { $in: ['org_admin', 'dept_admin'] }
+    }).select('_id');
 
-  await Promise.all(
-    admins.map((admin) =>
-      createNotification({
-        user: admin._id,
-        type: 'info',
-        message: `Retake request submitted for ${courseTitle || 'course quiz'} by ${studentName || 'a student'}.`,
-        link: '/admin/quiz-retake-requests'
-      })
-    )
-  );
+    await Promise.all(
+      orgApprovers.map((admin) =>
+        createNotification({
+          user: admin._id,
+          type: 'info',
+          message: `Retake request submitted for ${courseTitle || 'course quiz'} by ${studentName || 'a student'}.`,
+          link: '/dashboard/org/quiz-retake-requests'
+        })
+      )
+    );
+    return;
+  }
+
+  // Platform admin users are stored separately, so keep the request in the admin panel list.
 };
 
 /**
@@ -261,7 +428,9 @@ export const updateResult = async (req, res) => {
     userId: providedUserId,
     score = 0,
     totalQuestions = 0,
-    percentage: providedPercentage
+    percentage: providedPercentage,
+    questions = [],
+    answers = {}
   } = req.body;
 
   try {
@@ -274,6 +443,24 @@ export const updateResult = async (req, res) => {
       ? Number(providedPercentage)
       : normalizedMarks;
     const passed = normalizedPercentage >= CERTIFICATE_PASS_PERCENTAGE;
+    const sanitizedQuestions = (Array.isArray(questions) ? questions : []).map((question, index) => ({
+      id: String(question?.id || `q${index + 1}`),
+      question: String(question?.question || `Question ${index + 1}`),
+      difficulty: String(question?.difficulty || 'medium'),
+      options: Array.isArray(question?.options)
+        ? question.options.map((option, optionIndex) => ({
+            id: String(option?.id || String.fromCharCode(97 + optionIndex)),
+            text: String(typeof option === 'string' ? option : option?.text || option?.value || '')
+          }))
+        : [],
+      correctAnswer: String(question?.correctAnswer || '')
+    }));
+    const normalizedAnswers = sanitizedQuestions.map((question) => ({
+      questionId: question.id,
+      selectedOptionId: String(answers?.[question.id] || ''),
+      correctOptionId: question.correctAnswer,
+      isCorrect: String(answers?.[question.id] || '') === String(question.correctAnswer || '')
+    }));
 
     const newExam = new Exam({
       course: courseId,
@@ -285,7 +472,10 @@ export const updateResult = async (req, res) => {
       totalQuestions: normalizedTotalQuestions,
       percentage: normalizedPercentage,
       passPercentage: CERTIFICATE_PASS_PERCENTAGE,
-      submittedAt: new Date()
+      submittedAt: new Date(),
+      exam: JSON.stringify(sanitizedQuestions),
+      questionOrder: sanitizedQuestions.map((question) => question.id),
+      answers: normalizedAnswers
     });
     await newExam.save();
 
@@ -597,11 +787,90 @@ export const getLegacyQuizRetakeStatus = async (req, res) => {
   }
 };
 
+export const startLegacyQuizRetakeAttempt = async (req, res) => {
+  const { courseId, userId: providedUserId } = req.body;
+
+  try {
+    const course = await Course.findById(courseId).select('_id mainTopic content');
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    const userId = await normalizeUserId(providedUserId, course);
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'Valid userId is required' });
+    }
+
+    const attempts = await Exam.find({
+      course: courseId,
+      userId,
+      examType: 'legacy'
+    }).sort({ submittedAt: -1, date: -1 });
+    const latestRequest = await QuizRetakeRequest.findOne({
+      course: courseId,
+      userId
+    }).sort({ createdAt: -1 });
+    const certificate = await IssuedCertificate.findOne({
+      course: courseId,
+      user: userId
+    }).select('certificateId');
+    const quizStatus = buildLegacyQuizSummary({
+      attempts,
+      latestRequest,
+      certificateId: certificate?.certificateId || null
+    });
+
+    if (quizStatus.passed) {
+      return res.status(403).json({
+        success: false,
+        message: 'Quiz already passed. Further attempts are locked.',
+        quizStatus
+      });
+    }
+
+    if (!quizStatus.canStart) {
+      return res.status(403).json({
+        success: false,
+        message:
+          latestRequest?.status === 'pending'
+            ? 'Your retake request is pending admin approval.'
+            : 'Retake approval is required before starting another quiz attempt.',
+        quizStatus
+      });
+    }
+
+    const langObj = await Lang.findOne({ course: courseId }).select('lang');
+    const preparedQuestions = latestRequest?.status === 'approved'
+      ? parsePreparedQuestions(latestRequest.preparedQuestions)
+      : [];
+    const questions = preparedQuestions.length > 0
+      ? preparedQuestions
+      : await prepareLegacyRetakeQuestions({
+          course,
+          lang: langObj?.lang || 'English',
+          attempts
+        });
+
+    return res.json({
+      success: true,
+      topic: course.mainTopic,
+      questions,
+      quizStatus,
+      regenerated: attempts.length > 0,
+      preparedByAdmin: preparedQuestions.length > 0,
+      excludedQuestionCount: collectLegacyExcludedQuestions(attempts).length
+    });
+  } catch (error) {
+    console.error('startLegacyQuizRetakeAttempt error:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 export const createLegacyQuizRetakeRequest = async (req, res) => {
   const { courseId, userId: providedUserId, requestReason = '' } = req.body;
 
   try {
-    const course = await Course.findById(courseId).select('_id mainTopic');
+    const course = await Course.findById(courseId).select('_id mainTopic organizationId');
     if (!course) {
       return res.status(404).json({ success: false, message: 'Course not found' });
     }
@@ -657,7 +926,11 @@ export const createLegacyQuizRetakeRequest = async (req, res) => {
     });
 
     const student = await User.findById(userId).select('mName');
-    await notifyPlatformAdminsOfRetakeRequest(requestDoc, course.mainTopic, student?.mName || 'Student');
+    await notifyRetakeApprovers({
+      course,
+      courseTitle: course.mainTopic,
+      studentName: student?.mName || 'Student'
+    });
 
     return res.json({
       success: true,
@@ -677,6 +950,15 @@ export const createLegacyQuizRetakeRequest = async (req, res) => {
 
 export const getLegacyQuizRetakeRequests = async (req, res) => {
   try {
+    const access = await resolveRetakeRequestAccess({
+      requesterId: req.query.requesterId || '',
+      requesterEmail: req.query.requesterEmail || '',
+      organizationId: req.query.organizationId || ''
+    });
+    if (!access.ok) {
+      return res.status(access.status).json({ success: false, message: access.message });
+    }
+
     const requests = await QuizRetakeRequest.find()
       .sort({ createdAt: -1 })
       .lean();
@@ -684,18 +966,39 @@ export const getLegacyQuizRetakeRequests = async (req, res) => {
     const userIds = [...new Set(requests.map((request) => request.userId).filter(Boolean))];
     const courseIds = [...new Set(requests.map((request) => request.course).filter(Boolean))];
     const users = await User.find({ _id: { $in: userIds } }).select('_id mName email').lean();
-    const courses = await Course.find({ _id: { $in: courseIds } }).select('_id mainTopic').lean();
+    const courses = await Course.find({ _id: { $in: courseIds } }).select('_id mainTopic organizationId').lean();
+    const organizationIds = [...new Set(courses.map((course) => course.organizationId).filter(Boolean))];
+    const organizations = await Organization.find({ _id: { $in: organizationIds } }).select('_id name').lean();
     const userMap = new Map(users.map((user) => [String(user._id), user]));
     const courseMap = new Map(courses.map((course) => [String(course._id), course]));
+    const organizationMap = new Map(organizations.map((org) => [String(org._id), org]));
+
+    const visibleRequests =
+      access.scope === 'organization'
+        ? requests.filter((request) => {
+            const course = courseMap.get(String(request.course));
+            return course?.organizationId && String(course.organizationId) === String(access.organizationId);
+          })
+        : requests;
 
     return res.json({
       success: true,
-      requests: requests.map((request) => ({
+      requests: visibleRequests.map((request) => {
+        const mappedCourse = courseMap.get(String(request.course));
+        const orgId = mappedCourse?.organizationId ? String(mappedCourse.organizationId) : '';
+        const organizationName = orgId ? organizationMap.get(orgId)?.name || 'Organization' : '';
+        return ({
         ...request,
         studentName: userMap.get(String(request.userId))?.mName || 'Student',
         studentEmail: userMap.get(String(request.userId))?.email || '',
-        courseTitle: courseMap.get(String(request.course))?.mainTopic || 'Course'
-      }))
+        courseTitle: mappedCourse?.mainTopic || 'Course',
+        organizationId: orgId,
+        organizationName,
+        approvalScope: orgId ? 'organization' : 'platform',
+        generatedQuestionCount: request.generatedQuestionCount || 0,
+        regeneratedAt: request.regeneratedAt || null
+      });
+      })
     });
   } catch (error) {
     console.error('getLegacyQuizRetakeRequests error:', error);
@@ -704,7 +1007,15 @@ export const getLegacyQuizRetakeRequests = async (req, res) => {
 };
 
 export const reviewLegacyQuizRetakeRequest = async (req, res) => {
-  const { requestId, status, adminComment = '', reviewerId = '' } = req.body;
+  const {
+    requestId,
+    status,
+    adminComment = '',
+    reviewerId = '',
+    requesterEmail = '',
+    organizationId = '',
+    regenerateQuiz = false
+  } = req.body;
 
   try {
     if (!['approved', 'rejected'].includes(status)) {
@@ -716,16 +1027,54 @@ export const reviewLegacyQuizRetakeRequest = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Retake request not found' });
     }
 
+    const course = await Course.findById(requestDoc.course).select('mainTopic organizationId');
+    const access = await resolveRetakeRequestAccess({
+      requesterId: reviewerId,
+      requesterEmail,
+      organizationId: organizationId || String(course?.organizationId || '')
+    });
+    if (!access.ok) {
+      return res.status(access.status).json({ success: false, message: access.message });
+    }
+
+    if (
+      access.scope === 'organization' &&
+      String(course?.organizationId || '') !== String(access.organizationId || '')
+    ) {
+      return res.status(403).json({ success: false, message: 'You can review only your organization retake requests.' });
+    }
+
+    if (status === 'approved' && regenerateQuiz) {
+      const langObj = await Lang.findOne({ course: requestDoc.course }).select('lang');
+      const attempts = await Exam.find({
+        course: requestDoc.course,
+        userId: requestDoc.userId,
+        examType: 'legacy'
+      }).sort({ submittedAt: -1, date: -1 });
+      const regeneratedQuestions = await prepareLegacyRetakeQuestions({
+        course,
+        lang: langObj?.lang || 'English',
+        attempts
+      });
+
+      requestDoc.preparedQuestions = JSON.stringify(regeneratedQuestions);
+      requestDoc.generatedQuestionCount = regeneratedQuestions.length;
+      requestDoc.regeneratedAt = new Date();
+    }
+
     requestDoc.status = status;
     requestDoc.adminComment = String(adminComment || '').trim();
     requestDoc.reviewedBy = String(reviewerId || '').trim();
     requestDoc.reviewedAt = new Date();
     if (status === 'approved') {
       requestDoc.consumedAt = null;
+    } else {
+      requestDoc.preparedQuestions = '';
+      requestDoc.generatedQuestionCount = 0;
+      requestDoc.regeneratedAt = null;
     }
     await requestDoc.save();
 
-    const course = await Course.findById(requestDoc.course).select('mainTopic');
     await createNotification({
       user: requestDoc.userId,
       type: status === 'approved' ? 'success' : 'warning',
@@ -1066,16 +1415,41 @@ export const submitOrgQuizAttempt = async (req, res) => {
       const correctOptionId = question.correctAnswer;
       return {
         questionId: question.id,
+        difficulty: question.difficulty || 'medium',
+        sectionLabel: question.sectionLabel || question.difficulty || 'mixed',
         selectedOptionId,
         correctOptionId,
-        isCorrect: String(selectedOptionId) === String(correctOptionId)
+        isCorrect: String(selectedOptionId) === String(correctOptionId),
+        isAttempted: !!selectedOptionId
       };
     });
 
-    const score = evaluatedAnswers.filter((answer) => answer.isCorrect).length;
+    const correctCount = evaluatedAnswers.filter((answer) => answer.isCorrect).length;
+    const wrongCount = evaluatedAnswers.filter((answer) => answer.isAttempted && !answer.isCorrect).length;
+    const unansweredCount = evaluatedAnswers.filter((answer) => !answer.isAttempted).length;
+    const positiveMarks = correctCount * Number(settings.positiveMarkPerCorrect || 1);
+    const negativeMarks = settings.negativeMarkingEnabled ? wrongCount * Number(settings.negativeMarkPerWrong || 0) : 0;
+    const score = Number((positiveMarks - negativeMarks).toFixed(2));
     const totalQuestions = storedQuestions.length;
-    const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
+    const maxScore = totalQuestions * Number(settings.positiveMarkPerCorrect || 1);
+    const percentage = maxScore > 0 ? Math.max(0, Math.round((score / maxScore) * 100)) : 0;
     const passed = percentage >= settings.passPercentage;
+
+    const sectionStats = evaluatedAnswers.reduce((acc, answer) => {
+      const sectionKey = answer.sectionLabel || 'mixed';
+      if (!acc[sectionKey]) {
+        acc[sectionKey] = { total: 0, correct: 0, wrong: 0, unanswered: 0 };
+      }
+      acc[sectionKey].total += 1;
+      if (answer.isCorrect) {
+        acc[sectionKey].correct += 1;
+      } else if (answer.isAttempted) {
+        acc[sectionKey].wrong += 1;
+      } else {
+        acc[sectionKey].unanswered += 1;
+      }
+      return acc;
+    }, {});
 
     attempt.answers = evaluatedAnswers;
     attempt.score = score;
@@ -1116,11 +1490,19 @@ export const submitOrgQuizAttempt = async (req, res) => {
       result: {
         passed,
         score,
+        correctCount,
+        wrongCount,
+        unansweredCount,
+        positiveMarks,
+        negativeMarks,
+        maxScore,
         totalQuestions,
         percentage,
         attemptNumber: attempt.attemptNumber,
         nextAttemptAvailableAt: attempt.nextAttemptAvailableAt,
         malpracticeFlag: attempt.malpracticeFlag,
+        reviewMode: settings.reviewMode,
+        sectionStats,
         answers: evaluatedAnswers
       },
       summary: buildOrgQuizSummary(allAttempts, settings)

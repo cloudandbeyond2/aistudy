@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { serverURL } from '@/constants';
 import { useToast } from '@/hooks/use-toast';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -25,17 +26,29 @@ import { CheckCircle2, Clock3, XCircle, RotateCcw } from 'lucide-react';
 
 const AdminQuizRetakeRequests = () => {
     const { toast } = useToast();
+    const location = useLocation();
     const [requests, setRequests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState<any>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [adminComment, setAdminComment] = useState('');
     const [processing, setProcessing] = useState(false);
+    const role = sessionStorage.getItem('role');
+    const requesterId = sessionStorage.getItem('uid') || '';
+    const requesterEmail = sessionStorage.getItem('email') || '';
+    const organizationId = sessionStorage.getItem('orgId') || '';
+    const isOrganizationReviewer = role === 'org_admin' || role === 'dept_admin' || location.pathname.startsWith('/dashboard/org/');
 
     const fetchRequests = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`${serverURL}/api/quiz-retake-requests`);
+            const response = await axios.get(`${serverURL}/api/quiz-retake-requests`, {
+                params: {
+                    requesterId,
+                    requesterEmail,
+                    organizationId
+                }
+            });
             if (response.data?.success) {
                 setRequests(response.data.requests || []);
             }
@@ -73,7 +86,7 @@ const AdminQuizRetakeRequests = () => {
         setDialogOpen(true);
     };
 
-    const handleReview = async (status: 'approved' | 'rejected') => {
+    const handleReview = async (status: 'approved' | 'rejected', regenerateQuiz = false) => {
         if (!selectedRequest) return;
         setProcessing(true);
         try {
@@ -81,12 +94,17 @@ const AdminQuizRetakeRequests = () => {
                 requestId: selectedRequest._id,
                 status,
                 adminComment,
-                reviewerId: sessionStorage.getItem('email') || sessionStorage.getItem('uid') || ''
+                reviewerId: requesterId,
+                requesterEmail,
+                organizationId,
+                regenerateQuiz
             });
             if (response.data?.success) {
                 toast({
                     title: 'Updated',
-                    description: `Retake request ${status}.`
+                    description: status === 'approved' && regenerateQuiz
+                        ? 'Retake approved with a fresh AI-regenerated quiz set.'
+                        : `Retake request ${status}.`
                 });
                 setDialogOpen(false);
                 setSelectedRequest(null);
@@ -109,18 +127,21 @@ const AdminQuizRetakeRequests = () => {
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Quiz Retake Requests</h1>
                 <p className="text-muted-foreground mt-1">
-                    Approve or reject learner retake requests before a new legacy quiz attempt is allowed.
+                    {isOrganizationReviewer
+                        ? 'Approve or reject retake requests from learners in your organization before a new attempt is allowed.'
+                        : 'Approve or reject learner retake requests before a new legacy quiz attempt is allowed.'}
                 </p>
             </div>
 
             <div className="border rounded-lg bg-card text-card-foreground shadow-sm">
                 <Table>
                     <TableHeader>
-                        <TableRow>
-                            <TableHead>Student</TableHead>
-                            <TableHead>Course</TableHead>
-                            <TableHead>Latest Score</TableHead>
-                            <TableHead>Status</TableHead>
+                            <TableRow>
+                                <TableHead>Student</TableHead>
+                                <TableHead>Scope</TableHead>
+                                <TableHead>Course</TableHead>
+                                <TableHead>Latest Score</TableHead>
+                                <TableHead>Status</TableHead>
                             <TableHead>Requested</TableHead>
                             <TableHead className="text-right">Action</TableHead>
                         </TableRow>
@@ -128,11 +149,11 @@ const AdminQuizRetakeRequests = () => {
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="py-10 text-center">Loading...</TableCell>
+                                <TableCell colSpan={7} className="py-10 text-center">Loading...</TableCell>
                             </TableRow>
                         ) : requests.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                                <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
                                     No retake requests found.
                                 </TableCell>
                             </TableRow>
@@ -142,6 +163,16 @@ const AdminQuizRetakeRequests = () => {
                                     <TableCell>
                                         <div className="font-medium">{request.studentName || 'Student'}</div>
                                         <div className="text-xs text-muted-foreground">{request.studentEmail || 'No email'}</div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="space-y-1">
+                                            <Badge variant={request.approvalScope === 'organization' ? 'default' : 'secondary'}>
+                                                {request.approvalScope === 'organization' ? 'Organization' : 'Platform'}
+                                            </Badge>
+                                            {request.organizationName && (
+                                                <div className="text-xs text-muted-foreground">{request.organizationName}</div>
+                                            )}
+                                        </div>
                                     </TableCell>
                                     <TableCell>{request.courseTitle || 'Course'}</TableCell>
                                     <TableCell>{request.latestPercentage || 0}%</TableCell>
@@ -181,6 +212,16 @@ const AdminQuizRetakeRequests = () => {
                                 </div>
                             </div>
 
+                            {selectedRequest.generatedQuestionCount > 0 && (
+                                <div className="rounded-lg border p-3 text-sm">
+                                    <p className="font-medium">Prepared retake quiz</p>
+                                    <p className="mt-1 text-muted-foreground">
+                                        {selectedRequest.generatedQuestionCount} AI-generated questions prepared
+                                        {selectedRequest.regeneratedAt ? ` on ${new Date(selectedRequest.regeneratedAt).toLocaleString()}` : ''}.
+                                    </p>
+                                </div>
+                            )}
+
                             <div className="rounded-lg border p-3 text-sm">
                                 <p className="font-medium">Student reason</p>
                                 <p className="mt-1 text-muted-foreground">{selectedRequest.requestReason || 'No reason provided.'}</p>
@@ -204,8 +245,11 @@ const AdminQuizRetakeRequests = () => {
                                 <Button variant="destructive" onClick={() => handleReview('rejected')} disabled={processing}>
                                     Reject
                                 </Button>
-                                <Button onClick={() => handleReview('approved')} disabled={processing}>
+                                <Button variant="secondary" onClick={() => handleReview('approved')} disabled={processing}>
                                     Approve
+                                </Button>
+                                <Button onClick={() => handleReview('approved', true)} disabled={processing}>
+                                    Approve + Regenerate Quiz
                                 </Button>
                             </>
                         ) : (
