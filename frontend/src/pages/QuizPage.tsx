@@ -215,6 +215,30 @@ const QuizPage = () => {
         });
     };
 
+    const requestSecureFullscreen = async () => {
+        const rootElement: any = document.documentElement;
+        if (document.fullscreenElement) return true;
+
+        try {
+            if (rootElement.requestFullscreen) {
+                await rootElement.requestFullscreen();
+                return true;
+            }
+            if (rootElement.webkitRequestFullscreen) {
+                rootElement.webkitRequestFullscreen();
+                return true;
+            }
+            if (rootElement.msRequestFullscreen) {
+                rootElement.msRequestFullscreen();
+                return true;
+            }
+        } catch (error) {
+            console.error('Fullscreen request failed', error);
+        }
+
+        return false;
+    };
+
     function init() {
         try {
             console.log('Quiz Init - Raw questions:', questions);
@@ -664,7 +688,12 @@ const QuizPage = () => {
             });
         } catch (error: any) {
             console.error('Failed to start legacy quiz', error);
-            const message = error?.response?.data?.message || error?.message || 'Failed to prepare quiz';
+            const isMissingRetakeRoute =
+                error?.response?.status === 404 &&
+                String(error?.config?.url || '').includes('/api/quiz-retake/start');
+            const message = isMissingRetakeRoute
+                ? 'The backend needs a restart to load the new retake quiz route.'
+                : error?.response?.data?.message || error?.message || 'Failed to prepare quiz';
             toast({
                 title: 'Quiz unavailable',
                 description: message,
@@ -682,7 +711,16 @@ const QuizPage = () => {
     };
 
     const handleConfirmStartQuiz = async () => {
+        const fullscreenEnabled = await requestSecureFullscreen();
         setStartDialogOpen(false);
+        if (!fullscreenEnabled && (quizSettings?.proctoring?.detectFullscreenExit ?? defaultManualQuizSettings.proctoring.detectFullscreenExit)) {
+            toast({
+                title: 'Fullscreen required',
+                description: 'Allow fullscreen mode to start this secure quiz.',
+                variant: 'destructive'
+            });
+            return;
+        }
         await beginQuizAttempt();
     };
 
@@ -922,6 +960,40 @@ const QuizPage = () => {
         </div>
     );
 
+    const renderCameraPreviewBubble = (sizeClass = 'h-24 w-24') => {
+        const showLiveVideo = permissionState.camera === 'granted';
+
+        return (
+            <div className="flex items-center gap-3">
+                <div className={cn(
+                    "relative overflow-hidden rounded-full border-4 border-primary/15 bg-slate-950 shadow-lg ring-4 ring-background/80",
+                    sizeClass
+                )}>
+                    {showLiveVideo ? (
+                        <video
+                            ref={videoRef}
+                            autoPlay
+                            muted
+                            playsInline
+                            className="h-full w-full object-cover scale-x-[-1]"
+                        />
+                    ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-primary">
+                            <Camera className="h-7 w-7" />
+                        </div>
+                    )}
+                    <div className="absolute bottom-2 right-2 h-3 w-3 rounded-full border border-white/70 bg-emerald-500 shadow-sm" />
+                </div>
+                <div className="text-left">
+                    <p className="text-sm font-semibold text-foreground">Live Camera</p>
+                    <p className="text-xs text-muted-foreground">
+                        {showLiveVideo ? 'Monitoring active' : 'Camera preview ready'}
+                    </p>
+                </div>
+            </div>
+        );
+    };
+
     const downloadCertificate = async () => {
         const node = document.getElementById('certificate-node');
         if (node) {
@@ -1117,8 +1189,8 @@ const QuizPage = () => {
                                                     Certificate is issued only when you score {legacyCertificateThreshold}% or above. Any retake after a failed attempt needs admin approval.
                                                 </p>
                                             )}
-                                            <div className="mt-4 overflow-hidden rounded-xl border bg-muted/30">
-                                                <video ref={videoRef} autoPlay muted playsInline className="h-40 w-full object-cover" />
+                                            <div className="mt-4 rounded-2xl border border-primary/10 bg-background/80 p-4 shadow-sm">
+                                                {renderCameraPreviewBubble('h-28 w-28')}
                                             </div>
                                         </div>
                                         {!manualQuizExam && showLegacyRetakeRequestButton && renderLegacyRetakeRequestComposer()}
@@ -1146,11 +1218,18 @@ const QuizPage = () => {
                             {quizState === QuizState.InProgress && (
                                 <div className="space-y-6">
                                     <div className="space-y-2">
-                                        <div className="flex justify-between text-sm text-muted-foreground">
-                                            <span>Question {currentQuestionIndex + 1} of {quizQuestions.length}</span>
-                                            <span>{formatTime(timeRemaining)} remaining</span>
+                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-sm text-muted-foreground sm:min-w-[280px]">
+                                                    <span>Question {currentQuestionIndex + 1} of {quizQuestions.length}</span>
+                                                    <span>{formatTime(timeRemaining)} remaining</span>
+                                                </div>
+                                                <Progress value={progress} className="h-2" />
+                                            </div>
+                                            <div className="self-start rounded-2xl border border-primary/10 bg-background/80 px-3 py-2 shadow-sm">
+                                                {renderCameraPreviewBubble('h-20 w-20')}
+                                            </div>
                                         </div>
-                                        <Progress value={progress} className="h-2" />
                                     </div>
 
                                     <Card className="overflow-hidden border-primary/15 bg-gradient-to-br from-background to-primary/5 shadow-xl">

@@ -138,26 +138,29 @@ IMPORTANT: "correctAnswer" must match exactly one of the strings in "options".`;
     }
   ];
 
-  let text = await generateAIText({
-    prompt,
-    maxOutputTokens: 4096,
-    safetySettings
-  });
-
-  text = text
-    .replace(/```json/g, '')
-    .replace(/```/g, '')
-    .trim();
-
-  let examData;
   try {
-    examData = JSON.parse(text);
-  } catch (e) {
-    console.error('JSON Parse Error:', text);
-    throw new Error('Invalid JSON format received from AI');
-  }
+    let text = await generateAIText({
+      prompt,
+      maxOutputTokens: 4096,
+      safetySettings
+    });
 
-  return normalizeGeneratedExam(examData);
+    text = text
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
+
+    const examData = JSON.parse(text);
+    return normalizeGeneratedExam(examData);
+  } catch (e) {
+    console.error('generateQuizQuestionSet fallback triggered:', e);
+    const fallbackExam = buildFallbackExam(mainTopic, subtopicsString, lang, excludeQuestionTexts);
+    if (fallbackExam.length > 0) {
+      return fallbackExam;
+    }
+
+    throw new Error('Failed to generate quiz question set');
+  }
 };
 
 export const generateAIExam = async (req, res) => {
