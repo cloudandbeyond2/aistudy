@@ -286,7 +286,7 @@ const prepareLegacyRetakeQuestions = async ({ course, lang = 'English', attempts
     subtopicsString: subtopics.join(', '),
     lang,
     excludeQuestionTexts: excludedQuestionTexts,
-    questionCount: 30
+    questionCount: 20
   });
 };
 

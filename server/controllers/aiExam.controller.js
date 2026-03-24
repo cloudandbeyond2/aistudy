@@ -12,7 +12,7 @@ const buildFallbackExam = (
   subtopicsString,
   lang = 'English',
   excludeQuestionTexts = [],
-  questionCount = 30
+  questionCount = 20
 ) => {
   const topics = String(subtopicsString || '')
     .split(',')
@@ -135,7 +135,7 @@ export const generateQuizQuestionSet = async ({
   subtopicsString,
   lang = 'English',
   excludeQuestionTexts = [],
-  questionCount = 30
+  questionCount = 20
 }) => {
   const cleanedExcludedQuestions = (Array.isArray(excludeQuestionTexts) ? excludeQuestionTexts : [])
     .map((item) => String(item || '').trim())
@@ -218,7 +218,7 @@ IMPORTANT: "correctAnswer" must match exactly one of the strings in "options".`;
 };
 
 export const generateAIExam = async (req, res) => {
-  const { mainTopic, subtopicsString, lang, excludeQuestionTexts = [], questionCount = 30 } = req.body;
+  const { mainTopic, subtopicsString, lang, excludeQuestionTexts = [], questionCount = 20 } = req.body;
 
   try {
     const fs = await import('fs');
