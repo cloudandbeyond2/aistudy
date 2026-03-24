@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award } from 'lucide-react';
+import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -18,9 +18,80 @@ import AdminStatCard from "@/components/admin/AdminStatCard";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Swal from 'sweetalert2';
+
+const defaultQuizSettings = {
+    examMode: true,
+    attemptLimit: 2,
+    cooldownMinutes: 60,
+    passPercentage: 50,
+    questionCount: 10,
+    difficultyMode: 'mixed',
+    shuffleQuestions: true,
+    shuffleOptions: true,
+    proctoring: {
+        requireCamera: true,
+        requireMicrophone: true,
+        detectFullscreenExit: true,
+        detectTabSwitch: true,
+        detectCopyPaste: true,
+        detectContextMenu: true,
+        detectNoise: true
+    }
+};
+
+const createEmptyQuiz = () => ({
+    question: '',
+    options: ['', '', '', ''],
+    answer: '',
+    explanation: '',
+    difficulty: 'medium'
+});
+
+const createEmptyCourse = () => ({
+    title: '',
+    description: '',
+    department: '',
+    topics: [],
+    quizzes: [],
+    quizSettings: { ...defaultQuizSettings, proctoring: { ...defaultQuizSettings.proctoring } }
+});
+
+const normalizeCourseForEdit = (course: any) => {
+    const quizzes = Array.isArray(course?.quizzes)
+        ? course.quizzes.map((q: any) => ({
+            ...q,
+            options: Array.isArray(q?.options) ? q.options : ['', '', '', ''],
+            difficulty: q?.difficulty || 'medium'
+        }))
+        : [];
+
+    const quizSettings = {
+        ...defaultQuizSettings,
+        ...(course?.quizSettings || {}),
+        proctoring: {
+            ...defaultQuizSettings.proctoring,
+            ...(course?.quizSettings?.proctoring || {})
+        }
+    };
+
+    return {
+        ...course,
+        quizzes,
+        quizSettings
+    };
+};
+
 const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [], role }: any) => {
     if (!course) return null;
     const [expandedTopic, setExpandedTopic] = useState<number | null>(null);
+    const quizSettings = {
+        ...defaultQuizSettings,
+        ...(course.quizSettings || {}),
+        proctoring: {
+            ...defaultQuizSettings.proctoring,
+            ...(course.quizSettings?.proctoring || {})
+        }
+    };
 
     const updateTopic = (index: number, field: string, value: any) => {
         const updatedTopics = [...course.topics];
@@ -69,6 +140,29 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
     const removeQuiz = (index: number) => {
         const updatedQuizzes = course.quizzes.filter((_: any, i: number) => i !== index);
         setCourse({ ...course, quizzes: updatedQuizzes });
+    };
+
+    const updateQuizSetting = (field: string, value: any) => {
+        setCourse({
+            ...course,
+            quizSettings: {
+                ...quizSettings,
+                [field]: value
+            }
+        });
+    };
+
+    const updateProctoringSetting = (field: string, value: boolean) => {
+        setCourse({
+            ...course,
+            quizSettings: {
+                ...quizSettings,
+                proctoring: {
+                    ...quizSettings.proctoring,
+                    [field]: value
+                }
+            }
+        });
     };
 
 
@@ -232,6 +326,130 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
                 </div>
             </div>
 
+            <div className="space-y-4 pt-4 border-t">
+                <div className="border-b pb-2">
+                    <h3 className="text-lg font-semibold flex items-center gap-2"><Shield className="w-5 h-5 text-amber-500" /> Quiz Exam Mode</h3>
+                    <p className="text-sm text-muted-foreground">Configure GATE-style exam rules, attempts, cooldown, and malpractice monitoring.</p>
+                </div>
+
+                <div className="grid gap-4 p-5 border rounded-xl bg-card shadow-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label className="text-sm font-medium">Exam Mode</Label>
+                            <select
+                                className="flex h-11 w-full rounded-md border border-input bg-muted/50 focus:bg-background px-3 py-2 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                value={quizSettings.examMode ? 'secure' : 'standard'}
+                                onChange={(e) => updateQuizSetting('examMode', e.target.value === 'secure')}
+                            >
+                                <option value="secure">Secure Exam Mode</option>
+                                <option value="standard">Standard Quiz Mode</option>
+                            </select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label className="text-sm font-medium">Difficulty Mode</Label>
+                            <select
+                                className="flex h-11 w-full rounded-md border border-input bg-muted/50 focus:bg-background px-3 py-2 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                value={quizSettings.difficultyMode}
+                                onChange={(e) => updateQuizSetting('difficultyMode', e.target.value)}
+                            >
+                                <option value="mixed">Mixed</option>
+                                <option value="easy">Easy</option>
+                                <option value="medium">Medium</option>
+                                <option value="difficult">Difficult</option>
+                            </select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label className="text-sm font-medium">Attempt Limit</Label>
+                            <Input
+                                type="number"
+                                min={1}
+                                max={5}
+                                value={quizSettings.attemptLimit}
+                                onChange={(e) => updateQuizSetting('attemptLimit', Number(e.target.value) || 1)}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label className="text-sm font-medium">Cooldown After Failed Attempt (Minutes)</Label>
+                            <Input
+                                type="number"
+                                min={0}
+                                max={1440}
+                                value={quizSettings.cooldownMinutes}
+                                onChange={(e) => updateQuizSetting('cooldownMinutes', Number(e.target.value) || 0)}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label className="text-sm font-medium">Pass Percentage</Label>
+                            <Input
+                                type="number"
+                                min={1}
+                                max={100}
+                                value={quizSettings.passPercentage}
+                                onChange={(e) => updateQuizSetting('passPercentage', Number(e.target.value) || 50)}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label className="text-sm font-medium">Questions Per Attempt</Label>
+                            <Input
+                                type="number"
+                                min={1}
+                                max={100}
+                                value={quizSettings.questionCount}
+                                onChange={(e) => updateQuizSetting('questionCount', Number(e.target.value) || 1)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-muted/20">
+                            <span className="text-sm font-medium">Shuffle questions per attempt</span>
+                            <input type="checkbox" checked={quizSettings.shuffleQuestions} onChange={(e) => updateQuizSetting('shuffleQuestions', e.target.checked)} />
+                        </label>
+                        <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-muted/20">
+                            <span className="text-sm font-medium">Shuffle options per attempt</span>
+                            <input type="checkbox" checked={quizSettings.shuffleOptions} onChange={(e) => updateQuizSetting('shuffleOptions', e.target.checked)} />
+                        </label>
+                    </div>
+
+                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-amber-700">
+                            <AlertTriangle className="w-4 h-4" />
+                            Malpractice Monitoring
+                        </div>
+                        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-background">
+                                <span className="flex items-center gap-2 text-sm font-medium"><Camera className="w-4 h-4 text-primary" /> Require camera access</span>
+                                <input type="checkbox" checked={quizSettings.proctoring.requireCamera} onChange={(e) => updateProctoringSetting('requireCamera', e.target.checked)} />
+                            </label>
+                            <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-background">
+                                <span className="flex items-center gap-2 text-sm font-medium"><Mic className="w-4 h-4 text-primary" /> Require microphone access</span>
+                                <input type="checkbox" checked={quizSettings.proctoring.requireMicrophone} onChange={(e) => updateProctoringSetting('requireMicrophone', e.target.checked)} />
+                            </label>
+                            <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-background">
+                                <span className="text-sm font-medium">Detect tab switches</span>
+                                <input type="checkbox" checked={quizSettings.proctoring.detectTabSwitch} onChange={(e) => updateProctoringSetting('detectTabSwitch', e.target.checked)} />
+                            </label>
+                            <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-background">
+                                <span className="text-sm font-medium">Detect fullscreen exit</span>
+                                <input type="checkbox" checked={quizSettings.proctoring.detectFullscreenExit} onChange={(e) => updateProctoringSetting('detectFullscreenExit', e.target.checked)} />
+                            </label>
+                            <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-background">
+                                <span className="text-sm font-medium">Detect copy/paste</span>
+                                <input type="checkbox" checked={quizSettings.proctoring.detectCopyPaste} onChange={(e) => updateProctoringSetting('detectCopyPaste', e.target.checked)} />
+                            </label>
+                            <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-background">
+                                <span className="text-sm font-medium">Detect context menu</span>
+                                <input type="checkbox" checked={quizSettings.proctoring.detectContextMenu} onChange={(e) => updateProctoringSetting('detectContextMenu', e.target.checked)} />
+                            </label>
+                            <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-background md:col-span-2">
+                                <span className="text-sm font-medium">Detect external noise spikes</span>
+                                <input type="checkbox" checked={quizSettings.proctoring.detectNoise} onChange={(e) => updateProctoringSetting('detectNoise', e.target.checked)} />
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Quizzes */}
             <div className="space-y-4 pt-4 border-t">
                 <div className="border-b pb-2 flex justify-between items-end">
@@ -240,7 +458,7 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
                         <p className="text-sm text-muted-foreground">Add multiple choice questions to test knowledge.</p>
                     </div>
                     <Button type="button" size="sm" variant="secondary" onClick={() => {
-                        const quiz = { question: '', options: ['', '', '', ''], answer: '', explanation: '' };
+                        const quiz = createEmptyQuiz();
                         setCourse({ ...course, quizzes: [...course.quizzes, quiz] });
                     }}>
                         <Plus className="w-4 h-4 mr-2" /> Add Question
@@ -268,6 +486,18 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
                                         onChange={(e) => updateQuiz(qIdx, 'question', e.target.value)}
                                         placeholder="What is..."
                                     />
+                                </div>
+                                <div className="w-36 space-y-1.5">
+                                    <Label className="text-xs text-muted-foreground font-semibold uppercase">Difficulty</Label>
+                                    <select
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                        value={quiz.difficulty || 'medium'}
+                                        onChange={(e) => updateQuiz(qIdx, 'difficulty', e.target.value)}
+                                    >
+                                        <option value="easy">Easy</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="difficult">Difficult</option>
+                                    </select>
                                 </div>
                                 <Button size="icon" variant="ghost" className="text-destructive hover:bg-destructive/10 shrink-0" onClick={() => removeQuiz(qIdx)}>
                                     <Trash2 className="w-4 h-4" />
@@ -341,8 +571,7 @@ const OrgDashboard = () => {
     const [assignments, setAssignments] = useState([]);
     const [notices, setNotices] = useState([]);
     const [courses, setCourses] = useState([]);
-    // Add this line with your other state declarations (around line where you have other useState declarations)
-const [previewProject, setPreviewProject] = useState<any>(null);
+    const [previewProject, setPreviewProject] = useState<any>(null);
     const [userDeptName, setUserDeptName] = useState('');
     const [userDeptId, setUserDeptId] = useState(deptId || '');
     const getDeptScopedDepartment = () => (role === 'dept_admin' ? (userDeptId || deptId || '') : '');
@@ -354,7 +583,7 @@ const [previewProject, setPreviewProject] = useState<any>(null);
     const [newAssignment, setNewAssignment] = useState({ topic: '', description: '', dueDate: '', department: '' });
     const [editAssignment, setEditAssignment] = useState<any>(null); // New state for editing assignments
     const [newNotice, setNewNotice] = useState({ title: '', content: '', audience: 'all', department: '' });
-    const [newCourse, setNewCourse] = useState<any>({ title: '', description: '', department: '', topics: [], quizzes: [] });
+    const [newCourse, setNewCourse] = useState<any>(createEmptyCourse());
     const [editCourse, setEditCourse] = useState<any>(null);
     const [editAICourse, setEditAICourse] = useState<any>(null);
     const [previewCourse, setPreviewCourse] = useState<any>(null);
@@ -363,6 +592,11 @@ const [previewProject, setPreviewProject] = useState<any>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [studentSearch, setStudentSearch] = useState('');
     const [courseSearch, setCourseSearch] = useState('');
+    const [quizReportsMap, setQuizReportsMap] = useState<Record<string, any>>({});
+    const [quizReportsLoading, setQuizReportsLoading] = useState(false);
+    const [selectedQuizReport, setSelectedQuizReport] = useState<any>(null);
+    const [openQuizReportDialog, setOpenQuizReportDialog] = useState(false);
+    const [expandedQuizAttemptId, setExpandedQuizAttemptId] = useState('');
     const [openLimitIncreaseDialog, setOpenLimitIncreaseDialog] = useState(false);
     const [limitIncreaseData, setLimitIncreaseData] = useState({ requestedSlot: 1, requestedCustomLimit: 0 });
 
@@ -1229,11 +1463,37 @@ const formatGuidanceText = (text: string) => {
                     );
                 }
                 setCourses(coursesData);
+                void fetchQuizReports(coursesData.map((c: any) => String(c._id)));
             }
         } catch (e) {
             console.error(e);
         }
     }
+
+    const fetchQuizReports = async (courseIds?: string[]) => {
+        if (!orgId) return;
+        setQuizReportsLoading(true);
+        try {
+            const requesterId = sessionStorage.getItem('uid');
+            if (!requesterId) return;
+            const res = await axios.get(`${serverURL}/api/org-quiz/reports?organizationId=${orgId}&requesterId=${requesterId}`);
+            if (res.data?.success) {
+                const reports = Array.isArray(res.data.reports) ? res.data.reports : [];
+                const filtered = Array.isArray(courseIds) && courseIds.length > 0
+                    ? reports.filter((r: any) => courseIds.includes(String(r.courseId)))
+                    : reports;
+                const nextMap: Record<string, any> = {};
+                filtered.forEach((r: any) => {
+                    nextMap[String(r.courseId)] = r;
+                });
+                setQuizReportsMap(nextMap);
+            }
+        } catch (e) {
+            console.error('Failed to fetch quiz reports', e);
+        } finally {
+            setQuizReportsLoading(false);
+        }
+    };
 
     const fetchNotices = async () => {
         try {
@@ -1331,13 +1591,7 @@ const formatGuidanceText = (text: string) => {
             if (res.data.success) {
                 toast({ title: "Success", description: "Course created successfully" });
 
-                setNewCourse({
-                    title: '',
-                    description: '',
-                    department: '',
-                    topics: [],
-                    quizzes: []
-                });
+                setNewCourse(createEmptyCourse());
 
                 setOpenCourseDialog(false);   // ⭐ CLOSE POPUP
 
@@ -1425,7 +1679,7 @@ const formatGuidanceText = (text: string) => {
     };
 
     const addQuiz = (isEdit: boolean = false) => {
-        const quiz = { question: '', options: ['', '', '', ''], answer: '', explanation: '' };
+        const quiz = createEmptyQuiz();
         if (isEdit) {
             setEditCourse({ ...editCourse, quizzes: [...editCourse.quizzes, { ...quiz }] });
         } else {
@@ -2282,11 +2536,53 @@ const formatGuidanceText = (text: string) => {
                                                                 {course.department ? `Dept: ${departmentsList.find(d => d._id === course.department || d.name === course.department)?.name || course.department}` : (course.content ? 'AI Generated' : 'All students')}
                                                             </span>
                                                         </div>
+                                                        {quizCount > 0 && quizReportsMap[String(course._id)] && (
+                                                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                                                                {quizReportsMap[String(course._id)]?.quizSettings?.examMode && (
+                                                                    <Badge variant="secondary" className="gap-1">
+                                                                        <Shield className="w-3.5 h-3.5" /> Secure
+                                                                    </Badge>
+                                                                )}
+                                                                <Badge variant="outline">Attempts: {quizReportsMap[String(course._id)]?.attemptCount || 0}</Badge>
+                                                                <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+                                                                    Passed: {quizReportsMap[String(course._id)]?.passedCount || 0}
+                                                                </Badge>
+                                                                {(quizReportsMap[String(course._id)]?.flaggedCount || 0) > 0 && (
+                                                                    <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700 gap-1">
+                                                                        <AlertTriangle className="w-3.5 h-3.5" /> Flagged: {quizReportsMap[String(course._id)]?.flaggedCount || 0}
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     <div className="flex gap-2">
                                                         <Button variant="ghost" size="sm" onClick={() => setPreviewCourse({ ...course })}>
                                                             <Eye className="w-4 h-4" />
                                                         </Button>
+                                                        {quizCount > 0 && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                title="Quiz report"
+                                                                onClick={() => {
+                                                                    const report = quizReportsMap[String(course._id)];
+                                                                    const normalized = normalizeCourseForEdit(course);
+                                                                    setSelectedQuizReport(report || {
+                                                                        courseId: String(course._id),
+                                                                        title,
+                                                                        questionCount: quizCount,
+                                                                        quizSettings: normalized.quizSettings,
+                                                                        attemptCount: 0,
+                                                                        passedCount: 0,
+                                                                        flaggedCount: 0,
+                                                                        attempts: []
+                                                                    });
+                                                                    setOpenQuizReportDialog(true);
+                                                                }}
+                                                            >
+                                                                <BarChart className="w-4 h-4" />
+                                                            </Button>
+                                                        )}
                                                         <Button variant="ghost" size="sm" onClick={async () => {
                                                             const initialDescription = "Generating assignment description...";
                                                             
@@ -2326,7 +2622,7 @@ const formatGuidanceText = (text: string) => {
                                                             Create Assignment
                                                         </Button>
                                                         {course.topics ? (
-                                                            <Button variant="ghost" size="sm" onClick={() => setEditCourse({ ...course })}>Edit</Button>
+                                                            <Button variant="ghost" size="sm" onClick={() => setEditCourse(normalizeCourseForEdit(course))}>Edit</Button>
                                                         ) : course.content ? (
                                                             <Button variant="ghost" size="sm" onClick={() => setEditAICourse({ ...course })}>Edit</Button>
                                                         ) : null}
@@ -2345,6 +2641,178 @@ const formatGuidanceText = (text: string) => {
                                     </div>
                                 )}
                             </div>
+
+                            <Dialog
+                                open={openQuizReportDialog}
+                                onOpenChange={(open) => {
+                                    setOpenQuizReportDialog(open);
+                                    if (!open) {
+                                        setSelectedQuizReport(null);
+                                        setExpandedQuizAttemptId('');
+                                    }
+                                }}
+                            >
+                                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                    <DialogHeader>
+                                        <DialogTitle>Quiz Report</DialogTitle>
+                                        <DialogDescription>
+                                            Attempts, scores, cooldowns, and malpractice flags for this course.
+                                        </DialogDescription>
+                                    </DialogHeader>
+
+                                    {quizReportsLoading && (
+                                        <div className="text-sm text-muted-foreground">Loading reports...</div>
+                                    )}
+
+                                    {!quizReportsLoading && selectedQuizReport && (() => {
+                                        const settings = {
+                                            ...defaultQuizSettings,
+                                            ...(selectedQuizReport.quizSettings || {}),
+                                            proctoring: {
+                                                ...defaultQuizSettings.proctoring,
+                                                ...(selectedQuizReport.quizSettings?.proctoring || {})
+                                            }
+                                        };
+                                        const attempts = Array.isArray(selectedQuizReport.attempts) ? selectedQuizReport.attempts : [];
+
+                                        return (
+                                            <div className="space-y-4">
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div>
+                                                        <h3 className="text-lg font-semibold">{selectedQuizReport.title || 'Course'}</h3>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {selectedQuizReport.questionCount || 0} questions in bank, difficulty: {settings.difficultyMode}, pass mark: {settings.passPercentage}%.
+                                                        </p>
+                                                    </div>
+                                                    {settings.examMode ? (
+                                                        <Badge variant="secondary" className="gap-1">
+                                                            <Shield className="w-4 h-4" /> Secure exam
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="outline">Standard quiz</Badge>
+                                                    )}
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                    <div className="p-3 rounded-lg border bg-muted/20">
+                                                        <div className="text-xs text-muted-foreground">Attempt policy</div>
+                                                        <div className="font-semibold text-sm">{settings.attemptLimit} attempts, cooldown {settings.cooldownMinutes} min</div>
+                                                    </div>
+                                                    <div className="p-3 rounded-lg border bg-muted/20">
+                                                        <div className="text-xs text-muted-foreground">Summary</div>
+                                                        <div className="font-semibold text-sm">
+                                                            Attempts {selectedQuizReport.attemptCount || 0}, passed {selectedQuizReport.passedCount || 0}, flagged {selectedQuizReport.flaggedCount || 0}
+                                                        </div>
+                                                    </div>
+                                                    <div className="p-3 rounded-lg border bg-muted/20">
+                                                        <div className="text-xs text-muted-foreground">Shuffle</div>
+                                                        <div className="font-semibold text-sm">
+                                                            Questions {settings.shuffleQuestions ? 'on' : 'off'}, options {settings.shuffleOptions ? 'on' : 'off'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="border rounded-lg overflow-hidden">
+                                                    <div className="grid grid-cols-12 gap-2 bg-muted/40 px-3 py-2 text-xs font-semibold text-muted-foreground">
+                                                        <div className="col-span-3">Student</div>
+                                                        <div className="col-span-1">Try</div>
+                                                        <div className="col-span-2">Score</div>
+                                                        <div className="col-span-2">Result</div>
+                                                        <div className="col-span-2">Flags</div>
+                                                        <div className="col-span-2">Submitted</div>
+                                                    </div>
+                                                    {attempts.length === 0 ? (
+                                                        <div className="p-4 text-sm text-muted-foreground">No attempts yet.</div>
+                                                    ) : (
+                                                        <div className="divide-y">
+                                                            {attempts.map((a: any) => {
+                                                                const submitted = a.submittedAt ? new Date(a.submittedAt).toLocaleString() : '-';
+                                                                const eventSummary = a.eventSummary || {};
+                                                                const eventBadges = Object.entries(eventSummary).slice(0, 3);
+                                                                const isExpanded = expandedQuizAttemptId === String(a.attemptId);
+                                                                return (
+                                                                    <div key={a.attemptId} className="border-t first:border-t-0">
+                                                                        <div className="grid grid-cols-12 gap-2 px-3 py-2 text-sm items-center">
+                                                                            <div className="col-span-3">
+                                                                                <div className="font-medium truncate">{a.studentName || 'Student'}</div>
+                                                                                <div className="text-xs text-muted-foreground truncate">{a.studentEmail || ''}</div>
+                                                                            </div>
+                                                                            <div className="col-span-1 text-muted-foreground">{a.attemptNumber || 1}</div>
+                                                                            <div className="col-span-2">{a.score || 0}/{a.totalQuestions || 0} ({a.percentage || 0}%)</div>
+                                                                            <div className="col-span-2">
+                                                                                {a.passed ? (
+                                                                                    <Badge className="bg-emerald-600 text-white border-0">Passed</Badge>
+                                                                                ) : (
+                                                                                    <Badge variant="outline">Failed</Badge>
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="col-span-2 flex items-center gap-2">
+                                                                                {a.malpracticeFlag ? (
+                                                                                    <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700 gap-1">
+                                                                                        <AlertTriangle className="w-3.5 h-3.5" /> Malpractice
+                                                                                    </Badge>
+                                                                                ) : (
+                                                                                    <span className="text-xs text-muted-foreground">None</span>
+                                                                                )}
+                                                                                <span className="text-xs text-muted-foreground">{a.securityEventCount || 0} events</span>
+                                                                            </div>
+                                                                            <div className="col-span-2 text-xs text-muted-foreground">
+                                                                                <div>{submitted}</div>
+                                                                                {eventBadges.length > 0 && (
+                                                                                    <div className="mt-1 flex flex-wrap gap-1">
+                                                                                        {eventBadges.map(([eventType, count]) => (
+                                                                                            <Badge key={`${a.attemptId}-${eventType}`} variant="outline" className="text-[10px]">
+                                                                                                {eventType}: {String(count)}
+                                                                                            </Badge>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                )}
+                                                                                {(a.securityEvents?.length || 0) > 0 && (
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        className="mt-2 text-[11px] font-semibold text-primary"
+                                                                                        onClick={() => setExpandedQuizAttemptId(isExpanded ? '' : String(a.attemptId))}
+                                                                                    >
+                                                                                        {isExpanded ? 'Hide details' : 'View details'}
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                        {isExpanded && (a.securityEvents?.length || 0) > 0 && (
+                                                                            <div className="border-t bg-muted/20 px-3 py-3">
+                                                                                <div className="space-y-2">
+                                                                                    {a.securityEvents.map((event: any, index: number) => (
+                                                                                        <div key={`${a.attemptId}-event-${index}`} className="rounded-lg border bg-background px-3 py-2">
+                                                                                            <div className="flex items-center justify-between gap-2">
+                                                                                                <div className="flex items-center gap-2">
+                                                                                                    <Badge variant="outline">{event.type}</Badge>
+                                                                                                    <Badge variant={event.severity === 'high' ? 'destructive' : 'secondary'}>
+                                                                                                        {event.severity}
+                                                                                                    </Badge>
+                                                                                                </div>
+                                                                                                <span className="text-[11px] text-muted-foreground">
+                                                                                                    {event.timestamp ? new Date(event.timestamp).toLocaleString() : '-'}
+                                                                                                </span>
+                                                                                            </div>
+                                                                                            {event.details && (
+                                                                                                <p className="mt-2 text-xs text-muted-foreground">{event.details}</p>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+                                </DialogContent>
+                            </Dialog>
                         </CardContent>
                     </Card>
                 </TabsContent>

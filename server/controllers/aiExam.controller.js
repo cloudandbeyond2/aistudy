@@ -7,6 +7,58 @@ import {
 /**
  * AI EXAM GENERATION
  */
+const buildFallbackExam = (mainTopic, subtopicsString, lang = 'English') => {
+  const topics = String(subtopicsString || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  const uniqueTopics = [...new Set(topics)];
+  const fallbackTopics = uniqueTopics.length > 0 ? uniqueTopics : [mainTopic || 'Core topic'];
+  const templates = [
+    (subtopic) => ({
+      question: `Which option best represents the main focus of "${subtopic}" in ${mainTopic}?`,
+      correct: `Understanding the purpose and workflow of ${subtopic}`,
+      distractors: [
+        `Ignoring ${subtopic} while studying ${mainTopic}`,
+        `Memorizing only unrelated facts outside ${mainTopic}`,
+        `Skipping the practical use of ${subtopic}`
+      ]
+    }),
+    (subtopic) => ({
+      question: `When reviewing "${subtopic}", what should a learner mainly look for?`,
+      correct: `Key ideas, application steps, and examples connected to ${subtopic}`,
+      distractors: [
+        `Only course pricing and enrollment details`,
+        `Only certificate design and branding`,
+        `Only random facts unrelated to ${mainTopic}`
+      ]
+    }),
+    (subtopic) => ({
+      question: `Which outcome shows that "${subtopic}" has been understood correctly?`,
+      correct: `The learner can explain and apply ${subtopic} in a practical ${mainTopic} scenario`,
+      distractors: [
+        `The learner avoids using ${subtopic} completely`,
+        `The learner focuses only on unrelated tools`,
+        `The learner skips examples and practice`
+      ]
+    })
+  ];
+
+  const items = fallbackTopics.slice(0, 20).map((subtopic, index) => {
+    const template = templates[index % templates.length](subtopic);
+    const options = [template.correct, ...template.distractors].sort(() => Math.random() - 0.5);
+    return {
+      id: index + 1,
+      question: `${template.question} (${lang})`,
+      options,
+      answer: template.correct
+    };
+  });
+
+  return items;
+};
+
 export const generateAIExam = async (req, res) => {
   const { mainTopic, subtopicsString, lang } = req.body;
 
@@ -89,16 +141,18 @@ IMPORTANT: "correctAnswer" must match exactly one of the strings in "options".`;
     });
   } catch (error) {
     console.error('AI exam error:', error);
+    const fallbackExam = buildFallbackExam(mainTopic, subtopicsString, lang);
+    if (fallbackExam.length > 0) {
+      return res.json({
+        success: true,
+        fallback: true,
+        message: JSON.stringify(fallbackExam)
+      });
+    }
 
-    const isRateLimit =
-      error.message?.includes('429') ||
-      error.message?.includes('quota');
-
-    res.status(isRateLimit ? 429 : 500).json({
+    res.status(500).json({
       success: false,
-      message: isRateLimit
-        ? 'AI rate limit exceeded. Please try again.'
-        : 'Failed to generate exam',
+      message: 'Failed to generate exam',
       error: error.message
     });
   }

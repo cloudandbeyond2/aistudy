@@ -11,6 +11,7 @@ const StudentPortal = () => {
     const [courses, setCourses] = useState([]);
     const [studentInfo, setStudentInfo] = useState<any>(null);
     const [notifications, setNotifications] = useState<any[]>([]);
+    const [quizSummaries, setQuizSummaries] = useState<Record<string, any>>({});
     const navigate = useNavigate();
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -62,7 +63,24 @@ const StudentPortal = () => {
         try {
             const res = await axios.get(`${serverURL}/api/student/courses?organizationId=${orgId}&studentId=${studentId}`);
             if (res.data.success) {
-                setCourses(res.data.courses);
+                const nextCourses = res.data.courses || [];
+                setCourses(nextCourses);
+
+                const courseIds = nextCourses.map((c: any) => String(c._id)).filter(Boolean);
+                if (courseIds.length > 0) {
+                    try {
+                        const quizRes = await axios.post(`${serverURL}/api/getmyresults-batch`, { courseIds, userId: studentId });
+                        if (quizRes.data?.success && Array.isArray(quizRes.data.results)) {
+                            const map: Record<string, any> = {};
+                            quizRes.data.results.forEach((r: any) => {
+                                map[String(r.courseId)] = r;
+                            });
+                            setQuizSummaries(map);
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch quiz summaries:', e);
+                    }
+                }
             }
         } catch (e) {
             console.error('Error fetching courses:', e);
@@ -128,6 +146,32 @@ const StudentPortal = () => {
                     const title = course.title || course.mainTopic;
                     const rawDescription = course.description || (course.content ? "AI Generated Course" : "");
                     const description = rawDescription.replace(/<[^>]*>?/gm, '');
+                    const quizSummary = quizSummaries[String(course._id)];
+                    const hasQuiz = (course.quizzes?.length || 0) > 0;
+
+                    const nextAttemptAt = quizSummary?.nextAttemptAvailableAt ? new Date(quizSummary.nextAttemptAvailableAt) : null;
+                    const cooldownActive = !!nextAttemptAt && nextAttemptAt > new Date();
+
+                    let quizLabel = '';
+                    let quizClass = 'text-muted-foreground';
+                    if (hasQuiz) {
+                        if (quizSummary?.passed) {
+                            quizLabel = 'Exam passed';
+                            quizClass = 'text-emerald-600';
+                        } else if (quizSummary?.maxAttemptsReached) {
+                            quizLabel = 'Exam locked (max attempts reached)';
+                            quizClass = 'text-red-600';
+                        } else if (cooldownActive) {
+                            quizLabel = `Retry after ${nextAttemptAt!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                            quizClass = 'text-amber-600';
+                        } else if ((quizSummary?.attemptCount || 0) > 0) {
+                            quizLabel = `Attempt ${quizSummary.attemptCount}/${quizSummary.attemptLimit || 2}`;
+                            quizClass = 'text-blue-600';
+                        } else {
+                            quizLabel = 'Exam not started';
+                        }
+                    }
+
                     let topicCount = 0;
                     if (course.topics) {
                         topicCount = course.topics.length;
@@ -164,6 +208,11 @@ const StudentPortal = () => {
                                             style={{ width: `${course.progressPercentage || 0}%` }}
                                         />
                                     </div>
+                                    {hasQuiz && (
+                                        <div className={`text-xs font-medium ${quizClass}`}>
+                                            {quizLabel}
+                                        </div>
+                                    )}
                                     <div className="flex justify-end pt-2">
                                         <Button size="sm" variant="outline" className="group-hover:bg-primary group-hover:text-primary-foreground">
                                             {course.progressPercentage >= 100 ? 'View Course' : course.progressPercentage > 0 ? 'Continue Learning' : 'Start Learning'}

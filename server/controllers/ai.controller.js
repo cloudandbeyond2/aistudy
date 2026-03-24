@@ -211,10 +211,12 @@ export const generateBatchSubtopics = async (req, res) => {
   const systemInstruction = `Strictly in ${lang || 'English'}, you are a specialized educational content writer. 
 Your goal is to provide thorough, in-depth, and "large" explanations for course subtopics.
 IMPORTANT: You MUST explicitly translate the 'topicTitle' and subtopic 'title' fields into ${lang || 'English'}, alongside the 'theory' content.
-For each subtopic, provide a detailed explanation (approx 500-1000 words if possible) with rich examples and clear definitions.
+For each subtopic, provide a detailed explanation (approx 900-1500 words if possible) with rich examples, strong concept-building, and clear definitions.
 Ensure every sentence is complete and the content doesn't cut off abruptly.
 If providing code examples, ensure they are properly formatted with correct line breaks and indentation.
 Use valid HTML formatting for the "theory" field (paragraphs, bold text, lists).
+Every lesson should feel substantially complete, not like a short summary.
+Include layered explanation: concept meaning, why it matters, process or workflow, practical examples, mistakes to avoid, and a short closing recap.
 For business, sales, CRM, analytics, HR, marketing, operations, or management topics, include practical product-style examples such as dashboard concepts, KPI cards, pipeline views, report widgets, filters, tables, and workflow scenarios.
 When relevant, explain what a dashboard would show, why each metric matters, and how a team would use it in real work.
 When the lesson includes programming, commands, configuration, queries, or terminal examples, format them as proper multi-line HTML code blocks using <pre><code class="language-...">...</code></pre>.
@@ -449,7 +451,7 @@ ${theory}`;
   ) => {
     const isCompact = detailLevel === 'compact';
 
-    return `Course: "${mainTopic}"
+  return `Course: "${mainTopic}"
 
 Generate comprehensive educational content for exactly one chapter and one subtopic.
 
@@ -462,8 +464,18 @@ Requirements:
 - Return content only for this one chapter and this one subtopic.
 - Keep the same chapter title and subtopic title, translated into ${lang || 'English'} when needed.
 - The "theory" field must contain complete HTML content and must not be cut off.
-- Write ${isCompact ? 'a concise but complete lesson of about 220 to 400 words' : 'a detailed lesson of about 350 to 700 words'}.
+- Write ${isCompact ? 'a concise but complete lesson of about 650 to 900 words' : 'a detailed lesson of about 900 to 1500 words'}.
+- Make the lesson richer than a short summary. Explain the concept, why it matters, how it is used, where learners make mistakes, and how to apply it correctly.
+- Include these sections naturally in HTML:
+  1. Introduction
+  2. Core explanation
+  3. Step-by-step explanation, workflow, or method when relevant
+  4. Two or more practical examples, scenarios, or use cases
+  5. Common mistakes or caution points
+  6. Short recap
 - Use short paragraphs and lists where useful, but keep the HTML clean.
+- Prefer depth, clarity, and learning value over brevity.
+- The final HTML must read like a complete lesson a student can study independently.
 
 Response Format (JSON):
 {
@@ -491,8 +503,9 @@ Style Guidance: ${selectedContentProfile.instruction}
 Rules:
 - Return HTML only, not JSON.
 - Start with a short introductory paragraph.
-- Include a few useful details or examples.
-- Keep the lesson complete and readable.
+- Write a full lesson of roughly 700 to 1100 words.
+- Include meaningful explanation, workflow or method when relevant, at least one solid practical example or use case, common mistakes, and a short recap.
+- Keep the lesson complete, informative, and readable.
 - Use <p>, <strong>, <ul>, <li>, and <pre><code> only when appropriate.
 - Do not include images, links, markdown fences, or notes about being an AI.`;
 
@@ -500,7 +513,7 @@ Rules:
     topicTitle,
     subtopicTitle,
     detailLevel = 'detailed',
-    maxOutputTokens = 4096
+    maxOutputTokens = 5120
   }) => {
     const rawText = await generateAIText({
       prompt: buildSingleSubtopicPrompt(topicTitle, subtopicTitle, detailLevel),
@@ -529,7 +542,7 @@ Rules:
     const theory = await generateAIText({
       prompt: buildFallbackTheoryPrompt(topicTitle, subtopicTitle),
       systemInstruction: `Strictly in ${lang || 'English'}, you are a specialized educational content writer. Return only valid HTML for one lesson.`,
-      maxOutputTokens: 3072,
+      maxOutputTokens: 4096,
       safetySettings
     });
 
@@ -568,7 +581,7 @@ Rules:
         topicTitle,
         subtopicTitle,
         detailLevel: 'compact',
-        maxOutputTokens: 3072
+        maxOutputTokens: 4096
       });
     } catch (error) {
       console.warn(`Compact structured retry failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);

@@ -48,14 +48,12 @@ import axios from 'axios';
 import { useBranding } from '@/contexts/BrandingContext';
 import { useToast } from '@/hooks/use-toast';
 import { Cookie } from 'lucide-react';
-import { useTheme } from '@/contexts/ThemeContext';
 
 
 const AdminLayout = () => {
   const { appName, appLogo } = useBranding();
   const isMobile = useIsMobile();
   const location = useLocation();
-  const { toggleTheme } = useTheme();
   {/* Star bala */ }
   const { toast } = useToast();
   // Helper to check active route
@@ -168,6 +166,15 @@ const AdminLayout = () => {
                   <Link to="/admin/limit-requests" className={cn(isActive('/admin/limit-requests') && "text-primary")}>
                     <Shield />
                     <span>Limit Requests</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Quiz Retake Requests" isActive={isActive('/admin/quiz-retake-requests')}>
+                  <Link to="/admin/quiz-retake-requests" className={cn(isActive('/admin/quiz-retake-requests') && "text-primary")}>
+                    <ClipboardList />
+                    <span>Quiz Retake Requests</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -394,8 +401,7 @@ const AdminLayout = () => {
             <SidebarMenu className="py-2">
 
               {/* Toggle Theme */}
-              <SidebarMenuButton asChild tooltip="Theme" onClick={toggleTheme}>
-                <div className="
+              <div className="
           group
           flex items-center
           rounded-md
@@ -407,7 +413,6 @@ const AdminLayout = () => {
                   <ThemeToggle />
                   <span className="pl-3">Toggle Theme</span>
                 </div>
-              </SidebarMenuButton>
 
               {/* Back to Website */}
               <SidebarMenuItem>

@@ -13,7 +13,7 @@ import { Content } from '@tiptap/react'
 import { MinimalTiptapEditor } from '../minimal-tiptap'
 import YouTube from 'react-youtube';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2, Loader2, Sparkles, BookOpen, Image as ImageIcon, Brain, Video, FileText } from 'lucide-react';
+import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2, Loader2, Sparkles, BookOpen, Image as ImageIcon, Brain, Video, FileText, ArrowLeft, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getCoursePresentationMeta } from '@/lib/coursePresentation';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -184,6 +184,34 @@ const LoadingPopup = ({ isOpen, stage, subtopic, progress = 0 }) => {
   );
 };
 
+const QuizLoadingPopup = ({ isOpen, topic }) => {
+  if (!isOpen) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={() => {}}>
+      <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
+        <DialogTitle className="sr-only">
+          Preparing Quiz
+        </DialogTitle>
+        <div className="flex flex-col items-center py-8 px-4">
+          <div className="mb-6 rounded-full bg-primary/10 p-4">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold text-center mb-2">
+            Preparing Quiz
+          </h2>
+          <p className="text-center text-muted-foreground mb-4">
+            Generating the assessment for {topic || 'this course'}.
+          </p>
+          <div className="w-full rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm text-muted-foreground">
+            Please wait while we collect course topics, build questions, and open the quiz page.
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const CoursePage = () => {
   //ADDED FROM v4.0
   const { state } = useLocation();
@@ -204,6 +232,7 @@ const CoursePage = () => {
   const [loadingStage, setLoadingStage] = useState('theory');
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingSubtopic, setLoadingSubtopic] = useState('');
+  const [isQuizLoading, setIsQuizLoading] = useState(false);
 
   // OPTIMIZATION: Image cache and preloading
   const imageCache = useRef(new Set());
@@ -229,6 +258,8 @@ const CoursePage = () => {
   const [percentage, setPercentage] = useState(0);
   const [isComplete, setIsCompleted] = useState(false);
   const [isQuizPassed, setIsQuizPassed] = useState(pass);
+  const [quizAttemptSummary, setQuizAttemptSummary] = useState<any>(null);
+  const [selectedTopicTitle, setSelectedTopicTitle] = useState('');
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -554,6 +585,7 @@ Requirements:
               const mainTopicData = (content['course_topics'] || content[(mainTopicValue || '').toLowerCase()])?.[0];
               if (mainTopicData && mainTopicData.subtopics && mainTopicData.subtopics.length > 0) {
                 const firstSubtopic = mainTopicData.subtopics[0];
+                setSelectedTopicTitle(mainTopicData.title);
                 setSelected(firstSubtopic.title);
                 setTheory(firstSubtopic.theory);
                 if (course.type === 'video & text course') {
@@ -707,16 +739,19 @@ Requirements:
   };
 
   const handleMarkAsComplete = async () => {
-    if (!userId || !courseId || !selected) return;
+    if (!userId || !courseId || !currentLesson) return;
 
     const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
-    let currentTopicTitle = '';
-    if (Array.isArray(topicsList)) {
-      topicsList.forEach(t => {
-        if (Array.isArray(t.subtopics) && t.subtopics.some(s => s.title === selected)) {
-          currentTopicTitle = t.title;
-        }
-      });
+    const activeTopicTitle = currentLesson.topicTitle;
+    const activeSubtopicTitle = currentLesson.subtopicTitle;
+    const alreadyCompleted = completedSubtopics.some(
+      (entry) => entry.topicTitle === activeTopicTitle && entry.subtopicTitle === activeSubtopicTitle
+    );
+    if (alreadyCompleted) {
+      if (nextLesson) {
+        selectSubtopic(nextLesson.topicTitle, nextLesson.subtopicTitle);
+      }
+      return;
     }
 
     let total = 0;
@@ -726,8 +761,8 @@ Requirements:
       const res = await axios.post(`${serverURL}/api/progress/update`, {
         userId,
         courseId,
-        topicTitle: currentTopicTitle,
-        subtopicTitle: selected,
+        topicTitle: activeTopicTitle,
+        subtopicTitle: activeSubtopicTitle,
         totalSubtopics: total
       });
 
@@ -737,20 +772,9 @@ Requirements:
         setPercentage(res.data.progress.percentage);
 
         // --- LOGIC TO MOVE TO NEXT SUBTOPIC ---
-        const allSubtopics = [];
-        topicsList.forEach(t => {
-          t.subtopics.forEach(s => {
-            allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title });
-          });
-        });
+        if (nextLesson) {
+          selectSubtopic(nextLesson.topicTitle, nextLesson.subtopicTitle);
 
-        const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
-        
-        if (currentIndex < allSubtopics.length - 1) {
-          const next = allSubtopics[currentIndex + 1];
-          // Advance immediately without waiting for React to flush updated progress state.
-          selectSubtopic(next.topicTitle, next.subtopicTitle);
-          
           // Scroll to top for the new lesson
           if (mainContentRef.current) {
             mainContentRef.current.scrollTop = 0;
@@ -901,6 +925,7 @@ Requirements:
     setShowLoadingPopup(true);
     setLoadingSubtopic(subtopicTitle);
     setLoadingProgress(0);
+    setSelectedTopicTitle(topicTitle);
     setSelected(subtopicTitle);
 
     if (subtopicData?.theory) {
@@ -934,6 +959,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
   const clearTheoryProgress = simulateProgress('theory');
   
   // Instant UI Feedback - show loading state
+  setSelectedTopicTitle(clickedTopic);
   setSelected(clickedSub);
   setTheory(`<div class="prose dark:prose-invert max-w-none">
     <h2>${clickedSub}</h2>
@@ -1167,6 +1193,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
     simulateProgress('image');
 
     // Show theory immediately
+    setSelectedTopicTitle(topics || currentTopicTitle || '');
     setSelected(sub);
     setTheory(theory);
     
@@ -1292,6 +1319,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
     }
 
     // INSTANT: Change the title
+    setSelectedTopicTitle(topicTitle);
     setSelected(subtopicTitle);
 
     if (isSubtopicReadyForDisplay(mSubTopic)) {
@@ -1407,6 +1435,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
     mSubTopic.done = true;
 
     // Batch update all states at once
+    setSelectedTopicTitle(topics);
     setSelected(mSubTopic.title);
     setTheory(theory);
     setMedia(image); // Always set media here
@@ -1447,6 +1476,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
     mSubTopic.youtube = image;
     mSubTopic.done = true;
 
+    setSelectedTopicTitle(topics);
     setSelected(mSubTopic.title);
     setTheory(theory);
     setMedia(image);
@@ -1724,7 +1754,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
     s.toLowerCase().replace(/\s+/g, ' ').trim();
 
   async function redirectExam() {
-    if (isLoading) return;
+    if (isQuizLoading) return;
 
     // Check if all subtopics are completed
     if (!isOrgAdmin && jsonData) {
@@ -1751,22 +1781,41 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
 
     // Check for manual quizzes first
     if (jsonData?.quizzes && Array.isArray(jsonData.quizzes) && jsonData.quizzes.length > 0) {
-      const manualQuizzes = jsonData.quizzes.map((q, index) => ({
-        id: index + 1,
-        question: q.question,
-        options: q.options.map((opt, i) => ({
-          id: String.fromCharCode(97 + i), // 'a', 'b', 'c', ...
-          text: opt
-        })),
-        correctAnswer: q.answer, // Assuming 'answer' stores the correct option text or ID. QuizPage logic handles both.
-        answer: q.answer // Pass original answer for QuizPage flexible matching
-      }));
+      const cooldownActive =
+        !!quizAttemptSummary?.nextAttemptAvailableAt &&
+        new Date(quizAttemptSummary.nextAttemptAvailableAt) > new Date();
+
+      if (!isOrgAdmin) {
+        if (isQuizPassed) {
+          toast({
+            title: "Quiz locked",
+            description: "You have already passed this quiz.",
+          });
+          return;
+        }
+        if (quizAttemptSummary?.maxAttemptsReached) {
+          toast({
+            title: "Quiz locked",
+            description: "Maximum attempts reached for this quiz.",
+          });
+          return;
+        }
+        if (cooldownActive) {
+          toast({
+            title: "Quiz locked",
+            description: `Next attempt is available after ${new Date(quizAttemptSummary.nextAttemptAvailableAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`,
+          });
+          return;
+        }
+      }
 
       navigate(`/course/${courseId}/quiz`, {
         state: {
           topic: mainTopic,
           courseId,
-          questions: manualQuizzes,
+          questions: jsonData.quizzes,
+          manualQuizExam: true,
+          quizSettings: jsonData.quizSettings || {},
         },
       });
       return;
@@ -1809,7 +1858,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
       .map((sub: any) => sub.title)
       .join(', ');
 
-    setIsLoading(true);
+    setIsQuizLoading(true);
 
     try {
       const response = await axios.post(
@@ -1839,10 +1888,10 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
       console.error('redirectExam error:', error);
       toast({
         title: "Error",
-        description: "Failed to generate exam",
+        description: error?.response?.data?.message || "Failed to generate exam",
       });
     } finally {
-      setIsLoading(false);
+      setIsQuizLoading(false);
     }
   }
 
@@ -2094,6 +2143,14 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
         const response = await axios.post(serverURL + '/api/getmyresult', { courseId, userId });
         if (response.data.success) {
           setIsQuizPassed(response.data.message || (courseData?.pass === true));
+          setQuizAttemptSummary({
+            attemptCount: response.data.attemptCount,
+            attemptLimit: response.data.attemptLimit,
+            remainingAttempts: response.data.remainingAttempts,
+            nextAttemptAvailableAt: response.data.nextAttemptAvailableAt,
+            latestAttempt: response.data.latestAttempt,
+            maxAttemptsReached: response.data.maxAttemptsReached,
+          });
         }
       } catch (error) {
         console.error('Error fetching quiz status:', error);
@@ -2116,6 +2173,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
 
         // If nothing selected yet, select first
         if (!selected) {
+          setSelectedTopicTitle(mainTopicData.title);
           setSelected(firstSubtopic.title);
           
           // Check if content exists
@@ -2151,16 +2209,141 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
       (entry) => entry.topicTitle === lesson.topicTitle && entry.subtopicTitle === lesson.subtopicTitle
     )
   ).length;
-  const currentLessonIndex = orderedLessons.findIndex((lesson) => lesson.subtopicTitle === selected);
+  const exactCurrentLessonIndex = orderedLessons.findIndex(
+    (lesson) => lesson.subtopicTitle === selected && (!selectedTopicTitle || lesson.topicTitle === selectedTopicTitle)
+  );
+  const currentLessonIndex = exactCurrentLessonIndex >= 0
+    ? exactCurrentLessonIndex
+    : orderedLessons.findIndex((lesson) => lesson.subtopicTitle === selected);
   const currentLesson = currentLessonIndex >= 0 ? orderedLessons[currentLessonIndex] : orderedLessons[0];
-  const currentTopicTitle = currentLesson?.topicTitle || courseTopics[0]?.title || '';
+  const currentTopicTitle = selectedTopicTitle || currentLesson?.topicTitle || courseTopics[0]?.title || '';
   const currentTopic = courseTopics.find((topic) => topic.title === currentTopicTitle);
   const currentTopicCompletedCount = (Array.isArray(currentTopic?.subtopics) ? currentTopic.subtopics : []).filter((subtopic) =>
     completedSubtopics.some(
       (entry) => entry.topicTitle === currentTopicTitle && entry.subtopicTitle === subtopic.title
     )
   ).length;
+  const previousLesson = currentLessonIndex > 0 ? orderedLessons[currentLessonIndex - 1] : null;
   const nextLesson = currentLessonIndex >= 0 ? orderedLessons[currentLessonIndex + 1] : orderedLessons[1];
+  const currentLessonCompleted = !!currentLesson && completedSubtopics.some(
+    (entry) => entry.topicTitle === currentLesson.topicTitle && entry.subtopicTitle === currentLesson.subtopicTitle
+  );
+  const allLessonsCompleted = orderedLessons.length > 0 && completedLessonCount >= orderedLessons.length;
+  const quizLockedByCourseProgress = !isOrgAdmin && !allLessonsCompleted;
+  const hasManualQuiz = Array.isArray(jsonData?.quizzes) && jsonData.quizzes.length > 0;
+  const manualQuizSettings = {
+    examMode: true,
+    attemptLimit: 2,
+    cooldownMinutes: 60,
+    passPercentage: 50,
+    questionCount: jsonData?.quizzes?.length || 10,
+    difficultyMode: 'mixed',
+    shuffleQuestions: true,
+    shuffleOptions: true,
+    ...(jsonData?.quizSettings || {}),
+    proctoring: {
+      requireCamera: true,
+      requireMicrophone: true,
+      detectFullscreenExit: true,
+      detectTabSwitch: true,
+      detectCopyPaste: true,
+      detectContextMenu: true,
+      detectNoise: true,
+      ...(jsonData?.quizSettings?.proctoring || {})
+    }
+  };
+  const lessonAlertMessage = nextLesson
+    ? `Complete this lesson, then continue with ${nextLesson.subtopicTitle}.`
+    : `You are on the final lesson. Complete it to unlock the ${mainTopic} quiz.`;
+  const handlePreviousLesson = () => {
+    if (!previousLesson) return;
+    selectSubtopic(previousLesson.topicTitle, previousLesson.subtopicTitle);
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+  };
+  const handleNextLesson = () => {
+    if (nextLesson) {
+      if (!isOrgAdmin && !currentLessonCompleted) {
+        toast({
+          title: "Complete this lesson first",
+          description: "Mark the current lesson as complete to unlock the next lesson.",
+        });
+        return;
+      }
+      selectSubtopic(nextLesson.topicTitle, nextLesson.subtopicTitle);
+      if (mainContentRef.current) {
+        mainContentRef.current.scrollTop = 0;
+      }
+      return;
+    }
+
+    if (quizLockedByCourseProgress) {
+      toast({
+        title: "Quiz locked",
+        description: "Complete every lesson in the course before starting the quiz.",
+      });
+      return;
+    }
+
+    redirectExam();
+  };
+  const examRulesSection = hasManualQuiz ? (
+    <section className="mb-6 rounded-[28px] border border-primary/15 bg-gradient-to-br from-primary/[0.07] via-background to-background p-4 shadow-sm md:p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-primary/75">
+            Exam Rules
+          </p>
+          <h2 className="mt-2 text-xl font-semibold md:text-2xl">{mainTopic} Assessment</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Final quiz unlocks after every lesson is completed. Attempt rules and basic proctoring are controlled by the organization.
+          </p>
+        </div>
+        <div className="rounded-2xl border border-primary/15 bg-background px-4 py-3 text-sm shadow-sm">
+          <div className="font-semibold text-foreground">
+            {quizLockedByCourseProgress ? 'Locked until course completion' : 'Ready when you are'}
+          </div>
+          <div className="mt-1 text-muted-foreground">
+            {completedLessonCount}/{orderedLessons.length} lessons completed
+          </div>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl border border-border/60 bg-background p-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Attempts</div>
+          <div className="mt-1 text-sm font-semibold">{manualQuizSettings.attemptLimit} total attempts</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            {quizAttemptSummary?.attemptCount || 0} used, {quizAttemptSummary?.remainingAttempts ?? manualQuizSettings.attemptLimit} left
+          </div>
+        </div>
+        <div className="rounded-2xl border border-border/60 bg-background p-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Passing</div>
+          <div className="mt-1 text-sm font-semibold">{manualQuizSettings.passPercentage}% required</div>
+          <div className="mt-1 text-xs text-muted-foreground">{manualQuizSettings.questionCount} questions per attempt</div>
+        </div>
+        <div className="rounded-2xl border border-border/60 bg-background p-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Cooldown</div>
+          <div className="mt-1 text-sm font-semibold">{manualQuizSettings.cooldownMinutes} minutes after a failed attempt</div>
+          <div className="mt-1 text-xs text-muted-foreground">Difficulty mode: {manualQuizSettings.difficultyMode}</div>
+        </div>
+        <div className="rounded-2xl border border-border/60 bg-background p-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Monitoring</div>
+          <div className="mt-1 text-sm font-semibold">
+            {[
+              manualQuizSettings.proctoring.detectTabSwitch && 'tab switch',
+              manualQuizSettings.proctoring.detectFullscreenExit && 'fullscreen',
+              manualQuizSettings.proctoring.detectCopyPaste && 'clipboard',
+              manualQuizSettings.proctoring.detectNoise && 'noise'
+            ].filter(Boolean).join(', ') || 'standard'}
+          </div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            {manualQuizSettings.proctoring.requireCamera || manualQuizSettings.proctoring.requireMicrophone ? 'Camera/mic permissions may be requested' : 'No device access required'}
+          </div>
+        </div>
+      </div>
+    </section>
+  ) : null;
   const roadmapSection = courseTopics.length > 0 ? (
     <section className="mb-6 rounded-[28px] border border-border/60 bg-gradient-to-br from-background via-background to-muted/50 p-4 shadow-sm md:p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -2301,6 +2484,10 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
         subtopic={loadingSubtopic}
         progress={loadingProgress}
       />
+      <QuizLoadingPopup
+        isOpen={isQuizLoading}
+        topic={mainTopic}
+      />
 
       <header className="border-b border-border/40 py-2 px-2 md:px-4 flex justify-between items-center sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
         <div className="flex items-center gap-2 md:gap-4 shrink min-w-0">
@@ -2341,7 +2528,11 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                     <button
                       type="button"
                       onClick={redirectExam}
-                      className="mt-4 flex w-full items-center justify-between rounded-2xl border border-border/60 bg-background px-4 py-3 text-left transition-colors hover:bg-muted/60"
+                      disabled={quizLockedByCourseProgress || isQuizLoading}
+                      className={cn(
+                        "mt-4 flex w-full items-center justify-between rounded-2xl border border-border/60 bg-background px-4 py-3 text-left transition-colors",
+                        quizLockedByCourseProgress || isQuizLoading ? "cursor-not-allowed opacity-60" : "hover:bg-muted/60"
+                      )}
                     >
                       <span>
                         <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
@@ -2350,8 +2541,13 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                         <span className="mt-1 block text-sm font-semibold text-foreground">
                           {mainTopic} Quiz
                         </span>
+                        {quizLockedByCourseProgress && (
+                          <span className="mt-1 block text-xs text-muted-foreground">
+                            Complete every lesson to unlock the quiz
+                          </span>
+                        )}
                       </span>
-                      {pass === true ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <BookOpen className="h-4 w-4 text-muted-foreground" />}
+                      {isQuizLoading ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : quizLockedByCourseProgress ? <Lock className="h-4 w-4 text-muted-foreground" /> : isQuizPassed === true ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <BookOpen className="h-4 w-4 text-muted-foreground" />}
                     </button>
                   </div>
                 </ScrollArea>
@@ -2474,7 +2670,11 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
               <button
                 type="button"
                 onClick={redirectExam}
-                className="mt-4 flex w-full items-center justify-between rounded-2xl border border-border/60 bg-background px-4 py-3 text-left transition-colors hover:bg-muted/60"
+                disabled={quizLockedByCourseProgress || isQuizLoading}
+                className={cn(
+                  "mt-4 flex w-full items-center justify-between rounded-2xl border border-border/60 bg-background px-4 py-3 text-left transition-colors",
+                  quizLockedByCourseProgress || isQuizLoading ? "cursor-not-allowed opacity-60" : "hover:bg-muted/60"
+                )}
               >
                 <span>
                   <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
@@ -2483,8 +2683,13 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                   <span className="mt-1 block text-sm font-semibold text-foreground">
                     {mainTopic} Quiz
                   </span>
+                  {quizLockedByCourseProgress && (
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      Complete every lesson to unlock the quiz
+                    </span>
+                  )}
                 </span>
-                {pass === true ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <BookOpen className="h-4 w-4 text-muted-foreground" />}
+                {isQuizLoading ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : quizLockedByCourseProgress ? <Lock className="h-4 w-4 text-muted-foreground" /> : isQuizPassed === true ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <BookOpen className="h-4 w-4 text-muted-foreground" />}
               </button>
             </div>
           </ScrollArea>
@@ -2557,6 +2762,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                       </div>
                     </div>
                   </div>
+                  {!isMobile && examRulesSection}
                   {!isMobile && roadmapSection}
                   <div className="space-y-4">
                     {type === 'video & text course' ? (
@@ -2644,20 +2850,62 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                       </div>
                     )}
 
+                    <div className="rounded-[20px] border border-primary/20 bg-primary/5 p-4 text-primary shadow-sm">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80">
+                        Learning Note
+                      </p>
+                      <p className="mt-2 text-sm leading-6">
+                        {lessonAlertMessage}
+                      </p>
+                    </div>
+
+                    {isMobile && examRulesSection}
                     {isMobile && roadmapSection}
 
                     {!isOrgAdmin && (
-                      <div className="pt-8 border-t border-border mt-8 flex justify-center">
-                        <Button
-                          onClick={handleMarkAsComplete}
-                          className="px-6 py-5 md:px-8 md:py-6 text-base md:text-lg gap-2"
-                        >
-                          {completedSubtopics.some(s => s.subtopicTitle === selected) ? (
-                            <>Next Lesson <CheckCircle2 className="w-5 h-5" /></>
-                          ) : (
-                            <>Mark as Complete & Next <CheckCircle2 className="w-5 h-5" /></>
-                          )}
-                        </Button>
+                      <div className="mt-8 rounded-[24px] border border-border/60 bg-background p-4 shadow-sm">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                              Lesson Actions
+                            </p>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              {currentLessonCompleted
+                                ? nextLesson
+                                  ? 'This lesson is complete. You can move to the next lesson now.'
+                                  : 'All lessons are complete. The final quiz is now available.'
+                                : 'Mark this lesson as complete to unlock the next part of the course.'}
+                            </p>
+                          </div>
+                          <div className="flex flex-col gap-3 sm:flex-row">
+                            <Button
+                              variant="outline"
+                              onClick={handlePreviousLesson}
+                              disabled={!previousLesson}
+                              className="gap-2"
+                            >
+                              <ArrowLeft className="h-4 w-4" />
+                              Previous
+                            </Button>
+                            <Button
+                              variant={currentLessonCompleted ? "secondary" : "default"}
+                              onClick={handleMarkAsComplete}
+                              disabled={currentLessonCompleted}
+                              className="gap-2"
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                              {currentLessonCompleted ? 'Completed' : 'Mark as Complete'}
+                            </Button>
+                            <Button
+                              onClick={handleNextLesson}
+                              disabled={(!!nextLesson && !currentLessonCompleted) || isQuizLoading}
+                              className="gap-2"
+                            >
+                              {isQuizLoading ? 'Preparing Quiz...' : nextLesson ? 'Next Lesson' : 'Take Quiz'}
+                              {isQuizLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>

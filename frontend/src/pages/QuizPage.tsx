@@ -1,11 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { ChevronLeft, ChevronRight, Brain, Medal, Clock, Trophy } from 'lucide-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle
+} from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { ChevronLeft, ChevronRight, Medal, Clock, Trophy, Shield, Camera, Mic, FileCheck2, Sparkles, CircleAlert, LockKeyhole } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +34,82 @@ enum QuizState {
     Completed
 }
 
+const defaultManualQuizSettings = {
+    examMode: true,
+    attemptLimit: 2,
+    cooldownMinutes: 60,
+    passPercentage: 50,
+    questionCount: 10,
+    difficultyMode: 'mixed',
+    shuffleQuestions: true,
+    shuffleOptions: true,
+    proctoring: {
+        requireCamera: true,
+        requireMicrophone: true,
+        detectFullscreenExit: true,
+        detectTabSwitch: true,
+        detectCopyPaste: true,
+        detectContextMenu: true,
+        detectNoise: true
+    }
+};
+
+const initialSecuritySummary = {
+    tabWarnings: 0,
+    fullscreenWarnings: 0,
+    noiseWarnings: 0,
+    clipboardWarnings: 0
+};
+
+const defaultLegacyQuizStatus = {
+    passed: false,
+    certificateIssued: false,
+    certificateId: '',
+    certificateThreshold: 70,
+    attemptCount: 0,
+    latestAttempt: null,
+    retakeRequest: null,
+    canStart: true,
+    canRequestRetake: false,
+    retakeApproved: false,
+    needsAdminApproval: false
+};
+
+const normalizeQuizQuestions = (inputQuestions: any[] = []) =>
+    (Array.isArray(inputQuestions) ? inputQuestions : [])
+        .map((item: any, index: number) => {
+            if (!item) return null;
+
+            const questionText =
+                typeof item.question === 'string'
+                    ? item.question
+                    : item.question?.text || item.question?.question || 'Question text missing';
+
+            const sanitizedOptions = Array.isArray(item.options)
+                ? item.options.map((option: any, optionIndex: number) => ({
+                    id: option?.id || String.fromCharCode(97 + optionIndex),
+                    text:
+                        typeof option === 'string'
+                            ? option
+                            : option?.text || option?.value || String(option || 'Option')
+                }))
+                : [];
+
+            const rawAnswer = String(item.correctAnswer || item.answer || '').trim().toLowerCase();
+            const matchedById = sanitizedOptions.find((opt: any) => String(opt.id).toLowerCase() === rawAnswer);
+            const matchedByText = sanitizedOptions.find((opt: any) => opt.text.toLowerCase().trim() === rawAnswer);
+            const correctAnswer = matchedById?.id || matchedByText?.id || rawAnswer || sanitizedOptions[0]?.id || 'a';
+
+            return {
+                id: item.id || `q${index + 1}`,
+                question: questionText,
+                options: sanitizedOptions,
+                correctAnswer,
+                difficulty: item.difficulty || 'medium'
+            };
+        })
+        .filter(Boolean);
+
 const QuizPage = () => {
     const { state } = useLocation();
     // Safely extract topic - handle if it's an object or undefined
@@ -36,10 +121,11 @@ const QuizPage = () => {
     const courseId = state?.courseId || '';
     const questions = state?.questions || [];
     const certificateIdState = state?.certificateId || '';
+    const manualQuizExam = !!state?.manualQuizExam;
 
     const [quizState, setQuizState] = useState<QuizState>(QuizState.NotStarted);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [answers, setAnswers] = useState<Record<number, string>>({});
+    const [answers, setAnswers] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(true);
     const [timeRemaining, setTimeRemaining] = useState(0);
     const [timerActive, setTimerActive] = useState(false);
@@ -55,6 +141,29 @@ const QuizPage = () => {
     const [quizQuestions, setExamJSON] = useState<any[]>([]);
     const [passedQuiz, setPassed] = useState(false);
     const [certificateId, setCertificateId] = useState(certificateIdState);
+    const [attemptId, setAttemptId] = useState('');
+    const [attemptSummary, setAttemptSummary] = useState<any>(null);
+    const [quizSettings, setQuizSettings] = useState<any>({ ...defaultManualQuizSettings });
+    const [submittedResult, setSubmittedResult] = useState<any>(null);
+    const [permissionState, setPermissionState] = useState<any>({ camera: 'pending', microphone: 'pending' });
+    const [securitySummary, setSecuritySummary] = useState<any>({ ...initialSecuritySummary });
+    const [legacyQuizStatus, setLegacyQuizStatus] = useState<any>({ ...defaultLegacyQuizStatus });
+    const [retakeRequestSubmitting, setRetakeRequestSubmitting] = useState(false);
+    const [startDialogOpen, setStartDialogOpen] = useState(false);
+    const [startChecklist, setStartChecklist] = useState({
+        rulesAccepted: false,
+        monitoringAccepted: false,
+        honestyAccepted: false
+    });
+    const [retakeReason, setRetakeReason] = useState('');
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const mediaStreamRef = useRef<any>(null);
+    const audioContextRef = useRef<any>(null);
+    const analyserRef = useRef<any>(null);
+    const noiseIntervalRef = useRef<any>(null);
+    const securityThrottleRef = useRef<Record<string, number>>({});
+    const submissionLockRef = useRef(false);
+    const abandonmentSentRef = useRef(false);
 
     const fetchCertificateSettings = async () => {
         try {
@@ -78,10 +187,33 @@ const QuizPage = () => {
 
     useEffect(() => {
         fetchCertificateSettings();
-        if (questions) {
+        if (manualQuizExam) {
+            loadManualQuizStatus();
+        } else if (questions) {
             init();
+            loadLegacyQuizStatus();
         }
-    }, [questions]);
+    }, [questions, manualQuizExam]);
+
+    useEffect(() => {
+        return () => {
+            stopMonitoringDevices();
+        };
+    }, []);
+
+    const resetSecurityState = () => {
+        setSecuritySummary({ ...initialSecuritySummary });
+        setPermissionState({ camera: 'pending', microphone: 'pending' });
+        securityThrottleRef.current = {};
+    };
+
+    const resetStartChecklist = () => {
+        setStartChecklist({
+            rulesAccepted: false,
+            monitoringAccepted: false,
+            honestyAccepted: false
+        });
+    };
 
     function init() {
         try {
@@ -106,78 +238,7 @@ const QuizPage = () => {
                 return;
             }
 
-            const formattedQuestions = parsedQuestions.map((item: any, index: number) => {
-                if (!item) return null;
-
-                // Safely extract question text
-                let questionText = "Question text missing";
-                try {
-                    if (typeof item.question === 'string') {
-                        questionText = item.question;
-                    } else if (typeof item.question === 'object' && item.question !== null) {
-                        questionText = item.question.text || item.question.question || JSON.stringify(item.question);
-                    }
-                } catch (e) {
-                    questionText = "Error parsing question";
-                }
-
-                // Safely extract options
-                const sanitizedOptions = Array.isArray(item.options) ? item.options.map((option: any, i: number) => {
-                    let optionText = "Option";
-                    try {
-                        if (typeof option === 'string') {
-                            optionText = option;
-                        } else if (typeof option === 'object' && option !== null) {
-                            optionText = option.text || option.value || JSON.stringify(option);
-                        } else {
-                            optionText = String(option);
-                        }
-                    } catch (e) {
-                        optionText = "Error parsing option";
-                    }
-
-                    return {
-                        id: String.fromCharCode(97 + i),
-                        text: optionText
-                    };
-                }) : [];
-
-                // Determine correct answer
-                let finalCorrectAnswer = '';
-                const rawAnswer = item.answer ? String(item.answer).trim() : '';
-
-                // 1. Check if rawAnswer is 'a', 'b', 'c', 'd' (or A, B...) directly
-                const matchedById = sanitizedOptions.find((opt: any) => opt.id === rawAnswer.toLowerCase());
-
-                if (matchedById) {
-                    finalCorrectAnswer = matchedById.id;
-                } else {
-                    // 2. Check matching text directly
-                    // This logic is safer and uses the 'answer' text (e.g. "Option A") to find the shuffled option ID (e.g. 'c')
-                    const matchedOption = sanitizedOptions.find((opt: any) =>
-                        opt.text.toLowerCase().trim() === rawAnswer.toLowerCase().trim() ||
-                        rawAnswer.toLowerCase().includes(opt.text.toLowerCase().trim())
-                    );
-                    if (matchedOption) {
-                        finalCorrectAnswer = matchedOption.id;
-                    } else {
-                        // 3. Last resort: check if options contain the answer or vice versa
-                        const looselyMatched = sanitizedOptions.find((opt: any) =>
-                            opt.text.toLowerCase().includes(rawAnswer.toLowerCase())
-                        );
-                        if (looselyMatched) {
-                            finalCorrectAnswer = looselyMatched.id;
-                        }
-                    }
-                }
-
-                return {
-                    id: index + 1,
-                    question: questionText,
-                    options: sanitizedOptions,
-                    correctAnswer: finalCorrectAnswer
-                };
-            }).filter(q => q !== null); // Remove nulls
+            const formattedQuestions = normalizeQuizQuestions(parsedQuestions);
 
             console.log('Quiz Init - Formatted questions:', formattedQuestions);
             setExamJSON(formattedQuestions);
@@ -192,14 +253,226 @@ const QuizPage = () => {
         }
     }
 
-    useEffect(() => {
-        // Simulate loading delay
-        const loadTimer = setTimeout(() => {
-            setIsLoading(false);
-        }, 1500);
+    const stopMonitoringDevices = () => {
+        if (noiseIntervalRef.current) {
+            clearInterval(noiseIntervalRef.current);
+            noiseIntervalRef.current = null;
+        }
 
-        return () => clearTimeout(loadTimer);
-    }, []);
+        if (audioContextRef.current) {
+            audioContextRef.current.close?.();
+            audioContextRef.current = null;
+        }
+
+        if (mediaStreamRef.current) {
+            mediaStreamRef.current.getTracks().forEach((track: any) => track.stop());
+            mediaStreamRef.current = null;
+        }
+    };
+
+    const hasSevereMalpractice = (summary: any) =>
+        (summary?.tabWarnings || 0) >= 3 ||
+        (summary?.fullscreenWarnings || 0) >= 2 ||
+        (summary?.clipboardWarnings || 0) >= 2 ||
+        (summary?.noiseWarnings || 0) >= 5;
+
+    const sendAbandonAttempt = useCallback((reason = 'page_exit') => {
+        if (!manualQuizExam || !attemptId || submissionLockRef.current || abandonmentSentRef.current || quizState !== QuizState.InProgress) {
+            return;
+        }
+
+        abandonmentSentRef.current = true;
+        const payload = JSON.stringify({
+            attemptId,
+            userId: sessionStorage.getItem('uid'),
+            reason
+        });
+
+        fetch(`${serverURL}/api/org-quiz/abandon`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            keepalive: true
+        }).catch(() => undefined);
+    }, [attemptId, manualQuizExam, quizState]);
+
+    const loadManualQuizStatus = async () => {
+        if (!courseId) return;
+        setIsLoading(true);
+        try {
+            const fallbackQuestions = normalizeQuizQuestions(questions);
+            const userId = sessionStorage.getItem('uid');
+            const response = await axios.post(`${serverURL}/api/org-quiz/status`, { courseId, userId });
+            if (response.data?.success) {
+                setExamJSON(fallbackQuestions);
+                setAttemptSummary({
+                    attemptCount: response.data.attemptCount,
+                    attemptLimit: response.data.attemptLimit,
+                    remainingAttempts: response.data.remainingAttempts,
+                    nextAttemptAvailableAt: response.data.nextAttemptAvailableAt,
+                    latestAttempt: response.data.latestAttempt,
+                    maxAttemptsReached: response.data.maxAttemptsReached,
+                    passed: response.data.passed
+                });
+                setQuizSettings({
+                    ...defaultManualQuizSettings,
+                    ...(response.data.quizSettings || {}),
+                    proctoring: {
+                        ...defaultManualQuizSettings.proctoring,
+                        ...(response.data.quizSettings?.proctoring || {})
+                    }
+                });
+                setPassed(!!response.data.passed);
+            }
+        } catch (error) {
+            console.error('Failed to load manual quiz status', error);
+            toast({
+                title: 'Quiz unavailable',
+                description: 'Failed to load quiz status.',
+                variant: 'destructive'
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const loadLegacyQuizStatus = async () => {
+        if (!courseId) {
+            setIsLoading(false);
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const userId = sessionStorage.getItem('uid');
+            const response = await axios.post(`${serverURL}/api/quiz-retake/status`, { courseId, userId });
+            if (response.data?.success) {
+                const nextStatus = {
+                    ...defaultLegacyQuizStatus,
+                    ...(response.data || {})
+                };
+                setLegacyQuizStatus(nextStatus);
+                setPassed(!!response.data.passed);
+                if (response.data.certificateId) {
+                    setCertificateId(response.data.certificateId);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load legacy quiz status', error);
+            toast({
+                title: 'Quiz unavailable',
+                description: 'Failed to load quiz status.',
+                variant: 'destructive'
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const logSecurityEvent = async (eventType: string, severity = 'low', details = '', explicitAttemptId?: string) => {
+        const activeAttemptId = explicitAttemptId || attemptId;
+        if (!manualQuizExam || !activeAttemptId) return;
+
+        const now = Date.now();
+        const lastLoggedAt = securityThrottleRef.current[eventType] || 0;
+        if (now - lastLoggedAt < 5000) return;
+        securityThrottleRef.current[eventType] = now;
+
+        try {
+            await axios.post(`${serverURL}/api/org-quiz/security-event`, {
+                attemptId: activeAttemptId,
+                userId: sessionStorage.getItem('uid'),
+                eventType,
+                severity,
+                details
+            });
+        } catch (error) {
+            console.error('Failed to log security event', error);
+        }
+    };
+
+    const requestDevices = async (activeAttemptId?: string, settingsOverride?: any) => {
+        const mergedSettings = settingsOverride
+            ? {
+                ...defaultManualQuizSettings,
+                ...settingsOverride,
+                proctoring: {
+                    ...defaultManualQuizSettings.proctoring,
+                    ...(settingsOverride?.proctoring || {})
+                }
+            }
+            : quizSettings;
+        const proctoring = mergedSettings.proctoring || defaultManualQuizSettings.proctoring;
+        stopMonitoringDevices();
+
+        try {
+            if (proctoring.requireCamera || proctoring.requireMicrophone || proctoring.detectNoise) {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: !!proctoring.requireCamera,
+                    audio: !!(proctoring.requireMicrophone || proctoring.detectNoise)
+                });
+
+                mediaStreamRef.current = stream;
+
+                if (videoRef.current && proctoring.requireCamera) {
+                    videoRef.current.srcObject = stream;
+                }
+
+                setPermissionState({
+                    camera: proctoring.requireCamera ? 'granted' : 'optional',
+                    microphone: (proctoring.requireMicrophone || proctoring.detectNoise) ? 'granted' : 'optional'
+                });
+
+                if (proctoring.detectNoise) {
+                    const AudioContextRef: any = window.AudioContext || (window as any).webkitAudioContext;
+                    if (AudioContextRef) {
+                        const audioContext = new AudioContextRef();
+                        const analyser = audioContext.createAnalyser();
+                        const source = audioContext.createMediaStreamSource(stream);
+                        source.connect(analyser);
+                        analyser.fftSize = 256;
+                        audioContextRef.current = audioContext;
+                        analyserRef.current = analyser;
+                        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+                        noiseIntervalRef.current = setInterval(() => {
+                            analyser.getByteFrequencyData(dataArray);
+                            const avg = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
+                            if (avg > 65) {
+                                setSecuritySummary((prev: any) => ({ ...prev, noiseWarnings: prev.noiseWarnings + 1 }));
+                                logSecurityEvent('noise_spike', 'medium', `Average noise level detected: ${Math.round(avg)}`);
+                            }
+                        }, 4000);
+                    }
+                }
+
+                return true;
+            }
+
+            setPermissionState({ camera: 'optional', microphone: 'optional' });
+            return true;
+        } catch (error) {
+            console.error('Device access failed', error);
+            const cameraDenied = proctoring.requireCamera;
+            const micDenied = proctoring.requireMicrophone || proctoring.detectNoise;
+            setPermissionState({
+                camera: cameraDenied ? 'denied' : 'optional',
+                microphone: micDenied ? 'denied' : 'optional'
+            });
+            if (cameraDenied) {
+                await logSecurityEvent('camera_denied', 'high', 'Camera access denied before exam start', activeAttemptId);
+            }
+            if (micDenied) {
+                await logSecurityEvent('microphone_denied', 'high', 'Microphone access denied before exam start', activeAttemptId);
+            }
+            toast({
+                title: 'Permission required',
+                description: 'Camera or microphone permission was denied for this secure exam.',
+                variant: 'destructive'
+            });
+            return !cameraDenied && !micDenied;
+        }
+    };
 
     useEffect(() => {
         let timer: NodeJS.Timeout;
@@ -211,7 +484,7 @@ const QuizPage = () => {
                         clearInterval(timer);
                         setTimerActive(false);
                         setQuizState(QuizState.Completed);
-                        setQuizResult(); // Auto-submit when time runs out
+                        void finalizeQuizAttempt();
                         return 0;
                     }
                     return prev - 1;
@@ -224,18 +497,162 @@ const QuizPage = () => {
         };
     }, [timerActive, timeRemaining]);
 
-    const handleStartQuiz = () => {
+    useEffect(() => {
+        if (quizState !== QuizState.InProgress) return;
+
+        const proctoring = quizSettings.proctoring || defaultManualQuizSettings.proctoring;
+        const onVisibilityChange = () => {
+            if (document.hidden && proctoring.detectTabSwitch) {
+                setSecuritySummary((prev: any) => ({ ...prev, tabWarnings: prev.tabWarnings + 1 }));
+                void logSecurityEvent('tab_switch', 'high', 'Student moved away from the quiz tab');
+            }
+        };
+        const onFullScreenChange = () => {
+            if (proctoring.detectFullscreenExit && !document.fullscreenElement) {
+                setSecuritySummary((prev: any) => ({ ...prev, fullscreenWarnings: prev.fullscreenWarnings + 1 }));
+                void logSecurityEvent('fullscreen_exit', 'medium', 'Fullscreen mode exited during quiz');
+            }
+        };
+        const onClipboard = (event: ClipboardEvent) => {
+            if (!proctoring.detectCopyPaste) return;
+            event.preventDefault();
+            setSecuritySummary((prev: any) => ({ ...prev, clipboardWarnings: prev.clipboardWarnings + 1 }));
+            void logSecurityEvent('clipboard_attempt', 'medium', 'Copy or paste attempted during quiz');
+        };
+        const onContextMenu = (event: MouseEvent) => {
+            if (!proctoring.detectContextMenu) return;
+            event.preventDefault();
+            void logSecurityEvent('context_menu', 'medium', 'Context menu attempted during quiz');
+        };
+
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        document.addEventListener('fullscreenchange', onFullScreenChange);
+        document.addEventListener('copy', onClipboard);
+        document.addEventListener('cut', onClipboard);
+        document.addEventListener('paste', onClipboard);
+        document.addEventListener('contextmenu', onContextMenu);
+
+        const onPageHide = () => {
+            sendAbandonAttempt('pagehide');
+        };
+        const onBeforeUnload = () => {
+            sendAbandonAttempt('beforeunload');
+        };
+        window.addEventListener('pagehide', onPageHide);
+        window.addEventListener('beforeunload', onBeforeUnload);
+
+        if (proctoring.detectFullscreenExit && !document.fullscreenElement) {
+            document.documentElement.requestFullscreen?.().catch(() => undefined);
+        }
+
+        return () => {
+            document.removeEventListener('visibilitychange', onVisibilityChange);
+            document.removeEventListener('fullscreenchange', onFullScreenChange);
+            document.removeEventListener('copy', onClipboard);
+            document.removeEventListener('cut', onClipboard);
+            document.removeEventListener('paste', onClipboard);
+            document.removeEventListener('contextmenu', onContextMenu);
+            window.removeEventListener('pagehide', onPageHide);
+            window.removeEventListener('beforeunload', onBeforeUnload);
+        };
+    }, [quizState, quizSettings, sendAbandonAttempt]);
+
+    const beginQuizAttempt = async () => {
+        submissionLockRef.current = false;
+        abandonmentSentRef.current = false;
+        resetSecurityState();
+        if (manualQuizExam) {
+            setIsLoading(true);
+            try {
+                const userId = sessionStorage.getItem('uid');
+                const response = await axios.post(`${serverURL}/api/org-quiz/start`, { courseId, userId });
+                if (!response.data?.success) {
+                    throw new Error(response.data?.message || 'Failed to start quiz');
+                }
+
+                const nextAttemptId = response.data.attemptId;
+                const nextQuizSettings = {
+                    ...defaultManualQuizSettings,
+                    ...(response.data.quizSettings || {}),
+                    proctoring: {
+                        ...defaultManualQuizSettings.proctoring,
+                        ...(response.data.quizSettings?.proctoring || {})
+                    }
+                };
+                setAttemptId(nextAttemptId);
+                const permissionsOkay = await requestDevices(nextAttemptId, nextQuizSettings);
+                if (!permissionsOkay) {
+                    setIsLoading(false);
+                    return;
+                }
+
+                setAttemptSummary(response.data.summary);
+                setQuizSettings(nextQuizSettings);
+                setExamJSON(normalizeQuizQuestions(response.data.questions || []));
+                setAnswers({});
+                setSubmittedResult(null);
+                setCurrentQuestionIndex(0);
+                setQuizState(QuizState.InProgress);
+                setTimerActive(true);
+                setTimeRemaining(60 * (response.data.questions?.length || 0));
+                toast({
+                    title: 'Quiz started',
+                    description: `Attempt ${response.data.attemptNumber} started with secure monitoring enabled.`
+                });
+            } catch (error: any) {
+                console.error('Failed to start org quiz', error);
+                const message = error?.response?.data?.message || error.message || 'Failed to start quiz';
+                toast({
+                    title: 'Quiz locked',
+                    description: message,
+                    variant: 'destructive'
+                });
+                await loadManualQuizStatus();
+            } finally {
+                setIsLoading(false);
+            }
+            return;
+        }
+
+        if (!legacyQuizStatus.canStart) {
+            const requestStatus = legacyQuizStatus?.retakeRequest?.status;
+            const message =
+                requestStatus === 'pending'
+                    ? 'Your retake request is pending admin approval.'
+                    : 'Request a retake approval from admin before attempting the quiz again.';
+            toast({
+                title: 'Retake approval required',
+                description: message,
+                variant: 'destructive'
+            });
+            return;
+        }
+
+        const permissionsOkay = await requestDevices(undefined, quizSettings);
+        if (!permissionsOkay) {
+            return;
+        }
+
         setQuizState(QuizState.InProgress);
         setTimerActive(true);
         setAnswers({});
         setCurrentQuestionIndex(0);
-
         setTimeRemaining(60 * quizQuestions.length);
 
         toast({
             title: "Quiz started",
             description: "Good luck! You have " + quizQuestions.length + " minutes to complete the quiz.",
         });
+    };
+
+    const handleStartQuiz = async () => {
+        resetStartChecklist();
+        setStartDialogOpen(true);
+    };
+
+    const handleConfirmStartQuiz = async () => {
+        setStartDialogOpen(false);
+        await beginQuizAttempt();
     };
 
     const handleSelectAnswer = (questionId: number, optionId: string) => {
@@ -255,7 +672,7 @@ const QuizPage = () => {
                 title: "Quiz completed",
                 description: "Your answers have been submitted. Check your results below.",
             });
-            setQuizResult();
+            void finalizeQuizAttempt();
         }
     };
 
@@ -266,6 +683,7 @@ const QuizPage = () => {
     };
 
     const getScore = () => {
+        if (submittedResult?.score !== undefined) return submittedResult.score;
         let correctCount = 0;
         quizQuestions.forEach(question => {
             if (String(answers[question.id]) === String(question.correctAnswer)) {
@@ -276,29 +694,135 @@ const QuizPage = () => {
     };
 
     const setQuizResult = () => {
-        const half = quizQuestions.length;
         const scor = getScore();
-        if (scor >= half / 2) {
-            setPassed(true);
-            updateResult(scor);
-        } else {
-            setPassed(false);
-        }
+        const percentage = Math.round((scor / (quizQuestions.length || 1)) * 100);
+        setPassed(percentage >= legacyQuizStatus.certificateThreshold);
+        void updateResult(scor);
     };
+
+    const finalizeQuizAttempt = async () => {
+        if (submissionLockRef.current) return;
+        submissionLockRef.current = true;
+        abandonmentSentRef.current = true;
+        if (manualQuizExam) {
+            try {
+                const response = await axios.post(`${serverURL}/api/org-quiz/submit`, {
+                    attemptId,
+                    userId: sessionStorage.getItem('uid'),
+                    answers,
+                    clientSummary: securitySummary
+                });
+                if (response.data?.success) {
+                    setSubmittedResult(response.data.result);
+                    setAttemptSummary(response.data.summary);
+                    setPassed(!!response.data.result?.passed);
+                }
+            } catch (error) {
+                console.error('Failed to submit org quiz', error);
+                toast({
+                    title: 'Submit failed',
+                    description: 'Failed to submit your quiz attempt.',
+                    variant: 'destructive'
+                });
+            } finally {
+                stopMonitoringDevices();
+            }
+            return;
+        }
+
+        stopMonitoringDevices();
+        setQuizResult();
+    };
+
+    useEffect(() => {
+        if (quizState !== QuizState.InProgress) return;
+        if (!hasSevereMalpractice(securitySummary)) return;
+        if (submissionLockRef.current) return;
+
+        setTimerActive(false);
+        setQuizState(QuizState.Completed);
+        void logSecurityEvent('auto_submit_threshold', 'high', 'Exam auto-submitted after repeated malpractice indicators');
+        toast({
+            title: 'Quiz auto-submitted',
+            description: 'Repeated malpractice indicators were detected during the exam.',
+            variant: 'destructive'
+        });
+        void finalizeQuizAttempt();
+    }, [quizState, securitySummary, toast]);
 
     async function updateResult(correct: number) {
         const marks = correct * 10;
         const marksString = "" + marks;
         const userId = sessionStorage.getItem('uid');
         try {
-            const response = await axios.post(serverURL + '/api/updateresult', { courseId, marksString, userId });
-            if (response.data.success && response.data.certificateId) {
-                setCertificateId(response.data.certificateId);
+            const totalQuestions = quizQuestions.length;
+            const percentage = Math.round((correct / (totalQuestions || 1)) * 100);
+            const response = await axios.post(serverURL + '/api/updateresult', {
+                courseId,
+                marksString,
+                userId,
+                score: correct,
+                totalQuestions,
+                percentage
+            });
+            if (response.data.success) {
+                setPassed(!!response.data.passed);
+                setLegacyQuizStatus({
+                    ...defaultLegacyQuizStatus,
+                    ...(response.data.quizStatus || {})
+                });
+                if (response.data.certificateId) {
+                    setCertificateId(response.data.certificateId);
+                }
+                toast({
+                    title: response.data.passed ? 'Certificate unlocked' : 'Retake approval required',
+                    description: response.data.passed
+                        ? `You crossed ${response.data.certificateThreshold || 70}% and your certificate is now available.`
+                        : 'Request a retake from admin to attempt this quiz again.',
+                    variant: response.data.passed ? 'default' : 'destructive'
+                });
             }
         } catch (error) {
             console.error('Error updating result:', error);
         }
     }
+
+    const handleRetakeRequest = async () => {
+        if (retakeRequestSubmitting) return;
+        setRetakeRequestSubmitting(true);
+        try {
+            const userId = sessionStorage.getItem('uid');
+            const response = await axios.post(`${serverURL}/api/quiz-retake/request`, {
+                courseId,
+                userId,
+                requestReason: retakeReason.trim()
+            });
+            if (response.data?.success) {
+                setLegacyQuizStatus((prev: any) => ({
+                    ...prev,
+                    canStart: false,
+                    canRequestRetake: false,
+                    retakeApproved: false,
+                    needsAdminApproval: true,
+                    retakeRequest: response.data.retakeRequest || prev.retakeRequest
+                }));
+                toast({
+                    title: 'Request submitted',
+                    description: 'Your retake request has been sent to admin for approval.'
+                });
+                setRetakeReason('');
+            }
+        } catch (error: any) {
+            const message = error?.response?.data?.message || 'Failed to submit retake request.';
+            toast({
+                title: 'Request failed',
+                description: message,
+                variant: 'destructive'
+            });
+        } finally {
+            setRetakeRequestSubmitting(false);
+        }
+    };
 
     const formatTime = (seconds: number) => {
         const minutes = Math.floor(seconds / 60);
@@ -310,6 +834,60 @@ const QuizPage = () => {
     const progress = quizState === QuizState.InProgress
         ? ((currentQuestionIndex + 1) / quizQuestions.length) * 100
         : 0;
+    const effectiveAttemptSummary = attemptSummary || {};
+    const cooldownActive = !!effectiveAttemptSummary?.nextAttemptAvailableAt && new Date(effectiveAttemptSummary.nextAttemptAvailableAt) > new Date();
+    const canRetakeManualQuiz = manualQuizExam && !passedQuiz && !cooldownActive && !effectiveAttemptSummary?.maxAttemptsReached;
+    const manualPercentage = submittedResult?.percentage ?? Math.round((getScore() / (quizQuestions.length || 1)) * 100);
+    const legacyCertificateThreshold = legacyQuizStatus?.certificateThreshold || 70;
+    const showLegacyRetakeButton = !manualQuizExam && !passedQuiz && legacyQuizStatus.canStart && legacyQuizStatus.attemptCount > 0;
+    const showLegacyRetakeRequestButton =
+        !manualQuizExam &&
+        !passedQuiz &&
+        legacyQuizStatus.attemptCount > 0 &&
+        !legacyQuizStatus.canStart;
+    const canSubmitRetakeRequest =
+        retakeReason.trim().length >= 12 &&
+        !retakeRequestSubmitting &&
+        legacyQuizStatus?.retakeRequest?.status !== 'pending';
+    const canConfirmStart = Object.values(startChecklist).every(Boolean);
+
+    const renderLegacyRetakeRequestComposer = () => (
+        <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-background via-primary/5 to-indigo-500/5 p-5 text-left shadow-sm">
+            <div className="flex items-start gap-3">
+                <div className="rounded-2xl bg-primary/10 p-2 text-primary">
+                    <FileCheck2 className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                    <p className="text-base font-semibold">Send Retake Request</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Explain why you need another attempt. Admin will review your request and unlock the next quiz attempt after approval.
+                    </p>
+                </div>
+            </div>
+
+            <div className="mt-4 space-y-3">
+                <Textarea
+                    value={retakeReason}
+                    onChange={(e) => setRetakeReason(e.target.value)}
+                    placeholder="Example: I completed the course again, reviewed the weak topics, and I want one more attempt to improve my score above the certificate threshold."
+                    className="min-h-[120px] resize-none rounded-2xl border-primary/15 bg-background/90"
+                    disabled={legacyQuizStatus?.retakeRequest?.status === 'pending'}
+                />
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-xs text-muted-foreground">
+                        Minimum 12 characters. Include the reason and how you prepared for the retake.
+                    </p>
+                    <Button
+                        onClick={handleRetakeRequest}
+                        disabled={!canSubmitRetakeRequest}
+                        className="rounded-xl"
+                    >
+                        {legacyQuizStatus?.retakeRequest?.status === 'pending' ? 'Approval Pending' : 'Send Request'}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
 
     const downloadCertificate = async () => {
         const node = document.getElementById('certificate-node');
@@ -422,33 +1000,111 @@ const QuizPage = () => {
                     ) : (
                         <>
                             {quizState === QuizState.NotStarted && (
-                                <Card className="text-center">
-                                    <CardHeader>
-                                        <CardTitle className="text-2xl capitalize">{topic} Quiz</CardTitle>
-                                        <CardDescription>Test your knowledge of {topic} concepts</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <div className="flex justify-center mb-4">
-                                            <Brain className="h-24 w-24 text-primary/80" />
+                                <Card className="overflow-hidden border-primary/15 bg-gradient-to-br from-background via-background to-primary/5 text-center shadow-xl">
+                                    <CardHeader className="relative pb-4">
+                                        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-primary/10 via-indigo-500/10 to-sky-500/10" />
+                                        <div className="relative mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-3xl border border-primary/15 bg-background/80 shadow-sm backdrop-blur">
+                                            <Shield className="h-8 w-8 text-primary" />
                                         </div>
-                                        <div className="space-y-2 text-left">
-                                            <div className="flex items-center gap-2">
+                                        <CardTitle className="relative text-2xl capitalize">{topic} Quiz</CardTitle>
+                                        <CardDescription>
+                                            {manualQuizExam
+                                                ? 'Secure organization exam mode with attempt controls and malpractice monitoring.'
+                                                : `Secure quiz mode for ${topic} with camera, microphone, and malpractice checks.`}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-5">
+                                        <div className="grid gap-3 text-left sm:grid-cols-2">
+                                            <div className="rounded-2xl border border-primary/10 bg-background/80 p-4 shadow-sm">
+                                                <div className="flex items-center gap-2 text-sm font-medium">
+                                                    <Sparkles className="h-4 w-4 text-primary" />
+                                                    Quiz Snapshot
+                                                </div>
+                                                <div className="mt-3 space-y-3">
+                                            <div className="flex items-center gap-2 text-sm">
                                                 <Medal className="h-5 w-5 text-muted-foreground" />
-                                                <span>{quizQuestions.length} questions to test your understanding</span>
+                                                <span>{quizQuestions.length || quizSettings.questionCount} questions to test your understanding</span>
                                             </div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 text-sm">
                                                 <Clock className="h-5 w-5 text-muted-foreground" />
-                                                <span>{quizQuestions.length} minutes to complete the quiz</span>
+                                                <span>{quizQuestions.length || quizSettings.questionCount} minutes to complete the quiz</span>
                                             </div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 text-sm">
                                                 <Trophy className="h-5 w-5 text-muted-foreground" />
                                                 <span>Instant feedback on your answers</span>
                                             </div>
+                                            {manualQuizExam && (
+                                                <div className="flex items-center gap-2">
+                                                    <Shield className="h-5 w-5 text-muted-foreground" />
+                                                    <span>Attempts: {effectiveAttemptSummary.attemptCount || 0}/{effectiveAttemptSummary.attemptLimit || quizSettings.attemptLimit}</span>
+                                                </div>
+                                            )}
+                                                </div>
+                                            </div>
+                                            <div className="rounded-2xl border border-primary/10 bg-background/80 p-4 shadow-sm">
+                                                <div className="flex items-center gap-2 text-sm font-medium">
+                                                    <LockKeyhole className="h-4 w-4 text-primary" />
+                                                    Monitoring Status
+                                                </div>
+                                                <div className="mt-3 space-y-3">
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <Camera className="h-5 w-5 text-muted-foreground" />
+                                                <span>Camera: {permissionState.camera}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <Mic className="h-5 w-5 text-muted-foreground" />
+                                                <span>Microphone: {permissionState.microphone}</span>
+                                            </div>
+                                                </div>
+                                            </div>
                                         </div>
+                                        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-left">
+                                            <p className="text-sm font-semibold text-amber-700">Secure exam policy</p>
+                                            <p className="mt-2 text-sm text-muted-foreground">
+                                                Camera, microphone, tab switching, fullscreen exit, clipboard, and context-menu checks are monitored during the quiz.
+                                            </p>
+                                            {manualQuizExam ? (
+                                                <>
+                                                    <p className="mt-2 text-sm text-muted-foreground">
+                                                        Pass mark {quizSettings.passPercentage}%, max {quizSettings.attemptLimit} attempts, cooldown {quizSettings.cooldownMinutes} minutes after a failed attempt.
+                                                    </p>
+                                                    {cooldownActive && (
+                                                        <p className="mt-2 text-sm text-destructive">
+                                                            Next attempt available at {new Date(effectiveAttemptSummary.nextAttemptAvailableAt).toLocaleString()}.
+                                                        </p>
+                                                    )}
+                                                    {effectiveAttemptSummary.maxAttemptsReached && (
+                                                        <p className="mt-2 text-sm text-destructive">
+                                                            Maximum attempts reached for this quiz.
+                                                        </p>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <p className="mt-2 text-sm text-muted-foreground">
+                                                    Certificate is issued only when you score {legacyCertificateThreshold}% or above. Any retake after a failed attempt needs admin approval.
+                                                </p>
+                                            )}
+                                            <div className="mt-4 overflow-hidden rounded-xl border bg-muted/30">
+                                                <video ref={videoRef} autoPlay muted playsInline className="h-40 w-full object-cover" />
+                                            </div>
+                                        </div>
+                                        {!manualQuizExam && showLegacyRetakeRequestButton && renderLegacyRetakeRequestComposer()}
                                     </CardContent>
-                                    <CardFooter className="flex justify-center">
-                                        <Button size="lg" onClick={handleStartQuiz}>
-                                            Start Quiz
+                                    <CardFooter className="flex justify-center gap-3 flex-wrap">
+                                        <Button
+                                            size="lg"
+                                            onClick={handleStartQuiz}
+                                            disabled={
+                                                manualQuizExam
+                                                    ? cooldownActive || effectiveAttemptSummary.maxAttemptsReached || passedQuiz
+                                                    : passedQuiz || !legacyQuizStatus.canStart
+                                            }
+                                        >
+                                            {manualQuizExam
+                                                ? 'Start Quiz'
+                                                : legacyQuizStatus.attemptCount > 0
+                                                    ? 'Retake Quiz'
+                                                    : 'Start Quiz'}
                                         </Button>
                                     </CardFooter>
                                 </Card>
@@ -464,25 +1120,58 @@ const QuizPage = () => {
                                         <Progress value={progress} className="h-2" />
                                     </div>
 
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle>{quizQuestions[currentQuestionIndex].question}</CardTitle>
+                                    <Card className="overflow-hidden border-primary/15 bg-gradient-to-br from-background to-primary/5 shadow-xl">
+                                        <CardHeader className="border-b border-border/50 bg-background/80 backdrop-blur">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary">
+                                                    Question {currentQuestionIndex + 1}
+                                                </div>
+                                                <div className="rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground">
+                                                    {manualPercentage}% target view
+                                                </div>
+                                            </div>
+                                            <CardTitle className="pt-3 text-xl leading-8">{quizQuestions[currentQuestionIndex].question}</CardTitle>
+                                            <CardDescription>
+                                                Difficulty: {quizQuestions[currentQuestionIndex]?.difficulty || quizSettings.difficultyMode}
+                                            </CardDescription>
                                         </CardHeader>
                                         <CardContent>
+                                            <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-sm">
+                                                <div className="flex flex-wrap items-center gap-3">
+                                                    <span className="font-medium">Security events:</span>
+                                                    <span>Tab {securitySummary.tabWarnings}</span>
+                                                    <span>Fullscreen {securitySummary.fullscreenWarnings}</span>
+                                                    <span>Noise {securitySummary.noiseWarnings}</span>
+                                                    <span>Clipboard {securitySummary.clipboardWarnings}</span>
+                                                </div>
+                                                <p className="mt-2 text-xs text-muted-foreground">
+                                                    Repeated violations can auto-submit the exam.
+                                                </p>
+                                            </div>
                                             <RadioGroup
                                                 value={answers[quizQuestions[currentQuestionIndex].id] || ""}
                                                 onValueChange={(value) => handleSelectAnswer(quizQuestions[currentQuestionIndex].id, value)}
                                                 className="space-y-3"
                                             >
                                                 {quizQuestions[currentQuestionIndex].options.map((option) => (
-                                                    <div key={option.id} className="flex items-start space-x-2">
-                                                        <RadioGroupItem value={option.id} id={`option-${option.id}`} />
+                                                    <div
+                                                        key={option.id}
+                                                        className={cn(
+                                                            "rounded-2xl border p-4 transition-all",
+                                                            answers[quizQuestions[currentQuestionIndex].id] === option.id
+                                                                ? "border-primary bg-primary/5 shadow-sm"
+                                                                : "border-border bg-background hover:border-primary/30 hover:bg-muted/30"
+                                                        )}
+                                                    >
+                                                        <div className="flex items-start space-x-3">
+                                                        <RadioGroupItem value={option.id} id={`option-${option.id}`} className="mt-1" />
                                                         <Label
                                                             htmlFor={`option-${option.id}`}
-                                                            className="cursor-pointer font-normal"
+                                                            className="cursor-pointer font-normal leading-6"
                                                         >
                                                             {option.text}
                                                         </Label>
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </RadioGroup>
@@ -512,8 +1201,16 @@ const QuizPage = () => {
 
                             {quizState === QuizState.Completed && (
                                 <div className="space-y-6">
-                                    <Card className="text-center">
-                                        <CardHeader>
+                                    <Card className="overflow-hidden border-primary/15 bg-gradient-to-br from-background via-background to-primary/5 text-center shadow-xl">
+                                        <CardHeader className="pb-4">
+                                            <div className={cn(
+                                                "mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl border shadow-sm",
+                                                passedQuiz
+                                                    ? "border-green-500/20 bg-green-500/10 text-green-600"
+                                                    : "border-destructive/20 bg-destructive/10 text-destructive"
+                                            )}>
+                                                {passedQuiz ? <Trophy className="h-8 w-8" /> : <CircleAlert className="h-8 w-8" />}
+                                            </div>
                                             <CardTitle className="text-2xl">Quiz {passedQuiz ? "Passed" : "Failed"}</CardTitle>
                                             <CardDescription>
                                                 You scored {getScore()} out of {quizQuestions.length}
@@ -548,11 +1245,55 @@ const QuizPage = () => {
                                                             textAnchor="middle"
                                                             className="fill-foreground text-xl font-bold"
                                                         >
-                                                            {Math.round(getScore() / quizQuestions.length * 100)}%
+                                                            {manualPercentage}%
                                                         </text>
                                                     </svg>
                                                 </div>
                                             </div>
+
+                                            {manualQuizExam && (
+                                                <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-left">
+                                                    <div className="grid gap-2 sm:grid-cols-2">
+                                                        <p className="text-sm"><span className="font-semibold">Attempt:</span> {submittedResult?.attemptNumber || effectiveAttemptSummary?.latestAttempt?.attemptNumber || 1}</p>
+                                                        <p className="text-sm"><span className="font-semibold">Pass mark:</span> {quizSettings.passPercentage}%</p>
+                                                        <p className="text-sm"><span className="font-semibold">Malpractice flag:</span> {submittedResult?.malpracticeFlag ? 'Yes' : 'No'}</p>
+                                                        <p className="text-sm"><span className="font-semibold">Remaining attempts:</span> {effectiveAttemptSummary?.remainingAttempts ?? 0}</p>
+                                                    </div>
+                                                    {cooldownActive && (
+                                                        <p className="mt-2 text-sm text-destructive">
+                                                            Retry available at {new Date(effectiveAttemptSummary.nextAttemptAvailableAt).toLocaleString()}.
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {!manualQuizExam && (
+                                                <div className="mb-6 rounded-xl border border-primary/15 bg-primary/5 p-4 text-left">
+                                                    <div className="grid gap-2 sm:grid-cols-2">
+                                                        <p className="text-sm"><span className="font-semibold">Attempts:</span> {legacyQuizStatus.attemptCount || 0}</p>
+                                                        <p className="text-sm"><span className="font-semibold">Certificate mark:</span> {legacyCertificateThreshold}%</p>
+                                                        <p className="text-sm"><span className="font-semibold">Latest request:</span> {legacyQuizStatus?.retakeRequest?.status || 'none'}</p>
+                                                        <p className="text-sm"><span className="font-semibold">Certificate issued:</span> {certificateId ? 'Yes' : 'No'}</p>
+                                                    </div>
+                                                    {!passedQuiz && legacyQuizStatus?.retakeRequest?.status === 'pending' && (
+                                                        <p className="mt-2 text-sm text-amber-700">
+                                                            Your retake request is pending admin approval.
+                                                        </p>
+                                                    )}
+                                                    {!passedQuiz && legacyQuizStatus?.retakeRequest?.status === 'rejected' && (
+                                                        <p className="mt-2 text-sm text-destructive">
+                                                            Retake request rejected. {legacyQuizStatus?.retakeRequest?.adminComment || 'Contact admin for the next request.'}
+                                                        </p>
+                                                    )}
+                                                    {passedQuiz && (
+                                                        <p className="mt-2 text-sm text-green-700">
+                                                            You crossed the certificate threshold. Your certificate is now available.
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {!manualQuizExam && showLegacyRetakeRequestButton && renderLegacyRetakeRequestComposer()}
 
                                             <ScrollArea className="h-[300px] pr-4">
                                                 <div className="space-y-6">
@@ -561,22 +1302,27 @@ const QuizPage = () => {
                                                             <p className="font-medium mb-3">{idx + 1}. {question.question}</p>
                                                             <div className="space-y-2">
                                                                 {question.options.map((option) => (
+                                                                    (() => {
+                                                                        const reviewedAnswer = submittedResult?.answers?.find((item: any) => item.questionId === question.id);
+                                                                        const correctOptionId = reviewedAnswer?.correctOptionId || question.correctAnswer;
+                                                                        const selectedOptionId = reviewedAnswer?.selectedOptionId || answers[question.id];
+                                                                        return (
                                                                     <div
                                                                         key={option.id}
                                                                         className={cn(
                                                                             "p-2 rounded-md text-sm flex items-center",
-                                                                            option.id === question.correctAnswer && "bg-green-500/10 border border-green-500/30",
-                                                                            answers[question.id] === option.id && option.id !== question.correctAnswer && "bg-destructive/10 border border-destructive/30"
+                                                                            option.id === correctOptionId && "bg-green-500/10 border border-green-500/30",
+                                                                            selectedOptionId === option.id && option.id !== correctOptionId && "bg-destructive/10 border border-destructive/30"
                                                                         )}
                                                                     >
                                                                         <div className="mr-2">
-                                                                            {option.id === question.correctAnswer ? (
+                                                                            {option.id === correctOptionId ? (
                                                                                 <div className="h-5 w-5 rounded-full bg-green-500/20 flex items-center justify-center">
                                                                                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500">
                                                                                         <polyline points="20 6 9 17 4 12"></polyline>
                                                                                     </svg>
                                                                                 </div>
-                                                                            ) : answers[question.id] === option.id ? (
+                                                                            ) : selectedOptionId === option.id ? (
                                                                                 <div className="h-5 w-5 rounded-full bg-destructive/20 flex items-center justify-center">
                                                                                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-destructive">
                                                                                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -589,6 +1335,8 @@ const QuizPage = () => {
                                                                         </div>
                                                                         <span>{option.text}</span>
                                                                     </div>
+                                                                        );
+                                                                    })()
                                                                 ))}
                                                             </div>
                                                         </div>
@@ -600,15 +1348,22 @@ const QuizPage = () => {
                                             <Button onClick={() => window.history.back()} variant="outline">
                                                 Return to Course
                                             </Button>
-                                            <Button onClick={handleStartQuiz}>
-                                                Retake Quiz
-                                            </Button>
-                                            {/* {passedQuiz && (
+                                            {manualQuizExam && (
+                                                <Button onClick={handleStartQuiz} disabled={!canRetakeManualQuiz}>
+                                                    Retake Quiz
+                                                </Button>
+                                            )}
+                                            {showLegacyRetakeButton && (
+                                                <Button onClick={handleStartQuiz}>
+                                                    Retake Quiz
+                                                </Button>
+                                            )}
+                                            {passedQuiz && certificateId && (
                                                 <Button onClick={downloadCertificate} className="gap-2">
                                                     <Download className="h-4 w-4" />
                                                     Download Certificate
                                                 </Button>
-                                            )} */}
+                                            )}
                                         </CardFooter>
                                     </Card>
 
@@ -700,6 +1455,85 @@ const QuizPage = () => {
                     )}
                 </div>
             </main>
+
+            <Dialog open={startDialogOpen} onOpenChange={setStartDialogOpen}>
+                <DialogContent className="max-w-2xl rounded-3xl border-primary/15 p-0 overflow-hidden">
+                    <div className="bg-gradient-to-r from-primary/10 via-indigo-500/10 to-sky-500/10 px-6 py-5">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2 text-2xl">
+                                <Shield className="h-6 w-6 text-primary" />
+                                Quiz Instructions
+                            </DialogTitle>
+                            <DialogDescription className="text-sm">
+                                Review the conditions carefully and approve them before starting the quiz.
+                            </DialogDescription>
+                        </DialogHeader>
+                    </div>
+
+                    <div className="space-y-6 px-6 py-6">
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div className="rounded-2xl border border-primary/10 bg-background p-4">
+                                <p className="text-sm font-semibold">Attempt format</p>
+                                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                                    <li>{quizQuestions.length || quizSettings.questionCount} questions in one continuous attempt</li>
+                                    <li>Each question must be answered before moving forward</li>
+                                    <li>Certificate is issued only above the required threshold</li>
+                                </ul>
+                            </div>
+                            <div className="rounded-2xl border border-primary/10 bg-background p-4">
+                                <p className="text-sm font-semibold">Monitoring rules</p>
+                                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                                    <li>Camera and microphone permissions are required for secure mode</li>
+                                    <li>Tab switch, fullscreen exit, copy/paste, and context menu are tracked</li>
+                                    <li>Repeated violations can auto-submit the quiz</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 rounded-2xl border border-border bg-muted/20 p-4">
+                            <div className="flex items-start space-x-3">
+                                <Checkbox
+                                    id="rulesAccepted"
+                                    checked={startChecklist.rulesAccepted}
+                                    onCheckedChange={(checked) => setStartChecklist((prev) => ({ ...prev, rulesAccepted: !!checked }))}
+                                />
+                                <Label htmlFor="rulesAccepted" className="cursor-pointer leading-6">
+                                    I have read the quiz instructions and understand the attempt, scoring, and certificate rules.
+                                </Label>
+                            </div>
+                            <div className="flex items-start space-x-3">
+                                <Checkbox
+                                    id="monitoringAccepted"
+                                    checked={startChecklist.monitoringAccepted}
+                                    onCheckedChange={(checked) => setStartChecklist((prev) => ({ ...prev, monitoringAccepted: !!checked }))}
+                                />
+                                <Label htmlFor="monitoringAccepted" className="cursor-pointer leading-6">
+                                    I approve secure monitoring, including camera, microphone, fullscreen, and malpractice checks during the quiz.
+                                </Label>
+                            </div>
+                            <div className="flex items-start space-x-3">
+                                <Checkbox
+                                    id="honestyAccepted"
+                                    checked={startChecklist.honestyAccepted}
+                                    onCheckedChange={(checked) => setStartChecklist((prev) => ({ ...prev, honestyAccepted: !!checked }))}
+                                />
+                                <Label htmlFor="honestyAccepted" className="cursor-pointer leading-6">
+                                    I confirm this attempt will be taken honestly without external help, copying, or switching away from the quiz.
+                                </Label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <DialogFooter className="border-t border-border/50 bg-background px-6 py-4">
+                        <Button variant="outline" onClick={() => setStartDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleConfirmStartQuiz} disabled={!canConfirmStart}>
+                            Approve And Start Quiz
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

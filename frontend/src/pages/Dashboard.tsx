@@ -62,6 +62,7 @@ const Dashboard = () => {
   const userId = sessionStorage.getItem('uid');
   const [courseProgress, setCourseProgress] = useState({});
   const [modules, setTotalModules] = useState({});
+  const [quizSummaries, setQuizSummaries] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const userRole = sessionStorage.getItem('role');
@@ -258,9 +259,11 @@ const Dashboard = () => {
       ]).catch(() => [{ data: { results: [] } }, { data: { progress: {} } }]);
 
       const quizMap: Record<string, boolean> = {};
+      const quizSummaryMap: Record<string, any> = {};
       if (quizResponse.data?.success) {
         quizResponse.data.results.forEach((r: any) => {
           quizMap[r.courseId] = r.passed;
+          quizSummaryMap[r.courseId] = r;
         });
       }
 
@@ -281,6 +284,7 @@ const Dashboard = () => {
 
       setCourseProgress(newProgressMap);
       setTotalModules(newModulesMap);
+      setQuizSummaries(quizSummaryMap);
       setCourses(coursesData.sort((a: any, b: any) => b._id.localeCompare(a._id)));
     } catch (error) {
       console.error(error);
@@ -780,11 +784,45 @@ const Dashboard = () => {
                     <CardTitle className="text-lg md:text-xl leading-tight capitalize line-clamp-2 group-hover:text-primary transition-colors">
                       {course.mainTopic}
                     </CardTitle>
-                    <CardDescription className="text-xs capitalize flex items-center gap-2">
+                    <CardDescription className="text-xs capitalize">
+                      {course.type}
+                    </CardDescription>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
                       <Badge variant="outline" className="text-xs bg-primary/5">
                         {course.type}
                       </Badge>
-                    </CardDescription>
+                      {(() => {
+                        const qs: any = quizSummaries?.[course._id];
+                        if (!qs) return null;
+                        const shouldShow = qs.passed || qs.attemptCount || qs.maxAttemptsReached || qs.nextAttemptAvailableAt;
+                        if (!shouldShow) return null;
+
+                        const nextAt = qs.nextAttemptAvailableAt ? new Date(qs.nextAttemptAvailableAt) : null;
+                        const cooldownActive = !!nextAt && nextAt > new Date();
+
+                        let label = '';
+                        let className = 'text-xs border-0 text-white shadow-lg';
+                        if (qs.passed) {
+                          label = 'Quiz Passed';
+                          className += ' bg-gradient-to-r from-emerald-500 to-green-600';
+                        } else if (qs.maxAttemptsReached) {
+                          label = 'Quiz Locked';
+                          className += ' bg-gradient-to-r from-red-500 to-rose-600';
+                        } else if (cooldownActive) {
+                          label = 'Retry Later';
+                          className += ' bg-gradient-to-r from-amber-500 to-orange-600';
+                        } else {
+                          label = `Attempt ${qs.attemptCount || 0}/${qs.attemptLimit || 2}`;
+                          className += ' bg-gradient-to-r from-blue-500 to-indigo-600';
+                        }
+
+                        return (
+                          <Badge className={className}>
+                            {label}
+                          </Badge>
+                        );
+                      })()}
+                    </div>
                   </CardHeader>
 
                   {/* Progress Section */}
@@ -907,7 +945,7 @@ const Dashboard = () => {
 )}
       </motion.div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0px) translateX(0px); }
           50% { transform: translateY(-20px) translateX(10px); }

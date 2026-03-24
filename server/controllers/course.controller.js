@@ -403,7 +403,8 @@ export const getShareableCourse = async (req, res) => {
               image: course.type === 'image & text course' ? s.videoUrl : s.videoUrl // Allow as fallback
             }))
           })),
-          quizzes: course.quizzes
+          quizzes: course.quizzes,
+          quizSettings: course.quizSettings || {}
         })
       };
       return res.json([transformedCourse]);

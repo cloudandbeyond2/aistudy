@@ -100,6 +100,7 @@ import StudentAttendance from './pages/StudentAttendance';
 import AdminGlobalNews from "./pages/admin/AdminGlobalNews";
 import AdminKpiReports from "./pages/admin/AdminKpiReports";
 import AdminLimitRequests from "./pages/admin/AdminLimitRequests";
+import AdminQuizRetakeRequests from "./pages/admin/AdminQuizRetakeRequests";
 
 
 // Staff Pages
@@ -218,6 +219,7 @@ const App = () => (
                     <Route path="certificate" element={<AdminCertificate />} />
                     <Route path="orgs" element={<AdminOrganizations />} />
                     <Route path="limit-requests" element={<AdminLimitRequests />} />
+                    <Route path="quiz-retake-requests" element={<AdminQuizRetakeRequests />} />
                     <Route path="organization-enquiries" element={<AdminOrganizationEnquiries />} />
                     <Route path="testimonials" element={<AdminTestimonials />} />
                     <Route path="orders" element={<AdminOrders />} />

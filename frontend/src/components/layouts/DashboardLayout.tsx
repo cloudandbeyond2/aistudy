@@ -1011,7 +1011,6 @@ import { DownloadIcon } from '@radix-ui/react-icons';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import NotificationBell from '../NotificationBell';
-import { useTheme } from '@/contexts/ThemeContext';
 
 // Menu Item Component for cleaner code
 const MenuItem = ({ icon: Icon, label, to, isActive, badge, onClick, className }: any) => (
@@ -1088,7 +1087,6 @@ const DashboardLayout = () => {
   // Helper to check active route
   const isActive = (path: string) => location.pathname === path;
  
-  const { toggleTheme } = useTheme();
   const [notebookEnabled, setNotebookEnabled] = useState({
     free: false,
     monthly: true,
@@ -1702,11 +1700,10 @@ const DashboardLayout = () => {
     )}
 
     {/* Theme Toggle Button */}
-    <button
-      onClick={toggleTheme}
+    <div
       className={cn(
         "group relative overflow-hidden rounded-xl transition-all duration-300",
-        "hover:shadow-md active:scale-[0.98]",
+        "hover:shadow-md",
         isExpanded ? "p-2" : "p-2.5"
       )}
     >
@@ -1728,7 +1725,7 @@ const DashboardLayout = () => {
           </div>
         )}
       </div>
-    </button>
+    </div>
 
     {/* Logout Button */}
     <button
