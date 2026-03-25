@@ -2581,7 +2581,7 @@ const formatGuidanceText = (text: string) => {
                                                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                                     <div className="flex-1 space-y-1">
                                                         <div className="flex items-center gap-2">
-                                                            <h3 className="font-bold text-xl text-foreground group-hover:text-blue-600 transition-colors">
+                                                            <h3 className="font-bold text-xl text-foreground group-hover:text-blue-600 transition-colors capitalize">
                                                                 {course.title || course.mainTopic}
                                                             </h3>
                                                             <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200">
@@ -3019,7 +3019,7 @@ const formatGuidanceText = (text: string) => {
                                             <div key={course._id} className="p-4 border rounded-lg bg-card">
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex-1">
-                                                        <h3 className="font-semibold text-lg">{title}</h3>
+                                                        <h3 className="font-semibold text-lg capitalize">{title}</h3>
                                                         <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: description }} />
                                                         <div className="flex gap-4 mt-2 text-xs font-medium text-muted-foreground">
                                                             <span>{topicCount} Topics</span>
@@ -3532,7 +3532,7 @@ const formatGuidanceText = (text: string) => {
                                                             <div className="flex items-start justify-between gap-3">
                                                                 <div className="min-w-0">
                                                                     <div className="flex items-center gap-2">
-                                                                        <h3 className="font-semibold truncate">{title}</h3>
+                                                                        <h3 className="font-semibold truncate capitalize">{title}</h3>
                                                                         <Badge variant="outline" className="gap-1">
                                                                             <Clock className="w-3.5 h-3.5" /> Pending
                                                                         </Badge>
