@@ -285,7 +285,13 @@ const Dashboard = () => {
       setCourseProgress(newProgressMap);
       setTotalModules(newModulesMap);
       setQuizSummaries(quizSummaryMap);
-      setCourses(coursesData.sort((a: any, b: any) => b._id.localeCompare(a._id)));
+     setCourses(
+  coursesData.sort((a: any, b: any) => {
+    const dateA = new Date(a.createdAt || a.date || a.updatedAt);
+    const dateB = new Date(b.createdAt || b.date || b.updatedAt);
+    return dateB.getTime() - dateA.getTime(); // 🔥 DESCENDING
+  })
+);
     } catch (error) {
       console.error(error);
     } finally {
@@ -787,7 +793,8 @@ const Dashboard = () => {
                     <CardDescription className="text-xs capitalize">
                       {course.type}
                     </CardDescription>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
+         
+                <div className="mt-2 flex flex-wrap items-center gap-2">
                       <Badge variant="outline" className="text-xs bg-primary/5">
                         {course.type}
                       </Badge>
