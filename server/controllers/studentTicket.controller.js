@@ -240,7 +240,6 @@ import User from "../models/User.js";
 /* ================= CREATE STUDENT TICKET ================= */
 export const createStudentTicket = async (req, res) => {
   try {
-
     const { subject, message, studentId, orgId, department } = req.body;
 
     if (!subject || !message || !studentId || !orgId) {
@@ -268,21 +267,23 @@ export const createStudentTicket = async (req, res) => {
 
     await ticket.save();
 
-    /* 🔔 NOTIFY ORG ADMIN WHEN STUDENT CREATES TICKET */
+    /* 🔔 NOTIFY ORG ADMIN WHEN USER CREATES TICKET */
     try {
-
-      const student = await User.findById(studentId);
-      const studentName = student?.mName || "Student";
+      const creator = await User.findById(studentId);
+      const creatorName = creator?.mName || "User";
+      const creatorRole = creator?.role || "user";
 
       const orgAdmins = await User.find({
         role: "org_admin",
-        organizationId: orgId
+        $or: [{ organizationId: orgId }, { organization: orgId }]
       });
+
+      const roleDisplay = creatorRole === "student" ? "Student" : "Staff member";
 
       for (const admin of orgAdmins) {
         await Notification.create({
           user: admin._id,
-          message: `${studentName} created support ticket "${subject}".`,
+          message: `${roleDisplay} ${creatorName} created support ticket "${subject}".`,
           type: "info",
           link: "/dashboard/org/student-tickets"
         });
@@ -299,7 +300,7 @@ export const createStudentTicket = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("CREATE STUDENT TICKET ERROR:", error);
+    console.error("CREATE TICKET ERROR:", error);
     res.status(500).json({
       success: false,
       message: "Server error",
@@ -332,7 +333,8 @@ export const getOrgStudentTickets = async (req, res) => {
         id: ticket.studentId?._id,
         name: ticket.studentId?.mName,
         email: ticket.studentId?.email,
-        department: ticket.studentId?.studentDetails?.department,
+        role: ticket.studentId?.role,
+        department: ticket.studentId?.studentDetails?.department || ticket.department,
         section: ticket.studentId?.studentDetails?.section,
         rollNo: ticket.studentId?.studentDetails?.rollNo
       }
