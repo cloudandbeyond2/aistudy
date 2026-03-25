@@ -211,7 +211,7 @@ const SidebarContentComponent = ({ isExpanded, isCollapsed, hovered, setIsCollap
         <SidebarHeader className="border-b border-border/40 py-4 px-3">
           <div className="flex items-center justify-between">
             <Link 
-              to="/dashboard" 
+              to="/" 
               onClick={handleMobileMenuClick}
               className={cn(
                 "flex items-center space-x-3 group relative transition-all duration-300",
