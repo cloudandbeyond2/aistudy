@@ -858,7 +858,7 @@ export const createCourse = async (req, res) => {
             isAiGenerated: Boolean(isAiGenerated),
             courseMeta: courseMeta || {},
             department: parsedDepartment,
-            approvalStatus: 'pending',
+            approvalStatus: 'draft',
             isPublished: false,
             topics: topics || [],
             quizzes: quizzes || [],
@@ -962,7 +962,9 @@ export const getStudentCourses = async (req, res) => {
 
         const aiCourses = await Course.find({
             organizationId,
-            $or: aiDepartmentOr
+            approvalStatus: 'approved',
+            isPublished: true,
+            $and: [visibilityOr, { $or: aiDepartmentOr }]
         }).sort({ createdAt: -1 });
 
         const combined = [...orgCourses, ...aiCourses];
@@ -1061,11 +1063,21 @@ export const reviewOrgCourse = async (req, res) => {
         if (!reviewer || reviewer.isBlocked) {
             return res.status(403).json({ success: false, message: 'Reviewer is not allowed' });
         }
+
+        // Only org_admin can approve/reject. dept_admin can only set to pending (submit for review).
         if (reviewer.role !== 'org_admin') {
-            return res.status(403).json({ success: false, message: 'Only organization admins can review courses' });
+            if (reviewer.role === 'dept_admin' && approvalStatus === 'pending') {
+                // Allowed to submit for review
+            } else {
+                return res.status(403).json({ success: false, message: 'Only organization admins can approve or reject courses' });
+            }
         }
 
-        const course = await OrgCourse.findById(courseId);
+        let course = await OrgCourse.findById(courseId);
+        if (!course) {
+            course = await Course.findById(courseId);
+        }
+
         if (!course) return res.status(404).json({ success: false, message: 'Course not found' });
         if (String(course.organizationId) !== String(reviewer.organization)) {
             return res.status(403).json({ success: false, message: 'Course does not belong to this organization' });
@@ -1113,7 +1125,11 @@ export const setOrgCoursePublishState = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Only organization admins can publish courses' });
         }
 
-        const course = await OrgCourse.findById(courseId);
+        let course = await OrgCourse.findById(courseId);
+        if (!course) {
+            course = await Course.findById(courseId);
+        }
+
         if (!course) return res.status(404).json({ success: false, message: 'Course not found' });
         if (String(course.organizationId) !== String(publisher.organization)) {
             return res.status(403).json({ success: false, message: 'Course does not belong to this organization' });

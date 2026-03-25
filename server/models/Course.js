@@ -11,7 +11,14 @@ const courseSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
   end: { type: Date, default: Date.now },
   completed: { type: Boolean, default: false },
-  restricted: { type: Boolean, default: false }
+  restricted: { type: Boolean, default: false },
+  approvalStatus: {
+    type: String,
+    enum: ['draft', 'pending', 'approved', 'rejected'],
+    default: 'draft'
+  },
+  isPublished: { type: Boolean, default: false },
+  assignedTo: { type: [String], default: [] }
 });
 
 // Index for faster user queries

@@ -10,8 +10,8 @@ const orgCourseSchema = new mongoose.Schema({
     department: String, // To assign to a specific department
     approvalStatus: {
         type: String,
-        enum: ['pending', 'approved', 'rejected'],
-        default: 'pending'
+        enum: ['draft', 'pending', 'approved', 'rejected'],
+        default: 'draft'
     },
     isPublished: { type: Boolean, default: false },
     reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
