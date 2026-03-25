@@ -146,7 +146,9 @@ export const createCourse = async (req, res) => {
       content,
       type,
       mainTopic,
-      photo
+      photo,
+      approvalStatus: 'draft',
+      isPublished: false
     });
 
     await newCourse.save();
@@ -216,7 +218,9 @@ export const createSharedCourse = async (req, res) => {
       content,
       type,
       mainTopic,
-      photo
+      photo,
+      approvalStatus: 'draft',
+      isPublished: false
     });
 
     await newCourse.save();
@@ -363,18 +367,15 @@ export const getShareableCourse = async (req, res) => {
     const { id, requesterId } = req.query;
     if (!id) return res.status(400).json({ success: false, message: 'ID is required' });
 
-    // Try standard Course model first
+    // Combine Course and OrgCourse handling
     let course = await Course.findById(id).lean();
-
-    if (course) {
-      return res.json([course]);
+    if (!course) {
+      course = await OrgCourse.findById(id).lean();
     }
 
-    // Try OrgCourse model
-    course = await OrgCourse.findById(id).lean();
     if (course) {
       const isLegacyOrPublished = (() => {
-        if (!course) return false;
+        if (!course.organizationId) return true; // Non-org courses are always "published"
         if (!course.approvalStatus) return course.isPublished !== false;
         return course.approvalStatus === 'approved' && course.isPublished !== false;
       })();
@@ -390,7 +391,7 @@ export const getShareableCourse = async (req, res) => {
           requester &&
           String(requester.organization || '') === String(course.organizationId || '');
         const isStaff = sameOrg && ['org_admin', 'dept_admin'].includes(requester.role);
-        const isCreator = sameOrg && String(requester._id) === String(course.createdBy || '');
+        const isCreator = sameOrg && String(requester._id) === String(course.createdBy || course.user || '');
 
         if (!isStaff && !isCreator) {
           return res.status(403).json({
@@ -400,29 +401,33 @@ export const getShareableCourse = async (req, res) => {
         }
       }
 
-      // Transform OrgCourse to match CoursePage expectations
-      const transformedCourse = {
-        _id: course._id,
-        mainTopic: course.title,
-        type: course.type || 'video & text course',
-        photo: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800',
-        content: JSON.stringify({
-          course_title: course.title,
-          course_details: course.description,
-          course_topics: course.topics.map(t => ({
-            title: t.title,
-            subtopics: t.subtopics.map(s => ({
-              title: s.title,
-              theory: s.content,
-              youtube: course.type === 'video & text course' ? s.videoUrl : '',
-              image: course.type === 'image & text course' ? s.videoUrl : s.videoUrl // Allow as fallback
-            }))
-          })),
-          quizzes: course.quizzes,
-          quizSettings: course.quizSettings || {}
-        })
-      };
-      return res.json([transformedCourse]);
+      // If it's an OrgCourse, transform it
+      if (course.topics) { // Simple check for OrgCourse
+        const transformedCourse = {
+          _id: course._id,
+          mainTopic: course.title,
+          type: course.type || 'video & text course',
+          photo: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800',
+          content: JSON.stringify({
+            course_title: course.title,
+            course_details: course.description,
+            course_topics: course.topics.map(t => ({
+              title: t.title,
+              subtopics: t.subtopics.map(s => ({
+                title: s.title,
+                theory: s.content,
+                youtube: course.type === 'video & text course' ? s.videoUrl : '',
+                image: course.type === 'image & text course' ? s.videoUrl : s.videoUrl
+              }))
+            })),
+            quizzes: course.quizzes,
+            quizSettings: course.quizSettings || {}
+          })
+        };
+        return res.json([transformedCourse]);
+      }
+
+      return res.json([course]);
     }
 
     res.status(404).json({ success: false, message: 'Course not found' });

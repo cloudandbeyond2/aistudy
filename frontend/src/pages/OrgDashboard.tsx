@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle } from 'lucide-react';
+import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle, BookOpen, FileQuestion, Calendar, CheckCircle2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -2378,6 +2378,112 @@ const formatGuidanceText = (text: string) => {
                     </div>
                 </TabsContent>
 
+                {/* APPROVALS TAB */}
+                {role === 'org_admin' && (
+                    <TabsContent value="approvals" className="space-y-4">
+                        <Card className="border-none shadow-none bg-transparent">
+                            <CardHeader className="px-0 pt-0">
+                                <CardTitle className="text-2xl flex items-center gap-2">
+                                    <Clock className="w-6 h-6 text-blue-500" /> Pending Approval Requests
+                                </CardTitle>
+                                <CardDescription>Review and approve courses submitted by department admins or other staff members.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="px-0 space-y-4">
+                                {courses.filter((c: any) => c.approvalStatus === 'pending').length > 0 ? (
+                                    <div className="grid gap-4">
+                                        {courses.filter((c: any) => c.approvalStatus === 'pending').map((course: any) => (
+                                            <div key={course._id} className="group p-6 border rounded-2xl bg-card hover:shadow-md transition-all duration-300 border-blue-100 hover:border-blue-200">
+                                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                                    <div className="flex-1 space-y-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <h3 className="font-bold text-xl text-foreground group-hover:text-blue-600 transition-colors">
+                                                                {course.title || course.mainTopic}
+                                                            </h3>
+                                                            <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200">
+                                                                {departmentsList.find(d => d._id === course.department || d.name === course.department)?.name || course.department || 'General'}
+                                                            </Badge>
+                                                        </div>
+                                                        <p className="text-muted-foreground line-clamp-2 text-sm italic">"{course.description || 'No description provided'}"</p>
+                                                        <div className="flex flex-wrap gap-4 mt-3 text-xs font-semibold text-muted-foreground items-center">
+                                                            <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-md">
+                                                                <BookOpen className="w-3.5 h-3.5 text-blue-500" />
+                                                                <span>{course.topics?.length || 0} Lessons</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-md">
+                                                                <FileQuestion className="w-3.5 h-3.5 text-indigo-500" />
+                                                                <span>{course.quizzes?.length || 0} Quizzes</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-md">
+                                                                <Calendar className="w-3.5 h-3.5 text-emerald-500" />
+                                                                <span>Submitted: {new Date(course.updatedAt || course.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-2 w-full md:w-auto shrink-0">
+                                                        <Button 
+                                                            variant="outline" 
+                                                            size="sm" 
+                                                            className="flex-1 md:flex-none h-10 px-4 rounded-xl border-blue-200 hover:bg-blue-50 hover:text-blue-600"
+                                                            onClick={() => setPreviewCourse({ ...course })}
+                                                        >
+                                                            <Eye className="w-4 h-4 mr-2" /> Preview
+                                                        </Button>
+                                                        <Button 
+                                                            className="flex-1 md:flex-none h-10 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-200"
+                                                            size="sm"
+                                                            onClick={() => handleReviewOrgCourse(course._id, 'approved', 'Course approved for students.')}
+                                                        >
+                                                            <Check className="w-4 h-4 mr-2" /> Approve
+                                                        </Button>
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="sm"
+                                                            className="flex-1 md:flex-none h-10 px-4 rounded-xl text-destructive hover:bg-red-50 hover:text-red-600"
+                                                            onClick={async () => {
+                                                                const result = await Swal.fire({
+                                                                    title: 'Reject this course?',
+                                                                    input: 'textarea',
+                                                                    inputLabel: 'Feedback for the creator',
+                                                                    inputPlaceholder: 'Explain what needs to be changed before approval...',
+                                                                    showCancelButton: true,
+                                                                    confirmButtonText: 'Reject Course',
+                                                                    confirmButtonColor: '#dc2626',
+                                                                    cancelButtonText: 'Cancel',
+                                                                    customClass: {
+                                                                        popup: 'rounded-3xl',
+                                                                        confirmButton: 'rounded-xl',
+                                                                        cancelButton: 'rounded-xl'
+                                                                    }
+                                                                });
+
+                                                                if (result.isConfirmed) {
+                                                                    await handleReviewOrgCourse(course._id, 'rejected', String(result.value || ''));
+                                                                }
+                                                            }}
+                                                        >
+                                                            <X className="w-4 h-4 mr-2" /> Reject
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-20 bg-muted/20 border-2 border-dashed rounded-3xl animate-in fade-in zoom-in duration-500">
+                                        <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
+                                            <CheckCircle2 className="w-8 h-8" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-foreground">All Caught Up!</h3>
+                                        <p className="text-muted-foreground text-center max-w-xs mt-2">
+                                            There are no courses waiting for your approval at this time.
+                                        </p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                )}
+
                 {/* STUDENTS TAB */}
                 <TabsContent value="students" className="space-y-4">
                     <Card>
@@ -2707,11 +2813,9 @@ const formatGuidanceText = (text: string) => {
                                         const description = course.description || (course.content ? "AI Generated Course" : "");
                                         let topicCount = 0;
                                         let quizCount = 0;
-                                        const isOrgCourse = Boolean(course?.title && !course?.content);
-                                        const approvalStatus = isOrgCourse
-                                            ? (course.approvalStatus || (course.isPublished === false ? 'pending' : 'approved'))
-                                            : '';
-                                        const published = isOrgCourse ? (course.isPublished !== undefined ? Boolean(course.isPublished) : true) : false;
+                                        // Both OrgCourse and AI Course now support approval workflow
+                                        const approvalStatus = course.approvalStatus || (course.isPublished === false ? 'pending' : 'approved');
+                                        const published = course.isPublished !== undefined ? Boolean(course.isPublished) : (course.content ? false : true); // AI courses default to unpublished
 
                                         if (course.topics) {
                                             topicCount = course.topics.length;
@@ -2739,28 +2843,26 @@ const formatGuidanceText = (text: string) => {
                                                                 {course.department ? `Dept: ${departmentsList.find(d => d._id === course.department || d.name === course.department)?.name || course.department}` : (course.content ? 'AI Generated' : 'All students')}
                                                             </span>
                                                         </div>
-                                                        {isOrgCourse && (
-                                                            <div className="mt-2 flex flex-wrap items-center gap-2">
-                                                                {approvalStatus === 'pending' && (
-                                                                    <Badge variant="outline" className="gap-1">
-                                                                        <Clock className="w-3.5 h-3.5" /> Pending approval
-                                                                    </Badge>
-                                                                )}
-                                                                {approvalStatus === 'approved' && (
-                                                                    <Badge className="bg-emerald-600 text-white border-0 gap-1">
-                                                                        <Check className="w-3.5 h-3.5" /> Approved
-                                                                    </Badge>
-                                                                )}
-                                                                {approvalStatus === 'rejected' && (
-                                                                    <Badge variant="destructive" className="gap-1">
-                                                                        <X className="w-3.5 h-3.5" /> Rejected
-                                                                    </Badge>
-                                                                )}
-                                                                <Badge variant={published ? "secondary" : "outline"} className={published ? "bg-blue-500/10 text-blue-700 border-blue-200" : ""}>
-                                                                    {published ? 'Published' : 'Unpublished'}
+                                                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                                                            {approvalStatus === 'pending' && (
+                                                                <Badge variant="outline" className="gap-1">
+                                                                    <Clock className="w-3.5 h-3.5" /> Pending approval
                                                                 </Badge>
-                                                            </div>
-                                                        )}
+                                                            )}
+                                                            {approvalStatus === 'approved' && (
+                                                                <Badge className="bg-emerald-600 text-white border-0 gap-1">
+                                                                    <Check className="w-3.5 h-3.5" /> Approved
+                                                                </Badge>
+                                                            )}
+                                                            {approvalStatus === 'rejected' && (
+                                                                <Badge variant="destructive" className="gap-1">
+                                                                    <X className="w-3.5 h-3.5" /> Rejected
+                                                                </Badge>
+                                                            )}
+                                                            <Badge variant={published ? "secondary" : "outline"} className={published ? "bg-blue-500/10 text-blue-700 border-blue-200" : ""}>
+                                                                {published ? 'Published' : 'Unpublished'}
+                                                            </Badge>
+                                                        </div>
                                                         {quizCount > 0 && quizReportsMap[String(course._id)] && (
                                                             <div className="mt-2 flex flex-wrap items-center gap-2">
                                                                 {quizReportsMap[String(course._id)]?.quizSettings?.examMode && (
@@ -2784,7 +2886,7 @@ const formatGuidanceText = (text: string) => {
                                                         <Button variant="ghost" size="sm" onClick={() => setPreviewCourse({ ...course })}>
                                                             <Eye className="w-4 h-4" />
                                                         </Button>
-                                                        {role === 'org_admin' && isOrgCourse && (approvalStatus === 'pending' || approvalStatus === 'rejected') && (
+                                                        {role === 'org_admin' && (approvalStatus === 'pending' || approvalStatus === 'rejected') && (
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
@@ -2793,7 +2895,7 @@ const formatGuidanceText = (text: string) => {
                                                                 <Check className="w-4 h-4 mr-1" /> Approve
                                                             </Button>
                                                         )}
-                                                        {role === 'org_admin' && isOrgCourse && approvalStatus !== 'rejected' && (
+                                                        {role === 'org_admin' && approvalStatus !== 'rejected' && (
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
@@ -2816,7 +2918,7 @@ const formatGuidanceText = (text: string) => {
                                                                 <X className="w-4 h-4 mr-1" /> Reject
                                                             </Button>
                                                         )}
-                                                        {role === 'org_admin' && isOrgCourse && approvalStatus === 'approved' && (
+                                                        {role === 'org_admin' && approvalStatus === 'approved' && (
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"

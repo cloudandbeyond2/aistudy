@@ -130,6 +130,8 @@ const QuizPage = () => {
         : String(rawTopic || 'Course');
 
     const courseId = state?.courseId || '';
+    const userRole = sessionStorage.getItem('role');
+    const isOrgAdmin = userRole === 'org_admin' || userRole === 'dept_admin' || sessionStorage.getItem('isOrganization') === 'true';
     const questions = state?.questions || [];
     const certificateIdState = state?.certificateId || '';
     const manualQuizExam = !!state?.manualQuizExam;
@@ -179,6 +181,29 @@ const QuizPage = () => {
     const logQuizError = (label: string, error: any) => {
         const message = error?.response?.data?.message || error?.message || 'Unknown error';
         console.error(label, message);
+    };
+
+    const handleSendToAdminApproval = async () => {
+        try {
+            const response = await axios.post(`${serverURL}/api/org/course/${courseId}/review`, {
+                reviewerId: sessionStorage.getItem('uid'),
+                approvalStatus: 'pending',
+                approvalNote: 'Course reviewed and submitted for final admin approval.'
+            });
+            if (response.data.success) {
+                toast({
+                    title: "Submitted for Approval",
+                    description: "The course has been sent to the organization administrator for final approval.",
+                });
+            }
+        } catch (error) {
+            console.error("Failed to submit for approval:", error);
+            toast({
+                title: "Error",
+                description: "Failed to submit course for approval. Please try again.",
+                variant: "destructive"
+            });
+        }
     };
 
     const fetchCertificateSettings = async () => {
@@ -1531,6 +1556,12 @@ const QuizPage = () => {
                                             <Button onClick={() => window.history.back()} variant="outline">
                                                 Return to Course
                                             </Button>
+                                            {isOrgAdmin && (
+                                                <Button onClick={handleSendToAdminApproval} className="gap-2 bg-green-600 hover:bg-green-700">
+                                                    <FileCheck2 className="h-4 w-4" />
+                                                    Send to Admin Approval
+                                                </Button>
+                                            )}
                                             {manualQuizExam && (
                                                 <Button onClick={handleStartQuiz} disabled={!canRetakeManualQuiz}>
                                                     Retake Quiz
