@@ -496,6 +496,7 @@
 import User from "../models/User.js";
 import Admin from "../models/Admin.js";
 import Organization from '../models/Organization.js';
+import { recordLoginActivity } from '../services/loginActivity.service.js';
 import crypto from "crypto";
 import transporter from "../config/mail.js";
 import bcrypt from "bcrypt";
@@ -731,7 +732,10 @@ export const signin = async (req, res) => {
 
       // Reset failed attempts on successful login
       user.failedAttempts = 0;
+      user.lastLoginAt = new Date();
+      user.loginCount = (user.loginCount || 0) + 1;
       await user.save();
+      await recordLoginActivity({ user, req });
 
       return res.json({
         success: true,

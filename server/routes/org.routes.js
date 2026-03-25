@@ -19,6 +19,9 @@ import {
     createCourse,
     getCourses,
     getStudentCourses,
+    reviewOrgCourse,
+    setOrgCoursePublishState,
+    getOrgStaffLoginActivity,
     updateCourse,
     deleteCourse,
     updateOrganization,
@@ -45,6 +48,7 @@ import {
     updateAssignment,
     deleteAssignment,
     requestLimitIncrease,
+    requestStaffCourseLimitIncrease,
     generateProjectContent,
     createOrgPlan,
     getOrgPlan,
@@ -104,8 +108,11 @@ router.post('/org/course/create', createCourse);
 router.get('/org/courses', getCourses);
 router.get('/org/course-count', getOrgCourseCount);
 router.get('/student/courses', getStudentCourses);
+router.post('/org/course/:courseId/review', reviewOrgCourse);
+router.post('/org/course/:courseId/publish', setOrgCoursePublishState);
 router.put('/org/course/:courseId', updateCourse);
 router.delete('/org/course/:courseId', deleteCourse);
+router.get('/org/staff/activity', getOrgStaffLoginActivity);
 
 // Meetings
 router.post('/org/meeting/create', createMeeting);
@@ -143,6 +150,7 @@ router.delete('/org/dept-admin/:id', deleteDeptAdmin);
 
 // Student Limit Increase Request
 router.post('/org/limit-increase/request', requestLimitIncrease);
+router.post('/org/staff/course-limit/request', requestStaffCourseLimitIncrease);
 
 // Project AI Generation
 router.post('/org/project/generate', generateProjectContent);

@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import Organization from '../models/Organization.js';
 import LimitRequest from '../models/LimitRequest.js';
+import StaffCourseLimitRequest from '../models/StaffCourseLimitRequest.js';
 import bcrypt from 'bcrypt';
 import Course from '../models/Course.js';
 import Admin from '../models/Admin.js';
@@ -397,6 +398,36 @@ export const processLimitRequest = async (requestId, status, adminComment) => {
                 'organizationDetails.customStudentLimit': request.requestedCustomLimit
             }
         );
+    }
+
+    return request;
+};
+
+/* ---------------- STAFF COURSE LIMIT REQUESTS ---------------- */
+export const getAllStaffCourseLimitRequests = async () => {
+    return StaffCourseLimitRequest.find()
+        .populate('organizationId', 'name email')
+        .populate('requestedBy', 'mName email')
+        .populate('staffId', 'mName email courseLimit coursesCreatedCount')
+        .sort({ createdAt: -1 });
+};
+
+export const processStaffCourseLimitRequest = async (requestId, status, adminComment) => {
+    const request = await StaffCourseLimitRequest.findById(requestId);
+    if (!request) throw new Error('Request not found');
+
+    const normalized = String(status || '').toLowerCase();
+    if (!['approved', 'rejected'].includes(normalized)) {
+        throw new Error('Invalid status');
+    }
+
+    request.status = normalized;
+    request.adminComment = String(adminComment || '');
+    request.processedAt = new Date();
+    await request.save();
+
+    if (request.status === 'approved') {
+        await User.findByIdAndUpdate(request.staffId, { $set: { courseLimit: request.requestedCourseLimit } });
     }
 
     return request;

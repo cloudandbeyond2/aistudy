@@ -6,6 +6,8 @@ import Notice from '../models/Notice.js';
 import OrgCourse from '../models/OrgCourse.js';
 import Course from '../models/Course.js';
 import OrganizationPlan from '../models/OrganizationPlan.js';
+import LoginActivity from '../models/LoginActivity.js';
+import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import Meeting from '../models/Meeting.js';
 import Department from '../models/Department.js';
@@ -13,11 +15,33 @@ import StudentProgress from '../models/StudentProgress.js';
 import LimitRequest from '../models/LimitRequest.js';
 import ProjectModel from '../models/Project.js';
 import MaterialModel from '../models/Material.js';
+import StaffCourseLimitRequest from '../models/StaffCourseLimitRequest.js';
 import { createNotification } from './notification.controller.js';
 import { getChatModel } from '../config/genai.js';
 import { sendMail } from '../services/mail.service.js';
+import { recordLoginActivity } from '../services/loginActivity.service.js';
 import { getOrgPlanDurationDays, getUserAccessFromOrgPlan } from '../utils/orgPlanAccess.js';
 // import { generateAssignments } from './ai.controller.js'; // Will implement this export next
+
+const isLegacyPublishedCourse = (course) => {
+    if (!course) return false;
+    if (!course.approvalStatus) return course.isPublished !== false;
+    return course.approvalStatus === 'approved' && course.isPublished !== false;
+};
+
+const canRequesterAccessCourse = ({ course, requesterId, requesterRole, organizationId }) => {
+    if (!course) return false;
+    if (isLegacyPublishedCourse(course)) return true;
+
+    const normalizedRequesterId = String(requesterId || '');
+    const normalizedOrgId = String(organizationId || '');
+    const courseOrgId = String(course.organizationId || '');
+    const courseCreatedBy = String(course.createdBy || '');
+
+    if (!normalizedRequesterId || normalizedOrgId !== courseOrgId) return false;
+    if (['org_admin', 'dept_admin'].includes(requesterRole)) return true;
+    return normalizedRequesterId === courseCreatedBy;
+};
 
 /**
  * ORGANIZATION SIGNUP
@@ -143,6 +167,12 @@ export const orgSignin = async (req, res) => {
 
         // Find the admin user user for this org
         const user = await User.findOne({ email, role: 'org_admin' });
+        if (user) {
+            user.lastLoginAt = new Date();
+            user.loginCount = (user.loginCount || 0) + 1;
+            await user.save();
+            await recordLoginActivity({ user, req });
+        }
 
         res.json({ success: true, message: 'Login successful', org, user });
     } catch (error) {
@@ -796,26 +826,38 @@ export const updateOrganization = async (req, res) => {
 export const createCourse = async (req, res) => {
     const { organizationId, title, description, type, department, topics, quizzes, quizSettings, assignedTo, createdBy } = req.body;
     try {
+        const creator = createdBy ? await User.findById(createdBy).select('_id role department coursesCreatedCount courseLimit') : null;
+
         // Enforce course limit for dept_admin
-        if (createdBy) {
-            const creator = await User.findById(createdBy);
-            if (creator && creator.role === 'dept_admin') {
-                if (creator.coursesCreatedCount >= creator.courseLimit) {
-                    return res.status(403).json({
-                        success: false,
-                        message: `Course creation limit reached (${creator.courseLimit}). Please contact your organization administrator.`
-                    });
-                }
+        if (creator && creator.role === 'dept_admin') {
+            if (creator.coursesCreatedCount >= creator.courseLimit) {
+                return res.status(403).json({
+                    success: false,
+                    message: `Course creation limit reached (${creator.courseLimit}). Please contact your organization administrator.`
+                });
             }
         }
 
-        const parsedDepartment = department && department !== 'all' ? department : undefined;
+        const parsedDepartment =
+            creator?.role === 'dept_admin'
+                ? creator.department || undefined
+                : (department && department !== 'all' ? department : undefined);
+
+        if (creator?.role === 'dept_admin' && !parsedDepartment) {
+            return res.status(403).json({
+                success: false,
+                message: 'Department admins can only create courses for their assigned department.'
+            });
+        }
+
         const course = new OrgCourse({
             organizationId,
             title,
             description,
             type: type || 'video & text course',
             department: parsedDepartment,
+            approvalStatus: 'pending',
+            isPublished: false,
             topics: topics || [],
             quizzes: quizzes || [],
             quizSettings: quizSettings || {},
@@ -867,15 +909,33 @@ export const getStudentCourses = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Student not found' });
         }
 
-        const department = student.studentDetails?.department;
-        console.log('Fetching courses for student:', { studentId, department, organizationId });
+        const rawDepartment = student.department || student.studentDetails?.department || '';
+        let departmentId = '';
+        let departmentName = '';
+        if (rawDepartment && mongoose.Types.ObjectId.isValid(String(rawDepartment))) {
+            departmentId = String(rawDepartment);
+            const deptDoc = await Department.findById(departmentId).select('name');
+            departmentName = deptDoc?.name || '';
+        } else {
+            departmentName = String(rawDepartment || '');
+        }
+        const departmentValues = [departmentId, departmentName].filter(Boolean);
+
+        console.log('Fetching courses for student:', { studentId, departmentId, departmentName, organizationId });
 
         // Get courses assigned to this student, or this department, or all students (empty assignedTo and department)
-        const orgCourses = await OrgCourse.find({
-            organizationId,
+        const visibilityOr = {
+            $or: [
+                { approvalStatus: { $exists: false } },
+                { approvalStatus: 'approved', isPublished: true },
+                { approvalStatus: 'approved', isPublished: { $exists: false } }
+            ]
+        };
+
+        const assignmentOr = {
             $or: [
                 { assignedTo: studentId }, // Specifically assigned to this student
-                { department: department }, // Assigned to their department
+                ...(departmentValues.length > 0 ? [{ department: { $in: departmentValues } }] : []), // Assigned to their department
                 {
                     $and: [
                         { assignedTo: { $size: 0 } },
@@ -883,15 +943,24 @@ export const getStudentCourses = async (req, res) => {
                     ]
                 } // Assigned to all
             ]
+        };
+
+        const orgCourses = await OrgCourse.find({
+            organizationId,
+            $and: [visibilityOr, assignmentOr]
         }).sort({ createdAt: -1 });
 
         // Also fetch AI generated courses with same department filtering logic
+        const aiDepartmentOr = departmentValues.length > 0
+            ? [
+                { department: { $in: departmentValues } },
+                { $or: [{ department: { $exists: false } }, { department: '' }, { department: null }] }
+            ]
+            : [{ $or: [{ department: { $exists: false } }, { department: '' }, { department: null }] }];
+
         const aiCourses = await Course.find({
             organizationId,
-            $or: [
-                { department: department }, // Assigned to their department
-                { $or: [{ department: { $exists: false } }, { department: '' }, { department: null }] } // No department specified (available to all)
-            ]
+            $or: aiDepartmentOr
         }).sort({ createdAt: -1 });
 
         const combined = [...orgCourses, ...aiCourses];
@@ -917,9 +986,22 @@ export const getStudentCourses = async (req, res) => {
  */
 export const updateCourse = async (req, res) => {
     const { courseId } = req.params;
-    const updates = req.body;
+    const { updatedBy, ...updates } = req.body;
     console.log('Update course request:', { courseId, updates });
     try {
+        const updater = updatedBy ? await User.findById(updatedBy).select('_id role department') : null;
+        if (updater?.role === 'dept_admin' && updates.department !== undefined) {
+            updates.department = updater.department || updates.department;
+        }
+
+        delete updates.approvalStatus;
+        delete updates.isPublished;
+        delete updates.reviewedBy;
+        delete updates.reviewedAt;
+        delete updates.publishedBy;
+        delete updates.publishedAt;
+        delete updates.approvalNote;
+
         // Try to update OrgCourse first (manual courses)
         let course = await OrgCourse.findByIdAndUpdate(
             courseId,
@@ -955,6 +1037,137 @@ export const updateCourse = async (req, res) => {
     } catch (error) {
         console.error('Update course error:', error);
         res.status(500).json({ success: false, message: 'Server error: ' + error.message });
+    }
+};
+
+/**
+ * REVIEW ORG COURSE (Org Admin)
+ * approvalStatus: approved | rejected | pending
+ */
+export const reviewOrgCourse = async (req, res) => {
+    const { courseId } = req.params;
+    const { reviewerId, approvalStatus, approvalNote } = req.body;
+
+    try {
+        if (!courseId) return res.status(400).json({ success: false, message: 'courseId is required' });
+        if (!reviewerId) return res.status(400).json({ success: false, message: 'reviewerId is required' });
+        if (!['approved', 'rejected', 'pending'].includes(String(approvalStatus || ''))) {
+            return res.status(400).json({ success: false, message: 'Invalid approvalStatus' });
+        }
+
+        const reviewer = await User.findById(reviewerId).select('_id role organization isBlocked');
+        if (!reviewer || reviewer.isBlocked) {
+            return res.status(403).json({ success: false, message: 'Reviewer is not allowed' });
+        }
+        if (reviewer.role !== 'org_admin') {
+            return res.status(403).json({ success: false, message: 'Only organization admins can review courses' });
+        }
+
+        const course = await OrgCourse.findById(courseId);
+        if (!course) return res.status(404).json({ success: false, message: 'Course not found' });
+        if (String(course.organizationId) !== String(reviewer.organization)) {
+            return res.status(403).json({ success: false, message: 'Course does not belong to this organization' });
+        }
+
+        course.approvalStatus = String(approvalStatus);
+        course.reviewedBy = reviewer._id;
+        course.reviewedAt = new Date();
+        course.approvalNote = String(approvalNote || '');
+
+        // If it is not approved, force it back to unpublished.
+        if (course.approvalStatus !== 'approved') {
+            course.isPublished = false;
+            course.publishedBy = null;
+            course.publishedAt = null;
+        }
+
+        await course.save();
+        res.json({ success: true, message: 'Course review updated', course });
+    } catch (error) {
+        console.error('Review org course error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * PUBLISH / UNPUBLISH ORG COURSE (Org Admin)
+ */
+export const setOrgCoursePublishState = async (req, res) => {
+    const { courseId } = req.params;
+    const { publisherId, isPublished } = req.body;
+
+    try {
+        if (!courseId) return res.status(400).json({ success: false, message: 'courseId is required' });
+        if (!publisherId) return res.status(400).json({ success: false, message: 'publisherId is required' });
+        if (typeof isPublished !== 'boolean') {
+            return res.status(400).json({ success: false, message: 'isPublished (boolean) is required' });
+        }
+
+        const publisher = await User.findById(publisherId).select('_id role organization isBlocked');
+        if (!publisher || publisher.isBlocked) {
+            return res.status(403).json({ success: false, message: 'Publisher is not allowed' });
+        }
+        if (publisher.role !== 'org_admin') {
+            return res.status(403).json({ success: false, message: 'Only organization admins can publish courses' });
+        }
+
+        const course = await OrgCourse.findById(courseId);
+        if (!course) return res.status(404).json({ success: false, message: 'Course not found' });
+        if (String(course.organizationId) !== String(publisher.organization)) {
+            return res.status(403).json({ success: false, message: 'Course does not belong to this organization' });
+        }
+
+        const isLegacy = !course.approvalStatus;
+
+        // New workflow: must be approved before publishing (legacy courses can be toggled without migration).
+        if (!isLegacy && course.approvalStatus !== 'approved' && isPublished) {
+            return res.status(400).json({ success: false, message: 'Course must be approved before publishing' });
+        }
+
+        course.isPublished = Boolean(isPublished);
+        course.publishedBy = course.isPublished ? publisher._id : null;
+        course.publishedAt = course.isPublished ? new Date() : null;
+
+        await course.save();
+        res.json({ success: true, message: `Course ${course.isPublished ? 'published' : 'unpublished'}`, course });
+    } catch (error) {
+        console.error('Publish org course error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * STAFF LOGIN ACTIVITY (Org Admin)
+ */
+export const getOrgStaffLoginActivity = async (req, res) => {
+    const { organizationId, requesterId, limit } = req.query;
+
+    try {
+        if (!organizationId) return res.status(400).json({ success: false, message: 'organizationId is required' });
+        if (!requesterId) return res.status(400).json({ success: false, message: 'requesterId is required' });
+
+        const requester = await User.findById(requesterId).select('_id role organization isBlocked');
+        if (!requester || requester.isBlocked || requester.role !== 'org_admin') {
+            return res.status(403).json({ success: false, message: 'Not allowed' });
+        }
+        if (String(requester.organization) !== String(organizationId)) {
+            return res.status(403).json({ success: false, message: 'Organization mismatch' });
+        }
+
+        const resolvedLimit = Math.min(Math.max(parseInt(String(limit || '200'), 10) || 200, 1), 500);
+        const logs = await LoginActivity.find({
+            organization: organizationId,
+            activityType: 'login',
+            role: { $in: ['org_admin', 'dept_admin'] }
+        })
+            .sort({ createdAt: -1 })
+            .limit(resolvedLimit)
+            .lean();
+
+        res.json({ success: true, logs });
+    } catch (error) {
+        console.error('Get org staff login activity error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -1455,7 +1668,7 @@ export const getDeptAdmins = async (req, res) => {
         const admins = await User.find(query)
             .populate('department', 'name')
             .select('-password')
-            .sort({ createdAt: -1 });
+            .sort({ lastLoginAt: -1, date: -1 });
 
         res.json({ success: true, admins });
     } catch (error) {
@@ -1493,16 +1706,25 @@ export const uploadImage = async (req, res) => {
  * REQUEST STUDENT LIMIT INCREASE
  */
 export const requestLimitIncrease = async (req, res) => {
-    const { organizationId, adminId, requestedSlot, requestedCustomLimit } = req.body;
+    const { organizationId, adminId, requesterId, requestedSlot, requestedCustomLimit } = req.body;
 
-    if (!organizationId || !adminId) {
-        return res.status(400).json({ success: false, message: 'Missing organizationId or adminId' });
+    if (!organizationId) {
+        return res.status(400).json({ success: false, message: 'Missing organizationId' });
     }
 
     try {
+        let resolvedAdminId = adminId || requesterId;
+        if (!resolvedAdminId) {
+            const orgAdmin = await User.findOne({ organization: organizationId, role: 'org_admin' }).select('_id');
+            resolvedAdminId = orgAdmin?._id;
+        }
+        if (!resolvedAdminId) {
+            return res.status(404).json({ success: false, message: 'Organization admin not found' });
+        }
+
         const newRequest = new LimitRequest({
             organizationId,
-            adminId,
+            adminId: resolvedAdminId,
             requestedSlot,
             requestedCustomLimit
         });
@@ -1512,6 +1734,81 @@ export const requestLimitIncrease = async (req, res) => {
         res.json({ success: true, message: 'Limit increase request submitted successfully' });
     } catch (error) {
         console.error('requestLimitIncrease error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * REQUEST STAFF COURSE LIMIT INCREASE (Org Admin -> Super Admin)
+ */
+export const requestStaffCourseLimitIncrease = async (req, res) => {
+    const { organizationId, requesterId, staffId, requestedCourseLimit } = req.body;
+
+    if (!organizationId || !staffId) {
+        return res.status(400).json({ success: false, message: 'Missing organizationId or staffId' });
+    }
+
+    const parsedRequested = parseInt(String(requestedCourseLimit || ''), 10);
+    if (!Number.isFinite(parsedRequested) || parsedRequested < 0) {
+        return res.status(400).json({ success: false, message: 'requestedCourseLimit must be a valid number (>= 0)' });
+    }
+
+    try {
+        let resolvedRequesterId = requesterId;
+        if (!resolvedRequesterId) {
+            const orgAdmin = await User.findOne({ organization: organizationId, role: 'org_admin' }).select('_id');
+            resolvedRequesterId = orgAdmin?._id;
+        }
+        if (!resolvedRequesterId) {
+            return res.status(404).json({ success: false, message: 'Organization admin not found' });
+        }
+
+        const requester = await User.findById(resolvedRequesterId).select('_id role organization isBlocked');
+        if (!requester || requester.isBlocked || requester.role !== 'org_admin') {
+            return res.status(403).json({ success: false, message: 'Only organization admins can request staff course limit changes' });
+        }
+        if (String(requester.organization) !== String(organizationId)) {
+            return res.status(403).json({ success: false, message: 'Organization mismatch' });
+        }
+
+        const staff = await User.findById(staffId).select('_id role organization courseLimit isBlocked mName email');
+        if (!staff || staff.isBlocked || staff.role !== 'dept_admin') {
+            return res.status(404).json({ success: false, message: 'Staff member not found' });
+        }
+        if (String(staff.organization) !== String(organizationId)) {
+            return res.status(403).json({ success: false, message: 'Staff member does not belong to this organization' });
+        }
+
+        const current = staff.courseLimit || 0;
+        if (parsedRequested === current) {
+            return res.status(400).json({ success: false, message: 'Requested limit is the same as current limit' });
+        }
+
+        const existingPending = await StaffCourseLimitRequest.findOne({
+            organizationId,
+            staffId,
+            status: 'pending'
+        });
+        if (existingPending) {
+            existingPending.requestedCourseLimit = parsedRequested;
+            existingPending.currentCourseLimit = current;
+            existingPending.requestedBy = requester._id;
+            await existingPending.save();
+            return res.json({ success: true, message: 'Request updated successfully', request: existingPending });
+        }
+
+        const newRequest = new StaffCourseLimitRequest({
+            organizationId,
+            requestedBy: requester._id,
+            staffId,
+            currentCourseLimit: current,
+            requestedCourseLimit: parsedRequested
+        });
+
+        await newRequest.save();
+        res.json({ success: true, message: 'Staff course limit request submitted successfully', request: newRequest });
+    } catch (error) {
+        console.error('requestStaffCourseLimitIncrease error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };

@@ -49,6 +49,7 @@ import {
   Star,
   TrendingUp,
   Clock,
+  CheckCircle2,
   Zap,
   Sun,
   Moon
@@ -615,6 +616,33 @@ const DashboardLayout = () => {
                         isActive={location.search === '?tab=courses'}
                         isExpanded={isExpanded}
                       />
+                      {sessionStorage.getItem('role') === 'org_admin' && (
+                        <MenuItem 
+                          icon={Users} 
+                          label="Staff" 
+                          to="/dashboard/org?tab=staff" 
+                          isActive={location.search === '?tab=staff'}
+                          isExpanded={isExpanded}
+                        />
+                      )}
+                      {sessionStorage.getItem('role') === 'org_admin' && (
+                        <MenuItem 
+                          icon={CheckCircle2} 
+                          label="Approvals" 
+                          to="/dashboard/org?tab=approvals" 
+                          isActive={location.search === '?tab=approvals'}
+                          isExpanded={isExpanded}
+                        />
+                      )}
+                      {sessionStorage.getItem('role') === 'org_admin' && (
+                        <MenuItem 
+                          icon={Clock} 
+                          label="Activity" 
+                          to="/dashboard/org?tab=activity" 
+                          isActive={location.search === '?tab=activity'}
+                          isExpanded={isExpanded}
+                        />
+                      )}
                       <MenuItem 
                         icon={FileText} 
                         label="Assignments" 

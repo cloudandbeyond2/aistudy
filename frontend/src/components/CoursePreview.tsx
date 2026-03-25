@@ -1257,6 +1257,21 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
   async function handleCreateCourse() {
     if (isLoadingCourse) return;
 
+    const role = sessionStorage.getItem('role') || '';
+    if (role === 'dept_admin') {
+      const courseLimit = parseInt(sessionStorage.getItem('courseLimit') || '0', 10) || 0;
+      const coursesCreatedCount = parseInt(sessionStorage.getItem('coursesCreatedCount') || '0', 10) || 0;
+
+      if (coursesCreatedCount >= courseLimit) {
+        toast({
+          title: 'Course Limit Reached',
+          description: `Your course creation limit (${courseLimit}) has been reached. Please ask your organization admin to request an increase.`,
+          variant: 'destructive'
+        });
+        return;
+      }
+    }
+
     normalizeAllSubtopics();
     const courseTopics = getCourseTopics();
 
@@ -1304,6 +1319,12 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
       sessionStorage.setItem('courseId', res.data.courseId);
       sessionStorage.setItem('jsonData', JSON.stringify(topics));
 
+      // Keep staff quota UI in sync for dept_admin users.
+      if (sessionStorage.getItem('role') === 'dept_admin') {
+        const prev = parseInt(sessionStorage.getItem('coursesCreatedCount') || '0', 10) || 0;
+        sessionStorage.setItem('coursesCreatedCount', String(prev + 1));
+      }
+
       navigate('/course/' + res.data.courseId, {
         state: {
           jsonData: topics,
@@ -1314,12 +1335,16 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
         }
       });
     } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        (error?.response?.status === 429 ? 'Rate limit exceeded. Please wait.' : '') ||
+        error?.message ||
+        'Internal server error';
+
       toast({
         title: 'Error',
-        description:
-          error?.response?.status === 429
-            ? 'Rate limit exceeded. Please wait.'
-            : error.message || 'Internal server error'
+        description: message,
+        variant: 'destructive'
       });
     } finally {
       setIsLoadingCourse(false);
@@ -1331,6 +1356,11 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
   if (isLoading) return <Skeleton className="h-64 w-full" />;
 
   normalizeAllSubtopics(); // ✅ ensure data is fixed before render
+
+  const viewerRole = sessionStorage.getItem('role') || '';
+  const viewerCourseLimit = parseInt(sessionStorage.getItem('courseLimit') || '0', 10) || 0;
+  const viewerCoursesCreated = parseInt(sessionStorage.getItem('coursesCreatedCount') || '0', 10) || 0;
+  const isDeptAdminLimitReached = viewerRole === 'dept_admin' && viewerCoursesCreated >= viewerCourseLimit;
 
   return (
     <div className="space-y-6 py-8">
@@ -1422,7 +1452,7 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
           Cancel
         </Button>
         {sessionStorage.getItem('role') !== 'student' && (
-          <Button onClick={handleCreateCourse} disabled={isLoadingCourse}>
+          <Button onClick={handleCreateCourse} disabled={isLoadingCourse || isDeptAdminLimitReached}>
             {isLoadingCourse ? (
               <Loader className="animate-spin mr-2 h-4 w-4" />
             ) : (
@@ -1432,6 +1462,12 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
           </Button>
         )}
       </div>
+
+      {isDeptAdminLimitReached && (
+        <p className="text-center text-sm text-destructive">
+          Your staff course limit is reached. Ask your organization admin to request a higher limit.
+        </p>
+      )}
 
       {isLoadingCourse && (
         <p className="text-center text-sm text-muted-foreground">

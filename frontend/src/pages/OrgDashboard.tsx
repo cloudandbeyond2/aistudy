@@ -111,6 +111,10 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
             ...(course.quizSettings?.proctoring || {})
         }
     };
+    const lockedDepartmentLabel =
+        departments.find((d: any) => d._id === course.department || d.name === course.department)?.name ||
+        course.department ||
+        'Assigned department';
 
     const updateTopic = (index: number, field: string, value: any) => {
         const updatedTopics = [...course.topics];
@@ -223,16 +227,32 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="grid gap-3">
                             <Label className="text-sm font-medium">Assign to Department</Label>
-                            <select
-                                className="flex h-11 w-full rounded-md border border-input bg-muted/50 focus:bg-background px-3 py-2 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                value={course.department}
-                                onChange={(e) => setCourse({ ...course, department: e.target.value })}
-                            >
-                                {role !== 'dept_admin' && <option value="">All Students (Default)</option>}
-                                {departments.map((d: any) => (
-                                    <option key={d._id} value={d.name}>{d.name}</option>
-                                ))}
-                            </select>
+                            {role === 'dept_admin' ? (
+                                <div className="rounded-xl border bg-muted/40 px-4 py-3">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-medium">Locked department</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Department admins can only publish within their assigned department.
+                                            </p>
+                                        </div>
+                                        <Badge variant="secondary" className="shrink-0">
+                                            {lockedDepartmentLabel}
+                                        </Badge>
+                                    </div>
+                                </div>
+                            ) : (
+                                <select
+                                    className="flex h-11 w-full rounded-md border border-input bg-muted/50 focus:bg-background px-3 py-2 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    value={course.department}
+                                    onChange={(e) => setCourse({ ...course, department: e.target.value })}
+                                >
+                                    <option value="">All Students (Default)</option>
+                                    {departments.map((d: any) => (
+                                        <option key={d._id} value={d.name}>{d.name}</option>
+                                    ))}
+                                </select>
+                            )}
                         </div>
                         <div className="grid gap-3">
                             <Label className="text-sm font-medium">Course Type</Label>
@@ -715,7 +735,6 @@ const OrgDashboard = () => {
     const [meetings, setMeetings] = useState<any[]>([]);
     const [projects, setProjects] = useState<any[]>([]);
     const [materials, setMaterials] = useState<any[]>([]);
-    const [orgPlan, setOrgPlan] = useState<any>(null);
     const [openMeetingDialog, setOpenMeetingDialog] = useState(false);
     const [openProjectDialog, setOpenProjectDialog] = useState(false);
 
@@ -729,6 +748,10 @@ const OrgDashboard = () => {
     // Departments & Dept Admins
     const [departmentsList, setDepartmentsList] = useState<any[]>([]);
     const [deptAdmins, setDeptAdmins] = useState<any[]>([]);
+
+    // Staff activity (org_admin only)
+    const [staffLoginLogs, setStaffLoginLogs] = useState<any[]>([]);
+    const [staffLoginLoading, setStaffLoginLoading] = useState(false);
     const [newDept, setNewDept] = useState({ name: '', description: '' });
     const [newDeptAdmin, setNewDeptAdmin] = useState({ name: '', email: '', password: '', phone: '', departmentId: '', courseLimit: 0 });
     // const [newMaterial, setNewMaterial] = useState({ title: '', description: '', fileUrl: '', type: 'PDF', department: '' });
@@ -793,7 +816,6 @@ const resetProjectForm = () => {
         fetchOrgDepartments();
         fetchOrgDeptAdmins();
         fetchNotices();
-        fetchOrgPlan();
     }, [orgId]);
 
     useEffect(() => {
@@ -839,17 +861,6 @@ const resetProjectForm = () => {
             if (res.data.success) setDepartmentsList(res.data.departments);
         } catch (e) {
             console.error("Failed to fetch departments", e);
-        }
-    };
- 
-    const fetchOrgPlan = async () => {
-        try {
-            const res = await axios.get(`${serverURL}/api/admin/org-plan?organizationId=${orgId}`);
-            if (res.data.success) {
-                setOrgPlan(res.data.plan);
-            }
-        } catch (e) {
-            console.error("Failed to fetch org plan", e);
         }
     };
  
@@ -1581,6 +1592,32 @@ const formatGuidanceText = (text: string) => {
         }
     }
 
+    const fetchStaffLoginActivity = async () => {
+        if (role !== 'org_admin') return;
+        if (!orgId) return;
+        const requesterId = sessionStorage.getItem('uid') || '';
+        if (!requesterId) return;
+
+        setStaffLoginLoading(true);
+        try {
+            const res = await axios.get(`${serverURL}/api/org/staff/activity?organizationId=${orgId}&requesterId=${requesterId}&limit=200`);
+            if (res.data?.success) {
+                setStaffLoginLogs(Array.isArray(res.data.logs) ? res.data.logs : []);
+            }
+        } catch (e) {
+            console.error('Failed to fetch staff login activity', e);
+        } finally {
+            setStaffLoginLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'activity' && role === 'org_admin') {
+            fetchStaffLoginActivity();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab, orgId, role]);
+
     const fetchQuizReports = async (courseIds?: string[]) => {
         if (!orgId) return;
         setQuizReportsLoading(true);
@@ -1702,7 +1739,9 @@ const formatGuidanceText = (text: string) => {
             if (res.data.success) {
                 toast({ title: "Success", description: "Course created successfully" });
 
-                setNewCourse(createEmptyCourse());
+                setNewCourse(role === 'dept_admin'
+                    ? { ...createEmptyCourse(), department: getDeptScopedDepartment() }
+                    : createEmptyCourse());
 
                 setOpenCourseDialog(false);   // ⭐ CLOSE POPUP
 
@@ -1713,10 +1752,52 @@ const formatGuidanceText = (text: string) => {
         }
     };
 
+    const handleReviewOrgCourse = async (courseId: string, approvalStatus: 'approved' | 'rejected' | 'pending', approvalNote = '') => {
+        const reviewerId = sessionStorage.getItem('uid') || '';
+        if (!reviewerId) return;
+        try {
+            const res = await axios.post(`${serverURL}/api/org/course/${courseId}/review`, {
+                reviewerId,
+                approvalStatus,
+                approvalNote
+            });
+            if (res.data?.success) {
+                toast({ title: "Success", description: res.data.message || "Course updated" });
+                fetchCourses();
+            } else {
+                toast({ title: "Error", description: res.data?.message || "Failed to update course" });
+            }
+        } catch (e: any) {
+            toast({ title: "Error", description: e.response?.data?.message || e.message || "Request failed" });
+        }
+    };
+
+    const handlePublishOrgCourse = async (courseId: string, nextPublished: boolean) => {
+        const publisherId = sessionStorage.getItem('uid') || '';
+        if (!publisherId) return;
+        try {
+            const res = await axios.post(`${serverURL}/api/org/course/${courseId}/publish`, {
+                publisherId,
+                isPublished: nextPublished
+            });
+            if (res.data?.success) {
+                toast({ title: "Success", description: res.data.message || "Course updated" });
+                fetchCourses();
+            } else {
+                toast({ title: "Error", description: res.data?.message || "Failed to update course" });
+            }
+        } catch (e: any) {
+            toast({ title: "Error", description: e.response?.data?.message || e.message || "Request failed" });
+        }
+    };
+
     const handleUpdateCourse = async () => {
         if (!editCourse) return;
         try {
-            const res = await axios.put(`${serverURL}/api/org/course/${editCourse._id}`, editCourse);
+            const res = await axios.put(`${serverURL}/api/org/course/${editCourse._id}`, {
+                ...editCourse,
+                updatedBy: sessionStorage.getItem('uid')
+            });
             if (res.data.success) {
                 toast({ title: "Success", description: "Course updated successfully" });
                 setEditCourse(null);
@@ -1736,7 +1817,8 @@ const formatGuidanceText = (text: string) => {
         try {
             const res = await axios.put(`${serverURL}/api/org/course/${editAICourse._id}`, {
                 mainTopic: editAICourse.mainTopic,
-                department: editAICourse.department
+                department: editAICourse.department,
+                updatedBy: sessionStorage.getItem('uid')
             });
             console.log("Update response:", res.data);
             if (res.data.success) {
@@ -1997,23 +2079,9 @@ const formatGuidanceText = (text: string) => {
         }
     };
 
-    const daysRemaining = orgPlan?.endDate ? Math.ceil((new Date(orgPlan.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-    const isExpiring = daysRemaining !== null && daysRemaining <= 10 && daysRemaining >= 0;
-
     return (
         <div className="container mx-auto py-10 space-y-8 animate-fade-in">
             <SEO title="Organization Dashboard" description="Manage your organization, students, and curriculum." />
-
-            {isExpiring && (
-                <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive mb-6">
-                    <Bell className="h-4 w-4" />
-                    <AlertTitle>Plan Expiring Soon</AlertTitle>
-                    <AlertDescription>
-                        Your organization plan "{orgPlan.planName}" will expire in {daysRemaining} days. 
-                        Please contact the super admin to renew your plan and avoid service interruption.
-                    </AlertDescription>
-                </Alert>
-            )}
 
 
             <div className="p-8 rounded-3xl bg-gradient-to-br from-blue-600/10 via-indigo-600/5 to-transparent border border-blue-600/10 shadow-sm relative overflow-hidden group transition-all duration-500 hover:shadow-md hover:border-blue-600/20">
@@ -2124,6 +2192,13 @@ const formatGuidanceText = (text: string) => {
                         <>
                             <TabsTrigger value="departments" className="flex-1 min-w-[120px]">Departments</TabsTrigger>
                             {/* <TabsTrigger value="students" className="flex-1 min-w-[120px]">Students</TabsTrigger> */}
+                        </>
+                    )}
+                    {role === 'org_admin' && (
+                        <>
+                            <TabsTrigger value="staff" className="flex-1 min-w-[120px]">Staff</TabsTrigger>
+                            <TabsTrigger value="approvals" className="flex-1 min-w-[120px]">Approvals</TabsTrigger>
+                            <TabsTrigger value="activity" className="flex-1 min-w-[120px]">Activity</TabsTrigger>
                         </>
                     )}
                     <TabsTrigger value="students" className="flex-1 min-w-[120px]">Students</TabsTrigger>
@@ -2570,6 +2645,13 @@ const formatGuidanceText = (text: string) => {
                             <CardDescription>Create and assign courses to your students.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                            <Alert className="border-primary/20 bg-primary/5">
+                                <AlertTitle>Recommended organization flow</AlertTitle>
+                                <AlertDescription>
+                                    Draft the course, assign a department, review it internally, then publish it to the student portal.
+                                    Department admins stay locked to their own department, while organization admins can publish across departments.
+                                </AlertDescription>
+                            </Alert>
                             <div className="flex justify-between gap-2">
                                 <Input
                                     placeholder="Search courses..."
@@ -2585,7 +2667,12 @@ const formatGuidanceText = (text: string) => {
                                     )}
                                     {(orgSettings?.allowManualCreation !== false) && (
                                         <Dialog open={openCourseDialog} onOpenChange={setOpenCourseDialog}>
-                                            <DialogTrigger asChild onClick={() => setOpenCourseDialog(true)}>
+                                            <DialogTrigger asChild onClick={() => {
+                                                setNewCourse(role === 'dept_admin'
+                                                    ? { ...createEmptyCourse(), department: getDeptScopedDepartment() }
+                                                    : createEmptyCourse());
+                                                setOpenCourseDialog(true);
+                                            }}>
                                                 <Button>
                                                     <Plus className="w-4 h-4 mr-2" /> Create Course
                                                 </Button>
@@ -2620,6 +2707,11 @@ const formatGuidanceText = (text: string) => {
                                         const description = course.description || (course.content ? "AI Generated Course" : "");
                                         let topicCount = 0;
                                         let quizCount = 0;
+                                        const isOrgCourse = Boolean(course?.title && !course?.content);
+                                        const approvalStatus = isOrgCourse
+                                            ? (course.approvalStatus || (course.isPublished === false ? 'pending' : 'approved'))
+                                            : '';
+                                        const published = isOrgCourse ? (course.isPublished !== undefined ? Boolean(course.isPublished) : true) : false;
 
                                         if (course.topics) {
                                             topicCount = course.topics.length;
@@ -2647,6 +2739,28 @@ const formatGuidanceText = (text: string) => {
                                                                 {course.department ? `Dept: ${departmentsList.find(d => d._id === course.department || d.name === course.department)?.name || course.department}` : (course.content ? 'AI Generated' : 'All students')}
                                                             </span>
                                                         </div>
+                                                        {isOrgCourse && (
+                                                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                                                                {approvalStatus === 'pending' && (
+                                                                    <Badge variant="outline" className="gap-1">
+                                                                        <Clock className="w-3.5 h-3.5" /> Pending approval
+                                                                    </Badge>
+                                                                )}
+                                                                {approvalStatus === 'approved' && (
+                                                                    <Badge className="bg-emerald-600 text-white border-0 gap-1">
+                                                                        <Check className="w-3.5 h-3.5" /> Approved
+                                                                    </Badge>
+                                                                )}
+                                                                {approvalStatus === 'rejected' && (
+                                                                    <Badge variant="destructive" className="gap-1">
+                                                                        <X className="w-3.5 h-3.5" /> Rejected
+                                                                    </Badge>
+                                                                )}
+                                                                <Badge variant={published ? "secondary" : "outline"} className={published ? "bg-blue-500/10 text-blue-700 border-blue-200" : ""}>
+                                                                    {published ? 'Published' : 'Unpublished'}
+                                                                </Badge>
+                                                            </div>
+                                                        )}
                                                         {quizCount > 0 && quizReportsMap[String(course._id)] && (
                                                             <div className="mt-2 flex flex-wrap items-center gap-2">
                                                                 {quizReportsMap[String(course._id)]?.quizSettings?.examMode && (
@@ -2670,6 +2784,62 @@ const formatGuidanceText = (text: string) => {
                                                         <Button variant="ghost" size="sm" onClick={() => setPreviewCourse({ ...course })}>
                                                             <Eye className="w-4 h-4" />
                                                         </Button>
+                                                        {role === 'org_admin' && isOrgCourse && (approvalStatus === 'pending' || approvalStatus === 'rejected') && (
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => handleReviewOrgCourse(course._id, 'approved', '')}
+                                                            >
+                                                                <Check className="w-4 h-4 mr-1" /> Approve
+                                                            </Button>
+                                                        )}
+                                                        {role === 'org_admin' && isOrgCourse && approvalStatus !== 'rejected' && (
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={async () => {
+                                                                    const result = await Swal.fire({
+                                                                        title: 'Reject this course?',
+                                                                        input: 'textarea',
+                                                                        inputLabel: 'Reason (optional)',
+                                                                        inputPlaceholder: 'Write a short note for the staff member...',
+                                                                        showCancelButton: true,
+                                                                        confirmButtonText: 'Reject',
+                                                                        confirmButtonColor: '#dc2626'
+                                                                    });
+
+                                                                    if (result.isConfirmed) {
+                                                                        await handleReviewOrgCourse(course._id, 'rejected', String(result.value || ''));
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <X className="w-4 h-4 mr-1" /> Reject
+                                                            </Button>
+                                                        )}
+                                                        {role === 'org_admin' && isOrgCourse && approvalStatus === 'approved' && (
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={async () => {
+                                                                    const nextPublished = !published;
+                                                                    const result = await Swal.fire({
+                                                                        title: nextPublished ? 'Publish this course?' : 'Unpublish this course?',
+                                                                        text: nextPublished
+                                                                            ? 'Students will be able to see and open this course in the student portal.'
+                                                                            : 'Students will no longer see this course in the student portal.',
+                                                                        showCancelButton: true,
+                                                                        confirmButtonText: nextPublished ? 'Publish' : 'Unpublish',
+                                                                        confirmButtonColor: nextPublished ? '#16a34a' : '#dc2626'
+                                                                    });
+
+                                                                    if (result.isConfirmed) {
+                                                                        await handlePublishOrgCourse(course._id, nextPublished);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                {published ? 'Unpublish' : 'Publish'}
+                                                            </Button>
+                                                        )}
                                                         {quizCount > 0 && (
                                                             <Button
                                                                 variant="ghost"
@@ -2927,6 +3097,258 @@ const formatGuidanceText = (text: string) => {
                         </CardContent>
                     </Card>
                 </TabsContent>
+
+                {/* STAFF TAB */}
+                {role === 'org_admin' && (
+                    <TabsContent value="staff" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Staff Directory</CardTitle>
+                                <CardDescription>Maintain department admins and review their access, load, and activity.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                                    {deptAdmins.length > 0 ? (
+                                        deptAdmins.map((admin: any) => {
+                                            const departmentLabel = admin.department?.name || admin.department?.title || admin.department || 'No department';
+                                            const lastLogin = admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleString() : 'No login activity yet';
+                                            const coursesLeft = Math.max(0, (admin.courseLimit || 0) - (admin.coursesCreatedCount || 0));
+
+                                            return (
+                                                <div key={admin._id} className="rounded-xl border bg-card p-4 shadow-sm">
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <div className="min-w-0">
+                                                            <p className="font-semibold text-base truncate">{admin.mName || 'Staff Member'}</p>
+                                                            <p className="text-sm text-muted-foreground truncate">{admin.email || 'No email'}</p>
+                                                        </div>
+                                                        <Badge variant="secondary">Dept Admin</Badge>
+                                                    </div>
+                                                    <div className="mt-4 space-y-3 text-sm">
+                                                        <div className="flex items-center justify-between gap-3">
+                                                            <span className="text-muted-foreground">Department</span>
+                                                            <span className="font-medium text-right">{departmentLabel}</span>
+                                                        </div>
+                                                        <div className="flex items-center justify-between gap-3">
+                                                            <span className="text-muted-foreground">Courses created</span>
+                                                            <span className="font-medium">{admin.coursesCreatedCount || 0}</span>
+                                                        </div>
+                                                        <div className="flex items-center justify-between gap-3">
+                                                            <span className="text-muted-foreground">Courses left</span>
+                                                            <span className={`font-medium ${coursesLeft <= 0 ? 'text-destructive' : ''}`}>{coursesLeft}</span>
+                                                        </div>
+                                                        <div className="flex items-center justify-between gap-3">
+                                                            <span className="text-muted-foreground">Course limit</span>
+                                                            <span className="font-medium">{admin.courseLimit || 0}</span>
+                                                        </div>
+                                                        <div className="flex items-center justify-between gap-3">
+                                                            <span className="text-muted-foreground">Last login</span>
+                                                            <span className="font-medium text-right">{lastLogin}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mt-4 flex items-center justify-end gap-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={async () => {
+                                                                const result = await Swal.fire({
+                                                                    title: 'Request course limit change',
+                                                                    input: 'number',
+                                                                    inputLabel: `Current limit: ${admin.courseLimit || 0}`,
+                                                                    inputAttributes: { min: '0', step: '1' },
+                                                                    inputValue: String(admin.courseLimit || 0),
+                                                                    showCancelButton: true,
+                                                                    confirmButtonText: 'Send Request'
+                                                                });
+
+                                                                if (!result.isConfirmed) return;
+                                                                const requestedCourseLimit = parseInt(String(result.value || ''), 10);
+                                                                if (!Number.isFinite(requestedCourseLimit) || requestedCourseLimit < 0) {
+                                                                    toast({ title: "Error", description: "Please enter a valid limit", variant: "destructive" });
+                                                                    return;
+                                                                }
+
+                                                                try {
+                                                                    const requesterId = sessionStorage.getItem('uid') || sessionStorage.getItem('orgId') || '';
+                                                                    const res = await axios.post(`${serverURL}/api/org/staff/course-limit/request`, {
+                                                                        organizationId: orgId,
+                                                                        requesterId,
+                                                                        staffId: admin._id,
+                                                                        requestedCourseLimit
+                                                                    });
+                                                                    if (res.data?.success) {
+                                                                        toast({ title: "Request Sent", description: res.data.message || "Request submitted" });
+                                                                    } else {
+                                                                        toast({ title: "Error", description: res.data?.message || "Failed to submit request", variant: "destructive" });
+                                                                    }
+                                                                } catch (e: any) {
+                                                                    toast({ title: "Error", description: e.response?.data?.message || e.message || "Request failed", variant: "destructive" });
+                                                                }
+                                                            }}
+                                                        >
+                                                            Request Limit Change
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="col-span-full rounded-xl border border-dashed p-8 text-center text-muted-foreground">
+                                            No department admins found for this organization.
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                )}
+
+                {/* APPROVALS TAB */}
+                {role === 'org_admin' && (
+                    <TabsContent value="approvals" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Course Approvals</CardTitle>
+                                <CardDescription>Approve or reject staff-created courses before publishing to the student portal.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {(() => {
+                                    const pendingCourses = courses.filter((c: any) => {
+                                        const isOrgCourse = Boolean(c?.title && !c?.content);
+                                        if (!isOrgCourse) return false;
+                                        const approval = c?.approvalStatus || 'pending';
+                                        return approval === 'pending';
+                                    });
+
+                                    return (
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="text-sm text-muted-foreground">
+                                                    Pending: <span className="font-semibold text-foreground">{pendingCourses.length}</span>
+                                                </div>
+                                                <Button variant="outline" size="sm" onClick={fetchCourses}>
+                                                    Refresh
+                                                </Button>
+                                            </div>
+
+                                            {pendingCourses.length === 0 ? (
+                                                <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
+                                                    No courses waiting for approval.
+                                                </div>
+                                            ) : (
+                                                pendingCourses.map((course: any) => {
+                                                    const title = course.title || 'Untitled';
+                                                    const dept = course.department ? `Dept: ${getDepartmentLabel(course.department) || course.department}` : 'All students';
+
+                                                    return (
+                                                        <div key={course._id} className="rounded-xl border bg-card p-4 shadow-sm">
+                                                            <div className="flex items-start justify-between gap-3">
+                                                                <div className="min-w-0">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <h3 className="font-semibold truncate">{title}</h3>
+                                                                        <Badge variant="outline" className="gap-1">
+                                                                            <Clock className="w-3.5 h-3.5" /> Pending
+                                                                        </Badge>
+                                                                    </div>
+                                                                    <p className="mt-1 text-xs text-muted-foreground">{dept}</p>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Button variant="ghost" size="sm" title="Preview" onClick={() => setPreviewCourse({ ...course })}>
+                                                                        <Eye className="w-4 h-4" />
+                                                                    </Button>
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        onClick={() => handleReviewOrgCourse(course._id, 'approved', '')}
+                                                                    >
+                                                                        <Check className="w-4 h-4 mr-1" /> Approve
+                                                                    </Button>
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        onClick={async () => {
+                                                                            const result = await Swal.fire({
+                                                                                title: 'Reject this course?',
+                                                                                input: 'textarea',
+                                                                                inputLabel: 'Reason (optional)',
+                                                                                inputPlaceholder: 'Write a short note for the staff member...',
+                                                                                showCancelButton: true,
+                                                                                confirmButtonText: 'Reject',
+                                                                                confirmButtonColor: '#dc2626'
+                                                                            });
+
+                                                                            if (result.isConfirmed) {
+                                                                                await handleReviewOrgCourse(course._id, 'rejected', String(result.value || ''));
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <X className="w-4 h-4 mr-1" /> Reject
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    );
+                                })()}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                )}
+
+                {/* ACTIVITY TAB */}
+                {role === 'org_admin' && (
+                    <TabsContent value="activity" className="space-y-4">
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between gap-4">
+                                <div>
+                                    <CardTitle>Staff Login Activity</CardTitle>
+                                    <CardDescription>Recent successful sign-ins across your organization.</CardDescription>
+                                </div>
+                                <Button variant="outline" size="sm" onClick={fetchStaffLoginActivity} disabled={staffLoginLoading}>
+                                    {staffLoginLoading ? 'Loading…' : 'Refresh'}
+                                </Button>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {staffLoginLogs.length === 0 ? (
+                                    <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
+                                        {staffLoginLoading ? 'Loading activity…' : 'No activity yet.'}
+                                    </div>
+                                ) : (
+                                    <div className="border rounded-lg overflow-hidden">
+                                        <div className="grid grid-cols-12 gap-2 bg-muted/40 px-3 py-2 text-xs font-semibold text-muted-foreground">
+                                            <div className="col-span-4">Staff</div>
+                                            <div className="col-span-2">Role</div>
+                                            <div className="col-span-3">When</div>
+                                            <div className="col-span-3">IP</div>
+                                        </div>
+                                        <div className="divide-y">
+                                            {staffLoginLogs.map((log: any) => (
+                                                <div key={log._id} className="grid grid-cols-12 gap-2 px-3 py-2 text-sm items-center">
+                                                    <div className="col-span-4 min-w-0">
+                                                        <div className="font-medium truncate">{log.name || 'Staff Member'}</div>
+                                                        <div className="text-xs text-muted-foreground truncate">{log.email || ''}</div>
+                                                    </div>
+                                                    <div className="col-span-2">
+                                                        <Badge variant="secondary">{log.role || 'user'}</Badge>
+                                                    </div>
+                                                    <div className="col-span-3 text-xs text-muted-foreground">
+                                                        {log.createdAt ? new Date(log.createdAt).toLocaleString() : '-'}
+                                                    </div>
+                                                    <div className="col-span-3 text-xs text-muted-foreground truncate" title={log.ipAddress || ''}>
+                                                        {log.ipAddress || '-'}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                )}
 
                 {/* ASSIGNMENTS TAB */}
                 <TabsContent value="assignments" className="space-y-4">

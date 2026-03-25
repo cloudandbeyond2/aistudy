@@ -238,3 +238,22 @@ export const processLimitRequest = async (req, res) => {
         res.status(500).json({ success: false, message: err.message });
     }
 };
+
+export const getStaffCourseLimitRequests = async (req, res) => {
+  try {
+    const requests = await adminService.getAllStaffCourseLimitRequests();
+    res.json({ success: true, requests });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const processStaffCourseLimitRequest = async (req, res) => {
+  try {
+    const { requestId, status, adminComment } = req.body;
+    const request = await adminService.processStaffCourseLimitRequest(requestId, status, adminComment);
+    res.json({ success: true, request });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

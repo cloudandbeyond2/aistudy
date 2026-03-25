@@ -53,6 +53,7 @@ const performanceData = [
 export default function StaffDashboard() {
 const [classes, setClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const { theme } = useTheme();
 const isDark = theme === "dark";
 
@@ -82,6 +83,26 @@ const isDark = theme === "dark";
     }
 
     fetchClasses();
+  }, []);
+
+  useEffect(() => {
+    const uid = sessionStorage.getItem('uid');
+    if (!uid) return;
+
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await axios.get(`${serverURL}/api/user/${uid}`);
+        if (res.data?.success) {
+          setCurrentUser(res.data.user);
+          sessionStorage.setItem('courseLimit', String(res.data.user?.courseLimit || 0));
+          sessionStorage.setItem('coursesCreatedCount', String(res.data.user?.coursesCreatedCount || 0));
+        }
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+      }
+    };
+
+    fetchCurrentUser();
   }, []);
 
 
@@ -149,6 +170,20 @@ const isDark = theme === "dark";
           </span>
         </div>
       </div>
+
+      {currentUser?.lastLoginAt && (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 px-4 py-3 text-sm text-indigo-900 dark:border-indigo-900/40 dark:bg-indigo-950/30 dark:text-indigo-100">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 font-medium">
+              <Clock size={16} />
+              Login activity
+            </div>
+            <div className="text-xs text-indigo-700 dark:text-indigo-200">
+              Last successful sign-in: {new Date(currentUser.lastLoginAt).toLocaleString()}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

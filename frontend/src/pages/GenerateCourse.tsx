@@ -1035,7 +1035,6 @@ const GenerateCourse = () => {
   const [generationProgress, setGenerationProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState('');
   const [formProgress, setFormProgress] = useState(0);
-  const [orgPlan, setOrgPlan] = useState<any>(null);
   const [orgCourseCount, setOrgCourseCount] = useState(0);
   const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = useState(false);
   const [learnerType, setLearnerType] = useState<LearnerType>('student');
@@ -1069,22 +1068,37 @@ const GenerateCourse = () => {
   const subscriptionEndStr = sessionStorage.getItem('subscriptionEnd') || '';
   const planLimits = PLAN_LIMITS[userType] || PLAN_LIMITS.free;
   const userName = sessionStorage.getItem('mName') || 'Guest';
+  const role = sessionStorage.getItem('role') || '';
+  const orgId = sessionStorage.getItem('orgId');
+  const isOrgStaff = Boolean(orgId) && (role === 'org_admin' || role === 'dept_admin');
 
   const isPlanExpired = (() => {
+    if (isOrgStaff) return false;
     if (userType === 'forever') return false;
     if (!subscriptionEndStr) return true; // No date set = treat as expired
     return new Date(subscriptionEndStr) < new Date();
   })();
 
-  const canUseVideo = planLimits.allowVideo;
-  const canUseMultiLang = planLimits.allowMultiLang;
-  const maxSubtopics = planLimits.maxSubtopics;
+  const canUseVideo = isOrgStaff ? true : planLimits.allowVideo;
+  const canUseMultiLang = isOrgStaff ? true : planLimits.allowMultiLang;
+  const maxSubtopics = isOrgStaff ? 5 : planLimits.maxSubtopics;
   
-  const orgId = sessionStorage.getItem('orgId');
-  const orgLimit = orgPlan?.aiCourseSlots || 20;
-  
-  const displayLimit = orgId ? orgLimit : planLimits.maxCourses;
-  const currentCount = orgId ? orgCourseCount : courseCount;
+  const staffCourseLimit = parseInt(sessionStorage.getItem('courseLimit') || '0', 10) || 0;
+  const staffCoursesCreatedCount = parseInt(sessionStorage.getItem('coursesCreatedCount') || '0', 10) || 0;
+
+  const displayLimit =
+    isOrgStaff && role === 'dept_admin'
+      ? staffCourseLimit
+      : isOrgStaff && role === 'org_admin'
+        ? Infinity
+        : planLimits.maxCourses;
+
+  const currentCount =
+    isOrgStaff && role === 'dept_admin'
+      ? staffCoursesCreatedCount
+      : isOrgStaff && role === 'org_admin'
+        ? orgCourseCount
+        : courseCount;
  
   const remainingCourses =
     displayLimit === Infinity
@@ -1166,11 +1180,6 @@ const GenerateCourse = () => {
  
         if (orgId) {
           try {
-            const planRes = await axios.get(`${serverURL}/api/admin/org-plan?organizationId=${orgId}`);
-            if (planRes.data.success) {
-              setOrgPlan(planRes.data.plan);
-            }
- 
             const organizationCourses = allCourses.filter((course: { organizationId: string }) => course.organizationId === orgId);
             setOrgCourseCount(organizationCourses.length);
           } catch (err) {
@@ -1759,6 +1768,28 @@ Return only valid JSON that matches the schema.`;
           </div>
         </div>
 
+        {orgId && (
+          <Card className="mx-auto mb-8 max-w-4xl border-primary/20 bg-primary/5">
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="space-y-1">
+                  <p className="font-semibold text-foreground">Organization publishing flow</p>
+                  <p className="text-sm text-muted-foreground">
+                    Draft the course, review it inside your organization, then publish it to the student portal.
+                    Department admins stay scoped to their own department.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs font-medium">
+                  <span className="rounded-full border border-primary/20 bg-background px-3 py-1 text-primary">1 Draft</span>
+                  <span className="rounded-full border border-primary/20 bg-background px-3 py-1 text-primary">2 Review</span>
+                  <span className="rounded-full border border-primary/20 bg-background px-3 py-1 text-primary">3 Approve</span>
+                  <span className="rounded-full border border-primary/20 bg-background px-3 py-1 text-primary">4 Publish</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid grid-cols-1 gap-6 items-start lg:grid-cols-12 lg:gap-8">
           {/* Left Column: Instructions */}
           <div className="lg:col-span-5 space-y-6">
@@ -1813,9 +1844,6 @@ Return only valid JSON that matches the schema.`;
                    </p>
                    {subscriptionEndStr && userType !== 'forever' && !orgId && (
                     <p className="text-xs opacity-70 italic mt-1">Plan expires on {new Date(subscriptionEndStr).toLocaleDateString()}</p>
-                   )}
-                   {orgPlan?.endDate && (
-                    <p className="text-xs opacity-70 italic mt-1">Organization plan expires on {new Date(orgPlan.endDate).toLocaleDateString()}</p>
                    )}
                 </div>
               </div>

@@ -471,6 +471,8 @@ const Login = () => {
         sessionStorage.setItem('subscriptionEnd', response.data.userData.subscriptionEnd || '');
         sessionStorage.setItem('isOrganization', response.data.userData.isOrganization ? 'true' : 'false');
         sessionStorage.setItem('role', response.data.userData.role);
+        sessionStorage.setItem('courseLimit', String(response.data.userData.courseLimit || 0));
+        sessionStorage.setItem('coursesCreatedCount', String(response.data.userData.coursesCreatedCount || 0));
 
         const organizationId = response.data.userData.isOrganization
           ? response.data.userData._id
@@ -747,6 +749,8 @@ const Login = () => {
                       sessionStorage.setItem('subscriptionEnd', response.data.userData.subscriptionEnd || '');
                       sessionStorage.setItem('isOrganization', response.data.userData.isOrganization ? 'true' : 'false');
                       sessionStorage.setItem('role', response.data.userData.role);
+                      sessionStorage.setItem('courseLimit', String(response.data.userData.courseLimit || 0));
+                      sessionStorage.setItem('coursesCreatedCount', String(response.data.userData.coursesCreatedCount || 0));
 
                       const organizationId = response.data.userData.isOrganization
                         ? response.data.userData._id

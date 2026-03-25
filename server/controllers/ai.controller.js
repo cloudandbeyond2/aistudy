@@ -132,10 +132,11 @@ export const generateBatchSubtopics = async (req, res) => {
       const User = (await import('../models/User.js')).default;
       const user = await User.findById(userId);
       if (user) {
+        const isOrgStaff = ['org_admin', 'dept_admin'].includes(user.role) && user.organization;
         const planType = user.type || 'free';
         const limits = getPlanLimits(planType);
 
-        if (!isPlanActive(planType, user.subscriptionEnd)) {
+        if (!isOrgStaff && !isPlanActive(planType, user.subscriptionEnd)) {
           return res.status(403).json({
             success: false,
             message: 'Your subscription has expired. Please renew your plan.',
@@ -144,13 +145,15 @@ export const generateBatchSubtopics = async (req, res) => {
         }
 
         // Validate each topic's subtopic count against limits
-        for (const topic of topicsList) {
-          if (topic.subtopics && topic.subtopics.length > limits.maxSubtopics) {
-            return res.status(403).json({
-              success: false,
-              message: `Your ${planType} plan allows a maximum of ${limits.maxSubtopics} subtopics per topic.`,
-              subtopicLimitReached: true
-            });
+        if (!isOrgStaff) {
+          for (const topic of topicsList) {
+            if (topic.subtopics && topic.subtopics.length > limits.maxSubtopics) {
+              return res.status(403).json({
+                success: false,
+                message: `Your ${planType} plan allows a maximum of ${limits.maxSubtopics} subtopics per topic.`,
+                subtopicLimitReached: true
+              });
+            }
           }
         }
       }

@@ -1,12 +1,13 @@
 import Course from '../models/Course.js';
 import OrgCourse from '../models/OrgCourse.js';
 import Lang from '../models/Lang.js';
+import User from '../models/User.js';
+import mongoose from 'mongoose';
 import { getUnsplashApi } from '../config/unsplash.js';
 import IssuedCertificate from '../models/IssuedCertificate.js';
 import Notification from '../models/Notification.js';
 import StudentProgress from '../models/StudentProgress.js';
 import { getPlanLimits, isPlanActive } from '../config/planLimits.js';
-import OrganizationPlan from '../models/OrganizationPlan.js';
 
 /**
  * CHECK COURSE EXISTS
@@ -45,11 +46,12 @@ export const createCourse = async (req, res) => {
     const creator = await User.findById(user);
 
     if (creator) {
+      const isOrgStaff = ['org_admin', 'dept_admin'].includes(creator.role) && creator.organization;
       const planType = creator.type || 'free';
       const limits = getPlanLimits(planType);
 
       // 1. Subscription expiry check
-      if (!isPlanActive(planType, creator.subscriptionEnd)) {
+      if (!isOrgStaff && !isPlanActive(planType, creator.subscriptionEnd)) {
         return res.status(403).json({
           success: false,
           message: 'Your subscription has expired. Please renew your plan to create courses.',
@@ -58,7 +60,7 @@ export const createCourse = async (req, res) => {
       }
 
       // 2. Course count limit
-      if (limits.maxCourses !== Infinity) {
+      if (!isOrgStaff && limits.maxCourses !== Infinity) {
         const courseCount = await Course.countDocuments({ user });
         if (courseCount >= limits.maxCourses) {
           return res.status(403).json({
@@ -70,7 +72,7 @@ export const createCourse = async (req, res) => {
       }
 
       // 3. Course type restriction
-      if (type === 'video & text course' && !limits.allowVideo) {
+      if (!isOrgStaff && type === 'video & text course' && !limits.allowVideo) {
         return res.status(403).json({
           success: false,
           message: 'Video & Theory courses are not available on your current plan. Please upgrade to access this feature.',
@@ -100,21 +102,7 @@ export const createCourse = async (req, res) => {
     }
 
     // ── ORGANIZATION AI COURSE LIMIT CHECK ────────────────────────────────
-    const organizationId = resolvedCreator?.organization;
-    if (organizationId) {
-      const orgPlan = await OrganizationPlan.findOne({ organization: organizationId });
-      const aiCourseLimit = orgPlan?.aiCourseSlots || 20;
-
-      const orgAICourseCount = await Course.countDocuments({ organizationId });
-
-      if (orgAICourseCount >= aiCourseLimit) {
-        return res.status(403).json({
-          success: false,
-          message: `Your organization has reached the AI course generation limit (${aiCourseLimit}). Please contact admin to increase the limit.`,
-          courseLimitReached: true
-        });
-      }
-    }
+    // Organization pricing plan based AI slot limits are intentionally not enforced.
     // ──────────────────────────────────────────────────────────────────────
 
     // Safeguard: Check if course already exists for this user
@@ -372,7 +360,7 @@ export const getUserCourses = async (req, res) => {
  */
 export const getShareableCourse = async (req, res) => {
   try {
-    const { id } = req.query;
+    const { id, requesterId } = req.query;
     if (!id) return res.status(400).json({ success: false, message: 'ID is required' });
 
     // Try standard Course model first
@@ -385,6 +373,33 @@ export const getShareableCourse = async (req, res) => {
     // Try OrgCourse model
     course = await OrgCourse.findById(id).lean();
     if (course) {
+      const isLegacyOrPublished = (() => {
+        if (!course) return false;
+        if (!course.approvalStatus) return course.isPublished !== false;
+        return course.approvalStatus === 'approved' && course.isPublished !== false;
+      })();
+
+      if (!isLegacyOrPublished) {
+        let requester = null;
+        const normalizedRequesterId = String(requesterId || '');
+        if (normalizedRequesterId && mongoose.Types.ObjectId.isValid(normalizedRequesterId)) {
+          requester = await User.findById(normalizedRequesterId).select('_id role organization');
+        }
+
+        const sameOrg =
+          requester &&
+          String(requester.organization || '') === String(course.organizationId || '');
+        const isStaff = sameOrg && ['org_admin', 'dept_admin'].includes(requester.role);
+        const isCreator = sameOrg && String(requester._id) === String(course.createdBy || '');
+
+        if (!isStaff && !isCreator) {
+          return res.status(403).json({
+            success: false,
+            message: 'This course is not published yet'
+          });
+        }
+      }
+
       // Transform OrgCourse to match CoursePage expectations
       const transformedCourse = {
         _id: course._id,

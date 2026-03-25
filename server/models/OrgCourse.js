@@ -6,6 +6,17 @@ const orgCourseSchema = new mongoose.Schema({
     description: String,
     type: { type: String, default: 'video & text course' },
     department: String, // To assign to a specific department
+    approvalStatus: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+    },
+    isPublished: { type: Boolean, default: false },
+    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    reviewedAt: { type: Date, default: null },
+    publishedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    publishedAt: { type: Date, default: null },
+    approvalNote: { type: String, default: '' },
     topics: [{
         title: String,
         subtopics: [{

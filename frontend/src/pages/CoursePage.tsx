@@ -546,7 +546,18 @@ Requirements:
       if (!courseData && activeCourseId) {
         setIsLoading(true);
         try {
-          const response = await axios.get(`${serverURL}/api/shareable?id=${activeCourseId}`);
+          const requesterId = sessionStorage.getItem('uid') || '';
+          const requesterRole = sessionStorage.getItem('role') || '';
+          const organizationId = sessionStorage.getItem('orgId') || '';
+
+          const response = await axios.get(`${serverURL}/api/shareable`, {
+            params: {
+              id: activeCourseId,
+              requesterId,
+              requesterRole,
+              organizationId
+            }
+          });
           if (response.data && response.data.length > 0) {
             const course = response.data[0];
             const content = JSON.parse(course.content);
