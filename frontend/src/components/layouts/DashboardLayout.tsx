@@ -13,7 +13,6 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarRail,
-  useSidebar,
   SidebarTrigger
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
@@ -53,8 +52,7 @@ import {
   CheckCircle2,
   Zap,
   Sun,
-  Moon,
-  X // Add X icon for close state
+  Moon
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -65,19 +63,15 @@ import { DownloadIcon } from '@radix-ui/react-icons';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import NotificationBell from '../NotificationBell';
-// import { useSidebar } from '@/components/ui/sidebar';
 
 // Menu Item Component - Text hides when collapsed
-const MenuItem = ({ icon: Icon, label, to, isActive, badge, onClick, className, isExpanded, isMobile, onMobileClick }: any) => (
+const MenuItem = ({ icon: Icon, label, to, isActive, badge, onClick, className, isExpanded }: any) => (
   <SidebarMenuItem>
     <SidebarMenuButton 
       asChild 
       tooltip={!isExpanded ? label : undefined}
       isActive={isActive}
-      onClick={(e) => {
-        if (onClick) onClick(e);
-        if (isMobile && onMobileClick) onMobileClick();
-      }}
+      onClick={onClick}
       className={cn(
         "group relative overflow-hidden rounded-xl transition-all duration-300",
         "hover:shadow-md hover:scale-[1.02] active:scale-[0.98]",
@@ -134,6 +128,8 @@ const SectionHeader = ({ title, icon: Icon, isExpanded }: any) => {
   );
 };
 
+// Theme Toggle Button Component
+// Theme Toggle Button Component - Always show Sun icon with different text
 // Theme Toggle Button Component - Show appropriate icon for the action
 const ThemeToggleButton = ({ isExpanded = false }: { isExpanded?: boolean }) => {
   const { theme, toggleTheme } = useTheme();
@@ -173,774 +169,23 @@ const ThemeToggleButton = ({ isExpanded = false }: { isExpanded?: boolean }) => 
   );
 };
 
-// Create a separate component for the sidebar content that will use the useSidebar hook
-// Move all hooks to the top level of this component, before any conditional logic
-const SidebarContentComponent = ({ isExpanded, isCollapsed, hovered, setIsCollapsed, setHovered, admin, isPaidUser, notebookEnabled, resumeEnabled, careerEnabled, userType, courseCount, handleGenerateClick, installPrompt, handleInstallClick, Logout }: any) => {
-  // IMPORTANT: All hooks MUST be called at the top level, before any conditional returns
+const DashboardLayout = () => {
+  const { appName, appLogo } = useBranding();
   const isMobile = useIsMobile();
   const location = useLocation();
-  const { setOpenMobile, openMobile } = useSidebar(); // This must be called unconditionally
-  const branding = useBranding(); // Store branding in a variable
-  
-  // Helper to check active route
-  const isActive = (path: string) => location.pathname === path;
-  
-  // Function to close sidebar on mobile when menu item is clicked
-  const handleMobileMenuClick = () => {
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-  };
-
-  // Function to toggle mobile sidebar
-  const toggleMobileSidebar = () => {
-    setOpenMobile(!openMobile);
-  };
-
-  return (
-    <>
-      <Sidebar 
-        className={cn(
-          "border-r border-border/40 bg-card/95 backdrop-blur-sm shadow-xl transition-all duration-300 ease-in-out",
-          isCollapsed && !hovered ? "w-[70px]" : "w-[260px]"
-        )}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        {/* Header with Collapse Toggle */}
-        <SidebarHeader className="border-b border-border/40 py-4 px-3">
-          <div className="flex items-center justify-between">
-            <Link 
-              to="/" 
-              onClick={handleMobileMenuClick}
-              className={cn(
-                "flex items-center space-x-3 group relative transition-all duration-300",
-                !isExpanded && "justify-center w-full"
-              )}
-            >
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary/20 rounded-xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
-                <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:rotate-3">
-                  <img src={branding.appLogo} alt="Logo" className='h-5 w-5' />
-                </div>
-              </div>
-              {isExpanded && (
-                <span className="font-display text-lg font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent group-hover:scale-105 transition-transform whitespace-nowrap">
-                  {branding.appName}
-                </span>
-              )}
-            </Link>
-            
-            {/* Collapse Toggle Button - Only show on desktop */}
-            {!isMobile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 rounded-lg hover:bg-muted/50 transition-all"
-                onClick={() => setIsCollapsed(!isCollapsed)}
-              >
-                {!isExpanded ? (
-                  <ChevronRight className="h-4 w-4" />
-                ) : (
-                  <ChevronLeft className="h-4 w-4" />
-                )}
-              </Button>
-            )}
-          </div>
-        </SidebarHeader>
-
-        <SidebarContent className="py-4">
-          {/* Main Menu Section */}
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu className="space-y-1.5 px-2">
-                {sessionStorage.getItem('role') !== 'student' && sessionStorage.getItem('role') !== 'dept_admin' && (
-                  <>
-                    <MenuItem 
-                      icon={Home} 
-                      label="Home" 
-                      to="/dashboard" 
-                      isActive={isActive('/dashboard')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={User} 
-                      label="My Profile" 
-                      to="/dashboard/profile" 
-                      isActive={isActive('/dashboard/profile')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    
-                    {sessionStorage.getItem('isOrganization') !== 'true' && sessionStorage.getItem('role') !== 'dept_admin' && (
-                      <MenuItem 
-                        icon={DollarSign} 
-                        label="Pricing" 
-                        to="/dashboard/pricing" 
-                        isActive={isActive('/dashboard/pricing')}
-                        isExpanded={isExpanded}
-                        isMobile={isMobile}
-                        onMobileClick={handleMobileMenuClick}
-                      />
-                    )}
-
-                    {/* Resume Builder */}
-                    {resumeEnabled[sessionStorage.getItem('role') === 'org_admin' ? 'org_admin' : (sessionStorage.getItem('type') as keyof typeof resumeEnabled)] && (
-                      <MenuItem 
-                        icon={FileText} 
-                        label="Resume Builder" 
-                        to="/dashboard/resume-builder" 
-                        isActive={isActive('/dashboard/resume-builder')}
-                        badge={isPaidUser ? "PRO" : undefined}
-                        isExpanded={isExpanded}
-                        isMobile={isMobile}
-                        onMobileClick={handleMobileMenuClick}
-                      />
-                    )}
-
-                    {/* AI Notebook */}
-                    {notebookEnabled[sessionStorage.getItem('role') === 'org_admin' ? 'org_admin' : (sessionStorage.getItem('type') as keyof typeof notebookEnabled)] && (
-                      <MenuItem 
-                        icon={BrainCircuit} 
-                        label="AI Notebook" 
-                        to="/dashboard/notebook" 
-                        isActive={isActive('/dashboard/notebook')}
-                        badge="NEW"
-                        isExpanded={isExpanded}
-                        isMobile={isMobile}
-                        onMobileClick={handleMobileMenuClick}
-                      />
-                    )}
-
-                    <MenuItem 
-                      icon={Briefcase} 
-                      label="Interview Prep" 
-                      to="/dashboard/interview-prep" 
-                      isActive={isActive('/dashboard/interview-prep')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-
-                    {!admin && (
-                      <MenuItem 
-                        icon={MessageSquare} 
-                        label="Support" 
-                        to="/dashboard/support" 
-                        isActive={isActive('/dashboard/support')}
-                        isExpanded={isExpanded}
-                        isMobile={isMobile}
-                        onMobileClick={handleMobileMenuClick}
-                      />
-                    )}
-
-                    {!admin && (
-                      <MenuItem 
-                        icon={Megaphone} 
-                        label="Global News" 
-                        to="/dashboard/news" 
-                        isActive={isActive('/dashboard/news')}
-                        isExpanded={isExpanded}
-                        isMobile={isMobile}
-                        onMobileClick={handleMobileMenuClick}
-                      />
-                    )}
-                  </>
-                )}
-
-                {/* Student Menu Section */}
-                {sessionStorage.getItem('role') === 'student' && (
-                  <>
-                    <SectionHeader title="Overview" icon={LayoutDashboard} isExpanded={isExpanded} />
-                    <MenuItem 
-                      icon={LayoutDashboard} 
-                      label="Dashboard" 
-                      to="/dashboard/student" 
-                      isActive={isActive('/dashboard/student')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={User} 
-                      label="My Profile" 
-                      to="/dashboard/student/profile" 
-                      isActive={isActive('/dashboard/student/profile')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    
-                    <SectionHeader title="Learning Tools" icon={Zap} isExpanded={isExpanded} />
-                    {notebookEnabled.student && (
-                      <MenuItem 
-                        icon={BrainCircuit} 
-                        label="AI Notebook" 
-                        to="/dashboard/notebook" 
-                        isActive={isActive('/dashboard/notebook')}
-                        badge="NEW"
-                        isExpanded={isExpanded}
-                        isMobile={isMobile}
-                        onMobileClick={handleMobileMenuClick}
-                      />
-                    )}
-                    <MenuItem 
-                      icon={Briefcase} 
-                      label="Interview Prep" 
-                      to="/dashboard/interview-prep" 
-                      isActive={isActive('/dashboard/interview-prep')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    {careerEnabled.student && (
-                      <MenuItem 
-                        icon={Award} 
-                        label="Career Hub" 
-                        to="/dashboard/student/career" 
-                        isActive={isActive('/dashboard/student/career')}
-                        isExpanded={isExpanded}
-                        isMobile={isMobile}
-                        onMobileClick={handleMobileMenuClick}
-                      />
-                    )}
-                    
-                    <SectionHeader title="Academics" icon={BookOpen} isExpanded={isExpanded} />
-                    <MenuItem 
-                      icon={BookOpen} 
-                      label="Assignments" 
-                      to="/dashboard/student/assignments" 
-                      isActive={isActive('/dashboard/student/assignments')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={Bell} 
-                      label="Noticeboard" 
-                      to="/dashboard/student/notices" 
-                      isActive={isActive('/dashboard/student/notices')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={Briefcase} 
-                      label="Projects" 
-                      to="/dashboard/student/projects" 
-                      isActive={isActive('/dashboard/student/projects')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={BookOpen} 
-                      label="Materials" 
-                      to="/dashboard/student/materials" 
-                      isActive={isActive('/dashboard/student/materials')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    
-                    <SectionHeader title="Community" icon={Users} isExpanded={isExpanded} />
-                    <MenuItem 
-                      icon={Menu} 
-                      label="Meetings" 
-                      to="/dashboard/student/meetings" 
-                      isActive={isActive('/dashboard/student/meetings')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={Megaphone} 
-                      label="Global News" 
-                      to="/dashboard/student/news" 
-                      isActive={isActive('/dashboard/student/news')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={MessageSquare} 
-                      label="Support Tickets" 
-                      to="/dashboard/student/support-tickets" 
-                      isActive={isActive('/dashboard/student/support-tickets')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                  </>
-                )}
-
-                {/* Admin Panel */}
-                {admin && (
-                  <>
-                    <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                    <SectionHeader title="Administration" icon={Settings2Icon} isExpanded={isExpanded} />
-                    <MenuItem 
-                      icon={Settings2Icon} 
-                      label="Admin Panel" 
-                      to="/admin" 
-                      isActive={isActive('/admin')}
-                      badge="ADMIN"
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                  </>
-                )}
-                
-                {/* Analytics */}
-                {isPaidUser && (
-                  <MenuItem 
-                    icon={BarChart3} 
-                    label="Analytics" 
-                    to="/dashboard/analytics" 
-                    isActive={isActive('/dashboard/analytics')}
-                    isExpanded={isExpanded}
-                    isMobile={isMobile}
-                    onMobileClick={handleMobileMenuClick}
-                  />
-                )}
-
-                {/* Organization Portal */}
-                {sessionStorage.getItem('isOrganization') === 'true' && (
-                  <>
-                    <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                    <SectionHeader title="Organization" icon={Building2} isExpanded={isExpanded} />
-                    <MenuItem 
-                      icon={Building2} 
-                      label="Organization Portal" 
-                      to="/dashboard/org" 
-                      isActive={isActive('/dashboard/org')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={Building2} 
-                      label="Departments" 
-                      to="/dashboard/org?tab=departments" 
-                      isActive={location.search === '?tab=departments'}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={Users} 
-                      label="Students" 
-                      to="/dashboard/org?tab=students" 
-                      isActive={location.search === '?tab=students'}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={BookOpen} 
-                      label="Courses" 
-                      to="/dashboard/org?tab=courses" 
-                      isActive={location.search === '?tab=courses'}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    {sessionStorage.getItem('role') === 'org_admin' && (
-                      <MenuItem 
-                        icon={Users} 
-                        label="Staff" 
-                        to="/dashboard/org?tab=staff" 
-                        isActive={location.search === '?tab=staff'}
-                        isExpanded={isExpanded}
-                        isMobile={isMobile}
-                        onMobileClick={handleMobileMenuClick}
-                      />
-                    )}
-                    {sessionStorage.getItem('role') === 'org_admin' && (
-                      <MenuItem 
-                        icon={CheckCircle2} 
-                        label="Approvals" 
-                        to="/dashboard/org?tab=approvals" 
-                        isActive={location.search === '?tab=approvals'}
-                        isExpanded={isExpanded}
-                        isMobile={isMobile}
-                        onMobileClick={handleMobileMenuClick}
-                      />
-                    )}
-                    {sessionStorage.getItem('role') === 'org_admin' && (
-                      <MenuItem 
-                        icon={Clock} 
-                        label="Activity" 
-                        to="/dashboard/org?tab=activity" 
-                        isActive={location.search === '?tab=activity'}
-                        isExpanded={isExpanded}
-                        isMobile={isMobile}
-                        onMobileClick={handleMobileMenuClick}
-                      />
-                    )}
-                    <MenuItem 
-                      icon={FileText} 
-                      label="Assignments" 
-                      to="/dashboard/org?tab=assignments" 
-                      isActive={location.search === '?tab=assignments'}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={Video} 
-                      label="Meetings" 
-                      to="/dashboard/org?tab=meetings" 
-                      isActive={location.search === '?tab=meetings'}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={Briefcase} 
-                      label="Projects" 
-                      to="/dashboard/org?tab=projects" 
-                      isActive={location.search === '?tab=projects'}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={Download} 
-                      label="Materials" 
-                      to="/dashboard/org?tab=materials" 
-                      isActive={location.search === '?tab=materials'}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={Bell} 
-                      label="Noticeboard" 
-                      to="/dashboard/org?tab=notices" 
-                      isActive={location.search === '?tab=notices'}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    {careerEnabled.org_admin && (
-                      <MenuItem 
-                        icon={Award} 
-                        label="Career & Placement" 
-                        to="/dashboard/org/career" 
-                        isActive={isActive('/dashboard/org/career') || location.search === '?tab=career'}
-                        isExpanded={isExpanded}
-                        isMobile={isMobile}
-                        onMobileClick={handleMobileMenuClick}
-                      />
-                    )}
-                    <MenuItem 
-                      icon={MessageSquare} 
-                      label="Student Tickets" 
-                      to="/dashboard/org/student-tickets" 
-                      isActive={isActive('/dashboard/org/student-tickets')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={BarChart3} 
-                      label="KPI Reports" 
-                      to="/dashboard/org/reports" 
-                      isActive={isActive('/dashboard/org/reports')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={RotateCcw} 
-                      label="Quiz Retakes" 
-                      to="/dashboard/org/quiz-retake-requests" 
-                      isActive={isActive('/dashboard/org/quiz-retake-requests')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                  </>
-                )}
-
-                {/* Staff/Department Admin Menu */}
-                {sessionStorage.getItem('role') === 'dept_admin' && (
-                  <>
-                    <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                    <SectionHeader title="Staff Dashboard" icon={LayoutDashboard} isExpanded={isExpanded} />
-                    <MenuItem 
-                      icon={LayoutDashboard} 
-                      label="Dashboard" 
-                      to="/dashboard/staff" 
-                      isActive={isActive('/dashboard/staff')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={Briefcase} 
-                      label="Interview Prep" 
-                      to="/dashboard/interview-prep" 
-                      isActive={isActive('/dashboard/interview-prep')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={Megaphone} 
-                      label="Global News" 
-                      to="/dashboard/news" 
-                      isActive={isActive('/dashboard/news')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={LifeBuoy} 
-                      label="Support" 
-                      to="/dashboard/staff/support" 
-                      isActive={isActive('/dashboard/staff/support')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    
-                    <SectionHeader title="Management" icon={Settings2Icon} isExpanded={isExpanded} />
-                    <MenuItem 
-                      icon={BookOpen} 
-                      label="Courses" 
-                      to="/dashboard/org?tab=courses" 
-                      isActive={location.search === '?tab=courses'}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={Users} 
-                      label="Students" 
-                      to="/dashboard/org?tab=students" 
-                      isActive={location.search === '?tab=students'}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={FileText} 
-                      label="Assignments" 
-                      to="/dashboard/org?tab=assignments" 
-                      isActive={location.search === '?tab=assignments'}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={Video} 
-                      label="Meetings" 
-                      to="/dashboard/org?tab=meetings" 
-                      isActive={location.search === '?tab=meetings'}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={Briefcase} 
-                      label="Projects" 
-                      to="/dashboard/org?tab=projects" 
-                      isActive={location.search === '?tab=projects'}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={Download} 
-                      label="Materials" 
-                      to="/dashboard/org?tab=materials" 
-                      isActive={location.search === '?tab=materials'}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={Bell} 
-                      label="Noticeboard" 
-                      to="/dashboard/org?tab=notices" 
-                      isActive={location.search === '?tab=notices'}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
-                      icon={RotateCcw} 
-                      label="Quiz Retakes" 
-                      to="/dashboard/org/quiz-retake-requests" 
-                      isActive={isActive('/dashboard/org/quiz-retake-requests')}
-                      isExpanded={isExpanded}
-                      isMobile={isMobile}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                  </>
-                )}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-
-          {/* Generate Course Button */}
-          {sessionStorage.getItem('role') !== 'student' && (
-            <SidebarGroup className="mt-4">
-              <SidebarGroupContent>
-                <div className={cn("px-2", isExpanded && "px-3")}>
-                  <Button
-                    onClick={() => {
-                      handleGenerateClick();
-                      handleMobileMenuClick();
-                    }}
-                    className={cn(
-                      "w-full bg-gradient-to-r from-primary via-primary/90 to-indigo-500 hover:from-indigo-500 hover:via-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 rounded-xl group",
-                      !isExpanded && "p-2"
-                    )}
-                    size={isExpanded ? "default" : "icon"}
-                  >
-                    <Sparkles className={cn(
-                      "transition-transform",
-                      isExpanded ? "mr-2 h-4 w-4 group-hover:rotate-12" : "h-5 w-5"
-                    )} />
-                    {isExpanded && <span className="font-semibold">Generate Course</span>}
-                  </Button>
-                </div>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          )}
-        </SidebarContent>
-
-        {/* Footer */}
-        <SidebarFooter className="border-t border-border/40 bg-gradient-to-b from-background to-muted/5">
-          {/* Action Buttons */}
-          <div className={cn(
-            "grid gap-2 px-2",
-            isExpanded ? "grid-cols-1" : "grid-cols-1"
-          )}>
-            {/* Install App Button */}
-            {installPrompt && (
-              <button
-                onClick={() => {
-                  handleInstallClick();
-                  handleMobileMenuClick();
-                }}
-                className={cn(
-                  "group relative overflow-hidden rounded-xl transition-all duration-300 w-full",
-                  "hover:shadow-md active:scale-[0.98]",
-                  isExpanded ? "p-2" : "p-2.5"
-                )}
-              >
-                <div className={cn(
-                  "flex items-center",
-                  isExpanded ? "gap-3" : "justify-center"
-                )}>
-                  <div className="rounded-lg p-1.5 transition-all duration-300">
-                    <DownloadIcon className="h-5 w-5 text-blue-500" />
-                  </div>
-                  {isExpanded && (
-                    <div className="flex-1 text-left">
-                      <p className="text-sm font-medium">Install App</p>
-                      <p className="text-xs text-muted-foreground">Desktop experience</p>
-                    </div>
-                  )}
-                </div>
-              </button>
-            )}
-
-            {/* Theme Toggle Button */}
-            <ThemeToggleButton isExpanded={isExpanded} />
-
-            {/* Logout Button */}
-            <button
-              onClick={() => {
-                Logout();
-                handleMobileMenuClick();
-              }}
-              className={cn(
-                "group relative overflow-hidden rounded-xl transition-all duration-300 w-full",
-                "hover:shadow-md active:scale-[0.98]",
-                isExpanded ? "p-2" : "p-2.5"
-              )}
-            >
-              <div className={cn(
-                "flex items-center",
-                isExpanded ? "gap-3" : "justify-center"
-              )}>
-                <div className="rounded-lg p-1.5 transition-all duration-300">
-                  <LogOut className="h-5 w-5 text-red-500" />
-                </div>
-                {isExpanded && (
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium">Logout</p>
-                    <p className="text-xs text-muted-foreground">Sign out</p>
-                  </div>
-                )}
-              </div>
-            </button>
-          </div>
-        </SidebarFooter>
-        <SidebarRail />
-      </Sidebar>
-
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 relative">
-        {/* Mobile Header with Responsive Menu Icon */}
-        {isMobile && (
-          <div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleMobileSidebar}
-              className="mr-2 hover:bg-muted/50 transition-all duration-300"
-              aria-label={openMobile ? "Close menu" : "Open menu"}
-            >
-              {openMobile ? (
-                <X className="h-6 w-6 transition-transform duration-300 rotate-0" />
-              ) : (
-                <Menu className="h-6 w-6 transition-transform duration-300" />
-              )}
-            </Button>
-            <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-indigo-500 bg-clip-text text-transparent">
-              {branding.appName}
-            </h1>
-            <div className="ml-auto flex items-center gap-2">
-              <NotificationBell />
-              <ThemeToggleButton isExpanded={false} />
-            </div>
-          </div>
-        )}
-        
-        {/* Desktop Header */}
-        {!isMobile && (location.pathname.startsWith("/dashboard/org") || location.pathname.startsWith("/dashboard/student")) && (
-          <div className="absolute top-4 right-8 z-10 flex items-center gap-4">
-            <NotificationBell />
-          </div>
-        )}
-        
-        <Outlet />
-      </main>
-    </>
-  );
-};
-
-// Main DashboardLayout component that wraps everything with SidebarProvider
-const DashboardLayout = () => {
   const [admin, setAdmin] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hovered, setHovered] = useState(false);
   
   const plan = sessionStorage.getItem("type")?.toLowerCase()?.trim();
+  const role = sessionStorage.getItem("role");
   const isPaidUser = ["monthly", "yearly"].includes(plan) || admin;
 
   const [installPrompt, setInstallPrompt] = useState(null);
   const { toast } = useToast();
+  
+  // Helper to check active route
+  const isActive = (path: string) => location.pathname === path;
  
   const [notebookEnabled, setNotebookEnabled] = useState({
     free: false,
@@ -1027,6 +272,7 @@ const DashboardLayout = () => {
 
   const [userType, setUserType] = useState("");
   const [courseCount, setCourseCount] = useState(0);
+  const [canGenerate, setCanGenerate] = useState(true);
 
   useEffect(() => {
     async function checkCourseLimit() {
@@ -1073,24 +319,615 @@ const DashboardLayout = () => {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/20">
-        <SidebarContentComponent 
-          isExpanded={isExpanded}
-          isCollapsed={isCollapsed}
-          hovered={hovered}
-          setIsCollapsed={setIsCollapsed}
-          setHovered={setHovered}
-          admin={admin}
-          isPaidUser={isPaidUser}
-          notebookEnabled={notebookEnabled}
-          resumeEnabled={resumeEnabled}
-          careerEnabled={careerEnabled}
-          userType={userType}
-          courseCount={courseCount}
-          handleGenerateClick={handleGenerateClick}
-          installPrompt={installPrompt}
-          handleInstallClick={handleInstallClick}
-          Logout={Logout}
-        />
+        <Sidebar 
+          className={cn(
+            "border-r border-border/40 bg-card/95 backdrop-blur-sm shadow-xl transition-all duration-300 ease-in-out",
+            isCollapsed && !hovered ? "w-[70px]" : "w-[260px]"
+          )}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          {/* Header with Collapse Toggle */}
+          <SidebarHeader className="border-b border-border/40 py-4 px-3">
+            <div className="flex items-center justify-between">
+              <Link 
+                to="/dashboard" 
+                className={cn(
+                  "flex items-center space-x-3 group relative transition-all duration-300",
+                  !isExpanded && "justify-center w-full"
+                )}
+              >
+                <div className="relative">
+                  <div className="absolute inset-0 bg-primary/20 rounded-xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
+                  <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:rotate-3">
+                    <img src={appLogo} alt="Logo" className='h-5 w-5' />
+                  </div>
+                </div>
+                {isExpanded && (
+                  <span className="font-display text-lg font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent group-hover:scale-105 transition-transform whitespace-nowrap">
+                    {appName}
+                  </span>
+                )}
+              </Link>
+              
+              {/* Collapse Toggle Button */}
+              {!isMobile && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-lg hover:bg-muted/50 transition-all"
+                  onClick={() => setIsCollapsed(!isCollapsed)}
+                >
+                  {!isExpanded ? (
+                    <ChevronRight className="h-4 w-4" />
+                  ) : (
+                    <ChevronLeft className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
+            </div>
+          </SidebarHeader>
+
+          <SidebarContent className="py-4">
+            {/* Main Menu Section */}
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu className="space-y-1.5 px-2">
+                  {sessionStorage.getItem('role') !== 'student' && sessionStorage.getItem('role') !== 'dept_admin' && (
+                    <>
+                      <MenuItem 
+                        icon={Home} 
+                        label="Home" 
+                        to="/dashboard" 
+                        isActive={isActive('/dashboard')}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={User} 
+                        label="My Profile" 
+                        to="/dashboard/profile" 
+                        isActive={isActive('/dashboard/profile')}
+                        isExpanded={isExpanded}
+                      />
+                      
+                      {sessionStorage.getItem('isOrganization') !== 'true' && sessionStorage.getItem('role') !== 'dept_admin' && (
+                        <MenuItem 
+                          icon={DollarSign} 
+                          label="Pricing" 
+                          to="/dashboard/pricing" 
+                          isActive={isActive('/dashboard/pricing')}
+                          isExpanded={isExpanded}
+                        />
+                      )}
+
+                      {/* Resume Builder */}
+                      {resumeEnabled[sessionStorage.getItem('role') === 'org_admin' ? 'org_admin' : (sessionStorage.getItem('type') as keyof typeof resumeEnabled)] && (
+                        <MenuItem 
+                          icon={FileText} 
+                          label="Resume Builder" 
+                          to="/dashboard/resume-builder" 
+                          isActive={isActive('/dashboard/resume-builder')}
+                          badge={isPaidUser ? "PRO" : undefined}
+                          isExpanded={isExpanded}
+                        />
+                      )}
+
+                      {/* AI Notebook */}
+                      {notebookEnabled[sessionStorage.getItem('role') === 'org_admin' ? 'org_admin' : (sessionStorage.getItem('type') as keyof typeof notebookEnabled)] && (
+                        <MenuItem 
+                          icon={BrainCircuit} 
+                          label="AI Notebook" 
+                          to="/dashboard/notebook" 
+                          isActive={isActive('/dashboard/notebook')}
+                          badge="NEW"
+                          isExpanded={isExpanded}
+                        />
+                      )}
+
+                      <MenuItem 
+                        icon={Briefcase} 
+                        label="Interview Prep" 
+                        to="/dashboard/interview-prep" 
+                        isActive={isActive('/dashboard/interview-prep')}
+                        isExpanded={isExpanded}
+                      />
+
+                      {!admin && (
+                        <MenuItem 
+                          icon={MessageSquare} 
+                          label="Support" 
+                          to="/dashboard/support" 
+                          isActive={isActive('/dashboard/support')}
+                          isExpanded={isExpanded}
+                        />
+                      )}
+
+                      {!admin && (
+                        <MenuItem 
+                          icon={Megaphone} 
+                          label="Global News" 
+                          to="/dashboard/news" 
+                          isActive={isActive('/dashboard/news')}
+                          isExpanded={isExpanded}
+                        />
+                      )}
+                    </>
+                  )}
+
+                  {/* Student Menu Section */}
+                  {sessionStorage.getItem('role') === 'student' && (
+                    <>
+                      <SectionHeader title="Overview" icon={LayoutDashboard} isExpanded={isExpanded} />
+                      <MenuItem 
+                        icon={LayoutDashboard} 
+                        label="Dashboard" 
+                        to="/dashboard/student" 
+                        isActive={isActive('/dashboard/student')}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={User} 
+                        label="My Profile" 
+                        to="/dashboard/student/profile" 
+                        isActive={isActive('/dashboard/student/profile')}
+                        isExpanded={isExpanded}
+                      />
+                      
+                      <SectionHeader title="Learning Tools" icon={Zap} isExpanded={isExpanded} />
+                      {notebookEnabled.student && (
+                        <MenuItem 
+                          icon={BrainCircuit} 
+                          label="AI Notebook" 
+                          to="/dashboard/notebook" 
+                          isActive={isActive('/dashboard/notebook')}
+                          badge="NEW"
+                          isExpanded={isExpanded}
+                        />
+                      )}
+                      <MenuItem 
+                        icon={Briefcase} 
+                        label="Interview Prep" 
+                        to="/dashboard/interview-prep" 
+                        isActive={isActive('/dashboard/interview-prep')}
+                        isExpanded={isExpanded}
+                      />
+                      {careerEnabled.student && (
+                        <MenuItem 
+                          icon={Award} 
+                          label="Career Hub" 
+                          to="/dashboard/student/career" 
+                          isActive={isActive('/dashboard/student/career')}
+                          isExpanded={isExpanded}
+                        />
+                      )}
+                      
+                      <SectionHeader title="Academics" icon={BookOpen} isExpanded={isExpanded} />
+                      <MenuItem 
+                        icon={BookOpen} 
+                        label="Assignments" 
+                        to="/dashboard/student/assignments" 
+                        isActive={isActive('/dashboard/student/assignments')}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={Bell} 
+                        label="Noticeboard" 
+                        to="/dashboard/student/notices" 
+                        isActive={isActive('/dashboard/student/notices')}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={Briefcase} 
+                        label="Projects" 
+                        to="/dashboard/student/projects" 
+                        isActive={isActive('/dashboard/student/projects')}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={BookOpen} 
+                        label="Materials" 
+                        to="/dashboard/student/materials" 
+                        isActive={isActive('/dashboard/student/materials')}
+                        isExpanded={isExpanded}
+                      />
+                      
+                      <SectionHeader title="Community" icon={Users} isExpanded={isExpanded} />
+                      <MenuItem 
+                        icon={Menu} 
+                        label="Meetings" 
+                        to="/dashboard/student/meetings" 
+                        isActive={isActive('/dashboard/student/meetings')}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={Megaphone} 
+                        label="Global News" 
+                        to="/dashboard/student/news" 
+                        isActive={isActive('/dashboard/student/news')}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={MessageSquare} 
+                        label="Support Tickets" 
+                        to="/dashboard/student/support-tickets" 
+                        isActive={isActive('/dashboard/student/support-tickets')}
+                        isExpanded={isExpanded}
+                      />
+                    </>
+                  )}
+
+                  {/* Admin Panel */}
+                  {admin && (
+                    <>
+                      <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                      <SectionHeader title="Administration" icon={Settings2Icon} isExpanded={isExpanded} />
+                      <MenuItem 
+                        icon={Settings2Icon} 
+                        label="Admin Panel" 
+                        to="/admin" 
+                        isActive={isActive('/admin')}
+                        badge="ADMIN"
+                        isExpanded={isExpanded}
+                      />
+                    </>
+                  )}
+                  
+                  {/* Analytics */}
+                  {isPaidUser && (
+                    <MenuItem 
+                      icon={BarChart3} 
+                      label="Analytics" 
+                      to="/dashboard/analytics" 
+                      isActive={isActive('/dashboard/analytics')}
+                      isExpanded={isExpanded}
+                    />
+                  )}
+
+                  {/* Organization Portal */}
+                  {sessionStorage.getItem('isOrganization') === 'true' && (
+                    <>
+                      <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                      <SectionHeader title="Organization" icon={Building2} isExpanded={isExpanded} />
+                      <MenuItem 
+                        icon={Building2} 
+                        label="Organization Portal" 
+                        to="/dashboard/org" 
+                        isActive={isActive('/dashboard/org')}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={Building2} 
+                        label="Departments" 
+                        to="/dashboard/org?tab=departments" 
+                        isActive={location.search === '?tab=departments'}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={Users} 
+                        label="Students" 
+                        to="/dashboard/org?tab=students" 
+                        isActive={location.search === '?tab=students'}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={BookOpen} 
+                        label="Courses" 
+                        to="/dashboard/org?tab=courses" 
+                        isActive={location.search === '?tab=courses'}
+                        isExpanded={isExpanded}
+                      />
+                      {sessionStorage.getItem('role') === 'org_admin' && (
+                        <MenuItem 
+                          icon={Users} 
+                          label="Staff" 
+                          to="/dashboard/org?tab=staff" 
+                          isActive={location.search === '?tab=staff'}
+                          isExpanded={isExpanded}
+                        />
+                      )}
+                      {sessionStorage.getItem('role') === 'org_admin' && (
+                        <MenuItem 
+                          icon={CheckCircle2} 
+                          label="Approvals" 
+                          to="/dashboard/org?tab=approvals" 
+                          isActive={location.search === '?tab=approvals'}
+                          isExpanded={isExpanded}
+                        />
+                      )}
+                      {sessionStorage.getItem('role') === 'org_admin' && (
+                        <MenuItem 
+                          icon={Clock} 
+                          label="Activity" 
+                          to="/dashboard/org?tab=activity" 
+                          isActive={location.search === '?tab=activity'}
+                          isExpanded={isExpanded}
+                        />
+                      )}
+                      <MenuItem 
+                        icon={FileText} 
+                        label="Assignments" 
+                        to="/dashboard/org?tab=assignments" 
+                        isActive={location.search === '?tab=assignments'}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={Video} 
+                        label="Meetings" 
+                        to="/dashboard/org?tab=meetings" 
+                        isActive={location.search === '?tab=meetings'}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={Briefcase} 
+                        label="Projects" 
+                        to="/dashboard/org?tab=projects" 
+                        isActive={location.search === '?tab=projects'}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={Download} 
+                        label="Materials" 
+                        to="/dashboard/org?tab=materials" 
+                        isActive={location.search === '?tab=materials'}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={Bell} 
+                        label="Noticeboard" 
+                        to="/dashboard/org?tab=notices" 
+                        isActive={location.search === '?tab=notices'}
+                        isExpanded={isExpanded}
+                      />
+                      {careerEnabled.org_admin && (
+                        <MenuItem 
+                          icon={Award} 
+                          label="Career & Placement" 
+                          to="/dashboard/org/career" 
+                          isActive={isActive('/dashboard/org/career') || location.search === '?tab=career'}
+                          isExpanded={isExpanded}
+                        />
+                      )}
+                      <MenuItem 
+                        icon={MessageSquare} 
+                        label="Student Tickets" 
+                        to="/dashboard/org/student-tickets" 
+                        isActive={isActive('/dashboard/org/student-tickets')}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={BarChart3} 
+                        label="KPI Reports" 
+                        to="/dashboard/org/reports" 
+                        isActive={isActive('/dashboard/org/reports')}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={RotateCcw} 
+                        label="Quiz Retakes" 
+                        to="/dashboard/org/quiz-retake-requests" 
+                        isActive={isActive('/dashboard/org/quiz-retake-requests')}
+                        isExpanded={isExpanded}
+                      />
+                    </>
+                  )}
+
+                  {/* Staff/Department Admin Menu */}
+                  {sessionStorage.getItem('role') === 'dept_admin' && (
+                    <>
+                      <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                      <SectionHeader title="My Work" icon={LayoutDashboard} isExpanded={isExpanded} />
+                      <MenuItem 
+                        icon={LayoutDashboard} 
+                        label="Workboard" 
+                        to="/dashboard/staff" 
+                        isActive={isActive('/dashboard/staff')}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={Briefcase} 
+                        label="Interview Prep" 
+                        to="/dashboard/interview-prep" 
+                        isActive={isActive('/dashboard/interview-prep')}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={Megaphone} 
+                        label="Global News" 
+                        to="/dashboard/news" 
+                        isActive={isActive('/dashboard/news')}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={LifeBuoy} 
+                        label="Support Desk" 
+                        to="/dashboard/staff/support" 
+                        isActive={isActive('/dashboard/staff/support')}
+                        isExpanded={isExpanded}
+                      />
+                      
+                      <SectionHeader title="Teaching Ops" icon={Settings2Icon} isExpanded={isExpanded} />
+                      <MenuItem 
+                        icon={BookOpen} 
+                        label="Course Workspace" 
+                        to="/dashboard/org?tab=courses" 
+                        isActive={location.search === '?tab=courses'}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={Users} 
+                        label="Learner Directory" 
+                        to="/dashboard/org?tab=students" 
+                        isActive={location.search === '?tab=students'}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={FileText} 
+                        label="Assessment Desk" 
+                        to="/dashboard/org?tab=assignments" 
+                        isActive={location.search === '?tab=assignments'}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={Video} 
+                        label="Sessions" 
+                        to="/dashboard/org?tab=meetings" 
+                        isActive={location.search === '?tab=meetings'}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={Briefcase} 
+                        label="Projects & Labs" 
+                        to="/dashboard/org?tab=projects" 
+                        isActive={location.search === '?tab=projects'}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={Download} 
+                        label="Resource Library" 
+                        to="/dashboard/org?tab=materials" 
+                        isActive={location.search === '?tab=materials'}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={Bell} 
+                        label="Announcements" 
+                        to="/dashboard/org?tab=notices" 
+                        isActive={location.search === '?tab=notices'}
+                        isExpanded={isExpanded}
+                      />
+                      <MenuItem 
+                        icon={RotateCcw} 
+                        label="Retake Queue" 
+                        to="/dashboard/org/quiz-retake-requests" 
+                        isActive={isActive('/dashboard/org/quiz-retake-requests')}
+                        isExpanded={isExpanded}
+                      />
+                    </>
+                  )}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            {/* Generate Course Button */}
+            {sessionStorage.getItem('role') !== 'student' && (
+              <SidebarGroup className="mt-4">
+                <SidebarGroupContent>
+                  <div className={cn("px-2", isExpanded && "px-3")}>
+                    <Button
+                      onClick={handleGenerateClick}
+                      className={cn(
+                        "w-full bg-gradient-to-r from-primary via-primary/90 to-indigo-500 hover:from-indigo-500 hover:via-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 rounded-xl group",
+                        !isExpanded && "p-2"
+                      )}
+                      size={isExpanded ? "default" : "icon"}
+                    >
+                      <Sparkles className={cn(
+                        "transition-transform",
+                        isExpanded ? "mr-2 h-4 w-4 group-hover:rotate-12" : "h-5 w-5"
+                      )} />
+                      {isExpanded && <span className="font-semibold">Generate Course</span>}
+                    </Button>
+                  </div>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
+          </SidebarContent>
+
+          {/* Footer */}
+          <SidebarFooter className="border-t border-border/40 bg-gradient-to-b from-background to-muted/5">
+            {/* Action Buttons */}
+            <div className={cn(
+              "grid gap-2 px-2",
+              isExpanded ? "grid-cols-1" : "grid-cols-1"
+            )}>
+              {/* Install App Button */}
+              {installPrompt && (
+                <button
+                  onClick={handleInstallClick}
+                  className={cn(
+                    "group relative overflow-hidden rounded-xl transition-all duration-300 w-full",
+                    "hover:shadow-md active:scale-[0.98]",
+                    isExpanded ? "p-2" : "p-2.5"
+                  )}
+                >
+                  <div className={cn(
+                    "flex items-center",
+                    isExpanded ? "gap-3" : "justify-center"
+                  )}>
+                    <div className="rounded-lg p-1.5 transition-all duration-300">
+                      <DownloadIcon className="h-5 w-5 text-blue-500" />
+                    </div>
+                    {isExpanded && (
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium">Install App</p>
+                        <p className="text-xs text-muted-foreground">Desktop experience</p>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              )}
+
+              {/* Theme Toggle Button */}
+              <ThemeToggleButton isExpanded={isExpanded} />
+
+              {/* Logout Button */}
+              <button
+                onClick={Logout}
+                className={cn(
+                  "group relative overflow-hidden rounded-xl transition-all duration-300 w-full",
+                  "hover:shadow-md active:scale-[0.98]",
+                  isExpanded ? "p-2" : "p-2.5"
+                )}
+              >
+                <div className={cn(
+                  "flex items-center",
+                  isExpanded ? "gap-3" : "justify-center"
+                )}>
+                  <div className="rounded-lg p-1.5 transition-all duration-300">
+                    <LogOut className="h-5 w-5 text-red-500" />
+                  </div>
+                  {isExpanded && (
+                    <div className="flex-1 text-left">
+                      <p className="text-sm font-medium">Logout</p>
+                      <p className="text-xs text-muted-foreground">Sign out</p>
+                    </div>
+                  )}
+                </div>
+              </button>
+            </div>
+
+       
+          </SidebarFooter>
+          <SidebarRail />
+        </Sidebar>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 relative">
+          {/* Mobile Header */}
+          {isMobile && (
+            <div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm">
+              <SidebarTrigger className="mr-2">
+                <Menu className="h-6 w-6" />
+              </SidebarTrigger>
+              <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-indigo-500 bg-clip-text text-transparent">
+                {appName}
+              </h1>
+              <div className="ml-auto flex items-center gap-2">
+                <NotificationBell />
+                <ThemeToggleButton  />
+              </div>
+            </div>
+          )}
+          
+          {/* Desktop Header */}
+          {!isMobile && (location.pathname.startsWith("/dashboard/org") || location.pathname.startsWith("/dashboard/student")) && (
+            <div className="absolute top-4 right-8 z-10 flex items-center gap-4">
+              <NotificationBell />
+            </div>
+          )}
+          
+          <Outlet />
+        </main>
       </div>
     </SidebarProvider>
   );
