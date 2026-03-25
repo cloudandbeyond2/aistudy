@@ -1175,17 +1175,57 @@
 // export default CoursePreview;
 
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Loader, Sparkles } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
 import { serverURL } from '@/constants';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { getCoursePresentationMeta } from '@/lib/coursePresentation';
+
+const defaultQuizSettings = {
+  examMode: true,
+  quizMode: 'secure',
+  attemptLimit: 2,
+  cooldownMinutes: 60,
+  passPercentage: 50,
+  questionCount: 10,
+  difficultyMode: 'mixed',
+  shuffleQuestions: true,
+  shuffleOptions: true,
+  reviewMode: 'after_submit_with_answers',
+  positiveMarkPerCorrect: 1,
+  negativeMarkingEnabled: false,
+  negativeMarkPerWrong: 0.25,
+  sectionPatternEnabled: false,
+  sections: {
+    easy: 0,
+    medium: 0,
+    difficult: 0
+  },
+  proctoring: {
+    requireCamera: true,
+    requireMicrophone: true,
+    detectFullscreenExit: true,
+    detectTabSwitch: true,
+    detectCopyPaste: true,
+    detectContextMenu: true,
+    detectNoise: true
+  }
+};
+
+interface DepartmentOption {
+  _id: string;
+  name: string;
+}
 
 interface CoursePreviewProps {
   isLoading: boolean;
@@ -1209,16 +1249,121 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
   const navigate = useNavigate();
   const [isLoadingCourse, setIsLoadingCourse] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Preparing your course...');
+  const [orgDepartments, setOrgDepartments] = useState<DepartmentOption[]>([]);
+  const [isOrgSettingsDialogOpen, setIsOrgSettingsDialogOpen] = useState(false);
   const { toast } = useToast();
   const presentationMeta = getCoursePresentationMeta(
     contentProfile || topics?.course_meta?.contentProfile
   );
   const PresentationIcon = presentationMeta.icon;
+  const role = sessionStorage.getItem('role') || '';
+  const orgId = sessionStorage.getItem('orgId') || '';
+  const deptId = sessionStorage.getItem('deptId') || '';
+  const deptName = sessionStorage.getItem('deptName') || '';
+  const isOrgStaff = Boolean(orgId) && (role === 'org_admin' || role === 'dept_admin');
+  const [orgSaveConfig, setOrgSaveConfig] = useState(() => ({
+    department: role === 'dept_admin' ? (deptId || deptName || '') : 'all',
+    quizSettings: {
+      ...defaultQuizSettings,
+      proctoring: { ...defaultQuizSettings.proctoring },
+      sections: { ...defaultQuizSettings.sections }
+    }
+  }));
+
+  useEffect(() => {
+    if (!isOrgStaff || !orgId) return;
+
+    let ignore = false;
+    const fetchDepartments = async () => {
+      try {
+        const res = await axios.get(`${serverURL}/api/org/departments?organizationId=${orgId}`);
+        if (ignore) return;
+        const departments = Array.isArray(res.data?.departments) ? res.data.departments : [];
+        setOrgDepartments(departments);
+      } catch (error) {
+        console.error('Failed to fetch org departments for AI course save:', error);
+      }
+    };
+
+    void fetchDepartments();
+    return () => {
+      ignore = true;
+    };
+  }, [isOrgStaff, orgId]);
+
+  useEffect(() => {
+    if (role !== 'dept_admin') return;
+    setOrgSaveConfig((prev) => ({
+      ...prev,
+      department: deptId || deptName || prev.department
+    }));
+  }, [role, deptId, deptName]);
 
   /* ---------------- HELPERS ---------------- */
 
   const getCourseTopics = () =>
     topics?.course_topics || topics?.[courseName.toLowerCase()];
+
+  const updateOrgQuizSetting = (field: string, value: any) => {
+    setOrgSaveConfig((prev) => ({
+      ...prev,
+      quizSettings: {
+        ...prev.quizSettings,
+        [field]: value
+      }
+    }));
+  };
+
+  const updateOrgProctoringSetting = (field: string, value: boolean) => {
+    setOrgSaveConfig((prev) => ({
+      ...prev,
+      quizSettings: {
+        ...prev.quizSettings,
+        proctoring: {
+          ...prev.quizSettings.proctoring,
+          [field]: value
+        }
+      }
+    }));
+  };
+
+  const resolveOrgDepartmentValue = () => {
+    if (role === 'dept_admin') return deptId || deptName || orgSaveConfig.department || '';
+    return orgSaveConfig.department || 'all';
+  };
+
+  const extractOrgTopics = () =>
+    (getCourseTopics() || []).map((topic: any, topicIndex: number) => ({
+      title: topic?.title || `Module ${topicIndex + 1}`,
+      order: topicIndex + 1,
+      subtopics: (Array.isArray(topic?.subtopics) ? topic.subtopics : []).map((sub: any, subIndex: number) => ({
+        title: sub?.title || `Lesson ${subIndex + 1}`,
+        content: sub?.theory || sub?.content || '',
+        videoUrl: sub?.youtube || sub?.videoUrl || '',
+        diagram: sub?.image || sub?.diagram || '',
+        order: subIndex + 1
+      }))
+    }));
+
+  const extractCourseQuizzes = () => {
+    if (Array.isArray(topics?.quizzes)) return topics.quizzes;
+    if (Array.isArray(topics?.course_quizzes)) return topics.course_quizzes;
+    return [];
+  };
+
+  const buildPreviewJsonData = (quizSettings = defaultQuizSettings) => ({
+    ...topics,
+    course_meta: {
+      ...(topics.course_meta || {}),
+      contentProfile: presentationMeta.id,
+      contentProfileLabel: presentationMeta.label,
+      language: lang,
+      courseType: type,
+      organizationManaged: isOrgStaff
+    },
+    quizzes: extractCourseQuizzes(),
+    quizSettings
+  });
 
   /** ✅ GUARANTEES subtopic titles exist */
   const normalizeAllSubtopics = () => {
@@ -1257,7 +1402,6 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
   async function handleCreateCourse() {
     if (isLoadingCourse) return;
 
-    const role = sessionStorage.getItem('role') || '';
     if (role === 'dept_admin') {
       const courseLimit = parseInt(sessionStorage.getItem('courseLimit') || '0', 10) || 0;
       const coursesCreatedCount = parseInt(sessionStorage.getItem('coursesCreatedCount') || '0', 10) || 0;
@@ -1280,57 +1424,86 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
       return;
     }
 
-    setIsLoadingCourse(true);
-    try {
-      setLoadingMessage('Saving course structure...');
-      await saveCourse();
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description:
-          error?.response?.data?.message ||
-          error?.message ||
-          'Failed to create course.'
-      });
-      setIsLoadingCourse(false);
+    if (isOrgStaff) {
+      if (role === 'org_admin' && !resolveOrgDepartmentValue()) {
+        setOrgSaveConfig((prev) => ({ ...prev, department: 'all' }));
+      }
+      setIsOrgSettingsDialogOpen(true);
+      return;
     }
+
+    setIsLoadingCourse(true);
+    setLoadingMessage('Saving course structure...');
+    await saveCourse();
   }
 
   /* ---------------- SAVE ---------------- */
 
-  async function saveCourse() {
+  async function saveCourse(customQuizSettings?: typeof defaultQuizSettings) {
     try {
-      topics.course_meta = {
-        ...(topics.course_meta || {}),
-        contentProfile: presentationMeta.id,
-        contentProfileLabel: presentationMeta.label,
-        language: lang,
-        courseType: type,
-      };
+      const effectiveQuizSettings = customQuizSettings || orgSaveConfig.quizSettings;
+      const previewJsonData = buildPreviewJsonData(effectiveQuizSettings);
+      topics.course_meta = previewJsonData.course_meta;
+      topics.quizzes = previewJsonData.quizzes;
+      topics.quizSettings = previewJsonData.quizSettings;
 
-      const res = await axios.post(serverURL + '/api/course', {
-        user: sessionStorage.getItem('uid'),
-        content: JSON.stringify(topics),
-        type,
-        mainTopic: courseName,
-        lang
-      });
+      let savedCourseId = '';
 
-      sessionStorage.setItem('courseId', res.data.courseId);
-      sessionStorage.setItem('jsonData', JSON.stringify(topics));
+      if (isOrgStaff) {
+        const department = resolveOrgDepartmentValue();
+        setLoadingMessage('Saving organization course and publish controls...');
 
-      // Keep staff quota UI in sync for dept_admin users.
-      if (sessionStorage.getItem('role') === 'dept_admin') {
+        const res = await axios.post(`${serverURL}/api/org/course/create`, {
+          organizationId: orgId,
+          createdBy: sessionStorage.getItem('uid'),
+          title: courseName,
+          description: previewJsonData.course_meta?.contentProfileLabel
+            ? `${previewJsonData.course_meta.contentProfileLabel} AI-generated course`
+            : 'AI-generated course',
+          type,
+          department,
+          topics: extractOrgTopics(),
+          quizzes: previewJsonData.quizzes,
+          quizSettings: effectiveQuizSettings,
+          courseMeta: previewJsonData.course_meta,
+          isAiGenerated: true
+        });
+
+        if (!res.data?.success) {
+          throw new Error(res.data?.message || 'Failed to create organization course');
+        }
+
+        savedCourseId = res.data?.course?._id || '';
+      } else {
+        setLoadingMessage('Saving course structure...');
+        const res = await axios.post(serverURL + '/api/course', {
+          user: sessionStorage.getItem('uid'),
+          content: JSON.stringify(previewJsonData),
+          type,
+          mainTopic: courseName,
+          lang
+        });
+        savedCourseId = res.data?.courseId || '';
+      }
+
+      if (!savedCourseId) {
+        throw new Error('Course id was not returned after save');
+      }
+
+      sessionStorage.setItem('courseId', savedCourseId);
+      sessionStorage.setItem('jsonData', JSON.stringify(previewJsonData));
+
+      if (role === 'dept_admin') {
         const prev = parseInt(sessionStorage.getItem('coursesCreatedCount') || '0', 10) || 0;
         sessionStorage.setItem('coursesCreatedCount', String(prev + 1));
       }
 
-      navigate('/course/' + res.data.courseId, {
+      navigate('/course/' + savedCourseId, {
         state: {
-          jsonData: topics,
+          jsonData: previewJsonData,
           mainTopic: courseName.toUpperCase(),
           type: type.toLowerCase(),
-          courseId: res.data.courseId,
+          courseId: savedCourseId,
           lang
         }
       });
@@ -1350,6 +1523,12 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
       setIsLoadingCourse(false);
     }
   }
+
+  const handleSaveOrgCourseWithSettings = async () => {
+    setIsOrgSettingsDialogOpen(false);
+    setIsLoadingCourse(true);
+    await saveCourse(orgSaveConfig.quizSettings);
+  };
 
   /* ---------------- RENDER ---------------- */
 
@@ -1474,6 +1653,190 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
           {loadingMessage}
         </p>
       )}
+
+      <Dialog open={isOrgSettingsDialogOpen} onOpenChange={setIsOrgSettingsDialogOpen}>
+        <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Optional Publish Controls for AI Course</DialogTitle>
+            <DialogDescription>
+              This organization course will be saved as pending approval and unpublished by default. Keep the default secure exam settings, or adjust quiz mode and malpractice monitoring before it enters the org review flow.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-6 py-2">
+            <div className="grid gap-4 rounded-2xl border bg-muted/30 p-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Course title</Label>
+                <div className="rounded-xl border bg-background px-3 py-2 text-sm font-medium">
+                  {courseName}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Department</Label>
+                {role === 'dept_admin' ? (
+                  <div className="rounded-xl border bg-background px-3 py-2 text-sm font-medium">
+                    {deptName || orgDepartments.find((dept) => dept._id === deptId)?.name || deptId || 'Assigned department'}
+                  </div>
+                ) : (
+                  <Select
+                    value={orgSaveConfig.department || 'all'}
+                    onValueChange={(value) => setOrgSaveConfig((prev) => ({ ...prev, department: value }))}
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Departments</SelectItem>
+                      {orgDepartments.map((department) => (
+                        <SelectItem key={department._id} value={department._id}>
+                          {department.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Quiz mode</Label>
+                <Select
+                  value={orgSaveConfig.quizSettings.quizMode}
+                  onValueChange={(value) => {
+                    updateOrgQuizSetting('quizMode', value);
+                    updateOrgQuizSetting('examMode', value === 'secure');
+                  }}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Select mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="practice">Practice</SelectItem>
+                    <SelectItem value="assessment">Assessment</SelectItem>
+                    <SelectItem value="secure">Secure Exam</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Review mode</Label>
+                <Select
+                  value={orgSaveConfig.quizSettings.reviewMode}
+                  onValueChange={(value) => updateOrgQuizSetting('reviewMode', value)}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Select review mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="after_submit_with_answers">Show answers after submit</SelectItem>
+                    <SelectItem value="after_submit_without_answers">Show score only after submit</SelectItem>
+                    <SelectItem value="score_only">Score only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Attempt limit</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={orgSaveConfig.quizSettings.attemptLimit}
+                  onChange={(e) => updateOrgQuizSetting('attemptLimit', Number(e.target.value) || 1)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Cooldown after failed attempt (minutes)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={orgSaveConfig.quizSettings.cooldownMinutes}
+                  onChange={(e) => updateOrgQuizSetting('cooldownMinutes', Number(e.target.value) || 0)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Pass percentage</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={orgSaveConfig.quizSettings.passPercentage}
+                  onChange={(e) => updateOrgQuizSetting('passPercentage', Number(e.target.value) || 50)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Questions per attempt</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={orgSaveConfig.quizSettings.questionCount}
+                  onChange={(e) => updateOrgQuizSetting('questionCount', Number(e.target.value) || 1)}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
+              <div className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                Malpractice Monitoring
+              </div>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                {[
+                  ['requireCamera', 'Require camera access'],
+                  ['requireMicrophone', 'Require microphone access'],
+                  ['detectTabSwitch', 'Detect tab switches'],
+                  ['detectFullscreenExit', 'Detect fullscreen exit'],
+                  ['detectCopyPaste', 'Detect copy/paste'],
+                  ['detectContextMenu', 'Detect context menu'],
+                  ['detectNoise', 'Detect external noise spikes']
+                ].map(([field, label]) => (
+                  <label
+                    key={field}
+                    className="flex items-center justify-between gap-3 rounded-xl border bg-background px-3 py-2 text-sm"
+                  >
+                    <span>{label}</span>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(orgSaveConfig.quizSettings.proctoring[field as keyof typeof defaultQuizSettings.proctoring])}
+                      onChange={(e) => updateOrgProctoringSetting(field, e.target.checked)}
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button variant="outline" onClick={() => setIsOrgSettingsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  setOrgSaveConfig((prev) => ({
+                    ...prev,
+                    quizSettings: {
+                      ...defaultQuizSettings,
+                      proctoring: { ...defaultQuizSettings.proctoring },
+                      sections: { ...defaultQuizSettings.sections }
+                    }
+                  }));
+                  setIsOrgSettingsDialogOpen(false);
+                  setIsLoadingCourse(true);
+                  await saveCourse({
+                    ...defaultQuizSettings,
+                    proctoring: { ...defaultQuizSettings.proctoring },
+                    sections: { ...defaultQuizSettings.sections }
+                  });
+                }}
+              >
+                Use Defaults and Save
+              </Button>
+              <Button onClick={handleSaveOrgCourseWithSettings}>
+                Save with Current Controls
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -1499,18 +1499,50 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
   async function updateCourse() {
     CountDoneTopics();
     sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
-    const dataToSend = {
-      content: JSON.stringify(jsonData),
-      courseId: courseId
-    };
     try {
-      const postURL = serverURL + '/api/update';
-      await axios.post(postURL, dataToSend);
-    } catch (error) {
+      const viewerRole = sessionStorage.getItem('role') || '';
+      const isOrgEditor = viewerRole === 'org_admin' || viewerRole === 'dept_admin';
+      const isOrgManagedCourse = Boolean(jsonData?.course_meta?.organizationManaged);
+
+      if (isOrgManagedCourse) {
+        if (!isOrgEditor) {
+          return;
+        }
+
+        const orgTopics = (Array.isArray(jsonData?.course_topics) ? jsonData.course_topics : []).map((topic: any, topicIndex: number) => ({
+          title: topic?.title || `Module ${topicIndex + 1}`,
+          order: topicIndex + 1,
+          subtopics: (Array.isArray(topic?.subtopics) ? topic.subtopics : []).map((subtopic: any, subtopicIndex: number) => ({
+            title: subtopic?.title || `Lesson ${subtopicIndex + 1}`,
+            content: subtopic?.theory || subtopic?.content || '',
+            videoUrl: subtopic?.youtube || subtopic?.videoUrl || '',
+            diagram: subtopic?.image || subtopic?.diagram || '',
+            order: subtopicIndex + 1
+          }))
+        }));
+
+        await axios.put(`${serverURL}/api/org/course/${courseId}`, {
+          title: jsonData?.course_title || mainTopic || '',
+          description: jsonData?.course_details || '',
+          type,
+          topics: orgTopics,
+          quizzes: Array.isArray(jsonData?.quizzes) ? jsonData.quizzes : [],
+          quizSettings: jsonData?.quizSettings || {},
+          courseMeta: jsonData?.course_meta || {},
+          updatedBy: sessionStorage.getItem('uid')
+        });
+        return;
+      }
+
+      await axios.post(serverURL + '/api/update', {
+        content: JSON.stringify(jsonData),
+        courseId: courseId
+      });
+    } catch (error: any) {
       console.error(error);
       toast({
         title: "Error",
-        description: "Internal Server Error",
+        description: error?.response?.data?.message || "Internal Server Error",
       });
       setIsLoading(false);
     }

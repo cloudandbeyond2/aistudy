@@ -824,7 +824,7 @@ export const updateOrganization = async (req, res) => {
  * CREATE COURSE (Organization)
  */
 export const createCourse = async (req, res) => {
-    const { organizationId, title, description, type, department, topics, quizzes, quizSettings, assignedTo, createdBy } = req.body;
+    const { organizationId, title, description, type, department, topics, quizzes, quizSettings, assignedTo, createdBy, courseMeta, isAiGenerated } = req.body;
     try {
         const creator = createdBy ? await User.findById(createdBy).select('_id role department coursesCreatedCount courseLimit') : null;
 
@@ -855,6 +855,8 @@ export const createCourse = async (req, res) => {
             title,
             description,
             type: type || 'video & text course',
+            isAiGenerated: Boolean(isAiGenerated),
+            courseMeta: courseMeta || {},
             department: parsedDepartment,
             approvalStatus: 'pending',
             isPublished: false,

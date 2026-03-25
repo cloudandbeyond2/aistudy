@@ -700,6 +700,9 @@ const OrgDashboard = () => {
     const [stats, setStats] = useState<{ studentCount: number; studentLimit: number; assignmentCount: number; submissionCount: number; placedCount: number }>({ studentCount: 0, studentLimit: 50, assignmentCount: 0, submissionCount: 0, placedCount: 0 });
     const [students, setStudents] = useState([]); // Simplified for now
     const [assignments, setAssignments] = useState([]);
+    const [assignmentSubmissionStats, setAssignmentSubmissionStats] = useState<Record<string, { total: number; graded: number; pending: number; resubmit: number }>>({});
+    const [assignmentStatsLoading, setAssignmentStatsLoading] = useState(false);
+    const [assignmentDeskFilter, setAssignmentDeskFilter] = useState<'all' | 'review' | 'dueSoon' | 'overdue'>('all');
     const [notices, setNotices] = useState([]);
     const [courses, setCourses] = useState([]);
     const [previewProject, setPreviewProject] = useState<any>(null);
@@ -1618,6 +1621,53 @@ const formatGuidanceText = (text: string) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab, orgId, role]);
 
+    useEffect(() => {
+        if (activeTab !== 'assignments') return;
+        if (!assignments.length) {
+            setAssignmentSubmissionStats({});
+            return;
+        }
+
+        const fetchAssignmentSubmissionStats = async () => {
+            setAssignmentStatsLoading(true);
+            try {
+                const statsEntries = await Promise.all(
+                    assignments.map(async (assignment: any) => {
+                        try {
+                            const res = await axios.get(`${serverURL}/api/org/assignment/${assignment._id}/submissions`);
+                            const submissions = Array.isArray(res.data?.submissions) ? res.data.submissions : [];
+                            const graded = submissions.filter((submission: any) => submission.status === 'graded').length;
+                            const resubmit = submissions.filter((submission: any) => submission.status === 'resubmit_required').length;
+                            const pending = submissions.length - graded - resubmit;
+
+                            return [
+                                assignment._id,
+                                {
+                                    total: submissions.length,
+                                    graded,
+                                    pending,
+                                    resubmit,
+                                }
+                            ] as const;
+                        } catch (error) {
+                            console.error(`Failed to fetch submissions for assignment ${assignment._id}`, error);
+                            return [
+                                assignment._id,
+                                { total: 0, graded: 0, pending: 0, resubmit: 0 }
+                            ] as const;
+                        }
+                    })
+                );
+
+                setAssignmentSubmissionStats(Object.fromEntries(statsEntries));
+            } finally {
+                setAssignmentStatsLoading(false);
+            }
+        };
+
+        fetchAssignmentSubmissionStats();
+    }, [activeTab, assignments]);
+
     const fetchQuizReports = async (courseIds?: string[]) => {
         if (!orgId) return;
         setQuizReportsLoading(true);
@@ -2078,6 +2128,141 @@ const formatGuidanceText = (text: string) => {
             toast({ variant: 'destructive', title: "Error", description: error.response?.data?.message || "Failed to send request" });
         }
     };
+
+    const now = new Date();
+    const todayKey = now.toISOString().slice(0, 10);
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const meetingsTodayCount = meetings.filter((meeting: any) => {
+        if (!meeting?.date) return false;
+        return new Date(meeting.date).toISOString().slice(0, 10) === todayKey;
+    }).length;
+    const upcomingMeetingsCount = meetings.filter((meeting: any) => {
+        if (!meeting?.date) return false;
+        const meetingDateTime = new Date(`${meeting.date}T${meeting.time || '00:00'}`);
+        return meetingDateTime >= now;
+    }).length;
+    const aiProjectCount = projects.filter((project: any) => Boolean(project?.isAiGenerated)).length;
+    const dueSoonProjectsCount = projects.filter((project: any) => {
+        if (!project?.dueDate) return false;
+        const dueDate = new Date(project.dueDate);
+        return dueDate >= now && dueDate.getTime() - now.getTime() <= 7 * 24 * 60 * 60 * 1000;
+    }).length;
+    const recentNoticesCount = notices.filter((notice: any) => {
+        if (!notice?.createdAt) return false;
+        return new Date(notice.createdAt) >= weekAgo;
+    }).length;
+    const orgWideNoticeCount = notices.filter((notice: any) => !notice?.department).length;
+    const assignmentInsights = assignments.map((assignment: any) => {
+        const dueDate = assignment?.dueDate ? new Date(assignment.dueDate) : null;
+        const statsForAssignment = assignmentSubmissionStats[assignment._id] || { total: 0, graded: 0, pending: 0, resubmit: 0 };
+        const isOverdue = Boolean(dueDate && dueDate < new Date(new Date().setHours(0, 0, 0, 0)));
+        const isDueSoon = Boolean(
+            dueDate &&
+            dueDate >= now &&
+            dueDate.getTime() - now.getTime() <= 3 * 24 * 60 * 60 * 1000
+        );
+        const needsReview = statsForAssignment.pending > 0 || statsForAssignment.resubmit > 0;
+
+        return {
+            assignment,
+            stats: statsForAssignment,
+            isOverdue,
+            isDueSoon,
+            needsReview,
+        };
+    });
+    const overdueAssignments = assignmentInsights.filter((entry) => entry.isOverdue);
+    const dueSoonAssignments = assignmentInsights.filter((entry) => entry.isDueSoon);
+    const reviewAssignments = assignmentInsights.filter((entry) => entry.needsReview);
+    const filteredAssignmentInsights =
+        assignmentDeskFilter === 'review'
+            ? reviewAssignments
+            : assignmentDeskFilter === 'dueSoon'
+            ? dueSoonAssignments
+            : assignmentDeskFilter === 'overdue'
+            ? overdueAssignments
+            : assignmentInsights;
+
+    const renderAssignmentCard = ({ assignment, stats: statsForAssignment, isOverdue, isDueSoon, needsReview }: any) => (
+        <div key={assignment._id} className="rounded-xl border bg-card p-4 shadow-sm">
+            <div className="flex justify-between items-start gap-4">
+                <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold text-lg">{assignment.topic}</h3>
+                        <Badge
+                            variant={isOverdue ? "destructive" : "secondary"}
+                            className={isOverdue ? "" : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20"}
+                        >
+                            {isOverdue ? "Overdue" : isDueSoon ? "Due Soon" : "Active"}
+                        </Badge>
+                        {needsReview && (
+                            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300">
+                                Review Needed
+                            </Badge>
+                        )}
+                    </div>
+                    <div className="mt-2 text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: assignment.description }} />
+                    <div className="mt-3 flex flex-wrap gap-4 text-xs font-medium text-muted-foreground">
+                        <span>Due: {new Date(assignment.dueDate).toLocaleDateString()}</span>
+                        <span>Questions: {assignment.questions?.length || 0}</span>
+                        <span>Submissions: {statsForAssignment.total}</span>
+                        <span>Pending Review: {statsForAssignment.pending}</span>
+                        {statsForAssignment.resubmit > 0 && <span>Resubmit: {statsForAssignment.resubmit}</span>}
+                        {getDepartmentLabel(assignment.department) && <span>Dept: {getDepartmentLabel(assignment.department)}</span>}
+                    </div>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                    <Button variant="outline" size="sm" onClick={() => handleViewSubmissions(assignment)}>
+                        View Submissions
+                    </Button>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm" onClick={() => setEditAssignment({
+                                ...assignment,
+                                dueDate: assignment.dueDate ? new Date(assignment.dueDate).toISOString().split('T')[0] : ''
+                            })}>
+                                Edit
+                            </Button>
+                        </DialogTrigger>
+                        {editAssignment && editAssignment._id === assignment._id && (
+                            <DialogContent>
+                                <DialogHeader><DialogTitle>Edit Assignment</DialogTitle></DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                    <Label>Topic</Label>
+                                    <Input value={editAssignment.topic} onChange={(e) => setEditAssignment({ ...editAssignment, topic: e.target.value })} />
+                                    <Label>Description</Label>
+                                    <RichTextEditor
+                                        value={editAssignment.description || ''}
+                                        onChange={(content) => setEditAssignment({ ...editAssignment, description: content })}
+                                        placeholder="Assignment instructions..."
+                                        className="min-h-[150px]"
+                                    />
+                                    <Label>Due Date</Label>
+                                    <Input type="date" value={editAssignment.dueDate} onChange={(e) => setEditAssignment({ ...editAssignment, dueDate: e.target.value })} />
+                                    <Label>Department (Optional)</Label>
+                                    <select
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={editAssignment.department || ''}
+                                        onChange={(e) => setEditAssignment({ ...editAssignment, department: e.target.value })}
+                                        disabled={role === 'dept_admin'}
+                                    >
+                                        {role !== 'dept_admin' && <option value="">All Students</option>}
+                                        {departmentsList.map((d: any) => (
+                                            <option key={d._id} value={d._id}>{d.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <Button onClick={handleUpdateAssignment}>Update</Button>
+                            </DialogContent>
+                        )}
+                    </Dialog>
+                    <Button variant="ghost" size="sm" onClick={() => handleDeleteAssignment(assignment._id)}>
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
 
     return (
         <div className="container mx-auto py-10 space-y-8 animate-fade-in">
@@ -3354,90 +3539,103 @@ const formatGuidanceText = (text: string) => {
                 <TabsContent value="assignments" className="space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Assignments</CardTitle>
-                            <CardDescription>Create and track assignments.</CardDescription>
+                            <CardTitle>Assignment Desk</CardTitle>
+                            <CardDescription>Create assignments and monitor overdue, review-needed, and due-soon work.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                                <div className="rounded-xl border bg-muted/20 p-4">
+                                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Active Assignments</p>
+                                    <p className="mt-2 text-2xl font-bold">{assignments.length}</p>
+                                </div>
+                                <div className="rounded-xl border bg-muted/20 p-4">
+                                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Overdue</p>
+                                    <p className="mt-2 text-2xl font-bold">{overdueAssignments.length}</p>
+                                </div>
+                                <div className="rounded-xl border bg-muted/20 p-4">
+                                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Due In 3 Days</p>
+                                    <p className="mt-2 text-2xl font-bold">{dueSoonAssignments.length}</p>
+                                </div>
+                                <div className="rounded-xl border bg-muted/20 p-4">
+                                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Needs Review</p>
+                                    <p className="mt-2 text-2xl font-bold">{reviewAssignments.length}</p>
+                                </div>
+                            </div>
                             <div className="flex justify-end">
                                 <Button onClick={() => setOpenAssignmentDialog(true)}><Plus className="w-4 h-4 mr-2" /> New Assignment</Button>
                             </div>
+                            <div className="flex flex-wrap gap-2">
+                                <Button
+                                    type="button"
+                                    variant={assignmentDeskFilter === 'all' ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setAssignmentDeskFilter('all')}
+                                >
+                                    All
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={assignmentDeskFilter === 'review' ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setAssignmentDeskFilter('review')}
+                                >
+                                    Review Needed
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={assignmentDeskFilter === 'dueSoon' ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setAssignmentDeskFilter('dueSoon')}
+                                >
+                                    Due Soon
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={assignmentDeskFilter === 'overdue' ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setAssignmentDeskFilter('overdue')}
+                                >
+                                    Overdue
+                                </Button>
+                            </div>
                             <div className="space-y-4">
+                                {assignmentStatsLoading && (
+                                    <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                                        Loading submission insights for assignments...
+                                    </div>
+                                )}
                                 {assignments.length > 0 ? (
-                                    assignments.map((assignment: any) => (
-                                        <div key={assignment._id} className="p-4 border rounded-lg bg-card">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <h3 className="font-semibold text-lg">{assignment.topic}</h3>
-                                                        {(() => {
-                                                            const isExpired = new Date(assignment.dueDate) < new Date(new Date().setHours(0, 0, 0, 0));
-                                                            return (
-                                                                <Badge variant={isExpired ? "destructive" : "secondary"} className={isExpired ? "" : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20"}>
-                                                                    {isExpired ? "Expired" : "Active"}
-                                                                </Badge>
-                                                            );
-                                                        })()}
-                                                    </div>
-                                                    <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: assignment.description }} />
-                                                    <div className="flex gap-4 mt-2 text-xs font-medium text-muted-foreground">
-                                                        <span className="flex items-center gap-1">
-                                                            Due: {new Date(assignment.dueDate).toLocaleDateString()}
-                                                        </span>
-                                                        <span>{assignment.questions?.length || 0} Questions</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <Button variant="outline" size="sm" onClick={() => handleViewSubmissions(assignment)}>
-                                                        View Submissions
-                                                    </Button>
-                                                    <Dialog>
-                                                        <DialogTrigger asChild>
-                                                            <Button variant="ghost" size="sm" onClick={() => setEditAssignment({
-                                                                ...assignment,
-                                                                dueDate: assignment.dueDate ? new Date(assignment.dueDate).toISOString().split('T')[0] : ''
-                                                            })}>
-                                                                Edit
-                                                            </Button>
-                                                        </DialogTrigger>
-                                                        {editAssignment && editAssignment._id === assignment._id && (
-                                                            <DialogContent>
-                                                                <DialogHeader><DialogTitle>Edit Assignment</DialogTitle></DialogHeader>
-                                                                <div className="grid gap-4 py-4">
-                                                                    <Label>Topic</Label>
-                                                                    <Input value={editAssignment.topic} onChange={(e) => setEditAssignment({ ...editAssignment, topic: e.target.value })} />
-                                                                    <Label>Description</Label>
-                                                                    <RichTextEditor
-                                                                        value={editAssignment.description || ''}
-                                                                        onChange={(content) => setEditAssignment({ ...editAssignment, description: content })}
-                                                                        placeholder="Assignment instructions..."
-                                                                        className="min-h-[150px]"
-                                                                    />
-                                                                    <Label>Due Date</Label>
-                                                                    <Input type="date" value={editAssignment.dueDate} onChange={(e) => setEditAssignment({ ...editAssignment, dueDate: e.target.value })} />
-                                                                    <Label>Department (Optional)</Label>
-                                                                    <select
-                                                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                                        value={editAssignment.department || ''}
-                                                                        onChange={(e) => setEditAssignment({ ...editAssignment, department: e.target.value })}
-                                                                        disabled={role === 'dept_admin'}
-                                                                    >
-                                                                        {role !== 'dept_admin' && <option value="">All Students</option>}
-                                                                        {departmentsList.map((d: any) => (
-                                                                            <option key={d._id} value={d._id}>{d.name}</option>
-                                                                        ))}
-                                                                    </select>
-                                                                </div>
-                                                                <Button onClick={handleUpdateAssignment}>Update</Button>
-                                                            </DialogContent>
-                                                        )}
-                                                    </Dialog>
-                                                    <Button variant="ghost" size="sm" onClick={() => handleDeleteAssignment(assignment._id)}>
-                                                        <Trash2 className="w-4 h-4 text-destructive" />
-                                                    </Button>
-                                                </div>
-                                            </div>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                                                {assignmentDeskFilter === 'review'
+                                                    ? 'Review Needed'
+                                                    : assignmentDeskFilter === 'dueSoon'
+                                                    ? 'Due Soon'
+                                                    : assignmentDeskFilter === 'overdue'
+                                                    ? 'Overdue'
+                                                    : 'All Assignments'}
+                                            </h3>
+                                            <span className="text-xs text-muted-foreground">
+                                                {assignmentDeskFilter === 'review'
+                                                    ? 'Submissions waiting for grading or resubmission follow-up'
+                                                    : assignmentDeskFilter === 'dueSoon'
+                                                    ? 'Assignments closing within the next 3 days'
+                                                    : assignmentDeskFilter === 'overdue'
+                                                    ? 'Assignments that need extension or closeout review'
+                                                    : 'Full assignment register for this workspace'}
+                                            </span>
                                         </div>
-                                    ))
+                                        <div className="space-y-3">
+                                            {filteredAssignmentInsights.length > 0 ? (
+                                                filteredAssignmentInsights.map(renderAssignmentCard)
+                                            ) : (
+                                                <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                                                    No assignments match this filter.
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 ) : (
                                     <div className="text-center text-muted-foreground py-8">
                                         No assignments active.
@@ -3453,12 +3651,12 @@ const formatGuidanceText = (text: string) => {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>Online Meetings</CardTitle>
-                                <CardDescription>Schedule and manage Google Meet or Zoom sessions.</CardDescription>
+                                <CardTitle>Session Desk</CardTitle>
+                                <CardDescription>Plan live classes, mentoring slots, and virtual department sessions.</CardDescription>
                             </div>
                             <Dialog open={openMeetingDialog} onOpenChange={setOpenMeetingDialog}>
                                 <DialogTrigger asChild onClick={() => setOpenMeetingDialog(true)}>
-                                    <Button><Plus className="w-4 h-4 mr-2" /> Schedule Meeting</Button>
+                                    <Button><Plus className="w-4 h-4 mr-2" /> Plan Session</Button>
                                 </DialogTrigger>
                                 <DialogContent
   className="z-[9999]"
@@ -3518,6 +3716,41 @@ const formatGuidanceText = (text: string) => {
                             </Dialog>
                         </CardHeader>
                         <CardContent>
+                            <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                                <div className="rounded-xl border bg-muted/20 p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                                            <Video className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Total Sessions</p>
+                                            <p className="text-2xl font-bold">{meetings.length}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="rounded-xl border bg-muted/20 p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                            <Clock className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Scheduled Today</p>
+                                            <p className="text-2xl font-bold">{meetingsTodayCount}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="rounded-xl border bg-muted/20 p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="rounded-lg bg-violet-100 p-2 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+                                            <TrendingUp className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Upcoming Queue</p>
+                                            <p className="text-2xl font-bold">{upcomingMeetingsCount}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {meetings.length > 0 ? meetings.map((m: any) => (
                                     <div key={m._id} className="p-4 border rounded-lg flex justify-between items-start bg-card hover:shadow-md transition-all">
@@ -3554,8 +3787,8 @@ const formatGuidanceText = (text: string) => {
     <Card>
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
-                <CardTitle>Projects & Research</CardTitle>
-                <CardDescription>Assign practical projects, research topics, or lab work.</CardDescription>
+                <CardTitle>Projects & Labs Desk</CardTitle>
+                <CardDescription>Run practical work, guided research, and applied skill-building projects.</CardDescription>
             </div>
             {/* <Dialog open={openProjectDialog} onOpenChange={setOpenProjectDialog}>
                 <DialogTrigger asChild onClick={() => setOpenProjectDialog(true)}> */}
@@ -3853,6 +4086,41 @@ Login:
         </CardHeader>
         
         <CardContent>
+            <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="rounded-xl border bg-muted/20 p-4">
+                    <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                            <Briefcase className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Active Projects</p>
+                            <p className="text-2xl font-bold">{projects.length}</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="rounded-xl border bg-muted/20 p-4">
+                    <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-purple-100 p-2 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                            <Sparkles className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">AI Assisted</p>
+                            <p className="text-2xl font-bold">{aiProjectCount}</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="rounded-xl border bg-muted/20 p-4">
+                    <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-amber-100 p-2 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                            <Clock className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Due In 7 Days</p>
+                            <p className="text-2xl font-bold">{dueSoonProjectsCount}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
             {/* Projects Grid Display with View and Delete Icons */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {projects.length > 0 ? (
@@ -4183,10 +4451,45 @@ Login:
                 <TabsContent value="notices" className="space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Notice board</CardTitle>
-                            <CardDescription>Broadcast messages to students.</CardDescription>
+                            <CardTitle>Announcement Desk</CardTitle>
+                            <CardDescription>Broadcast updates, exam alerts, and operational notices to learners.</CardDescription>
                         </CardHeader>
                         <CardContent>
+                            <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                                <div className="rounded-xl border bg-muted/20 p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="rounded-lg bg-sky-100 p-2 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
+                                            <Bell className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Total Notices</p>
+                                            <p className="text-2xl font-bold">{notices.length}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="rounded-xl border bg-muted/20 p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                            <TrendingUp className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Posted This Week</p>
+                                            <p className="text-2xl font-bold">{recentNoticesCount}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="rounded-xl border bg-muted/20 p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="rounded-lg bg-violet-100 p-2 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+                                            <Users className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs uppercase tracking-wide text-muted-foreground">All Learners</p>
+                                            <p className="text-2xl font-bold">{orgWideNoticeCount}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div className="space-y-4">
                                 <div className="grid gap-2">
                                     <Label>Title</Label>

@@ -5,6 +5,8 @@ const orgCourseSchema = new mongoose.Schema({
     title: { type: String, required: true },
     description: String,
     type: { type: String, default: 'video & text course' },
+    isAiGenerated: { type: Boolean, default: false },
+    courseMeta: { type: mongoose.Schema.Types.Mixed, default: {} },
     department: String, // To assign to a specific department
     approvalStatus: {
         type: String,
