@@ -55,25 +55,23 @@ const OrgStudentTickets = () => {
   };
 
   const filteredTickets = tickets.filter((ticket) => {
+    const search = searchTerm.toLowerCase().replace("#", "");
+    const ticketId = ticket._id.slice(-6).toLowerCase();
+    const subject = ticket.subject?.toLowerCase() || "";
+    const memberName = ticket.student?.name?.toLowerCase() || "";
+    const role = ticket.student?.role?.toLowerCase() || "";
 
-  const search = searchTerm.toLowerCase().replace("#","");
+    const matchesSearch =
+      subject.includes(search) ||
+      memberName.includes(search) ||
+      role.includes(search) ||
+      ticketId.includes(search);
 
-  const ticketId = ticket._id.slice(-6).toLowerCase();
+    const matchesStatus =
+      statusFilter === "All" || ticket.status === statusFilter;
 
-  const subject = ticket.subject?.toLowerCase() || "";
-  const student = ticket.student?.name?.toLowerCase() || "";
-
-  const matchesSearch =
-    subject.includes(search) ||
-    student.includes(search) ||
-    ticketId.includes(search);
-
-  const matchesStatus =
-    statusFilter === "All" || ticket.status === statusFilter;
-
-  return matchesSearch && matchesStatus;
-
-});
+    return matchesSearch && matchesStatus;
+  });
 
   const totalPages = Math.ceil(filteredTickets.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -131,10 +129,10 @@ const OrgStudentTickets = () => {
     <div className="p-6 space-y-6 bg-background min-h-screen">
       <div className="space-y-4">
         <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
-          Student Support Center
+          Member Support Center
         </h1>
         <p className="text-muted-foreground text-base leading-relaxed max-w-2xl">
-          Manage and respond to student requests.
+          Manage and respond to student and staff requests.
         </p>
       </div>
 
@@ -194,9 +192,9 @@ const OrgStudentTickets = () => {
                 <TableRow>
                   <TableHead className="w-[120px] font-semibold">Ticket ID</TableHead>
                   <TableHead className="font-semibold">Issue Details</TableHead>
-                  <TableHead className="font-semibold">Student</TableHead>
+                  <TableHead className="font-semibold">Member</TableHead>
+                  <TableHead className="font-semibold text-center">Role</TableHead>
                   <TableHead className="font-semibold">Status</TableHead>
-                  {/* Updated Header */}
                   <TableHead className="font-semibold">Date Created</TableHead> 
                   <TableHead className="font-semibold text-center">Unread</TableHead>
                   <TableHead className="text-right font-semibold pr-6">Action</TableHead>
@@ -228,9 +226,15 @@ const OrgStudentTickets = () => {
                           <div className="flex flex-col">
                             <span className="font-semibold text-foreground">{ticket.student?.name}</span>
                             <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                              {ticket.student?.department || "General"}
+                              {ticket.student?.department || ticket.department || "General"}
                             </span>
                           </div>
+                        </TableCell>
+
+                        <TableCell className="text-center">
+                           <Badge variant="outline" className="capitalize">
+                             {ticket.student?.role || "Student"}
+                           </Badge>
                         </TableCell>
 
                         <TableCell>
@@ -278,7 +282,7 @@ const OrgStudentTickets = () => {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground italic">
+                    <TableCell colSpan={8} className="h-32 text-center text-muted-foreground italic">
                       No support tickets found.
                     </TableCell>
                   </TableRow>
