@@ -13,6 +13,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarRail,
+  useSidebar,
   SidebarTrigger
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
@@ -52,7 +53,8 @@ import {
   CheckCircle2,
   Zap,
   Sun,
-  Moon
+  Moon,
+  X // Add X icon for close state
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -63,7 +65,7 @@ import { DownloadIcon } from '@radix-ui/react-icons';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import NotificationBell from '../NotificationBell';
-import { useSidebar } from '@/components/ui/sidebar';
+// import { useSidebar } from '@/components/ui/sidebar';
 
 // Menu Item Component - Text hides when collapsed
 const MenuItem = ({ icon: Icon, label, to, isActive, badge, onClick, className, isExpanded, isMobile, onMobileClick }: any) => (
@@ -172,10 +174,13 @@ const ThemeToggleButton = ({ isExpanded = false }: { isExpanded?: boolean }) => 
 };
 
 // Create a separate component for the sidebar content that will use the useSidebar hook
+// Move all hooks to the top level of this component, before any conditional logic
 const SidebarContentComponent = ({ isExpanded, isCollapsed, hovered, setIsCollapsed, setHovered, admin, isPaidUser, notebookEnabled, resumeEnabled, careerEnabled, userType, courseCount, handleGenerateClick, installPrompt, handleInstallClick, Logout }: any) => {
+  // IMPORTANT: All hooks MUST be called at the top level, before any conditional returns
   const isMobile = useIsMobile();
   const location = useLocation();
-  const { setOpenMobile } = useSidebar();
+  const { setOpenMobile, openMobile } = useSidebar(); // This must be called unconditionally
+  const branding = useBranding(); // Store branding in a variable
   
   // Helper to check active route
   const isActive = (path: string) => location.pathname === path;
@@ -185,6 +190,11 @@ const SidebarContentComponent = ({ isExpanded, isCollapsed, hovered, setIsCollap
     if (isMobile) {
       setOpenMobile(false);
     }
+  };
+
+  // Function to toggle mobile sidebar
+  const toggleMobileSidebar = () => {
+    setOpenMobile(!openMobile);
   };
 
   return (
@@ -211,17 +221,17 @@ const SidebarContentComponent = ({ isExpanded, isCollapsed, hovered, setIsCollap
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/20 rounded-xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
                 <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:rotate-3">
-                  <img src={useBranding().appLogo} alt="Logo" className='h-5 w-5' />
+                  <img src={branding.appLogo} alt="Logo" className='h-5 w-5' />
                 </div>
               </div>
               {isExpanded && (
                 <span className="font-display text-lg font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent group-hover:scale-105 transition-transform whitespace-nowrap">
-                  {useBranding().appName}
+                  {branding.appName}
                 </span>
               )}
             </Link>
             
-            {/* Collapse Toggle Button */}
+            {/* Collapse Toggle Button - Only show on desktop */}
             {!isMobile && (
               <Button
                 variant="ghost"
@@ -881,18 +891,28 @@ const SidebarContentComponent = ({ isExpanded, isCollapsed, hovered, setIsCollap
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 relative">
-        {/* Mobile Header */}
+        {/* Mobile Header with Responsive Menu Icon */}
         {isMobile && (
           <div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm">
-            <SidebarTrigger className="mr-2">
-              <Menu className="h-6 w-6" />
-            </SidebarTrigger>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleMobileSidebar}
+              className="mr-2 hover:bg-muted/50 transition-all duration-300"
+              aria-label={openMobile ? "Close menu" : "Open menu"}
+            >
+              {openMobile ? (
+                <X className="h-6 w-6 transition-transform duration-300 rotate-0" />
+              ) : (
+                <Menu className="h-6 w-6 transition-transform duration-300" />
+              )}
+            </Button>
             <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-indigo-500 bg-clip-text text-transparent">
-              {useBranding().appName}
+              {branding.appName}
             </h1>
             <div className="ml-auto flex items-center gap-2">
               <NotificationBell />
-              <ThemeToggleButton  />
+              <ThemeToggleButton isExpanded={false} />
             </div>
           </div>
         )}
