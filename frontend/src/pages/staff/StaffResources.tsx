@@ -363,6 +363,12 @@ export default function StaffResources() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, filteredResources.length);
   const currentResources = filteredResources.slice(startIndex, endIndex);
+  const latestResourceDate =
+    resources.length > 0
+      ? resources
+          .map((resource) => resource.date)
+          .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0]
+      : 'No uploads yet';
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -377,10 +383,10 @@ return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Course Resources
+          Resource Library
         </h1>
         <p className="text-slate-500 dark:text-slate-400">
-          Manage and share learning materials.
+          Organize notes, manuals, assignments, and reference files for your learners.
         </p>
       </div>
 
@@ -425,6 +431,56 @@ return (
         onChange={(e) => setSearchQuery(e.target.value)}
         className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
       />
+    </div>
+
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-blue-50 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+            <FileText size={18} />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Total Resources</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{resources.length}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-emerald-50 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+            <Folder size={18} />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Custom Categories</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{Math.max(categories.length - 1, 0)}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-amber-50 p-2 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+            <Search size={18} />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Visible Results</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{filteredResources.length}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-violet-50 p-2 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+            <Download size={18} />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Latest Update</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">{latestResourceDate}</p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

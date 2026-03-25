@@ -4,6 +4,7 @@ import {
   Filter,
   MoreHorizontal,
   User,
+  Users,
   Plus,
   X,
   Upload,
@@ -92,6 +93,12 @@ const currentStudents = filteredStudents.slice(
 );
 
 const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
+const activeClassCount = classes.length;
+const academicYearCount = new Set(
+  students
+    .map((student) => student.studentDetails?.academicYear)
+    .filter(Boolean)
+).size;
 
 useEffect(() => {
   fetchStudents();
@@ -288,10 +295,10 @@ const [newStudent, setNewStudent] = useState({
   {/* Title Section */}
   <div>
     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-      Department Students
+      Learner Directory
     </h1>
     <p className="text-slate-500 dark:text-slate-400">
-      View and manage students within your department.
+      Maintain student records, class allocation, and academic intake for your department.
     </p>
   </div>
 
@@ -339,6 +346,56 @@ const [newStudent, setNewStudent] = useState({
 
   </div>
 </div>
+
+   <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <div className="flex items-center gap-3">
+        <div className="rounded-lg bg-blue-50 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+          <Users size={18} />
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Total Learners</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">{students.length}</p>
+        </div>
+      </div>
+    </div>
+
+    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <div className="flex items-center gap-3">
+        <div className="rounded-lg bg-emerald-50 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+          <FileSpreadsheet size={18} />
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Active Classes</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">{activeClassCount}</p>
+        </div>
+      </div>
+    </div>
+
+    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <div className="flex items-center gap-3">
+        <div className="rounded-lg bg-amber-50 p-2 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+          <Filter size={18} />
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Visible Results</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">{filteredStudents.length}</p>
+        </div>
+      </div>
+    </div>
+
+    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <div className="flex items-center gap-3">
+        <div className="rounded-lg bg-violet-50 p-2 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+          <User size={18} />
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Academic Years</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">{academicYearCount}</p>
+        </div>
+      </div>
+    </div>
+   </div>
 
    <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
 

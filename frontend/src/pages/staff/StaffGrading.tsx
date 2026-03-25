@@ -1,544 +1,654 @@
-import React, { useState } from 'react';
-import { 
-  CheckCircle2, 
-  Clock, 
-  FileText, 
-  ChevronRight, 
-  ChevronLeft, 
-  Maximize2, 
-  ZoomIn, 
-  ZoomOut, 
-  RotateCw, 
-  Save, 
-  MessageSquare,
-  MoreVertical,
+import React, { useEffect, useState } from 'react';
+import {
+  CheckCircle2,
+  Clock,
+  FileText,
+  ChevronRight,
+  ChevronLeft,
+  Maximize2,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+  Save,
   Download,
-  X
+  Loader2,
+  ExternalLink,
+  AlertCircle,
 } from 'lucide-react';
+import axios from 'axios';
+import { serverURL } from '@/constants';
+import { useToast } from '@/hooks/use-toast';
 
-// --- Types ---
-interface Assignment {
-  id: number;
-  title: string;
-  class: string;
-  submitted: number;
-  total: number;
-  due: string;
-  status: 'Pending' | 'Active' | 'Graded';
-}
+const GRADE_OPTIONS = ['A', 'B', 'C', 'D', 'E'];
 
-interface Submission {
-  id: number;
-  studentName: string;
-  studentId: string;
-  submittedAt: string;
-  status: 'Pending' | 'Graded';
-  imageUrl: string;
-  score: number | '';
-  feedback: string;
-}
+const getDepartmentValue = (value: any) => {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') return value._id || value.name || '';
+  return '';
+};
 
-// --- Mock Data ---
-const ASSIGNMENTS: Assignment[] = [
-  { id: 1, title: 'Algorithm Analysis Report', class: 'CS 101', submitted: 42, total: 45, due: 'Feb 28, 2026', status: 'Pending' },
-  { id: 2, title: 'Data Structures Implementation', class: 'Data Structures', submitted: 35, total: 38, due: 'Mar 05, 2026', status: 'Active' },
-  { id: 3, title: 'Web Portfolio Project', class: 'Web Dev', submitted: 40, total: 42, due: 'Mar 10, 2026', status: 'Active' },
-  { id: 4, title: 'Midterm Exam', class: 'CS 101', submitted: 45, total: 45, due: 'Feb 15, 2026', status: 'Graded' },
-];
+const formatSubmissionStatus = (submission: any) => {
+  if (submission?.status === 'resubmit_required') return 'Resubmit Required';
+  if (submission?.status === 'graded') return `Graded${submission?.grade ? ` (${submission.grade})` : ''}`;
+  if (submission?.status === 'submitted') return 'Submitted';
+  return submission?.status || 'Pending';
+};
 
-const MOCK_SUBMISSIONS: Submission[] = [
-  {
-    id: 101,
-    studentName: "Alice Johnson",
-    studentId: "S2026001",
-    submittedAt: "Feb 27, 2026 • 2:30 PM",
-    status: "Pending",
-    imageUrl: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=1000&auto=format&fit=crop", // Handwriting/Math
-    score: '',
-    feedback: ""
-  },
-  {
-    id: 102,
-    studentName: "Bob Smith",
-    studentId: "S2026002",
-    submittedAt: "Feb 28, 2026 • 10:15 AM",
-    status: "Graded",
-    imageUrl: "https://images.unsplash.com/photo-1596495578065-6e0763fa1178?q=80&w=1000&auto=format&fit=crop", // Code/Screen
-    score: 88,
-    feedback: "Great analysis, but watch out for edge cases in the sorting algorithm."
-  },
-  {
-    id: 103,
-    studentName: "Charlie Brown",
-    studentId: "S2026003",
-    submittedAt: "Feb 28, 2026 • 11:45 PM",
-    status: "Pending",
-    imageUrl: "https://images.unsplash.com/photo-1517842645767-c639042777db?q=80&w=1000&auto=format&fit=crop", // Notes
-    score: '',
-    feedback: ""
-  }
-];
+const isImageFile = (fileUrl: string) => /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(fileUrl);
+const isPdfFile = (fileUrl: string) => /\.pdf$/i.test(fileUrl);
 
 export default function StaffGrading() {
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState<number | null>(null);
-  
-  // Grading View State
+  const { toast } = useToast();
+  const orgId = sessionStorage.getItem('orgId') || '';
+  const role = sessionStorage.getItem('role');
+  const deptId = sessionStorage.getItem('deptId') || '';
+  const deptName = sessionStorage.getItem('deptName') || '';
+
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [assignmentSubmissionStats, setAssignmentSubmissionStats] = useState<Record<string, { total: number; graded: number; pending: number; resubmit: number }>>({});
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [loadingAssignments, setLoadingAssignments] = useState(true);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [currentSubmissionIndex, setCurrentSubmissionIndex] = useState(0);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [rotation, setRotation] = useState(0);
-  const [submissions, setSubmissions] = useState<Submission[]>(MOCK_SUBMISSIONS);
+  const [selectedGrade, setSelectedGrade] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  const activeAssignment = ASSIGNMENTS.find(a => a.id === selectedAssignmentId);
-  const currentSubmission = submissions[currentSubmissionIndex];
+  useEffect(() => {
+    if (!orgId) return;
+    fetchAssignments();
+  }, [orgId, deptId, deptName, role]);
 
-  // Handlers
-  const handleGradeClick = (id: number) => {
-    setSelectedAssignmentId(id);
-    setCurrentSubmissionIndex(0); // Reset to first student
-  };
+  useEffect(() => {
+    if (!assignments.length) {
+      setAssignmentSubmissionStats({});
+      return;
+    }
 
-  const handleBack = () => {
-    setSelectedAssignmentId(null);
-  };
+    const fetchSubmissionStats = async () => {
+      try {
+        const statsEntries = await Promise.all(
+          assignments.map(async (assignment: any) => {
+            try {
+              const res = await axios.get(`${serverURL}/api/org/assignment/${assignment._id}/submissions`);
+              const nextSubmissions = Array.isArray(res.data?.submissions) ? res.data.submissions : [];
+              const graded = nextSubmissions.filter((submission: any) => submission.status === 'graded').length;
+              const resubmit = nextSubmissions.filter((submission: any) => submission.status === 'resubmit_required').length;
+              const pending = nextSubmissions.length - graded - resubmit;
 
-  const handlePrevStudent = () => {
-    setCurrentSubmissionIndex(prev => Math.max(0, prev - 1));
-  };
+              return [
+                assignment._id,
+                { total: nextSubmissions.length, graded, pending, resubmit }
+              ] as const;
+            } catch (error) {
+              console.error(`Failed to fetch submission stats for ${assignment._id}`, error);
+              return [assignment._id, { total: 0, graded: 0, pending: 0, resubmit: 0 }] as const;
+            }
+          })
+        );
 
-  const handleNextStudent = () => {
-    setCurrentSubmissionIndex(prev => Math.min(submissions.length - 1, prev + 1));
-  };
-
-  const handleZoomIn = () => setZoomLevel(prev => Math.min(200, prev + 10));
-  const handleZoomOut = () => setZoomLevel(prev => Math.max(50, prev - 10));
-  const handleRotate = () => setRotation(prev => (prev + 90) % 360);
-
-  const handleScoreChange = (val: string) => {
-    const num = val === '' ? '' : Math.min(100, Math.max(0, Number(val)));
-    updateSubmission(currentSubmission.id, { score: num });
-  };
-
-  const handleFeedbackChange = (val: string) => {
-    updateSubmission(currentSubmission.id, { feedback: val });
-  };
-
-  const updateSubmission = (id: number, updates: Partial<Submission>) => {
-    setSubmissions(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
-  };
-
-  const handleSaveGrade = () => {
-    setIsSaving(true);
-    // Simulate API call
-    setTimeout(() => {
-      updateSubmission(currentSubmission.id, { status: 'Graded' });
-      setIsSaving(false);
-      
-      // Auto-advance to next student if not last
-      if (currentSubmissionIndex < submissions.length - 1) {
-        setCurrentSubmissionIndex(prev => prev + 1);
+        setAssignmentSubmissionStats(Object.fromEntries(statsEntries));
+      } catch (error) {
+        console.error('Failed to fetch assignment submission stats', error);
       }
-    }, 600);
+    };
+
+    fetchSubmissionStats();
+  }, [assignments]);
+
+  useEffect(() => {
+    if (!selectedAssignmentId) return;
+    fetchSubmissions(selectedAssignmentId);
+  }, [selectedAssignmentId]);
+
+  useEffect(() => {
+    const currentSubmission = submissions[currentSubmissionIndex];
+    setSelectedGrade(currentSubmission?.grade || '');
+  }, [submissions, currentSubmissionIndex]);
+
+  const matchesCurrentDepartment = (value: any, departmentId?: any) => {
+    const normalizedValue = getDepartmentValue(value);
+    const normalizedDepartmentId = getDepartmentValue(departmentId);
+    return Boolean(
+      (deptName && normalizedValue === deptName) ||
+      (deptId && normalizedValue === deptId) ||
+      (deptId && normalizedDepartmentId === deptId)
+    );
   };
 
-  // --- Render: Grading Interface ---
+  const fetchAssignments = async () => {
+    setLoadingAssignments(true);
+    try {
+      const res = await axios.get(`${serverURL}/api/org/assignments?organizationId=${orgId}`);
+      if (res.data?.success) {
+        let nextAssignments = Array.isArray(res.data.assignments) ? res.data.assignments : [];
+        if (role === 'dept_admin') {
+          nextAssignments = nextAssignments.filter((assignment: any) =>
+            matchesCurrentDepartment(assignment.department, assignment.departmentId)
+          );
+        }
+        setAssignments(nextAssignments);
+      }
+    } catch (error) {
+      console.error('Failed to fetch assignments', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load assignments.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingAssignments(false);
+    }
+  };
+
+  const fetchSubmissions = async (assignmentId: string) => {
+    setLoadingSubmissions(true);
+    try {
+      const res = await axios.get(`${serverURL}/api/org/assignment/${assignmentId}/submissions`);
+      if (res.data?.success) {
+        const nextSubmissions = Array.isArray(res.data.submissions) ? res.data.submissions : [];
+        setSubmissions(nextSubmissions);
+        setCurrentSubmissionIndex(0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch submissions', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load assignment submissions.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingSubmissions(false);
+    }
+  };
+
+  const handleGradeSave = async () => {
+    const currentSubmission = submissions[currentSubmissionIndex];
+    if (!currentSubmission?._id || !selectedGrade) {
+      toast({
+        title: 'Missing grade',
+        description: 'Select a grade before saving.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const res = await axios.post(
+        `${serverURL}/api/org/assignment/submission/${currentSubmission._id}/grade`,
+        { grade: selectedGrade }
+      );
+
+      if (res.data?.success) {
+        const nextStatus = selectedGrade === 'E' ? 'resubmit_required' : 'graded';
+        setSubmissions((prev) =>
+          prev.map((submission) =>
+            submission._id === currentSubmission._id
+              ? { ...submission, grade: selectedGrade, status: nextStatus }
+              : submission
+          )
+        );
+        setAssignmentSubmissionStats((prev) => {
+          const activeAssignmentStats = prev[selectedAssignmentId || ''] || { total: 0, graded: 0, pending: 0, resubmit: 0 };
+          const nextStats = { ...activeAssignmentStats };
+          const previousStatus = currentSubmission.status;
+
+          if (previousStatus === 'graded') nextStats.graded = Math.max(0, nextStats.graded - 1);
+          if (previousStatus === 'resubmit_required') nextStats.resubmit = Math.max(0, nextStats.resubmit - 1);
+          if (previousStatus === 'submitted' || previousStatus === 'pending') nextStats.pending = Math.max(0, nextStats.pending - 1);
+
+          if (nextStatus === 'graded') nextStats.graded += 1;
+          if (nextStatus === 'resubmit_required') nextStats.resubmit += 1;
+
+          return {
+            ...prev,
+            [selectedAssignmentId || '']: nextStats,
+          };
+        });
+
+        toast({
+          title: 'Grade saved',
+          description: 'Submission updated successfully.',
+        });
+      }
+    } catch (error) {
+      console.error('Failed to grade submission', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save grade.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const activeAssignment = assignments.find((assignment) => assignment._id === selectedAssignmentId) || null;
+  const currentSubmission = submissions[currentSubmissionIndex] || null;
+  const pendingReviewCount = Object.values(assignmentSubmissionStats).reduce((sum, stats) => sum + stats.pending + stats.resubmit, 0);
+  const activeAssignmentCount = assignments.length;
+  const completedAssignmentCount = assignments.filter((assignment) => {
+    const stats = assignmentSubmissionStats[assignment._id];
+    return stats && stats.total > 0 && stats.pending === 0 && stats.resubmit === 0;
+  }).length;
+
   if (selectedAssignmentId && activeAssignment) {
-return (
-  <div className="flex flex-col h-[calc(100vh-4rem)] -m-4 lg:-m-8">
+    const fileUrl = currentSubmission?.fileUrl ? `${serverURL}${currentSubmission.fileUrl}` : '';
 
-    {/* Header */}
-
-    <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-3 flex items-center justify-between shadow-sm z-10">
-
-      <div className="flex items-center gap-4">
-
-        <button
-          onClick={handleBack}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg text-gray-500 dark:text-slate-300 transition-colors"
-        >
-          <ChevronLeft size={20} />
-        </button>
-
-        <div>
-          <h2 className="font-bold text-slate-900 dark:text-white">
-            {activeAssignment.title}
-          </h2>
-          <p className="text-xs text-gray-500 dark:text-slate-400">
-            {activeAssignment.class} • Due {activeAssignment.due}
-          </p>
-        </div>
-
-      </div>
-
-      <div className="flex items-center gap-4">
-
-        <div className="flex items-center gap-2 bg-gray-100 dark:bg-slate-800 rounded-lg p-1">
-
-          <button
-            onClick={handlePrevStudent}
-            disabled={currentSubmissionIndex === 0}
-            className="p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-md disabled:opacity-30 transition-all"
-          >
-            <ChevronLeft size={16} />
-          </button>
-
-          <span className="text-sm font-medium text-gray-600 dark:text-slate-300 min-w-[100px] text-center">
-            Student {currentSubmissionIndex + 1} of {submissions.length}
-          </span>
-
-          <button
-            onClick={handleNextStudent}
-            disabled={currentSubmissionIndex === submissions.length - 1}
-            className="p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-md disabled:opacity-30 transition-all"
-          >
-            <ChevronRight size={16} />
-          </button>
-
-        </div>
-
-        <div className="h-8 w-px bg-gray-200 dark:bg-slate-700 mx-2"></div>
-
-        <button
-          onClick={handleSaveGrade}
-          disabled={isSaving}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors shadow-sm"
-        >
-          {isSaving ? <RotateCw className="animate-spin" size={16} /> : <Save size={16} />}
-          {isSaving ? "Saving..." : "Save Grade"}
-        </button>
-
-      </div>
-
-    </div>
-
-    {/* Main Content */}
-
-    <div className="flex-1 flex overflow-hidden bg-gray-50 dark:bg-slate-950">
-
-      {/* Left: Submission Viewer */}
-
-      <div className="flex-1 flex flex-col relative border-r border-gray-200 dark:border-slate-700">
-
-        {/* Toolbar */}
-
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-gray-200 dark:border-slate-700 shadow-sm rounded-full px-4 py-2 flex items-center gap-4 z-20">
-
-          <button onClick={handleZoomOut} className="text-gray-500 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white">
-            <ZoomOut size={18} />
-          </button>
-
-          <span className="text-xs font-medium text-gray-600 dark:text-slate-300 w-12 text-center">
-            {zoomLevel}%
-          </span>
-
-          <button onClick={handleZoomIn} className="text-gray-500 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white">
-            <ZoomIn size={18} />
-          </button>
-
-          <div className="w-px h-4 bg-gray-300 dark:bg-slate-600"></div>
-
-          <button onClick={handleRotate} className="text-gray-500 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white">
-            <RotateCw size={18} />
-          </button>
-
-          <button className="text-gray-500 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white">
-            <Maximize2 size={18} />
-          </button>
-
-        </div>
-
-        {/* Canvas */}
-
-        <div className="flex-1 overflow-auto flex items-center justify-center p-8 bg-slate-100/50 dark:bg-slate-900">
-
-          <div
-            className="bg-white dark:bg-slate-800 shadow-lg transition-transform duration-200 ease-out origin-center"
-            style={{
-              transform: `scale(${zoomLevel / 100}) rotate(${rotation}deg)`,
-              maxWidth: "100%",
-              maxHeight: "100%"
-            }}
-          >
-
-            <img
-              src={currentSubmission.imageUrl}
-              alt="Student Submission"
-              className="max-w-full h-auto object-contain"
-              draggable={false}
-            />
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* Right: Grading Panel */}
-
-      <div className="w-96 bg-white dark:bg-slate-900 flex flex-col shadow-xl z-10">
-
-        <div className="p-6 border-b border-gray-200 dark:border-slate-700">
-
-          <div className="flex items-start justify-between mb-4">
+    return (
+      <div className="flex h-[calc(100vh-4rem)] flex-col -m-4 lg:-m-8">
+        <div className="z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSelectedAssignmentId(null)}
+              className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              <ChevronLeft size={20} />
+            </button>
 
             <div>
-              <h3 className="font-bold text-slate-900 dark:text-white text-lg">
-                {currentSubmission.studentName}
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-slate-400">
-                ID: {currentSubmission.studentId}
+              <h2 className="font-bold text-slate-900 dark:text-white">
+                {activeAssignment.topic}
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-slate-400">
+                Due {activeAssignment.dueDate ? new Date(activeAssignment.dueDate).toLocaleDateString() : 'Not set'}
               </p>
             </div>
-
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                currentSubmission.status === "Graded"
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400"
-                  : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
-              }`}
-            >
-              {currentSubmission.status}
-            </span>
-
           </div>
 
-          <div className="text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1">
-            <Clock size={12} />
-            Submitted {currentSubmission.submittedAt}
-          </div>
-
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 space-y-8">
-
-          {/* Score */}
-
-          <div className="space-y-3">
-
-            <label className="text-sm font-bold text-slate-900 dark:text-white block">
-              Grade
-            </label>
-
-            <div className="flex items-center gap-3">
-
-              <div className="relative flex-1">
-
-                <input
-                  type="number"
-                  value={currentSubmission.score}
-                  onChange={(e) => handleScoreChange(e.target.value)}
-                  className="w-full pl-4 pr-12 py-3 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl text-lg font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="0"
-                />
-
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-                  / 100
-                </span>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* Feedback */}
-
-          <div className="space-y-3">
-
-            <label className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <MessageSquare size={16} />
-              Feedback
-            </label>
-
-            <textarea
-              value={currentSubmission.feedback}
-              onChange={(e) => handleFeedbackChange(e.target.value)}
-              className="w-full h-32 p-4 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl text-sm text-gray-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-              placeholder="Enter feedback for the student..."
-            ></textarea>
-
-          </div>
-
-        </div>
-
-        {/* Footer */}
-
-        <div className="p-6 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900">
-
-          <button className="w-full flex items-center justify-center gap-2 text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white transition-colors text-sm font-medium">
-            <Download size={16} />
-            Download Submission
-          </button>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-);
-  }
-
-  // --- Render: Dashboard List ---
-return (
-  <div className="max-w-7xl mx-auto space-y-8">
-
-    <div>
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-        Grading & Assignments
-      </h1>
-      <p className="text-slate-500 dark:text-slate-400">
-        Track submissions and grade student work.
-      </p>
-    </div>
-
-    {/* Stats Cards */}
-
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
-        <div className="p-3 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl">
-          <Clock size={24} />
-        </div>
-        <div>
-          <p className="text-sm text-gray-500 dark:text-slate-400">
-            Pending Review
-          </p>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
-            12
-          </h3>
-        </div>
-      </div>
-
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
-        <div className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl">
-          <FileText size={24} />
-        </div>
-        <div>
-          <p className="text-sm text-gray-500 dark:text-slate-400">
-            Active Assignments
-          </p>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
-            5
-          </h3>
-        </div>
-      </div>
-
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
-        <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl">
-          <CheckCircle2 size={24} />
-        </div>
-        <div>
-          <p className="text-sm text-gray-500 dark:text-slate-400">
-            Completed This Term
-          </p>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
-            8
-          </h3>
-        </div>
-      </div>
-
-    </div>
-
-    {/* Assignments List */}
-
-    <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
-
-      <div className="p-6 border-b border-gray-200 dark:border-slate-700">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-          Recent Assignments
-        </h2>
-      </div>
-
-      <div className="divide-y divide-gray-100 dark:divide-slate-700">
-
-        {ASSIGNMENTS.map((assignment) => (
-
-          <div
-            key={assignment.id}
-            className="p-6 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
-          >
-
-            <div className="flex items-start gap-4">
-
-              <div
-                className={`p-3 rounded-xl ${
-                  assignment.status === "Pending"
-                    ? "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
-                    : assignment.status === "Active"
-                    ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-                    : "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
-                }`}
-              >
-                <FileText size={20} />
-              </div>
-
-              <div>
-                <h3 className="font-bold text-slate-900 dark:text-white">
-                  {assignment.title}
-                </h3>
-
-                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400 mt-1">
-                  <span className="font-medium text-gray-700 dark:text-slate-300">
-                    {assignment.class}
-                  </span>
-                  <span>•</span>
-                  <span>Due: {assignment.due}</span>
-                </div>
-              </div>
-
-            </div>
-
-            <div className="flex items-center gap-8">
-
-              <div className="text-right min-w-[100px]">
-
-                <div className="text-sm font-medium text-gray-900 dark:text-white">
-                  {assignment.submitted}/{assignment.total}
-                </div>
-
-                <div className="text-xs text-gray-500 dark:text-slate-400">
-                  Submitted
-                </div>
-
-                <div className="w-full bg-gray-100 dark:bg-slate-700 h-1.5 rounded-full mt-1">
-                  <div
-                    className={`h-1.5 rounded-full ${
-                      assignment.status === "Graded"
-                        ? "bg-emerald-500"
-                        : "bg-blue-500"
-                    }`}
-                    style={{
-                      width: `${
-                        (assignment.submitted / assignment.total) * 100
-                      }%`,
-                    }}
-                  ></div>
-                </div>
-
-              </div>
-
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 rounded-lg bg-gray-100 p-1 dark:bg-slate-800">
               <button
-                onClick={() => handleGradeClick(assignment.id)}
-                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-blue-600 transition-colors"
+                onClick={() => setCurrentSubmissionIndex((prev) => Math.max(0, prev - 1))}
+                disabled={currentSubmissionIndex === 0}
+                className="rounded-md p-1.5 transition-all hover:bg-white disabled:opacity-30 dark:hover:bg-slate-700"
               >
-                {assignment.status === "Graded"
-                  ? "View Grades"
-                  : "Grade Now"}
-                <ChevronRight size={16} />
+                <ChevronLeft size={16} />
               </button>
 
+              <span className="min-w-[120px] text-center text-sm font-medium text-gray-600 dark:text-slate-300">
+                Submission {submissions.length === 0 ? 0 : currentSubmissionIndex + 1} of {submissions.length}
+              </span>
+
+              <button
+                onClick={() => setCurrentSubmissionIndex((prev) => Math.min(submissions.length - 1, prev + 1))}
+                disabled={currentSubmissionIndex === submissions.length - 1 || submissions.length === 0}
+                className="rounded-md p-1.5 transition-all hover:bg-white disabled:opacity-30 dark:hover:bg-slate-700"
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
 
+            <div className="mx-2 h-8 w-px bg-gray-200 dark:bg-slate-700"></div>
+
+            <button
+              onClick={handleGradeSave}
+              disabled={isSaving || !currentSubmission}
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 disabled:bg-blue-400"
+            >
+              {isSaving ? <RotateCw className="animate-spin" size={16} /> : <Save size={16} />}
+              {isSaving ? 'Saving...' : 'Save Grade'}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-1 overflow-hidden bg-gray-50 dark:bg-slate-950">
+          <div className="relative flex flex-1 flex-col border-r border-gray-200 dark:border-slate-700">
+            <div className="absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-4 rounded-full border border-gray-200 bg-white/90 px-4 py-2 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/90">
+              <button onClick={() => setZoomLevel((prev) => Math.max(50, prev - 10))} className="text-gray-500 hover:text-gray-900 dark:text-slate-300 dark:hover:text-white">
+                <ZoomOut size={18} />
+              </button>
+              <span className="w-12 text-center text-xs font-medium text-gray-600 dark:text-slate-300">
+                {zoomLevel}%
+              </span>
+              <button onClick={() => setZoomLevel((prev) => Math.min(200, prev + 10))} className="text-gray-500 hover:text-gray-900 dark:text-slate-300 dark:hover:text-white">
+                <ZoomIn size={18} />
+              </button>
+              <div className="h-4 w-px bg-gray-300 dark:bg-slate-600"></div>
+              <button onClick={() => setRotation((prev) => (prev + 90) % 360)} className="text-gray-500 hover:text-gray-900 dark:text-slate-300 dark:hover:text-white">
+                <RotateCw size={18} />
+              </button>
+              <button className="text-gray-500 hover:text-gray-900 dark:text-slate-300 dark:hover:text-white">
+                <Maximize2 size={18} />
+              </button>
+            </div>
+
+            <div className="flex flex-1 items-center justify-center overflow-auto bg-slate-100/50 p-8 dark:bg-slate-900">
+              {loadingSubmissions ? (
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              ) : !currentSubmission ? (
+                <div className="rounded-xl border border-dashed bg-white p-10 text-center text-sm text-muted-foreground dark:bg-slate-900">
+                  No submissions received yet.
+                </div>
+              ) : currentSubmission.fileUrl && isImageFile(currentSubmission.fileUrl) ? (
+                <div
+                  className="origin-center bg-white shadow-lg transition-transform duration-200 ease-out dark:bg-slate-800"
+                  style={{ transform: `scale(${zoomLevel / 100}) rotate(${rotation}deg)`, maxWidth: '100%', maxHeight: '100%' }}
+                >
+                  <img
+                    src={fileUrl}
+                    alt="Student submission"
+                    className="h-auto max-w-full object-contain"
+                    draggable={false}
+                  />
+                </div>
+              ) : currentSubmission.fileUrl && isPdfFile(currentSubmission.fileUrl) ? (
+                <div
+                  className="h-full w-full overflow-hidden rounded-xl border bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800"
+                  style={{ transform: `scale(${zoomLevel / 100}) rotate(${rotation}deg)` }}
+                >
+                  <iframe title="Submission PDF" src={fileUrl} className="h-[75vh] w-[60vw]" />
+                </div>
+              ) : currentSubmission.content ? (
+                <div
+                  className="max-w-3xl rounded-xl border bg-white p-6 shadow-lg dark:border-slate-700 dark:bg-slate-800"
+                  style={{ transform: `scale(${zoomLevel / 100}) rotate(${rotation}deg)` }}
+                >
+                  <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    Text Submission
+                  </h3>
+                  <div className="whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-200">
+                    {currentSubmission.content}
+                  </div>
+                </div>
+              ) : currentSubmission.fileUrl ? (
+                <div className="rounded-xl border bg-white p-8 text-center shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                  <FileText className="mx-auto mb-4 h-10 w-10 text-blue-600" />
+                  <p className="mb-3 font-medium text-slate-900 dark:text-white">File preview is not available for this type.</p>
+                  <a
+                    href={fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:underline"
+                  >
+                    Open submission file
+                    <ExternalLink size={14} />
+                  </a>
+                </div>
+              ) : (
+                <div className="rounded-xl border bg-white p-8 text-center shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                  <AlertCircle className="mx-auto mb-4 h-10 w-10 text-amber-500" />
+                  <p className="font-medium text-slate-900 dark:text-white">No preview available for this submission.</p>
+                </div>
+              )}
+            </div>
           </div>
 
-        ))}
+          <div className="z-10 flex w-96 flex-col bg-white shadow-xl dark:bg-slate-900">
+            <div className="border-b border-gray-200 p-6 dark:border-slate-700">
+              <div className="mb-4 flex items-start justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                    {currentSubmission?.studentId?.mName || 'Student'}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-slate-400">
+                    {currentSubmission?.studentId?.email || 'No email'}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500">
+                    Roll No: {currentSubmission?.studentId?.studentDetails?.rollNo || '-'}
+                  </p>
+                </div>
 
+                <span
+                  className={`rounded-full px-2 py-1 text-xs font-medium ${
+                    currentSubmission?.status === 'graded'
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+                      : currentSubmission?.status === 'resubmit_required'
+                      ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+                      : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
+                  }`}
+                >
+                  {formatSubmissionStatus(currentSubmission)}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-slate-500">
+                <Clock size={12} />
+                Submitted {currentSubmission?.submittedAt ? new Date(currentSubmission.submittedAt).toLocaleString() : '-'}
+              </div>
+            </div>
+
+            <div className="flex-1 space-y-8 overflow-y-auto p-6">
+              <div className="space-y-3">
+                <label className="block text-sm font-bold text-slate-900 dark:text-white">
+                  Grade
+                </label>
+
+                <div className="grid grid-cols-5 gap-2">
+                  {GRADE_OPTIONS.map((grade) => (
+                    <button
+                      key={grade}
+                      onClick={() => setSelectedGrade(grade)}
+                      className={`rounded-xl border px-3 py-3 text-sm font-bold transition-colors ${
+                        selectedGrade === grade
+                          ? 'border-blue-600 bg-blue-600 text-white'
+                          : grade === 'E'
+                          ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300'
+                          : 'border-gray-200 bg-white text-slate-900 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {grade}
+                    </button>
+                  ))}
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  Grade `E` marks the submission as resubmission required in the current backend flow.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+                  <FileText size={16} />
+                  Submission Details
+                </label>
+
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm dark:border-slate-700 dark:bg-slate-800">
+                  <p className="font-medium text-slate-900 dark:text-white">
+                    Current State
+                  </p>
+                  <p className="mt-1 text-muted-foreground">
+                    {currentSubmission?.grade ? `Saved grade: ${currentSubmission.grade}` : 'No grade has been saved yet.'}
+                  </p>
+                  {currentSubmission?.content && (
+                    <p className="mt-3 line-clamp-6 whitespace-pre-wrap text-slate-700 dark:text-slate-200">
+                      {currentSubmission.content}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-200 bg-gray-50 p-6 dark:border-slate-700 dark:bg-slate-900">
+              {currentSubmission?.fileUrl ? (
+                <a
+                  href={fileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex w-full items-center justify-center gap-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-slate-300 dark:hover:text-white"
+                >
+                  <Download size={16} />
+                  Download Submission
+                </a>
+              ) : (
+                <div className="text-center text-sm text-muted-foreground">
+                  No downloadable file attached.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Assessment Desk
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400">
+          Review pending work, open live submissions, and grade department assignments with real organization data.
+        </p>
       </div>
 
-    </div>
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+              Assessment Control Panel
+            </p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Prioritize submissions that need grading or resubmission follow-up, then move to completed assignment review.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs font-medium">
+            <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+              Pending: {pendingReviewCount}
+            </span>
+            <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+              Active Assignments: {activeAssignmentCount}
+            </span>
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+              Completed: {completedAssignmentCount}
+            </span>
+          </div>
+        </div>
+      </div>
 
-  </div>
-);
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div className="rounded-xl bg-amber-50 p-3 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+            <Clock size={24} />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 dark:text-slate-400">
+              Pending Review
+            </p>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+              {pendingReviewCount}
+            </h3>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div className="rounded-xl bg-blue-50 p-3 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+            <FileText size={24} />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 dark:text-slate-400">
+              Active Assignments
+            </p>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+              {activeAssignmentCount}
+            </h3>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div className="rounded-xl bg-emerald-50 p-3 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+            <CheckCircle2 size={24} />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 dark:text-slate-400">
+              Completed Assignments
+            </p>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+              {completedAssignmentCount}
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="border-b border-gray-200 p-6 dark:border-slate-700">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+            Assignment Queue
+          </h2>
+        </div>
+
+        {loadingAssignments ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : assignments.length === 0 ? (
+          <div className="py-12 text-center text-muted-foreground">
+            No assignments available for this staff workspace.
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-100 dark:divide-slate-700">
+            {assignments.map((assignment) => {
+              const stats = assignmentSubmissionStats[assignment._id] || { total: 0, graded: 0, pending: 0, resubmit: 0 };
+              const needsReview = stats.pending > 0 || stats.resubmit > 0;
+
+              return (
+                <div
+                  key={assignment._id}
+                  className="flex flex-col gap-4 p-6 transition-colors hover:bg-gray-50 dark:hover:bg-slate-800 md:flex-row md:items-center md:justify-between"
+                >
+                  <div className="flex items-start gap-4">
+                    <div
+                      className={`rounded-xl p-3 ${
+                        needsReview
+                          ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
+                          : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                      }`}
+                    >
+                      <FileText size={20} />
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-slate-900 dark:text-white">
+                        {assignment.topic}
+                      </h3>
+
+                      <div className="mt-1 flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
+                        <span>Due: {assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'Not set'}</span>
+                        <span>•</span>
+                        <span>Submissions: {stats.total}</span>
+                        <span>•</span>
+                        <span>Pending: {stats.pending + stats.resubmit}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-8">
+                    <div className="min-w-[140px] text-right">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {stats.graded}/{stats.total || 0}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-slate-400">
+                        Graded
+                      </div>
+                      <div className="mt-1 h-1.5 w-full rounded-full bg-gray-100 dark:bg-slate-700">
+                        <div
+                          className={`h-1.5 rounded-full ${needsReview ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                          style={{
+                            width: `${stats.total > 0 ? (stats.graded / stats.total) * 100 : 0}%`,
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setSelectedAssignmentId(assignment._id)}
+                      className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                    >
+                      {needsReview ? 'Open Grading' : 'Review Assignment'}
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
