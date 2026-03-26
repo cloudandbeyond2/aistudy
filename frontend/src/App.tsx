@@ -109,12 +109,13 @@ import StaffClassDetails from './pages/staff/StaffClassDetails';
 import StaffClassAttendance from './pages/staff/StaffClassAttendance';
 import StaffStudents from './pages/staff/StaffStudents';
 import StaffGrading from './pages/staff/StaffGrading';
-import StaffSchedule from './pages/staff/StaffSchedule';
+import CalendarScheduler from './pages/CalendarScheduler';
 import StaffGlobalNews from "./pages/staff/StaffAnnouncements";
 import StudentProfile from "./pages/StudentProfile";
 import StaffResources from './pages/staff/StaffResources';
 import StaffSupport from './pages/staff/StaffSupport';
 import InterviewPreparation from "./pages/InterviewPreparation";
+import TodoCenter from "./pages/TodoCenter";
 
 const queryClient = new QueryClient();
 
@@ -163,7 +164,9 @@ const App = () => (
 
                     <Route path="notebook" element={<AINotebook />} />
                     <Route path="resume-builder" element={<ResumeBuilder />} />
-                  
+                    <Route path="calendar" element={<CalendarScheduler />} />
+                    <Route path="todo" element={<TodoCenter />} />
+                 
 
                     <Route path="support" element={<SupportTickets />} />
                     <Route path="student/support-tickets" element={<StudentSupportTickets />} />
@@ -248,10 +251,9 @@ const App = () => (
                     <Route path="classes" element={<StaffClasses />} />
                     <Route path="classes/:id" element={<StaffClassDetails />} />
                     <Route path="classes/:id/attendance" element={<StaffClassAttendance />} />
+                    <Route path="schedule" element={<CalendarScheduler />} />
                     <Route path="students" element={<StaffStudents />} />
                     <Route path="grading" element={<StaffGrading />} />
-                    <Route path="schedule" element={<StaffSchedule />} />
-
                     <Route path="resources" element={<StaffResources />} />
                     <Route path="support" element={<StaffSupport />} />
                     <Route path="*" element={<StaffDashboard />} /> {/* Fallback for demo */}

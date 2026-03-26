@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, Users, BookOpen, Sparkles, ArrowRight, BookPlus, FileQuestion, Loader, MoreVertical, Share, Trash2, CheckCircle, Medal, Search, CalendarDays, Lock, Brain, Zap, TrendingUp, Award, Star, Rocket, Cpu, Globe, BarChart3, Target } from 'lucide-react';
+import { Clock, Users, BookOpen, Sparkles, ArrowRight, BookPlus, FileQuestion, Loader, MoreVertical, Share, Trash2, CheckCircle, Medal, Search, CalendarDays, Lock, Brain, Zap, TrendingUp, Award, Star, Rocket, Cpu, Globe, BarChart3, Target, ListTodo } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Link, useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
@@ -563,6 +563,18 @@ const Dashboard = () => {
               >
                 <Rocket className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                 Create New Course
+              </Button>
+            </motion.div>
+
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                onClick={() => navigate('/dashboard/todo')}
+                variant="outline"
+                size="sm"
+                className="hidden sm:inline-flex shadow-md backdrop-blur-sm bg-background/50"
+              >
+                <ListTodo className="mr-2 h-4 w-4" />
+                Todo Center
               </Button>
             </motion.div>
 
