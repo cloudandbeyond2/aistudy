@@ -2518,7 +2518,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
     </section>
   ) : null;
 
-  return (
+ return (
     <div className="flex min-h-[100dvh] flex-col bg-background overflow-x-hidden md:h-screen md:overflow-hidden">
       {/* Loading Popup */}
       <LoadingPopup 
@@ -2532,19 +2532,18 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
         topic={mainTopic}
       />
 
-      <header className="border-b border-border/40 py-2 px-2 md:px-4 flex justify-between items-center sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
+      {/* ── HEADER ── */}
+      <header className="border-b border-border/40 py-2 px-3 md:px-4 flex justify-between items-center sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
         <div className="flex items-center gap-2 md:gap-4 shrink min-w-0">
+
+          {/* Mobile drawer trigger */}
           <Drawer>
             <DrawerTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden"
-              >
+              <Button variant="ghost" size="icon" className="md:hidden flex-shrink-0">
                 <Menu className="h-5 w-5" />
               </Button>
             </DrawerTrigger>
-            <DrawerContent className="max-h-[80vh]">
+            <DrawerContent className="max-h-[85vh]">
               <div className="p-4">
                 <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-background via-background to-muted/60 p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
@@ -2557,7 +2556,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                         {completedLessonCount}/{orderedLessons.length} lessons completed
                       </p>
                     </div>
-                    <div className="rounded-2xl bg-primary/10 px-3 py-2 text-right text-primary">
+                    <div className="rounded-2xl bg-primary/10 px-3 py-2 text-right text-primary flex-shrink-0">
                       <div className="text-lg font-semibold leading-none">{percentage}%</div>
                       <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary/70">
                         Progress
@@ -2566,7 +2565,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                   </div>
                 </div>
                 <ScrollArea className="h-[60vh]">
-                  <div className="pr-4 pt-4">
+                  <div className="pr-2 pt-4">
                     {courseTopics.length > 0 && renderTopicsList(courseTopics)}
                     <button
                       type="button"
@@ -2574,7 +2573,9 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                       disabled={quizLockedByCourseProgress || isQuizLoading}
                       className={cn(
                         "mt-4 flex w-full items-center justify-between rounded-2xl border border-border/60 bg-background px-4 py-3 text-left transition-colors",
-                        quizLockedByCourseProgress || isQuizLoading ? "cursor-not-allowed opacity-60" : "hover:bg-muted/60"
+                        quizLockedByCourseProgress || isQuizLoading
+                          ? "cursor-not-allowed opacity-60"
+                          : "hover:bg-muted/60"
                       )}
                     >
                       <span>
@@ -2590,7 +2591,15 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                           </span>
                         )}
                       </span>
-                      {isQuizLoading ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : quizLockedByCourseProgress ? <Lock className="h-4 w-4 text-muted-foreground" /> : isQuizPassed === true ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <BookOpen className="h-4 w-4 text-muted-foreground" />}
+                      {isQuizLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />
+                      ) : quizLockedByCourseProgress ? (
+                        <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      ) : isQuizPassed === true ? (
+                        <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
+                      ) : (
+                        <BookOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      )}
                     </button>
                   </div>
                 </ScrollArea>
@@ -2598,16 +2607,14 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
             </DrawerContent>
           </Drawer>
 
-          <div className="flex items-center gap-2">
+          {/* Title + progress ring */}
+          <div className="flex items-center gap-2 min-w-0">
             {!isOrgAdmin && (
-              <div className="relative w-8 h-8">
+              <div className="relative w-8 h-8 flex-shrink-0">
                 <svg className="w-8 h-8" viewBox="0 0 36 36">
                   <circle cx="18" cy="18" r="16" fill="none" className="stroke-muted-foreground/20" strokeWidth="2" />
                   <circle
-                    cx="18"
-                    cy="18"
-                    r="16"
-                    fill="none"
+                    cx="18" cy="18" r="16" fill="none"
                     className="stroke-primary"
                     strokeWidth="2"
                     strokeDasharray="100"
@@ -2615,8 +2622,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                     transform="rotate(-90 18 18)"
                   />
                   <text
-                    x="18"
-                    y="18"
+                    x="18" y="18"
                     dominantBaseline="middle"
                     textAnchor="middle"
                     className="fill-foreground text-[10px] font-medium"
@@ -2626,11 +2632,15 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                 </svg>
               </div>
             )}
-            <h1 className="text-lg md:text-xl font-bold truncate max-w-[120px] sm:max-w-none">{mainTopic}</h1>
+            <h1 className="text-base sm:text-lg md:text-xl font-bold truncate max-w-[130px] xs:max-w-[160px] sm:max-w-[220px] md:max-w-none">
+              {mainTopic}
+            </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Right header actions */}
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          {/* Desktop sidebar toggle */}
           <Button
             variant="ghost"
             size="icon"
@@ -2639,53 +2649,68 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <ToggleGroup type="single" className="hidden sm:flex">
+
+          {/* Desktop action buttons */}
+          <div className="hidden sm:flex items-center gap-1">
             <Button variant="ghost" size="sm" asChild>
-              <Link to='/dashboard'>
+              <Link to="/dashboard">
                 <Home className="h-4 w-4 mr-1" /> Home
               </Link>
             </Button>
-            {(plan !== "free" || isOrgAdmin || userRole === 'student') && isQuizPassed && (
+            {(plan !== "free" || isOrgAdmin || userRole === "student") && isQuizPassed && (
               <Button
                 onClick={certificateCheck}
                 variant="default"
                 size="sm"
                 className={cn(
                   "shadow-none",
-                  (userRole === 'student' || !!sessionStorage.getItem('orgId'))
+                  userRole === "student" || !!sessionStorage.getItem("orgId")
                     ? "bg-yellow-600 hover:bg-yellow-700 text-white border-none"
                     : "bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
                 )}
               >
-                <Award className="h-4 w-4 mr-1" /> Download Certificate
+                <Award className="h-4 w-4 mr-1" />
+                <span className="hidden lg:inline">Download Certificate</span>
+                <span className="lg:hidden">Certificate</span>
               </Button>
             )}
-
             <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm" asChild>
-              <span className='cursor-pointer'><Download className="h-4 w-4 mr-1" />{exporting ? 'Exporting...' : 'Export'}</span>
+              <span className="cursor-pointer">
+                <Download className="h-4 w-4 mr-1" />
+                <span className="hidden lg:inline">{exporting ? "Exporting..." : "Export"}</span>
+              </span>
             </Button>
             <ShareOnSocial
-              textToShare={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
-              link={websiteURL + '/shareable?id=' + courseId}
-              linkTitle={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
-              linkMetaDesc={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+              textToShare={sessionStorage.getItem("mName") + " shared you course on " + mainTopic}
+              link={websiteURL + "/shareable?id=" + courseId}
+              linkTitle={sessionStorage.getItem("mName") + " shared you course on " + mainTopic}
+              linkMetaDesc={sessionStorage.getItem("mName") + " shared you course on " + mainTopic}
               linkFavicon={appLogo}
               noReferer
             >
               <Button variant="ghost" size="sm" asChild>
-                <span className='cursor-pointer'><Share className="h-4 w-4 mr-1" /> Share</span>
+                <span className="cursor-pointer">
+                  <Share className="h-4 w-4 mr-1" />
+                  <span className="hidden lg:inline">Share</span>
+                </span>
               </Button>
             </ShareOnSocial>
-          </ToggleGroup>
+          </div>
+
           <ThemeToggle />
         </div>
       </header>
 
+      {/* ── BODY ── */}
       <div className="flex flex-1 overflow-visible md:overflow-hidden">
-        <div className={cn(
-          "hidden overflow-hidden border-r border-border/40 bg-gradient-to-b from-slate-50 via-background to-background transition-all duration-300 dark:from-slate-950/30 md:block",
-          isMenuOpen ? "w-[22rem]" : "w-0"
-        )}>
+
+        {/* Desktop sidebar */}
+        <div
+          className={cn(
+            "hidden overflow-hidden border-r border-border/40 bg-gradient-to-b from-slate-50 via-background to-background transition-all duration-300 dark:from-slate-950/30 md:block",
+            isMenuOpen ? "w-72 lg:w-[22rem]" : "w-0"
+          )}
+        >
           <ScrollArea className="h-full">
             <div className="p-4">
               <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-background via-background to-muted/60 p-4 shadow-sm">
@@ -2699,7 +2724,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                       {completedLessonCount}/{orderedLessons.length} lessons completed
                     </p>
                   </div>
-                  <div className="rounded-2xl bg-primary/10 px-3 py-2 text-right text-primary">
+                  <div className="rounded-2xl bg-primary/10 px-3 py-2 text-right text-primary flex-shrink-0">
                     <div className="text-lg font-semibold leading-none">{percentage}%</div>
                     <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary/70">
                       Progress
@@ -2716,7 +2741,9 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                 disabled={quizLockedByCourseProgress || isQuizLoading}
                 className={cn(
                   "mt-4 flex w-full items-center justify-between rounded-2xl border border-border/60 bg-background px-4 py-3 text-left transition-colors",
-                  quizLockedByCourseProgress || isQuizLoading ? "cursor-not-allowed opacity-60" : "hover:bg-muted/60"
+                  quizLockedByCourseProgress || isQuizLoading
+                    ? "cursor-not-allowed opacity-60"
+                    : "hover:bg-muted/60"
                 )}
               >
                 <span>
@@ -2732,60 +2759,78 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                     </span>
                   )}
                 </span>
-                {isQuizLoading ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : quizLockedByCourseProgress ? <Lock className="h-4 w-4 text-muted-foreground" /> : isQuizPassed === true ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <BookOpen className="h-4 w-4 text-muted-foreground" />}
+                {isQuizLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />
+                ) : quizLockedByCourseProgress ? (
+                  <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                ) : isQuizPassed === true ? (
+                  <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
+                ) : (
+                  <BookOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                )}
               </button>
             </div>
           </ScrollArea>
         </div>
 
+        {/* ── MAIN CONTENT ── */}
         <div className="min-h-0 flex-1 overflow-visible md:overflow-hidden">
           <ScrollArea className="h-auto md:h-full" viewportRef={mainContentRef}>
-            <main className="mx-auto max-w-6xl p-3 pb-36 md:p-6 md:pb-10">
+            <main className="mx-auto max-w-6xl p-3 pb-36 sm:p-4 sm:pb-36 md:p-6 md:pb-10">
               {isLoading ? (
                 <CourseContentSkeleton />
               ) : (
                 <>
-                  <div className="mb-6 overflow-hidden rounded-[20px] md:rounded-[30px] border border-slate-800/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/80 p-3 md:p-6 text-white shadow-xl">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                  {/* Hero banner */}
+                  <div className="mb-4 md:mb-6 overflow-hidden rounded-[20px] md:rounded-[30px] border border-slate-800/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/80 p-3 sm:p-4 md:p-6 text-white shadow-xl">
+                    <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
                       <div className="max-w-3xl">
                         <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.26em] text-white/80 backdrop-blur">
-                          {currentLesson ? `Chapter ${currentLesson.topicIndex + 1}` : 'Lesson overview'}
+                          {currentLesson ? `Chapter ${currentLesson.topicIndex + 1}` : "Lesson overview"}
                         </span>
-                        <h1 className="mt-4 break-words text-2xl font-semibold leading-tight md:text-4xl">{selected}</h1>
-                        <p className="mt-3 text-sm leading-6 text-white/75 md:text-base">
+                        <h1 className="mt-3 break-words text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold leading-tight">
+                          {selected}
+                        </h1>
+                        <p className="mt-2 md:mt-3 text-xs sm:text-sm leading-6 text-white/75">
                           {currentTopicTitle && `Inside ${currentTopicTitle}. `}
-                          {currentLesson ? `Lesson ${currentLessonIndex + 1} of ${orderedLessons.length}. ` : ''}
+                          {currentLesson ? `Lesson ${currentLessonIndex + 1} of ${orderedLessons.length}. ` : ""}
                           Continue through the roadmap below or jump directly from the side menu.
                         </p>
                       </div>
-                      <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
+
+                      {/* Info cards — stacked on mobile, side-by-side on sm+ */}
+                      <div className="grid grid-cols-2 gap-2 sm:gap-2 xl:w-auto xl:min-w-[320px]">
                         <div className="rounded-xl border border-white/12 bg-white/10 px-3 py-2 md:px-4 md:py-3 backdrop-blur">
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">
+                          <div className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">
                             Current Chapter
                           </div>
-                          <div className="mt-2 text-lg font-semibold">
-                            {currentTopic ? `${currentLesson?.topicIndex + 1}. ${currentTopic.title}` : 'Course lesson'}
+                          <div className="mt-1.5 text-sm sm:text-base md:text-lg font-semibold leading-tight">
+                            {currentTopic
+                              ? `${currentLesson?.topicIndex + 1}. ${currentTopic.title}`
+                              : "Course lesson"}
                           </div>
-                          <div className="mt-1 text-xs text-white/65">
+                          <div className="mt-1 text-[10px] sm:text-xs text-white/65">
                             {currentTopicCompletedCount}/{currentTopic?.subtopics?.length || 0} lessons done
                           </div>
                         </div>
                         <div className="rounded-xl border border-white/12 bg-white/10 px-3 py-2 md:px-4 md:py-3 backdrop-blur">
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">
+                          <div className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">
                             Up Next
                           </div>
-                          <div className="mt-2 text-sm font-semibold leading-5">
-                            {nextLesson ? nextLesson.subtopicTitle : 'Final quiz after completion'}
+                          <div className="mt-1.5 text-xs sm:text-sm font-semibold leading-5">
+                            {nextLesson ? nextLesson.subtopicTitle : "Final quiz after completion"}
                           </div>
-                          <div className="mt-1 text-xs text-white/65">
+                          <div className="mt-1 text-[10px] sm:text-xs text-white/65">
                             {nextLesson ? nextLesson.topicTitle : `${mainTopic} quiz`}
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className={`mb-6 rounded-2xl border p-4 ${contentProfileMeta.surfaceClass}`}>
-                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+
+                  {/* Content profile badge bar */}
+                  <div className={`mb-4 md:mb-6 rounded-2xl border p-3 sm:p-4 ${contentProfileMeta.surfaceClass}`}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${contentProfileMeta.badgeClass}`}>
@@ -2793,25 +2838,27 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                             {contentProfileMeta.label}
                           </span>
                           <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-                            {type === 'video & text course' ? 'Video + Text' : 'Text + Images'}
+                            {type === "video & text course" ? "Video + Text" : "Text + Images"}
                           </span>
                           <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
                             {lang}
                           </span>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {contentProfileMeta.summary}
-                        </p>
+                        <p className="text-sm text-muted-foreground">{contentProfileMeta.summary}</p>
                       </div>
                     </div>
                   </div>
+
+                  {/* Exam rules + roadmap — desktop above content, mobile below */}
                   {!isMobile && examRulesSection}
                   {!isMobile && roadmapSection}
+
                   <div className="space-y-4">
-                    {type === 'video & text course' ? (
+                    {/* Video or Image */}
+                    {type === "video & text course" ? (
                       media ? (
-                        <div className="overflow-hidden rounded-[28px] border border-border/60 bg-background p-3 shadow-sm">
-                          <div className="aspect-video w-full overflow-hidden rounded-2xl">
+                        <div className="overflow-hidden rounded-[20px] sm:rounded-[28px] border border-border/60 bg-background p-2 sm:p-3 shadow-sm">
+                          <div className="aspect-video w-full overflow-hidden rounded-xl sm:rounded-2xl">
                             <YouTube
                               key={media}
                               className="h-full w-full [&>iframe]:h-full [&>iframe]:w-full"
@@ -2821,14 +2868,14 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                           </div>
                         </div>
                       ) : (
-                        <div className="flex h-96 items-center justify-center rounded-[28px] border border-border/60 bg-muted">
-                          <p className="text-muted-foreground">Loading video...</p>
+                        <div className="flex h-48 sm:h-72 md:h-96 items-center justify-center rounded-[20px] sm:rounded-[28px] border border-border/60 bg-muted">
+                          <p className="text-muted-foreground text-sm">Loading video...</p>
                         </div>
                       )
                     ) : (
-                      <div className="relative h-96 w-full overflow-hidden rounded-[28px] border border-border/60 bg-muted shadow-sm max-md:h-64">
+                      <div className="relative h-48 sm:h-72 md:h-96 w-full overflow-hidden rounded-[20px] sm:rounded-[28px] border border-border/60 bg-muted shadow-sm">
                         {media ? (
-                          <img 
+                          <img
                             key={media}
                             src={media}
                             fetchpriority="high"
@@ -2838,7 +2885,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                             )}
                             alt={selected}
                             onLoad={() => {
-                              setImageLoading(prev => {
+                              setImageLoading((prev) => {
                                 const newMap = new Map(prev);
                                 newMap.delete(selected);
                                 return newMap;
@@ -2846,30 +2893,31 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                             }}
                             onError={async (e) => {
                               const target = e.target as HTMLImageElement;
-                              target.onerror = null; // Prevent infinite loop
-                              
-                              // Try to fetch a new image from the backend API
+                              target.onerror = null;
                               try {
-                                const imagePrompt = `${selected} in ${mainTopic || ''}`;
-                                const res = await axios.post(serverURL + '/api/image', { prompt: imagePrompt }, { timeout: 8000 });
+                                const imagePrompt = `${selected} in ${mainTopic || ""}`;
+                                const res = await axios.post(
+                                  serverURL + "/api/image",
+                                  { prompt: imagePrompt },
+                                  { timeout: 8000 }
+                                );
                                 if (res.data?.url) {
                                   target.src = res.data.url;
                                   return;
                                 }
                               } catch (apiErr) {
-                                console.error('Image API fallback failed:', apiErr);
+                                console.error("Image API fallback failed:", apiErr);
                               }
-                              
-                              // Ultimate fallback - show a gradient with text
                               const parent = target.parentElement;
                               if (parent) {
-                                target.style.display = 'none';
-                                const gradientDiv = document.createElement('div');
-                                gradientDiv.className = 'flex items-center justify-center w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20';
+                                target.style.display = "none";
+                                const gradientDiv = document.createElement("div");
+                                gradientDiv.className =
+                                  "flex items-center justify-center w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20";
                                 gradientDiv.innerHTML = `
                                   <div class="text-center p-4">
                                     <p class="text-lg font-semibold text-primary">${selected}</p>
-                                    <p class="text-sm text-muted-foreground">${mainTopic || 'Course'} visualization</p>
+                                    <p class="text-sm text-muted-foreground">${mainTopic || "Course"} visualization</p>
                                   </div>
                                 `;
                                 parent.appendChild(gradientDiv);
@@ -2880,33 +2928,36 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                           <div className="absolute inset-0 flex flex-col items-center justify-center space-y-3">
                             <Skeleton className="w-full h-full absolute inset-0" />
                             <div className="z-10 flex flex-col items-center">
-                              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                               <span className="text-xs font-medium mt-2">Fetching Visuals...</span>
                             </div>
                           </div>
                         )}
                       </div>
                     )}
+
+                    {/* Theory text */}
                     {theory && (
-                      <div className="rounded-[20px] md:rounded-[28px] border border-border/60 bg-background p-3.5 md:p-7 shadow-sm">
+                      <div className="rounded-[20px] md:rounded-[28px] border border-border/60 bg-background p-3 sm:p-5 md:p-7 shadow-sm">
                         <StyledText text={theory} />
                       </div>
                     )}
 
-                    <div className="rounded-[20px] border border-primary/20 bg-primary/5 p-4 text-primary shadow-sm">
+                    {/* Learning note */}
+                    <div className="rounded-[20px] border border-primary/20 bg-primary/5 p-3 sm:p-4 text-primary shadow-sm">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80">
                         Learning Note
                       </p>
-                      <p className="mt-2 text-sm leading-6">
-                        {lessonAlertMessage}
-                      </p>
+                      <p className="mt-2 text-sm leading-6">{lessonAlertMessage}</p>
                     </div>
 
+                    {/* Mobile-only: exam rules + roadmap below content */}
                     {isMobile && examRulesSection}
                     {isMobile && roadmapSection}
 
+                    {/* Lesson actions */}
                     {!isOrgAdmin && (
-                      <div className="mt-8 rounded-[24px] border border-border/60 bg-background p-4 shadow-sm">
+                      <div className="mt-6 md:mt-8 rounded-[20px] md:rounded-[24px] border border-border/60 bg-background p-3 sm:p-4 shadow-sm">
                         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                           <div>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
@@ -2915,72 +2966,51 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                             <p className="mt-2 text-sm text-muted-foreground">
                               {currentLessonCompleted
                                 ? nextLesson
-                                  ? 'This lesson is complete. You can move to the next lesson now.'
-                                  : 'All lessons are complete. The final quiz is now available.'
-                                : 'Mark this lesson as complete to unlock the next part of the course.'}
+                                  ? "This lesson is complete. You can move to the next lesson now."
+                                  : "All lessons are complete. The final quiz is now available."
+                                : "Mark this lesson as complete to unlock the next part of the course."}
                             </p>
                           </div>
-                          <div className="flex flex-col gap-3 sm:flex-row">
+                          {/* Action buttons — full-width on mobile, auto on desktop */}
+                          <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-row sm:gap-2 sm:flex-shrink-0">
                             <Button
                               variant="outline"
                               onClick={handlePreviousLesson}
                               disabled={!previousLesson}
-                              className="gap-2"
+                              className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3"
                             >
-                              <ArrowLeft className="h-4 w-4" />
-                              Previous
+                              <ArrowLeft className="h-4 w-4 flex-shrink-0" />
+                              <span>Prev</span>
                             </Button>
                             <Button
                               variant={currentLessonCompleted ? "secondary" : "default"}
                               onClick={handleMarkAsComplete}
                               disabled={currentLessonCompleted}
-                              className="gap-2"
+                              className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3"
                             >
-                              <CheckCircle2 className="h-4 w-4" />
-                              {currentLessonCompleted ? 'Completed' : 'Mark as Complete'}
+                              <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                              <span className="hidden xs:inline">
+                                {currentLessonCompleted ? "Completed" : "Complete"}
+                              </span>
+                              <span className="xs:hidden">
+                                {currentLessonCompleted ? "✓" : "Done"}
+                              </span>
                             </Button>
                             <Button
                               onClick={handleNextLesson}
                               disabled={(!!nextLesson && !currentLessonCompleted) || isQuizLoading}
-                              className="gap-2"
+                              className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3"
                             >
-                              {isQuizLoading ? 'Preparing Quiz...' : nextLesson ? 'Next Lesson' : 'Take Quiz'}
-                              {isQuizLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {isOrgAdmin && (
-                      <div className="mt-8 rounded-[24px] border border-border/60 bg-background p-4 shadow-sm">
-                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                          <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                              Review Actions
-                            </p>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              {nextLesson 
-                                ? "You are reviewing this course. Continue to the next lesson to complete the review."
-                                : "You have reached the end of the lessons. Complete the final quiz to send this course for approval."}
-                            </p>
-                          </div>
-                          <div className="flex flex-col gap-3 sm:flex-row">
-                            <Button
-                              variant="outline"
-                              onClick={handlePreviousLesson}
-                              disabled={!previousLesson}
-                              className="gap-2"
-                            >
-                              <ArrowLeft className="h-4 w-4" />
-                              Previous
-                            </Button>
-                            <Button
-                              onClick={handleNextLesson}
-                              disabled={isQuizLoading}
-                              className="gap-2"
-                            >
-                              {isQuizLoading ? 'Preparing Quiz...' : nextLesson ? 'Continue Review' : 'Take Review Quiz'}
-                              {isQuizLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                              {isQuizLoading
+                                ? "Loading..."
+                                : nextLesson
+                                ? "Next"
+                                : "Quiz"}
+                              {isQuizLoading ? (
+                                <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
+                              ) : (
+                                <ArrowRight className="h-4 w-4 flex-shrink-0" />
+                              )}
                             </Button>
                           </div>
                         </div>
@@ -2994,20 +3024,23 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
         </div>
       </div>
 
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border p-2 flex justify-around items-center">
-        <Button variant="ghost" size="sm">
-          <Link to='/dashboard'>
+      {/* ── MOBILE BOTTOM NAV ── */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-2 flex justify-around items-center z-40 safe-area-pb">
+        <Button variant="ghost" size="sm" asChild>
+          <Link to="/dashboard">
             <Home className="h-5 w-5" />
           </Link>
         </Button>
-        {(plan !== "free" || isOrgAdmin || userRole === 'student') && isQuizPassed && (
+        {(plan !== "free" || isOrgAdmin || userRole === "student") && isQuizPassed && (
           <Button
             onClick={certificateCheck}
             variant="ghost"
             size="sm"
             className={cn(
               "font-bold",
-              (userRole === 'student' || !!sessionStorage.getItem('orgId')) ? "text-yellow-600" : "text-primary"
+              userRole === "student" || !!sessionStorage.getItem("orgId")
+                ? "text-yellow-600"
+                : "text-primary"
             )}
           >
             <Award className="h-5 w-5" />
@@ -3017,10 +3050,10 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
           <Download className="h-5 w-5" />
         </Button>
         <ShareOnSocial
-          textToShare={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
-          link={websiteURL + '/shareable?id=' + courseId}
-          linkTitle={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
-          linkMetaDesc={sessionStorage.getItem('mName') + " shared you course on " + mainTopic}
+          textToShare={sessionStorage.getItem("mName") + " shared you course on " + mainTopic}
+          link={websiteURL + "/shareable?id=" + courseId}
+          linkTitle={sessionStorage.getItem("mName") + " shared you course on " + mainTopic}
+          linkMetaDesc={sessionStorage.getItem("mName") + " shared you course on " + mainTopic}
           linkFavicon={appLogo}
           noReferer
         >
@@ -3030,32 +3063,72 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
         </ShareOnSocial>
       </div>
 
-      <div className="fixed bottom-24 right-4 z-40 flex flex-col gap-3 md:bottom-6 md:right-6">
+      {/* ── FLOATING ACTION BUTTONS ── */}
+      <div className="fixed bottom-20 right-3 z-40 flex flex-col gap-2 md:bottom-6 md:right-6">
         <Button
           size="icon"
-          className="rounded-full bg-primary shadow-lg hover:shadow-xl"
+          className="rounded-full bg-primary shadow-lg hover:shadow-xl h-10 w-10 md:h-11 md:w-11"
           onClick={() => setIsChatOpen(true)}
         >
-          <MessageCircle className="h-5 w-5" />
+          <MessageCircle className="h-4 w-4 md:h-5 md:w-5" />
         </Button>
         <Button
           size="icon"
-          className="rounded-full bg-primary shadow-lg hover:shadow-xl"
+          className="rounded-full bg-primary shadow-lg hover:shadow-xl h-10 w-10 md:h-11 md:w-11"
           onClick={() => setIsNotesOpen(true)}
         >
-          <ClipboardCheck className="h-5 w-5" />
+          <ClipboardCheck className="h-4 w-4 md:h-5 md:w-5" />
         </Button>
       </div>
 
+      {/* ── CHAT SHEET / DIALOG ── */}
       {isMobile ? (
         <Sheet open={isChatOpen} onOpenChange={setIsChatOpen}>
-          <SheetContent side="bottom" className="h-[90vh] sm:max-w-full p-0">
-            <div className="flex flex-col h-full p-4">
-              <div className="py-2 px-4 border-b border-border mb-2">
-                <h2 className="text-lg font-semibold">Course Assistant</h2>
+          <SheetContent side="bottom" className="h-[90dvh] sm:max-w-full p-0">
+            <div className="flex flex-col h-full">
+              <div className="py-3 px-4 border-b border-border">
+                <h2 className="text-base font-semibold">Course Assistant</h2>
               </div>
+              <ScrollArea className="flex-1 px-4">
+                <div className="space-y-4 pt-3 pb-2">
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={cn(
+                        "flex w-max max-w-[85%] flex-col gap-2 rounded-2xl px-3 py-2 text-sm",
+                        message.sender === "user"
+                          ? "ml-auto bg-primary text-primary-foreground"
+                          : "bg-muted"
+                      )}
+                    >
+                      <StyledText text={message.text} />
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+              <div className="flex items-center gap-2 p-3 border-t border-border">
+                <Input
+                  placeholder={isChatLoading ? "Assistant is thinking..." : "Type your message..."}
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  disabled={isChatLoading}
+                  onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
+                  className="flex-1 text-sm"
+                />
+                <Button onClick={sendMessage} disabled={isChatLoading} size="sm">
+                  {isChatLoading ? "..." : "Send"}
+                </Button>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
+          <DialogContent className="sm:max-w-md w-[calc(100vw-2rem)]">
+            <DialogTitle>Course Assistant</DialogTitle>
+            <div className="flex flex-col h-[60vh]">
               <ScrollArea className="flex-1 pr-4 mb-4">
-                <div className="space-y-4 pt-2 px-4">
+                <div className="space-y-4 pt-2">
                   {messages.map((message) => (
                     <div
                       key={message.id}
@@ -3071,61 +3144,13 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                   ))}
                 </div>
               </ScrollArea>
-
-              <div className="flex items-center gap-2 p-4 border-t border-border">
-                <Input
-                  placeholder={isChatLoading ? "Assistant is thinking..." : "Type your message..."}
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  disabled={isChatLoading}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      sendMessage();
-                    }
-                  }}
-                  className="flex-1"
-                />
-                <Button onClick={sendMessage} disabled={isChatLoading}>
-                  {isChatLoading ? "..." : "Send"}
-                </Button>
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-      ) : (
-        <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogTitle>Course Assistant</DialogTitle>
-            <div className="flex flex-col h-[60vh]">
-              <ScrollArea className="flex-1 pr-4 mb-4">
-                <div className="space-y-4 pt-2">
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={cn(
-                        "flex w-2/4 max-w-[80%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
-                        message.sender === "user"
-                          ? "ml-auto bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      )}
-                    >
-                      <StyledText text={message.text} />
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-
               <div className="flex items-center gap-2">
                 <Input
                   placeholder={isChatLoading ? "Assistant is thinking..." : "Type your message..."}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   disabled={isChatLoading}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      sendMessage();
-                    }
-                  }}
+                  onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
                   className="flex-1"
                 />
                 <Button onClick={sendMessage} disabled={isChatLoading}>
@@ -3137,32 +3162,34 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
         </Dialog>
       )}
 
+      {/* ── NOTES SHEET / DIALOG ── */}
       {isMobile ? (
         <Sheet open={isNotesOpen} onOpenChange={setIsNotesOpen}>
-          <SheetContent side="bottom" className="h-[90vh] sm:max-w-full p-0">
-            <div className="flex flex-col h-full p-4">
-              <div className="py-2 px-4 border-b border-border mb-2">
-                <h2 className="text-lg font-semibold">Course Notes</h2>
+          <SheetContent side="bottom" className="h-[90dvh] sm:max-w-full p-0">
+            <div className="flex flex-col h-full">
+              <div className="py-3 px-4 border-b border-border">
+                <h2 className="text-base font-semibold">Course Notes</h2>
               </div>
-              <ScrollArea className="flex-1 pr-4 mb-4">
-                <div className="space-y-4 pt-2 px-4">
+              <ScrollArea className="flex-1 px-4">
+                <div className="pt-3 pb-2">
                   <MinimalTiptapEditor
                     value={value}
                     onChange={setValue}
                     className="w-full"
-                    editorContentClassName="p-5"
+                    editorContentClassName="p-4"
                     output="html"
                     placeholder="No notes yet. Start taking notes for this course."
                     autofocus={true}
                     editable={true}
-                    editorClassName="focus:outline-none"
+                    editorClassName="focus:outline-none min-h-[200px]"
                   />
                 </div>
               </ScrollArea>
-
-              <div className="p-4 border-t border-border">
+              <div className="p-3 border-t border-border">
                 <div className="flex justify-end">
-                  <Button disabled={saving} onClick={handleSaveNote}>{saving ? 'Saving...' : 'Save Note'}</Button>
+                  <Button disabled={saving} onClick={handleSaveNote} size="sm">
+                    {saving ? "Saving..." : "Save Note"}
+                  </Button>
                 </div>
               </div>
             </div>
@@ -3170,7 +3197,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
         </Sheet>
       ) : (
         <Dialog open={isNotesOpen} onOpenChange={setIsNotesOpen}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-lg w-[calc(100vw-2rem)]">
             <DialogTitle>Course Notes</DialogTitle>
             <div className="flex flex-col h-[60vh]">
               <ScrollArea className="flex-1 pr-4 mb-4">
@@ -3188,11 +3215,10 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                   />
                 </div>
               </ScrollArea>
-
-              <div>
-                <div className="flex justify-end">
-                  <Button disabled={saving} onClick={handleSaveNote}>{saving ? 'Saving...' : 'Save Note'}</Button>
-                </div>
+              <div className="flex justify-end">
+                <Button disabled={saving} onClick={handleSaveNote}>
+                  {saving ? "Saving..." : "Save Note"}
+                </Button>
               </div>
             </div>
           </DialogContent>
