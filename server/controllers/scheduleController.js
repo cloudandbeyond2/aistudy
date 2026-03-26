@@ -36,27 +36,16 @@ export const createSchedule = async (req, res) => {
 /* GET ALL */
 export const getSchedules = async (req, res) => {
   try {
-    const { organizationId, ownerId } = req.query;
+    const { ownerId } = req.query;
 
-    const query = [];
-
-    if (organizationId) {
-      query.push({
-        $or: [
-          { organizationId },
-          { organizationId: { $exists: false } },
-          { organizationId: null }
-        ]
+    if (!ownerId) {
+      return res.json({
+        success: true,
+        data: []
       });
     }
 
-    if (ownerId) {
-      query.push({ ownerId });
-    }
-
-    const schedules = query.length > 0
-      ? await Schedule.find({ $or: query }).sort({ date: 1, startTime: 1, createdAt: -1 })
-      : await Schedule.find().sort({ date: 1, startTime: 1, createdAt: -1 });
+    const schedules = await Schedule.find({ ownerId }).sort({ date: 1, startTime: 1, createdAt: -1 });
 
     res.json({
       success: true,
