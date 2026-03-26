@@ -167,7 +167,7 @@ export default function CalendarScheduler() {
 
   useEffect(() => {
     fetchSchedules();
-  }, [orgId, uid]);
+  }, [uid]);
 
   useEffect(() => {
     setForm((prev) => ({ ...prev, date: dateInput(selectedDate), day: dayName(selectedDate) }));
@@ -177,7 +177,7 @@ export default function CalendarScheduler() {
     setLoading(true);
     try {
       const res = await axios.get(`${serverURL}/api/schedule`, {
-        params: { organizationId: orgId || undefined, ownerId: uid || undefined },
+        params: { ownerId: uid || undefined },
       });
       setEvents(Array.isArray(res.data?.data) ? res.data.data : []);
     } catch (error) {
@@ -375,7 +375,7 @@ export default function CalendarScheduler() {
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Calendar Scheduler</h1>
             <p className="max-w-2xl text-sm text-muted-foreground">
-              Build daily schedules, recurring blocks, meetings, deadlines, and organization-wide events
+              Build daily schedules, recurring blocks, meetings, and deadlines for the logged-in account
               from one interactive planner.
             </p>
           </div>

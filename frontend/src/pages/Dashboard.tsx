@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Pagination from './Pagination';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const ITEMS_PER_PAGE = 9;
+const ITEMS_PER_PAGE = 8;
 
 // Animated gradient background component
 const AnimatedGradient = () => (

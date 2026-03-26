@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Megaphone, Search, Calendar, Inbox, ChevronLeft, ChevronRight } from "lucide-react";
+import { Megaphone, Search, Calendar, Inbox, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { serverURL } from "@/constants";
 
@@ -60,20 +60,20 @@ const GlobalNews = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8 max-w-7xl">
+      <div className="container mx-auto px-4 sm:px-6 md:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl">
         <div className="space-y-4 sm:space-y-6 lg:space-y-8">
 
-          {/* HEADER - Responsive */}
-          <div className="flex flex-col sm:flex-row sm:items-start md:items-center justify-between gap-4 sm:gap-6">
+          {/* HEADER - Improved Tablet Layout */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6">
             
             {/* Logo and Title Section */}
-            <div className="flex items-center gap-3 sm:gap-4">
-              <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-r from-primary to-indigo-500 text-white shadow-lg flex-shrink-0">
+            <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+              <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-r from-primary to-indigo-500 text-white shadow-lg">
                 <Megaphone className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
 
-              <div className="min-w-0 flex-1">
-                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold truncate">
+              <div>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
                   Global Announcements
                 </h1>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
@@ -82,23 +82,45 @@ const GlobalNews = () => {
               </div>
             </div>
 
-            {/* SEARCH - Responsive */}
-            <div className="relative w-full sm:w-72 md:w-80 lg:w-96">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+            {/* SEARCH - Full Width on Tablet, Fixed on Desktop */}
+            <div className="relative w-full lg:w-96">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search news..."
-                className="pl-9 sm:pl-10 bg-background border-border focus:ring-2 focus:ring-primary text-sm sm:text-base"
+                placeholder="Search announcements..."
+                className="pl-10 pr-10 bg-background border-border focus:ring-2 focus:ring-primary h-11 text-base"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </div>
+
+          {/* Results Info Bar - Tablet Friendly */}
+          {!loading && filteredNews.length > 0 && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 border-b border-border">
+              <p className="text-sm text-muted-foreground">
+                Found <span className="font-semibold text-foreground">{filteredNews.length}</span> announcement{filteredNews.length !== 1 ? 's' : ''}
+              </p>
+              {searchQuery && (
+                <p className="text-sm text-primary">
+                  Showing results for: <span className="font-medium">"{searchQuery}"</span>
+                </p>
+              )}
+            </div>
+          )}
 
           {/* NEWS LIST */}
           {loading ? (
             <div className="space-y-3 sm:space-y-4">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-24 sm:h-28 lg:h-32 rounded-xl" />
+                <Skeleton key={i} className="h-28 sm:h-32 lg:h-36 rounded-xl" />
               ))}
             </div>
           ) : paginatedNews.length > 0 ? (
@@ -109,28 +131,28 @@ const GlobalNews = () => {
                   key={item._id}
                   className="border-l-4 border-l-primary hover:shadow-lg hover:scale-[1.01] transition-all duration-300 bg-background/80 backdrop-blur border border-border"
                 >
-                  <CardContent className="p-4 sm:p-5 lg:p-6">
+                  <CardContent className="p-4 sm:p-5 md:p-6">
                     
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4">
                       
                       {/* Content Section */}
-                      <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
-                        <h2 className="text-base sm:text-lg md:text-xl font-semibold text-foreground hover:text-primary transition line-clamp-2 sm:line-clamp-1">
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <h2 className="text-base sm:text-lg md:text-xl font-semibold text-foreground hover:text-primary transition line-clamp-2 md:line-clamp-1">
                           {item.title}
                         </h2>
                         
-                        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-2 sm:line-clamp-3 lg:line-clamp-2">
+                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 md:line-clamp-3">
                           {item.content}
                         </p>
                       </div>
 
-                      {/* Date Badge - Responsive */}
+                      {/* Date Badge */}
                       <Badge
                         variant="secondary"
-                        className="flex items-center gap-1 text-xs whitespace-nowrap self-start sm:self-center flex-shrink-0"
+                        className="flex items-center gap-1.5 text-xs whitespace-nowrap self-start sm:self-center flex-shrink-0 px-2.5 py-1"
                       >
-                        <Calendar className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                        <span className="text-[10px] sm:text-xs">
+                        <Calendar className="h-3 w-3" />
+                        <span>
                           {formatDistanceToNow(new Date(item.createdAt), {
                             addSuffix: true,
                           })}
@@ -143,38 +165,61 @@ const GlobalNews = () => {
                 </Card>
               ))}
 
-              {/* PAGINATION - Responsive */}
+              {/* PAGINATION - Enhanced for Tablet */}
               {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 pt-4 sm:pt-6">
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-6 sm:pt-8">
                   
                   <Button
                     variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
+                    size="default"
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className="w-28 sm:w-auto"
+                    className="min-w-[100px]"
                   >
-                    <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
-                    <span className="text-xs sm:text-sm">Previous</span>
+                    <ChevronLeft className="h-4 w-4 mr-2" />
+                    Previous
                   </Button>
 
-                  <span className="text-xs sm:text-sm font-medium px-3 py-1.5 bg-muted rounded-md">
-                    Page {currentPage} of {totalPages}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {/* Page Numbers for Tablet */}
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                        if (i === 4) pageNum = totalPages;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      
+                      if (pageNum > totalPages) return null;
+                      
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className="w-9 h-9 md:w-10 md:h-10 p-0"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
 
                   <Button
                     variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
+                    size="default"
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className="w-28 sm:w-auto"
+                    className="min-w-[100px]"
                   >
-                    <span className="text-xs sm:text-sm">Next</span>
-                    <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-1" />
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
 
                 </div>
@@ -182,15 +227,15 @@ const GlobalNews = () => {
 
             </div>
           ) : (
-            // Empty State - Responsive
-            <div className="flex flex-col items-center justify-center py-12 sm:py-16 lg:py-20 text-center">
-              <div className="bg-muted p-4 sm:p-5 rounded-full mb-3 sm:mb-4">
-                <Inbox className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
+            // Empty State
+            <div className="flex flex-col items-center justify-center py-16 sm:py-20 lg:py-24 text-center">
+              <div className="bg-muted p-5 rounded-full mb-4">
+                <Inbox className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground" />
               </div>
-              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1">
+              <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2">
                 No announcements found
               </h3>
-              <p className="text-xs sm:text-sm text-muted-foreground max-w-xs sm:max-w-md">
+              <p className="text-sm text-muted-foreground max-w-sm">
                 {searchQuery 
                   ? `No results found for "${searchQuery}". Try a different keyword.`
                   : "No announcements available at the moment. Check back later!"}
@@ -198,9 +243,8 @@ const GlobalNews = () => {
               {searchQuery && (
                 <Button
                   variant="ghost"
-                  size="sm"
                   onClick={() => setSearchQuery("")}
-                  className="mt-3 sm:mt-4 text-xs sm:text-sm"
+                  className="mt-4"
                 >
                   Clear search
                 </Button>
