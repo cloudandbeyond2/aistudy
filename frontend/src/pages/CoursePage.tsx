@@ -3017,6 +3017,42 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                         </div>
                       </div>
                     )}
+
+                       {isOrgAdmin && (
+                      <div className="mt-8 rounded-[24px] border border-border/60 bg-background p-4 shadow-sm">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                              Review Actions
+                            </p>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              {nextLesson 
+                                ? "You are reviewing this course. Continue to the next lesson to complete the review."
+                                : "You have reached the end of the lessons. Complete the final quiz to send this course for approval."}
+                            </p>
+                          </div>
+                          <div className="flex flex-col gap-3 sm:flex-row">
+                            <Button
+                              variant="outline"
+                              onClick={handlePreviousLesson}
+                              disabled={!previousLesson}
+                              className="gap-2"
+                            >
+                              <ArrowLeft className="h-4 w-4" />
+                              Previous
+                            </Button>
+                            <Button
+                              onClick={handleNextLesson}
+                              disabled={isQuizLoading}
+                              className="gap-2"
+                            >
+                              {isQuizLoading ? 'Preparing Quiz...' : nextLesson ? 'Continue Review' : 'Take Review Quiz'}
+                              {isQuizLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
