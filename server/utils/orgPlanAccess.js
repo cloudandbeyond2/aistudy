@@ -17,8 +17,8 @@ export const mapOrgPlanToUserType = (planName) => {
     yearly: 'yearly',
     forever: 'forever',
     '1months': 'monthly',
-    '3months': 'yearly',
-    '6months': 'yearly'
+    '3months': 'monthly',
+    '6months': 'monthly'
   };
 
   return mapping[normalizedPlan] || 'free';

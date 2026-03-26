@@ -16,6 +16,7 @@ import LimitRequest from '../models/LimitRequest.js';
 import ProjectModel from '../models/Project.js';
 import MaterialModel from '../models/Material.js';
 import StaffCourseLimitRequest from '../models/StaffCourseLimitRequest.js';
+import DeptCourseLimitRequest from '../models/DeptCourseLimitRequest.js';
 import { createNotification } from './notification.controller.js';
 import { getChatModel } from '../config/genai.js';
 import { sendMail } from '../services/mail.service.js';
@@ -190,10 +191,10 @@ const getOrgStudentLimit = async (organizationId) => {
     if (org.customStudentLimit > 0) return org.customStudentLimit;
 
     const slotLimits = {
-        1: 20,
-        2: 40,
-        3: 60,
-        4: 80
+        1: 50,
+        2: 100,
+        3: 150,
+        4: 200
     };
 
     return slotLimits[org.studentSlot] || 50;
@@ -827,6 +828,21 @@ export const createCourse = async (req, res) => {
     const { organizationId, title, description, type, department, topics, quizzes, quizSettings, assignedTo, createdBy, courseMeta, isAiGenerated } = req.body;
     try {
         const creator = createdBy ? await User.findById(createdBy).select('_id role department coursesCreatedCount courseLimit') : null;
+
+        // Enforce org-level course limit
+        const orgPlan = await OrganizationPlan.findOne({ organization: organizationId, isActive: true });
+        if (orgPlan) {
+            const orgCoursesCount = await OrgCourse.countDocuments({ organizationId });
+            const aiCoursesCount = await Course.countDocuments({ organizationId });
+            const totalCreatedCount = orgCoursesCount + aiCoursesCount;
+
+            if (totalCreatedCount >= orgPlan.aiCourseSlots) {
+                return res.status(403).json({
+                    success: false,
+                    message: `Organization course creation limit reached (${orgPlan.aiCourseSlots}). Please contact your administrator or upgrade your plan.`
+                });
+            }
+        }
 
         // Enforce course limit for dept_admin
         if (creator && creator.role === 'dept_admin') {
@@ -1827,6 +1843,151 @@ export const requestStaffCourseLimitIncrease = async (req, res) => {
         res.json({ success: true, message: 'Staff course limit request submitted successfully', request: newRequest });
     } catch (error) {
         console.error('requestStaffCourseLimitIncrease error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * DEPT ADMIN COURSE LIMIT REQUESTS -> ORG ADMIN
+ */
+
+// 1. Dept Admin requests limit from Org Admin
+export const createDeptCourseLimitRequest = async (req, res) => {
+    const { organizationId, deptAdminId, requestedCourseLimit } = req.body;
+
+    if (!organizationId || !deptAdminId) {
+        return res.status(400).json({ success: false, message: 'Missing organizationId or deptAdminId' });
+    }
+
+    const parsedRequested = parseInt(String(requestedCourseLimit || ''), 10);
+    if (!Number.isFinite(parsedRequested) || parsedRequested <= 0) {
+        return res.status(400).json({ success: false, message: 'Requested limit must be a valid positive number' });
+    }
+
+    try {
+        const staff = await User.findById(deptAdminId).select('_id role organization isBlocked');
+        if (!staff || staff.isBlocked || staff.role !== 'dept_admin') {
+            return res.status(404).json({ success: false, message: 'Department admin not found or blocked' });
+        }
+        if (String(staff.organization) !== String(organizationId)) {
+            return res.status(403).json({ success: false, message: 'Department admin does not belong to this organization' });
+        }
+
+        // Check for existing pending request to prevent spam
+        const existingPending = await DeptCourseLimitRequest.findOne({
+            organizationId,
+            deptAdminId,
+            status: 'pending'
+        });
+
+        if (existingPending) {
+            existingPending.requestedCourseLimit = parsedRequested;
+            await existingPending.save();
+            return res.json({ success: true, message: 'Existing request updated successfully', request: existingPending });
+        }
+
+        const newRequest = new DeptCourseLimitRequest({
+            organizationId,
+            deptAdminId,
+            requestedCourseLimit: parsedRequested
+        });
+
+        await newRequest.save();
+        res.json({ success: true, message: 'Course limit request submitted to Organization Admin', request: newRequest });
+    } catch (error) {
+        console.error('createDeptCourseLimitRequest error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// 2. Org Admin or Dept Admin gets requests
+export const getDeptCourseLimitRequests = async (req, res) => {
+    const { organizationId, deptAdminId } = req.query;
+
+    if (!organizationId) {
+        return res.status(400).json({ success: false, message: 'Missing organizationId' });
+    }
+
+    try {
+        let query = { organizationId };
+        if (deptAdminId) {
+            query.deptAdminId = deptAdminId;
+        }
+
+        const requests = await DeptCourseLimitRequest.find(query)
+            .populate('deptAdminId', 'mName email courseLimit coursesCreatedCount')
+            .sort({ createdAt: -1 });
+
+        res.json({ success: true, requests });
+    } catch (error) {
+        console.error('getDeptCourseLimitRequests error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// 3. Org Admin processes (approves/rejects) request
+export const processDeptCourseLimitRequest = async (req, res) => {
+    const { requestId, status, adminComment, orgAdminId } = req.body;
+
+    if (!requestId || !status) {
+        return res.status(400).json({ success: false, message: 'Missing requestId or status' });
+    }
+
+    const normalizedStatus = String(status || '').toLowerCase();
+    if (!['approved', 'rejected'].includes(normalizedStatus)) {
+        return res.status(400).json({ success: false, message: 'Invalid status' });
+    }
+
+    try {
+        const request = await DeptCourseLimitRequest.findById(requestId);
+        if (!request) {
+            return res.status(404).json({ success: false, message: 'Request not found' });
+        }
+        
+        if (request.status !== 'pending') {
+            return res.status(400).json({ success: false, message: 'Request is already processed' });
+        }
+
+        // Verify Org Admin
+        const orgAdmin = await User.findById(orgAdminId).select('_id role organization courseLimit coursesCreatedCount');
+        if (!orgAdmin || orgAdmin.role !== 'org_admin' || String(orgAdmin.organization) !== String(request.organizationId)) {
+            return res.status(403).json({ success: false, message: 'Unauthorized org_admin' });
+        }
+
+        if (normalizedStatus === 'approved') {
+            const requestedAmount = request.requestedCourseLimit;
+            
+            // Check if Org Admin has enough limit
+            const orgAdminAvailable = (orgAdmin.courseLimit || 0) - (orgAdmin.coursesCreatedCount || 0);
+            if (orgAdminAvailable < requestedAmount) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Organization Admin does not have enough remaining limit. (Available: ${orgAdminAvailable}, Requested: ${requestedAmount})` 
+                });
+            }
+
+            // Deduct from Org Admin courseLimit
+            // Wait, does deducting from courseLimit make sense, or should we increase coursesCreatedCount?
+            // If we reduce orgAdmin's courseLimit, their available quota decreases.
+            orgAdmin.courseLimit -= requestedAmount;
+            await orgAdmin.save();
+
+            // Add to Dept Admin courseLimit
+            const deptAdmin = await User.findById(request.deptAdminId);
+            if (deptAdmin) {
+                deptAdmin.courseLimit = (deptAdmin.courseLimit || 0) + requestedAmount;
+                await deptAdmin.save();
+            }
+        }
+
+        request.status = normalizedStatus;
+        request.adminComment = String(adminComment || '');
+        request.processedAt = new Date();
+        await request.save();
+
+        res.json({ success: true, message: 'Request processed successfully', request });
+    } catch (error) {
+        console.error('processDeptCourseLimitRequest error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };

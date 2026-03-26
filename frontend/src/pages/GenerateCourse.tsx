@@ -1042,6 +1042,7 @@ const GenerateCourse = () => {
   const [topicSuggestions, setTopicSuggestions] = useState<TopicSuggestion[]>([]);
   const [selectedSuggestion, setSelectedSuggestion] = useState<string>('');
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
+  const [orgPlan, setOrgPlan] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -1090,7 +1091,7 @@ const GenerateCourse = () => {
     isOrgStaff && role === 'dept_admin'
       ? staffCourseLimit
       : isOrgStaff && role === 'org_admin'
-        ? Infinity
+        ? (orgPlan?.aiCourseSlots || 20)
         : planLimits.maxCourses;
 
   const currentCount =
@@ -1195,6 +1196,24 @@ const GenerateCourse = () => {
       fetchCourseCount();
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    async function fetchOrgPlan() {
+      if (orgId && role === 'org_admin') {
+        try {
+          const res = await axios.get(`${serverURL}/api/admin/org-plan?organizationId=${orgId}`);
+          if (res.data.success) {
+            setOrgPlan(res.data.plan);
+          }
+        } catch (error) {
+          console.error('Error fetching org plan:', error);
+        }
+      }
+    }
+    if (isAuthenticated) {
+      fetchOrgPlan();
+    }
+  }, [isAuthenticated, orgId, role]);
 
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseFormSchema),

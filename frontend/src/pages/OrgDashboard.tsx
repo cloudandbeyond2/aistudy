@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle, BookOpen, FileQuestion, Calendar, CheckCircle2 } from 'lucide-react';
+import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle, BookOpen, FileQuestion, Calendar, CheckCircle2, ArrowUpCircle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -733,6 +733,9 @@ const OrgDashboard = () => {
     const [expandedQuizAttemptId, setExpandedQuizAttemptId] = useState('');
     const [openLimitIncreaseDialog, setOpenLimitIncreaseDialog] = useState(false);
     const [limitIncreaseData, setLimitIncreaseData] = useState({ requestedSlot: 1, requestedCustomLimit: 0 });
+    const [openDeptCourseLimitDialog, setOpenDeptCourseLimitDialog] = useState(false);
+    const [deptCourseLimitData, setDeptCourseLimitData] = useState({ requestedCourseLimit: 5 });
+    const [deptLimitRequests, setDeptLimitRequests] = useState<any[]>([]);
 
     // New features state
     const [meetings, setMeetings] = useState<any[]>([]);
@@ -819,6 +822,7 @@ const resetProjectForm = () => {
         fetchOrgDepartments();
         fetchOrgDeptAdmins();
         fetchNotices();
+        fetchDeptLimitRequests();
     }, [orgId]);
 
     useEffect(() => {
@@ -831,6 +835,7 @@ const resetProjectForm = () => {
             fetchProjects();
             fetchMaterials();
             fetchNotices();
+            fetchDeptLimitRequests();
         }
     }, [userDeptName, deptId, role]);
 
@@ -992,6 +997,68 @@ const resetProjectForm = () => {
             }
         } catch (e) {
             console.error("Failed to fetch materials", e);
+        }
+    };
+
+    const fetchDeptLimitRequests = async () => {
+        try {
+            const endpoint = role === 'dept_admin' 
+                ? `${serverURL}/api/org/dept-admin/course-limit/requests?organizationId=${orgId}&deptAdminId=${sessionStorage.getItem('uid')}`
+                : `${serverURL}/api/org/dept-admin/course-limit/requests?organizationId=${orgId}`;
+            const res = await axios.get(endpoint);
+            if (res.data.success) {
+                setDeptLimitRequests(res.data.requests);
+            }
+        } catch (e) {
+            console.error("Failed to fetch dept limit requests", e);
+        }
+    };
+
+    const handleDeptCourseLimitRequest = async () => {
+        if (!deptCourseLimitData.requestedCourseLimit || deptCourseLimitData.requestedCourseLimit < 1) {
+            toast({ title: "Error", description: "Please enter a valid number of courses", variant: "destructive" });
+            return;
+        }
+
+        try {
+            const res = await axios.post(`${serverURL}/api/org/dept-admin/course-limit/request`, {
+                organizationId: orgId,
+                deptAdminId: sessionStorage.getItem('uid'),
+                requestedCourseLimit: deptCourseLimitData.requestedCourseLimit
+            });
+            
+            if (res.data.success) {
+                toast({ title: "Request Sent", description: "Your course limit increase request has been sent to the organization admin." });
+                setOpenDeptCourseLimitDialog(false);
+                fetchDeptLimitRequests();
+            } else {
+                toast({ title: "Error", description: res.data.message || "Failed to submit request", variant: "destructive" });
+            }
+        } catch (e: any) {
+            toast({ title: "Error", description: e.response?.data?.message || e.message || "Failed to submit request", variant: "destructive" });
+        }
+    };
+
+    const handleProcessDeptCourseLimitRequest = async (requestId: string, status: 'approved' | 'rejected', adminComment: string = '') => {
+        try {
+            const orgAdminId = sessionStorage.getItem('uid') || '';
+            const res = await axios.post(`${serverURL}/api/org/dept-admin/course-limit/process`, {
+                organizationId: orgId,
+                orgAdminId,
+                requestId,
+                status,
+                adminComment
+            });
+
+            if (res.data.success) {
+                toast({ title: "Success", description: `Request ${status} successfully` });
+                fetchDeptLimitRequests();
+                fetchStats(); // Update org admin limit numbers
+            } else {
+                toast({ title: "Error", description: res.data.message || `Failed to ${status} request`, variant: "destructive" });
+            }
+        } catch (e: any) {
+            toast({ title: "Error", description: e.response?.data?.message || e.message || `Failed to ${status} request`, variant: "destructive" });
         }
     };
 
@@ -2951,6 +3018,36 @@ const formatGuidanceText = (text: string) => {
                                     onChange={(e) => setCourseSearch(e.target.value)}
                                 />
                                 <div className="flex gap-2">
+                                    {role === 'dept_admin' && (
+                                        <Dialog open={openDeptCourseLimitDialog} onOpenChange={setOpenDeptCourseLimitDialog}>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline">
+                                                    <Plus className="w-4 h-4 mr-2" /> Request Limit Increase
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Request Course Limit Increase</DialogTitle>
+                                                    <DialogDescription>
+                                                        Submit a request to your organization's admin to increase your course creation capacity.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <div className="grid gap-4 py-4">
+                                                    <div className="grid gap-2">
+                                                        <Label>Requested Additional Courses</Label>
+                                                        <Input
+                                                            type="number"
+                                                            min="1"
+                                                            value={deptCourseLimitData.requestedCourseLimit}
+                                                            onChange={(e) => setDeptCourseLimitData({ ...deptCourseLimitData, requestedCourseLimit: parseInt(e.target.value) || 1 })}
+                                                        />
+                                                    </div>
+                                                    <Button onClick={handleDeptCourseLimitRequest}>Submit Request</Button>
+                                                </div>
+                                            </DialogContent>
+                                        </Dialog>
+                                    )}
+
                                     {(orgSettings?.allowAICreation !== false) && (
                                         <Button variant="outline" onClick={() => window.location.href = '/dashboard/generate-course'}>
                                             <Sparkles className="w-4 h-4 mr-2" /> AI Generate
@@ -3493,6 +3590,71 @@ const formatGuidanceText = (text: string) => {
                 {/* APPROVALS TAB */}
                 {role === 'org_admin' && (
                     <TabsContent value="approvals" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <ArrowUpCircle className="w-5 h-5 text-blue-500" /> Department Course Limit Requests
+                                </CardTitle>
+                                <CardDescription>Review and approve course limit increase requests from department admins.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {(() => {
+                                    const pendingLimitRequests = deptLimitRequests.filter((r: any) => r.status === 'pending');
+                                    return (
+                                        <div className="space-y-3">
+                                            {pendingLimitRequests.length === 0 ? (
+                                                <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
+                                                    No course limit requests pending.
+                                                </div>
+                                            ) : (
+                                                pendingLimitRequests.map((request: any) => (
+                                                    <div key={request._id} className="rounded-xl border bg-card p-4 shadow-sm">
+                                                        <div className="flex items-start justify-between gap-3">
+                                                            <div>
+                                                                <h3 className="font-semibold">{request.deptAdminId?.name || 'Department Admin'}</h3>
+                                                                <p className="mt-1 text-sm text-muted-foreground">Requested Limit Increase: <span className="font-medium text-foreground">{request.requestedCourseLimit}</span> courses</p>
+                                                                <p className="text-xs text-muted-foreground">Submitted: {new Date(request.createdAt).toLocaleDateString()}</p>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <Button
+                                                                    variant="outline"
+                                                                    className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-none"
+                                                                    size="sm"
+                                                                    onClick={() => handleProcessDeptCourseLimitRequest(request._id, 'approved')}
+                                                                >
+                                                                    <Check className="w-4 h-4 mr-1" /> Approve
+                                                                </Button>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    className="bg-red-50 text-red-600 hover:bg-red-100 border-none"
+                                                                    size="sm"
+                                                                    onClick={async () => {
+                                                                        const result = await Swal.fire({
+                                                                            title: 'Reject Request?',
+                                                                            input: 'text',
+                                                                            inputLabel: 'Reason (optional)',
+                                                                            showCancelButton: true,
+                                                                            confirmButtonText: 'Reject',
+                                                                            confirmButtonColor: '#dc2626'
+                                                                        });
+                                                                        if (result.isConfirmed) {
+                                                                            await handleProcessDeptCourseLimitRequest(request._id, 'rejected', result.value || '');
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <X className="w-4 h-4 mr-1" /> Reject
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    );
+                                })()}
+                            </CardContent>
+                        </Card>
+
                         <Card>
                             <CardHeader>
                                 <CardTitle>Course Approvals</CardTitle>

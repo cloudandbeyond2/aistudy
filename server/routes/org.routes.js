@@ -54,7 +54,10 @@ import {
     getOrgPlan,
     getAllOrgPlans,
     updateOrgPlanFeatures,
-    deleteOrgPlan
+    deleteOrgPlan,
+    createDeptCourseLimitRequest,
+    getDeptCourseLimitRequests,
+    processDeptCourseLimitRequest
 } from '../controllers/org.controller.js';
 import { getOrgCourseCount } from '../controllers/course.controller.js';
 import Organization from '../models/Organization.js';
@@ -151,6 +154,11 @@ router.delete('/org/dept-admin/:id', deleteDeptAdmin);
 // Student Limit Increase Request
 router.post('/org/limit-increase/request', requestLimitIncrease);
 router.post('/org/staff/course-limit/request', requestStaffCourseLimitIncrease);
+
+// Dept Admin Course Limit Increase Requests
+router.post('/org/dept-admin/course-limit/request', createDeptCourseLimitRequest);
+router.get('/org/dept-admin/course-limit/requests', getDeptCourseLimitRequests);
+router.post('/org/dept-admin/course-limit/process', processDeptCourseLimitRequest);
 
 // Project AI Generation
 router.post('/org/project/generate', generateProjectContent);
