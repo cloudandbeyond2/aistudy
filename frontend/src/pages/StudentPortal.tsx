@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen, FileText, X, Briefcase, Sparkles, ClipboardCheck, Loader2 } from 'lucide-react';
+import { BookOpen, FileText, X, Briefcase, Sparkles, ClipboardCheck, Loader2, ListTodo } from 'lucide-react';
 import SEO from '@/components/SEO';
 import axios from 'axios';
 import { serverURL } from '@/constants';
@@ -148,20 +148,31 @@ const StudentPortal = () => {
 
                     {/* RIGHT SIDE STATS - Only show when not loading */}
                     {!loading && (
-                        <div className="flex gap-3 text-xs">
-                            <div className="px-3 py-2 rounded-lg bg-primary/10 border border-primary/20">
-                                <span className="block font-semibold text-primary">
-                                    {courses.length}
-                                </span>
-                                <span className="text-muted-foreground">Courses</span>
+                        <div className="flex flex-col gap-3">
+                            <div className="flex gap-3 text-xs">
+                                <div className="px-3 py-2 rounded-lg bg-primary/10 border border-primary/20">
+                                    <span className="block font-semibold text-primary">
+                                        {courses.length}
+                                    </span>
+                                    <span className="text-muted-foreground">Courses</span>
+                                </div>
+
+                                <div className="px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/20">
+                                    <span className="block font-semibold text-green-600">
+                                        {courses.filter(c => c.progressPercentage === 100).length}
+                                    </span>
+                                    <span className="text-muted-foreground">Completed</span>
+                                </div>
                             </div>
 
-                            <div className="px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/20">
-                                <span className="block font-semibold text-green-600">
-                                    {courses.filter(c => c.progressPercentage === 100).length}
-                                </span>
-                                <span className="text-muted-foreground">Completed</span>
-                            </div>
+                            <Button
+                                onClick={() => navigate('/dashboard/todo')}
+                                variant="outline"
+                                className="w-full md:w-auto justify-start gap-2"
+                            >
+                                <ListTodo className="w-4 h-4" />
+                                Open Todo Center
+                            </Button>
                         </div>
                     )}
                 </div>

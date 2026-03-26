@@ -1,6 +1,9 @@
 import mongoose from "mongoose";
 
 const scheduleSchema = new mongoose.Schema({
+  date: {
+    type: Date
+  },
   day: {
     type: String,
     required: true
@@ -8,6 +11,10 @@ const scheduleSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true
+  },
+  description: {
+    type: String,
+    default: ""
   },
   startTime: {
     type: String,
@@ -23,8 +30,35 @@ const scheduleSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ["Lecture", "Lab", "Meeting", "Workshop"],
+    enum: ["Lecture", "Lab", "Meeting", "Workshop", "Deadline", "Study"],
     default: "Lecture"
+  },
+  visibility: {
+    type: String,
+    enum: ["organization", "personal", "public"],
+    default: "organization"
+  },
+  organizationId: {
+    type: String
+  },
+  ownerId: {
+    type: String
+  },
+  ownerRole: {
+    type: String
+  },
+  location: {
+    type: String,
+    default: ""
+  },
+  color: {
+    type: String,
+    default: "#2563eb"
+  },
+  status: {
+    type: String,
+    enum: ["planned", "in-progress", "done"],
+    default: "planned"
   }
 }, { timestamps: true });
 

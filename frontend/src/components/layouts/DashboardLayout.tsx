@@ -51,6 +51,7 @@ import {
   TrendingUp,
   Clock,
   CheckCircle2,
+  ListTodo,
   Zap,
   Sun,
   Moon
@@ -447,6 +448,22 @@ const DashboardLayoutContent = () => {
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
+                    <MenuItem 
+                      icon={Calendar} 
+                      label="Calendar Scheduler" 
+                      to="/dashboard/calendar" 
+                      isActive={isActive('/dashboard/calendar')}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
+                    <MenuItem 
+                      icon={ListTodo} 
+                      label="Todo Center" 
+                      to="/dashboard/todo" 
+                      isActive={isActive('/dashboard/todo')}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
 
                     {!admin && (
                       <MenuItem 
@@ -510,6 +527,22 @@ const DashboardLayoutContent = () => {
                       label="Interview Prep" 
                       to="/dashboard/interview-prep" 
                       isActive={isActive('/dashboard/interview-prep')}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
+                    <MenuItem 
+                      icon={Calendar} 
+                      label="Calendar Scheduler" 
+                      to="/dashboard/calendar" 
+                      isActive={isActive('/dashboard/calendar')}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
+                    <MenuItem 
+                      icon={ListTodo} 
+                      label="Todo Center" 
+                      to="/dashboard/todo" 
+                      isActive={isActive('/dashboard/todo')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
@@ -625,6 +658,14 @@ const DashboardLayoutContent = () => {
                       label="Organization Portal" 
                       to="/dashboard/org" 
                       isActive={isActive('/dashboard/org')}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
+                    <MenuItem 
+                      icon={Calendar} 
+                      label="Calendar Scheduler" 
+                      to="/dashboard/calendar" 
+                      isActive={isActive('/dashboard/calendar')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
@@ -777,6 +818,22 @@ const DashboardLayoutContent = () => {
                       label="Interview Prep" 
                       to="/dashboard/interview-prep" 
                       isActive={isActive('/dashboard/interview-prep')}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
+                    <MenuItem 
+                      icon={Calendar} 
+                      label="Calendar Scheduler" 
+                      to="/dashboard/calendar" 
+                      isActive={isActive('/dashboard/calendar')}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
+                    <MenuItem 
+                      icon={ListTodo} 
+                      label="Todo Center" 
+                      to="/dashboard/todo" 
+                      isActive={isActive('/dashboard/todo')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />

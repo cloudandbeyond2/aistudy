@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Users,
   Clock,
@@ -12,6 +13,7 @@ import {
   BookOpen,
   ArrowRight,
   Bell,
+  ListTodo,
 } from 'lucide-react';
 import {
   LineChart,
@@ -385,6 +387,15 @@ export default function StaffDashboard() {
           <span className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
             Spring Semester 2026
           </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/dashboard/todo')}
+            className="hidden sm:inline-flex gap-2"
+          >
+            <ListTodo size={16} />
+            Todo Center
+          </Button>
         </div>
       </div>
 

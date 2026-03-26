@@ -1,9 +1,26 @@
 import Schedule from "../models/Schedule.js";
 
+const getDayName = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString("en-US", { weekday: "long" });
+};
+
 /* CREATE */
 export const createSchedule = async (req, res) => {
   try {
-    const schedule = new Schedule(req.body);
+    const payload = { ...req.body };
+
+    if (payload.date && !payload.day) {
+      payload.day = getDayName(payload.date) || payload.day;
+    }
+
+    if (!payload.visibility) {
+      payload.visibility = payload.ownerId ? "personal" : "organization";
+    }
+
+    const schedule = new Schedule(payload);
     await schedule.save();
 
     res.status(201).json({
@@ -19,7 +36,27 @@ export const createSchedule = async (req, res) => {
 /* GET ALL */
 export const getSchedules = async (req, res) => {
   try {
-    const schedules = await Schedule.find();
+    const { organizationId, ownerId } = req.query;
+
+    const query = [];
+
+    if (organizationId) {
+      query.push({
+        $or: [
+          { organizationId },
+          { organizationId: { $exists: false } },
+          { organizationId: null }
+        ]
+      });
+    }
+
+    if (ownerId) {
+      query.push({ ownerId });
+    }
+
+    const schedules = query.length > 0
+      ? await Schedule.find({ $or: query }).sort({ date: 1, startTime: 1, createdAt: -1 })
+      : await Schedule.find().sort({ date: 1, startTime: 1, createdAt: -1 });
 
     res.json({
       success: true,
