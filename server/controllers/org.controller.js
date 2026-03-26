@@ -702,6 +702,7 @@ export const submitAssignment = async (req, res) => {
             studentId,
             content,
             fileUrl,
+            text: content,   // ✅ MUST BE THIS
             status: 'submitted'
         });
         await submission.save();

@@ -65,13 +65,13 @@ const SearchFilterBar = ({ searchTerm, setSearchTerm, filterType, setFilterType,
     >
       {/* Search Input */}
       <div className="relative group">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-500 group-focus-within:text-blue-600 transition-colors" />
+       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-500 dark:text-gray-400 group-focus-within:text-blue-600 transition-colors" />
         <input
           type="text"
           placeholder="Search projects by title, description, or subtopics..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 border border-blue-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 shadow-sm hover:shadow-md text-gray-800 placeholder:text-gray-400"
+        className="w-full pl-10 pr-4 py-3 border border-blue-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 shadow-sm hover:shadow-md text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
         />
       </div>
     </motion.div>
@@ -126,14 +126,14 @@ const ProjectCard = ({ project, onView, onDownload, index }) => {
       initial="hidden"
       animate="visible"
       custom={index}
-      className="h-full"
+    className="h-full w-full"
     >
       <motion.div
         variants={cardHoverVariants}
         whileHover="hover"
         className="group relative h-full"
       >
-        <Card className="relative overflow-hidden bg-white border border-blue-100 shadow-lg hover:shadow-xl transition-all duration-500 h-full flex flex-col">
+      <Card className="relative overflow-hidden bg-white dark:bg-gray-900 border border-blue-100 dark:border-gray-700  shadow-lg hover:shadow-xl transition-all duration-500 h-full flex flex-col ">
           {/* Animated gradient border */}
           <motion.div 
             className={`absolute inset-0 bg-gradient-to-r ${getTypeGradient(project.type)} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
@@ -164,11 +164,11 @@ const ProjectCard = ({ project, onView, onDownload, index }) => {
               )}
             </div>
             
-            <CardTitle className="text-lg lg:text-xl text-gray-800 line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors min-h-[3.5rem]">
+            <CardTitle className="text-lg lg:text-xl text-gray-800 dark:text-white line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors min-h-[3.5rem]">
               {project.title}
             </CardTitle>
 
-            <CardDescription className="line-clamp-2 text-gray-600 text-sm min-h-[2.5rem]">
+            <CardDescription className="line-clamp-2 text-gray-600 dark:text-gray-400 text-sm min-h-[2.5rem]">
               {(project.description || '').replace(/<[^>]*>?/gm, '').substring(0, 100)}
               {(project.description || '').length > 100 ? '...' : ''}
             </CardDescription>
@@ -195,37 +195,55 @@ const ProjectCard = ({ project, onView, onDownload, index }) => {
               </div>
             )}
             
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs text-blue-600">
-                <Briefcase className="w-3 h-3" />
-                <span>{project.department || 'General'}</span>
-                {project.dueDate && (
-                  <>
-                    <Clock className="w-3 h-3 ml-1" />
-                    <span>{new Date(project.dueDate).toLocaleDateString()}</span>
-                  </>
-                )}
-              </div>
-              
-              <div className="flex gap-1">
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => onView(project)}
-                  className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-blue-50 transition-colors"
-                >
-                  <Eye className="w-4 h-4 text-blue-600" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => onDownload(project)}
-                  className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-blue-50 transition-colors"
-                >
-                  <Download className="w-4 h-4 text-blue-600" />
-                </motion.button>
-              </div>
-            </div>
+       <div className="flex items-center justify-between mt-3">
+
+  {/* LEFT SIDE */}
+  <div className="flex flex-col gap-1 min-w-0">
+
+    {/* Department / ID */}
+    <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
+      <Briefcase className="w-3 h-3 shrink-0" />
+      <span className="truncate max-w-[130px]">
+        {project.department || 'General'}
+      </span>
+    </div>
+
+    {/* Date */}
+    {project.dueDate && (
+      <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+        <Clock className="w-3 h-3" />
+        <span>
+          {new Date(project.dueDate).toLocaleDateString()}
+        </span>
+      </div>
+    )}
+
+  </div>
+
+  {/* RIGHT SIDE ICONS */}
+  <div className="flex items-center gap-2 shrink-0">
+
+    <motion.button
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      onClick={() => onView(project)}
+      className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-blue-50 dark:hover:bg-gray-800 transition"
+    >
+      <Eye className="w-4 h-4 text-blue-600" />
+    </motion.button>
+
+    <motion.button
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      onClick={() => onDownload(project)}
+      className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-blue-50 dark:hover:bg-gray-800 transition"
+    >
+      <Download className="w-4 h-4 text-blue-600" />
+    </motion.button>
+
+  </div>
+
+</div>
           </CardContent>
         </Card>
       </motion.div>
@@ -389,12 +407,11 @@ ${p.subtopics?.join(', ') || 'N/A'}
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-purple-50 to-blue-50">
+  <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
       <SEO title="My Projects" description="View your projects with AI-powered insights" />
       
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 md:px-8 lg:px-10 py-5 sm:py-6 md:py-8">
         {/* Header with Animation */}
         <motion.div 
           initial={{ opacity: 0, y: -30 }}
@@ -414,10 +431,10 @@ ${p.subtopics?.join(', ') || 'N/A'}
             </motion.div>
             <span>AI-Powered Project Management</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-3">
-            My Projects
-          </h1>
-          <p className="text-gray-600">
+ <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gradient bg-gradient-to-r from-primary to-purple-600">
+  My Projects
+</h1>
+      <p className="text-gray-600 dark:text-gray-400">
             Discover, manage, and excel in your academic projects with AI-powered insights and recommendations
           </p>
         </motion.div>
@@ -441,7 +458,7 @@ ${p.subtopics?.join(', ') || 'N/A'}
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6"
             >
               {filteredProjects.map((project, index) => (
                 <ProjectCard
@@ -489,13 +506,13 @@ ${p.subtopics?.join(', ') || 'N/A'}
             onClick={() => setOpenView(false)}
           >
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 50 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 50 }}
-              transition={{ type: "spring", damping: 25 }}
-              className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
+  initial={{ scale: 0.9, opacity: 0, y: 50 }}
+  animate={{ scale: 1, opacity: 1, y: 0 }}
+  exit={{ scale: 0.9, opacity: 0, y: 50 }}
+  transition={{ type: "spring", damping: 25 }}
+  className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+  onClick={(e) => e.stopPropagation()}
+>
               <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex justify-between items-center">
                 <h2 className="text-xl font-semibold text-white">{selectedProject.title}</h2>
                 <motion.button 
@@ -514,11 +531,11 @@ ${p.subtopics?.join(', ') || 'N/A'}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 }}
                 >
-                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-blue-700">
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-blue-700 dark:text-blue-400">
                     <BookOpen className="w-5 h-5" />
                     Description
                   </h3>
-                  <div className="prose max-w-none text-gray-700" dangerouslySetInnerHTML={{ __html: selectedProject.description }} />
+              <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: selectedProject.description }} />
                 </motion.div>
 
                 <motion.div
@@ -526,12 +543,12 @@ ${p.subtopics?.join(', ') || 'N/A'}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 }}
                 >
-                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-blue-700">
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-blue-700 dark:text-blue-400">
                     <Lightbulb className="w-5 h-5 text-yellow-500" />
                     Guidance
                   </h3>
-                  <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                    <div className="prose max-w-none text-gray-700" dangerouslySetInnerHTML={{ __html: selectedProject.guidance }} />
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
+               <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: selectedProject.guidance }} />
                   </div>
                 </motion.div>
 
@@ -541,7 +558,7 @@ ${p.subtopics?.join(', ') || 'N/A'}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 }}
                   >
-                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-blue-700">
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-blue-700 dark:text-blue-400">
                       <Tag className="w-5 h-5 text-green-500" />
                       Subtopics
                     </h3>
@@ -552,7 +569,7 @@ ${p.subtopics?.join(', ') || 'N/A'}
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
                           transition={{ delay: i * 0.05 }}
-                          className="text-sm bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-full"
+                       className="text-sm bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 px-3 py-1.5 rounded-full"
                         >
                           {st}
                         </motion.span>
@@ -565,16 +582,16 @@ ${p.subtopics?.join(', ') || 'N/A'}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.4 }}
-                  className="grid grid-cols-2 gap-4 pt-4 border-t border-blue-200"
+            className="grid grid-cols-2 gap-4 pt-4 border-t border-blue-200 dark:border-gray-700"
                 >
                   <div>
-                    <p className="text-sm text-blue-600">Type</p>
-                    <p className="font-medium text-gray-800">{selectedProject.type}</p>
+                    <p className="text-sm text-blue-600 dark:text-blue-400">Type</p>
+<p className="font-medium text-gray-800 dark:text-gray-200">{selectedProject.type}</p>
                   </div>
                   {selectedProject.dueDate && (
                     <div>
-                      <p className="text-sm text-blue-600">Due Date</p>
-                      <p className="font-medium text-gray-800">
+                  <p className="text-sm text-blue-600 dark:text-blue-400">Due Date</p>
+                    <p className="font-medium text-gray-800 dark:text-gray-200">
                         {new Date(selectedProject.dueDate).toLocaleDateString(undefined, { 
                           year: 'numeric', 
                           month: 'long', 
@@ -584,16 +601,16 @@ ${p.subtopics?.join(', ') || 'N/A'}
                     </div>
                   )}
                   <div>
-                    <p className="text-sm text-blue-600">Department</p>
-                    <p className="font-medium text-gray-800">{selectedProject.department || 'General'}</p>
+                 <p className="text-sm text-blue-600 dark:text-blue-400">Department</p>
+<p className="font-medium text-gray-800 dark:text-gray-200">{selectedProject.department || 'General'}</p>
                   </div>
                 </motion.div>
               </div>
 
-              <div className="sticky bottom-0 bg-white border-t border-blue-200 px-6 py-4 flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setOpenView(false)} className="border-blue-300 text-blue-700 hover:bg-blue-50">Close</Button>
+           <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-blue-200 dark:border-gray-700 px-6 py-4 flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setOpenView(false)} className="border-blue-300 dark:border-gray-600 text-blue-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-800">Close</Button>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button variant="default" onClick={() => handleDownload(selectedProject)} className="bg-blue-600 hover:bg-blue-700">
+                  <Button variant="default" onClick={() => handleDownload(selectedProject)} className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">
                     <Download className="w-4 h-4 mr-2" />
                     Download
                   </Button>
