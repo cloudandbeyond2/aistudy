@@ -1,6 +1,7 @@
 import OrganizationEnquiry from "../models/OrganizationEnquiry.js";
 import Notification from "../models/Notification.js";
 import User from "../models/User.js";
+import Admin from "../models/Admin.js";
 
 /* CREATE */
 export const createOrganizationEnquiry = async (req, res) => {
@@ -9,20 +10,17 @@ export const createOrganizationEnquiry = async (req, res) => {
 
     /* ADMIN NOTIFICATION */
     try {
-      const admins = await User.find({
-        $or: [
-          { role: "org_admin" },
-          { role: "user", isOrganization: false }
-        ]
-      });
-
-      for (const admin of admins) {
-        await Notification.create({
-          user: admin._id,
-          message: `New organization enquiry from "${enquiry.organizationName}".`,
-          type: "info",
-          link: "/admin/organization-enquiries",
-        });
+      const mainAdmin = await Admin.findOne({ type: "main" });
+      if (mainAdmin) {
+        const adminUser = await User.findOne({ email: mainAdmin.email });
+        if (adminUser) {
+          await Notification.create({
+            user: adminUser._id,
+            message: `New organization enquiry from "${enquiry.organizationName}".`,
+            type: "info",
+            link: "/admin/organization-enquiries",
+          });
+        }
       }
     } catch (err) {
       console.error("Admin notification for enquiry failed:", err);

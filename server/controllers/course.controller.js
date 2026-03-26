@@ -2,6 +2,8 @@ import Course from '../models/Course.js';
 import OrgCourse from '../models/OrgCourse.js';
 import Lang from '../models/Lang.js';
 import User from '../models/User.js';
+import OrganizationPlan from '../models/OrganizationPlan.js';
+
 import mongoose from 'mongoose';
 import { getUnsplashApi } from '../config/unsplash.js';
 import IssuedCertificate from '../models/IssuedCertificate.js';
@@ -102,7 +104,22 @@ export const createCourse = async (req, res) => {
     }
 
     // ── ORGANIZATION AI COURSE LIMIT CHECK ────────────────────────────────
-    // Organization pricing plan based AI slot limits are intentionally not enforced.
+    if (resolvedCreator && resolvedCreator.organization) {
+      const orgPlan = await OrganizationPlan.findOne({ organization: resolvedCreator.organization, isActive: true });
+      if (orgPlan) {
+        const orgCoursesCount = await OrgCourse.countDocuments({ organizationId: resolvedCreator.organization });
+        const aiCoursesCount = await Course.countDocuments({ organizationId: resolvedCreator.organization });
+        const totalCreated = orgCoursesCount + aiCoursesCount;
+
+        if (totalCreated >= orgPlan.aiCourseSlots) {
+          return res.status(403).json({
+            success: false,
+            message: `Organization course creation limit reached (${orgPlan.aiCourseSlots}). Please contact your administrator or upgrade your plan.`,
+            courseLimitReached: true
+          });
+        }
+      }
+    }
     // ──────────────────────────────────────────────────────────────────────
 
     // Safeguard: Check if course already exists for this user
