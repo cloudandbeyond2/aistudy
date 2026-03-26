@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -95,9 +94,10 @@ const OrgAssignmentSubmissions = () => {
 
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-bold">{assignment?.topic || 'Assignment Submissions'}</h1>
-                    <p className="text-muted-foreground mt-1">{assignment?.description}</p>
-                </div>
+  <h1 className="text-3xl font-bold">
+    {assignment?.topic || 'Assignment Submissions'}
+  </h1>
+</div>
                 {/* <Button variant="outline" onClick={fetchSubmissions}>Refresh</Button> */}
             </div>
 
@@ -137,14 +137,21 @@ const OrgAssignmentSubmissions = () => {
                                                 <div className="text-xs text-muted-foreground">{sub.studentId?.studentDetails?.rollNo}</div>
                                             </div>
                                         </TableCell>
-                                        <TableCell>
-                                            <div className="text-sm">
-                                                {new Date(sub.createdAt).toLocaleDateString()}
-                                                <span className="text-xs text-muted-foreground block">
-                                                    {new Date(sub.createdAt).toLocaleTimeString()}
-                                                </span>
-                                            </div>
-                                        </TableCell>
+                                       <TableCell>
+  <div className="text-sm">
+   {new Date(sub.submittedAt || sub.createdAt).toLocaleDateString()}
+<span className="text-xs text-muted-foreground block">
+  {new Date(sub.submittedAt || sub.createdAt).toLocaleTimeString()}
+</span>
+
+    {/* ✅ STUDENT MESSAGE */}
+    {sub.content && (
+ <div className="text-xs mt-1 text-gray-400">
+  {sub.content}
+</div>
+)}
+  </div>
+</TableCell>
                                         <TableCell>
                                             {sub.fileUrl ? (
                                                 <a
