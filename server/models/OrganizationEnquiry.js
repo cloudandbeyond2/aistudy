@@ -10,8 +10,7 @@ const organizationEnquirySchema = new mongoose.Schema(
     message: String,
 
     referBy: {
-      type: String,
-      required: true,
+      type: String
     },
 
     handledBy: {          // ✅ NEW FIELD (Admin Name)

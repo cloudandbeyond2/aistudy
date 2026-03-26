@@ -927,6 +927,7 @@ Requirements:
 
   const isSubtopicReadyForDisplay = (subtopic) => {
     if (!subtopic?.theory) return false;
+    if (subtopic.theory.length < 300) return false;
     return type === 'video & text course'
       ? !!subtopic.youtube
       : !!subtopic.image;
