@@ -143,25 +143,43 @@ const pricingPlans = [
     price: FreeCost,
     billing: '7 days access',
     featured: false,
+    summary: 'Try the platform and test the learning flow.',
     features: ['AI content chat', '1 course creation', 'Certificate download', 'Basic support'],
+    ctaLabel: 'Start Free',
   },
   {
     name: 'Monthly',
     price: MonthCost,
     billing: 'per month',
     featured: true,
-    features: ['Course generation', 'Smart workspace', 'Resume Builder', 'Interview Prep', 'Priority support'],
+    summary: 'Best for active learners and job seekers who use the platform regularly.',
+    features: ['Course generation', 'Smart workspace', 'Assessment tools', 'Resume Builder', 'Priority support'],
+    ctaLabel: 'Choose Monthly',
   },
   {
     name: 'Yearly',
     price: YearCost,
     billing: 'per year',
     featured: false,
+    summary: 'Best value for individual learners who stay on the platform all year.',
     features: ['Unlimited courses', 'Video + theory modules', 'Advanced analytics', 'Priority support'],
+    ctaLabel: 'Choose Yearly',
   },
 ];
 
+const pricingAspects = ['AI content', 'Assessments', 'Resume tools', 'Certificates', 'Support'];
+
 const sectionHeading = 'mx-auto max-w-3xl text-center';
+const featureCardClass =
+  "group relative h-full overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/90 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.35)] transition-all duration-300 hover:-translate-y-1 hover:border-slate-950/20 hover:shadow-[0_34px_90px_-48px_rgba(15,23,42,0.45)]";
+const audienceCardClass =
+  "group relative overflow-hidden rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cyan-300/30 hover:bg-white/7 hover:shadow-[0_30px_80px_-42px_rgba(34,211,238,0.2)]";
+const workflowCardClass =
+  "group relative rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_60px_-40px_rgba(15,23,42,0.28)]";
+const pricingCardClass =
+  "relative rounded-[28px] border p-6 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.35)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_34px_90px_-48px_rgba(15,23,42,0.42)]";
+const logoTileClass =
+  "group flex items-center justify-center rounded-3xl border border-slate-200/80 bg-slate-50/80 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:bg-white hover:shadow-[0_18px_50px_-32px_rgba(15,23,42,0.35)]";
 
 const getDashboardPath = () => {
   const role = sessionStorage.getItem('role') || '';
@@ -237,15 +255,15 @@ const Index = () => {
       <SEO title="Home" description="Colossus IQ is an AI-based learning system for schools, universities, organizations, and job seekers." />
       <Header />
 
-      <main className="bg-[radial-gradient(circle_at_top_left,rgba(30,138,138,0.08),transparent_30%),linear-gradient(180deg,hsl(var(--background))_0%,hsl(var(--background))_100%)]">
-        <section id="home" className="relative overflow-hidden bg-slate-950 text-white">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(30,138,138,0.18),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.14),transparent_30%)]" />
+      <main className="bg-[radial-gradient(circle_at_top_left,rgba(13,148,136,0.08),transparent_30%),linear-gradient(180deg,hsl(var(--background))_0%,hsl(var(--background))_100%)]">
+        <section id="home" className="relative overflow-hidden bg-[#06101d] text-white">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.18),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.12),transparent_30%),linear-gradient(180deg,rgba(6,16,29,1)_0%,rgba(8,13,24,1)_100%)]" />
           <div
-            className="absolute inset-0 bg-cover bg-center opacity-10 mix-blend-screen"
+            className="absolute inset-0 bg-cover bg-center opacity-8 mix-blend-screen"
             style={{ backgroundImage: "url('/bexon/images/pattern-bg.webp')" }}
           />
-          <div className="absolute -left-24 top-24 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
-          <div className="absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" />
+          <div className="absolute -left-24 top-24 h-72 w-72 rounded-full bg-cyan-400/12 blur-3xl" />
+          <div className="absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-emerald-400/10 blur-3xl" />
 
           <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-20 md:px-6 lg:grid-cols-[1.06fr_0.94fr] lg:items-center lg:px-8 lg:py-28">
             <motion.div
@@ -254,7 +272,7 @@ const Index = () => {
               transition={{ duration: 0.7 }}
               className="space-y-7"
             >
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold text-cyan-100 backdrop-blur">
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-1.5 text-xs font-semibold text-cyan-100 backdrop-blur">
                 <Sparkles className="h-3.5 w-3.5" />
                 Colossus IQ is an AI-based learning system
               </div>
@@ -270,21 +288,21 @@ const Index = () => {
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Button onClick={handlePrimaryAction} className="h-12 rounded-full bg-primary px-6 text-white hover:bg-primary/90">
+                <Button onClick={handlePrimaryAction} className="h-12 rounded-full bg-white px-6 text-slate-950 hover:bg-slate-100">
                   Get Started
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 <Button
                   onClick={() => scrollToSection('pricing')}
                   variant="outline"
-                  className="h-12 rounded-full border-white/15 bg-white/5 px-6 text-white hover:bg-white/10 hover:text-white"
+                  className="h-12 rounded-full border-cyan-400/20 bg-white/5 px-6 text-white hover:border-cyan-300/30 hover:bg-white/10 hover:text-white"
                 >
                   View Pricing
                 </Button>
                 <Button
                   onClick={() => scrollToSection('features')}
                   variant="ghost"
-                  className="h-12 rounded-full px-6 text-white hover:bg-white/10 hover:text-white"
+                  className="h-12 rounded-full px-6 text-slate-200 hover:bg-white/10 hover:text-white"
                 >
                   Explore Features
                 </Button>
@@ -292,7 +310,7 @@ const Index = () => {
 
               <div className="grid gap-2 sm:grid-cols-3">
                 {platformMetrics.map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-white/10 bg-white/8 p-4 backdrop-blur">
+                  <div key={item.label} className="group rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cyan-300/30 hover:bg-white/10 hover:shadow-[0_18px_50px_-30px_rgba(45,212,191,0.24)]">
                     <div className="text-2xl font-semibold text-white">{item.value}</div>
                     <div className="mt-1 text-[11px] uppercase tracking-[0.25em] text-slate-400">{item.label}</div>
                   </div>
@@ -301,7 +319,7 @@ const Index = () => {
 
               <div className="grid gap-3">
                 {heroHighlights.map((item) => (
-                  <div key={item} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                  <div key={item} className="group flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cyan-300/30 hover:bg-white/10 hover:shadow-[0_18px_50px_-30px_rgba(45,212,191,0.2)]">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 text-cyan-300" />
                     <p className="text-sm leading-6 text-slate-200">{item}</p>
                   </div>
@@ -315,18 +333,19 @@ const Index = () => {
               transition={{ duration: 0.8, delay: 0.1 }}
               className="relative"
             >
-              <div className="absolute -inset-1 rounded-[34px] bg-gradient-to-tr from-primary/50 via-cyan-400/30 to-blue-500/40 blur-2xl opacity-60" />
-              <div className="relative overflow-hidden rounded-[34px] border border-white/10 bg-white/5 p-2 pb-28 shadow-[0_32px_120px_-60px_rgba(15,23,42,0.95)] backdrop-blur sm:pb-2">
+              <div className="absolute -inset-1 rounded-[34px] bg-gradient-to-tr from-cyan-400/40 via-sky-400/25 to-emerald-400/25 blur-2xl opacity-60" />
+              <div className="group relative overflow-hidden rounded-[34px] border border-white/10 bg-white/5 p-2 pb-28 shadow-[0_32px_120px_-60px_rgba(6,16,29,0.95)] backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cyan-300/30 hover:shadow-[0_36px_140px_-60px_rgba(45,212,191,0.24)] sm:pb-2">
+                <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <div className="overflow-hidden rounded-[26px] bg-slate-900">
                   <img
                     src="/bexon/images/hero-img.webp"
                     alt="Colossus IQ dashboard preview"
-                    className="h-[280px] w-full object-cover sm:h-[360px] lg:h-full"
+                    className="h-[280px] w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] sm:h-[360px] lg:h-full"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-transparent to-transparent" />
                 </div>
 
-                <div className="absolute left-4 top-4 rounded-3xl border border-white/10 bg-white/10 px-3 py-2 backdrop-blur sm:left-6 sm:top-6 sm:px-4 sm:py-3">
+                <div className="absolute left-4 top-4 rounded-3xl border border-cyan-300/20 bg-slate-950/50 px-3 py-2 backdrop-blur sm:left-6 sm:top-6 sm:px-4 sm:py-3">
                   <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300">Live platform</p>
                   <div className="mt-1 text-3xl font-semibold text-white">24/7</div>
                 </div>
@@ -338,7 +357,7 @@ const Index = () => {
                       { label: 'Learning', value: 'Smart + guided', icon: CalendarDays },
                       { label: 'Support', value: 'Role aware', icon: MessageSquare },
                     ].map((item) => (
-                      <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                      <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 p-3 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-300/25 hover:bg-white/10 hover:shadow-[0_18px_50px_-30px_rgba(34,211,238,0.18)]">
                         <div className="flex items-center gap-2 text-cyan-100">
                           <item.icon className="h-4 w-4" />
                           <span className="text-xs uppercase tracking-[0.25em] text-slate-300">{item.label}</span>
@@ -378,10 +397,11 @@ const Index = () => {
                   viewport={{ once: true, amount: 0.3 }}
                   transition={{ duration: 0.45, delay: index * 0.06 }}
                 >
-                  <Card className="group h-full overflow-hidden border-slate-200/80 bg-white/90 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.35)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_34px_80px_-45px_rgba(15,23,42,0.42)]">
+                  <Card className={`${featureCardClass} group/card`}>
                     <CardHeader className="space-y-4">
-                      <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <item.icon className="h-5 w-5" />
+                      <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-slate-900/25 to-transparent opacity-0 transition-opacity duration-300 group-hover/card:opacity-100" />
+                      <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform duration-300 group-hover/card:scale-110">
+                        <item.icon className="h-5 w-5" />
                       </div>
                       <CardTitle className="text-xl">{item.title}</CardTitle>
                       <CardDescription className="text-sm leading-7">{item.description}</CardDescription>
@@ -402,7 +422,8 @@ const Index = () => {
         </section>
 
         <section id="platform" className="px-4 pb-20 md:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl rounded-[40px] border border-white/10 bg-slate-950 px-6 py-10 text-white shadow-[0_32px_100px_-60px_rgba(15,23,42,0.95)] md:px-10 md:py-14">
+          <div className="group relative mx-auto max-w-7xl rounded-[40px] border border-white/10 bg-slate-950 px-6 py-10 text-white shadow-[0_32px_100px_-60px_rgba(15,23,42,0.95)] transition-all duration-300 hover:border-cyan-300/20 hover:shadow-[0_34px_120px_-60px_rgba(34,211,238,0.22)] md:px-10 md:py-14">
+            <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
               <motion.div
                 initial={{ opacity: 0, x: -18 }}
@@ -450,10 +471,10 @@ const Index = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.3 }}
                     transition={{ duration: 0.4, delay: index * 0.05 }}
-                    className="rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur"
+                    className={`${audienceCardClass} group/audience`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+                      <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/15 text-primary transition-transform duration-300 group-hover/audience:scale-110">
                         <item.icon className="h-5 w-5" />
                       </div>
                       <div>
@@ -464,7 +485,7 @@ const Index = () => {
 
                     <div className="mt-4 space-y-2">
                       {item.items.map((subItem) => (
-                        <div key={subItem} className="flex items-center gap-2 text-sm text-slate-300">
+                        <div key={subItem} className="flex items-center gap-2 text-sm text-slate-300 transition-transform duration-300 group-hover/audience:translate-x-1">
                           <CheckCircle2 className="h-4 w-4 text-cyan-300" />
                           <span>{subItem}</span>
                         </div>
@@ -486,10 +507,11 @@ const Index = () => {
                 viewport={{ once: true, amount: 0.3 }}
                 className="relative"
               >
-                <div className="overflow-hidden rounded-[30px] border border-slate-200/80 bg-white shadow-[0_28px_80px_-55px_rgba(15,23,42,0.35)]">
-                  <img src="/bexon/images/about-1.webp" alt="Smart learning preview" className="h-[420px] w-full object-cover" />
+                <div className="group relative overflow-hidden rounded-[30px] border border-slate-200/80 bg-white shadow-[0_28px_80px_-55px_rgba(15,23,42,0.35)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_34px_90px_-50px_rgba(15,23,42,0.35)]">
+                  <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary/35 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  <img src="/bexon/images/about-1.webp" alt="Smart learning preview" className="h-[420px] w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
                 </div>
-                <div className="absolute -bottom-5 left-5 rounded-[24px] border border-white/40 bg-white/95 p-4 shadow-lg">
+                <div className="absolute -bottom-5 left-5 rounded-[24px] border border-white/40 bg-white/95 p-4 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_18px_50px_-32px_rgba(15,23,42,0.28)]">
                   <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Experience</div>
                   <div className="mt-1 text-3xl font-semibold text-slate-950">13+</div>
                   <div className="mt-1 max-w-[220px] text-sm text-muted-foreground">
@@ -515,9 +537,10 @@ const Index = () => {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   {workflowSteps.map((item) => (
-                    <div key={item.step} className="rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-sm">
+                    <div key={item.step} className={`${workflowCardClass} group/workflow`}>
+                      <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary/35 to-transparent opacity-0 transition-opacity duration-300 group-hover/workflow:opacity-100" />
                       <div className="flex items-center gap-3">
-                        <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
+                        <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white transition-transform duration-300 group-hover/workflow:scale-110">
                           {item.step}
                         </div>
                         <div>
@@ -529,7 +552,8 @@ const Index = () => {
                   ))}
                 </div>
 
-                <div className="rounded-[28px] border border-slate-200/80 bg-slate-50/80 p-5">
+                <div className="group rounded-[28px] border border-slate-200/80 bg-slate-50/80 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:bg-white hover:shadow-[0_18px_50px_-32px_rgba(15,23,42,0.25)]">
+                  <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-900/15 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   <div className="flex flex-wrap gap-2">
                     {['Responsive layouts', 'Soft glass surfaces', 'AI-based learning', 'Learning at scale'].map((item) => (
                       <Badge key={item} variant="secondary" className="rounded-full px-3 py-1">
@@ -548,14 +572,31 @@ const Index = () => {
             <div className={sectionHeading}>
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary">
                 <BarChart3 className="h-3.5 w-3.5" />
-                Pricing plans
+                Individual pricing
               </div>
               <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
-                Simple pricing for learners, staff, and organizations.
+                Simple pricing for individual learners only.
               </h2>
               <p className="mt-3 text-sm leading-7 text-muted-foreground md:text-base">
-                    Clear tiers, no clutter, and a simple presentation that helps people compare quickly.
+                Clear tiers, no clutter, and a simple presentation that helps people compare quickly. For schools,
+                universities, companies, and institutions, use the organization enquiry route.
               </p>
+              <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <div className="rounded-full border border-slate-200/80 bg-white/90 px-4 py-2 text-xs font-medium text-slate-600 shadow-sm">
+                  Need pricing for a team or institution?
+                </div>
+                <Button onClick={handleOrganizationAction} variant="outline" className="h-10 rounded-full border-primary/20 bg-white px-5 text-primary hover:bg-primary/5 hover:text-primary">
+                  Organization pricing
+                </Button>
+              </div>
+            </div>
+
+            <div className="mt-10 flex flex-wrap justify-center gap-2">
+              {pricingAspects.map((item) => (
+                <Badge key={item} variant="secondary" className="rounded-full px-3 py-1">
+                  {item}
+                </Badge>
+              ))}
             </div>
 
             <div className="mt-12 grid gap-5 lg:grid-cols-3">
@@ -567,7 +608,7 @@ const Index = () => {
                   viewport={{ once: true, amount: 0.3 }}
                   transition={{ duration: 0.45, delay: index * 0.07 }}
                   className={[
-                    'relative rounded-[28px] border p-6 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.35)] transition-transform duration-300 hover:-translate-y-1',
+                    `${pricingCardClass} group/pricing`,
                     plan.featured
                       ? 'border-slate-950 bg-slate-950 text-white'
                       : 'border-slate-200/80 bg-white/90',
@@ -578,6 +619,8 @@ const Index = () => {
                       Most popular
                     </div>
                   )}
+
+                  <div className={`absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent ${plan.featured ? 'via-cyan-300/70' : 'via-slate-900/25'} to-transparent opacity-0 transition-opacity duration-300 group-hover/pricing:opacity-100`} />
 
                   <div className="space-y-2">
                     <p className={`text-xs uppercase tracking-[0.3em] ${plan.featured ? 'text-cyan-100' : 'text-muted-foreground'}`}>
@@ -591,6 +634,10 @@ const Index = () => {
                     </p>
                   </div>
 
+                  <p className={`mt-4 text-sm leading-7 ${plan.featured ? 'text-slate-300' : 'text-muted-foreground'}`}>
+                    {plan.summary}
+                  </p>
+
                   <div className="mt-6 space-y-3">
                     {plan.features.map((feature) => (
                       <div key={feature} className="flex items-center gap-3 text-sm">
@@ -601,24 +648,43 @@ const Index = () => {
                   </div>
 
                   <Button
+                    onClick={() => navigate('/signup')}
                     className={[
-                      'mt-8 h-12 w-full rounded-full',
+                      'mt-8 h-12 w-full rounded-full transition-all duration-300',
                       plan.featured
-                        ? 'bg-white text-slate-950 hover:bg-slate-100'
-                        : 'bg-primary text-white hover:bg-primary/90',
+                        ? 'bg-white text-slate-950 hover:bg-slate-100 hover:shadow-[0_18px_40px_-24px_rgba(255,255,255,0.35)]'
+                        : 'bg-primary text-white hover:bg-primary/90 hover:shadow-[0_18px_40px_-24px_rgba(37,99,235,0.35)]',
                     ].join(' ')}
                   >
-                    Choose {plan.name}
+                    {plan.ctaLabel}
                   </Button>
                 </motion.div>
               ))}
+            </div>
+
+            <div className="mt-8 rounded-[28px] border border-slate-200/80 bg-white/85 p-5 shadow-[0_20px_50px_-38px_rgba(15,23,42,0.28)]">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Organizations and institutions</p>
+                  <h3 className="mt-2 text-lg font-semibold text-slate-950">
+                    Need pricing for a school, university, company group, or training institution?
+                  </h3>
+                  <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                    Use the organization enquiry route for custom setup, group access, and institution-level onboarding.
+                  </p>
+                </div>
+                <Button onClick={handleOrganizationAction} className="h-11 rounded-full bg-slate-950 px-5 text-white hover:bg-slate-800">
+                  Go to organization enquiry
+                </Button>
+              </div>
             </div>
           </div>
         </section>
 
         <section className="px-4 pb-20 md:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
-            <div className="rounded-[34px] border border-slate-200/80 bg-white/90 p-6 shadow-[0_28px_80px_-55px_rgba(15,23,42,0.35)] md:p-8">
+            <div className="group relative rounded-[34px] border border-slate-200/80 bg-white/90 p-6 shadow-[0_28px_80px_-55px_rgba(15,23,42,0.35)] transition-all duration-300 hover:border-primary/25 hover:shadow-[0_34px_90px_-50px_rgba(15,23,42,0.35)] md:p-8">
+              <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <div className="text-center">
                 <div className="text-xs uppercase tracking-[0.35em] text-muted-foreground">Trusted by teams</div>
                 <h2 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">
@@ -628,8 +694,8 @@ const Index = () => {
 
               <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
                 {clientLogos.map((logo) => (
-                  <div key={logo} className="flex items-center justify-center rounded-3xl border border-slate-200/80 bg-slate-50/80 p-4">
-                    <img src={logo} alt="Client logo" className="max-h-10 w-auto object-contain opacity-90" />
+                  <div key={logo} className={logoTileClass}>
+                    <img src={logo} alt="Client logo" className="max-h-10 w-auto object-contain opacity-90 transition-transform duration-300 group-hover:scale-105" />
                   </div>
                 ))}
               </div>
@@ -639,9 +705,10 @@ const Index = () => {
 
         <section id="contact" className="px-4 pb-20 md:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
-            <div className="rounded-[34px] bg-slate-950 px-6 py-10 text-white md:px-10">
+            <div className="group relative rounded-[34px] bg-slate-950 px-6 py-10 text-white transition-all duration-300 hover:shadow-[0_34px_120px_-60px_rgba(34,211,238,0.18)] md:px-10">
+              <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
-              <div>
+                <div>
                   <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold text-cyan-100">
                     <Rocket className="h-3.5 w-3.5" />
                     Colossus IQ for modern learning teams
@@ -654,13 +721,13 @@ const Index = () => {
                   </p>
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-                  <Button onClick={handleOrganizationAction} className="h-12 rounded-full bg-white px-6 text-slate-950 hover:bg-slate-100">
+                  <Button onClick={handleOrganizationAction} className="h-12 rounded-full bg-white px-6 text-slate-950 transition-all duration-300 hover:bg-slate-100 hover:shadow-[0_18px_40px_-24px_rgba(255,255,255,0.4)]">
                     Request a Demo
                   </Button>
                   <Button
                     onClick={handleContactAction}
                     variant="outline"
-                    className="h-12 rounded-full border-white/15 bg-white/5 px-6 text-white hover:bg-white/10 hover:text-white"
+                    className="h-12 rounded-full border-white/15 bg-white/5 px-6 text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/10 hover:text-white hover:shadow-[0_18px_40px_-24px_rgba(34,211,238,0.18)]"
                   >
                     Contact Support
                   </Button>

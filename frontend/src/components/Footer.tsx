@@ -97,6 +97,11 @@ const Footer = () => {
                   Pricing
                 </a>
               </li>
+              <li>
+                <Link to="/blog" className="transition hover:text-primary">
+                  Blog
+                </Link>
+              </li>
             </ul>
           </div>
 

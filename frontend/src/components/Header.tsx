@@ -146,12 +146,6 @@ const Header = () => {
     </svg>
   );
 
-  const PricingIcon = () => (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  );
-
   const DashboardIcon = () => (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -219,7 +213,6 @@ const Header = () => {
               { label: 'Features', href: '#features' },
               { label: 'Platform', href: '#platform' },
               { label: 'How It Works', href: '#how-it-works' },
-              { label: 'Pricing', href: '#pricing' },
               { label: 'Contact', href: '#contact' },
             ].map((item) => (
               <motion.a
@@ -317,14 +310,7 @@ const Header = () => {
                           <HowItWorksIcon />
                           How It Works
                         </a>
-                        <a
-                          href="#pricing"
-                          onClick={() => setOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-                        >
-                          <PricingIcon />
-                          Pricing
-                        </a> */}
+                        */}
 
                         {/* Account Section */}
                         <div className="px-3 py-2 mt-2 text-xs font-semibold text-slate-400 uppercase tracking-wider border-t border-slate-100 dark:border-slate-800 pt-2">
@@ -553,14 +539,6 @@ const Header = () => {
                     >
                       <HowItWorksIcon />
                       How It Works
-                    </a>
-                    <a
-                      href="#pricing"
-                      className="flex items-center gap-3 px-5 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-                      onClick={(e) => handleMobileNavClick(e, '#pricing')}
-                    >
-                      <PricingIcon />
-                      Pricing
                     </a>
                     <a
                       href="#contact"
