@@ -402,22 +402,47 @@ const Index = () => {
         </section>
 
         <section id="platform" className="px-4 pb-20 md:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="rounded-[34px] border border-slate-200/80 bg-white/85 p-5 shadow-[0_30px_90px_-55px_rgba(15,23,42,0.35)] md:p-8">
-              <div className={sectionHeading}>
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary">
+          <div className="mx-auto max-w-7xl rounded-[40px] border border-white/10 bg-slate-950 px-6 py-10 text-white shadow-[0_32px_100px_-60px_rgba(15,23,42,0.95)] md:px-10 md:py-14">
+            <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+              <motion.div
+                initial={{ opacity: 0, x: -18 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                className="space-y-6"
+              >
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary">
                   <Layers3 className="h-3.5 w-3.5" />
                   Built for every audience
                 </div>
-                <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
+                <h2 className="max-w-xl text-3xl font-semibold tracking-tight text-white md:text-4xl">
                   One smart learning system for schools, universities, organizations, and job seekers.
                 </h2>
-                <p className="mt-3 text-sm leading-7 text-muted-foreground md:text-base">
-                  Each audience gets a tailored UI with its own dashboard, navigation, and actions, while the learning flow and reporting stay consistent across the product.
+                <p className="max-w-xl text-sm leading-7 text-slate-300 md:text-base">
+                  Each audience gets a tailored dashboard, navigation pattern, and action set, while the learning
+                  flow and reporting stay consistent across the product.
                 </p>
-              </div>
 
-              <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {[
+                    'Schools get class-first dashboards and attendance tools.',
+                    'Universities get timetable and department views.',
+                    'Organizations get staff, onboarding, and KPI controls.',
+                    'Job seekers get career, resume, and interview tools.',
+                  ].map((item) => (
+                    <div key={item} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm leading-6 text-slate-200 backdrop-blur">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 18 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.45 }}
+                className="grid gap-4 sm:grid-cols-2"
+              >
                 {audienceCards.map((item, index) => (
                   <motion.div
                     key={item.title}
@@ -425,29 +450,29 @@ const Index = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.3 }}
                     transition={{ duration: 0.4, delay: index * 0.05 }}
-                    className="rounded-[28px] border border-slate-200/80 bg-slate-50/80 p-5"
+                    className="rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                      <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/15 text-primary">
                         <item.icon className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Audience</p>
-                        <h3 className="text-lg font-semibold text-slate-950">{item.title}</h3>
+                        <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Audience</p>
+                        <h3 className="text-lg font-semibold text-white">{item.title}</h3>
                       </div>
                     </div>
 
                     <div className="mt-4 space-y-2">
                       {item.items.map((subItem) => (
-                        <div key={subItem} className="flex items-center gap-2 text-sm text-slate-700">
-                          <CheckCircle2 className="h-4 w-4 text-primary" />
+                        <div key={subItem} className="flex items-center gap-2 text-sm text-slate-300">
+                          <CheckCircle2 className="h-4 w-4 text-cyan-300" />
                           <span>{subItem}</span>
                         </div>
                       ))}
                     </div>
                   </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </div>
           </div>
         </section>
