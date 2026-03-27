@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { serverURL } from '@/constants';
+import { appWordmarkDark, serverURL } from '@/constants';
 import axios from 'axios';
 import { Key, Save, AlertCircle, Upload, HandCoins, Sparkles } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -62,7 +62,7 @@ const AdminSettings = () => {
             setOpenaiModel(res.data.openaiModel || 'gpt-4.1-mini');
             setUnsplashApiKey(res.data.unsplashApiKey || '');
             setWebsiteName(res.data.websiteName || 'Colossus IQ');
-            setWebsiteLogo(res.data.websiteLogo || '/logo.png');
+            setWebsiteLogo(res.data.websiteLogo || appWordmarkDark);
             setTaxPercentage(res.data.taxPercentage || 0);
             if (res.data.notebookEnabled) {
                 setNotebookEnabled(res.data.notebookEnabled);
@@ -242,12 +242,12 @@ const AdminSettings = () => {
                                     <div className="flex items-start gap-4">
                                         <div className="flex-1 space-y-2">
                                             <div className="flex gap-2">
-                                                <Input
-                                                    id="website-logo"
-                                                    placeholder="e.g. /logo.png or https://..."
-                                                    value={websiteLogo}
-                                                    onChange={(e) => setWebsiteLogo(e.target.value)}
-                                                />
+                                            <Input
+                                                id="website-logo"
+                                                placeholder="e.g. /logo-colossus-dark.png or https://..."
+                                                value={websiteLogo}
+                                                onChange={(e) => setWebsiteLogo(e.target.value)}
+                                            />
                                                 <div className="relative">
                                                     <input
                                                         type="file"

@@ -360,39 +360,78 @@ export default function CalendarScheduler() {
     org: filteredEvents.filter((item) => item.visibility !== 'personal').length,
     personal: filteredEvents.filter((item) => item.visibility === 'personal').length,
   };
+  const heroStats = [
+    { label: 'Selected day', value: format(selectedDate, 'EEE, MMM d') },
+    { label: 'Today', value: `${counts.today} items` },
+    { label: 'Week load', value: `${counts.week} items` },
+  ];
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6 lg:p-8">
+    <div className="relative mx-auto max-w-7xl space-y-8 px-4 py-6 md:px-6 lg:px-8">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute -left-24 top-0 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute right-0 top-20 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      </div>
       <SEO title="Calendar Scheduler" description="Plan calendar events and daily schedules across all panels." />
 
-      <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-r from-primary/10 via-indigo-500/10 to-cyan-500/10 p-6 shadow-sm">
-        <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-white/20 blur-3xl" />
-        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-background/70 px-3 py-1 text-xs font-semibold text-primary">
+      <section className="relative overflow-hidden rounded-[32px] border border-slate-200/70 bg-slate-950 px-6 py-7 text-white shadow-[0_32px_90px_-55px_rgba(15,23,42,0.9)] md:px-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.18),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,0.16),transparent_30%)]" />
+        <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
+        <div className="relative grid gap-6 lg:grid-cols-[1.25fr_0.75fr] lg:items-end">
+          <div className="space-y-5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-cyan-100 backdrop-blur">
               <Sparkles className="h-3.5 w-3.5" />
               Shared calendar workflow
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Calendar Scheduler</h1>
-            <p className="max-w-2xl text-sm text-muted-foreground">
-              Build daily schedules, recurring blocks, meetings, and deadlines for the logged-in account
-              from one interactive planner.
-            </p>
+            <div className="space-y-3">
+              <h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-white md:text-5xl">
+                Calendar scheduler built for daily planning and team rhythm.
+              </h1>
+              <p className="max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
+                Plan classes, meetings, deadlines, and personal blocks from one interactive dashboard.
+                Every event stays scoped to the logged-in account and the calendar stays compact, fast, and readable.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Button variant="secondary" onClick={openNewEvent} className="bg-white text-slate-950 hover:bg-slate-100">
+                <Plus className="mr-2 h-4 w-4" />
+                Create Schedule
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setSelectedDate(new Date())}
+                className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+              >
+                Today
+              </Button>
+              <Button
+                className="bg-gradient-to-r from-cyan-500 to-primary text-white hover:from-primary hover:to-cyan-500"
+                onClick={() => setSelectedDate(startOfWeek(selectedDate, { weekStartsOn: 1 }))}
+              >
+                <CalendarDays className="mr-2 h-4 w-4" />
+                This Week
+              </Button>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => setSelectedDate(new Date())}>Today</Button>
-            <Button variant="secondary" onClick={openNewEvent}>New Event</Button>
-            <Button
-              className="bg-gradient-to-r from-primary to-indigo-500 text-white hover:from-indigo-500 hover:to-primary"
-              onClick={() => setSelectedDate(startOfWeek(selectedDate, { weekStartsOn: 1 }))}
-            >
-              <CalendarDays className="mr-2 h-4 w-4" />
-              This Week
-            </Button>
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            <div className="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-300">Selected date</p>
+              <p className="mt-2 text-lg font-semibold">{format(selectedDate, 'EEEE')}</p>
+              <p className="text-sm text-slate-300">{format(selectedDate, 'MMMM d, yyyy')}</p>
+            </div>
+            {heroStats.map((item) => (
+              <div key={item.label} className="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-300">{item.label}</p>
+                <p className="mt-2 text-lg font-semibold text-white">{item.value}</p>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
 
       <div className="grid gap-4 md:grid-cols-4">
         {[
@@ -401,12 +440,14 @@ export default function CalendarScheduler() {
           { label: 'Organization', value: counts.org, icon: Layers3, tone: 'text-indigo-600' },
           { label: 'Personal', value: counts.personal, icon: CheckCircle2, tone: 'text-emerald-600' },
         ].map((item) => (
-          <Card key={item.label}>
+          <Card key={item.label} className="overflow-hidden border-slate-200/80 bg-white/90 shadow-[0_18px_60px_-45px_rgba(15,23,42,0.45)]">
             <CardContent className="p-4">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">{item.label}</p>
-              <div className="mt-2 flex items-center justify-between">
-                <span className="text-2xl font-bold">{item.value}</span>
-                <item.icon className={`h-5 w-5 ${item.tone}`} />
+              <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">{item.label}</p>
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-2xl font-semibold text-slate-950">{item.value}</span>
+                <span className="rounded-2xl bg-slate-950/5 p-2">
+                  <item.icon className={`h-5 w-5 ${item.tone}`} />
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -414,13 +455,18 @@ export default function CalendarScheduler() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-        <Card className="border-border/60">
-          <CardHeader>
-            <CardTitle>Calendar View</CardTitle>
-            <CardDescription>Pick a date to view or edit the day&apos;s plan.</CardDescription>
+        <Card className="overflow-hidden border-slate-200/80 bg-white/90 shadow-[0_28px_90px_-55px_rgba(15,23,42,0.38)]">
+          <CardHeader className="space-y-1 border-b border-slate-200/70 bg-slate-50/80">
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <CalendarDays className="h-5 w-5 text-primary" />
+              Calendar View
+            </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
+              Pick a date to view or edit the day&apos;s plan.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="mx-auto max-w-[340px] rounded-2xl border border-border/60 bg-background/80 p-3 shadow-sm">
+          <CardContent className="space-y-4 p-5">
+            <div className="mx-auto max-w-[340px] rounded-[28px] border border-slate-200/80 bg-gradient-to-b from-slate-50 to-white p-4 shadow-[0_24px_70px_-50px_rgba(15,23,42,0.35)]">
               <Calendar
                 mode="single"
                 selected={selectedDate}
@@ -435,21 +481,21 @@ export default function CalendarScheduler() {
               />
             </div>
 
-            <div className="space-y-3 rounded-2xl border border-border/60 bg-card/60 p-4">
+            <div className="space-y-3 rounded-[28px] border border-slate-200/80 bg-slate-50/80 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold">{format(selectedDate, 'EEEE, MMM d')}</p>
+                  <p className="text-sm font-semibold text-slate-950">{format(selectedDate, 'EEEE, MMM d')}</p>
                   <p className="text-xs text-muted-foreground">{selectedEvents.length} events on the selected day</p>
                 </div>
                 <Badge variant="outline">Live agenda</Badge>
               </div>
 
               {selectedEvents.length > 0 ? selectedEvents.map((item) => (
-                <div key={item._id} className="rounded-xl border border-border/60 bg-background/80 p-3">
+                <div key={item._id} className="rounded-2xl border border-slate-200/80 bg-white p-3 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold">{item.name}</p>
+                        <p className="font-semibold text-slate-950">{item.name}</p>
                         <Badge className={`border ${categoryTone(item.type)}`}>{item.type}</Badge>
                         <Badge className={`border ${visibilityTone(item.visibility)}`}>
                           {item.visibility || defaultVisibility()}
@@ -473,7 +519,7 @@ export default function CalendarScheduler() {
                   {item.description && <p className="mt-2 text-sm text-muted-foreground">{item.description}</p>}
                 </div>
               )) : (
-                <div className="rounded-xl border border-dashed border-border/70 p-5 text-center text-sm text-muted-foreground">
+                <div className="rounded-2xl border border-dashed border-slate-300/80 bg-white p-5 text-center text-sm text-muted-foreground">
                   No events scheduled for this date.
                 </div>
               )}
@@ -481,14 +527,19 @@ export default function CalendarScheduler() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/60">
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Open the popup editor or jump into a filtered view.</CardDescription>
+        <Card className="overflow-hidden border-slate-200/80 bg-white/90 shadow-[0_28px_90px_-55px_rgba(15,23,42,0.38)]">
+          <CardHeader className="space-y-1 border-b border-slate-200/70 bg-slate-50/80">
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Quick Actions
+            </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
+              Open the popup editor or jump into a filtered view.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5 p-5">
             <Button
-              className="w-full justify-start bg-gradient-to-r from-primary to-indigo-500 text-white hover:from-indigo-500 hover:to-primary"
+              className="h-12 w-full justify-start rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-primary text-white shadow-lg shadow-primary/20 hover:from-primary hover:to-slate-950"
               onClick={openNewEvent}
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -496,18 +547,18 @@ export default function CalendarScheduler() {
             </Button>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-border/60 bg-card/60 p-3">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">Default Mode</p>
-                <p className="mt-2 text-sm font-semibold">{defaultVisibility() === 'personal' ? 'Personal' : 'Organization'}</p>
+              <div className="rounded-3xl border border-slate-200/80 bg-slate-50/80 p-4">
+                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Default Mode</p>
+                <p className="mt-2 text-sm font-semibold text-slate-950">{defaultVisibility() === 'personal' ? 'Personal' : 'Organization'}</p>
               </div>
-              <div className="rounded-2xl border border-border/60 bg-card/60 p-3">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">Selected Day</p>
-                <p className="mt-2 text-sm font-semibold">{format(selectedDate, 'EEE, MMM d')}</p>
+              <div className="rounded-3xl border border-slate-200/80 bg-slate-50/80 p-4">
+                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Selected Day</p>
+                <p className="mt-2 text-sm font-semibold text-slate-950">{format(selectedDate, 'EEE, MMM d')}</p>
               </div>
             </div>
 
             <div className="space-y-3">
-              <p className="text-sm font-semibold">Upcoming events</p>
+              <p className="text-sm font-semibold text-slate-950">Upcoming events</p>
               {filteredEvents
                 .filter((item) => {
                   const resolved = resolveDate(item, selectedDate);
@@ -521,11 +572,11 @@ export default function CalendarScheduler() {
                       setSelectedDate(resolveDate(item, selectedDate) || selectedDate);
                       editSchedule(item);
                     }}
-                    className="w-full rounded-2xl border border-border/60 bg-background/80 p-3 text-left transition hover:-translate-y-0.5 hover:border-primary/30"
+                    className="w-full rounded-3xl border border-slate-200/80 bg-white p-3 text-left transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold">{item.name}</p>
+                        <p className="truncate text-sm font-semibold text-slate-950">{item.name}</p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
                           {item.startTime} - {item.endTime}
                         </p>
@@ -538,7 +589,7 @@ export default function CalendarScheduler() {
                 const resolved = resolveDate(item, selectedDate);
                 return resolved ? resolved >= new Date(new Date().setHours(0, 0, 0, 0)) : false;
               }).length === 0 && (
-                <div className="rounded-2xl border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
+                <div className="rounded-3xl border border-dashed border-slate-300/80 bg-slate-50/80 p-4 text-sm text-muted-foreground">
                   No upcoming events yet.
                 </div>
               )}
@@ -682,8 +733,8 @@ export default function CalendarScheduler() {
         </DialogContent>
       </Dialog>
 
-      <Card className="border-border/60">
-        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <Card className="overflow-hidden border-slate-200/80 bg-white/90 shadow-[0_28px_90px_-55px_rgba(15,23,42,0.38)]">
+        <CardHeader className="flex flex-col gap-4 border-b border-slate-200/70 bg-slate-50/80 md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
               <Layers3 className="h-5 w-5 text-primary" />
@@ -707,18 +758,18 @@ export default function CalendarScheduler() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-5">
           {loading ? (
-            <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">Loading schedules...</div>
+            <div className="rounded-3xl border border-dashed border-slate-300/80 bg-slate-50/80 p-6 text-center text-sm text-muted-foreground">Loading schedules...</div>
           ) : (
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
               {weekDays.map((day) => {
                 const dayItems = filteredEvents.filter((item) => sameDay(item, day));
                 return (
-                  <div key={format(day, 'yyyy-MM-dd')} className="rounded-2xl border border-border/60 bg-background/80 p-3">
+                  <div key={format(day, 'yyyy-MM-dd')} className="rounded-3xl border border-slate-200/80 bg-slate-50/70 p-3 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-semibold">{format(day, 'EEE')}</p>
+                        <p className="text-sm font-semibold text-slate-950">{format(day, 'EEE')}</p>
                         <p className="text-xs text-muted-foreground">{format(day, 'MMM d')}</p>
                       </div>
                       <Badge variant="secondary">{dayItems.length}</Badge>
@@ -728,16 +779,16 @@ export default function CalendarScheduler() {
                         <button
                           key={item._id}
                           onClick={() => { setSelectedDate(day); editSchedule(item); }}
-                          className="w-full rounded-xl border border-border/60 bg-card/80 p-2 text-left transition hover:-translate-y-0.5 hover:border-primary/30"
+                          className="w-full rounded-2xl border border-slate-200/80 bg-white p-2 text-left transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
                         >
                           <div className="flex items-center gap-2">
                             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color || '#2563eb' }} />
-                            <p className="truncate text-xs font-medium">{item.name}</p>
+                            <p className="truncate text-xs font-medium text-slate-950">{item.name}</p>
                           </div>
                           <p className="mt-1 text-[11px] text-muted-foreground">{item.startTime} - {item.endTime}</p>
                         </button>
                       )) : (
-                        <div className="rounded-xl border border-dashed border-border/70 p-3 text-xs text-muted-foreground">No events</div>
+                        <div className="rounded-2xl border border-dashed border-slate-300/80 bg-white p-3 text-xs text-muted-foreground">No events</div>
                       )}
                     </div>
                   </div>

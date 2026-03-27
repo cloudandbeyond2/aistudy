@@ -14,10 +14,15 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+      includeAssets: [
+        'colossus-icon.png',
+        'logo-colossus-dark.png',
+        'logo-colossus.png',
+        'apple-touch-icon.png'
+      ],
       manifest: {
-        name: 'AiCourse',
-        short_name: 'AiCourse',
+        name: 'Colossus IQ',
+        short_name: 'Colossus IQ',
         description: 'Ai Course Generator',
         theme_color: '#007BFF',
         icons: [

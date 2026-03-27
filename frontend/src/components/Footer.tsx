@@ -1,35 +1,23 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useBranding } from '@/contexts/BrandingContext';
-import { Facebook, X, Instagram, Linkedin, Send } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, Send, X } from 'lucide-react';
 import axios from 'axios';
-import { serverURL } from '@/constants';
+import { appWordmarkLight, serverURL } from '@/constants';
 import { useToast } from '@/hooks/use-toast';
 
 const Footer = () => {
-  const { appName, appLogo } = useBranding();
+  const { appName } = useBranding();
   const currentYear = new Date().getFullYear();
   const [email, setEmail] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const { toast } = useToast();
 
   const socialLinks = [
-    {
-      icon: Facebook,
-      url: 'https://www.facebook.com'
-    },
-    {
-      icon: X,
-      url: 'https://twitter.com'
-    },
-    {
-      icon: Instagram,
-      url: 'https://www.instagram.com'
-    },
-    {
-      icon: Linkedin,
-      url: 'https://www.linkedin.com/in'
-    }
+    { icon: Facebook, url: 'https://www.facebook.com' },
+    { icon: X, url: 'https://twitter.com' },
+    { icon: Instagram, url: 'https://www.instagram.com' },
+    { icon: Linkedin, url: 'https://www.linkedin.com/in' },
   ];
 
   const handleSubscribe = async (e: React.FormEvent) => {
@@ -41,16 +29,16 @@ const Footer = () => {
       const res = await axios.post(`${serverURL}/api/subscribe`, { email });
       if (res.data.success) {
         toast({
-          title: "Subscribed!",
-          description: "Thank you for joining our newsletter.",
+          title: 'Subscribed!',
+          description: 'Thank you for joining our newsletter.',
         });
         setEmail('');
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.response?.data?.message || "Something went wrong. Please try again.",
-        variant: "destructive"
+        title: 'Error',
+        description: error.response?.data?.message || 'Something went wrong. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
@@ -58,127 +46,133 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-slate-950 text-slate-400 py-20 border-t border-slate-900">
-      <div className="max-w-7xl mx-auto px-6 md:px-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-16">
-
-          {/* LOGO */}
-          <div className="col-span-1">
-            <Link to="/" className="flex items-center space-x-3 mb-8 group">
-              <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                <img src={appLogo} alt="Logo" className="h-7 w-7" />
-              </div>
-              <span className="font-black text-2xl text-white tracking-tighter">
-                {appName}<span className="text-primary text-4xl leading-[0]">.</span>
-              </span>
+    <footer className="border-t border-slate-900 bg-slate-950 text-slate-400">
+      <div className="mx-auto max-w-7xl px-4 py-16 md:px-6 lg:px-8">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+          <div>
+            <Link to="/" className="mb-6 flex items-center gap-3">
+              <img src={appWordmarkLight} alt={appName} className="h-10 w-auto max-w-[240px]" />
             </Link>
 
-            <p className="text-lg leading-relaxed mb-8 max-w-sm">
-              AI-driven course solutions for organizational learning.
-              Built for institutions, educators, and professional teams.
-              Transform learning with intelligent technology.
+            <p className="max-w-sm text-base leading-7">
+              AI-driven course solutions for institutions, educators, and professional teams.
+              Build, schedule, and manage learning with a polished corporate experience.
             </p>
 
-            <div className="flex space-x-4">
+            <div className="mt-6 flex gap-3">
               {socialLinks.map(({ icon: Icon, url }, i) => (
                 <a
                   key={i}
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="h-10 w-10 rounded-xl bg-slate-900 flex items-center justify-center
-                                 hover:bg-primary hover:text-white transition-all"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 transition hover:bg-primary hover:text-white"
                 >
                   <Icon className="h-5 w-5" />
                 </a>
               ))}
             </div>
-
           </div>
 
-          {/* PLATFORM */}
           <div>
-            <h4 className="text-white font-black text-xl mb-8 uppercase tracking-widest">
-              Platform
-            </h4>
-            <ul className="space-y-4 text-lg">
+            <h4 className="mb-6 text-lg font-black uppercase tracking-[0.24em] text-white">Platform</h4>
+            <ul className="space-y-4 text-base">
               <li>
-                <a href="/#features" className="hover:text-primary">
+                <a href="/#features" className="transition hover:text-primary">
                   Features
                 </a>
               </li>
               <li>
-                <a href="/#how-it-works" className="hover:text-primary">
+                <a href="/#platform" className="transition hover:text-primary">
+                  Panels
+                </a>
+              </li>
+              <li>
+                <a href="/#how-it-works" className="transition hover:text-primary">
                   How It Works
                 </a>
               </li>
               <li>
-                <a href="/#pricing" className="hover:text-primary">
+                <a href="/#pricing" className="transition hover:text-primary">
                   Pricing
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* COMPANY */}
           <div>
-            <h4 className="text-white font-black text-xl mb-8 uppercase tracking-widest">
-              Company
-            </h4>
-            <ul className="space-y-4 text-lg">
-              <li><Link to="/about" className="hover:text-primary">About Us</Link></li>
-              <li><Link to="/blog" className="hover:text-primary">Blog</Link></li>
-              <li><Link to="/contact" className="hover:text-primary">Contact</Link></li>
+            <h4 className="mb-6 text-lg font-black uppercase tracking-[0.24em] text-white">Company</h4>
+            <ul className="space-y-4 text-base">
+              <li>
+                <Link to="/about" className="transition hover:text-primary">
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="transition hover:text-primary">
+                  Contact
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy-policy" className="transition hover:text-primary">
+                  Privacy
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="transition hover:text-primary">
+                  Terms
+                </Link>
+              </li>
             </ul>
           </div>
 
-          {/* NEWSLETTER */}
           <div>
-            <h4 className="text-white font-black text-xl mb-8 uppercase tracking-widest">
-              Newsletter
-            </h4>
-            <p className="mb-8 text-lg">
-              Actionable AI insights, learning resources, and updates — straight to your inbox.
+            <h4 className="mb-6 text-lg font-black uppercase tracking-[0.24em] text-white">Newsletter</h4>
+            <p className="mb-6 text-base leading-7">
+              Corporate AI updates, learning resources, and product news delivered directly to your inbox.
             </p>
             <form onSubmit={handleSubscribe} className="space-y-3">
-              <div className="relative group">
+              <div className="relative">
                 <input
                   type="email"
                   placeholder="Your email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 text-white rounded-2xl px-6 py-4 pr-14 focus:outline-none focus:border-primary transition-all text-lg"
+                  className="w-full rounded-2xl border border-slate-800 bg-slate-900 px-5 py-4 pr-14 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-primary"
                   required
                 />
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-11 w-11 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed group-hover:scale-105"
+                  className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl bg-primary text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isSubmitting ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></div>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent" />
                   ) : (
                     <Send className="h-5 w-5" />
                   )}
                 </button>
               </div>
-              <p className="text-xs text-slate-500 italic px-2">
-                We respect your privacy. Unsubscribe at any time.
-              </p>
+              <p className="px-1 text-xs text-slate-500">You can unsubscribe at any time.</p>
             </form>
           </div>
         </div>
 
-        {/* BOTTOM LINKS */}
-        <div className="pt-8 border-t border-slate-900 flex justify-between items-center">
+        <div className="mt-12 flex flex-col gap-4 border-t border-slate-900 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm">
             © {currentYear} {appName}. All rights reserved.
           </p>
 
-          <div className="flex items-center space-x-8 text-sm font-medium">
-            <Link to="/privacy-policy" className="hover:text-white">Privacy</Link>
-            <Link to="/terms" className="hover:text-white">Terms</Link>
-            <Link to="/cookies" className="hover:text-white">Cookies</Link>
+          <div className="flex flex-wrap gap-6 text-sm font-medium">
+            <Link to="/privacy-policy" className="transition hover:text-white">
+              Privacy
+            </Link>
+            <Link to="/terms" className="transition hover:text-white">
+              Terms
+            </Link>
+            <Link to="/cookies" className="transition hover:text-white">
+              Cookies
+            </Link>
           </div>
         </div>
       </div>

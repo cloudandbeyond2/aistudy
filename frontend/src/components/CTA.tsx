@@ -64,7 +64,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, Building2 } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -96,31 +96,29 @@ const CTA = () => {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-bold mb-8 border border-primary/20">
               <Sparkles className="h-4 w-4" />
-              <span>For Organizations & Institutions</span>
+              <span>Ready to get started?</span>
             </div>
 
             {/* Title */}
             <h2 className="text-4xl md:text-6xl font-black text-white mb-8 leading-tight">
-              Looking to Train Your Team <br className="hidden md:block" />
-              with AI?
+              Build your learning space <br className="hidden md:block" />
+              with AI.
             </h2>
 
             {/* Subtitle */}
             <p className="text-xl text-slate-300 mb-12 max-w-2xl mx-auto leading-relaxed">
-              We help organizations, colleges, and enterprises upskill their
-              teams with AI-powered learning, custom courses, analytics, and
-              certifications.
+              Create courses, organize schedules, and explore role-based tools
+              in one clean platform.
             </p>
 
             {/* CTA Button */}
             <div className="flex justify-center">
               <Button
-                onClick={() => navigate("/organization-enquiry")}
+                onClick={() => navigate("/signup")}
                 size="lg"
                 className="bg-primary hover:bg-white hover:text-primary text-white font-black text-xl h-16 px-12 rounded-full shadow-2xl shadow-primary/40 transition-all active:scale-95"
               >
-                <Building2 className="mr-2 h-6 w-6" />
-                Request an Enquiry
+                Start Free
                 <ArrowRight className="ml-2 h-6 w-6" />
               </Button>
             </div>

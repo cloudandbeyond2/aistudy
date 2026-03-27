@@ -5,11 +5,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
 import { useBranding } from '@/contexts/BrandingContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { serverURL } from '@/constants';
+import { appWordmarkDark, appWordmarkLight, serverURL } from '@/constants';
 import axios from 'axios';
+import { MessageSquare } from 'lucide-react';
 
 const Header = () => {
-  const { appName, appLogo } = useBranding();
+  const { appName } = useBranding();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuth, setIsAuth] = useState(false);
@@ -104,6 +105,11 @@ const Header = () => {
     e.preventDefault();
 
     const destinationId = href.substring(1);
+    if (destinationId === 'home') {
+      setIsMobileMenuOpen(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     const destinationElement = document.getElementById(destinationId);
 
     if (destinationElement) {
@@ -199,27 +205,26 @@ const Header = () => {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo Area */}
           <Link to="/" className="flex items-center shrink-0">
-            <div className="flex items-center gap-2">
-              <img src={appLogo} alt="Logo" className="h-7 w-7 sm:h-8 sm:w-8" />
-              <span
-                className={cn(
-                  "font-bold text-lg sm:text-xl tracking-tight",
-                  isScrolled
-                    ? "text-slate-800 dark:text-white"
-                    : "text-white"
-                )}
-              >
-                {appName}
-              </span>
-            </div>
+            <img
+              src={isScrolled ? appWordmarkDark : appWordmarkLight}
+              alt={appName}
+              className="h-7 w-auto max-w-[180px] sm:h-8"
+            />
           </Link>
 
           {/* Desktop Navigation - Hidden on mobile */}
           <nav className="hidden md:flex items-center gap-1">
-            {['Home', 'Features', 'How It Works', 'Pricing'].map((item) => (
+            {[
+              { label: 'Home', href: '#home' },
+              { label: 'Features', href: '#features' },
+              { label: 'Platform', href: '#platform' },
+              { label: 'How It Works', href: '#how-it-works' },
+              { label: 'Pricing', href: '#pricing' },
+              { label: 'Contact', href: '#contact' },
+            ].map((item) => (
               <motion.a
-                key={item}
-                href={item === 'Home' ? '/' : `#${item.toLowerCase().replace(/\s+/g, '-')}`}
+                key={item.label}
+                href={item.href}
                 whileHover={{ y: -1 }}
                 className={cn(
                   "px-3 lg:px-4 py-2 text-sm font-medium transition-colors rounded-lg",
@@ -228,7 +233,7 @@ const Header = () => {
                     : "text-white/80 hover:text-white"
                 )}
               >
-                {item}
+                {item.label}
               </motion.a>
             ))}
           </nav>
@@ -358,7 +363,7 @@ const Header = () => {
                             "text-xs font-medium px-3 py-1.5 rounded-full inline-flex items-center gap-2",
                             hasPremium ? "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                           )}>
-                            {hasPremium ? "⭐ Premium Plan" : "📋 Free Plan"}
+                            {hasPremium ? 'Premium Plan' : 'Free Plan'}
                           </div>
                           {hasPremium && (
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -479,13 +484,11 @@ const Header = () => {
               <div className="flex flex-col min-h-full">
                 {/* Menu Header with User Info */}
                 <div className="sticky top-0 bg-white dark:bg-slate-900 z-10 border-b border-slate-100 dark:border-slate-800">
-                  <div className="p-4">
+                <div className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <img src={appLogo} alt="Logo" className="h-7 w-7" />
-                        <span className="font-bold text-lg text-slate-800 dark:text-white">
-                          {appName}
-                        </span>
+                        <img src={appWordmarkDark} alt={appName} className="h-6 w-auto dark:hidden" />
+                        <img src={appWordmarkLight} alt={appName} className="hidden h-6 w-auto dark:block" />
                       </div>
                       <button
                         onClick={() => setIsMobileMenuOpen(false)}
@@ -526,10 +529,10 @@ const Header = () => {
                       Menu
                     </div>
                     <a
-                      href="/"
+                      href="#home"
                       className="flex items-center gap-3 px-5 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                       onClick={(e) => {
-                        setIsMobileMenuOpen(false);
+                        handleMobileNavClick(e, '#home');
                       }}
                     >
                       <HomeIcon />
@@ -558,6 +561,14 @@ const Header = () => {
                     >
                       <PricingIcon />
                       Pricing
+                    </a>
+                    <a
+                      href="#contact"
+                      className="flex items-center gap-3 px-5 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                      onClick={(e) => handleMobileNavClick(e, '#contact')}
+                    >
+                      <MessageSquare className="h-5 w-5" />
+                      Contact
                     </a>
                   </div>
 
@@ -599,7 +610,7 @@ const Header = () => {
                             "text-xs font-medium px-3 py-1.5 rounded-full inline-flex items-center gap-2",
                             hasPremium ? "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                           )}>
-                            {hasPremium ? "⭐ Premium Plan" : "📋 Free Plan"}
+                            {hasPremium ? 'Premium Plan' : 'Free Plan'}
                           </div>
                           {hasPremium && (
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">

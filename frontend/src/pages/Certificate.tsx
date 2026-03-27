@@ -13,7 +13,6 @@ import { appName, websiteURL } from '@/constants';
 import { QRCodeSVG } from 'qrcode.react';
 
 import certificate from '../res/certificate.png';
-import logo from '../res/logo.svg';
 import saravananSign from '../res/saravanan-sign.png';
 import { toPng } from 'html-to-image';
 import { Card, CardContent } from '@/components/ui/card';

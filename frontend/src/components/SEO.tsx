@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { appWordmarkDark } from '@/constants';
 import { useBranding } from '@/contexts/BrandingContext';
 
 interface SEOProps {
@@ -21,7 +22,7 @@ const SEO = ({
   const { appName } = useBranding();
   // Format the title to include the brand name
   const formattedTitle = `${title} | ${appName}`;
-  const defaultOgImage = `${window.location.origin}/logo.png`; // Fallback image
+  const defaultOgImage = `${window.location.origin}${appWordmarkDark}`; // Fallback image
 
   return (
     <Helmet>

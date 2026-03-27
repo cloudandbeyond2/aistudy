@@ -8,8 +8,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Mail, AlertTriangle, ArrowRight, ShieldCheck, KeyRound, Home } from 'lucide-react';
-import { appLogo, appName, companyName, serverURL } from '@/constants';
-import Logo from '../res/logo.svg';
+import { appLogo, appName, appWordmarkDark, appWordmarkLight, companyName, serverURL } from '@/constants';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -85,12 +84,9 @@ const ForgotPassword = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="flex items-center gap-3 mb-8"
+            className="mb-8"
           >
-            <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-2xl">
-              <img src={Logo} alt="Logo" className='h-8 w-8 filter brightness-0 invert' />
-            </div>
-            <span className="font-display font-bold text-3xl tracking-tight u-text-shadow-sm">{appName}</span>
+            <img src={appWordmarkLight} alt={appName} className="h-10 w-auto max-w-[280px]" />
           </motion.div>
 
           <motion.h2
@@ -148,10 +144,7 @@ const ForgotPassword = () => {
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-10">
             <Link to="/" className="inline-flex items-center gap-2 mb-6">
-              <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                <img src={Logo} alt="Logo" className='h-6 w-6 filter brightness-0 invert' />
-              </div>
-              <span className="font-display font-bold text-2xl tracking-tight">{appName}</span>
+              <img src={appWordmarkDark} alt={appName} className="h-8 w-auto max-w-[240px]" />
             </Link>
           </div>
 

@@ -1,23 +1,51 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useToast } from '@/hooks/use-toast';
-import { ArrowRight, Mail, Lock, User, AlertTriangle, Sparkles, GraduationCap, ShieldCheck, Home } from 'lucide-react';
-import { appLogo, appName, companyName, serverURL, websiteURL } from '@/constants';
-import Logo from '../res/logo.svg';
 import axios from 'axios';
 import { GoogleLogin } from '@react-oauth/google';
-import { jwtDecode } from "jwt-decode";
-import { motion, AnimatePresence } from 'framer-motion';
-import ReCAPTCHA from "react-google-recaptcha";
-import { recaptchaSiteKey } from '@/constants';
+import { jwtDecode } from 'jwt-decode';
+import ReCAPTCHA from 'react-google-recaptcha';
 import Swal from 'sweetalert2';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  GraduationCap,
+  Home,
+  Lock,
+  Mail,
+  ShieldCheck,
+  Sparkles,
+  User,
+} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { appLogo, appName, appWordmarkDark, appWordmarkLight, companyName, recaptchaSiteKey, serverURL, websiteURL } from '@/constants';
+
+const signupHighlights = [
+  {
+    icon: CheckCircle2,
+    title: 'Clean onboarding',
+    text: 'Create an account in a few steps with responsive forms and clear validation.',
+  },
+  {
+    icon: GraduationCap,
+    title: 'Role-ready access',
+    text: 'Start free and move into student, staff, or organization workflows later.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Verified signup',
+    text: 'reCAPTCHA and email verification help keep the platform controlled.',
+  },
+];
+
 const Signup = () => {
   const [mName, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -27,542 +55,460 @@ const Signup = () => {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [googleButtonWidth, setGoogleButtonWidth] = useState(340);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    const auth = sessionStorage.getItem('auth');
-    if (auth) {
+    window.scrollTo(0, 0);
+    if (sessionStorage.getItem('auth')) {
       redirectHome();
     }
   }, []);
-useEffect(() => {
-  window.scrollTo(0, 0);
-}, []);
-  function redirectHome() {
-    navigate("/dashboard");
-  }
 
+  useEffect(() => {
+    const updateGoogleButtonWidth = () => {
+      const availableWidth = Math.max(240, window.innerWidth - 48);
+      setGoogleButtonWidth(Math.min(340, availableWidth));
+    };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError('');
+    updateGoogleButtonWidth();
+    window.addEventListener('resize', updateGoogleButtonWidth);
+    return () => window.removeEventListener('resize', updateGoogleButtonWidth);
+  }, []);
 
-  // Validation
-  if (!mName || !email || !password || !confirmPassword) {
-    setError('Please fill out all fields');
-    return;
-  }
+  const redirectHome = () => {
+    navigate('/dashboard');
+  };
 
-  if (password !== confirmPassword) {
-    setError('Passwords do not match');
-    return;
-  }
+  const sendEmail = async (mEmail: string, name?: string) => {
+    try {
+      const dataToSend = {
+        subject: `Welcome to ${appName}`,
+        to: mEmail,
+        html: `
+          <html>
+            <body style="font-family: Arial, sans-serif; background:#f6f9fc; padding:24px;">
+              <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:18px;padding:32px;border:1px solid #e5e7eb;">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+                  <img src="${appLogo}" alt="${appName}" width="44" height="44" />
+                  <h1 style="margin:0;font-size:24px;">Welcome to ${appName}</h1>
+                </div>
+                <p style="font-size:16px;line-height:1.7;color:#111827;">Hello ${name || mEmail}, your account is ready.</p>
+                <p style="font-size:16px;line-height:1.7;color:#111827;">Use ${websiteURL} to sign in and start building courses, schedules, and learning workflows.</p>
+              </div>
+            </body>
+          </html>`,
+      };
 
-  if (!agreeToTerms) {
-    setError('You must agree to the terms and conditions');
-    return;
-  }
+      await axios.post(`${serverURL}/api/data`, dataToSend);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
-  if (password.length < 9) {
-    setError('Password should be at least 9 characters');
-    return;
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
 
-  if (!captchaToken) {
-    setError('Please complete the reCAPTCHA');
-    return;
-  }
+    if (!mName || !email || !password || !confirmPassword) {
+      setError('Please fill out all fields');
+      return;
+    }
 
-  setIsLoading(true);
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
 
-  try {
-    const postURL = serverURL + '/api/signup';
-    const type = 'free';
+    if (!agreeToTerms) {
+      setError('You must agree to the terms and conditions');
+      return;
+    }
 
-    const response = await axios.post(postURL, {
-      email,
-      mName,
-      password,
-      type,
-      phone,
-      captchaToken
-    });
+    if (password.length < 9) {
+      setError('Password should be at least 9 characters');
+      return;
+    }
 
-    if (response.data.success) {
+    if (!captchaToken) {
+      setError('Please complete the reCAPTCHA');
+      return;
+    }
 
-      // ✅ AUTO LOGIN CASE
+    setIsLoading(true);
+    try {
+      const response = await axios.post(`${serverURL}/api/signup`, {
+        email,
+        mName,
+        password,
+        type: 'free',
+        phone,
+        captchaToken,
+      });
+
+      if (!response.data.success) {
+        setError(response.data.message || 'Signup failed');
+        return;
+      }
+
       if (response.data.autoLogin) {
         sessionStorage.setItem('email', email);
         sessionStorage.setItem('mName', mName);
         sessionStorage.setItem('auth', 'true');
         sessionStorage.setItem('uid', response.data.userId);
         sessionStorage.setItem('type', 'forever');
-
-        await Swal.fire({
-          icon: 'success',
-          title: 'Account Created!',
-          text: `Welcome to ${appName}. Your account is ready to use.`,
-          confirmButtonColor: '#3085d6',
+        toast({
+          title: 'Account created',
+          description: `Welcome to ${appName}`,
         });
-
-        sendEmail(email);
-
-        // Optional redirect
+        await sendEmail(email, mName);
         window.location.href = '/dashboard';
+        return;
       }
 
-      // ✅ EMAIL VERIFICATION CASE
-      else {
-        if (response.data.mailError) {
-          await Swal.fire({
-            icon: 'warning',
-            title: 'Account Created (Email Issue)',
-            text: "Your account was created, but we couldn't send the verification email. Please contact support.",
-            confirmButtonColor: '#d33',
-          });
-        } else {
-          await Swal.fire({
-            icon: 'success',
-            title: 'Verify Your Email',
-            text: 'Your account has been created successfully. Please check your email inbox (and spam folder) to verify your account before logging in.',
-            confirmButtonColor: '#3085d6',
-          });
-        }
-
-        // Optional redirect after alert
-        window.location.href = '/login';
-      }
-
-    } else {
-      setError(response.data.message);
-    }
-
-  } catch (err) {
-    console.error(err);
-
-    await Swal.fire({
-      icon: 'error',
-      title: 'Signup Failed',
-      text: 'Failed to create account. Please try again.',
-      confirmButtonColor: '#d33',
-    });
-
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-  async function sendEmail(mEmail: string, name?: string) {
-    const userName = name || name;
-    try {
-      const dataToSend = {
-        subject: `Welcome to ${appName}`,
-        to: mEmail,
-        html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-                <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
-                <html lang="en">
-                  <head></head>
-                  <div id="__react-email-preview" style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0;">Welcome to Colossus IQ<div> ‌​‍‎‏﻿</div></div>
-                  <body style="padding:20px; margin-left:auto;margin-right:auto;margin-top:auto;margin-bottom:auto;background-color:#f6f9fc;font-family:ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;">
-                    <table align="center" role="presentation" cellSpacing="0" cellPadding="0" border="0" height="80%" width="100%" style="max-width:37.5em;max-height:80%; margin-left:auto;margin-right:auto;margin-top:80px;margin-bottom:80px;width:465px;border-radius:0.25rem;border-width:1px;background-color:#fff;padding:20px">
-                      <tr style="width:100%">
-                        <td>
-                          <table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%" style="margin-top:32px">
-                            <tbody>
-                              <tr>
-                                <td><img alt="Logo" src="${appLogo}" width="40" height="37" style="display:block;outline:none;border:none;text-decoration:none;margin-left:auto;margin-right:auto;margin-top:0px;margin-bottom:0px" /></td>
-                              </tr>
-                            </tbody>
-                          </table>
-                          <h1 style="margin-left:0px;margin-right:0px;margin-top:30px;margin-bottom:30px;padding:0px;text-align:center;font-size:24px;font-weight:400;color:rgb(0,0,0)">Welcome to <strong>${appName}</strong></h1>
-                          <p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Hello <strong>${userName}</strong>,</p>
-                          <p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Welcome to <strong>${appName}</strong>, Unleash your AI potential with our platform, offering a seamless blend of theory and video courses. Dive into comprehensive lessons, from foundational theories to real-world applications, tailored to your learning preferences. Experience the future of AI education with ${appName} – where theory meets engaging visuals for a transformative learning journey!</p>
-                          <table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%" style="margin-bottom:32px;margin-top:32px;text-align:center">
-                            <tbody>
-                              <tr>
-                                <td><a href="${websiteURL}" target="_blank" style="p-x:20px;p-y:12px;line-height:100%;text-decoration:none;display:inline-block;max-width:100%;padding:12px 20px;border-radius:0.25rem;background-color: #007BFF;text-align:center;font-size:12px;font-weight:600;color:rgb(255,255,255);text-decoration-line:none"><span></span><span style="p-x:20px;p-y:12px;max-width:100%;display:inline-block;line-height:120%;text-decoration:none;text-transform:none;mso-padding-alt:0px;mso-text-raise:9px"><span>Get Started</span></a></td>
-                              </tr>
-                            </tbody>
-                          </table>
-                          <p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Best,<p target="_blank" style="color:rgb(0,0,0);text-decoration:none;text-decoration-line:none">The <strong>${companyName}</strong> Team</p></p>
-                          </td>
-                      </tr>
-                    </table>
-                  </body>
-                </html>`
-      };
-      const postURL = serverURL + '/api/data';
-      await axios.post(postURL, dataToSend).then(res => {
-        redirectHome();
-      }).catch(error => {
-        console.error(error);
-        redirectHome();
+      toast({
+        title: 'Verify your email',
+        description: 'Your account has been created. Please check your inbox before logging in.',
       });
+      if (!response.data.mailError) {
+        await sendEmail(email, mName);
+      }
+      window.location.href = '/login';
+    } catch (err) {
+      console.error(err);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Signup Failed',
+        text: 'Failed to create account. Please try again.',
+        confirmButtonColor: '#d33',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = async (credentialResponse: any) => {
+    if (!credentialResponse.credential) return;
+
+    const decoded: any = jwtDecode(credentialResponse.credential);
+    try {
+      setIsLoading(true);
+      const response = await axios.post(`${serverURL}/api/social`, { email: decoded.email, mName: decoded.name });
+      if (!response.data.success) {
+        setError(response.data.message || 'Signup failed');
+        return;
+      }
+
+      sessionStorage.setItem('email', decoded.email);
+      sessionStorage.setItem('mName', decoded.name);
+      sessionStorage.setItem('auth', 'true');
+      sessionStorage.setItem('uid', response.data.userData._id);
+      sessionStorage.setItem('type', response.data.userData.type);
+
+      toast({
+        title: 'Account created',
+        description: `Welcome to ${appName}`,
+      });
+      await sendEmail(decoded.email, decoded.name);
+      window.location.href = '/dashboard';
     } catch (error) {
       console.error(error);
-      redirectHome();
+      setError('Internal Server Error');
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="flex min-h-screen bg-background relative overflow-hidden">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl -z-10" />
-      <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl -z-10" />
+    <div className="min-h-dvh overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(30,138,138,0.08),transparent_25%),linear-gradient(180deg,hsl(var(--background))_0%,hsl(var(--background))_100%)]">
+      <div className="absolute right-0 top-0 -z-10 h-[28rem] w-[28rem] translate-x-1/3 -translate-y-1/3 rounded-full bg-primary/10 blur-3xl" />
+      <div className="absolute bottom-0 left-0 -z-10 h-[28rem] w-[28rem] -translate-x-1/3 translate-y-1/3 rounded-full bg-cyan-500/10 blur-3xl" />
 
-      {/* Left Panel - Branding (Hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary via-primary/90 to-indigo-600 relative items-center justify-center p-12 overflow-hidden">
-        {/* Animated Background Shapes */}
-        <motion.div
-          animate={{
-            rotate: [0, 90, 180, 270, 360],
-            scale: [1.2, 1, 1.2, 1, 1.2]
-          }}
-          transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
-          className="absolute top-[-5%] right-[-5%] w-[45%] h-[45%] border border-white/10 rounded-full"
-        />
-        <motion.div
-          animate={{
-            rotate: [360, 270, 180, 90, 0],
-            scale: [1, 1.4, 1, 1.4, 1]
-          }}
-          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-          className="absolute bottom-[-15%] left-[-15%] w-[60%] h-[60%] border border-white/10 rounded-full"
-        />
-
-        <div className="relative z-10 max-w-lg text-white">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="flex items-center gap-3 mb-8"
-          >
-            <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-2xl">
-              <img src={Logo} alt="Logo" className='h-8 w-8 filter brightness-0 invert' />
-            </div>
-            <span className="font-display font-bold text-3xl tracking-tight">{appName}</span>
-          </motion.div>
-
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.1 }}
-            className="text-4xl md:text-5xl font-bold mb-6 leading-[1.1]"
-          >
-            Start Your <br /> Learning Adventure <br /> Today.
-          </motion.h2>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-white/80 text-lg mb-10 leading-relaxed"
-          >
-            Unlock the power of AI-driven education. Join 50,000+ learners who are mastering new technologies effortlessly.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.4 }}
-            className="space-y-4"
-          >
-            <div className="flex items-center gap-4 bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/10">
-              <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
-                <ShieldCheck className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <div className="font-bold text-lg">Secure & Private</div>
-                <div className="text-white/60 text-sm">Your data is always protected</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/10">
-              <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
-                <Sparkles className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <div className="font-bold text-lg">AI-Powered</div>
-                <div className="text-white/60 text-sm">Personalized curriculum in seconds</div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
+      <div className="absolute right-4 top-4 z-50 sm:right-6 sm:top-6">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/80 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm backdrop-blur transition hover:border-primary/20 hover:text-primary sm:px-4 sm:py-2 sm:text-sm"
+        >
+          <Home className="h-4 w-4" />
+          Back to Website
+        </Link>
       </div>
 
-      {/* Back to Website Button */}
-  {/* Back to Website Button */}
-<div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
-  <Link
-    to="/"
-    className="
-      flex items-center gap-2
-      text-xs sm:text-sm
-      font-medium
-      text-muted-foreground hover:text-primary
-      transition-all duration-200
-      bg-background/70 backdrop-blur-md
-      px-3 py-1.5 sm:px-4 sm:py-2
-      rounded-full
-      border border-border/50
-      hover:bg-background
-      hover:border-primary/20
-      hover:shadow-md
-    "
-  >
-    <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-    <span className="hidden xs:inline">Back to Website</span>
-    <span className="xs:hidden">Back</span>
-  </Link>
-</div>
+      <div className="grid min-h-dvh lg:grid-cols-[0.95fr_1.05fr]">
+        <section className="relative hidden overflow-hidden bg-slate-950 text-white lg:flex lg:items-center lg:justify-center lg:px-12">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(30,138,138,0.18),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.12),transparent_30%)]" />
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-10 mix-blend-screen"
+            style={{ backgroundImage: "url('/bexon/images/pattern-bg.webp')" }}
+          />
 
-      {/* Right Panel - Signup Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12">
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          className="w-full max-w-[440px]"
-        >
-          {/* Mobile Logo */}
-          <div className="lg:hidden text-center mb-10">
-            <Link to="/" className="inline-flex items-center gap-2 mb-6">
-              <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                <img src={Logo} alt="Logo" className='h-6 w-6 filter brightness-0 invert' />
-              </div>
-              <span className="font-display font-bold text-2xl tracking-tight">{appName}</span>
-            </Link>
-          </div>
-
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2 tracking-tight">Sign Up</h1>
-            <p className="text-muted-foreground">Join the future of learning</p>
-          </div>
-
-          <AnimatePresence mode="wait">
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-6 overflow-hidden"
-              >
-                <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription className="font-medium text-sm">{error}</AlertDescription>
-                </Alert>
-              </motion.div>
-            )}
-            {success && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-6 overflow-hidden"
-              >
-                <Alert className="bg-green-500/10 border-green-500/20 text-green-600">
-                  <ShieldCheck className="h-4 w-4" />
-                  <AlertDescription className="font-medium text-sm">{success}</AlertDescription>
-                </Alert>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="name" className="text-xs font-bold tracking-wider uppercase text-muted-foreground/80">
-                Full Name
-              </Label>
-              <div className="relative group">
-                <User className="absolute left-3.5 top-3 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                <Input
-                  id="name"
-                  placeholder="John Doe"
-                  value={mName}
-                  onChange={(e) => setName(e.target.value)}
-                  className="pl-11 h-12 bg-muted/30 border-transparent focus:border-primary focus:bg-background transition-all rounded-xl"
-                  disabled={isLoading}
-                />
+          <motion.div
+            initial={{ opacity: 0, x: -24 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7 }}
+            className="relative z-10 max-w-xl space-y-8"
+          >
+            <div className="flex items-center gap-3">
+              <img src={appWordmarkLight} alt={appName} className="h-10 w-auto max-w-[260px]" />
+              <div>
+                <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Create account</p>
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs font-bold tracking-wider uppercase text-muted-foreground/80">
-                Email Address
-              </Label>
-              <div className="relative group">
-                <Mail className="absolute left-3.5 top-3 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-11 h-12 bg-muted/30 border-transparent focus:border-primary focus:bg-background transition-all rounded-xl"
-                  disabled={isLoading}
-                />
-              </div>
+            <div className="space-y-4">
+              <Badge className="rounded-full bg-white/10 px-4 py-1.5 text-cyan-100 hover:bg-white/10">
+                <Sparkles className="mr-2 h-3.5 w-3.5" />
+                Join the platform
+              </Badge>
+              <h1 className="max-w-lg text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
+                Start with a clean onboarding flow and a structured workspace.
+              </h1>
+              <p className="max-w-lg text-sm leading-7 text-slate-300 lg:text-base">
+                Create your account, verify your email, and enter the learning platform with a responsive UI.
+              </p>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="phone" className="text-xs font-bold tracking-wider uppercase text-muted-foreground/80">
-                Phone Number (Optional)
-              </Label>
-              <div className="relative group">
-                <span className="absolute left-3.5 top-3 text-muted-foreground transition-colors group-focus-within:text-primary font-medium">
-                  +
-                </span>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="1234567890"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="pl-8 h-12 bg-muted/30 border-transparent focus:border-primary focus:bg-background transition-all rounded-xl"
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="password" { /* @ts-ignore */ ...{}} className="text-xs font-bold tracking-wider uppercase text-muted-foreground/80">
-                Password
-              </Label>
-              <div className="relative group">
-                <Lock className="absolute left-3.5 top-3 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="At least 9 characters"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-11 h-12 bg-muted/30 border-transparent focus:border-primary focus:bg-background transition-all rounded-xl"
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="confirmPassword" { /* @ts-ignore */ ...{}} className="text-xs font-bold tracking-wider uppercase text-muted-foreground/80">
-                Confirm Password
-              </Label>
-              <div className="relative group">
-                <Lock className="absolute left-3.5 top-3 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Repeat your password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-11 h-12 bg-muted/30 border-transparent focus:border-primary focus:bg-background transition-all rounded-xl"
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-center py-2">
-              <ReCAPTCHA
-                sitekey={recaptchaSiteKey}
-                onChange={(token) => setCaptchaToken(token)}
-              />
-            </div>
-
-            <div className="flex items-start space-x-2 pt-2">
-              <Checkbox
-                id="terms"
-                checked={agreeToTerms}
-                onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
-                disabled={isLoading}
-                className="mt-1"
-              />
-              <label
-                htmlFor="terms"
-                className="text-sm text-muted-foreground leading-tight cursor-pointer"
-              >
-                I agree to the{" "}
-                <Link to="/terms" className="text-primary font-medium hover:underline">Terms of Service</Link>
-                {" "}and{" "}
-                <Link to="/privacy-policy" className="text-primary font-medium hover:underline">Privacy Policy</Link>
-              </label>
-            </div>
-
-            <Button type="submit" className="w-full h-12 rounded-xl text-base font-semibold transition-all hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-primary/20 mt-4" disabled={isLoading}>
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Creating account...
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                { value: 'Free', label: 'Starter' },
+                { value: 'AI', label: 'Tools' },
+                { value: '24/7', label: 'Access' },
+              ].map((item) => (
+                <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                  <div className="text-2xl font-semibold">{item.value}</div>
+                  <div className="mt-1 text-[11px] uppercase tracking-[0.25em] text-slate-400">{item.label}</div>
                 </div>
-              ) : (
-                <div className="flex items-center justify-center gap-2">
-                  Sign Up
-                  <ArrowRight className="h-5 w-5" />
+              ))}
+            </div>
+
+            <div className="grid gap-3">
+              {signupHighlights.map((item) => (
+                <div key={item.title} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                  <item.icon className="mt-0.5 h-5 w-5 text-cyan-200" />
+                  <div>
+                    <h3 className="font-semibold text-white">{item.title}</h3>
+                    <p className="text-sm leading-6 text-slate-300">{item.text}</p>
+                  </div>
                 </div>
-              )}
-            </Button>
-          </form>
-
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-muted" />
+              ))}
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-4 text-muted-foreground font-medium">Or sign up with</span>
+          </motion.div>
+        </section>
+
+        <section className="flex items-start justify-center px-4 py-8 sm:px-6 lg:items-center lg:px-8 lg:py-16">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+            className="w-full max-w-[460px]"
+          >
+            <div className="lg:hidden mb-8">
+              <Link to="/" className="inline-flex items-center gap-3">
+                <img src={appWordmarkDark} alt={appName} className="h-8 w-auto max-w-[240px]" />
+              </Link>
             </div>
-          </div>
 
-          <div className="w-full flex justify-center mb-8">
-            <GoogleLogin
-              theme='outline'
-              type='standard'
-              width="440"
-              shape="rectangular"
-              onSuccess={async (credentialResponse) => {
-                if (!credentialResponse.credential) return;
-                const decoded: any = jwtDecode(credentialResponse.credential);
-                const email = decoded.email;
-                const name = decoded.name;
-                const postURL = serverURL + '/api/social';
-                try {
-                  setIsLoading(true);
-                  const response = await axios.post(postURL, { email, mName: name });
-                  if (response.data.success) {
-                    toast({
-                      title: "Login successful",
-                      description: "Welcome to " + appName,
-                    });
-                    setIsLoading(false);
-                    sessionStorage.setItem('email', decoded.email);
-                    sessionStorage.setItem('name', decoded.name);
-                    sessionStorage.setItem('auth', 'true');
-                    sessionStorage.setItem('uid', response.data.userData._id);
-                    sessionStorage.setItem('type', response.data.userData.type);
-                    sendEmail(decoded.email, decoded.name);
-                  } else {
-                    setIsLoading(false);
-                    setError(response.data.message);
-                  }
-                } catch (error) {
-                  console.error(error);
-                  setIsLoading(false);
-                  setError('Internal Server Error');
-                }
-              }}
-              onError={() => {
-                setIsLoading(false);
-                setError('Signup Failed');
-              }}
-            />
-          </div>
+            <Card className="border-slate-200/80 bg-white/90 shadow-[0_30px_90px_-55px_rgba(15,23,42,0.35)] backdrop-blur">
+              <CardContent className="space-y-6 p-6 md:p-8">
+                <div>
+                  <Badge variant="secondary" className="rounded-full px-4 py-1.5">
+                    <ShieldCheck className="mr-2 h-3.5 w-3.5" />
+                    Sign up
+                  </Badge>
+                  <h2 className="mt-4 text-3xl font-semibold tracking-tight">Create your account</h2>
+                  <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                    Start free and move into the platform with verified access.
+                  </p>
+                </div>
 
-          <p className="text-center text-muted-foreground">
-            Already have an account?{' '}
-            <Link to="/login" className="text-primary font-bold hover:underline transition-colors">
-              Sign in
-            </Link>
-          </p>
-        </motion.div>
+                <AnimatePresence mode="wait">
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <Alert variant="destructive" className="border-destructive/20 bg-destructive/10 text-destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription className="font-medium text-sm">{error}</AlertDescription>
+                      </Alert>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                        Full name
+                      </Label>
+                      <div className="relative">
+                        <User className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
+                        <Input
+                          id="name"
+                          placeholder="John Doe"
+                          value={mName}
+                          onChange={(e) => setName(e.target.value)}
+                          className="h-12 rounded-xl border-transparent bg-slate-50 pl-11 transition focus:border-primary focus:bg-white"
+                          disabled={isLoading}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                        Email address
+                      </Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="you@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="h-12 rounded-xl border-transparent bg-slate-50 pl-11 transition focus:border-primary focus:bg-white"
+                          disabled={isLoading}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                        Phone number
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="phone"
+                          type="tel"
+                          placeholder="1234567890"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          className="h-12 rounded-xl border-transparent bg-slate-50 transition focus:border-primary focus:bg-white"
+                          disabled={isLoading}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                        Password
+                      </Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
+                        <Input
+                          id="password"
+                          type="password"
+                          placeholder="At least 9 characters"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="h-12 rounded-xl border-transparent bg-slate-50 pl-11 transition focus:border-primary focus:bg-white"
+                          disabled={isLoading}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                        Confirm password
+                      </Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          placeholder="Repeat your password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="h-12 rounded-xl border-transparent bg-slate-50 pl-11 transition focus:border-primary focus:bg-white"
+                          disabled={isLoading}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-center py-2 overflow-hidden">
+                    <div className="origin-center scale-[0.9] sm:scale-100">
+                      <ReCAPTCHA sitekey={recaptchaSiteKey} onChange={(token) => setCaptchaToken(token)} />
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 pt-1">
+                    <Checkbox
+                      id="terms"
+                      checked={agreeToTerms}
+                      onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
+                      disabled={isLoading}
+                      className="mt-1"
+                    />
+                    <label htmlFor="terms" className="text-sm leading-6 text-muted-foreground">
+                      I agree to the{' '}
+                      <Link to="/terms" className="font-medium text-primary hover:underline">
+                        Terms of Service
+                      </Link>{' '}
+                      and{' '}
+                      <Link to="/privacy-policy" className="font-medium text-primary hover:underline">
+                        Privacy Policy
+                      </Link>
+                    </label>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="h-12 w-full rounded-xl bg-primary text-white shadow-lg shadow-primary/20 transition hover:bg-primary/90"
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Creating account...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        Sign up
+                        <ArrowRight className="h-4 w-4" />
+                      </span>
+                    )}
+                  </Button>
+                </form>
+
+                <div className="relative py-2">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-slate-200" />
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-white px-4 text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                      Or sign up with
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-center overflow-hidden">
+                  <GoogleLogin
+                    theme="outline"
+                    type="standard"
+                    width={googleButtonWidth}
+                    shape="rectangular"
+                    onSuccess={handleGoogleSignup}
+                    onError={() => {
+                      setError('Signup Failed');
+                    }}
+                  />
+                </div>
+
+                <p className="text-center text-sm text-muted-foreground">
+                  Already have an account?{' '}
+                  <Link to="/login" className="font-semibold text-primary hover:underline">
+                    Sign in
+                  </Link>
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </section>
       </div>
     </div>
   );
