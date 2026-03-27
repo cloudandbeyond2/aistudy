@@ -106,6 +106,7 @@ const OrganizationEnquiry = () => {
     referBy: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [phoneDigitCount, setPhoneDigitCount] = useState(0);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -141,7 +142,9 @@ const OrganizationEnquiry = () => {
 
     const phoneDigits = form.phone.replace(/\D/g, "");
     if (!phoneDigits) next.phone = "Phone number is required";
-    else if (!selectedCountry.phoneLength.includes(phoneDigits.length)) next.phone = `${selectedCountry.name} requires ${selectedCountry.phoneLength.join(" or ")} digits`;
+    else if (phoneDigits.length !== selectedCountry.phoneLength[0]) {
+      next.phone = `Please enter exactly ${selectedCountry.phoneLength[0]} digits`;
+    }
 
     if (!form.teamSize.trim()) next.teamSize = "Required";
     if (form.message.trim().length < 10) next.message = "Please share a little more detail";
@@ -328,7 +331,12 @@ const OrganizationEnquiry = () => {
                           name="phone"
                           type="tel"
                           value={form.phone}
-                          onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value.replace(/[^\d\s\-()+]/g, "") }))}
+                          onChange={(e) => {
+                            const cleaned = e.target.value.replace(/[^\d\s\-()+]/g, "");
+                            const digitCount = cleaned.replace(/\D/g, "").length;
+                            setForm((prev) => ({ ...prev, phone: cleaned }));
+                            setPhoneDigitCount(digitCount);
+                          }}
                           placeholder={`${selectedCountry.phoneLength.join(" / ")} digits`}
                           className="h-full flex-1 rounded-r-xl bg-transparent px-3 text-sm font-mono text-white outline-none placeholder:text-slate-500"
                         />
@@ -363,7 +371,21 @@ const OrganizationEnquiry = () => {
                         )}
                       </AnimatePresence>
                     </div>
-                    {!errors.phone && <p className="px-1 text-[11px] text-slate-500">{selectedCountry.name} uses {selectedCountry.phoneLength.join(" or ")} digits.</p>}
+                    {!errors.phone && (
+                      <p className={`px-1 text-[11px] ${
+                        phoneDigitCount === 0
+                          ? "text-slate-500"
+                          : phoneDigitCount < (selectedCountry.phoneLength[0] || 10)
+                          ? "text-yellow-500/70"
+                          : phoneDigitCount === (selectedCountry.phoneLength[0] || 10)
+                          ? "text-emerald-500/70"
+                          : "text-red-500/70"
+                      }`}>
+                        {phoneDigitCount === 0
+                          ? `${selectedCountry.name} requires ${selectedCountry.phoneLength[0]} digits`
+                          : `${phoneDigitCount} of ${selectedCountry.phoneLength[0]} digits entered`}
+                      </p>
+                    )}
                   </Field>
                 </div>
 
