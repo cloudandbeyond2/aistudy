@@ -666,6 +666,7 @@ Requirements:
         title: "Note saved",
         description: "Your note has been saved successfully.",
       });
+      setIsNotesOpen(false); // Close the notes popup after successful save
     } else {
       toast({
         title: "Error",
