@@ -42,10 +42,16 @@ const COUNTRIES: Country[] = [
   { code: "BD", name: "Bangladesh", dialCode: "+880", phoneLength: [10] },
 ];
 
-const guidance = [
-  { icon: Building2, title: "Who this is for", text: "Organizations planning rollout, onboarding, training, or support workflows." },
-  { icon: ClipboardList, title: "What to include", text: "Team size, contact person, work email, phone number, and your main use case." },
-  { icon: Clock3, title: "What happens next", text: "We review the request, clarify anything missing, and send the right next step." },
+const preSubmitGuidance = [
+  { icon: Building2, title: "Organizations", text: "Use this page if your team needs rollout help, onboarding, pricing, or support coordination." },
+  { icon: Briefcase, title: "Companies", text: "Great for product teams, HR, L&D, and internal training groups planning a structured setup." },
+  { icon: CalendarDays, title: "Institutions", text: "Best for colleges, academies, and training institutions planning large-scale adoption." },
+];
+
+const enquiryGuidance = [
+  { icon: ClipboardList, title: "What to include", text: "Share your org name, team size, contact person, work email, and main use case." },
+  { icon: Clock3, title: "Timeline details", text: "Mention your launch date, onboarding window, or any deadline that affects the rollout." },
+  { icon: Headphones, title: "Support needs", text: "Tell us whether you need training, migration help, custom workflows, or ongoing support." },
 ];
 
 const followUps = [
@@ -249,7 +255,7 @@ const OrganizationEnquiry = () => {
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Before you submit</p>
                 <h2 className="mt-2 text-2xl font-semibold">Tell us the shape of your rollout.</h2>
                 <div className="mt-6 grid gap-3">
-                  {guidance.map((item) => (
+                  {preSubmitGuidance.map((item) => (
                     <div key={item.title} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary">
                         <item.icon className="h-4 w-4" />
@@ -416,7 +422,7 @@ const OrganizationEnquiry = () => {
                 <span className="text-xs uppercase tracking-[0.28em]">What to include</span>
               </div>
               <div className="mt-4 space-y-4">
-                {guidance.map((item) => (
+                {enquiryGuidance.map((item) => (
                   <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                     <div className="flex items-start gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary">
