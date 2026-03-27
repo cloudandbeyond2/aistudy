@@ -43,85 +43,97 @@ const clientLogos = [
 const featureCards = [
   {
     icon: Sparkles,
-    title: 'AI Course Generation',
-    description: 'Generate structured courses, lesson flows, and topic outlines from one prompt.',
-    points: ['Course outlines', 'Lesson blocks', 'Theory support'],
+    title: 'AI Learning Engine',
+    description: 'Generate courses, lesson flows, notes, summaries, and topic outlines from one prompt.',
+    points: ['Course outlines', 'Study notes', 'Theory support'],
   },
   {
     icon: Brain,
-    title: 'AI Notebook',
-    description: 'Capture notes, summarize concepts, and keep a clean learning workspace.',
+    title: 'Smart Learning Workspace',
+    description: 'Capture notes, summarize concepts, and keep a clean learning workspace for every user.',
     points: ['Summaries', 'Revision notes', 'Study prompts'],
   },
   {
-    icon: FileText,
-    title: 'Resume Builder',
-    description: 'Build a polished resume that emphasizes skills, projects, and achievements.',
-    points: ['Role templates', 'Skill sections', 'Export ready'],
+    icon: CalendarDays,
+    title: 'Lesson Planner',
+    description: 'Organize class schedules, sessions, and learning timelines with a single planning flow.',
+    points: ['Daily agenda', 'Weekly view', 'Timeline control'],
   },
   {
-    icon: CalendarDays,
-    title: 'Calendar Scheduler',
-    description: 'Create daily schedules, meetings, and event timelines with visible day markers.',
-    points: ['Daily agenda', 'Month markers', 'Popup editor'],
+    icon: Target,
+    title: 'Assessment Builder',
+    description: 'Create assignments, quizzes, and checks that help measure progress clearly.',
+    points: ['Quizzes', 'Assignments', 'Progress checks'],
+  },
+  {
+    icon: FileText,
+    title: 'Career Toolkit',
+    description: 'Build a polished resume and interview prep flow for job seekers and graduates.',
+    points: ['Resume builder', 'Interview prep', 'Export ready'],
+  },
+  {
+    icon: Award,
+    title: 'Certificates & Outcomes',
+    description: 'Track certificates, readiness, and career progress with measurable outcomes.',
+    points: ['Verified proof', 'Placement view', 'Readiness tracking'],
   },
   {
     icon: MessageSquare,
-    title: 'Support & Tickets',
+    title: 'Support & Collaboration',
     description: 'Handle learner, staff, and organization requests in one response workflow.',
     points: ['Unified inbox', 'Status tracking', 'Role filters'],
   },
   {
-    icon: Award,
-    title: 'Certificates & Placement',
-    description: 'Track certificates, readiness, and career progress with measurable outcomes.',
-    points: ['Verified proof', 'Placement view', 'Readiness tracking'],
+    icon: TrendingUp,
+    title: 'Attendance & Reporting',
+    description: 'Keep an eye on attendance, completion, and performance with clear reporting.',
+    points: ['Attendance', 'Completion', 'Analytics'],
   },
 ];
 
 const audienceCards = [
   {
     icon: Users,
-    title: 'User Panel',
-    items: ['Personal dashboard', 'Todo center', 'Profile and pricing', 'Quick navigation'],
+    title: 'Schools',
+    items: ['Teacher dashboard', 'Class schedule cards', 'Attendance sidebar', 'Assignment inbox'],
   },
   {
     icon: GraduationCap,
-    title: 'Student Panel',
-    items: ['Assignments', 'Attendance', 'Meetings', 'Calendar planning'],
+    title: 'Universities',
+    items: ['Department overview', 'Timetable grid', 'Course progress', 'Academic reports'],
   },
   {
     icon: Building2,
-    title: 'Staff Panel',
-    items: ['Classes', 'Students', 'Grading', 'Teaching operations'],
+    title: 'Organizations',
+    items: ['Admin console', 'Onboarding flow', 'KPI tiles', 'Workflow routing'],
   },
   {
     icon: BarChart3,
-    title: 'Organization Panel',
-    items: ['Staff management', 'KPI reports', 'Scheduling', 'Governance'],
+    title: 'Job Seekers',
+    items: ['Resume workspace', 'Interview checklist', 'Certificate shelf', 'Career progress'],
   },
 ];
 
 const workflowSteps = [
   {
     step: '01',
-    title: 'Select your role',
-    description: 'The interface adapts automatically for users, students, staff, and organizations.',
+    title: 'Choose your audience',
+    description: 'The interface adapts for schools, universities, organizations, and job seekers.',
   },
   {
     step: '02',
-    title: 'Create and organize',
-    description: 'Generate courses, write notes, schedule events, and manage daily tasks from one shell.',
+    title: 'Generate content',
+    description: 'Create courses, lesson flows, notes, and learning plans from one system.',
   },
   {
     step: '03',
-    title: 'Track progress',
-    description: 'Monitor assignments, calendars, reports, and completion states with clear visuals.',
+    title: 'Track learning',
+    description: 'Monitor assignments, schedules, reports, and completion states with clear visuals.',
   },
   {
     step: '04',
-    title: 'Scale operations',
-    description: 'Use the same corporate system across teams without fragmenting the user experience.',
+    title: 'Scale across places',
+    description: 'Use the same smart learning system across campuses, teams, and training centers.',
   },
 ];
 
@@ -131,14 +143,14 @@ const pricingPlans = [
     price: FreeCost,
     billing: '7 days access',
     featured: false,
-    features: ['AI Teacher Chat', '1 course creation', 'Certificate download', 'Basic support'],
+    features: ['AI content chat', '1 course creation', 'Certificate download', 'Basic support'],
   },
   {
     name: 'Monthly',
     price: MonthCost,
     billing: 'per month',
     featured: true,
-    features: ['Course generation', 'AI Notebook', 'Resume Builder', 'Interview Prep', 'Priority support'],
+    features: ['Course generation', 'Smart workspace', 'Resume Builder', 'Interview Prep', 'Priority support'],
   },
   {
     name: 'Yearly',
@@ -209,20 +221,20 @@ const Index = () => {
   };
 
   const heroHighlights = [
-    'Role-based access across user, student, staff, and organization panels.',
-    'Responsive corporate UI with strong hierarchy and soft glass surfaces.',
-    'Calendar, tasks, AI tools, and pricing surfaced in one coherent landing page.',
+    'Generate learning content, study notes, outlines, and learning plans from one system.',
+    'Built for schools, universities, organizations, and job seekers.',
+    'Responsive design with a calm hierarchy and clear navigation.',
   ];
 
   const platformMetrics = [
-    { label: 'Active learners', value: '50K+' },
-    { label: 'Organizations', value: '250+' },
-    { label: 'Placement rate', value: '94%' },
+    { label: 'Learners reached', value: '50K+' },
+    { label: 'Institutions', value: '250+' },
+    { label: 'Career outcomes', value: '94%' },
   ];
 
   return (
     <div className="min-h-screen overflow-x-hidden text-foreground">
-      <SEO title="Home" description="Corporate landing page for Colossus IQ." />
+      <SEO title="Home" description="Colossus IQ is an AI-based learning system for schools, universities, organizations, and job seekers." />
       <Header />
 
       <main className="bg-[radial-gradient(circle_at_top_left,rgba(30,138,138,0.08),transparent_30%),linear-gradient(180deg,hsl(var(--background))_0%,hsl(var(--background))_100%)]">
@@ -244,16 +256,16 @@ const Index = () => {
             >
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold text-cyan-100 backdrop-blur">
                 <Sparkles className="h-3.5 w-3.5" />
-                Recognized for excellence
+                Colossus IQ is an AI-based learning system
               </div>
 
               <div className="space-y-4">
                 <h1 className="max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
-                  A corporate learning platform designed to look premium and work cleanly on every screen.
+                  Smart learning for schools, universities, organizations, and job seekers.
                 </h1>
                 <p className="max-w-2xl text-sm leading-7 text-slate-300 md:text-base">
-                  {appName} connects course generation, scheduling, resumes, support, and role-based dashboards
-                  into one polished public experience.
+                  {appName} connects AI-powered learning workflows, scheduling, assessments, resumes, support,
+                  and role-based dashboards into one smart platform for modern institutions and teams.
                 </p>
               </div>
 
@@ -322,8 +334,8 @@ const Index = () => {
                 <div className="absolute bottom-3 left-3 right-3 rounded-[24px] border border-white/10 bg-slate-950/80 p-3 backdrop-blur sm:bottom-5 sm:left-5 sm:right-5 sm:p-4">
                   <div className="grid gap-3 sm:grid-cols-3">
                     {[
-                      { label: 'AI courses', value: 'On demand', icon: BookOpen },
-                      { label: 'Schedules', value: 'Daily + weekly', icon: CalendarDays },
+                      { label: 'AI content', value: 'Generated fast', icon: BookOpen },
+                      { label: 'Learning', value: 'Smart + guided', icon: CalendarDays },
                       { label: 'Support', value: 'Role aware', icon: MessageSquare },
                     ].map((item) => (
                       <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 p-3">
@@ -346,18 +358,18 @@ const Index = () => {
             <div className={sectionHeading}>
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary">
                 <Sparkles className="h-3.5 w-3.5" />
-                Platform features
+                Core features
               </div>
               <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
-                Detailed tools for learning, planning, and operational control.
+                Practical tools for content, learning, assessment, and career readiness.
               </h2>
               <p className="mt-3 text-sm leading-7 text-muted-foreground md:text-base">
-                The landing page now shows the actual application capabilities so visitors can see the
-                product depth before they log in.
+                Schools, universities, organizations, training centers, and job seekers can all use the same
+                system to manage learning and track outcomes.
               </p>
             </div>
 
-            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-12 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
               {featureCards.map((item, index) => (
                 <motion.div
                   key={item.title}
@@ -369,7 +381,7 @@ const Index = () => {
                   <Card className="group h-full overflow-hidden border-slate-200/80 bg-white/90 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.35)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_34px_80px_-45px_rgba(15,23,42,0.42)]">
                     <CardHeader className="space-y-4">
                       <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                        <item.icon className="h-5 w-5" />
+                    <item.icon className="h-5 w-5" />
                       </div>
                       <CardTitle className="text-xl">{item.title}</CardTitle>
                       <CardDescription className="text-sm leading-7">{item.description}</CardDescription>
@@ -395,14 +407,13 @@ const Index = () => {
               <div className={sectionHeading}>
                 <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary">
                   <Layers3 className="h-3.5 w-3.5" />
-                  Built for every panel
+                  Built for every audience
                 </div>
                 <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
-                  One corporate system for user, student, staff, and organization views.
+                  One smart learning system for schools, universities, organizations, and job seekers.
                 </h2>
                 <p className="mt-3 text-sm leading-7 text-muted-foreground md:text-base">
-                  Each role gets a tailored experience, but the design language and workflow remain
-                  consistent across the product.
+                  Each audience gets a tailored UI with its own dashboard, navigation, and actions, while the learning flow and reporting stay consistent across the product.
                 </p>
               </div>
 
@@ -421,7 +432,7 @@ const Index = () => {
                         <item.icon className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Panel</p>
+                        <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Audience</p>
                         <h3 className="text-lg font-semibold text-slate-950">{item.title}</h3>
                       </div>
                     </div>
@@ -451,13 +462,13 @@ const Index = () => {
                 className="relative"
               >
                 <div className="overflow-hidden rounded-[30px] border border-slate-200/80 bg-white shadow-[0_28px_80px_-55px_rgba(15,23,42,0.35)]">
-                  <img src="/bexon/images/about-1.webp" alt="Corporate about preview" className="h-[420px] w-full object-cover" />
+                  <img src="/bexon/images/about-1.webp" alt="Smart learning preview" className="h-[420px] w-full object-cover" />
                 </div>
                 <div className="absolute -bottom-5 left-5 rounded-[24px] border border-white/40 bg-white/95 p-4 shadow-lg">
                   <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Experience</div>
                   <div className="mt-1 text-3xl font-semibold text-slate-950">13+</div>
                   <div className="mt-1 max-w-[220px] text-sm text-muted-foreground">
-                    Decades of experience, endless innovation.
+                    Built for real learning workflows across institutions and teams.
                   </div>
                 </div>
               </motion.div>
@@ -469,11 +480,11 @@ const Index = () => {
                     How it works
                   </div>
                   <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
-                    A clean workflow from login to planning, creation, and scale.
+                    A clean workflow from discovery to setup, learning, and scale.
                   </h2>
                   <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground md:text-base">
-                    The site uses corporate spacing, strong hierarchy, and a guided flow to make the product
-                    feel understandable at first glance.
+                    The site uses strong hierarchy and a guided flow to make the AI-based learning platform feel understandable
+                    at first glance.
                   </p>
                 </div>
 
@@ -495,7 +506,7 @@ const Index = () => {
 
                 <div className="rounded-[28px] border border-slate-200/80 bg-slate-50/80 p-5">
                   <div className="flex flex-wrap gap-2">
-                    {['Responsive layouts', 'Soft glass surfaces', 'Role-aware content', 'Corporate pacing'].map((item) => (
+                    {['Responsive layouts', 'Soft glass surfaces', 'AI-based learning', 'Learning at scale'].map((item) => (
                       <Badge key={item} variant="secondary" className="rounded-full px-3 py-1">
                         {item}
                       </Badge>
@@ -518,7 +529,7 @@ const Index = () => {
                 Simple pricing for learners, staff, and organizations.
               </h2>
               <p className="mt-3 text-sm leading-7 text-muted-foreground md:text-base">
-                Clear tiers, no clutter, and a corporate presentation that helps people compare quickly.
+                    Clear tiers, no clutter, and a simple presentation that helps people compare quickly.
               </p>
             </div>
 
@@ -586,7 +597,7 @@ const Index = () => {
               <div className="text-center">
                 <div className="text-xs uppercase tracking-[0.35em] text-muted-foreground">Trusted by teams</div>
                 <h2 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">
-                  Used by institutions that need structure and visibility.
+                  Used by schools, universities, companies, and training institutions that need structure and visibility.
                 </h2>
               </div>
 
@@ -605,29 +616,28 @@ const Index = () => {
           <div className="mx-auto max-w-7xl">
             <div className="rounded-[34px] bg-slate-950 px-6 py-10 text-white md:px-10">
               <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
-                <div>
+              <div>
                   <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold text-cyan-100">
                     <Rocket className="h-3.5 w-3.5" />
-                    Organizations, companies, and institutions
+                    Colossus IQ for modern learning teams
                   </div>
                   <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
-                    Join with a custom setup for your team, campus, or business.
+                    Join with a custom setup for learning, growth, and operational scale.
                   </h2>
                   <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300 md:text-base">
-                    Share your rollout goals, team size, timeline, and support needs so we can route you to the
-                    right organization enquiry path.
+                    Share your goals, team size, timeline, and support needs so we can route you to the right enquiry path.
                   </p>
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                   <Button onClick={handleOrganizationAction} className="h-12 rounded-full bg-white px-6 text-slate-950 hover:bg-slate-100">
-                    Join as Organization
+                    Request a Demo
                   </Button>
                   <Button
                     onClick={handleContactAction}
                     variant="outline"
                     className="h-12 rounded-full border-white/15 bg-white/5 px-6 text-white hover:bg-white/10 hover:text-white"
                   >
-                    Contact Team
+                    Contact Support
                   </Button>
                 </div>
               </div>
