@@ -3,7 +3,7 @@ import { serverURL } from '@/constants';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Newspaper, Target, Network, Lock, Sparkles, Brain, CheckCircle2, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, Newspaper, Target, Network, Lock, Sparkles, Brain, CheckCircle2, XCircle, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -294,6 +294,7 @@ const InterviewPreparation = () => {
   const [currentAffairs, setCurrentAffairs] = useState([]);
   const [dailyAptitudes, setDailyAptitudes] = useState([]);
   const [loadingAptitude, setLoadingAptitude] = useState(false);
+  const [loadingNews, setLoadingNews] = useState(false);
   const [aiQuizData, setAiQuizData] = useState([]);
   const [aiCategory, setAiCategory] = useState('');
   const [generatingQuiz, setGeneratingQuiz] = useState(false);
@@ -312,6 +313,20 @@ const InterviewPreparation = () => {
     checkUserAccess();
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Auto-refresh news every 2 hours
+  useEffect(() => {
+    if (!isPaidUser) return;
+
+    const interval = setInterval(() => {
+      const uid = sessionStorage.getItem('uid');
+      if (uid) {
+        fetchCurrentAffairs(uid);
+      }
+    }, 2 * 60 * 60 * 1000); // 2 hours in milliseconds
+
+    return () => clearInterval(interval);
+  }, [isPaidUser]);
 
   const checkUserAccess = async () => {
     const uid = sessionStorage.getItem('uid');
@@ -341,7 +356,8 @@ const InterviewPreparation = () => {
     }
   };
 
-  const fetchCurrentAffairs = async (uid: string) => {
+  const fetchCurrentAffairs = async (uid: string, showLoading = false) => {
+    if (showLoading) setLoadingNews(true);
     try {
       console.log("Fetching current affairs for:", uid);
       const resp = await axios.get(`${serverURL}/api/interview-prep/current-affairs`, {
@@ -353,6 +369,8 @@ const InterviewPreparation = () => {
       }
     } catch (e) {
       console.error("Fetch current affairs error:", e);
+    } finally {
+      if (showLoading) setLoadingNews(false);
     }
   };
 
@@ -480,16 +498,35 @@ const InterviewPreparation = () => {
           <TabsContent value="news" className="space-y-4 outline-none">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
               <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
-                <Newspaper className="h-4 w-4 md:h-5 md:w-5 text-primary" /> Today's News
+                <Newspaper className="h-4 w-4 md:h-5 md:w-5 text-primary" /> Latest News
               </h2>
-              <span className="text-xs md:text-sm text-muted-foreground font-medium">
-                {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const uid = sessionStorage.getItem('uid');
+                    if (uid) fetchCurrentAffairs(uid, true);
+                  }}
+                  disabled={loadingNews}
+                  className="h-8 px-3"
+                >
+                  {loadingNews ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3 w-3" />
+                  )}
+                  <span className="ml-1 hidden sm:inline">Refresh</span>
+                </Button>
+                <span className="text-xs md:text-sm text-muted-foreground font-medium">
+                  {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </span>
+              </div>
             </div>
             {currentAffairs.length === 0 ? (
               <div className="text-center py-8 md:py-12 text-muted-foreground bg-card/50 rounded-xl md:rounded-2xl border border-dashed">
                 <Newspaper className="h-8 w-8 md:h-10 md:w-10 mx-auto text-muted-foreground/50 mb-3 md:mb-4" />
-                <p className="text-sm md:text-base">No news available for today. Check back later!</p>
+                <p className="text-sm md:text-base">No news available. Check back later!</p>
               </div>
             ) : (
               <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">

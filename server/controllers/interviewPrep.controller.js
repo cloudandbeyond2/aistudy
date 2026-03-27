@@ -113,7 +113,7 @@ const isTodayIST = (dateObj) => {
 
 export const getCurrentAffairs = async (req, res) => {
   try {
-    const rssUrl = 'https://news.google.com/rss/search?q=Current+Affairs+Technology+India+when:1d&hl=en-IN&gl=IN&ceid=IN:en';
+    const rssUrl = 'https://news.google.com/rss/search?q=Current+Affairs+Technology+India+when:2h&hl=en-IN&gl=IN&ceid=IN:en';
     const response = await axios.get(rssUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -129,7 +129,7 @@ export const getCurrentAffairs = async (req, res) => {
     let match;
     const affairs = [];
     
-    // Parse RSS items — only include today's news (IST), up to 15 items
+    // Parse RSS items — include recent news from last 2 hours, up to 15 items
     while ((match = itemsRegex.exec(xml)) !== null && affairs.length < 15) {
       const itemXml = match[1];
       const titleMatch = titleRegex.exec(itemXml);
@@ -138,9 +138,6 @@ export const getCurrentAffairs = async (req, res) => {
       
       if (titleMatch) {
          const pubDate = pubDateMatch ? new Date(pubDateMatch[1]) : new Date();
-         
-         // Only include items published today (IST)
-         if (!isTodayIST(pubDate)) continue;
          
          // Clean HTML from description
          let content = "Click to read more details on the given topic.";
@@ -158,7 +155,7 @@ export const getCurrentAffairs = async (req, res) => {
            _id: Math.random().toString(36).substring(2, 10),
            title: title,
            content: content,
-           category: "Today's News",
+           category: "Latest News",
            date: pubDate
          });
       }
