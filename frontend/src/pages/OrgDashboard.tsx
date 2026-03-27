@@ -2439,11 +2439,11 @@ const formatGuidanceText = (text: string) => {
             </div>
 
             <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })} className="w-full">
-                <TabsList className="flex flex-wrap h-auto w-full gap-1 p-1 bg-muted rounded-xl mb-6">
+                {/* <TabsList className="flex flex-wrap h-auto w-full gap-1 p-1 bg-muted rounded-xl mb-6">
                     {role !== 'dept_admin' && (
                         <>
                             <TabsTrigger value="departments" className="flex-1 min-w-[120px]">Departments</TabsTrigger>
-                            {/* <TabsTrigger value="students" className="flex-1 min-w-[120px]">Students</TabsTrigger> */}
+                            
                         </>
                     )}
                     {role === 'org_admin' && (
@@ -2462,7 +2462,7 @@ const formatGuidanceText = (text: string) => {
                     <TabsTrigger value="notices" className="flex-1 min-w-[120px]">Noticeboard</TabsTrigger>
                     <TabsTrigger value="career" className="flex-1 min-w-[120px]"><Briefcase className="w-3.5 h-3.5 mr-1" />Career & Placement</TabsTrigger>
 
-                </TabsList>
+                </TabsList> */}
 
                 {/* DEPARTMENTS TAB */}
                 <TabsContent value="departments" className="space-y-6">
