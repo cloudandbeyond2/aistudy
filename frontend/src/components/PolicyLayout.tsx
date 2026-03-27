@@ -63,6 +63,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { LucideIcon } from "lucide-react";
+import Footer from "@/components/Footer";
 
 interface PolicyLayoutProps {
   title: string;
@@ -78,8 +79,8 @@ const PolicyLayout: React.FC<PolicyLayoutProps> = ({
   children,
 }) => {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-6 py-16">
+      <div className="min-h-screen bg-background">
+        <div className="max-w-4xl mx-auto px-6 py-16">
 
         {/* Back Button */}
         <div className="mb-10">
@@ -115,6 +116,7 @@ const PolicyLayout: React.FC<PolicyLayoutProps> = ({
         </div>
 
       </div>
+      <Footer />
     </div>
   );
 };

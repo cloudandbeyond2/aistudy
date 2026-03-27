@@ -19,6 +19,7 @@ import {
   Zap,
 } from 'lucide-react';
 import SEO from '@/components/SEO';
+import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -116,6 +117,15 @@ const About = () => {
           />
           <div className="absolute -left-24 top-24 h-72 w-72 rounded-full bg-cyan-400/12 blur-3xl" />
           <div className="absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-emerald-400/10 blur-3xl" />
+          <div className="absolute right-4 top-4 z-20 md:right-6 md:top-6">
+            <Button
+              asChild
+              variant="outline"
+              className="h-10 rounded-full border-white/15 bg-white/95 px-4 text-sm font-medium text-slate-800 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.35)] hover:border-cyan-300/30 hover:bg-white hover:text-slate-900"
+            >
+              <Link to="/">Back to Website</Link>
+            </Button>
+          </div>
 
           <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-20 md:px-6 lg:grid-cols-[1.06fr_0.94fr] lg:items-center lg:px-8 lg:py-28">
             <motion.div
@@ -147,13 +157,6 @@ const About = () => {
                     Contact Us
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  className="h-12 rounded-full border-cyan-400/20 bg-white/5 px-6 text-white hover:border-cyan-300/30 hover:bg-white/10 hover:text-white"
-                >
-                  <Link to="/">Back to Website</Link>
                 </Button>
                 <Button
                   asChild
@@ -384,6 +387,7 @@ const About = () => {
           </div>
         </section>
       </div>
+      <Footer />
     </>
   );
 };

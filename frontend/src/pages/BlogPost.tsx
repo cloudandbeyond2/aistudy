@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Calendar, Tag, Clock, Share2, Facebook, Twitter, Linkedin, MessageCircle, ArrowRight } from 'lucide-react';
 import SEO from '@/components/SEO';
+import Footer from '@/components/Footer';
 import StyledText from '@/components/styledText';
 import { motion, useScroll, useSpring } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -306,8 +307,9 @@ const BlogPost = () => {
                         </Card>
                     )}
                 </div>
-            </div>
-        </>
+        </div>
+        <Footer />
+      </>
     );
 };
 

@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { serverURL, recaptchaSiteKey, appWordmarkLight } from "@/constants";
 import { useBranding } from "@/contexts/BrandingContext";
 import { cn } from "@/lib/utils";
+import Footer from "@/components/Footer";
 
 type Country = { code: string; name: string; dialCode: string; phoneLength: number[] };
 
@@ -496,6 +497,7 @@ const OrganizationEnquiry = () => {
           </div>
         )}
       </AnimatePresence>
+      <Footer />
     </div>
   );
 };
