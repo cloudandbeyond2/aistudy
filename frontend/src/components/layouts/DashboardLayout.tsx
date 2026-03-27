@@ -653,7 +653,7 @@ const DashboardLayoutContent = () => {
                   <>
                     <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     <SectionHeader title="Organization" icon={Building2} isExpanded={isExpanded} />
-                    <MenuItem 
+                    {/* <MenuItem 
                       icon={Building2} 
                       label="Organization Portal" 
                       to="/dashboard/org" 
@@ -668,7 +668,7 @@ const DashboardLayoutContent = () => {
                       isActive={isActive('/dashboard/calendar')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
-                    />
+                    /> */}
                     <MenuItem 
                       icon={Building2} 
                       label="Departments" 
