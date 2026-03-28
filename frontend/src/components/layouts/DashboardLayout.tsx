@@ -133,42 +133,6 @@ const SectionHeader = ({ title, icon: Icon, isExpanded }: any) => {
   );
 };
 
-// Theme Toggle Button Component
-const ThemeToggleButton = ({ isExpanded = false }: { isExpanded?: boolean }) => {
-  const { theme, toggleTheme } = useTheme();
-  
-  return (
-    <button
-      onClick={toggleTheme}
-      className={cn(
-        "group relative overflow-hidden rounded-xl transition-all duration-300 w-full",
-        "border border-border/50 bg-background/80 text-foreground hover:bg-muted/60 hover:border-primary/30 hover:shadow-md active:scale-[0.98]",
-        isExpanded ? "p-2" : "p-2.5"
-      )}
-    >
-      <div className={cn(
-        "flex items-center",
-        isExpanded ? "gap-3" : "justify-center"
-      )}>
-        <div className="rounded-lg p-1.5 transition-all duration-300 bg-primary/10">
-          {theme === 'light' ? (
-            <Sun className="h-5 w-5 text-primary transition-all duration-300 group-hover:-rotate-12" />
-          ) : (
-            <Moon className="h-5 w-5 text-primary transition-all duration-300 group-hover:rotate-90" />
-          )}
-        </div>
-        {isExpanded && (
-          <div className="flex-1 text-left">
-            <p className="text-sm font-medium">Theme</p>
-            <p className="text-xs text-muted-foreground">
-              {theme === 'light' ? 'Switch to Dark' : 'Switch to Light'}
-            </p>
-          </div>
-        )}
-      </div>
-    </button>
-  );
-};
 
 // Inner component that uses useSidebar hook
 const DashboardLayoutContent = () => {
@@ -944,7 +908,7 @@ const DashboardLayoutContent = () => {
         </SidebarContent>
 
         {/* Footer */}
-        <SidebarFooter className="border-t border-border/40 bg-gradient-to-b from-background to-muted/5">
+        <SidebarFooter className="border-t border-border/40 bg-transparent">
           {/* Action Buttons */}
           <div className={cn(
             "grid gap-2 px-2",
@@ -959,7 +923,7 @@ const DashboardLayoutContent = () => {
                 }}
                 className={cn(
                   "group relative overflow-hidden rounded-xl transition-all duration-300 w-full",
-                  "hover:shadow-md active:scale-[0.98]",
+                  "text-slate-300 hover:bg-white/10 hover:text-white active:scale-[0.98]",
                   isExpanded ? "p-2" : "p-2.5"
                 )}
               >
@@ -967,21 +931,19 @@ const DashboardLayoutContent = () => {
                   "flex items-center",
                   isExpanded ? "gap-3" : "justify-center"
                 )}>
-                  <div className="rounded-lg p-1.5 transition-all duration-300">
-                    <DownloadIcon className="h-5 w-5 text-blue-500" />
+                  <div className="rounded-lg p-1.5 transition-all duration-300 group-hover:bg-white/10">
+                    <DownloadIcon className="h-5 w-5 text-blue-400 group-hover:text-blue-300" />
                   </div>
                   {isExpanded && (
                     <div className="flex-1 text-left">
                       <p className="text-sm font-medium">Install App</p>
-                      <p className="text-xs text-muted-foreground">Desktop experience</p>
+                      <p className="text-xs text-slate-400 group-hover:text-slate-300">Desktop experience</p>
                     </div>
                   )}
                 </div>
               </button>
             )}
 
-            {/* Theme Toggle Button */}
-            {!isMobile && <ThemeToggleButton isExpanded={isExpanded} />}
 
             {/* Logout Button */}
             <button
@@ -991,7 +953,7 @@ const DashboardLayoutContent = () => {
               }}
               className={cn(
                 "group relative overflow-hidden rounded-xl transition-all duration-300 w-full",
-                "hover:shadow-md active:scale-[0.98]",
+                "text-slate-300 hover:bg-white/10 hover:text-white active:scale-[0.98]",
                 isExpanded ? "p-2" : "p-2.5"
               )}
             >
@@ -999,13 +961,13 @@ const DashboardLayoutContent = () => {
                 "flex items-center",
                 isExpanded ? "gap-3" : "justify-center"
               )}>
-                <div className="rounded-lg p-1.5 transition-all duration-300">
-                  <LogOut className="h-5 w-5 text-red-500" />
+                <div className="rounded-lg p-1.5 transition-all duration-300 group-hover:bg-white/10">
+                  <LogOut className="h-5 w-5 text-red-500 group-hover:text-red-400" />
                 </div>
                 {isExpanded && (
                   <div className="flex-1 text-left">
                     <p className="text-sm font-medium">Logout</p>
-                    <p className="text-xs text-muted-foreground">Sign out</p>
+                    <p className="text-xs text-slate-400 group-hover:text-slate-300">Sign out</p>
                   </div>
                 )}
               </div>
@@ -1026,7 +988,6 @@ const DashboardLayoutContent = () => {
               <img src={appWordmarkLight} alt={appName} className="h-7 w-auto max-w-[150px]" />
             <div className="ml-auto flex items-center gap-2">
               <NotificationBell />
-              {!isMobile && <ThemeToggleButton />}
             </div>
           </div>
         )}

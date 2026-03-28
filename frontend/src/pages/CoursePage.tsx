@@ -26,7 +26,6 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { appLogo, companyName, serverURL, websiteURL } from '@/constants';
@@ -2698,8 +2697,6 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
               </Button>
             </ShareOnSocial>
           </div>
-
-          <ThemeToggle />
         </div>
       </header>
 

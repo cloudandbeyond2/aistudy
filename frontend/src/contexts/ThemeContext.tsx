@@ -1,7 +1,7 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext } from 'react';
 
-type Theme = 'light' | 'dark';
+type Theme = 'light';
 
 interface ThemeContextType {
   theme: Theme;
@@ -12,45 +12,18 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const isPrivateArea = window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/dashboard');
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
-  const [theme, setTheme] = useState<Theme>(() => {
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    if (!isPrivateArea) return 'light';
-    return savedTheme || 'light';
-  });
+  const theme: Theme = 'light';
 
-  useEffect(() => {
+  // Ensure the light class is always applied
+  if (typeof window !== 'undefined') {
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+    root.classList.remove('dark');
+    root.classList.add('light');
+    localStorage.setItem('theme', 'light');
+  }
 
-  useEffect(() => {
-    const media = window.matchMedia('(max-width: 767px)');
-    const updateMobile = () => setIsMobile(media.matches);
-
-    updateMobile();
-    media.addEventListener?.('change', updateMobile);
-    window.addEventListener('resize', updateMobile);
-
-    return () => {
-      media.removeEventListener?.('change', updateMobile);
-      window.removeEventListener('resize', updateMobile);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isMobile && theme !== 'light') {
-      setTheme('light');
-    }
-  }, [isMobile, theme]);
-
-  const toggleTheme = () => {
-    if (isMobile) return;
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
+  const setTheme = () => { /* light only — no-op */ };
+  const toggleTheme = () => { /* light only — no-op */ };
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>

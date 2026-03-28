@@ -125,16 +125,9 @@ const PublicThemeGuard = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const isPrivateArea =
-      location.pathname.startsWith('/admin') ||
-      location.pathname.startsWith('/dashboard');
-
     const root = document.documentElement;
-
-    if (!isPrivateArea) {
-      root.classList.remove('dark');
-      root.classList.add('light');
-    }
+    root.classList.remove('dark');
+    root.classList.add('light');
   }, [location.pathname]);
 
   return null;
