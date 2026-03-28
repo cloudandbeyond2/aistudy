@@ -1,6 +1,76 @@
 
 import type { Config } from "tailwindcss";
 
+const blueScale = {
+	50: '#effbff',
+	100: '#def5ff',
+	200: '#b8ebfb',
+	300: '#84dcf2',
+	400: '#45c6e6',
+	500: '#13a0e0',
+	600: '#0f84bc',
+	700: '#0d698d',
+	800: '#0a4d66',
+	900: '#072f41',
+	950: '#03141d',
+};
+
+const cyanScale = {
+	50: '#effeff',
+	100: '#d8fbff',
+	200: '#aeefff',
+	300: '#74e0fb',
+	400: '#35caf1',
+	500: '#0ea6de',
+	600: '#0e87b8',
+	700: '#0d6994',
+	800: '#0b4f70',
+	900: '#07314a',
+	950: '#031723',
+};
+
+const skyScale = {
+	50: '#eefbff',
+	100: '#d8f5ff',
+	200: '#b1ebff',
+	300: '#7edcff',
+	400: '#45c9ff',
+	500: '#18a9ea',
+	600: '#128cc4',
+	700: '#0f6ea0',
+	800: '#0c567a',
+	900: '#08354d',
+	950: '#041b2a',
+};
+
+const indigoScale = {
+	50: '#eef5ff',
+	100: '#dce9ff',
+	200: '#bfd5ff',
+	300: '#93b7ff',
+	400: '#6291f7',
+	500: '#366ceb',
+	600: '#2052cc',
+	700: '#1a41a6',
+	800: '#17347c',
+	900: '#10244f',
+	950: '#091430',
+};
+
+const purpleScale = {
+	50: '#f0f7ff',
+	100: '#e0efff',
+	200: '#c1dcff',
+	300: '#95c0ff',
+	400: '#64a0f3',
+	500: '#3f7fe5',
+	600: '#2b63c5',
+	700: '#214ca0',
+	800: '#1b3c7b',
+	900: '#152a54',
+	950: '#0b152c',
+};
+
 export default {
 	darkMode: ["class"],
 	content: [
@@ -20,6 +90,11 @@ export default {
 		},
 		extend: {
 			colors: {
+				blue: blueScale,
+				cyan: cyanScale,
+				sky: skyScale,
+				indigo: indigoScale,
+				purple: purpleScale,
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',

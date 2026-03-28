@@ -7,84 +7,12 @@ import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import axios from 'axios';
 import { motion, easeOut } from 'framer-motion';
-
-/* ================= CURRENCY MAP ================= */
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  USD: '$',
-  INR: '₹',
-  EUR: '€',
-  GBP: '£',
-};
-
-/* ================= PLAN FEATURES ================= */
-
-const ALL_FEATURES = [
-  'Sub-Topic Limit',
-  'Access Duration',
-  'Theory & Image Course',
-  'Create Courses',
-  'AI Teacher Chat',
-  'Course in 23+ Languages',
-  'Video & Theory Course',
-  'Resume Builder',
-  'AI Notebook',
-  'Interview Preparation',
-  'Certification',
-  'Priority Support',
-  'Advanced Analytics',
-];
-
-/* -------------------- PLAN FEATURES -------------------- */
-
-const PLAN_FEATURES = {
-  free: {
-    'Sub-Topic Limit': '5 per course',
-    'Access Duration': '7 days',
-    'Theory & Image Course': true,
-    'Create Courses': '1 course only',
-    'AI Teacher Chat': true,
-    'Course in 23+ Languages': false,
-    'Video & Theory Course': false,
-    'Resume Builder': false,
-    'AI Notebook': false,
-    'Interview Preparation': false,
-    'Certification': true,
-    'Priority Support': false,
-    'Advanced Analytics': false,
-  },
-
-  monthly: {
-    'Sub-Topic Limit': '10 per course',
-    'Access Duration': '1 month',
-    'Theory & Image Course': true,
-    'Create Courses': '20 courses only',
-    'AI Teacher Chat': true,
-    'Course in 23+ Languages': false,
-    'Video & Theory Course': true,
-    'Resume Builder': true,
-    'AI Notebook': true,
-    'Interview Preparation': true,
-    'Certification': true,
-    'Priority Support': true,
-    'Advanced Analytics': true,
-  },
-
-  yearly: {
-    'Sub-Topic Limit': '10 per course',
-    'Access Duration': '1 year',
-    'Theory & Image Course': true,
-    'Create Courses': 'Unlimited',
-    'AI Teacher Chat': true,
-    'Course in 23+ Languages': true,
-    'Video & Theory Course': true,
-    'Resume Builder': true,
-    'AI Notebook': true,
-    'Interview Preparation': true,
-    'Certification': true,
-    'Priority Support': true,
-    'Advanced Analytics': true,
-  },
-};
+import {
+  PRICING_FEATURES as ALL_FEATURES,
+  PRICING_FEATURE_ICONS as FEATURE_ICONS,
+  PRICING_PLAN_FEATURES as PLAN_FEATURES,
+} from '@/lib/pricingFeatures';
+import { formatPrice, toPriceNumber } from '@/lib/formatPricing';
 
 const Pricing = () => {
   const [plans, setPlans] = useState<any[]>([]);
@@ -102,7 +30,12 @@ const Pricing = () => {
           const data = Array.isArray(res.data.pricing)
             ? res.data.pricing
             : Object.values(res.data.pricing);
-          setPlans(data);
+          setPlans(
+            data.map((plan: any) => ({
+              ...plan,
+              price: toPriceNumber(plan.price),
+            }))
+          );
         } else {
           setPlans(getDefaultPlans());
         }
@@ -140,10 +73,6 @@ const Pricing = () => {
       billingPeriod: 'year',
     },
   ];
-
-  /* ================= HELPERS ================= */
-  const getCurrencySymbol = (currency?: string) =>
-    CURRENCY_SYMBOLS[currency?.toUpperCase() || 'INR'] || '₹';
 
   /* ================= ANIMATION ================= */
   const containerVariants = {
@@ -248,8 +177,7 @@ const Pricing = () => {
 
                 <div className="flex items-baseline gap-1 mb-6 sm:mb-8">
                   <span className="text-2xl sm:text-3xl md:text-4xl font-bold">
-                    {getCurrencySymbol(plan.currency)}
-                    {Number(plan.price).toFixed(2)}
+                    {formatPrice(plan.price, plan.currency)}
                   </span>
                   <span className="text-sm sm:text-base text-slate-400">/{plan.billingPeriod}</span>
                 </div>

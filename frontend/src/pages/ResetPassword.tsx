@@ -9,8 +9,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Key, AlertTriangle, ArrowRight, Check, Eye, EyeOff } from 'lucide-react';
-import { appLogo, appName, appWordmarkDark, companyName, serverURL, websiteURL } from '@/constants';
+import { appLogo, appName, companyName, serverURL, websiteURL } from '@/constants';
 import axios from 'axios';
+import InnerPageTopBar from '@/components/InnerPageTopBar';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
@@ -171,12 +172,13 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+    <div className="relative flex min-h-screen items-center justify-center bg-background px-4 py-12">
+      <div className="absolute inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6 lg:px-8">
+        <InnerPageTopBar variant="light" className="px-0" />
+      </div>
+
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <Link to="/" className="inline-flex items-center space-x-2">
-            <img src={appWordmarkDark} alt={appName} className="h-8 w-auto max-w-[260px]" />
-          </Link>
           <h1 className="mt-6 text-3xl font-bold">Reset password</h1>
           <p className="mt-2 text-muted-foreground">
             Enter your new password below

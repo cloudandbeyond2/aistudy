@@ -25,11 +25,12 @@ import {
 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Testimonials from '@/components/Testimonials';
 import SEO from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { appName, FreeCost, MonthCost, YearCost } from '@/constants';
+import { appName } from '@/constants';
 
 const clientLogos = [
   '/bexon/images/brand-1.webp',
@@ -137,47 +138,11 @@ const workflowSteps = [
   },
 ];
 
-const pricingPlans = [
-  {
-    name: 'Free',
-    price: FreeCost,
-    billing: '7 days access',
-    featured: false,
-    summary: 'Try the platform and test the learning flow.',
-    features: ['AI content chat', '1 course creation', 'Certificate download', 'Basic support'],
-    ctaLabel: 'Start Free',
-  },
-  {
-    name: 'Monthly',
-    price: MonthCost,
-    billing: 'per month',
-    featured: true,
-    summary: 'Best for active learners and job seekers who use the platform regularly.',
-    features: ['Course generation', 'Smart workspace', 'Assessment tools', 'Resume Builder', 'Priority support'],
-    ctaLabel: 'Choose Monthly',
-  },
-  {
-    name: 'Yearly',
-    price: YearCost,
-    billing: 'per year',
-    featured: false,
-    summary: 'Best value for individual learners who stay on the platform all year.',
-    features: ['Unlimited courses', 'Video + theory modules', 'Advanced analytics', 'Priority support'],
-    ctaLabel: 'Choose Yearly',
-  },
-];
-
-const pricingAspects = ['AI content', 'Assessments', 'Resume tools', 'Certificates', 'Support'];
-
 const sectionHeading = 'mx-auto max-w-3xl text-center';
 const featureCardClass =
   "group relative h-full overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/90 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.35)] transition-all duration-300 hover:-translate-y-1 hover:border-slate-950/20 hover:shadow-[0_34px_90px_-48px_rgba(15,23,42,0.45)]";
 const audienceCardClass =
   "group relative overflow-hidden rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cyan-300/30 hover:bg-white/7 hover:shadow-[0_30px_80px_-42px_rgba(34,211,238,0.2)]";
-const workflowCardClass =
-  "group relative rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_60px_-40px_rgba(15,23,42,0.28)]";
-const pricingCardClass =
-  "relative rounded-[28px] border p-6 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.35)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_34px_90px_-48px_rgba(15,23,42,0.42)]";
 const logoTileClass =
   "group flex items-center justify-center rounded-3xl border border-slate-200/80 bg-slate-50/80 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:bg-white hover:shadow-[0_18px_50px_-32px_rgba(15,23,42,0.35)]";
 
@@ -227,15 +192,6 @@ const Index = () => {
 
   const handleContactAction = () => {
     navigate('/contact');
-  };
-
-  const scrollToSection = (id: string) => {
-    const section = document.getElementById(id);
-    if (!section) return;
-    window.scrollTo({
-      top: section.offsetTop - 80,
-      behavior: 'smooth',
-    });
   };
 
   const heroHighlights = [
@@ -293,7 +249,7 @@ const Index = () => {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 <Button
-                  onClick={() => scrollToSection('pricing')}
+                  onClick={() => navigate('/pricing/individual')}
                   variant="outline"
                   className="h-12 rounded-full border-cyan-400/20 bg-white/5 px-6 text-white hover:border-cyan-300/30 hover:bg-white/10 hover:text-white"
                 >
@@ -499,183 +455,74 @@ const Index = () => {
         </section>
 
         <section id="how-it-works" className="px-4 pb-20 md:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div className="mx-auto max-w-7xl rounded-[34px] border border-slate-200/80 bg-white/90 px-5 py-10 shadow-[0_28px_80px_-55px_rgba(15,23,42,0.28)] md:px-8 md:py-14 lg:px-10">
+            <div className="mx-auto max-w-3xl text-center">
+              <Badge variant="secondary" className="rounded-full px-4 py-1.5">
+                <Clock className="mr-2 h-3.5 w-3.5" />
+                How it works
+              </Badge>
+              <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl">
+                A simple path from discovery to setup, learning, and growth.
+              </h2>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground md:text-base">
+                The flow is arranged to reduce friction, keep decisions obvious, and help each audience move through the product with confidence.
+              </p>
+            </div>
+
+            <div className="mt-12 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
               <motion.div
                 initial={{ opacity: 0, x: -18 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, amount: 0.3 }}
                 className="relative"
               >
-                <div className="group relative overflow-hidden rounded-[30px] border border-slate-200/80 bg-white shadow-[0_28px_80px_-55px_rgba(15,23,42,0.35)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_34px_90px_-50px_rgba(15,23,42,0.35)]">
-                  <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary/35 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                  <img src="/bexon/images/about-1.webp" alt="Smart learning preview" className="h-[420px] w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+                <div className="overflow-hidden rounded-[30px] border border-slate-200/80 bg-slate-50 shadow-[0_26px_60px_-42px_rgba(15,23,42,0.28)]">
+                  <img
+                    src="/bexon/images/about-1.webp"
+                    alt="Smart learning preview"
+                    className="h-[360px] w-full object-cover sm:h-[420px]"
+                  />
                 </div>
-                <div className="absolute -bottom-5 left-5 rounded-[24px] border border-white/40 bg-white/95 p-4 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_18px_50px_-32px_rgba(15,23,42,0.28)]">
-                  <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Experience</div>
+                <div className="absolute -bottom-5 left-5 max-w-[240px] rounded-[24px] border border-slate-200/80 bg-white p-4 shadow-[0_18px_50px_-32px_rgba(15,23,42,0.18)]">
+                  <div className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Experience</div>
                   <div className="mt-1 text-3xl font-semibold text-slate-950">13+</div>
-                  <div className="mt-1 max-w-[220px] text-sm text-muted-foreground">
+                  <div className="mt-1 text-sm leading-6 text-slate-600">
                     Built for real learning workflows across institutions and teams.
                   </div>
                 </div>
               </motion.div>
 
-              <div className="space-y-6">
-                <div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary">
-                    <Clock className="h-3.5 w-3.5" />
-                    How it works
-                  </div>
-                  <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
-                    A clean workflow from discovery to setup, learning, and scale.
-                  </h2>
-                  <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground md:text-base">
-                    The site uses strong hierarchy and a guided flow to make the AI-based learning platform feel understandable
-                    at first glance.
-                  </p>
-                </div>
-
+              <div className="space-y-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   {workflowSteps.map((item) => (
-                    <div key={item.step} className={`${workflowCardClass} group/workflow`}>
-                      <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary/35 to-transparent opacity-0 transition-opacity duration-300 group-hover/workflow:opacity-100" />
+                    <motion.div
+                      key={item.step}
+                      initial={{ opacity: 0, y: 18 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.3 }}
+                      transition={{ duration: 0.35 }}
+                      className="rounded-[24px] border border-slate-200/80 bg-slate-50 p-5 shadow-[0_18px_45px_-34px_rgba(15,23,42,0.2)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:bg-white hover:shadow-[0_24px_60px_-36px_rgba(15,23,42,0.24)]"
+                    >
                       <div className="flex items-center gap-3">
-                        <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white transition-transform duration-300 group-hover/workflow:scale-110">
+                        <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-sm font-semibold text-primary">
                           {item.step}
                         </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-slate-950">{item.title}</h3>
-                        </div>
+                        <h3 className="text-lg font-semibold text-slate-950">{item.title}</h3>
                       </div>
-                      <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.description}</p>
-                    </div>
+                      <p className="mt-3 text-sm leading-7 text-slate-600">{item.description}</p>
+                    </motion.div>
                   ))}
                 </div>
 
-                <div className="group rounded-[28px] border border-slate-200/80 bg-slate-50/80 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:bg-white hover:shadow-[0_18px_50px_-32px_rgba(15,23,42,0.25)]">
-                  <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-900/15 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="rounded-[24px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_50px_-34px_rgba(15,23,42,0.16)]">
                   <div className="flex flex-wrap gap-2">
-                    {['Responsive layouts', 'Soft glass surfaces', 'AI-based learning', 'Learning at scale'].map((item) => (
-                      <Badge key={item} variant="secondary" className="rounded-full px-3 py-1">
+                    {['Responsive layouts', 'Soft surfaces', 'AI-based learning', 'Learning at scale'].map((item) => (
+                      <Badge key={item} variant="secondary" className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700 hover:bg-slate-100">
                         {item}
                       </Badge>
                     ))}
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="pricing" className="px-4 py-20 md:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className={sectionHeading}>
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary">
-                <BarChart3 className="h-3.5 w-3.5" />
-                Individual pricing
-              </div>
-              <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
-                Simple pricing for individual learners only.
-              </h2>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground md:text-base">
-                Clear tiers, no clutter, and a simple presentation that helps people compare quickly. For schools,
-                universities, companies, and institutions, use the organization enquiry route.
-              </p>
-              <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <div className="rounded-full border border-slate-200/80 bg-white/90 px-4 py-2 text-xs font-medium text-slate-600 shadow-sm">
-                  Need pricing for a team or institution?
-                </div>
-                <Button onClick={handleOrganizationAction} variant="outline" className="h-10 rounded-full border-primary/20 bg-white px-5 text-primary hover:bg-primary/5 hover:text-primary">
-                  Organization pricing
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-10 flex flex-wrap justify-center gap-2">
-              {pricingAspects.map((item) => (
-                <Badge key={item} variant="secondary" className="rounded-full px-3 py-1">
-                  {item}
-                </Badge>
-              ))}
-            </div>
-
-            <div className="mt-12 grid gap-5 lg:grid-cols-3">
-              {pricingPlans.map((plan, index) => (
-                <motion.div
-                  key={plan.name}
-                  initial={{ opacity: 0, y: 18 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{ duration: 0.45, delay: index * 0.07 }}
-                  className={[
-                    `${pricingCardClass} group/pricing`,
-                    plan.featured
-                      ? 'border-slate-950 bg-slate-950 text-white'
-                      : 'border-slate-200/80 bg-white/90',
-                  ].join(' ')}
-                >
-                  {plan.featured && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-white">
-                      Most popular
-                    </div>
-                  )}
-
-                  <div className={`absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent ${plan.featured ? 'via-cyan-300/70' : 'via-slate-900/25'} to-transparent opacity-0 transition-opacity duration-300 group-hover/pricing:opacity-100`} />
-
-                  <div className="space-y-2">
-                    <p className={`text-xs uppercase tracking-[0.3em] ${plan.featured ? 'text-cyan-100' : 'text-muted-foreground'}`}>
-                      {plan.name}
-                    </p>
-                    <div className={`text-4xl font-semibold ${plan.featured ? 'text-white' : 'text-slate-950'}`}>
-                      ${plan.price}
-                    </div>
-                    <p className={`text-sm ${plan.featured ? 'text-slate-300' : 'text-muted-foreground'}`}>
-                      {plan.billing}
-                    </p>
-                  </div>
-
-                  <p className={`mt-4 text-sm leading-7 ${plan.featured ? 'text-slate-300' : 'text-muted-foreground'}`}>
-                    {plan.summary}
-                  </p>
-
-                  <div className="mt-6 space-y-3">
-                    {plan.features.map((feature) => (
-                      <div key={feature} className="flex items-center gap-3 text-sm">
-                        <CheckCircle2 className={`h-4 w-4 ${plan.featured ? 'text-cyan-300' : 'text-primary'}`} />
-                        <span className={plan.featured ? 'text-slate-200' : 'text-slate-700'}>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Button
-                    onClick={() => navigate('/signup')}
-                    className={[
-                      'mt-8 h-12 w-full rounded-full transition-all duration-300',
-                      plan.featured
-                        ? 'bg-white text-slate-950 hover:bg-slate-100 hover:shadow-[0_18px_40px_-24px_rgba(255,255,255,0.35)]'
-                        : 'bg-primary text-white hover:bg-primary/90 hover:shadow-[0_18px_40px_-24px_rgba(37,99,235,0.35)]',
-                    ].join(' ')}
-                  >
-                    {plan.ctaLabel}
-                  </Button>
-                </motion.div>
-              ))}
-            </div>
-
-            <div className="mt-8 rounded-[28px] border border-slate-200/80 bg-white/85 p-5 shadow-[0_20px_50px_-38px_rgba(15,23,42,0.28)]">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Organizations and institutions</p>
-                  <h3 className="mt-2 text-lg font-semibold text-slate-950">
-                    Need pricing for a school, university, company group, or training institution?
-                  </h3>
-                  <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                    Use the organization enquiry route for custom setup, group access, and institution-level onboarding.
-                  </p>
-                </div>
-                <Button onClick={handleOrganizationAction} className="h-11 rounded-full bg-slate-950 px-5 text-white hover:bg-slate-800">
-                  Go to organization enquiry
-                </Button>
               </div>
             </div>
           </div>
@@ -702,6 +549,8 @@ const Index = () => {
             </div>
           </div>
         </section>
+
+        <Testimonials />
 
         <section id="contact" className="px-4 pb-20 md:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">

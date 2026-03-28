@@ -61,9 +61,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import Footer from "@/components/Footer";
+import InnerPageTopBar from "@/components/InnerPageTopBar";
 
 interface PolicyLayoutProps {
   title: string;
@@ -79,21 +79,12 @@ const PolicyLayout: React.FC<PolicyLayoutProps> = ({
   children,
 }) => {
   return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-4xl mx-auto px-6 py-16">
+    <div className="min-h-screen bg-background">
+      <div className="px-4 pt-4 sm:px-6 lg:px-8">
+        <InnerPageTopBar variant="light" className="px-0" />
+      </div>
 
-        {/* Back Button */}
-        <div className="mb-10">
-          <Link
-            to="/"
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
-          </Link>
-        </div>
-
-        {/* Header */}
+      <div className="mx-auto max-w-4xl px-6 py-16">
         <div className="text-center mb-12">
           <Icon className="h-12 w-12 text-primary mx-auto mb-4" />
           <h1 className="text-4xl font-bold">{title}</h1>
@@ -105,16 +96,13 @@ const PolicyLayout: React.FC<PolicyLayoutProps> = ({
           )}
         </div>
 
-        {/* Content */}
         <div>{children}</div>
 
-        {/* Contact Button */}
         <div className="text-center mt-16">
           <Button asChild>
             <Link to="/contact">Contact Our Legal Team</Link>
           </Button>
         </div>
-
       </div>
       <Footer />
     </div>

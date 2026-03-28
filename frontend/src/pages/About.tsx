@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import SEO from '@/components/SEO';
 import Footer from '@/components/Footer';
+import InnerPageTopBar from '@/components/InnerPageTopBar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -117,14 +118,8 @@ const About = () => {
           />
           <div className="absolute -left-24 top-24 h-72 w-72 rounded-full bg-cyan-400/12 blur-3xl" />
           <div className="absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-emerald-400/10 blur-3xl" />
-          <div className="absolute right-4 top-4 z-20 md:right-6 md:top-6">
-            <Button
-              asChild
-              variant="outline"
-              className="h-10 rounded-full border-white/15 bg-white/95 px-4 text-sm font-medium text-slate-800 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.35)] hover:border-cyan-300/30 hover:bg-white hover:text-slate-900"
-            >
-              <Link to="/">Back to Website</Link>
-            </Button>
+          <div className="relative z-20 mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8 lg:pt-6">
+            <InnerPageTopBar variant="dark" className="px-0" />
           </div>
 
           <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-20 md:px-6 lg:grid-cols-[1.06fr_0.94fr] lg:items-center lg:px-8 lg:py-28">

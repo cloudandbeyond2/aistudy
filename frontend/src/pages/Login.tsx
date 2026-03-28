@@ -9,7 +9,6 @@ import {
   ArrowRight,
   BookOpen,
   GraduationCap,
-  Home,
   Lock,
   Mail,
   ShieldCheck,
@@ -22,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import InnerPageTopBar from '@/components/InnerPageTopBar';
 import { appName, appWordmarkDark, appWordmarkLight, serverURL } from '@/constants';
 
 const loginHighlights = [
@@ -181,14 +181,8 @@ const Login = () => {
       <div className="absolute right-0 top-0 -z-10 h-[28rem] w-[28rem] translate-x-1/3 -translate-y-1/3 rounded-full bg-primary/10 blur-3xl" />
       <div className="absolute bottom-0 left-0 -z-10 h-[28rem] w-[28rem] -translate-x-1/3 translate-y-1/3 rounded-full bg-cyan-500/10 blur-3xl" />
 
-      <div className="absolute right-4 top-4 z-50 sm:right-6 sm:top-6">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/80 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm backdrop-blur transition hover:border-primary/20 hover:text-primary sm:px-4 sm:py-2 sm:text-sm"
-        >
-          <Home className="h-4 w-4" />
-          Back to Website
-        </Link>
+      <div className="relative z-20 px-4 pt-4 sm:px-6 lg:px-8 lg:pt-6">
+        <InnerPageTopBar variant="light" className="px-0" />
       </div>
 
       <div className="grid min-h-dvh lg:grid-cols-[1.05fr_0.95fr]">

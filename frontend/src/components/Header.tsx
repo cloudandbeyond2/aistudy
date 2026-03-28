@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Link, useNavigate } from 'react-router-dom';
-import { ThemeToggle } from './ThemeToggle';
 import { useBranding } from '@/contexts/BrandingContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { appWordmarkDark, appWordmarkLight, serverURL } from '@/constants';
@@ -213,7 +212,6 @@ const Header = () => {
               { label: 'Features', href: '#features' },
               { label: 'Platform', href: '#platform' },
               { label: 'How It Works', href: '#how-it-works' },
-              { label: 'Contact', href: '#contact' },
             ].map((item) => (
               <motion.a
                 key={item.label}
@@ -229,12 +227,21 @@ const Header = () => {
                 {item.label}
               </motion.a>
             ))}
+            <Link
+              to="/contact"
+              className={cn(
+                "px-3 lg:px-4 py-2 text-sm font-medium transition-colors rounded-lg",
+                isScrolled
+                  ? "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                  : "text-white/80 hover:text-white"
+              )}
+            >
+              Contact
+            </Link>
           </nav>
 
           {/* Right Actions */}
           <div className="hidden md:flex items-center gap-3 lg:gap-4">
-            <ThemeToggle />
-
             {isAuth ? (
               <div className="relative" ref={dropdownRef}>
                 <motion.button
@@ -420,7 +427,6 @@ const Header = () => {
 
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center gap-2">
-            <ThemeToggle />
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -540,14 +546,14 @@ const Header = () => {
                       <HowItWorksIcon />
                       How It Works
                     </a>
-                    <a
-                      href="#contact"
+                    <Link
+                      to="/contact"
                       className="flex items-center gap-3 px-5 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-                      onClick={(e) => handleMobileNavClick(e, '#contact')}
+                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <MessageSquare className="h-5 w-5" />
                       Contact
-                    </a>
+                    </Link>
                   </div>
 
                   {/* Account Section */}
@@ -653,7 +659,6 @@ const Header = () => {
                     <span className="text-xs text-slate-500 dark:text-slate-400">
                       {userName ? `Welcome, ${userName}` : appName}
                     </span>
-                    <ThemeToggle />
                   </div>
                 </div>
               </div>

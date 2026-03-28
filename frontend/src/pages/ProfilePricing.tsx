@@ -1936,98 +1936,13 @@ import {
   YearType,
   serverURL,
 } from '@/constants';
-
-/* -------------------- FEATURE ORDER -------------------- */
-
-const ALL_FEATURES = [
-  'Sub-Topic Limit',
-  'Access Duration',
-  'Theory & Image Course',
-  'Create Courses',
-  'AI Teacher Chat',
-  'Course in 23+ Languages',
-  'Video & Theory Course',
-  'Resume Builder',
-  'AI Notebook',
-  'Interview Preparation',
-  'Certification',
-  'Priority Support',
-  'Advanced Analytics',
-];
-
-const FEATURE_ICONS: Record<string, any> = {
-  'Sub-Topic Limit': Layers,
-  'Access Duration': Clock,
-  'Theory & Image Course': BookOpen,
-  'Create Courses': FileText,
-  'AI Teacher Chat': MessageSquare,
-  'Course in 23+ Languages': Globe,
-  'Video & Theory Course': Video,
-  'Resume Builder': FileText,
-  'AI Notebook': Brain,
-  'Interview Preparation': Target,
-  'Certification': Award,
-  'Priority Support': Headphones,
-  'Advanced Analytics': BarChart,
-};
-
-/* -------------------- PLAN FEATURES -------------------- */
-
-const PLAN_FEATURES: Record<string, Record<string, boolean | string>> = {
-  free: {
-    'Sub-Topic Limit': '5 per course',
-    'Access Duration': '7 days',
-    'Theory & Image Course': true,
-    'Create Courses': '1 course only',
-    'AI Teacher Chat': true,
-    'Course in 23+ Languages': false,
-    'Video & Theory Course': false,
-    'Resume Builder': false,
-    'AI Notebook': false,
-    'Interview Preparation': false,
-    'Certification': true,
-    'Priority Support': false,
-    'Advanced Analytics': false,
-  },
-  monthly: {
-    'Sub-Topic Limit': '10 per course',
-    'Access Duration': '1 month',
-    'Theory & Image Course': true,
-    'Create Courses': '20 courses only',
-    'AI Teacher Chat': true,
-    'Course in 23+ Languages': false,
-    'Video & Theory Course': true,
-    'Resume Builder': true,
-    'AI Notebook': true,
-    'Interview Preparation': true,
-    'Certification': true,
-    'Priority Support': true,
-    'Advanced Analytics': true,
-  },
-  yearly: {
-    'Sub-Topic Limit': '10 per course',
-    'Access Duration': '1 year',
-    'Theory & Image Course': true,
-    'Create Courses': 'Unlimited',
-    'AI Teacher Chat': true,
-    'Course in 23+ Languages': true,
-    'Video & Theory Course': true,
-    'Resume Builder': true,
-    'AI Notebook': true,
-    'Interview Preparation': true,
-    'Certification': true,
-    'Priority Support': true,
-    'Advanced Analytics': true,
-  },
-};
-
-/* -------------------- PLAN ORDER -------------------- */
-
-const PLAN_ORDER: Record<string, number> = {
-  free: 0,
-  monthly: 1,
-  yearly: 2,
-};
+import {
+  PRICING_FEATURES as ALL_FEATURES,
+  PRICING_FEATURE_ICONS as FEATURE_ICONS,
+  PRICING_PLAN_FEATURES as PLAN_FEATURES,
+  PRICING_PLAN_ORDER as PLAN_ORDER,
+} from '@/lib/pricingFeatures';
+import { formatPrice, toPriceNumber } from '@/lib/formatPricing';
 
 /* -------------------- PLAN CONFIGURATION -------------------- */
 
@@ -2190,7 +2105,7 @@ const ProfilePricing = () => {
           return {
             id: planType,
             name: plan.planName || plan.name,
-            price: plan.price || 0,
+            price: toPriceNumber(plan.price),
             currency: plan.currency || 'INR',
             features: PLAN_FEATURES[planType],
             featured: planType === 'yearly',
@@ -2268,11 +2183,6 @@ const ProfilePricing = () => {
         planName: plan.name,
       },
     });
-  };
-
-  const getCurrencySymbol = (currency: string) => {
-    const symbols: any = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
-    return symbols[currency] || '₹';
   };
 
   const calculateSavings = () => {
@@ -2555,7 +2465,7 @@ const ProfilePricing = () => {
                       className="mb-6"
                     >
                       <span className="text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
-                        {getCurrencySymbol(plan.currency)}{plan.price}
+                        {formatPrice(plan.price, plan.currency)}
                       </span>
                       {plan.planType !== 'free' && (
                         <span className="text-muted-foreground ml-2">
