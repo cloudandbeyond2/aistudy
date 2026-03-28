@@ -15,6 +15,7 @@ import CoursePage from "./pages/CoursePage";
 import GenerateCourse from "./pages/GenerateCourse";
 import DashboardLayout from "./components/layouts/DashboardLayout";
 import ProfilePricing from "./pages/ProfilePricing";
+import IndividualPricing from "./pages/IndividualPricing";
 import PaymentDetails from "./pages/PaymentDetails";
 import Profile from "./pages/Profile";
 import Certificate from "./pages/Certificate";
@@ -194,6 +195,7 @@ const App = () => (
                   <Route path="/cookies" element={<Cookies />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/organization-enquiry" element={<OrganizationEnquiry />} />
+                  <Route path="/pricing/individual" element={<IndividualPricing />} />
 
                   <Route path="/cancellation-policy" element={<CancellationPolicy />} />
                   <Route path="/refund-policy" element={<RefundPolicy />} />

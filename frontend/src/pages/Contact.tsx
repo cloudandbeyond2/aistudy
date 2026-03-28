@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft,
   CheckCircle2,
   Clock,
   Headphones,
@@ -17,6 +16,7 @@ import {
 } from 'lucide-react';
 import SEO from '@/components/SEO';
 import Footer from '@/components/Footer';
+import InnerPageTopBar from '@/components/InnerPageTopBar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -119,14 +119,11 @@ const Contact = () => {
             style={{ backgroundImage: "url('/bexon/images/pattern-bg.webp')" }}
           />
 
-          <div className="relative mx-auto max-w-7xl px-4 py-16 md:px-6 lg:px-8 lg:py-24">
-            <div className="mb-8">
-              <Link to="/" className="inline-flex items-center text-sm text-slate-300 hover:text-white">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Home
-              </Link>
-            </div>
+          <div className="relative z-20 mx-auto max-w-7xl px-4 pt-4 md:px-6 lg:px-8 lg:pt-6">
+            <InnerPageTopBar variant="dark" className="px-0" />
+          </div>
 
+          <div className="relative mx-auto max-w-7xl px-4 py-16 md:px-6 lg:px-8 lg:py-24">
             <div className="grid gap-10 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}

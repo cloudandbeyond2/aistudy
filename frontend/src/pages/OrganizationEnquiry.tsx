@@ -27,6 +27,7 @@ import { serverURL, recaptchaSiteKey, appWordmarkLight } from "@/constants";
 import { useBranding } from "@/contexts/BrandingContext";
 import { cn } from "@/lib/utils";
 import Footer from "@/components/Footer";
+import InnerPageTopBar from "@/components/InnerPageTopBar";
 
 type Country = { code: string; name: string; dialCode: string; phoneLength: number[] };
 
@@ -199,18 +200,7 @@ const OrganizationEnquiry = () => {
           isScrolled ? "bg-[#081325]/90 backdrop-blur-xl border-b border-white/10 shadow-2xl" : "bg-transparent"
         )}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-          <Link to="/" className="flex items-center gap-3">
-            <img src={appWordmarkLight} alt={appName} className="h-8 w-auto max-w-[180px] sm:max-w-[220px]" />
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link to="/" className="hidden rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75 hover:text-white md:inline-flex">Home</Link>
-            <Link to="/contact" className="hidden rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75 hover:text-white md:inline-flex">Contact</Link>
-            <Button onClick={scrollToEnquiry} className="h-11 rounded-full bg-primary px-5 text-sm font-semibold text-white hover:bg-primary/90">
-              Request a call
-            </Button>
-          </div>
-        </div>
+        <InnerPageTopBar variant="dark" className="px-0" />
       </motion.header>
 
       <section className="relative overflow-hidden pt-28 pb-14 md:pt-36 md:pb-20">

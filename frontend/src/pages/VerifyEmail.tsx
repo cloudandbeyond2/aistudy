@@ -1,12 +1,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { CheckCircle2, XCircle, Loader2, ArrowRight, Home } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { serverURL } from '@/constants';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import InnerPageTopBar from '@/components/InnerPageTopBar';
 
 const VerifyEmail = () => {
     const { token } = useParams();
@@ -41,10 +42,14 @@ const VerifyEmail = () => {
     }, [token]);
 
     return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden">
+        <div className="relative min-h-screen bg-background flex items-center justify-center p-6 overflow-hidden">
             {/* Background Decorative Elements */}
             <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl -z-10" />
             <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl -z-10" />
+
+            <div className="absolute inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6 lg:px-8">
+                <InnerPageTopBar variant="light" className="px-0" />
+            </div>
 
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -93,12 +98,6 @@ const VerifyEmail = () => {
                                 </Link>
                             </Button>
                         )}
-                        <Button asChild variant="ghost" className="w-full h-12 rounded-xl text-base font-medium">
-                            <Link to="/">
-                                <Home className="mr-2 h-5 w-5" />
-                                Back to Home
-                            </Link>
-                        </Button>
                     </CardFooter>
                 </Card>
             </motion.div>

@@ -415,6 +415,11 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { serverURL } from '@/constants';
+import {
+  PRICING_FEATURES,
+  PRICING_PLAN_FEATURES,
+} from '@/lib/pricingFeatures';
+import { formatPrice, toPriceNumber } from '@/lib/formatPricing';
 
 interface PricingData {
   planType: 'free' | 'monthly' | 'yearly';
@@ -449,6 +454,7 @@ const AdminPricing = () => {
   const [hasChanges, setHasChanges] = useState(false);
   const [submitStatus, setSubmitStatus] =
     useState<'idle' | 'success' | 'error'>('idle');
+  const [showFeatureSnapshot, setShowFeatureSnapshot] = useState(false);
 
   const [pricingData, setPricingData] = useState<Record<string, PricingData>>({
     free: {
@@ -483,7 +489,18 @@ const AdminPricing = () => {
       setIsLoading(true);
       const res = await axios.get(`${serverURL}/api/admin/pricing`);
       if (res.data?.pricing) {
-        setPricingData(res.data.pricing);
+        const normalized = Object.fromEntries(
+          Object.entries(res.data.pricing).map(([planType, planData]: [string, any]) => [
+            planType,
+            {
+              ...planData,
+              price: toPriceNumber(planData.price),
+              currency: planData.currency || 'USD',
+            },
+          ])
+        ) as Record<string, PricingData>;
+
+        setPricingData(normalized);
       }
     } catch (err) {
       toast({
@@ -497,9 +514,6 @@ const AdminPricing = () => {
   };
 
   const currentPricing = pricingData[selectedPlan];
-  const currentCurrency =
-    CURRENCIES.find((c) => c.code === currentPricing.currency) ||
-    CURRENCIES[0];
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPricingData((prev) => ({
@@ -670,8 +684,7 @@ const AdminPricing = () => {
 
             <div className="p-4 bg-muted rounded-lg">
               <p className="text-lg font-bold">
-                {currentCurrency.symbol}
-                {currentPricing.price.toFixed(2)} /{' '}
+                {formatPrice(currentPricing.price, currentPricing.currency)} /{' '}
                 {PLAN_CONFIGS[selectedPlan].period}
               </p>
             </div>
@@ -690,7 +703,6 @@ const AdminPricing = () => {
             <div className="space-y-3">
               {(['free', 'monthly', 'yearly'] as const).map((plan) => {
                 const planData = pricingData[plan];
-                const planCurrency = CURRENCIES.find((c) => c.code === planData?.currency);
                 return (
                   <div
                     key={plan}
@@ -702,8 +714,7 @@ const AdminPricing = () => {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold">
-                        {planCurrency?.symbol || '$'}
-                        {planData?.price.toFixed(2) || '0.00'}
+                        {formatPrice(planData?.price, planData?.currency)}
                       </p>
                       <p className="text-xs text-muted-foreground">{PLAN_CONFIGS[plan].period}</p>
                     </div>
@@ -713,6 +724,66 @@ const AdminPricing = () => {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <div>
+              <CardTitle>Feature Snapshot</CardTitle>
+              <CardDescription>
+                Dynamic feature values shared with the public pricing cards.
+              </CardDescription>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowFeatureSnapshot((prev) => !prev)}
+            >
+              {showFeatureSnapshot ? 'Hide' : 'Show'} features
+            </Button>
+          </CardHeader>
+          {showFeatureSnapshot && (
+            <CardContent className="space-y-3">
+              {PRICING_FEATURES.map((feature) => {
+                const free = PRICING_PLAN_FEATURES.free[feature];
+                const monthly = PRICING_PLAN_FEATURES.monthly[feature];
+                const yearly = PRICING_PLAN_FEATURES.yearly[feature];
+
+                const renderValue = (value: boolean | string) =>
+                  typeof value === 'string'
+                    ? value
+                    : value
+                    ? 'Included'
+                    : 'Hidden';
+
+                const valueClass = (value: boolean | string) =>
+                  typeof value === 'string'
+                    ? 'bg-primary/10 text-primary'
+                    : value
+                    ? 'bg-green-50 text-green-700'
+                    : 'bg-slate-100 text-slate-500';
+
+                return (
+                  <div
+                    key={feature}
+                    className="grid gap-3 rounded-xl border border-border bg-muted/30 p-4 md:grid-cols-[1.3fr_1fr_1fr_1fr]"
+                  >
+                    <p className="font-medium">{feature}</p>
+                    <span className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-medium ${valueClass(free)}`}>
+                      Free: {renderValue(free)}
+                    </span>
+                    <span className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-medium ${valueClass(monthly)}`}>
+                      Monthly: {renderValue(monthly)}
+                    </span>
+                    <span className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-medium ${valueClass(yearly)}`}>
+                      Yearly: {renderValue(yearly)}
+                    </span>
+                  </div>
+                );
+              })}
+            </CardContent>
+          )}
+        </Card>
+
         <div className="flex justify-end gap-3">
           <Button
             type="button"

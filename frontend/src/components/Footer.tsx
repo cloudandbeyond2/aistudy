@@ -93,9 +93,9 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="/#pricing" className="transition hover:text-primary">
+                <Link to="/pricing/individual" className="transition hover:text-primary">
                   Pricing
-                </a>
+                </Link>
               </li>
               <li>
                 <Link to="/blog" className="transition hover:text-primary">
