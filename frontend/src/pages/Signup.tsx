@@ -197,8 +197,8 @@ const Signup = () => {
       <div className="absolute right-0 top-0 -z-10 h-[28rem] w-[28rem] translate-x-1/3 -translate-y-1/3 rounded-full bg-primary/10 blur-3xl" />
       <div className="absolute bottom-0 left-0 -z-10 h-[28rem] w-[28rem] -translate-x-1/3 translate-y-1/3 rounded-full bg-cyan-500/10 blur-3xl" />
 
-      <div className="relative z-20 px-4 pt-4 sm:px-6 lg:px-8 lg:pt-6">
-        <InnerPageTopBar variant="light" className="px-0" />
+      <div className="relative z-20 bg-[#06101d] px-4 pt-4 sm:px-6 lg:px-8 lg:pt-6">
+        <InnerPageTopBar variant="dark" className="px-0" />
       </div>
 
       <div className="grid min-h-dvh lg:grid-cols-[0.95fr_1.05fr]">

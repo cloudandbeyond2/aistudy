@@ -48,7 +48,7 @@ const VerifyEmail = () => {
             <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl -z-10" />
 
             <div className="absolute inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6 lg:px-8">
-                <InnerPageTopBar variant="light" className="px-0" />
+                <InnerPageTopBar variant="dark" className="px-0" />
             </div>
 
             <motion.div

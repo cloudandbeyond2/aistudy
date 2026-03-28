@@ -174,7 +174,7 @@ const ResetPassword = () => {
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background px-4 py-12">
       <div className="absolute inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6 lg:px-8">
-        <InnerPageTopBar variant="light" className="px-0" />
+        <InnerPageTopBar variant="dark" className="px-0" />
       </div>
 
       <div className="w-full max-w-md space-y-8">
