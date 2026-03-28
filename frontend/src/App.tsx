@@ -117,6 +117,7 @@ import StaffResources from './pages/staff/StaffResources';
 import StaffSupport from './pages/staff/StaffSupport';
 import InterviewPreparation from "./pages/InterviewPreparation";
 import TodoCenter from "./pages/TodoCenter";
+import LandingPage from "./pages/LandingPage";
 
 const queryClient = new QueryClient();
 
@@ -129,6 +130,7 @@ const App = () => (
             <TooltipProvider>
               <BrowserRouter>
                 <Routes>
+                  <Route path="/home1" element={<LandingPage />} />
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
