@@ -12,25 +12,43 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const isPrivateArea = window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/dashboard');
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [theme, setTheme] = useState<Theme>(() => {
-    // Check for saved theme or user preference
     const savedTheme = localStorage.getItem('theme') as Theme;
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    return savedTheme || (prefersDark ? 'dark' : 'light');
+    if (!isPrivateArea) return 'light';
+    return savedTheme || 'light';
   });
 
   useEffect(() => {
-    // Update class on document element
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');
     root.classList.add(theme);
-    
-    // Save to localStorage
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 767px)');
+    const updateMobile = () => setIsMobile(media.matches);
+
+    updateMobile();
+    media.addEventListener?.('change', updateMobile);
+    window.addEventListener('resize', updateMobile);
+
+    return () => {
+      media.removeEventListener?.('change', updateMobile);
+      window.removeEventListener('resize', updateMobile);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isMobile && theme !== 'light') {
+      setTheme('light');
+    }
+  }, [isMobile, theme]);
+
   const toggleTheme = () => {
+    if (isMobile) return;
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 

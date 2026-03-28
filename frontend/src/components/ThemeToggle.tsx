@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 
 export function ThemeToggle() {
@@ -17,9 +16,12 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+      className="h-10 w-10 rounded-full flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
     >
-      {theme === "dark" ? "🌙" : "☀️"}
+      <span className="text-lg leading-none">
+        {theme === "dark" ? "🌙" : "☀️"}
+      </span>
     </button>
   );
 }

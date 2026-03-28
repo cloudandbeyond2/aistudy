@@ -142,7 +142,7 @@ const ThemeToggleButton = ({ isExpanded = false }: { isExpanded?: boolean }) => 
       onClick={toggleTheme}
       className={cn(
         "group relative overflow-hidden rounded-xl transition-all duration-300 w-full",
-        "hover:shadow-md active:scale-[0.98]",
+        "border border-border/50 bg-background/80 text-foreground hover:bg-muted/60 hover:border-primary/30 hover:shadow-md active:scale-[0.98]",
         isExpanded ? "p-2" : "p-2.5"
       )}
     >
@@ -150,11 +150,11 @@ const ThemeToggleButton = ({ isExpanded = false }: { isExpanded?: boolean }) => 
         "flex items-center",
         isExpanded ? "gap-3" : "justify-center"
       )}>
-        <div className="rounded-lg p-1.5 transition-all duration-300">
+        <div className="rounded-lg p-1.5 transition-all duration-300 bg-primary/10">
           {theme === 'light' ? (
-            <Sun className="h-5 w-5 text-slate-700 transition-all duration-300 group-hover:-rotate-12" />
+            <Sun className="h-5 w-5 text-primary transition-all duration-300 group-hover:-rotate-12" />
           ) : (
-            <Moon className="h-5 w-5 text-yellow-500 transition-all duration-300 group-hover:rotate-90" />
+            <Moon className="h-5 w-5 text-primary transition-all duration-300 group-hover:rotate-90" />
           )}
         </div>
         {isExpanded && (
@@ -991,7 +991,7 @@ const DashboardLayoutContent = () => {
             )}
 
             {/* Theme Toggle Button */}
-            <ThemeToggleButton isExpanded={isExpanded} />
+            {!isMobile && <ThemeToggleButton isExpanded={isExpanded} />}
 
             {/* Logout Button */}
             <button
@@ -1029,16 +1029,16 @@ const DashboardLayoutContent = () => {
       <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 relative">
         {/* Mobile Header */}
         {isMobile && (
-          <div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm">
-            <SidebarTrigger className="mr-2">
-              <Menu className="h-6 w-6" />
-            </SidebarTrigger>
-            <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-indigo-500 bg-clip-text text-transparent">
-              {appName}
+            <div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm border border-border/40">
+              <SidebarTrigger className="mr-2">
+                <Menu className="h-6 w-6" />
+              </SidebarTrigger>
+              <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-indigo-500 bg-clip-text text-transparent">
+                {appName}
             </h1>
             <div className="ml-auto flex items-center gap-2">
               <NotificationBell />
-              <ThemeToggleButton  />
+              {!isMobile && <ThemeToggleButton />}
             </div>
           </div>
         )}

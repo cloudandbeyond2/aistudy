@@ -118,6 +118,27 @@ import StaffSupport from './pages/staff/StaffSupport';
 import InterviewPreparation from "./pages/InterviewPreparation";
 import TodoCenter from "./pages/TodoCenter";
 import LandingPage from "./pages/LandingPage";
+import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
+
+const PublicThemeGuard = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    const isPrivateArea =
+      location.pathname.startsWith('/admin') ||
+      location.pathname.startsWith('/dashboard');
+
+    const root = document.documentElement;
+
+    if (!isPrivateArea) {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    }
+  }, [location.pathname]);
+
+  return null;
+};
 
 const queryClient = new QueryClient();
 
@@ -129,6 +150,7 @@ const App = () => (
           <BrandingProvider>
             <TooltipProvider>
               <BrowserRouter>
+                <PublicThemeGuard />
                 <Routes>
                   <Route path="/home1" element={<LandingPage />} />
                   <Route path="/" element={<Index />} />
