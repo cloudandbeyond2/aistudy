@@ -58,7 +58,7 @@ import {
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { websiteURL, serverURL } from '@/constants';
+import { appWordmarkLight, websiteURL, serverURL } from '@/constants';
 import { useBranding } from '@/contexts/BrandingContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { DownloadIcon } from '@radix-ui/react-icons';
@@ -172,7 +172,7 @@ const ThemeToggleButton = ({ isExpanded = false }: { isExpanded?: boolean }) => 
 
 // Inner component that uses useSidebar hook
 const DashboardLayoutContent = () => {
-  const { appName, appLogo } = useBranding();
+  const { appName } = useBranding();
   const isMobile = useIsMobile();
   const location = useLocation();
   const [admin, setAdmin] = useState(false);
@@ -348,17 +348,7 @@ const DashboardLayoutContent = () => {
                 !isExpanded && "justify-center w-full"
               )}
             >
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary/20 rounded-xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
-                <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:rotate-3">
-                  <img src={appLogo} alt="Logo" className='h-5 w-5' />
-                </div>
-              </div>
-              {isExpanded && (
-                <span className="font-display text-lg font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent group-hover:scale-105 transition-transform whitespace-nowrap">
-                  {appName}
-                </span>
-              )}
+              <img src={appWordmarkLight} alt={appName} className={cn("w-auto transition-transform duration-300 group-hover:scale-105", isExpanded ? "h-8 max-w-[160px]" : "h-7 max-w-[44px]")} />
             </Link>
             
             {/* Collapse Toggle Button */}
@@ -379,7 +369,7 @@ const DashboardLayoutContent = () => {
           </div>
         </SidebarHeader>
 
-        <SidebarContent className="py-4">
+        <SidebarContent className="thin-scrollbar py-4">
           {/* Main Menu Section */}
           <SidebarGroup>
             <SidebarGroupContent>
@@ -1026,16 +1016,14 @@ const DashboardLayoutContent = () => {
       </Sidebar>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 relative">
+      <main className="thin-scrollbar flex-1 overflow-auto p-4 md:p-6 lg:p-8 relative">
         {/* Mobile Header */}
         {isMobile && (
             <div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm border border-border/40">
               <SidebarTrigger className="mr-2">
                 <Menu className="h-6 w-6" />
               </SidebarTrigger>
-              <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-indigo-500 bg-clip-text text-transparent">
-                {appName}
-            </h1>
+              <img src={appWordmarkLight} alt={appName} className="h-7 w-auto max-w-[150px]" />
             <div className="ml-auto flex items-center gap-2">
               <NotificationBell />
               {!isMobile && <ThemeToggleButton />}

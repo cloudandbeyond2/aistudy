@@ -50,7 +50,7 @@ import {
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { serverURL, websiteURL } from '@/constants';
+import { appWordmarkLight, serverURL, websiteURL } from '@/constants';
 import axios from 'axios';
 import { useBranding } from '@/contexts/BrandingContext';
 import { useToast } from '@/hooks/use-toast';
@@ -58,7 +58,7 @@ import { Cookie } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext'; // Import useTheme hook
 
 const AdminLayout = () => {
-  const { appName, appLogo } = useBranding();
+  const { appName } = useBranding();
   const isMobile = useIsMobile();
   const location = useLocation();
   const { toast } = useToast();
@@ -108,28 +108,25 @@ const AdminLayout = () => {
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 to-indigo-50/30 dark:from-slate-950 dark:to-indigo-950/20">
         {/* Sidebar with new color scheme */}
-        <Sidebar className="border-r border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm shadow-sm">
+        <Sidebar className="border-r border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm shadow-sm [&_[data-sidebar=menu-button]]:text-slate-300 [&_[data-sidebar=menu-button]]:hover:text-white [&_[data-sidebar=menu-button][data-active=true]]:text-indigo-600 dark:[&_[data-sidebar=menu-button][data-active=true]]:text-indigo-400">
           <SidebarHeader className="border-b border-slate-200/60 dark:border-slate-800/60">
-            <Link to="/admin" className="flex items-center space-x-3 px-4 py-4 group">
-                <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:rotate-3">
-                  <img src={appLogo} alt="Logo" className='h-5 w-5' />
-                </div>
-              <div className="flex flex-col">
-                <span className="font-display text-lg font-bold bg-gradient-to-r from-indigo-600 to-indigo-500 dark:from-indigo-400 dark:to-indigo-300 bg-clip-text text-transparent">Colossus IQ</span>
-                <span className="text-xs text-slate-500 dark:text-slate-400 -mt-0.5">Admin Portal</span>
-              </div>
+            <Link to="/admin" className="flex flex-col gap-1 px-4 py-4 group">
+                <img src={appWordmarkLight} alt={appName} className="h-8 w-auto max-w-[160px] transition-transform duration-300 group-hover:scale-105" />
+              <span className="text-[11px] font-medium uppercase tracking-[0.28em] leading-none text-slate-300 dark:text-slate-300 whitespace-nowrap">
+                Admin Portal
+              </span>
             </Link>
           </SidebarHeader>
 
-          <SidebarContent className="py-4">
+          <SidebarContent className="thin-scrollbar py-4">
             {/* Main Navigation Section */}
             <div className="px-3 mb-2">
               <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 mb-2">Main</p>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Dashboard" isActive={isActive('/admin')} className={cn(
-                    "rounded-xl transition-all duration-200",
-                    isActive('/admin') ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 shadow-sm" : "hover:bg-slate-100 dark:hover:bg-slate-800/50"
+                    "rounded-xl transition-all duration-200 text-slate-300 hover:text-white",
+                    isActive('/admin') ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 shadow-sm" : "hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-white"
                   )}>
                     <Link to="/admin">
                       <LayoutDashboard className="h-4.5 w-4.5" />
@@ -146,8 +143,8 @@ const AdminLayout = () => {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Users" isActive={isActive('/admin/users')} className={cn(
-                    "rounded-xl transition-all duration-200",
-                    isActive('/admin/users') ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "hover:bg-slate-100 dark:hover:bg-slate-800/50"
+                    "rounded-xl transition-all duration-200 text-slate-300 hover:text-white",
+                    isActive('/admin/users') ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-white"
                   )}>
                     <Link to="/admin/users">
                       <Users />
@@ -158,8 +155,8 @@ const AdminLayout = () => {
 
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Deletion Requests" isActive={isActive('/admin/deletion-requests')} className={cn(
-                    "rounded-xl transition-all duration-200",
-                    isActive('/admin/deletion-requests') ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "hover:bg-slate-100 dark:hover:bg-slate-800/50"
+                    "rounded-xl transition-all duration-200 text-slate-300 hover:text-white",
+                    isActive('/admin/deletion-requests') ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-white"
                   )}>
                     <Link to="/admin/deletion-requests">
                       <UserMinus />
@@ -170,8 +167,8 @@ const AdminLayout = () => {
 
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Paid Users" isActive={isActive('/admin/paid-users')} className={cn(
-                    "rounded-xl transition-all duration-200",
-                    isActive('/admin/paid-users') ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "hover:bg-slate-100 dark:hover:bg-slate-800/50"
+                    "rounded-xl transition-all duration-200 text-slate-300 hover:text-white",
+                    isActive('/admin/paid-users') ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-white"
                   )}>
                     <Link to="/admin/paid-users">
                       <DollarSign />
@@ -567,16 +564,14 @@ const AdminLayout = () => {
           <SidebarRail />
         </Sidebar>
 
-        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
+        <main className="thin-scrollbar flex-1 overflow-auto p-4 md:p-6 lg:p-8">
           {isMobile && (
             <div className="flex items-center mb-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-xl p-3 shadow-sm border border-slate-200/60 dark:border-slate-800/60">
               <SidebarTrigger className="mr-3">
                 <Menu className="h-5 w-5" />
               </SidebarTrigger>
               <div className="flex items-center gap-2">
-                 <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:rotate-3">
-                  <img src={appLogo} alt="Logo" className='h-5 w-5' />
-                </div>
+                <img src={appWordmarkLight} alt={appName} className="h-7 w-auto max-w-[140px]" />
                 <h1 className="text-lg font-semibold bg-gradient-to-r from-indigo-600 to-indigo-500 bg-clip-text text-transparent">Admin Panel</h1>
               </div>
             </div>

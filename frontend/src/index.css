@@ -158,6 +158,40 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  .thin-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary) / 0.45) transparent;
+    scrollbar-gutter: stable;
+  }
+
+  .thin-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .thin-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .thin-scrollbar::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: linear-gradient(
+      180deg,
+      hsl(var(--primary) / 0.45),
+      hsl(var(--accent) / 0.55)
+    );
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--primary) / 0.65),
+      hsl(var(--accent) / 0.8)
+    );
+  }
 }
 
 /* Smooth Scroll */
