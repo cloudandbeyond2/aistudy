@@ -82,31 +82,6 @@ const Signup = () => {
     navigate('/dashboard');
   };
 
-  const sendEmail = async (mEmail: string, name?: string) => {
-    try {
-      const dataToSend = {
-        subject: `Welcome to ${appName}`,
-        to: mEmail,
-        html: `
-          <html>
-            <body style="font-family: Arial, sans-serif; background:#f6f9fc; padding:24px;">
-              <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:18px;padding:32px;border:1px solid #e5e7eb;">
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
-                  <img src="${appLogo}" alt="${appName}" width="44" height="44" />
-                  <h1 style="margin:0;font-size:24px;">Welcome to ${appName}</h1>
-                </div>
-                <p style="font-size:16px;line-height:1.7;color:#111827;">Hello ${name || mEmail}, your account is ready.</p>
-                <p style="font-size:16px;line-height:1.7;color:#111827;">Use ${websiteURL} to sign in and start building courses, schedules, and learning workflows.</p>
-              </div>
-            </body>
-          </html>`,
-      };
-
-      await axios.post(`${serverURL}/api/data`, dataToSend);
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,7 +138,6 @@ const Signup = () => {
           title: 'Account created',
           description: `Welcome to ${appName}`,
         });
-        await sendEmail(email, mName);
         window.location.href = '/dashboard';
         return;
       }
@@ -172,9 +146,6 @@ const Signup = () => {
         title: 'Verify your email',
         description: 'Your account has been created. Please check your inbox before logging in.',
       });
-      if (!response.data.mailError) {
-        await sendEmail(email, mName);
-      }
       window.location.href = '/login';
     } catch (err) {
       console.error(err);
