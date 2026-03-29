@@ -119,7 +119,7 @@ const workflowSteps = [
   {
     step: '01',
     title: 'Choose your audience',
-    description: 'The interface adapts for schools, universities, organizations, and job seekers.',
+    description: 'The interface adapts for schools, universities, organizations and job seekers.',
   },
   {
     step: '02',
@@ -140,7 +140,7 @@ const workflowSteps = [
 
 const sectionHeading = 'mx-auto max-w-3xl text-center';
 const featureCardClass =
-  "group relative h-full overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/90 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.35)] transition-all duration-300 hover:-translate-y-1 hover:border-slate-950/20 hover:shadow-[0_34px_90px_-48px_rgba(15,23,42,0.45)]";
+  "group relative h-full overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/90 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.35)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/30 hover:shadow-[0_34px_90px_-48px_rgba(8,145,178,0.38)]";
 const audienceCardClass =
   "group relative overflow-hidden rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cyan-300/30 hover:bg-white/7 hover:shadow-[0_30px_80px_-42px_rgba(34,211,238,0.2)]";
 const logoTileClass =
@@ -196,7 +196,7 @@ const Index = () => {
 
   const heroHighlights = [
     'Generate learning content, study notes, outlines, and learning plans from one system.',
-    'Built for schools, universities, organizations, and job seekers.',
+    'Built for schools, universities, organizations and job seekers.',
     'Responsive design with a calm hierarchy and clear navigation.',
   ];
 
@@ -208,7 +208,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen overflow-x-hidden text-foreground">
-      <SEO title="Home" description="Colossus IQ is an AI-based learning system for schools, universities, organizations, and job seekers." />
+      <SEO title="Home" description="Colossus IQ is an AI-based learning system for schools, universities, organizations and job seekers." />
       <Header />
 
       <main className="bg-[radial-gradient(circle_at_top_left,rgba(13,148,136,0.08),transparent_30%),linear-gradient(180deg,hsl(var(--background))_0%,hsl(var(--background))_100%)]">
@@ -235,7 +235,7 @@ const Index = () => {
 
               <div className="space-y-4">
                 <h1 className="max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
-                  Smart learning for schools, universities, organizations, and job seekers.
+                  Smart learning for schools, universities, organizations and job seekers.
                 </h1>
                 <p className="max-w-2xl text-sm leading-7 text-slate-300 md:text-base">
                   {appName} connects AI-powered learning workflows, scheduling, assessments, resumes, support,
@@ -354,18 +354,29 @@ const Index = () => {
                   transition={{ duration: 0.45, delay: index * 0.06 }}
                 >
                   <Card className={`${featureCardClass} group/card`}>
+                    <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover/card:opacity-100">
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.16),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.14),transparent_30%),linear-gradient(180deg,rgba(6,16,29,0.98)_0%,rgba(8,13,24,0.98)_100%)]" />
+                      <div
+                        className="absolute inset-0 bg-cover bg-center opacity-[0.08] mix-blend-screen"
+                        style={{ backgroundImage: "url('/bexon/images/pattern-bg.webp')" }}
+                      />
+                    </div>
                     <CardHeader className="space-y-4">
-                      <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-slate-900/25 to-transparent opacity-0 transition-opacity duration-300 group-hover/card:opacity-100" />
-                      <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform duration-300 group-hover/card:scale-110">
+                      <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent opacity-0 transition-opacity duration-300 group-hover/card:opacity-100" />
+                      <div className="relative inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-300 group-hover/card:scale-110 group-hover/card:bg-white/10 group-hover/card:text-cyan-100">
                         <item.icon className="h-5 w-5" />
                       </div>
-                      <CardTitle className="text-xl">{item.title}</CardTitle>
-                      <CardDescription className="text-sm leading-7">{item.description}</CardDescription>
+                      <CardTitle className="relative text-xl transition-colors duration-300 group-hover/card:text-white">
+                        {item.title}
+                      </CardTitle>
+                      <CardDescription className="relative text-sm leading-7 transition-colors duration-300 group-hover/card:text-slate-300">
+                        {item.description}
+                      </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-2 pb-6">
+                    <CardContent className="relative space-y-2 pb-6">
                       {item.points.map((point) => (
-                        <div key={point} className="flex items-center gap-2 text-sm text-slate-700">
-                          <CheckCircle2 className="h-4 w-4 text-primary" />
+                        <div key={point} className="flex items-center gap-2 text-sm text-slate-700 transition-colors duration-300 group-hover/card:text-slate-200">
+                          <CheckCircle2 className="h-4 w-4 text-primary transition-colors duration-300 group-hover/card:text-cyan-300" />
                           <span>{point}</span>
                         </div>
                       ))}
@@ -501,15 +512,26 @@ const Index = () => {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true, amount: 0.3 }}
                       transition={{ duration: 0.35 }}
-                      className="rounded-[24px] border border-slate-200/80 bg-slate-50 p-5 shadow-[0_18px_45px_-34px_rgba(15,23,42,0.2)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:bg-white hover:shadow-[0_24px_60px_-36px_rgba(15,23,42,0.24)]"
+                      className="group relative overflow-hidden rounded-[24px] border border-slate-200/80 bg-slate-50 p-5 shadow-[0_18px_45px_-34px_rgba(15,23,42,0.2)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/30 hover:shadow-[0_24px_60px_-36px_rgba(8,145,178,0.3)]"
                     >
+                      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.16),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.14),transparent_30%),linear-gradient(180deg,rgba(6,16,29,0.98)_0%,rgba(8,13,24,0.98)_100%)]" />
+                        <div
+                          className="absolute inset-0 bg-cover bg-center opacity-[0.08] mix-blend-screen"
+                          style={{ backgroundImage: "url('/bexon/images/pattern-bg.webp')" }}
+                        />
+                      </div>
                       <div className="flex items-center gap-3">
-                        <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-sm font-semibold text-primary">
+                        <div className="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-sm font-semibold text-primary transition-all duration-300 group-hover:bg-white/10 group-hover:text-cyan-100">
                           {item.step}
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-950">{item.title}</h3>
+                        <h3 className="relative text-lg font-semibold text-slate-950 transition-colors duration-300 group-hover:text-white">
+                          {item.title}
+                        </h3>
                       </div>
-                      <p className="mt-3 text-sm leading-7 text-slate-600">{item.description}</p>
+                      <p className="relative mt-3 text-sm leading-7 text-slate-600 transition-colors duration-300 group-hover:text-slate-300">
+                        {item.description}
+                      </p>
                     </motion.div>
                   ))}
                 </div>
