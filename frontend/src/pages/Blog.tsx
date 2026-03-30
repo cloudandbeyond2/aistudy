@@ -798,9 +798,13 @@ const Blog = () => {
                                 <p className="text-sm leading-7 text-muted-foreground">{post.excerpt}</p>
                               </CardContent>
                               <CardFooter className="px-6 pb-6 pt-0">
-                                <Button onClick={() => readMore(post)} variant="ghost" className="h-10 px-0 text-primary hover:bg-transparent">
-                                  Explore post <ArrowRight className="ml-2 h-4 w-4" />
-                                </Button>
+                               <Button
+  onClick={() => readMore(post)}
+  variant="ghost"
+  className="h-10 px-0 text-primary hover:text-primary hover:bg-transparent focus:bg-transparent active:bg-transparent shadow-none"
+>
+  Explore post <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+</Button>
                               </CardFooter>
                             </Card>
                           </motion.div>
