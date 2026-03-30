@@ -45,8 +45,8 @@ export const paypalPlanIdTwo = "P-8T744865W27080359MWOCE5QRR";
 
 //RAZORPAY
 // export const razorpayKeyId = "rzp_test_SCLaCj6sIAD331";
-export const razorpayKeyId = "rzp_test_SNXqWQ4BRcnHhA";
-export const razorpayPlanIdOne = "plan_SJqvapiTytNotQ";
+export const razorpayKeyId = "rzp_live_SXJVKRqxXYeJZA";
+export const razorpayPlanIdOne = "plan_SXJ7zY1uc9bTHp";
 export const razorpayPlanIdTwo = "plan_SJsENuOG8v3573";
 
 
