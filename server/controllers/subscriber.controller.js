@@ -148,14 +148,49 @@ export const subscribe = async (req, res) => {
     try {
       await sendMail({
         to: email,
-        subject: "Welcome to Colossus IQ 🚀",
-        html: `
-          <h2>Welcome to Colossus IQ!</h2>
-          <p>Thank you for subscribing to our newsletter.</p>
-          <p>You’ll now receive updates about new courses, learning resources, and platform announcements.</p>
-          <p>Start exploring: <a href="https://Colossus IQ-infilabs.vercel.app/">Colossus IQ Platform</a></p>
-          <p>Best regards,<br/>Colossus IQ Team</p>
-        `
+        subject: "Welcome to Colossus IQ",
+      html: `
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family: Arial, sans-serif;">
+  <tr>
+    <td align="left" style="padding:20px;">
+
+      <table width="600" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td align="left">
+
+            <h2 style="margin-bottom:10px;">Welcome to Colossus IQ!</h2>
+
+            <p>Thank you for subscribing to our newsletter.</p>
+
+            <p>You’ll now receive updates about new courses, learning resources, and platform announcements.</p>
+
+            <p style="margin:20px 0;">
+              <a href="https://aistudy-infilabs.vercel.app/" 
+                 target="_blank"
+                 style="background:#4f46e5;
+                        color:#ffffff;
+                        padding:10px 18px;
+                        text-decoration:none;
+                        border-radius:6px;
+                        display:inline-block;
+                        font-weight:600;">
+                Visit Colossus IQ
+              </a>
+            </p>
+
+            <p style="color:#555; margin-top:25px;">
+              Best regards,<br/>
+              Colossus IQ Team
+            </p>
+
+          </td>
+        </tr>
+      </table>
+
+    </td>
+  </tr>
+</table>
+`
       });
     } catch (mailError) {
       console.error("Welcome email failed:", mailError);
