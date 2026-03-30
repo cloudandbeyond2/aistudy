@@ -121,13 +121,7 @@ const getSmartCourse = () => {
 };
 // ✅ BUTTON HANDLER
 const handleContinueLearning = () => {
-  const course = getSmartCourse();
-
-  if (course) {
-    navigate(`/course/${course._id}`);
-  } else {
-    navigate("/dashboard");
-  }
+  navigate("/dashboard");
 };
 
 // 🔥 TEMP ACTIVITY DATA (replace later with backend)
