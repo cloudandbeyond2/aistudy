@@ -7,6 +7,18 @@ import Course from '../models/Course.js';
 import Admin from '../models/Admin.js';
 import Subscription from '../models/Subscription.js';
 import OrganizationPlan from '../models/OrganizationPlan.js';
+import Department from '../models/Department.js';
+import OrgCourse from '../models/OrgCourse.js';
+import Assignment from '../models/Assignment.js';
+import Notice from '../models/Notice.js';
+import Meeting from '../models/Meeting.js';
+import Material from '../models/Material.js';
+import Schedule from '../models/Schedule.js';
+import Project from '../models/Project.js';
+import PlacementProfile from '../models/PlacementProfile.js';
+import DeptCourseLimitRequest from '../models/DeptCourseLimitRequest.js';
+import LoginActivity from '../models/LoginActivity.js';
+import Exam from '../models/Exam.js';
 
 import { addOneMonthSafe } from '../utils/date.utils.js';
 import { getUserAccessFromOrgPlan } from '../utils/orgPlanAccess.js';
@@ -107,9 +119,71 @@ export const updateUser = async ({ userId, mName, email, type }) => {
 
 
 export const deleteUser = async (userId) => {
-  await User.findByIdAndDelete(userId);
-  await Subscription.findOneAndDelete({ user: userId });
-  await Course.deleteMany({ user: userId });
+  const user = await User.findById(userId).lean();
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  const isOrganizationRoot = user.isOrganization || user.role === 'org_admin';
+
+  if (!isOrganizationRoot) {
+    await User.findByIdAndDelete(userId);
+    await Subscription.findOneAndDelete({ user: userId });
+    await Course.deleteMany({ user: userId });
+    return;
+  }
+
+  const organizationId = user.organization;
+  if (!organizationId) {
+    await User.findByIdAndDelete(userId);
+    await Subscription.findOneAndDelete({ user: userId });
+    await Course.deleteMany({ user: String(userId) });
+    return;
+  }
+
+  const orgUserIds = await User.find({
+    $or: [
+      { _id: userId },
+      { organization: organizationId },
+      { organizationId: userId }
+    ]
+  }).distinct('_id');
+
+  const orgUserIdStrings = orgUserIds.map((id) => String(id));
+
+  await Promise.all([
+    User.deleteMany({
+      $or: [
+        { _id: { $in: orgUserIds } },
+        { organization: organizationId },
+        { organizationId: userId }
+      ]
+    }),
+    Subscription.deleteMany({ user: { $in: orgUserIds } }),
+    Course.deleteMany({
+      $or: [
+        { user: { $in: orgUserIdStrings } },
+        { user: userId },
+        { organizationId }
+      ]
+    }),
+    OrganizationPlan.deleteMany({ organization: organizationId }),
+    Organization.deleteOne({ _id: organizationId }),
+    Department.deleteMany({ organizationId }),
+    OrgCourse.deleteMany({ organizationId }),
+    Assignment.deleteMany({ organizationId }),
+    Notice.deleteMany({ organizationId }),
+    Meeting.deleteMany({ organizationId }),
+    Material.deleteMany({ organizationId }),
+    Schedule.deleteMany({ organizationId }),
+    Project.deleteMany({ organizationId }),
+    PlacementProfile.deleteMany({ organizationId }),
+    LimitRequest.deleteMany({ organizationId }),
+    StaffCourseLimitRequest.deleteMany({ organizationId }),
+    DeptCourseLimitRequest.deleteMany({ organizationId }),
+    LoginActivity.deleteMany({ organization: organizationId }),
+    Exam.deleteMany({ organizationId: String(organizationId) })
+  ]);
 };
 
 // export const updateUser = async ({ userId, mName, email, type }) => {
