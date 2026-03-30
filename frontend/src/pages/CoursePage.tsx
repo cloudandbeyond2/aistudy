@@ -2740,12 +2740,12 @@ sendDataVideo(url, cleanedTheory, mTopic, mSubTopic);
                 <span className="lg:hidden">Certificate</span>
               </Button>
             )}
-            <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm" asChild>
+            {/* <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm" asChild>
               <span className="cursor-pointer">
                 <Download className="h-4 w-4 mr-1" />
                 <span className="hidden lg:inline">{exporting ? "Exporting..." : "Export"}</span>
               </span>
-            </Button>
+            </Button> */}
             <ShareOnSocial
               textToShare={sessionStorage.getItem("mName") + " shared you course on " + mainTopic}
               link={websiteURL + "/shareable?id=" + courseId}
@@ -2919,7 +2919,7 @@ sendDataVideo(url, cleanedTheory, mTopic, mSubTopic);
 
                   <div className="space-y-4">
                     {/* Video or Image */}
-                    {type === "video & text course" ? (
+                    {/* {type === "video & text course" ? (
                       media ? (
                         <div className="overflow-hidden rounded-[20px] sm:rounded-[28px] border border-border/60 bg-background p-2 sm:p-3 shadow-sm">
                           <div className="aspect-video w-full overflow-hidden rounded-xl sm:rounded-2xl">
@@ -2998,7 +2998,7 @@ sendDataVideo(url, cleanedTheory, mTopic, mSubTopic);
                           </div>
                         )}
                       </div>
-                    )}
+                    )} */}
 
                     {/* Theory text */}
                     {theory && (
