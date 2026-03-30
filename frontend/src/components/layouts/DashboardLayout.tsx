@@ -1047,72 +1047,106 @@ const DashboardLayoutContent = () => {
         </SidebarContent>
 
         {/* Footer */}
-        <SidebarFooter className="border-t border-border/40 bg-transparent">
-          {/* Action Buttons */}
-          <div className={cn(
-            "grid gap-2 px-2",
-            isExpanded ? "grid-cols-1" : "grid-cols-1"
+        {/* Footer */}
+<SidebarFooter className="border-t border-white/5 bg-transparent p-0">
+  {/* User Profile Card */}
+  <div className={cn(
+    "group relative flex items-center gap-3 overflow-hidden transition-all duration-300 ease-in-out",
+    "bg-white/[0.03] border border-white/10 hover:border-white/20",
+    isExpanded ? "m-2 mb-0 rounded-2xl p-2" : "m-1 rounded-xl p-2 justify-center"
+  )}>
+    {/* Animated background glow */}
+    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+    {/* Avatar Section */}
+    <div className="relative flex-shrink-0">
+      <div className={cn(
+        "relative z-10 flex items-center justify-center rounded-xl font-bold text-white shadow-lg transition-all duration-300",
+        "bg-gradient-to-tr from-primary to-indigo-600 ring-2 ring-white/10 group-hover:ring-primary/40",
+        isExpanded ? "h-10 w-10 text-sm" : "h-9 w-9 text-xs"
+      )}>
+        {(sessionStorage.getItem('mName') || 'L').charAt(0).toUpperCase()}
+      </div>
+      {/* Pulse Status Indicator */}
+      <span className="absolute -bottom-0.5 -right-0.5 z-20 flex h-3 w-3">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-[#0f172a]"></span>
+      </span>
+    </div>
+
+    {/* User Metadata */}
+    {isExpanded && (
+      <div className="flex-1 min-w-0 z-10 animate-in fade-in slide-in-from-left-2 duration-300">
+        <p className="text-sm font-semibold text-slate-100 truncate tracking-tight">
+          {sessionStorage.getItem('mName') || 'Learner'}
+        </p>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className={cn(
+            "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border",
+            sessionStorage.getItem('role') === 'org_admin' && "bg-violet-500/10 text-violet-400 border-violet-500/20",
+            sessionStorage.getItem('role') === 'dept_admin' && "bg-blue-500/10 text-blue-400 border-blue-500/20",
+            sessionStorage.getItem('role') === 'student' && "bg-teal-500/10 text-teal-400 border-teal-500/20",
+            !['org_admin', 'dept_admin', 'student'].includes(sessionStorage.getItem('role') || '') && "bg-slate-500/10 text-slate-400 border-slate-500/20"
           )}>
-            {/* Install App Button */}
-            {installPrompt && (
-              <button
-                onClick={() => {
-                  handleInstallClick();
-                  handleMobileMenuClick();
-                }}
-                className={cn(
-                  "group relative overflow-hidden rounded-xl transition-all duration-300 w-full",
-                  "text-slate-300 hover:bg-white/10 hover:text-white active:scale-[0.98]",
-                  isExpanded ? "p-2" : "p-2.5"
-                )}
-              >
-                <div className={cn(
-                  "flex items-center",
-                  isExpanded ? "gap-3" : "justify-center"
-                )}>
-                  <div className="rounded-lg p-1.5 transition-all duration-300 group-hover:bg-white/10">
-                    <DownloadIcon className="h-5 w-5 text-blue-400 group-hover:text-blue-300" />
-                  </div>
-                  {isExpanded && (
-                    <div className="flex-1 text-left">
-                      <p className="text-sm font-medium">Install App</p>
-                      <p className="text-xs text-slate-400 group-hover:text-slate-300">Desktop experience</p>
-                    </div>
-                  )}
-                </div>
-              </button>
-            )}
+            {sessionStorage.getItem('role')?.replace('_', ' ') || 'User'}
+          </span>
+        </div>
+      </div>
+    )}
 
+    {/* Contextual Action */}
+    {isExpanded && (
+      <Link
+        to="/dashboard/profile"
+        onClick={handleMobileMenuClick}
+        className="relative z-10 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+      >
+        <Settings2Icon className="h-4 w-4" />
+      </Link>
+    )}
+  </div>
 
-            {/* Logout Button */}
-            <button
-              onClick={() => {
-                Logout();
-                handleMobileMenuClick();
-              }}
-              className={cn(
-                "group relative overflow-hidden rounded-xl transition-all duration-300 w-full",
-                "text-slate-300 hover:bg-white/10 hover:text-white active:scale-[0.98]",
-                isExpanded ? "p-2" : "p-2.5"
-              )}
-            >
-              <div className={cn(
-                "flex items-center",
-                isExpanded ? "gap-3" : "justify-center"
-              )}>
-                <div className="rounded-lg p-1.5 transition-all duration-300 group-hover:bg-white/10">
-                  <LogOut className="h-5 w-5 text-red-500 group-hover:text-red-400" />
-                </div>
-                {isExpanded && (
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium">Logout</p>
-                    <p className="text-xs text-slate-400 group-hover:text-slate-300">Sign out</p>
-                  </div>
-                )}
-              </div>
-            </button>
+  {/* Action Navigation */}
+  <div className="mt-2 space-y-1 px-2">
+    {/* Install Button */}
+    {installPrompt && (
+      <button
+        onClick={() => { handleInstallClick(); handleMobileMenuClick(); }}
+        className={cn(
+          "group flex items-center w-full gap-3 rounded-xl transition-all duration-200",
+          "hover:bg-blue-500/10 text-slate-400 hover:text-blue-400",
+          isExpanded ? "p-2.5" : "p-3 justify-center"
+        )}
+      >
+        <DownloadIcon className={cn("h-5 w-5 transition-transform group-hover:-translate-y-0.5", !isExpanded && "h-6 w-6")} />
+        {isExpanded && (
+          <div className="text-left">
+            <p className="text-sm font-medium leading-none">Install App</p>
+            <p className="text-[11px] opacity-60 mt-1">Desktop experience</p>
           </div>
-        </SidebarFooter>
+        )}
+      </button>
+    )}
+
+    {/* Logout Button */}
+    <button
+      onClick={() => { Logout(); handleMobileMenuClick(); }}
+      className={cn(
+        "group flex items-center w-full gap-3 rounded-xl transition-all duration-200",
+        "hover:bg-red-500/10 text-slate-400 hover:text-red-500",
+        isExpanded ? "p-2.5" : "p-3 justify-center"
+      )}
+    >
+      <LogOut className={cn("h-5 w-5 transition-transform group-hover:translate-x-0.5", !isExpanded && "h-6 w-6")} />
+      {isExpanded && (
+        <div className="text-left">
+          <p className="text-sm font-medium leading-none">Logout</p>
+          <p className="text-[11px] opacity-60 mt-1">Sign out of session</p>
+        </div>
+      )}
+    </button>
+  </div>
+</SidebarFooter>
         <SidebarRail />
       </Sidebar>
 

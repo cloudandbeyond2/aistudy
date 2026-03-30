@@ -99,7 +99,7 @@ const AdminLayout = () => {
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 to-indigo-50/30 dark:from-slate-950 dark:to-indigo-950/20">
         {/* Sidebar with new color scheme */}
-        <Sidebar className="border-r border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm shadow-sm [&_[data-sidebar=menu-button]]:text-slate-300 [&_[data-sidebar=menu-button]]:hover:text-white [&_[data-sidebar=menu-button][data-active=true]]:text-indigo-600 dark:[&_[data-sidebar=menu-button][data-active=true]]:text-indigo-400">
+        <Sidebar className="border-r border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm shadow-sm [&_[data-sidebar=menu-button]]:text-white [&_[data-sidebar=menu-button]]:hover:text-white [&_[data-sidebar=menu-button][data-active=true]]:text-white">
           <SidebarHeader className="border-b border-slate-200/60 dark:border-slate-800/60">
             <Link to="/admin" className="flex flex-col gap-1 px-4 py-4 group">
                 <img src={appWordmarkLight} alt={appName} className="h-8 w-auto max-w-[160px] transition-transform duration-300 group-hover:scale-105" />
@@ -513,24 +513,66 @@ const AdminLayout = () => {
             </div>
           </SidebarContent>
 
-          <SidebarFooter className="border-t border-slate-200/60 dark:border-slate-800/60 p-3">
-            <div className="space-y-2">              {/* Back to Website */}
-              <Link to="/" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-white/10 hover:text-primary transition-all duration-200">
-                <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                  <Globe className="h-4 w-4 text-slate-300" />
-                </div>
-                <span className="text-sm font-medium">Back to Website</span>
-              </Link>
+          <SidebarFooter className="border-t border-slate-200/60 dark:border-slate-800/60 p-2 space-y-0.5">
 
-              {/* Logout Button */}
-              <button onClick={Logout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:bg-white/10  hover:text-red-400 transition-all duration-200 group">
-                <div className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-red-100 dark:group-hover:bg-red-900/30 transition-colors">
-                  <LogOut className="h-4 w-4 text-red-400" />
-                </div>
-                <span className="text-sm font-medium">Logout</span>
-              </button>
-            </div>
-          </SidebarFooter>
+  {/* User Profile Row */}
+  <Link
+    to="/dashboard/profile"
+    className="group flex items-center w-full rounded-xl px-2 py-2 transition-all duration-200 hover:bg-white/8 active:scale-[0.98]"
+  >
+    <div className="relative flex-shrink-0">
+      <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-400 to-violet-500 flex items-center justify-center shadow-md ring-2 ring-indigo-500/20 transition-all duration-200 group-hover:ring-indigo-500/40 group-hover:shadow-lg">
+        <span className="text-[13px] font-bold text-white uppercase tracking-wide">
+          {(sessionStorage.getItem('mName') || 'A').charAt(0)}
+        </span>
+      </div>
+      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-sidebar shadow-sm" />
+    </div>
+
+    <div className="flex-1 min-w-0 ml-3">
+      <p className="text-[13px] font-semibold text-white truncate leading-tight">
+        {sessionStorage.getItem('mName') || 'Admin'}
+      </p>
+      <span className="inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide mt-0.5 bg-indigo-500/20 text-indigo-400">
+        Admin
+      </span>
+    </div>
+
+    <Settings className="h-3.5 w-3.5 text-slate-500 group-hover:text-slate-300 transition-colors flex-shrink-0 ml-1" />
+  </Link>
+
+  {/* Divider */}
+  <div className="h-px bg-white/6 mx-2 my-0.5" />
+
+  {/* Back to Website */}
+  <Link
+    to="/"
+    className="group flex items-center w-full rounded-xl px-2 py-2 transition-all duration-200 hover:bg-white/8 active:scale-[0.98]"
+  >
+    <div className="flex-shrink-0 h-9 w-9 rounded-lg bg-slate-500/10 group-hover:bg-slate-500/20 flex items-center justify-center transition-all duration-200">
+      <Globe className="h-4 w-4 text-slate-400 group-hover:text-slate-300 transition-colors" />
+    </div>
+    <div className="flex-1 min-w-0 ml-3 text-left">
+      <p className="text-[13px] font-semibold text-slate-200 group-hover:text-white transition-colors leading-tight">Back to Website</p>
+      <p className="text-[11px] text-slate-500 group-hover:text-slate-400 transition-colors mt-0.5">Exit admin portal</p>
+    </div>
+  </Link>
+
+  {/* Logout */}
+  <button
+    onClick={Logout}
+    className="group flex items-center w-full rounded-xl px-2 py-2 transition-all duration-200 hover:bg-red-500/8 active:scale-[0.98]"
+  >
+    <div className="flex-shrink-0 h-9 w-9 rounded-lg bg-red-500/10 group-hover:bg-red-500/20 flex items-center justify-center transition-all duration-200">
+      <LogOut className="h-4 w-4 text-red-500 group-hover:text-red-400 transition-colors" />
+    </div>
+    <div className="flex-1 min-w-0 ml-3 text-left">
+      <p className="text-[13px] font-semibold text-slate-200 group-hover:text-white transition-colors leading-tight">Logout</p>
+      <p className="text-[11px] text-slate-500 group-hover:text-slate-400 transition-colors mt-0.5">Sign out of account</p>
+    </div>
+  </button>
+
+</SidebarFooter>
           <SidebarRail />
         </Sidebar>
 
