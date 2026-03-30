@@ -56,6 +56,14 @@ const Profile = () => {
     streak: 0,
     completed: 0,
   });
+
+  const countries = [
+  { name: "India", code: "+91", length: 10 },
+  { name: "USA", code: "+1", length: 10 },
+  { name: "UK", code: "+44", length: 10 },
+  { name: "UAE", code: "+971", length: 9 },
+];
+
   const [notifications, setNotifications] = useState({
     mail: true,
     payments: true,
@@ -105,6 +113,7 @@ const Profile = () => {
   const [cost, setCost] = useState('');
   const [plan, setPlan] = useState('');
   const [jsonData, setJsonData] = useState({});
+  const [selectedCountry, setSelectedCountry] = useState(countries[0]);
   const [socialLinks, setSocialLinks] = useState({
     linkedin: "",
     twitter: "",
@@ -318,15 +327,28 @@ const Profile = () => {
     async function fetchProfile() {
       const uid = sessionStorage.getItem('uid');
       if (!uid) return;
+      
 
       try {
         const response = await axios.get(`${serverURL}/api/getuser/${uid}`);
         if (response.data.success) {
           const user = response.data.user;
+
+          const fullPhone = user.phone || "";
+
+// find matching country
+const matched = countries.find(c => fullPhone.startsWith(c.code));
+
+let phoneNumber = fullPhone;
+
+if (matched) {
+  setSelectedCountry(matched);
+  phoneNumber = fullPhone.replace(matched.code, "");
+}
           setFormData({
             mName: user.mName || "",
             email: user.email || "",
-            phone: user.phone || "",
+          phone: phoneNumber,
             dob: user.dob ? new Date(user.dob).toISOString().split('T')[0] : "",
             password: "",
             userType: user.userType || "",
@@ -371,66 +393,135 @@ const Profile = () => {
     }
     fetchProfile();
   }, []);
+const validateForm = () => {
 
-  const handleSubmit = async () => {
-    if (!formData.mName || !formData.email) {
-      toast({ title: "Couldn't update profile", description: "Please fill in all required fields." });
-      return;
-    }
+  // ✅ Name
+  if (!formData.mName.trim()) {
+    toast({ title: "Name required", description: "Enter your name" });
+    return false;
+  }
 
-    setProcessing(true);
-    const uid = sessionStorage.getItem("uid");
-    const postURL = serverURL + "/api/profile";
+  // ✅ Email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(formData.email)) {
+    toast({ title: "Invalid email", description: "Enter valid email" });
+    return false;
+  }
 
-    try {
-      const response = await axios.post(postURL, {
-        uid,
-        mName: formData.mName,
-        email: formData.email,
-        password: formData.password,
-        phone: formData.phone,
-        dob: formData.dob || null,
-        gender: formData.gender,
-        country: formData.country,
-        state: formData.state,
-        city: formData.city,
-        pin: formData.pin,
-        address: formData.address,
-        userType: formData.userType,
-        profession: formData.userType === "individual" ? formData.profession : "",
-        experienceLevel: formData.userType === "individual" ? formData.experienceLevel : "beginner",
-        organizationName: formData.userType === "organization" ? formData.organizationName : "",
-        bio: formData.bio,
-        linkedin: socialLinks.linkedin,
-        twitter: socialLinks.twitter,
-        website: socialLinks.website,
-        github: socialLinks.github,
+  // ✅ Phone validation
+const phoneRegex = new RegExp(`^\\d{${selectedCountry.length}}$`);
+
+if (!phoneRegex.test(formData.phone)) {
+  toast({
+    title: "Invalid Phone",
+    description: `Enter exactly ${selectedCountry.length} digits`
+  });
+  return false;
+}
+
+  // ✅ DOB
+  if (!formData.dob) {
+    toast({ title: "DOB required", description: "Select your date of birth" });
+    return false;
+  }
+
+  // ✅ Gender
+  if (!formData.gender) {
+    toast({ title: "Gender required", description: "Select gender" });
+    return false;
+  }
+
+  // ✅ Password (only if entered)
+  if (formData.password && formData.password.length < 6) {
+    toast({ title: "Weak password", description: "Min 6 characters" });
+    return false;
+  }
+
+  // ✅ Country
+  if (!formData.country.trim()) {
+    toast({ title: "Country required", description: "Enter country" });
+    return false;
+  }
+
+  // ✅ State
+  if (!formData.state.trim()) {
+    toast({ title: "State required", description: "Enter state" });
+    return false;
+  }
+
+  // ✅ City
+  if (!formData.city.trim()) {
+    toast({ title: "City required", description: "Enter city" });
+    return false;
+  }
+
+  // ✅ PIN
+  const pinRegex = /^\d{6}$/;
+  if (!pinRegex.test(formData.pin)) {
+    toast({ title: "Invalid PIN", description: "6 digits only" });
+    return false;
+  }
+
+  // ✅ Address
+  if (!formData.address.trim()) {
+    toast({ title: "Address required", description: "Enter address" });
+    return false;
+  }
+
+  return true;
+};
+
+const handleSubmit = async (e) => {
+  e.preventDefault(); // stop page reload
+
+  // run validation
+  if (!validateForm()) return;
+
+  setProcessing(true);
+  const uid = sessionStorage.getItem("uid");
+  const postURL = serverURL + "/api/profile";
+
+  try {
+    const response = await axios.post(postURL, {
+      uid,
+      mName: formData.mName,
+      email: formData.email,
+      password: formData.password,
+     phone: selectedCountry.code + formData.phone,
+      dob: formData.dob || null,
+      gender: formData.gender,
+      country: formData.country,
+      state: formData.state,
+      city: formData.city,
+      pin: formData.pin,
+      address: formData.address,
+      userType: formData.userType,
+      profession: formData.userType === "individual" ? formData.profession : "",
+      experienceLevel: formData.userType === "individual" ? formData.experienceLevel : "beginner",
+      organizationName: formData.userType === "organization" ? formData.organizationName : "",
+      bio: formData.bio,
+      linkedin: socialLinks.linkedin,
+      twitter: socialLinks.twitter,
+      website: socialLinks.website,
+      github: socialLinks.github,
+    });
+
+    if (response.data.success) {
+      toast({
+        title: "Profile updated",
+        description: "Your profile updated successfully"
       });
 
-      if (response.data.success) {
-        toast({ title: "Profile updated", description: "Your profile information has been updated successfully." });
-        sessionStorage.setItem("mName", formData.mName);
-        sessionStorage.setItem("email", formData.email);
-        sessionStorage.setItem("userType", formData.userType);
-        sessionStorage.setItem("dob", formData.dob);
-        sessionStorage.setItem("gender", formData.gender);
-        sessionStorage.setItem("phone", formData.phone);
-        sessionStorage.setItem('country', formData.country);
-        sessionStorage.setItem('state', formData.state);
-        sessionStorage.setItem('city', formData.city);
-        sessionStorage.setItem('pin', formData.pin);
-        sessionStorage.setItem('address', formData.address);
-        sessionStorage.setItem("profession", formData.profession);
-        sessionStorage.setItem("organizationName", formData.organizationName);
-        sessionStorage.setItem("bio", formData.bio);
-        setIsEditing(false);
-      }
-    } catch (error) {
-      toast({ title: "Error", description: "Internal Server Error" });
-    } finally {
-      setProcessing(false);
+      setIsEditing(false);
     }
-  };
+
+  } catch (error) {
+    toast({ title: "Error", description: "Internal Server Error" });
+  } finally {
+    setProcessing(false);
+  }
+};
+
 
   async function getDetails() {
     if (sessionStorage.getItem('type') !== 'free') {
@@ -711,19 +802,48 @@ const Profile = () => {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            <Phone className="h-4 w-4" />
-                            Phone Number
-                          </Label>
-                          <Input
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            disabled={!isEditing}
-                            placeholder="+91 XXXXX XXXXX"
-                            className="transition-all focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
+  <Label className="flex items-center gap-2">
+    <Phone className="h-4 w-4" />
+    Phone Number
+  </Label>
+
+  <div className="flex gap-2">
+    
+    {/* Country */}
+    <select
+      value={selectedCountry.code}
+      onChange={(e) => {
+        const country = countries.find(c => c.code === e.target.value);
+        setSelectedCountry(country);
+        setFormData(prev => ({ ...prev, phone: "" }));
+      }}
+      disabled={!isEditing}
+      className="h-10 rounded-md border px-3 text-sm"
+    >
+      {countries.map((c) => (
+        <option key={c.code} value={c.code}>
+          {c.name} ({c.code})
+        </option>
+      ))}
+    </select>
+
+    {/* Phone */}
+    <Input
+      value={formData.phone}
+      onChange={(e) => {
+        const value = e.target.value
+          .replace(/\D/g, "")
+          .slice(0, selectedCountry.length);
+
+        setFormData(prev => ({ ...prev, phone: value }));
+      }}
+      placeholder={`Enter ${selectedCountry.length} digits`}
+      disabled={!isEditing}
+      className="flex-1"
+    />
+
+  </div>
+</div>
                         <div className="space-y-2">
                           <Label>Date of Birth</Label>
                           <Input
@@ -772,7 +892,10 @@ const Profile = () => {
                         <Textarea
                           name="bio"
                           value={formData.bio}
-                          onChange={handleChange}
+                     onChange={(e) => {
+  const value = e.target.value.slice(0, 200);
+  setFormData(prev => ({ ...prev, bio: value }));
+}}
                           disabled={!isEditing}
                           placeholder="Tell us a little about yourself..."
                           rows={3}
@@ -822,7 +945,10 @@ const Profile = () => {
                             <Input
                               name="pin"
                               value={formData.pin}
-                              onChange={handleChange}
+                            onChange={(e) => {
+  const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+  setFormData(prev => ({ ...prev, pin: value }));
+}}
                               disabled={!isEditing}
                               placeholder="e.g. 600001"
                               className="transition-all focus:ring-2 focus:ring-blue-500"
@@ -1137,7 +1263,10 @@ const Profile = () => {
                   )}
                   {isEditing && (
                     <div className="flex gap-3 justify-end pt-4">
-                      <Button onClick={handleSubmit} className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600">
+                <Button 
+type="submit"
+  className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600"
+>
                         <Save className="h-4 w-4" />
                         Save Social Links
                       </Button>
