@@ -118,6 +118,7 @@ import StaffSupport from './pages/staff/StaffSupport';
 import InterviewPreparation from "./pages/InterviewPreparation";
 import TodoCenter from "./pages/TodoCenter";
 import LandingPage from "./pages/LandingPage";
+import OrgLandingPage from "./pages/OrgLandingPage";
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 
@@ -260,7 +261,9 @@ const App = () => (
                   </Route>
                   <Route path="/verify-certificate" element={<CertificateVerification />} />
 
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  {/* Org Landing Page - Catch-all for slugs */}
+                  <Route path="/:slug" element={<OrgLandingPage />} />
+
                   <Route path="*" element={<NotFound />} />
 
 

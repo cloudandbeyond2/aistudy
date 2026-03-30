@@ -499,6 +499,7 @@ const DashboardLayoutContent = () => {
                   <>
                     <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     <SectionHeader title="Organization" icon={Building2} isExpanded={isExpanded} />
+                    <MenuItem icon={Sparkles} label="Landing Page" to="/dashboard/org?tab=landing" isActive={location.search === '?tab=landing'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Building2} label="Departments" to="/dashboard/org?tab=departments" isActive={location.search === '?tab=departments'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Users} label="Students" to="/dashboard/org?tab=students" isActive={location.search === '?tab=students'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={BookOpen} label="Courses" to="/dashboard/org?tab=courses" isActive={location.search === '?tab=courses'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
