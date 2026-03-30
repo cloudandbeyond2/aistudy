@@ -543,9 +543,14 @@ Requirements:
   useEffect(() => {
     const fetchCourseData = async () => {
       if (!courseData && activeCourseId) {
+        const requesterId = sessionStorage.getItem('uid') || '';
+        if (!requesterId) {
+          window.location.href = `${websiteURL}/login`;
+          return;
+        }
+
         setIsLoading(true);
         try {
-          const requesterId = sessionStorage.getItem('uid') || '';
           const requesterRole = sessionStorage.getItem('role') || '';
           const organizationId = sessionStorage.getItem('orgId') || '';
 
@@ -612,6 +617,10 @@ Requirements:
           }
         } catch (error) {
           console.error("Failed to fetch course data:", error);
+          if (axios.isAxiosError(error) && [401, 403].includes(error.response?.status || 0)) {
+            window.location.href = `${websiteURL}/login`;
+            return;
+          }
         } finally {
           setIsLoading(false);
         }
