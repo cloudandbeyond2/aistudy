@@ -45,9 +45,9 @@ export const paypalPlanIdTwo = "P-8T744865W27080359MWOCE5QRR";
 
 //RAZORPAY
 // export const razorpayKeyId = "rzp_test_SCLaCj6sIAD331";
-export const razorpayKeyId = "rzp_test_SNXqWQ4BRcnHhA";
-export const razorpayPlanIdOne = "plan_SJqvapiTytNotQ";
-export const razorpayPlanIdTwo = "plan_SJsENuOG8v3573";
+export const razorpayKeyId = "rzp_live_SXJVKRqxXYeJZA";
+export const razorpayPlanIdOne = "plan_SXLRJtS5ucd2bJ";
+export const razorpayPlanIdTwo = "plan_SXLReHoR2BwPzr";
 
 
 // export const razorpayPlanIdOne = "plan_SDArK5ibfyHQlJ";

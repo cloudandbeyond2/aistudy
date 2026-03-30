@@ -2619,7 +2619,7 @@ const ProfilePricing = () => {
           <Button 
             variant="ghost" 
             onClick={() => setShowComparison(!showComparison)}
-            className="gap-2 text-muted-foreground hover:text-primary group"
+            className="group gap-2 text-muted-foreground transition-colors hover:text-white"
           >
             <TrendingUp className="h-4 w-4 group-hover:rotate-12 transition-transform" />
             {showComparison ? "Hide" : "Compare all features"}

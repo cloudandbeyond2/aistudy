@@ -402,7 +402,7 @@ export default function StaffSupport() {
                   <div className="p-2 bg-white/20 rounded-lg h-fit"><Mail size={18} /></div>
                   <div>
                     <p className="text-[10px] uppercase font-bold text-blue-100 tracking-wider">Email Support</p>
-                    <p className="text-sm font-semibold truncate">support.aistudy@gmail.com</p>
+                    <p className="text-sm font-semibold truncate">support.colossusiq@gmail.com</p>
                   </div>
                 </div>
                 <div className="flex gap-4">

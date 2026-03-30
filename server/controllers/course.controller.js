@@ -384,6 +384,19 @@ export const getShareableCourse = async (req, res) => {
     const { id, requesterId } = req.query;
     if (!id) return res.status(400).json({ success: false, message: 'ID is required' });
 
+    const normalizedRequesterId = String(requesterId || '');
+    if (!normalizedRequesterId || !mongoose.Types.ObjectId.isValid(normalizedRequesterId)) {
+      return res.status(401).json({ success: false, message: 'Login required' });
+    }
+
+    const requester = await User.findById(normalizedRequesterId)
+      .select('_id role organization department studentDetails.department')
+      .lean();
+
+    if (!requester) {
+      return res.status(401).json({ success: false, message: 'Login required' });
+    }
+
     // Combine Course and OrgCourse handling
     let course = await Course.findById(id).lean();
     if (!course) {
@@ -391,6 +404,39 @@ export const getShareableCourse = async (req, res) => {
     }
 
     if (course) {
+      const courseOrganizationId = String(course.organizationId || '');
+      const requesterOrganizationId = String(requester.organization || '');
+      const sameOrg = Boolean(courseOrganizationId) && requesterOrganizationId === courseOrganizationId;
+      const isStaff = sameOrg && ['org_admin', 'dept_admin'].includes(requester.role);
+      const isCreator = sameOrg && String(requester._id) === String(course.createdBy || course.user || '');
+      const assignedToValues = Array.isArray(course.assignedTo) ? course.assignedTo.map((value) => String(value)) : [];
+      const rawDepartmentValues = [
+        requester.department,
+        requester.studentDetails?.department
+      ].filter(Boolean).map((value) => String(value));
+      const courseDepartment = String(course.department || '').trim();
+      const departmentAssigned = Boolean(courseDepartment) && courseDepartment.toLowerCase() !== 'all';
+      const matchesDepartment = departmentAssigned && rawDepartmentValues.includes(courseDepartment);
+      const isAssignedDirectly = assignedToValues.includes(String(requester._id));
+      const isOpenOrgCourse = assignedToValues.length === 0 && !departmentAssigned;
+
+      if (!courseOrganizationId) {
+        const isOwner = String(course.user || '') === String(requester._id);
+        const isAssigned = assignedToValues.includes(String(requester._id));
+
+        if (!isOwner && !isAssigned) {
+          return res.status(403).json({
+            success: false,
+            message: 'You are not allowed to access this course'
+          });
+        }
+      } else if (!sameOrg) {
+        return res.status(403).json({
+          success: false,
+          message: 'You are not allowed to access this course'
+        });
+      }
+
       const isLegacyOrPublished = (() => {
         if (!course.organizationId) return true; // Non-org courses are always "published"
         if (!course.approvalStatus) return course.isPublished !== false;
@@ -398,24 +444,17 @@ export const getShareableCourse = async (req, res) => {
       })();
 
       if (!isLegacyOrPublished) {
-        let requester = null;
-        const normalizedRequesterId = String(requesterId || '');
-        if (normalizedRequesterId && mongoose.Types.ObjectId.isValid(normalizedRequesterId)) {
-          requester = await User.findById(normalizedRequesterId).select('_id role organization');
-        }
-
-        const sameOrg =
-          requester &&
-          String(requester.organization || '') === String(course.organizationId || '');
-        const isStaff = sameOrg && ['org_admin', 'dept_admin'].includes(requester.role);
-        const isCreator = sameOrg && String(requester._id) === String(course.createdBy || course.user || '');
-
         if (!isStaff && !isCreator) {
           return res.status(403).json({
             success: false,
             message: 'This course is not published yet'
           });
         }
+      } else if (courseOrganizationId && !isStaff && !isCreator && !isAssignedDirectly && !matchesDepartment && !isOpenOrgCourse) {
+        return res.status(403).json({
+          success: false,
+          message: 'You are not allowed to access this course'
+        });
       }
 
       // Transform OrgCourse to match CoursePage expectations
