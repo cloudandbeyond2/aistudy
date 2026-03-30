@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Search, Edit, Trash, Ban, UserCheck } from 'lucide-react';
+import { Search, Edit, Trash, Ban, UserCheck, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -94,6 +94,33 @@ const AdminUsers = () => {
     const start = (currentPage - 1) * itemsPerPage;
     return filteredData.slice(start, start + itemsPerPage);
   }, [filteredData, currentPage]);
+
+  const visiblePages = useMemo(() => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    const pages: Array<number | 'ellipsis-left' | 'ellipsis-right'> = [1];
+
+    if (currentPage > 3) {
+      pages.push('ellipsis-left');
+    }
+
+    const startPage = Math.max(2, currentPage - 1);
+    const endPage = Math.min(totalPages - 1, currentPage + 1);
+
+    for (let page = startPage; page <= endPage; page += 1) {
+      pages.push(page);
+    }
+
+    if (currentPage < totalPages - 2) {
+      pages.push('ellipsis-right');
+    }
+
+    pages.push(totalPages);
+
+    return pages;
+  }, [currentPage, totalPages]);
 
   // ---------------- EDIT / DELETE ----------------
   const handleEditClick = (user) => {
@@ -306,25 +333,59 @@ const AdminUsers = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-end gap-2 mt-6">
-              <Button size="sm" variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
-                Previous
-              </Button>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                Showing {filteredData.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}
+                {' '}to{' '}
+                {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length}
+              </p>
 
-              {[...Array(totalPages)].map((_, i) => (
+              <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
                 <Button
-                  key={i}
                   size="sm"
-                  variant={currentPage === i + 1 ? 'default' : 'outline'}
-                  onClick={() => setCurrentPage(i + 1)}
+                  variant="outline"
+                  className="gap-1"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => p - 1)}
                 >
-                  {i + 1}
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline">Previous</span>
                 </Button>
-              ))}
 
-              <Button size="sm" variant="outline" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
-                Next
-              </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  {visiblePages.map((page, index) =>
+                    typeof page === 'number' ? (
+                      <Button
+                        key={page}
+                        size="sm"
+                        className="min-w-9 px-3"
+                        variant={currentPage === page ? 'default' : 'outline'}
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </Button>
+                    ) : (
+                      <span
+                        key={`${page}-${index}`}
+                        className="flex h-9 w-9 items-center justify-center text-muted-foreground"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </span>
+                    )
+                  )}
+                </div>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => p + 1)}
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
