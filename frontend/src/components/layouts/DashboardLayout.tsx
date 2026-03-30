@@ -64,7 +64,22 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { DownloadIcon } from '@radix-ui/react-icons';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import NotificationBell from '../NotificationBell';
+
+const combineDateAndTime = (dateValue?: string, timeValue?: string) => {
+  if (!dateValue || !timeValue) return null;
+
+  const baseDate = new Date(dateValue);
+  if (Number.isNaN(baseDate.getTime())) return null;
+
+  const [hours, minutes] = timeValue.split(':').map(Number);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+
+  const parsed = new Date(baseDate);
+  parsed.setHours(hours, minutes, 0, 0);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
 
 // Menu Item Component - Text hides when collapsed
 const MenuItem = ({ icon: Icon, label, to, isActive, badge, onClick, className, isExpanded, onMobileClick }: any) => (
@@ -152,6 +167,7 @@ const DashboardLayoutContent = () => {
 
   const [installPrompt, setInstallPrompt] = useState(null);
   const { toast } = useToast();
+  const uid = sessionStorage.getItem('uid') || '';
   
   // Helper to check active route
   const isActive = (path: string) => location.pathname === path;
@@ -225,6 +241,129 @@ const DashboardLayoutContent = () => {
       setInstallPrompt(e)
     });
   }, []);
+
+  useEffect(() => {
+    if (!uid || typeof window === 'undefined') return undefined;
+
+    let cancelled = false;
+    let refreshTimer: number | undefined;
+    let reminderTimers: number[] = [];
+
+    const clearReminderTimers = () => {
+      reminderTimers.forEach((timer) => window.clearTimeout(timer));
+      reminderTimers = [];
+    };
+
+    const showReminder = (event: any) => {
+      if (!event?._id) return;
+
+      const reminderKey = `schedule-reminder:${uid}:${event._id}:${event.date}:${event.startTime}`;
+      if (sessionStorage.getItem(reminderKey)) return;
+
+      sessionStorage.setItem(reminderKey, 'shown');
+
+      void Swal.fire({
+        icon: 'info',
+        title: 'Upcoming event',
+        html: `
+          <div style="text-align:left;color:#0f172a;">
+            <div style="border:1px solid rgba(148,163,184,0.2);border-radius:20px;padding:18px 18px 16px;background:linear-gradient(180deg,#f8fbff 0%,#eef6ff 100%);box-shadow:0 18px 45px -28px rgba(37,99,235,0.35);">
+              <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:rgba(37,99,235,0.1);color:#1d4ed8;font-size:12px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">
+                Calendar Reminder
+              </div>
+              <h3 style="margin:14px 0 6px;font-size:22px;line-height:1.2;font-weight:800;color:#020617;">${event.name}</h3>
+              <p style="margin:0 0 16px;color:#475569;font-size:14px;line-height:1.6;">This event starts in 5 minutes. Here is your quick agenda snapshot.</p>
+              <div style="display:grid;gap:10px;">
+                <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:14px;background:white;border:1px solid rgba(226,232,240,0.95);">
+                  <span style="color:#64748b;font-size:13px;font-weight:600;">Time</span>
+                  <span style="color:#0f172a;font-size:13px;font-weight:700;">${event.startTime} - ${event.endTime}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:14px;background:white;border:1px solid rgba(226,232,240,0.95);">
+                  <span style="color:#64748b;font-size:13px;font-weight:600;">Type</span>
+                  <span style="color:#0f172a;font-size:13px;font-weight:700;">${event.type}</span>
+                </div>
+                ${event.room ? `
+                  <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:14px;background:white;border:1px solid rgba(226,232,240,0.95);">
+                    <span style="color:#64748b;font-size:13px;font-weight:600;">Room</span>
+                    <span style="color:#0f172a;font-size:13px;font-weight:700;">${event.room}</span>
+                  </div>
+                ` : ''}
+                ${event.location ? `
+                  <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:14px;background:white;border:1px solid rgba(226,232,240,0.95);">
+                    <span style="color:#64748b;font-size:13px;font-weight:600;">Location</span>
+                    <span style="color:#0f172a;font-size:13px;font-weight:700;">${event.location}</span>
+                  </div>
+                ` : ''}
+                ${event.description ? `
+                  <div style="padding:12px 14px;border-radius:14px;background:rgba(255,255,255,0.75);border:1px solid rgba(226,232,240,0.95);">
+                    <div style="margin-bottom:6px;color:#64748b;font-size:13px;font-weight:600;">Notes</div>
+                    <div style="color:#334155;font-size:13px;line-height:1.6;">${event.description}</div>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `,
+        confirmButtonText: 'Got it',
+        buttonsStyling: false,
+        customClass: {
+          popup: 'w-[min(92vw,32rem)] rounded-[28px] border border-slate-200/80 bg-white p-3 shadow-[0_28px_90px_-40px_rgba(15,23,42,0.45)]',
+          title: 'px-4 pt-4 text-left text-2xl font-semibold tracking-tight text-slate-950',
+          htmlContainer: 'px-4 pb-2',
+          confirmButton: 'mt-2 inline-flex h-11 items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:from-blue-600 hover:to-cyan-500 focus:outline-none',
+          icon: 'border-0 text-cyan-500',
+        },
+      });
+    };
+
+    const syncScheduleReminders = async () => {
+      try {
+        const res = await axios.get(`${serverURL}/api/schedule`, {
+          params: { ownerId: uid || undefined },
+        });
+
+        if (cancelled) return;
+
+        const events = Array.isArray(res.data?.data) ? res.data.data : [];
+        clearReminderTimers();
+
+        const now = Date.now();
+
+        events.forEach((event: any) => {
+          if (!event?._id || event.status === 'done') return;
+
+          const eventStart = combineDateAndTime(event.date, event.startTime);
+          if (!eventStart) return;
+
+          const eventEnd = combineDateAndTime(event.date, event.endTime || event.startTime)?.getTime() ?? eventStart.getTime();
+          if (eventEnd <= now) return;
+
+          const reminderAt = eventStart.getTime() - 5 * 60 * 1000;
+          const delay = reminderAt - now;
+
+          if (delay <= 0) {
+            if (eventStart.getTime() > now) {
+              showReminder(event);
+            }
+            return;
+          }
+
+          reminderTimers.push(window.setTimeout(() => showReminder(event), delay));
+        });
+      } catch (error) {
+        console.error('schedule reminder sync error', error);
+      }
+    };
+
+    void syncScheduleReminders();
+    refreshTimer = window.setInterval(syncScheduleReminders, 60 * 1000);
+
+    return () => {
+      cancelled = true;
+      clearReminderTimers();
+      if (refreshTimer) window.clearInterval(refreshTimer);
+    };
+  }, [uid, location.pathname]);
 
   const handleInstallClick = () => {
     if (!installPrompt) return

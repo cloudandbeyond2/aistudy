@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { addDays, format, isSameDay, startOfWeek } from 'date-fns';
 import { type DayContentProps } from 'react-day-picker';
-import Swal from 'sweetalert2';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -80,20 +79,6 @@ const defaultVisibility = () =>
   sessionStorage.getItem('role') === 'student' || sessionStorage.getItem('role') === 'dept_admin' || sessionStorage.getItem('isOrganization') !== 'true'
     ? 'personal'
     : 'organization';
-const combineDateAndTime = (dateValue?: string, timeValue?: string) => {
-  if (!dateValue || !timeValue) return null;
-
-  const baseDate = new Date(dateValue);
-  if (Number.isNaN(baseDate.getTime())) return null;
-
-  const [hours, minutes] = timeValue.split(':').map(Number);
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
-
-  const parsed = new Date(baseDate);
-  parsed.setHours(hours, minutes, 0, 0);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-const getEventDateTime = (item: ScheduleItem) => combineDateAndTime(item.date, item.startTime);
 const resolveDate = (item: ScheduleItem, baseDate: Date) => {
   if (item.date) {
     const parsed = new Date(item.date);
@@ -183,103 +168,6 @@ export default function CalendarScheduler() {
   useEffect(() => {
     fetchSchedules();
   }, [uid]);
-
-  useEffect(() => {
-    if (!uid || typeof window === 'undefined') return undefined;
-
-    const timers: number[] = [];
-    const reminderPrefix = `schedule-reminder:${uid}:`;
-    const now = Date.now();
-
-    const showReminder = (event: ScheduleItem) => {
-      if (!event._id) return;
-
-      const reminderKey = `${reminderPrefix}${event._id}:${event.date}:${event.startTime}`;
-      if (sessionStorage.getItem(reminderKey)) return;
-
-      sessionStorage.setItem(reminderKey, 'shown');
-
-      void Swal.fire({
-        icon: 'info',
-        title: 'Upcoming event',
-        html: `
-          <div style="text-align:left;color:#0f172a;">
-            <div style="border:1px solid rgba(148,163,184,0.2);border-radius:20px;padding:18px 18px 16px;background:linear-gradient(180deg,#f8fbff 0%,#eef6ff 100%);box-shadow:0 18px 45px -28px rgba(37,99,235,0.35);">
-              <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:rgba(37,99,235,0.1);color:#1d4ed8;font-size:12px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">
-                Calendar Reminder
-              </div>
-              <h3 style="margin:14px 0 6px;font-size:22px;line-height:1.2;font-weight:800;color:#020617;">${event.name}</h3>
-              <p style="margin:0 0 16px;color:#475569;font-size:14px;line-height:1.6;">This event starts in 5 minutes. Here is your quick agenda snapshot.</p>
-
-              <div style="display:grid;gap:10px;">
-                <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:14px;background:white;border:1px solid rgba(226,232,240,0.95);">
-                  <span style="color:#64748b;font-size:13px;font-weight:600;">Time</span>
-                  <span style="color:#0f172a;font-size:13px;font-weight:700;">${event.startTime} - ${event.endTime}</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:14px;background:white;border:1px solid rgba(226,232,240,0.95);">
-                  <span style="color:#64748b;font-size:13px;font-weight:600;">Type</span>
-                  <span style="color:#0f172a;font-size:13px;font-weight:700;">${event.type}</span>
-                </div>
-                ${event.room ? `
-                  <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:14px;background:white;border:1px solid rgba(226,232,240,0.95);">
-                    <span style="color:#64748b;font-size:13px;font-weight:600;">Room</span>
-                    <span style="color:#0f172a;font-size:13px;font-weight:700;">${event.room}</span>
-                  </div>
-                ` : ''}
-                ${event.location ? `
-                  <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:14px;background:white;border:1px solid rgba(226,232,240,0.95);">
-                    <span style="color:#64748b;font-size:13px;font-weight:600;">Location</span>
-                    <span style="color:#0f172a;font-size:13px;font-weight:700;">${event.location}</span>
-                  </div>
-                ` : ''}
-                ${event.description ? `
-                  <div style="padding:12px 14px;border-radius:14px;background:rgba(255,255,255,0.75);border:1px solid rgba(226,232,240,0.95);">
-                    <div style="margin-bottom:6px;color:#64748b;font-size:13px;font-weight:600;">Notes</div>
-                    <div style="color:#334155;font-size:13px;line-height:1.6;">${event.description}</div>
-                  </div>
-                ` : ''}
-              </div>
-            </div>
-          </div>
-        `,
-        confirmButtonText: 'Got it',
-        buttonsStyling: false,
-        customClass: {
-          popup: 'w-[min(92vw,32rem)] rounded-[28px] border border-slate-200/80 bg-white p-3 shadow-[0_28px_90px_-40px_rgba(15,23,42,0.45)]',
-          title: 'px-4 pt-4 text-left text-2xl font-semibold tracking-tight text-slate-950',
-          htmlContainer: 'px-4 pb-2',
-          confirmButton: 'mt-2 inline-flex h-11 items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:from-blue-600 hover:to-cyan-500 focus:outline-none',
-          icon: 'border-0 text-cyan-500',
-        },
-      });
-    };
-
-    events.forEach((event) => {
-      if (!event._id || event.status === 'done') return;
-
-      const eventDateTime = getEventDateTime(event);
-      if (!eventDateTime) return;
-
-      const reminderAt = eventDateTime.getTime() - 5 * 60 * 1000;
-      const delay = reminderAt - now;
-      const eventEnd = combineDateAndTime(event.date, event.endTime || event.startTime)?.getTime() ?? eventDateTime.getTime();
-
-      if (eventEnd <= now) return;
-
-      if (delay <= 0) {
-        if (eventDateTime.getTime() > now) {
-          showReminder(event);
-        }
-        return;
-      }
-
-      timers.push(window.setTimeout(() => showReminder(event), delay));
-    });
-
-    return () => {
-      timers.forEach((timer) => window.clearTimeout(timer));
-    };
-  }, [events, uid]);
 
   useEffect(() => {
     setForm((prev) => ({ ...prev, date: dateInput(selectedDate), day: dayName(selectedDate) }));
