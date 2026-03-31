@@ -11,6 +11,50 @@ import Notification from '../models/Notification.js';
 import StudentProgress from '../models/StudentProgress.js';
 import { getPlanLimits, isPlanActive } from '../config/planLimits.js';
 
+const transformOrgCourseForDashboard = (course) => {
+  const plainCourse = course?.toObject ? course.toObject() : course;
+  const topics = Array.isArray(plainCourse?.topics) ? plainCourse.topics : [];
+
+  return {
+    _id: plainCourse._id,
+    user: String(plainCourse.createdBy || ''),
+    organizationId: plainCourse.organizationId || null,
+    content: JSON.stringify({
+      course_meta: {
+        ...(plainCourse.courseMeta || {}),
+        organizationManaged: true
+      },
+      course_title: plainCourse.title,
+      course_details: plainCourse.description || '',
+      course_topics: topics.map((topic, topicIndex) => ({
+        title: topic?.title || `Module ${topicIndex + 1}`,
+        subtopics: (Array.isArray(topic?.subtopics) ? topic.subtopics : []).map((subtopic, subtopicIndex) => ({
+          title: subtopic?.title || `Lesson ${subtopicIndex + 1}`,
+          theory: subtopic?.content || '',
+          youtube: subtopic?.videoUrl || '',
+          image: subtopic?.diagram || ''
+        }))
+      })),
+      quizzes: Array.isArray(plainCourse.quizzes) ? plainCourse.quizzes : [],
+      quizSettings: plainCourse.quizSettings || {}
+    }),
+    type: plainCourse.type || 'video & text course',
+    mainTopic: plainCourse.title,
+    photo: plainCourse.courseMeta?.thumbnail || '',
+    date: plainCourse.createdAt || plainCourse.updatedAt || new Date(),
+    end: plainCourse.updatedAt || plainCourse.createdAt || new Date(),
+    completed: false,
+    restricted: false,
+    approvalStatus: plainCourse.approvalStatus || 'draft',
+    isPublished: Boolean(plainCourse.isPublished),
+    assignedTo: Array.isArray(plainCourse.assignedTo) ? plainCourse.assignedTo.map((entry) => String(entry)) : [],
+    createdAt: plainCourse.createdAt,
+    updatedAt: plainCourse.updatedAt,
+    isOrgManaged: true,
+    createdBy: plainCourse.createdBy ? String(plainCourse.createdBy) : ''
+  };
+};
+
 /**
  * CHECK COURSE EXISTS
  */
@@ -345,17 +389,35 @@ export const finishCourse = async (req, res) => {
 export const getUserCourses = async (req, res) => {
   try {
     const { userId, page = 1, limit = 9 } = req.query;
-    const skip = (page - 1) * limit;
+    const normalizedPage = Math.max(parseInt(page, 10) || 1, 1);
+    const normalizedLimit = Math.max(parseInt(limit, 10) || 9, 1);
+    const skip = (normalizedPage - 1) * normalizedLimit;
 
-    const total = await Course.countDocuments({ user: userId });
+    const [requester, personalCourses] = await Promise.all([
+      User.findById(userId).select('_id role organization').lean(),
+      Course.find({ user: userId }).lean()
+    ]);
 
-    const courses = await Course.find({ user: userId })
-      .skip(parseInt(skip))
-      .limit(parseInt(limit))
-      .lean();
+    let orgManagedCourses = [];
+    if (requester?.organization && ['org_admin', 'dept_admin'].includes(requester.role)) {
+      const orgCourses = await OrgCourse.find({
+        organizationId: requester.organization,
+        createdBy: requester._id
+      }).lean();
+      orgManagedCourses = orgCourses.map(transformOrgCourseForDashboard);
+    }
+
+    const mergedCourses = [...personalCourses, ...orgManagedCourses]
+      .sort((a, b) => {
+        const dateA = new Date(a.updatedAt || a.createdAt || a.date || 0).getTime();
+        const dateB = new Date(b.updatedAt || b.createdAt || b.date || 0).getTime();
+        return dateB - dateA;
+      });
+
+    const paginatedCourses = mergedCourses.slice(skip, skip + normalizedLimit);
 
     const coursesWithCert = await Promise.all(
-      courses.map(async (course) => {
+      paginatedCourses.map(async (course) => {
         if (course.completed) {
           const cert = await IssuedCertificate.findOne({
             user: userId,
@@ -369,7 +431,7 @@ export const getUserCourses = async (req, res) => {
       })
     );
 
-    res.json({ courses: coursesWithCert, total });
+    res.json({ courses: coursesWithCert, total: mergedCourses.length });
   } catch (error) {
     console.log('Error', error);
     res.status(500).send('Internal Server Error');

@@ -22,6 +22,58 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const ITEMS_PER_PAGE = 8;
 
+const safeParseCourseContent = (content: string) => {
+  try {
+    return JSON.parse(content);
+  } catch (error) {
+    console.error('Failed to parse course content:', error);
+    return null;
+  }
+};
+
+const getCourseTopicsFromContent = (course: any) => {
+  const jsonData = safeParseCourseContent(course?.content);
+  if (!jsonData) return [];
+  return jsonData?.course_topics || jsonData?.[course?.mainTopic?.toLowerCase()] || [];
+};
+
+const isOrgManagedDraftCourse = (course: any) => {
+  if (course?.isOrgManaged) return true;
+  const jsonData = safeParseCourseContent(course?.content);
+  return Boolean(jsonData?.course_meta?.organizationManaged);
+};
+
+const getDraftGenerationProgress = (course: any) => {
+  const topics = getCourseTopicsFromContent(course);
+  if (!Array.isArray(topics) || topics.length === 0) return 0;
+
+  let totalLessons = 0;
+  let generatedLessons = 0;
+
+  topics.forEach((topic: any) => {
+    const subtopics = Array.isArray(topic?.subtopics) ? topic.subtopics : [];
+    subtopics.forEach((subtopic: any) => {
+      totalLessons += 1;
+      const hasTheory = typeof subtopic?.theory === 'string' && subtopic.theory.trim().length >= 50;
+      const hasMedia = Boolean(subtopic?.youtube || subtopic?.image);
+      if (hasTheory && hasMedia) {
+        generatedLessons += 1;
+      }
+    });
+  });
+
+  if (!totalLessons) return 0;
+  return Math.round((generatedLessons / totalLessons) * 100);
+};
+
+const getCourseWorkflowBadge = (course: any, progress: number) => {
+  if (isOrgManagedDraftCourse(course)) {
+    if (progress >= 100) return 'Ready for Review';
+    return course?.approvalStatus === 'pending' ? 'Pending Review' : 'Draft';
+  }
+  return course?.completed === true ? 'Completed ✓' : 'In Progress';
+};
+
 // Animated gradient background component
 const AnimatedGradient = () => (
   <div className="fixed inset-0 -z-10 overflow-hidden">
@@ -278,7 +330,9 @@ const Dashboard = () => {
 
       coursesData.forEach((course: any, i: number) => {
         const isPassed = quizMap[course._id] || course.completed;
-        newProgressMap[course._id] = isPassed ? 100 : (apiProgressMap[course._id]?.percentage || 0);
+        const persistedProgress = apiProgressMap[course._id]?.percentage || 0;
+        const draftProgress = isOrgManagedDraftCourse(course) ? getDraftGenerationProgress(course) : 0;
+        newProgressMap[course._id] = isPassed ? 100 : Math.max(persistedProgress, draftProgress);
         newModulesMap[course._id] = moduleValues[i];
       });
 
@@ -778,14 +832,18 @@ const Dashboard = () => {
                               Share
                             </DropdownMenuItem>
                           </ShareOnSocial>
-                          <DropdownMenuItem onClick={() => handleDeleteCourse(course._id)} className="text-sm">
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleCompleteCourse(course._id)} className="text-sm">
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Mark Complete
-                          </DropdownMenuItem>
+                          {!isOrgManagedDraftCourse(course) && (
+                            <DropdownMenuItem onClick={() => handleDeleteCourse(course._id)} className="text-sm">
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          )}
+                          {!isOrgManagedDraftCourse(course) && (
+                            <DropdownMenuItem onClick={() => handleCompleteCourse(course._id)} className="text-sm">
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Mark Complete
+                            </DropdownMenuItem>
+                          )}
                           {course.certificateId && (
                             <DropdownMenuItem onClick={() => navigate(`/verify-certificate?id=${course.certificateId}`)} className="text-sm">
                               <Medal className="h-4 w-4 mr-2" />
@@ -810,6 +868,17 @@ const Dashboard = () => {
                       <Badge variant="outline" className="text-xs bg-primary/5">
                         {course.type}
                       </Badge>
+                      {isOrgManagedDraftCourse(course) && (
+                        <Badge className={`text-xs border-0 text-white shadow-lg ${
+                          courseProgress[course._id] >= 100
+                            ? 'bg-gradient-to-r from-blue-500 to-indigo-600'
+                            : course.approvalStatus === 'pending'
+                              ? 'bg-gradient-to-r from-amber-500 to-orange-600'
+                              : 'bg-gradient-to-r from-slate-500 to-slate-700'
+                        }`}>
+                          {getCourseWorkflowBadge(course, courseProgress[course._id] || 0)}
+                        </Badge>
+                      )}
                       {(() => {
                         const qs: any = quizSummaries?.[course._id];
                         if (!qs) return null;
@@ -882,7 +951,13 @@ const Dashboard = () => {
                       className="w-full group-hover:bg-gradient-to-r group-hover:from-primary/10 group-hover:to-indigo-500/10 transition-all duration-300 justify-between"
                     >
                       <span>
-                        {courseProgress[course._id] === 100 ? "Review Course" : "Continue Learning"}
+                        {isOrgManagedDraftCourse(course)
+                          ? courseProgress[course._id] === 100
+                            ? "Review Draft"
+                            : "Continue Building"
+                          : courseProgress[course._id] === 100
+                            ? "Review Course"
+                            : "Continue Learning"}
                       </span>
                       <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </Button>

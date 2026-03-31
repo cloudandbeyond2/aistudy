@@ -746,22 +746,14 @@ const DashboardLayoutContent = () => {
                   <>
                     <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     <SectionHeader title="Organization" icon={Building2} isExpanded={isExpanded} />
-                    {/* <MenuItem 
-                      icon={Building2} 
-                      label="Organization Portal" 
+                    <MenuItem 
+                      icon={LayoutDashboard} 
+                      label="Dashboard" 
                       to="/dashboard/org" 
-                      isActive={isActive('/dashboard/org')}
+                      isActive={isActive('/dashboard/org') && !location.search}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
-                    <MenuItem 
-                      icon={Calendar} 
-                      label="Calendar Scheduler" 
-                      to="/dashboard/calendar" 
-                      isActive={isActive('/dashboard/calendar')}
-                      isExpanded={isExpanded}
-                      onMobileClick={handleMobileMenuClick}
-                    /> */}
                     <MenuItem 
                       icon={Building2} 
                       label="Departments" 
@@ -898,6 +890,16 @@ const DashboardLayoutContent = () => {
                   <>
                     <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     <SectionHeader title="My Work" icon={LayoutDashboard} isExpanded={isExpanded} />
+                    
+                    <MenuItem 
+                      icon={LayoutDashboard} 
+                      label="Dashboard" 
+                      to="/dashboard" 
+                      isActive={isActive('/dashboard/staff')}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
+
                     <MenuItem 
                       icon={LayoutDashboard} 
                       label="Workboard" 
