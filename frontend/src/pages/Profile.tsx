@@ -46,6 +46,12 @@ const PLAN_FEATURES: Record<string, string[]> = {
   yearly: ["All premium features", "24/7 Priority support", "Advanced analytics", "Certification", "Save 20%"],
 };
 
+const normalizePlanType = (value?: string | null): "free" | "monthly" | "yearly" => {
+  const normalized = String(value || '').toLowerCase().trim();
+  if (normalized === 'monthly' || normalized === 'yearly') return normalized;
+  return 'free';
+};
+
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("account");
@@ -98,7 +104,9 @@ const Profile = () => {
 
   const [originalData, setOriginalData] = useState(formData);
   const [plans, setPlans] = useState<any[]>([]);
-  const [activeType, setActiveType] = useState<"free" | "monthly" | "yearly">("free");
+  const [activeType, setActiveType] = useState<"free" | "monthly" | "yearly">(
+    normalizePlanType(sessionStorage.getItem('type'))
+  );
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingPlans, setLoadingPlans] = useState(true);
@@ -228,19 +236,24 @@ const Profile = () => {
   });
 
   useEffect(() => {
-    const email = sessionStorage.getItem("email");
-    if (!email) return;
+    const uid = sessionStorage.getItem("uid");
+    if (!uid) {
+      setLoadingUser(false);
+      return;
+    }
 
-    axios.get(`${serverURL}/api/getusers`)
+    axios.get(`${serverURL}/api/getuser/${uid}`)
       .then((res) => {
-        const user = res.data.find((u) => u.email === email);
+        const user = res.data?.user;
         if (!user) return;
 
+        const nextType = normalizePlanType(user.type);
+        sessionStorage.setItem('type', nextType);
         if (user.subscriptionEnd) {
           const expiryDate = new Date(user.subscriptionEnd);
           const today = new Date();
           if (expiryDate > today) {
-            setActiveType(user.type);
+            setActiveType(nextType);
             setSubscriptionEnd(user.subscriptionEnd);
             setIsExpired(false);
           } else {
@@ -249,7 +262,7 @@ const Profile = () => {
             setIsExpired(true);
           }
         } else {
-          setActiveType("free");
+          setActiveType(nextType);
           setIsExpired(false);
         }
       })
@@ -677,9 +690,11 @@ const handleSubmit = async (e) => {
                       ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
                       : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
                   }`}>
-                    {getPlanIcon()}
+                    {!loadingUser && getPlanIcon()}
                     <span>
-                      {isExpired 
+                      {loadingUser
+                        ? "Loading plan..."
+                        : isExpired 
                         ? "Expired Plan" 
                         : activeType !== "free" 
                         ? `${activeType === "monthly" ? "Monthly" : "Yearly"} Pro` 
