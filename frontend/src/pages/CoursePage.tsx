@@ -1924,6 +1924,7 @@ sendDataVideo(url, cleanedTheory, mTopic, mSubTopic);
           courseId,
           questions: jsonData.quizzes,
           manualQuizExam: true,
+          orgManagedQuiz: Boolean(jsonData?.course_meta?.organizationManaged),
           quizSettings: jsonData.quizSettings || {},
         },
       });
@@ -1991,6 +1992,7 @@ sendDataVideo(url, cleanedTheory, mTopic, mSubTopic);
           topic: mainTopic,
           courseId,
           questions,
+          generatedQuizSession: true,
         },
       });
     } catch (error) {
