@@ -555,9 +555,9 @@ const Index = () => {
             <div className="group relative rounded-[34px] border border-slate-200/80 bg-white/90 p-6 shadow-[0_28px_80px_-55px_rgba(15,23,42,0.35)] transition-all duration-300 hover:border-primary/25 hover:shadow-[0_34px_90px_-50px_rgba(15,23,42,0.35)] md:p-8">
               <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <div className="text-center">
-                <div className="text-xs uppercase tracking-[0.35em] text-muted-foreground">Trusted by teams</div>
+                <div className="text-xs uppercase tracking-[0.35em] text-muted-foreground">Trusted by Teams</div>
                 <h2 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">
-                  Used by schools, universities, companies, and training institutions that need structure and visibility.
+                  Used by Schools, Universities, Companies, and Training Institutions that need structure and visibility.
                 </h2>
               </div>
 
