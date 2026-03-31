@@ -102,6 +102,12 @@ import AdminGlobalNews from "./pages/admin/AdminGlobalNews";
 import AdminKpiReports from "./pages/admin/AdminKpiReports";
 import AdminLimitRequests from "./pages/admin/AdminLimitRequests";
 import AdminQuizRetakeRequests from "./pages/admin/AdminQuizRetakeRequests";
+import OrgMockInterview from "./pages/OrgMockInterview";
+import InterviewTrainingHub from "./pages/InterviewTrainingHub";
+import AiMockRoom from "@/pages/AiMockRoom";
+import MockReport from "./pages/MockReport";
+
+
 
 
 // Staff Pages
@@ -143,7 +149,7 @@ const App = () => (
         <ThemeProvider>
           <BrandingProvider>
             <TooltipProvider>
-              <BrowserRouter>
+              <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <PublicThemeGuard />
                 <Routes>
                   <Route path="/home1" element={<LandingPage />} />
@@ -165,7 +171,13 @@ const App = () => (
                     <Route path="org" element={<OrgDashboard />} />
                     <Route path="org/quiz-retake-requests" element={<AdminQuizRetakeRequests />} />
                     <Route path="org/career" element={<OrgCareerPlacement />} />
+                    <Route path="org/mock-interview" element={<OrgMockInterview />} />
+                    <Route path="interview-training" element={<InterviewTrainingHub />} />
+                    <Route path="ai-mock-room" element={<AiMockRoom />} />
+                    <Route path="mock-report/:applicationId" element={<MockReport />} />
                     <Route path="org/reports" element={<OrgKpiReports />} />
+
+
                     <Route path="org/assignment/:assignmentId/submissions" element={<OrgAssignmentSubmissions />} />
                     <Route path="student" element={<StudentPortal />} />
                     <Route path="student/career" element={<StudentCareer />} />

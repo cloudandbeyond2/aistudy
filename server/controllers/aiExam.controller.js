@@ -130,6 +130,262 @@ const normalizeGeneratedExam = (examData = []) =>
     };
   });
 
+const QUIZ_RESPONSE_SCHEMA = {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      question: { type: 'string' },
+      options: {
+        type: 'array',
+        items: { type: 'string' }
+      },
+      correctAnswer: { type: 'string' }
+    },
+    required: ['question', 'options', 'correctAnswer']
+  }
+};
+
+const stripCodeFences = (text = '') =>
+  String(text || '')
+    .replace(/```json/gi, '')
+    .replace(/```/g, '')
+    .trim();
+
+const extractTopLevelJsonArray = (text = '') => {
+  const source = stripCodeFences(text);
+  const start = source.indexOf('[');
+  if (start < 0) return source;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < source.length; i += 1) {
+    const char = source[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (char === '[') depth += 1;
+    if (char === ']') {
+      depth -= 1;
+      if (depth === 0) {
+        return source.slice(start, i + 1);
+      }
+    }
+  }
+
+  return source.slice(start);
+};
+
+const sanitizeJsonLikeString = (text = '') => {
+  const input = extractTopLevelJsonArray(text);
+  let output = '';
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < input.length; i += 1) {
+    const char = input[i];
+    const next = input[i + 1];
+
+    if (inString) {
+      if (escaped) {
+        output += char;
+        escaped = false;
+        continue;
+      }
+
+      if (char === '\\') {
+        output += char;
+        escaped = true;
+        continue;
+      }
+
+      if (char === '\r') {
+        continue;
+      }
+
+      if (char === '\n') {
+        output += '\\n';
+        continue;
+      }
+
+      if (char === '"') {
+        let j = i + 1;
+        while (j < input.length && /\s/.test(input[j])) j += 1;
+
+        const likelyStringTerminator =
+          j >= input.length ||
+          [',', '}', ']', ':'].includes(input[j]);
+
+        if (likelyStringTerminator) {
+          inString = false;
+          output += char;
+        } else {
+          output += '\\"';
+        }
+        continue;
+      }
+
+      output += char;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      output += char;
+      continue;
+    }
+
+    if ((char === ',' || char === '}') && next && /[\]}]/.test(next)) {
+      output += char;
+      continue;
+    }
+
+    output += char;
+  }
+
+  return output.trim();
+};
+
+const isValidGeneratedQuestion = (item) =>
+  !!item &&
+  typeof item.question === 'string' &&
+  item.question.trim().length > 0 &&
+  Array.isArray(item.options) &&
+  item.options.length >= 2 &&
+  item.options.every((option) => typeof option === 'string' && option.trim().length > 0) &&
+  typeof (item.correctAnswer || item.answer) === 'string' &&
+  String(item.correctAnswer || item.answer).trim().length > 0;
+
+const salvageQuestionsFromPartialArray = (rawText = '') => {
+  const source = sanitizeJsonLikeString(rawText);
+  const start = source.indexOf('[');
+  if (start < 0) return [];
+
+  const salvaged = [];
+  let objectStart = -1;
+  let objectDepth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < source.length; i += 1) {
+    const char = source[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (char === '{') {
+      if (objectDepth === 0) {
+        objectStart = i;
+      }
+      objectDepth += 1;
+      continue;
+    }
+
+    if (char === '}') {
+      if (objectDepth > 0) {
+        objectDepth -= 1;
+        if (objectDepth === 0 && objectStart >= 0) {
+          const candidate = source.slice(objectStart, i + 1);
+          try {
+            const parsed = JSON.parse(candidate);
+            if (isValidGeneratedQuestion(parsed)) {
+              salvaged.push(parsed);
+            }
+          } catch {
+            // Ignore malformed partial objects and keep scanning.
+          }
+          objectStart = -1;
+        }
+      }
+    }
+  }
+
+  return salvaged;
+};
+
+const parseGeneratedExamResponse = (rawText = '') => {
+  const candidates = [
+    stripCodeFences(rawText),
+    extractTopLevelJsonArray(rawText),
+    sanitizeJsonLikeString(rawText)
+  ].filter(Boolean);
+
+  let lastError = null;
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  const salvaged = salvageQuestionsFromPartialArray(rawText);
+  if (salvaged.length > 0) {
+    return salvaged;
+  }
+
+  const preview = String(rawText || '').slice(0, 500);
+  throw new Error(
+    `Invalid quiz JSON returned from AI provider. ${lastError?.message || 'Unknown parse error'}. Preview: ${preview}`
+  );
+};
+
+const buildQuizPrompt = ({
+  mainTopic,
+  subtopicsString,
+  lang = 'English',
+  blockedQuestions = [],
+  questionCount = 20,
+  compact = false
+}) => `Generate ${questionCount} multiple choice questions about ${mainTopic} including these subtopics: ${subtopicsString}. The language should be ${lang || 'English'}.
+CRITICAL: Randomize the correct answer position.
+CRITICAL: Do not repeat or closely paraphrase any previous question from the blocked list.
+CRITICAL: Prefer fresh scenarios, new wording, and different correct-answer phrasing for each retake.
+${compact ? 'CRITICAL: Keep each question and option concise. Avoid long explanations inside options.' : ''}
+
+Blocked previous questions:
+${blockedQuestions.length > 0 ? blockedQuestions.map((item, index) => `${index + 1}. ${item}`).join('\n') : 'None'}
+
+Return ONLY a raw JSON array (no markdown, no code blocks) with this exact format:
+[
+  {
+    "question": "Question text",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correctAnswer": "Option C"
+  }
+]
+IMPORTANT: "correctAnswer" must match exactly one of the strings in "options".`;
+
 export const generateQuizQuestionSet = async ({
   mainTopic,
   subtopicsString,
@@ -141,24 +397,6 @@ export const generateQuizQuestionSet = async ({
     .map((item) => String(item || '').trim())
     .filter(Boolean)
     .slice(0, 30);
-
-  const prompt = `Generate ${questionCount} multiple choice questions about ${mainTopic} including these subtopics: ${subtopicsString}. The language should be ${lang || 'English'}. 
-CRITICAL: Randomize the correct answer position.
-CRITICAL: Do not repeat or closely paraphrase any previous question from the blocked list.
-CRITICAL: Prefer fresh scenarios, new wording, and different correct-answer phrasing for each retake.
-
-Blocked previous questions:
-${cleanedExcludedQuestions.length > 0 ? cleanedExcludedQuestions.map((item, index) => `${index + 1}. ${item}`).join('\n') : 'None'}
-
-Return ONLY a raw JSON array (no markdown, no code blocks) with this exact format:
-[
-  {
-    "question": "Question text",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correctAnswer": "Option C"
-  }
-]
-IMPORTANT: "correctAnswer" must match exactly one of the strings in "options".`;
 
   const safetySettings = [
     {
@@ -181,17 +419,53 @@ IMPORTANT: "correctAnswer" must match exactly one of the strings in "options".`;
 
   try {
     let text = await generateAIText({
-      prompt,
-      maxOutputTokens: 4096,
+      prompt: buildQuizPrompt({
+        mainTopic,
+        subtopicsString,
+        lang,
+        blockedQuestions: cleanedExcludedQuestions,
+        questionCount
+      }),
+      responseMimeType: 'application/json',
+      responseSchema: QUIZ_RESPONSE_SCHEMA,
+      maxOutputTokens: 8192,
       safetySettings
     });
 
-    text = text
-      .replace(/```json/g, '')
-      .replace(/```/g, '')
-      .trim();
+    text = stripCodeFences(text);
+    let examData = normalizeGeneratedExam(parseGeneratedExamResponse(text));
 
-    const examData = normalizeGeneratedExam(JSON.parse(text));
+    if (examData.length < questionCount) {
+      const missingCount = questionCount - examData.length;
+      const retryBlockedQuestions = [
+        ...cleanedExcludedQuestions,
+        ...examData.map((item) => item.question)
+      ].slice(0, 50);
+
+      try {
+        let retryText = await generateAIText({
+          prompt: buildQuizPrompt({
+            mainTopic,
+            subtopicsString,
+            lang,
+            blockedQuestions: retryBlockedQuestions,
+            questionCount: missingCount,
+            compact: true
+          }),
+          responseMimeType: 'application/json',
+          responseSchema: QUIZ_RESPONSE_SCHEMA,
+          maxOutputTokens: 4096,
+          safetySettings
+        });
+
+        retryText = stripCodeFences(retryText);
+        const retryData = normalizeGeneratedExam(parseGeneratedExamResponse(retryText));
+        examData = [...examData, ...retryData];
+      } catch (retryError) {
+        console.warn('generateQuizQuestionSet partial recovery retry failed:', retryError?.message || retryError);
+      }
+    }
+
     if (examData.length >= questionCount) {
       return examData.slice(0, questionCount);
     }

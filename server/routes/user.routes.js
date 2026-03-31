@@ -7,7 +7,8 @@ import {
   updateSettings,
   requestAccountDeletion,
   getDeletionRequests,
-  updateDeletionRequestStatus
+  updateDeletionRequestStatus,
+  updatePlacementReady
 } from '../controllers/user.controller.js';
 
 const router = express.Router();
@@ -21,5 +22,8 @@ router.post('/request-deletion', requestAccountDeletion);
 // Admin Routes
 router.get('/admin/deletion-requests', getDeletionRequests);
 router.put('/admin/deletion-request', updateDeletionRequestStatus);
+
+// Mock Interview Helper
+router.put('/placement-ready', updatePlacementReady);
 
 export default router;

@@ -1319,10 +1319,23 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
       ...prev,
       quizSettings: {
         ...prev.quizSettings,
-        proctoring: {
-          ...prev.quizSettings.proctoring,
-          [field]: value
-        }
+        proctoring: (() => {
+          const nextProctoring = {
+            ...prev.quizSettings.proctoring,
+            [field]: value
+          };
+
+          // Noise detection depends on microphone input.
+          if (field === 'requireMicrophone' && !value) {
+            nextProctoring.detectNoise = false;
+          }
+
+          if (field === 'detectNoise' && value) {
+            nextProctoring.requireMicrophone = true;
+          }
+
+          return nextProctoring;
+        })()
       }
     }));
   };
@@ -1777,6 +1790,10 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
               <div className="text-sm font-semibold text-amber-700 dark:text-amber-300">
                 Malpractice Monitoring
               </div>
+              <p className="mt-2 text-xs text-amber-700/80 dark:text-amber-300/80">
+                Camera is requested only when camera access is enabled. Microphone is requested when microphone access
+                or external noise detection is enabled.
+              </p>
               <div className="mt-3 grid gap-3 md:grid-cols-2">
                 {[
                   ['requireCamera', 'Require camera access'],
@@ -1810,7 +1827,7 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button
                 variant="outline"
-                onClick={async () => {
+                onClick={() => {
                   setOrgSaveConfig((prev) => ({
                     ...prev,
                     quizSettings: {
@@ -1819,16 +1836,9 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
                       sections: { ...defaultQuizSettings.sections }
                     }
                   }));
-                  setIsOrgSettingsDialogOpen(false);
-                  setIsLoadingCourse(true);
-                  await saveCourse({
-                    ...defaultQuizSettings,
-                    proctoring: { ...defaultQuizSettings.proctoring },
-                    sections: { ...defaultQuizSettings.sections }
-                  });
                 }}
               >
-                Use Defaults and Save
+                Reset Controls to Defaults
               </Button>
               <Button onClick={handleSaveOrgCourseWithSettings}>
                 Save with Current Controls

@@ -62,6 +62,9 @@ import orgLandingRoutes from "./routes/orgLanding.routes.js";
 import interviewPrepRoutes from "./routes/interviewPrep.routes.js";
 import reportRoutes from "./routes/report.routes.js";
 import analyticsRoutes from "./routes/analytics.routes.js";
+import superAdminRoutes from "./routes/superAdmin.routes.js";
+import mockTrainingRoutes from "./routes/mockTraining.routes.js";
+
 
 // -------------------- INIT --------------------
 connectDB();
@@ -146,6 +149,9 @@ app.use("/api", reportRoutes);
 app.use("/api", interviewPrepRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api", orgLandingRoutes);
+app.use("/api", superAdminRoutes);
+app.use("/api", mockTrainingRoutes);
+
 // -------------------- ERROR HANDLER --------------------
 app.use((err, req, res, next) => {
   console.error('SERVER ERROR:', err);

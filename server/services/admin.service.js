@@ -352,6 +352,14 @@ export const getDashboardStatsWithOrgs = async () => {
         forever: true,
         org_admin: true,
         student: true
+      },
+      interviewEnabled: admin?.interviewEnabled || {
+        free: false,
+        monthly: true,
+        yearly: true,
+        forever: true,
+        org_admin: true,
+        student: false
       }
     }
   };
@@ -582,41 +590,133 @@ export const createOrganization = async ({ email, password, institutionName, inc
       subject: `Organization Account Created - ${institutionName}`,
       html: `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Organization Account Created</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Account Created</title>
 </head>
-<body style="margin:0;padding:0;background:#f2f2f2;font-family:Arial,Helvetica,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+
+<body style="margin:0;padding:0;background:#f4f6fb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+
+<!-- Preheader -->
+<div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#f4f6fb;">
+Your organization account is ready. Access your dashboard now.
+</div>
+
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;background:#f4f6fb;">
 <tr>
 <td align="center">
-<table width="700" cellpadding="0" cellspacing="0" style="background:#e9e9e9;border-radius:10px;border:1px solid #d0d0d0;">
+
+<table width="560" style="max-width:560px;width:100%;">
+
+<!-- Logo -->
 <tr>
-<td style="padding:35px 40px; color:#333;">
-<h2 style="text-align:center;margin-top:0;margin-bottom:25px;color:#333;">Organization Account Created</h2>
-<p>Hello <strong>${institutionName}</strong>,</p>
-<p>An institutional account has been created for you on <strong>${process.env.COMPANY || "Colossus IQ Ai Solutions"}</strong>.</p>
-<p>You can now log in using the following details:</p>
-<ul style="list-style:none;padding:0;">
-<li><strong>Login URL:</strong> <a href="${loginUrl}">${loginUrl}</a></li>
-<li><strong>Email:</strong> ${email}</li>
-<li><strong>Password:</strong> ${password}</li>
-</ul>
-<p>For security reasons, your password is not included in this email. Please use the password provided by your administrator.</p>
-<div style="text-align:center;margin:35px 0;">
-<a href="${loginUrl}" style="background:#1a73e8;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:bold;display:inline-block;font-size:15px;">Login to Dashboard</a>
-</div>
-<hr style="border:none;border-top:1px solid #cfcfcf;margin:30px 0;">
-<p style="text-align:center;font-size:12px;color:#666;margin-bottom:0;">
-© ${new Date().getFullYear()} ${process.env.COMPANY || "Colossus IQ Ai Solutions"}. All rights reserved.
+<td align="center" style="padding-bottom:24px;">
+  <div style="font-size:20px;font-weight:700;color:#111827;">
+    Colossus IQ <span style="color:#4f6ef7;">AI Solutions</span>
+  </div>
+</td>
+</tr>
+
+<!-- Card -->
+<tr>
+<td style="background:#ffffff;border-radius:14px;box-shadow:0 10px 25px rgba(0,0,0,0.05);overflow:hidden;">
+
+<!-- Top Accent -->
+<div style="height:4px;background:linear-gradient(90deg,#4f6ef7,#7c3aed);"></div>
+
+<!-- Content -->
+<div style="padding:40px 36px;">
+
+<h2 style="margin:0 0 10px;font-size:22px;color:#111827;">
+🚀 Your Organization is Ready
+</h2>
+
+<p style="margin:0 0 25px;color:#6b7280;font-size:14px;">
+Your institutional workspace has been successfully created.
 </p>
+
+<p style="font-size:15px;color:#374151;line-height:1.7;margin-bottom:25px;">
+Hello <strong>${institutionName}</strong>,<br><br>
+Your account has been created on 
+<strong>${process.env.COMPANY || "Colossus IQ AI Solutions"}</strong>.
+Use the credentials below to get started.
+</p>
+
+<!-- Credentials Card -->
+<div style="background:#f9fafc;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:28px;">
+
+<!-- URL -->
+<div style="margin-bottom:15px;">
+  <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;">Login URL</div>
+  <a href="${loginUrl}" style="color:#4f6ef7;font-weight:600;text-decoration:none;font-size:14px;">
+    ${loginUrl}
+  </a>
+</div>
+
+<!-- Email -->
+<div style="margin-bottom:15px;">
+  <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;">Email</div>
+  <div style="font-family:monospace;color:#111827;font-size:14px;">
+    ${email}
+  </div>
+</div>
+
+<!-- Password -->
+<div>
+  <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;">Password</div>
+  <div style="font-family:monospace;color:#111827;font-size:14px;">
+    ${password}
+  </div>
+</div>
+
+</div>
+
+<!-- Button -->
+<div style="text-align:center;margin-bottom:28px;">
+  <a href="${loginUrl}" 
+     style="background:linear-gradient(90deg,#4f6ef7,#7c3aed);
+     color:#ffffff;
+     padding:14px 32px;
+     font-size:15px;
+     font-weight:600;
+     text-decoration:none;
+     border-radius:8px;
+     display:inline-block;">
+     Login to Dashboard →
+  </a>
+</div>
+
+<!-- Security Note -->
+<div style="background:#fff7ed;border-left:4px solid #f59e0b;padding:14px 16px;border-radius:6px;">
+  <p style="margin:0;font-size:13px;color:#92400e;">
+    <strong>Security Tip:</strong> Change your password after first login and never share credentials.
+  </p>
+</div>
+
+</div>
+</td>
+</tr>
+
+<!-- Footer -->
+<tr>
+<td align="center" style="padding-top:24px;">
+  <p style="font-size:12px;color:#9ca3af;margin:0;">
+    This is an automated email. Please do not reply.
+  </p>
+  <p style="font-size:12px;color:#9ca3af;margin:4px 0 0;">
+    © ${new Date().getFullYear()} ${process.env.COMPANY || "Colossus IQ AI Solutions"}.
+  </p>
+</td>
+</tr>
+
+</table>
+
 </td>
 </tr>
 </table>
-</td>
-</tr>
-</table>
+
 </body>
 </html>
 `
@@ -664,6 +764,14 @@ export const getAdminSettings = async () => {
       forever: true,
       org_admin: true,
       student: true
+    },
+    interviewEnabled: admin?.interviewEnabled || {
+      free: false,
+      monthly: true,
+      yearly: true,
+      forever: true,
+      org_admin: true,
+      student: false
     }
   };
 };
@@ -697,7 +805,8 @@ export const updateAdminSettings = async (data) => {
     taxPercentage: data.taxPercentage,
     notebookEnabled: data.notebookEnabled,
     resumeEnabled: data.resumeEnabled,
-    careerEnabled: data.careerEnabled
+    careerEnabled: data.careerEnabled,
+    interviewEnabled: data.interviewEnabled
   };
 
   Object.assign(admin, updatePayload);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -123,18 +123,24 @@ const normalizeQuizQuestions = (inputQuestions: any[] = []) =>
 
 const QuizPage = () => {
     const { state } = useLocation();
+    const { courseId: routeCourseId = '' } = useParams();
     // Safely extract topic - handle if it's an object or undefined
     const rawTopic = state?.topic;
-    const topic = typeof rawTopic === 'object' && rawTopic !== null
+    const initialTopic = typeof rawTopic === 'object' && rawTopic !== null
         ? (rawTopic.name || rawTopic.title || rawTopic.topic || JSON.stringify(rawTopic))
         : String(rawTopic || 'Course');
 
-    const courseId = state?.courseId || '';
+    const [topic, setTopic] = useState(initialTopic);
+    const [courseId, setCourseId] = useState(state?.courseId || routeCourseId || '');
     const userRole = sessionStorage.getItem('role');
     const isOrgAdmin = userRole === 'org_admin' || userRole === 'dept_admin' || sessionStorage.getItem('isOrganization') === 'true';
-    const questions = state?.questions || [];
+    const [questions, setResolvedQuestions] = useState<any[]>(Array.isArray(state?.questions) ? state.questions : []);
     const certificateIdState = state?.certificateId || '';
-    const manualQuizExam = !!state?.manualQuizExam;
+    const [manualQuizExam, setManualQuizExam] = useState(!!state?.manualQuizExam);
+    const [orgManagedQuiz, setOrgManagedQuiz] = useState(!!state?.orgManagedQuiz);
+    const [generatedQuizSession, setGeneratedQuizSession] = useState(!!state?.generatedQuizSession);
+    const usesOrgQuizBackend = manualQuizExam && orgManagedQuiz;
+    const [quizContextReady, setQuizContextReady] = useState(Boolean((state?.courseId || routeCourseId) && (state?.questions || routeCourseId)));
 
     const [quizState, setQuizState] = useState<QuizState>(QuizState.NotStarted);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -183,6 +189,87 @@ const QuizPage = () => {
         console.error(label, message);
     };
 
+    const hydrateQuizContext = useCallback(async () => {
+        const resolvedCourseId = state?.courseId || routeCourseId || '';
+        if (!resolvedCourseId) {
+            setQuizContextReady(true);
+            return;
+        }
+
+        setCourseId(resolvedCourseId);
+
+        const hasUsableStateQuestions = Array.isArray(state?.questions) && state.questions.length > 0;
+        if (hasUsableStateQuestions) {
+            setResolvedQuestions(state.questions);
+            setManualQuizExam(!!state?.manualQuizExam);
+            setOrgManagedQuiz(!!state?.orgManagedQuiz);
+            setGeneratedQuizSession(!!state?.generatedQuizSession);
+            if (state?.quizSettings) {
+                setQuizSettings({
+                    ...defaultManualQuizSettings,
+                    ...(state.quizSettings || {}),
+                    sections: {
+                        ...defaultManualQuizSettings.sections,
+                        ...(state.quizSettings?.sections || {})
+                    },
+                    proctoring: {
+                        ...defaultManualQuizSettings.proctoring,
+                        ...(state.quizSettings?.proctoring || {})
+                    }
+                });
+            }
+            setQuizContextReady(true);
+            return;
+        }
+
+        try {
+            const requesterId = sessionStorage.getItem('uid') || '';
+            const requesterRole = sessionStorage.getItem('role') || '';
+            const organizationId = sessionStorage.getItem('orgId') || '';
+            const response = await axios.get(`${serverURL}/api/shareable`, {
+                params: {
+                    id: resolvedCourseId,
+                    requesterId,
+                    requesterRole,
+                    organizationId
+                }
+            });
+
+            const fetchedCourse = Array.isArray(response.data) ? response.data[0] : null;
+            const parsedContent = fetchedCourse?.content ? JSON.parse(fetchedCourse.content) : {};
+            const fetchedQuestions = Array.isArray(parsedContent?.quizzes) ? parsedContent.quizzes : [];
+            const fetchedTopic = fetchedCourse?.mainTopic || parsedContent?.course_title || initialTopic;
+            const fetchedOrgManaged = Boolean(parsedContent?.course_meta?.organizationManaged);
+
+            setTopic(String(fetchedTopic || initialTopic));
+            setResolvedQuestions(fetchedQuestions);
+            setManualQuizExam(fetchedQuestions.length > 0);
+            setOrgManagedQuiz(fetchedOrgManaged);
+            setGeneratedQuizSession(false);
+            setQuizSettings({
+                ...defaultManualQuizSettings,
+                ...(parsedContent?.quizSettings || {}),
+                sections: {
+                    ...defaultManualQuizSettings.sections,
+                    ...(parsedContent?.quizSettings?.sections || {})
+                },
+                proctoring: {
+                    ...defaultManualQuizSettings.proctoring,
+                    ...(parsedContent?.quizSettings?.proctoring || {})
+                }
+            });
+        } catch (error) {
+            logQuizError('Failed to hydrate quiz context', error);
+            toast({
+                title: 'Quiz unavailable',
+                description: 'Failed to load quiz details.',
+                variant: 'destructive'
+            });
+        } finally {
+            setQuizContextReady(true);
+        }
+    }, [initialTopic, routeCourseId, state, toast]);
+
     const handleSendToAdminApproval = async () => {
         try {
             const response = await axios.post(`${serverURL}/api/org/course/${courseId}/review`, {
@@ -228,13 +315,24 @@ const QuizPage = () => {
 
     useEffect(() => {
         fetchCertificateSettings();
-        if (manualQuizExam) {
+        void hydrateQuizContext();
+    }, [hydrateQuizContext]);
+
+    useEffect(() => {
+        if (!quizContextReady) return;
+
+        if (usesOrgQuizBackend) {
             loadManualQuizStatus();
-        } else if (questions) {
+        } else if (generatedQuizSession && questions.length > 0) {
+            init();
+            setIsLoading(false);
+        } else if (questions.length > 0) {
             init();
             loadLegacyQuizStatus();
+        } else {
+            setIsLoading(false);
         }
-    }, [questions, manualQuizExam]);
+    }, [generatedQuizSession, questions, quizContextReady, usesOrgQuizBackend]);
 
     useEffect(() => {
         return () => {
@@ -356,7 +454,7 @@ const QuizPage = () => {
         (summary?.noiseWarnings || 0) >= 5;
 
     const sendAbandonAttempt = useCallback((reason = 'page_exit') => {
-        if (!manualQuizExam || !attemptId || submissionLockRef.current || abandonmentSentRef.current || quizState !== QuizState.InProgress) {
+        if (!usesOrgQuizBackend || !attemptId || submissionLockRef.current || abandonmentSentRef.current || quizState !== QuizState.InProgress) {
             return;
         }
 
@@ -373,7 +471,7 @@ const QuizPage = () => {
             body: payload,
             keepalive: true
         }).catch(() => undefined);
-    }, [attemptId, manualQuizExam, quizState]);
+    }, [attemptId, usesOrgQuizBackend, quizState]);
 
     const loadManualQuizStatus = async () => {
         if (!courseId) return;
@@ -441,6 +539,21 @@ const QuizPage = () => {
                 }
             }
         } catch (error) {
+            const message = error?.response?.data?.message || error?.message || '';
+            const shouldRetryWithOrgStatus =
+                manualQuizExam &&
+                !generatedQuizSession &&
+                questions.length > 0 &&
+                error?.response?.status === 404 &&
+                String(message).toLowerCase().includes('course not found');
+
+            if (shouldRetryWithOrgStatus) {
+                logQuizError('Legacy quiz status failed, retrying org quiz status', error);
+                setOrgManagedQuiz(true);
+                await loadManualQuizStatus();
+                return;
+            }
+
             logQuizError('Failed to load legacy quiz status', error);
             toast({
                 title: 'Quiz unavailable',
@@ -454,7 +567,7 @@ const QuizPage = () => {
 
     const logSecurityEvent = async (eventType: string, severity = 'low', details = '', explicitAttemptId?: string) => {
         const activeAttemptId = explicitAttemptId || attemptId;
-        if (!manualQuizExam || !activeAttemptId) return;
+        if (!usesOrgQuizBackend || !activeAttemptId) return;
 
         const now = Date.now();
         const lastLoggedAt = securityThrottleRef.current[eventType] || 0;
@@ -645,7 +758,7 @@ const QuizPage = () => {
         submissionLockRef.current = false;
         abandonmentSentRef.current = false;
         resetSecurityState();
-        if (manualQuizExam) {
+        if (usesOrgQuizBackend) {
             setIsLoading(true);
             try {
                 const userId = sessionStorage.getItem('uid');
@@ -699,6 +812,27 @@ const QuizPage = () => {
             } finally {
                 setIsLoading(false);
             }
+            return;
+        }
+
+        if (generatedQuizSession) {
+            const nextQuestions = normalizeQuizQuestions(questions);
+            const permissionsOkay = await requestDevices(undefined, quizSettings);
+            if (!permissionsOkay) {
+                return;
+            }
+
+            setExamJSON(nextQuestions);
+            setAnswers({});
+            setSubmittedResult(null);
+            setCurrentQuestionIndex(0);
+            setQuizState(QuizState.InProgress);
+            setTimerActive(true);
+            setTimeRemaining(60 * nextQuestions.length);
+            toast({
+                title: 'Quiz started',
+                description: `Good luck! You have ${nextQuestions.length} minutes to complete the quiz.`,
+            });
             return;
         }
 
@@ -837,7 +971,7 @@ const QuizPage = () => {
         if (submissionLockRef.current) return;
         submissionLockRef.current = true;
         abandonmentSentRef.current = true;
-        if (manualQuizExam) {
+        if (usesOrgQuizBackend) {
             try {
                 const response = await axios.post(`${serverURL}/api/org-quiz/submit`, {
                     attemptId,
@@ -971,14 +1105,14 @@ const QuizPage = () => {
         : 0;
     const effectiveAttemptSummary = attemptSummary || {};
     const cooldownActive = !!effectiveAttemptSummary?.nextAttemptAvailableAt && new Date(effectiveAttemptSummary.nextAttemptAvailableAt) > new Date();
-    const canRetakeManualQuiz = manualQuizExam && !passedQuiz && !cooldownActive && !effectiveAttemptSummary?.maxAttemptsReached;
+    const canRetakeManualQuiz = usesOrgQuizBackend && !passedQuiz && !cooldownActive && !effectiveAttemptSummary?.maxAttemptsReached;
     const manualPercentage = submittedResult?.percentage ?? Math.round((getScore() / (quizQuestions.length || 1)) * 100);
     const legacyCertificateThreshold = legacyQuizStatus?.certificateThreshold || 70;
-    const showLegacyRetakeButton = !manualQuizExam && !passedQuiz && legacyQuizStatus.canStart && legacyQuizStatus.attemptCount > 0;
+    const showLegacyRetakeButton = (!manualQuizExam || !usesOrgQuizBackend) && !passedQuiz && legacyQuizStatus.canStart && legacyQuizStatus.attemptCount > 0;
     const showDetailedManualReview = manualQuizExam && submittedResult?.reviewMode === 'after_submit_with_answers';
     const showSummaryOnlyManualReview = manualQuizExam && submittedResult?.reviewMode === 'score_only';
     const showLegacyRetakeRequestButton =
-        !manualQuizExam &&
+        (!manualQuizExam || !usesOrgQuizBackend) &&
         !passedQuiz &&
         legacyQuizStatus.attemptCount > 0 &&
         !legacyQuizStatus.canStart;
@@ -1198,7 +1332,7 @@ const QuizPage = () => {
                                                 <Trophy className="h-5 w-5 text-muted-foreground" />
                                                 <span>Instant feedback on your answers</span>
                                             </div>
-                                            {manualQuizExam && (
+                                            {usesOrgQuizBackend && (
                                                 <div className="flex items-center gap-2">
                                                     <Shield className="h-5 w-5 text-muted-foreground" />
                                                     <span>Attempts: {effectiveAttemptSummary.attemptCount || 0}/{effectiveAttemptSummary.attemptLimit || quizSettings.attemptLimit}</span>
@@ -1235,7 +1369,10 @@ const QuizPage = () => {
                                             {manualQuizExam ? (
                                                 <>
                                                     <p className="mt-2 text-sm text-muted-foreground">
-                                                        Mode {quizSettings.quizMode}, pass mark {quizSettings.passPercentage}%, max {quizSettings.attemptLimit} attempts, cooldown {quizSettings.cooldownMinutes} minutes after a failed attempt.
+                                                        Mode {quizSettings.quizMode}, pass mark {quizSettings.passPercentage}%,
+                                                        {usesOrgQuizBackend
+                                                            ? ` max ${quizSettings.attemptLimit} attempts, cooldown ${quizSettings.cooldownMinutes} minutes after a failed attempt.`
+                                                            : ' and a retake requires admin approval after a failed attempt.'}
                                                     </p>
                                                     <p className="mt-2 text-sm text-muted-foreground">
                                                         Review mode: {String(quizSettings.reviewMode || '').replace(/_/g, ' ')}.
@@ -1248,12 +1385,12 @@ const QuizPage = () => {
                                                             Section pattern: Easy {quizSettings.sections.easy}, Medium {quizSettings.sections.medium}, Difficult {quizSettings.sections.difficult}.
                                                         </p>
                                                     )}
-                                                    {cooldownActive && (
+                                                    {usesOrgQuizBackend && cooldownActive && (
                                                         <p className="mt-2 text-sm text-destructive">
                                                             Next attempt available at {new Date(effectiveAttemptSummary.nextAttemptAvailableAt).toLocaleString()}.
                                                         </p>
                                                     )}
-                                                    {effectiveAttemptSummary.maxAttemptsReached && (
+                                                    {usesOrgQuizBackend && effectiveAttemptSummary.maxAttemptsReached && (
                                                         <p className="mt-2 text-sm text-destructive">
                                                             Maximum attempts reached for this quiz.
                                                         </p>
@@ -1268,19 +1405,19 @@ const QuizPage = () => {
                                                 {renderCameraPreviewBubble('h-28 w-28')}
                                             </div>
                                         </div>
-                                        {!manualQuizExam && showLegacyRetakeRequestButton && renderLegacyRetakeRequestComposer()}
+                                        {!usesOrgQuizBackend && showLegacyRetakeRequestButton && renderLegacyRetakeRequestComposer()}
                                     </CardContent>
                                     <CardFooter className="flex justify-center gap-3 flex-wrap">
                                         <Button
                                             size="lg"
                                             onClick={handleStartQuiz}
                                             disabled={
-                                                manualQuizExam
+                                                usesOrgQuizBackend
                                                     ? cooldownActive || effectiveAttemptSummary.maxAttemptsReached || passedQuiz
                                                     : passedQuiz || !legacyQuizStatus.canStart
                                             }
                                         >
-                                            {manualQuizExam
+                                            {usesOrgQuizBackend
                                                 ? 'Start Quiz'
                                                 : legacyQuizStatus.attemptCount > 0
                                                     ? 'Retake Quiz'
@@ -1400,7 +1537,7 @@ const QuizPage = () => {
                                             </div>
                                             <CardTitle className="text-2xl">Quiz {passedQuiz ? "Passed" : "Failed"}</CardTitle>
                                             <CardDescription>
-                                                {manualQuizExam && submittedResult
+                                                {usesOrgQuizBackend && submittedResult
                                                     ? `Net score ${submittedResult.score} from ${submittedResult.correctCount || 0} correct answers out of ${quizQuestions.length}`
                                                     : `You scored ${getScore()} out of ${quizQuestions.length}`}
                                             </CardDescription>
@@ -1440,7 +1577,7 @@ const QuizPage = () => {
                                                 </div>
                                             </div>
 
-                                            {manualQuizExam && (
+                                            {usesOrgQuizBackend && (
                                                 <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-left">
                                                     <div className="grid gap-2 sm:grid-cols-2">
                                                         <p className="text-sm"><span className="font-semibold">Attempt:</span> {submittedResult?.attemptNumber || effectiveAttemptSummary?.latestAttempt?.attemptNumber || 1}</p>
@@ -1475,7 +1612,7 @@ const QuizPage = () => {
                                                 </div>
                                             )}
 
-                                            {!manualQuizExam && (
+                                            {!usesOrgQuizBackend && (
                                                 <div className="mb-6 rounded-xl border border-primary/15 bg-primary/5 p-4 text-left">
                                                     <div className="grid gap-2 sm:grid-cols-2">
                                                         <p className="text-sm"><span className="font-semibold">Attempts:</span> {legacyQuizStatus.attemptCount || 0}</p>
@@ -1501,7 +1638,7 @@ const QuizPage = () => {
                                                 </div>
                                             )}
 
-                                            {!manualQuizExam && showLegacyRetakeRequestButton && renderLegacyRetakeRequestComposer()}
+                                            {!usesOrgQuizBackend && showLegacyRetakeRequestButton && renderLegacyRetakeRequestComposer()}
 
                                             {!showSummaryOnlyManualReview && (
                                                 <ScrollArea className="h-[300px] pr-4">
@@ -1515,7 +1652,7 @@ const QuizPage = () => {
                                                                             const reviewedAnswer = submittedResult?.answers?.find((item: any) => item.questionId === question.id);
                                                                             const correctOptionId = reviewedAnswer?.correctOptionId || question.correctAnswer;
                                                                             const selectedOptionId = reviewedAnswer?.selectedOptionId || answers[question.id];
-                                                                            const showCorrectAnswer = !manualQuizExam || showDetailedManualReview;
+                                                                            const showCorrectAnswer = !usesOrgQuizBackend || showDetailedManualReview;
                                                                             return (
                                                                                 <div
                                                                                     key={option.id}
@@ -1562,7 +1699,7 @@ const QuizPage = () => {
                                                     Send to Admin Approval
                                                 </Button>
                                             )}
-                                            {manualQuizExam && (
+                                            {usesOrgQuizBackend && (
                                                 <Button onClick={handleStartQuiz} disabled={!canRetakeManualQuiz}>
                                                     Retake Quiz
                                                 </Button>

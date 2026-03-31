@@ -300,6 +300,12 @@ ONLY respond with a valid JSON object matching the requested schema.`;
       .replace(/\s+/g, ' ')
       .trim();
 
+  const getWordCount = (html = '') => {
+    const text = stripHtmlToText(html);
+    if (!text) return 0;
+    return text.split(/\s+/).filter(Boolean).length;
+  };
+
   const hasCompleteSentenceEnding = (html = '') => {
     const text = stripHtmlToText(html);
     if (!text) return false;
@@ -342,8 +348,10 @@ ONLY respond with a valid JSON object matching the requested schema.`;
 
   const needsLessonRepair = (html = '') => {
     const text = stripHtmlToText(html);
+    const wordCount = getWordCount(html);
     if (!text) return true;
     if (text.length < 120) return true;
+    if (wordCount < 220) return true;
     if (!hasCompleteSentenceEnding(html)) return true;
 
     const lowered = text.toLowerCase();
@@ -369,6 +377,9 @@ Rewrite the following lesson into clean, valid HTML.
 Every sentence must be complete and meaningful.
 Remove any truncated phrase, dangling clause, or cut-off ending.
 Preserve the lesson's meaning and structure, but make the final result read naturally from start to finish.
+Expand thin sections so the lesson feels complete and self-contained for student study.
+Target roughly 700 to 1100 words.
+Include a proper introduction, core explanation, practical examples, common mistakes, and a short recap.
 Return HTML only.
 
 Original lesson:

@@ -526,7 +526,10 @@ export const getShareableCourse = async (req, res) => {
         type: course.type || 'video & text course',
         photo: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800',
         content: JSON.stringify({
-          course_meta: course.courseMeta || {},
+          course_meta: {
+            ...(course.courseMeta || {}),
+            organizationManaged: true
+          },
           course_title: course.title,
           course_details: course.description,
           course_topics: course.topics.map(t => ({

@@ -43,6 +43,15 @@ const AdminSettings = () => {
         org_admin: true,
         student: false
     });
+    const [interviewEnabled, setInterviewEnabled] = useState({
+        free: false,
+        monthly: true,
+        yearly: true,
+        forever: true,
+        org_admin: true,
+        student: false
+    });
+
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -73,6 +82,10 @@ const AdminSettings = () => {
             if (res.data.careerEnabled) {
                 setCareerEnabled(res.data.careerEnabled);
             }
+            if (res.data.interviewEnabled) {
+                setInterviewEnabled(res.data.interviewEnabled);
+            }
+
         } catch (error) {
             console.error('Failed to fetch settings:', error);
             toast({
@@ -156,8 +169,10 @@ const AdminSettings = () => {
                 taxPercentage: Number(taxPercentage),
                 notebookEnabled,
                 resumeEnabled,
-                careerEnabled
+                careerEnabled,
+                interviewEnabled
             });
+
             if (res.data.success) {
                 toast({
                     title: "Success",
@@ -198,6 +213,14 @@ const AdminSettings = () => {
             [role]: !prev[role]
         }));
     };
+
+    const handleInterviewToggle = (role: keyof typeof interviewEnabled) => {
+        setInterviewEnabled(prev => ({
+            ...prev,
+            [role]: !prev[role]
+        }));
+    };
+
 
     if (isLoading) {
         return (
@@ -686,8 +709,79 @@ const AdminSettings = () => {
                                         />
                                     </div>
                                 </div>
+
+                                <div className="flex items-center justify-between border-b pb-4 border-border/30 pt-4">
+                                    <div>
+                                        <Label className="text-base font-semibold">AI Mock Interview Visibility</Label>
+                                        <p className="text-sm text-muted-foreground">Control which users can see the Mock Interview Training section.</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="mi-free" className="cursor-pointer font-medium">Free Users</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="mi-free"
+                                            checked={interviewEnabled.free}
+                                            onChange={() => handleInterviewToggle('free')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="mi-monthly" className="cursor-pointer font-medium">Monthly Paid</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="mi-monthly"
+                                            checked={interviewEnabled.monthly}
+                                            onChange={() => handleInterviewToggle('monthly')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="mi-yearly" className="cursor-pointer font-medium">Yearly Paid</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="mi-yearly"
+                                            checked={interviewEnabled.yearly}
+                                            onChange={() => handleInterviewToggle('yearly')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="mi-forever" className="cursor-pointer font-medium">Lifetime Access</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="mi-forever"
+                                            checked={interviewEnabled.forever}
+                                            onChange={() => handleInterviewToggle('forever')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="mi-org" className="cursor-pointer font-medium">Organization Admins</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="mi-org"
+                                            checked={interviewEnabled.org_admin}
+                                            onChange={() => handleInterviewToggle('org_admin')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="mi-student" className="cursor-pointer font-medium">Organization Students</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="mi-student"
+                                            checked={interviewEnabled.student}
+                                            onChange={() => handleInterviewToggle('student')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </CardContent>
+
                     </Card>
 
                     <div className="flex justify-end">

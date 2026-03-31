@@ -46,7 +46,12 @@ const userSchema = new mongoose.Schema({
     classId: { type: mongoose.Schema.Types.ObjectId, ref: 'Class' },
     placementCompany: { type: String, default: null },
     placementPosition: { type: String, default: null },
-    isPlacementClosed: { type: Boolean, default: false }
+    isPlacementClosed: { type: Boolean, default: false },
+    isPlacementReady: { type: Boolean, default: false } // For Org Admin to assign mocks
+  },
+  mockAttempts: {
+    count: { type: Number, default: 0 },
+    lastResetAt: { type: Date, default: Date.now }
   },
   subscriptionStart: { type: Date, default: null },
   subscriptionEnd: { type: Date, default: null },
