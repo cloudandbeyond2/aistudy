@@ -25,11 +25,12 @@ import {
   LogOut,
   Sparkles,
   Menu,
-  Settings2Icon,
+  Settings2,
   Building2,
   BookOpen,
   Bell,
   Newspaper,
+  Globe,
   LayoutDashboard,
   Gauge,
   Briefcase,
@@ -37,6 +38,7 @@ import {
   Users,
   FileText,
   Download,
+  Brain,
   BrainCircuit,
   MessageSquare,
   Calendar,
@@ -213,6 +215,10 @@ const DashboardLayoutContent = () => {
   const [careerEnabled, setCareerEnabled] = useState({
     free: false, monthly: true, yearly: true, forever: true, org_admin: true, student: false
   });
+  const [interviewEnabled, setInterviewEnabled] = useState({
+    free: false, monthly: true, yearly: true, forever: true, org_admin: true, student: false
+  });
+
 
   useEffect(() => {
     if (sessionStorage.getItem('uid') === null) {
@@ -228,7 +234,9 @@ const DashboardLayoutContent = () => {
       if (response.data.admin.notebookEnabled) setNotebookEnabled(response.data.admin.notebookEnabled);
       if (response.data.admin.resumeEnabled) setResumeEnabled(response.data.admin.resumeEnabled);
       if (response.data.admin.careerEnabled) setCareerEnabled(response.data.admin.careerEnabled);
+      if (response.data.admin.interviewEnabled) setInterviewEnabled(response.data.admin.interviewEnabled);
     }
+
     if (sessionStorage.getItem('adminEmail')) {
       if (sessionStorage.getItem('adminEmail') === sessionStorage.getItem('email')) setAdmin(true);
       dashboardData();
@@ -467,8 +475,10 @@ const DashboardLayoutContent = () => {
                     <MenuItem icon={Calendar} label="Calendar Scheduler" to="/dashboard/calendar" isActive={isActive('/dashboard/calendar')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={ListTodo} label="Todo Center" to="/dashboard/todo" isActive={isActive('/dashboard/todo')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     {careerEnabled.student && <MenuItem icon={Award} label="Career Hub" to="/dashboard/student/career" isActive={isActive('/dashboard/student/career')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
+                    {interviewEnabled.student && <MenuItem icon={Brain} label="Mock Training" to="/dashboard/interview-training" isActive={isActive('/dashboard/interview-training')} badge="READY" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
 
                     <SectionHeader title="Academics" icon={BookOpen} isExpanded={isExpanded} />
+
                     <MenuItem icon={BookOpen} label="Assignments" to="/dashboard/student/assignments" isActive={isActive('/dashboard/student/assignments')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Bell} label="Noticeboard" to="/dashboard/student/notices" isActive={isActive('/dashboard/student/notices')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Briefcase} label="Projects" to="/dashboard/student/projects" isActive={isActive('/dashboard/student/projects')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
@@ -505,6 +515,14 @@ const DashboardLayoutContent = () => {
                       label="Dashboard" 
                       to="/dashboard/org" 
                       isActive={isActive('/dashboard/org') && !location.search}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
+                    <MenuItem 
+                      icon={Globe} 
+                      label="Landing Page" 
+                      to="/dashboard/org?tab=landing" 
+                      isActive={location.search === '?tab=landing'}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
@@ -612,6 +630,17 @@ const DashboardLayoutContent = () => {
                         onMobileClick={handleMobileMenuClick}
                       />
                     )}
+                    {interviewEnabled.org_admin && (
+                      <MenuItem 
+                        icon={Brain} 
+                        label="Recruitment Hub" 
+                        to="/dashboard/org/mock-interview" 
+                        isActive={isActive('/dashboard/org/mock-interview')}
+                        isExpanded={isExpanded}
+                        onMobileClick={handleMobileMenuClick}
+                        badge="AI"
+                      />
+                    )}
                     <MenuItem 
                       icon={MessageSquare} 
                       label="Student Tickets" 
@@ -703,7 +732,7 @@ const DashboardLayoutContent = () => {
                       onMobileClick={handleMobileMenuClick}
                     />
                     
-                    <SectionHeader title="Teaching Ops" icon={Settings2Icon} isExpanded={isExpanded} />
+                    <SectionHeader title="Teaching Ops" icon={Settings2} isExpanded={isExpanded} />
                     <MenuItem icon={BookOpen} label="Course Workspace" to="/dashboard/org?tab=courses" isActive={location.search === '?tab=courses'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Users} label="Learner Directory" to="/dashboard/org?tab=students" isActive={location.search === '?tab=students'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={FileText} label="Assessment Desk" to="/dashboard/org?tab=assignments" isActive={location.search === '?tab=assignments'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
@@ -712,6 +741,17 @@ const DashboardLayoutContent = () => {
                     <MenuItem icon={Download} label="Resource Library" to="/dashboard/org?tab=materials" isActive={location.search === '?tab=materials'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Bell} label="Announcements" to="/dashboard/org?tab=notices" isActive={location.search === '?tab=notices'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={RotateCcw} label="Retake Queue" to="/dashboard/org/quiz-retake-requests" isActive={isActive('/dashboard/org/quiz-retake-requests')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    {interviewEnabled.org_admin && (
+                      <MenuItem 
+                        icon={Brain} 
+                        label="Recruitment Hub" 
+                        to="/dashboard/org/mock-interview" 
+                        isActive={isActive('/dashboard/org/mock-interview')}
+                        isExpanded={isExpanded}
+                        onMobileClick={handleMobileMenuClick}
+                        badge="AI"
+                      />
+                    )}
                   </>
                 )}
               </SidebarMenu>
@@ -785,7 +825,7 @@ const DashboardLayoutContent = () => {
 
             {isExpanded && (
               <Link to="/dashboard/profile" onClick={handleMobileMenuClick} className="relative z-10 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
-                <Settings2Icon className="h-4 w-4" />
+                <Settings2 className="h-4 w-4" />
               </Link>
             )}
           </div>
@@ -801,7 +841,7 @@ const DashboardLayoutContent = () => {
                   isExpanded ? "p-2.5" : "p-3 justify-center"
                 )}
               >
-                <DownloadIcon className={cn("h-5 w-5 transition-transform group-hover:-translate-y-0.5", !isExpanded && "h-6 w-6")} />
+                <Download className={cn("h-5 w-5 transition-transform group-hover:-translate-y-0.5", !isExpanded && "h-6 w-6")} />
                 {isExpanded && (
                   <div className="text-left">
                     <p className="text-sm font-medium leading-none">Install App</p>

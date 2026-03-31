@@ -248,3 +248,30 @@ export const upgradeUser = async (req, res) => {
   }
 };
 
+/**
+ * TOGGLE PLACEMENT READY (ADMIN ONLY)
+ */
+export const updatePlacementReady = async (req, res) => {
+  try {
+    const { userId, isReady } = req.body;
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: { 'studentDetails.isPlacementReady': isReady } },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({
+      success: true,
+      message: `Student marked as ${isReady ? 'Ready' : 'Not Ready'}`,
+      isPlacementReady: user.studentDetails.isPlacementReady
+    });
+  } catch (error) {
+    console.error('Update placement ready error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+

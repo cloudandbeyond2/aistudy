@@ -352,6 +352,14 @@ export const getDashboardStatsWithOrgs = async () => {
         forever: true,
         org_admin: true,
         student: true
+      },
+      interviewEnabled: admin?.interviewEnabled || {
+        free: false,
+        monthly: true,
+        yearly: true,
+        forever: true,
+        org_admin: true,
+        student: false
       }
     }
   };
@@ -756,6 +764,14 @@ export const getAdminSettings = async () => {
       forever: true,
       org_admin: true,
       student: true
+    },
+    interviewEnabled: admin?.interviewEnabled || {
+      free: false,
+      monthly: true,
+      yearly: true,
+      forever: true,
+      org_admin: true,
+      student: false
     }
   };
 };
@@ -789,7 +805,8 @@ export const updateAdminSettings = async (data) => {
     taxPercentage: data.taxPercentage,
     notebookEnabled: data.notebookEnabled,
     resumeEnabled: data.resumeEnabled,
-    careerEnabled: data.careerEnabled
+    careerEnabled: data.careerEnabled,
+    interviewEnabled: data.interviewEnabled
   };
 
   Object.assign(admin, updatePayload);
