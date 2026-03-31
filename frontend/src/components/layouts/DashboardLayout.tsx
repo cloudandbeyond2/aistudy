@@ -31,6 +31,7 @@ import {
   Bell,
   Newspaper,
   LayoutDashboard,
+  Gauge,
   Briefcase,
   Video,
   Users,
@@ -456,8 +457,8 @@ const DashboardLayoutContent = () => {
                 {/* Student Menu */}
                 {sessionStorage.getItem('role') === 'student' && (
                   <>
-                    <SectionHeader title="Overview" icon={LayoutDashboard} isExpanded={isExpanded} />
-                    <MenuItem icon={LayoutDashboard} label="Dashboard" to="/dashboard/student" isActive={isActive('/dashboard/student')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    <SectionHeader title="Overview" icon={Gauge} isExpanded={isExpanded} />
+                    <MenuItem icon={Gauge} label="Dashboard" to="/dashboard/student" isActive={isActive('/dashboard/student')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={User} label="My Profile" to="/dashboard/student/profile" isActive={isActive('/dashboard/student/profile')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
 
                     <SectionHeader title="Learning Tools" icon={Zap} isExpanded={isExpanded} />
@@ -500,7 +501,7 @@ const DashboardLayoutContent = () => {
                     <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     <SectionHeader title="Organization" icon={Building2} isExpanded={isExpanded} />
                     <MenuItem 
-                      icon={LayoutDashboard} 
+                      icon={Gauge} 
                       label="Dashboard" 
                       to="/dashboard/org" 
                       isActive={isActive('/dashboard/org') && !location.search}
@@ -642,13 +643,13 @@ const DashboardLayoutContent = () => {
                 {sessionStorage.getItem('role') === 'dept_admin' && (
                   <>
                     <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                    <SectionHeader title="My Work" icon={LayoutDashboard} isExpanded={isExpanded} />
+                    <SectionHeader title="My Work" icon={Gauge} isExpanded={isExpanded} />
                     
                     <MenuItem 
-                      icon={LayoutDashboard} 
+                      icon={Gauge} 
                       label="Dashboard" 
                       to="/dashboard" 
-                      isActive={isActive('/dashboard/staff')}
+                      isActive={isActive('/dashboard')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
