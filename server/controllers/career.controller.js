@@ -40,6 +40,7 @@ export const getOrgPlacementStats = async (req, res) => {
     const { organizationId } = req.query;
     try {
         const students = await User.find({ organization: organizationId, role: 'student' })
+            .populate('department', 'name')
             .select('mName email studentDetails department');
 
         const studentIds = students.map(s => s._id);
@@ -82,8 +83,9 @@ export const getOrgPlacementStats = async (req, res) => {
                 studentId: s._id,
                 name: s.mName,
                 email: s.email,
-                department: s.department,
+                department: s.department?.name || s.studentDetails?.department || "No Dept",
                 rollNo: s.studentDetails?.rollNo,
+                studentDetails: s.studentDetails,
                 placementScore: finalScore,
                 resumeComplete: finalResumeComplete,
                 projectsCount: profile?.projectsCount || 0,

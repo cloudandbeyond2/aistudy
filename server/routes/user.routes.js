@@ -23,7 +23,4 @@ router.post('/request-deletion', requestAccountDeletion);
 router.get('/admin/deletion-requests', getDeletionRequests);
 router.put('/admin/deletion-request', updateDeletionRequestStatus);
 
-// Mock Interview Helper
-router.put('/placement-ready', updatePlacementReady);
-
 export default router;

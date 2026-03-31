@@ -13,6 +13,7 @@ import {
   getOrganizationApplications,
   getStudentApplications
 } from '../controllers/mockTraining.controller.js';
+import { updatePlacementReady } from '../controllers/user.controller.js';
 
 
 
@@ -27,6 +28,7 @@ router.post('/mock-interview/chat', chatWithAiInterviewer);
 router.post('/mock-interview/finalize', finalizeMockRound);
 
 router.post('/mock-interview/tmr-feedback', updateTmrMockFeedback);
+router.put('/mock-interview/placement-ready', updatePlacementReady);
 
 // Student Stats & Assignments
 router.get('/mock-interview/stats', getStudentMockStats);

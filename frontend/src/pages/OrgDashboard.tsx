@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle, BookOpen, FileQuestion, Calendar, CheckCircle2, ArrowUpCircle, Edit } from 'lucide-react';
+import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle, BookOpen, FileQuestion, Calendar, CheckCircle2, ArrowUpCircle, Edit, Globe, BarChart3 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -2729,21 +2729,14 @@ const handleUpdateDeptAdmin = async () => {
 </div>
 
             <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })} className="w-full">
-                {/* <TabsList className="flex flex-wrap h-auto w-full gap-1 p-1 bg-muted rounded-xl mb-6">
-                    {role !== 'dept_admin' && (
-                        <>
-                            <TabsTrigger value="departments" className="flex-1 min-w-[120px]">Departments</TabsTrigger>
-                            
-                        </>
-                    )}
+                <TabsList className="flex flex-wrap h-auto w-full gap-1 p-1 bg-muted rounded-xl mb-6">
+                    {role !== 'dept_admin' && <TabsTrigger value="departments" className="flex-1 min-w-[120px]">Departments</TabsTrigger>}
                     {role === 'org_admin' && (
                         <>
                             <TabsTrigger value="staff" className="flex-1 min-w-[120px]">Staff</TabsTrigger>
-                            <TabsTrigger value="approvals" className="flex-1 min-w-[120px]">Approvals</TabsTrigger>
-                            <TabsTrigger value="activity" className="flex-1 min-w-[120px]">Activity</TabsTrigger>
+                            <TabsTrigger value="students" className="flex-1 min-w-[120px]">Students</TabsTrigger>
                         </>
                     )}
-                    <TabsTrigger value="students" className="flex-1 min-w-[120px]">Students</TabsTrigger>
                     <TabsTrigger value="courses" className="flex-1 min-w-[120px]">Courses</TabsTrigger>
                     <TabsTrigger value="assignments" className="flex-1 min-w-[120px]">Assignments</TabsTrigger>
                     <TabsTrigger value="meetings" className="flex-1 min-w-[120px]">Meetings</TabsTrigger>
@@ -2751,8 +2744,10 @@ const handleUpdateDeptAdmin = async () => {
                     <TabsTrigger value="materials" className="flex-1 min-w-[120px]">Materials</TabsTrigger>
                     <TabsTrigger value="notices" className="flex-1 min-w-[120px]">Noticeboard</TabsTrigger>
                     <TabsTrigger value="career" className="flex-1 min-w-[120px]"><Briefcase className="w-3.5 h-3.5 mr-1" />Career & Placement</TabsTrigger>
-
-                </TabsList> */}
+                    {role === 'org_admin' && (
+                        <TabsTrigger value="landing" className="flex-1 min-w-[120px]"><Globe className="w-3.5 h-3.5 mr-1" />Landing Page</TabsTrigger>
+                    )}
+                </TabsList>
 
                 {/* DEPARTMENTS TAB */}
                <TabsContent value="departments" className="space-y-6">
@@ -5627,6 +5622,13 @@ Login:
                         </CardContent>
                     </Card>
                 </TabsContent>
+                
+                {/* LANDING PAGE TAB */}
+                {role === 'org_admin' && (
+                    <TabsContent value="landing" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <OrgLandingSetup organizationId={orgId} />
+                    </TabsContent>
+                )}
             </Tabs>
 
             {/* Create Assignment Dialog - Moved outside loop for global access */}

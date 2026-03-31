@@ -216,7 +216,7 @@ const DashboardLayoutContent = () => {
     free: false, monthly: true, yearly: true, forever: true, org_admin: true, student: false
   });
   const [interviewEnabled, setInterviewEnabled] = useState({
-    free: false, monthly: true, yearly: true, forever: true, org_admin: true, student: false
+    free: false, monthly: true, yearly: true, forever: true, org_admin: true, student: true
   });
 
 
