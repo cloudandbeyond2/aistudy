@@ -55,7 +55,7 @@ import {
   TrendingUp,
   Clock,
   CheckCircle2,
-  ListTodo,
+  ListTodo,  
   Zap,
   Sun,
   Moon
@@ -495,8 +495,8 @@ const DashboardLayoutContent = () => {
                 {admin && (
                   <>
                     <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                    <SectionHeader title="Administration" icon={Settings2Icon} isExpanded={isExpanded} />
-                    <MenuItem icon={Settings2Icon} label="Admin Panel" to="/admin" isActive={isActive('/admin')} badge="ADMIN" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    <SectionHeader title="Administration" icon={Settings2} isExpanded={isExpanded} />
+                    <MenuItem icon={Settings2} label="Admin Panel" to="/admin" isActive={isActive('/admin')} badge="ADMIN" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                   </>
                 )}
 
