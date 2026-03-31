@@ -402,14 +402,14 @@ export default function StaffSupport() {
                   <div className="p-2 bg-white/20 rounded-lg h-fit"><Mail size={18} /></div>
                   <div>
                     <p className="text-[10px] uppercase font-bold text-blue-100 tracking-wider">Email Support</p>
-                    <p className="text-sm font-semibold truncate">support.colossusiq@gmail.com</p>
+                    <p className="text-base font-semibold truncate">colossusiq@gmail.com</p>
                   </div>
                 </div>
                 <div className="flex gap-4">
                   <div className="p-2 bg-white/20 rounded-lg h-fit"><Clock size={18} /></div>
                   <div>
                     <p className="text-[10px] uppercase font-bold text-blue-100 tracking-wider">Office Hours</p>
-                    <p className="text-sm font-semibold">9:00 AM - 6:00 PM (IST)</p>
+                    <p className="text-base font-semibold">9:00 AM - 6:00 PM (IST)</p>
                   </div>
                 </div>
               </div>

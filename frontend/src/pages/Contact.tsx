@@ -28,10 +28,10 @@ import { useToast } from '@/hooks/use-toast';
 import { appName, serverURL } from '@/constants';
 
 const infoCards = [
-  { icon: Mail, title: 'Email', value: 'support@colossusiq.com', text: 'Best for product and account questions.' },
-  { icon: Phone, title: 'Phone', value: '+91 00000 00000', text: 'Available during business hours.' },
+  { icon: Mail, title: 'Email', value: 'colossusiq@gmail.com', text: 'Best for product and account questions.' },
+  { icon: Phone, title: 'Phone', value: '+91 82200 02535', text: 'Available during business hours.' },
   { icon: MapPin, title: 'Location', value: 'Remote first', text: 'Corporate support across time zones.' },
-  { icon: Clock, title: 'Response', value: '24-48 hours', text: 'We reply as soon as the queue allows.' },
+  { icon: Clock, title: 'Response', value: '9:00 AM - 6:00 PM (IST)', text: 'We reply as soon as the queue allows.' },
 ];
 
 const faqItems = [
