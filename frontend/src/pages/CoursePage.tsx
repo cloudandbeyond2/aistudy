@@ -46,7 +46,15 @@ const cleanGeneratedHtml = (htmlContent) => {
   if (!htmlContent) return '';
   
   // Remove common unwanted wrapper tags like <html>, <body>, etc.
-  let cleaned = htmlContent;
+  let cleaned = String(htmlContent);
+
+  // Remove markdown code fences that sometimes wrap generated HTML.
+  cleaned = cleaned.replace(/^\s*```html\s*/i, '');
+  cleaned = cleaned.replace(/^\s*```\s*/i, '');
+  cleaned = cleaned.replace(/\s*```\s*$/i, '');
+
+  // Remove stray leading "html" text left behind by partial fence stripping.
+  cleaned = cleaned.replace(/^\s*html\s*(?:\r?\n|\s)+/i, '');
   
   // Remove <html> tags and their contents if they're wrapping everything
   cleaned = cleaned.replace(/<html[^>]*>/gi, '');
@@ -986,7 +994,15 @@ Requirements:
 
   const isSubtopicReadyForDisplay = (subtopic) => {
     if (!subtopic?.theory) return false;
-    if (subtopic.theory.length < 300) return false;
+    const plainText = String(subtopic.theory || '')
+      .replace(/<pre[\s\S]*?<\/pre>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const wordCount = plainText ? plainText.split(/\s+/).filter(Boolean).length : 0;
+    if (plainText.length < 1200) return false;
+    if (wordCount < 220) return false;
     return type === 'video & text course'
       ? !!subtopic.youtube
       : !!subtopic.image;
@@ -1000,7 +1016,7 @@ Requirements:
     setSelected(subtopicTitle);
 
     if (subtopicData?.theory) {
-      setTheory(subtopicData.theory);
+      setTheory(cleanGeneratedHtml(subtopicData.theory));
       setMedia(type === 'video & text course' ? subtopicData.youtube || '' : subtopicData.image || '');
     } else {
       setTheory(`<div class="prose dark:prose-invert max-w-none">
@@ -1268,7 +1284,7 @@ updateLocalCache(clickedTopic, clickedSub, { theory: cleanedTheory, done: true }
     // Show theory immediately
     setSelectedTopicTitle(topics || currentTopicTitle || '');
     setSelected(sub);
-    setTheory(theory);
+    setTheory(cleanGeneratedHtml(theory));
     
     setImageLoading(prev => new Map(prev).set(sub, true));
     
@@ -1397,7 +1413,7 @@ updateLocalCache(clickedTopic, clickedSub, { theory: cleanedTheory, done: true }
 
     if (isSubtopicReadyForDisplay(mSubTopic)) {
       // CACHE HIT: Show immediately
-      setTheory(mSubTopic.theory);
+      setTheory(cleanGeneratedHtml(mSubTopic.theory));
       setMedia(type === 'video & text course' ? mSubTopic.youtube : mSubTopic.image);
     } else {
       startSubtopicPreparation(topicTitle, subtopicTitle, mSubTopic);
@@ -1513,7 +1529,7 @@ mSubTopic.image = image;
     // Batch update all states at once
     setSelectedTopicTitle(topics);
     setSelected(mSubTopic.title);
-    setTheory(theory);
+    setTheory(cleanedTheory);
     setMedia(image); // Always set media here
 
     setIsLoading(false);
@@ -1548,13 +1564,14 @@ mSubTopic.image = image;
       return;
     }
 
-    mSubTopic.theory = theory;
+    const cleanedTheory = cleanGeneratedHtml(theory);
+    mSubTopic.theory = cleanedTheory;
     mSubTopic.youtube = image;
     mSubTopic.done = true;
 
     setSelectedTopicTitle(topics);
     setSelected(mSubTopic.title);
-    setTheory(theory);
+    setTheory(cleanedTheory);
     setMedia(image);
 
     setIsLoading(false);
@@ -2289,7 +2306,7 @@ sendDataVideo(url, cleanedTheory, mTopic, mSubTopic);
           
           // Check if content exists
           if (isSubtopicReadyForDisplay(firstSubtopic)) {
-            setTheory(firstSubtopic.theory);
+            setTheory(cleanGeneratedHtml(firstSubtopic.theory));
             setMedia(type === 'video & text course' ? firstSubtopic.youtube : firstSubtopic.image);
           } else {
             setTimeout(() => {
