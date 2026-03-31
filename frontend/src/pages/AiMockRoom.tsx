@@ -40,6 +40,9 @@ const AiMockRoom = () => {
     const [isThinking, setIsThinking] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [isMuted, setIsMuted] = useState(false);
+    const [ttsSupported, setTtsSupported] = useState(true);
+    const [sttSupported, setSttSupported] = useState(true);
+    const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
     
     const scrollRef = useRef<HTMLDivElement>(null);
     const recognitionRef = useRef<any>(null);
@@ -77,7 +80,24 @@ const AiMockRoom = () => {
 
     const setupSpeech = () => {
         const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        setTtsSupported(typeof window !== 'undefined' && 'speechSynthesis' in window);
+
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            const pickVoice = () => {
+                const voices = window.speechSynthesis.getVoices();
+                if (!voices.length) return;
+                const englishVoice =
+                    voices.find(v => v.lang?.toLowerCase().startsWith('en') && /female|zira|aria|google/i.test(v.name)) ||
+                    voices.find(v => v.lang?.toLowerCase().startsWith('en')) ||
+                    voices[0];
+                setSelectedVoice(englishVoice || null);
+            };
+            pickVoice();
+            window.speechSynthesis.onvoiceschanged = pickVoice;
+        }
+
         if (SpeechRecognition) {
+            setSttSupported(true);
             const recognition = new SpeechRecognition();
             recognition.continuous = false;
             recognition.interimResults = false;
@@ -90,18 +110,29 @@ const AiMockRoom = () => {
                 setIsListening(false);
             };
 
-            recognition.onerror = () => {
+            recognition.onerror = (event: any) => {
                 setIsListening(false);
-                toast({ title: "Mic Error", description: "Could not hear you. Try typing.", variant: "destructive" });
+                const errorType = event?.error;
+                const message =
+                    errorType === 'not-allowed'
+                        ? 'Microphone permission denied. Please allow mic access in browser settings.'
+                        : errorType === 'no-speech'
+                        ? 'No speech detected. Please try speaking again.'
+                        : errorType === 'audio-capture'
+                        ? 'No microphone detected. Please connect or enable a microphone.'
+                        : 'Could not hear you. Try typing.';
+                toast({ title: "Mic Error", description: message, variant: "destructive" });
             };
 
             recognition.onend = () => setIsListening(false);
             recognitionRef.current = recognition;
+        } else {
+            setSttSupported(false);
         }
     };
 
     const toggleListening = () => {
-        if (!recognitionRef.current) {
+        if (!sttSupported || !recognitionRef.current) {
             toast({ title: "Not Supported", description: "Speech recognition not supported in this browser." });
             return;
         }
@@ -115,11 +146,22 @@ const AiMockRoom = () => {
 
     const speak = (text: string) => {
         if (isMuted) return;
+        if (!ttsSupported || !('speechSynthesis' in window)) {
+            toast({ title: "Audio Not Supported", description: "Text-to-speech is not supported in this browser." });
+            return;
+        }
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        if (selectedVoice) utterance.voice = selectedVoice;
         utterance.onstart = () => setIsSpeaking(true);
         utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => {
+            setIsSpeaking(false);
+            toast({ title: "Audio Error", description: "Unable to play AI voice. Check browser audio permissions.", variant: "destructive" });
+        };
         window.speechSynthesis.speak(utterance);
     };
 
@@ -145,8 +187,8 @@ const AiMockRoom = () => {
                 setMessages(prev => [...prev, { role: 'ai', message: aiMsg }]);
                 speak(aiMsg);
 
-                // Check if session wrapped up (Gemini prompt includes a trigger phrase)
-                if (aiMsg.toLowerCase().includes("performance blueprint")) {
+                // Backend decides when the session should wrap up (avoids accidental early close).
+                if (res.data.shouldFinalize) {
                     setTimeout(() => finalizeSession(sessId || session?._id), 3000);
                 }
             }
@@ -282,14 +324,14 @@ const AiMockRoom = () => {
                         />
                         
                         <div className="flex items-center gap-2">
-                             <Button 
+                            <Button 
                                 onClick={toggleListening}
                                 className={`w-14 h-14 rounded-full transition-all duration-300 ${
                                     isListening 
                                         ? 'bg-rose-500 hover:bg-rose-600 shadow-[0_0_20px_rgba(244,63,94,0.4)]' 
                                         : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
                                 }`}
-                                disabled={isThinking || isSpeaking}
+                                disabled={isThinking || isSpeaking || !sttSupported}
                             >
                                 {isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
                             </Button>

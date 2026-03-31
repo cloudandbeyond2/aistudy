@@ -32,7 +32,32 @@ const MockReport = () => {
         try {
             const res = await axios.get(`${serverURL}/api/mock-interview/application/${applicationId}`);
             if (res.data.success) {
-                setReport(res.data.data);
+                const app = res.data.data;
+                const feedback = app?.genAiFeedback || {};
+                const hasAnalytics =
+                    Number(feedback?.score || 0) > 0 ||
+                    !!feedback?.overallAnalysis ||
+                    (Array.isArray(feedback?.strengths) && feedback.strengths.length > 0) ||
+                    (Array.isArray(feedback?.weaknesses) && feedback.weaknesses.length > 0) ||
+                    (Array.isArray(feedback?.technicalGaps) && feedback.technicalGaps.length > 0);
+
+                const hasTranscript = Array.isArray(feedback?.transcript) && feedback.transcript.length > 0;
+
+                // Auto-recover analytics if transcript exists but analysis wasn't generated/stored.
+                if (!hasAnalytics && hasTranscript) {
+                    try {
+                        await axios.post(`${serverURL}/api/mock-interview/finalize`, { applicationId });
+                        const retry = await axios.get(`${serverURL}/api/mock-interview/application/${applicationId}`);
+                        if (retry.data.success) {
+                            setReport(retry.data.data);
+                            return;
+                        }
+                    } catch (e) {
+                        console.error('Auto-finalize failed:', e);
+                    }
+                }
+
+                setReport(app);
             }
         } catch (e) {
             console.error(e);
