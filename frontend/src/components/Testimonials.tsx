@@ -99,13 +99,13 @@ const Testimonials = () => {
     <section className="relative py-20 md:py-32 overflow-hidden bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30 transition-colors duration-300">
       {/* Animated Background Elements - Dark mode adjustments */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-300/20 dark:bg-indigo-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-300/20 dark:bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-300/10 dark:bg-cyan-500/5 rounded-full blur-3xl animate-pulse delay-2000" />
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-sky-300/20 dark:bg-sky-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-sky-400/20 dark:bg-sky-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-sky-300/10 dark:bg-sky-500/5 rounded-full blur-3xl animate-pulse delay-2000" />
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
-        {/* AI-Inspired Header - Dark mode text adjustments */}
+        {/* AI-Inspired Header - Dark blue text, skyblue icon */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -116,16 +116,16 @@ const Testimonials = () => {
           <motion.div
             animate={{ rotate: [0, 5, -5, 0] }}
             transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100/50 dark:bg-indigo-900/30 backdrop-blur-sm border border-indigo-200 dark:border-indigo-700/50 mb-4"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-100/50 dark:bg-sky-900/30 backdrop-blur-sm border border-sky-200 dark:border-sky-700/50 mb-4"
           >
-            <Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-            <span className="text-xs md:text-sm font-semibold text-indigo-600 dark:text-indigo-400 tracking-wide">
+            <Sparkles className="h-4 w-4 text-sky-500" />
+            <span className="text-xs md:text-sm font-semibold text-sky-600 dark:text-sky-400 tracking-wide">
               AI-POWERED INSIGHTS
             </span>
           </motion.div>
           
-          <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold bg-gradient-to-r from-slate-900 via-indigo-800 to-purple-900 dark:from-slate-100 dark:via-indigo-300 dark:to-purple-300 bg-clip-text text-transparent">
-           Our success is defined by how fast our learners grow.
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-[#0A192F] dark:text-slate-100">
+            Our success is defined by how fast our learners grow.
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mt-4 text-lg max-w-2xl mx-auto transition-colors duration-300">
             Real experiences from real people who transformed their journey with our AI platform
@@ -144,12 +144,12 @@ const Testimonials = () => {
               exit="exit"
               className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 dark:border-slate-700/50 p-8 md:p-12 transition-colors duration-300"
             >
-              {/* Quote Icon - Dark mode opacity adjustment */}
+              {/* Quote Icon - Skyblue */}
               <div className="absolute top-6 right-6 opacity-10 dark:opacity-20">
-                <Quote className="h-20 w-20 text-indigo-600 dark:text-indigo-400" />
+                <Quote className="h-20 w-20 text-sky-400" />
               </div>
 
-              {/* Rating with Animation */}
+              {/* Rating with Animation - Yellow stars */}
               <div className="flex gap-1 mb-6">
                 {[...Array(5)].map((_, i) => (
                   <motion.div
@@ -169,17 +169,17 @@ const Testimonials = () => {
                 ))}
               </div>
 
-              {/* Testimonial Text - Dark mode text color */}
+              {/* Testimonial Text - Dark blue */}
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 leading-relaxed mb-8 transition-colors duration-300"
+                className="text-xl md:text-2xl text-[#0A192F] dark:text-gray-300 leading-relaxed mb-8 transition-colors duration-300"
               >
                 "{current.message}"
               </motion.p>
 
-              {/* User Info - Dark mode adjustments */}
+              {/* User Info - Skyblue avatar */}
               <div className="flex items-center gap-4">
                 <motion.div
                   initial={{ scale: 0 }}
@@ -191,28 +191,28 @@ const Testimonials = () => {
                     <img
                       src={current.photoUrl}
                       alt={current.userName}
-                      className="h-14 w-14 rounded-full object-cover border-2 border-indigo-500 dark:border-indigo-400 shadow-lg"
+                      className="h-14 w-14 rounded-full object-cover border-2 border-sky-400 shadow-lg"
                     />
                   ) : (
-                    <div className="h-14 w-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <div className="h-14 w-14 rounded-full bg-gradient-to-br from-sky-400 to-sky-500 flex items-center justify-center shadow-lg">
                       <User className="h-6 w-6 text-white" />
                     </div>
                   )}
                   <motion.div
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1 border-2 border-white dark:border-slate-900"
+                    className="absolute -bottom-1 -right-1 bg-sky-400 rounded-full p-1 border-2 border-white dark:border-slate-900"
                   >
                     <div className="h-2 w-2 rounded-full bg-white" />
                   </motion.div>
                 </motion.div>
 
                 <div>
-                  <p className="font-bold text-lg text-gray-900 dark:text-white transition-colors duration-300">
+                  <p className="font-bold text-lg text-[#0A192F] dark:text-white transition-colors duration-300">
                     {current.userName}
                   </p>
-                  <div className="flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-400">
-                    <Award className="h-4 w-4" />
+                  <div className="flex items-center gap-1 text-sm text-sky-500">
+                    <Award className="h-4 w-4 text-sky-500" />
                     <span>{current.profession}</span>
                   </div>
                 </div>
@@ -220,7 +220,7 @@ const Testimonials = () => {
             </motion.div>
           </AnimatePresence>
 
-          {/* Navigation Buttons - Dark mode */}
+          {/* Navigation Buttons - Skyblue accents */}
           <div className="flex justify-center gap-4 mt-8">
             <motion.button
               whileHover={{ scale: 1.1 }}
@@ -228,7 +228,7 @@ const Testimonials = () => {
               onClick={prevTestimonial}
               className="p-3 rounded-full bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-slate-700"
             >
-              <ChevronLeft className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              <ChevronLeft className="h-5 w-5 text-sky-500" />
             </motion.button>
             
             <div className="flex gap-2 items-center">
@@ -242,8 +242,8 @@ const Testimonials = () => {
                   }}
                   className={`h-2 rounded-full transition-all duration-300 ${
                     idx === currentIndex
-                      ? "w-8 bg-indigo-600 dark:bg-indigo-500"
-                      : "w-2 bg-gray-300 dark:bg-slate-600 hover:bg-indigo-300 dark:hover:bg-indigo-600"
+                      ? "w-8 bg-sky-500"
+                      : "w-2 bg-gray-300 dark:bg-slate-600 hover:bg-sky-300 dark:hover:bg-sky-600"
                   }`}
                 />
               ))}
@@ -255,12 +255,12 @@ const Testimonials = () => {
               onClick={nextTestimonial}
               className="p-3 rounded-full bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-slate-700"
             >
-              <ChevronRight className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              <ChevronRight className="h-5 w-5 text-sky-500" />
             </motion.button>
           </div>
         </div>
 
-        {/* Mini Stats Cards - Dark mode */}
+        {/* Mini Stats Cards - Skyblue icons, dark blue text */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -278,8 +278,8 @@ const Testimonials = () => {
               whileHover={{ y: -5 }}
               className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 text-center border border-white/50 dark:border-slate-700/50 shadow-lg transition-colors duration-300"
             >
-              <stat.icon className="h-8 w-8 text-indigo-600 dark:text-indigo-400 mx-auto mb-3" />
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
+              <stat.icon className={`h-8 w-8 mx-auto mb-3 ${stat.icon === Star ? 'text-yellow-400' : 'text-sky-500'}`} />
+              <p className="text-2xl font-bold text-[#0A192F] dark:text-white">{stat.value}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
             </motion.div>
           ))}

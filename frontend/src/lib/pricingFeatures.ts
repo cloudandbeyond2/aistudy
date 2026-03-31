@@ -57,7 +57,7 @@ export const PRICING_PLAN_FEATURES: Record<string, Record<string, boolean | stri
     'Resume Builder': false,
     'AI Notebook': false,
     'Interview Preparation': false,
-    'Certification': true,
+    'Certification': false,
     'Priority Support': false,
     'Advanced Analytics': false,
   },

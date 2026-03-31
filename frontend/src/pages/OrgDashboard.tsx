@@ -18,6 +18,8 @@ import AdminStatCard from "@/components/admin/AdminStatCard";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Swal from 'sweetalert2';
+import OrgLandingSetup from "@/components/dashboard/OrgLandingSetup";
+
 
 const defaultQuizSettings = {
     examMode: true,
@@ -3799,7 +3801,13 @@ const formatGuidanceText = (text: string) => {
                     </TabsContent>
                 )}
 
+                {/* LANDING PAGE SETUP TAB */}
+                <TabsContent value="landing" className="space-y-4">
+                    <OrgLandingSetup organizationId={orgId} />
+                </TabsContent>
+
                 {/* ASSIGNMENTS TAB */}
+
                 <TabsContent value="assignments" className="space-y-4">
                     <Card>
                         <CardHeader>

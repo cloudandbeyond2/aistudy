@@ -58,9 +58,11 @@ import scheduleRoutes from "./routes/scheduleRoutes.js";
 import supportRoutes from "./routes/supportRoutes.js";
 import globalNewsRoutes from "./routes/globalNews.routes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
+import orgLandingRoutes from "./routes/orgLanding.routes.js";
 import interviewPrepRoutes from "./routes/interviewPrep.routes.js";
 import reportRoutes from "./routes/report.routes.js";
 import analyticsRoutes from "./routes/analytics.routes.js";
+
 // -------------------- INIT --------------------
 connectDB();
 const app = express();
@@ -143,6 +145,7 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api", reportRoutes);
 app.use("/api", interviewPrepRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api", orgLandingRoutes);
 // -------------------- ERROR HANDLER --------------------
 app.use((err, req, res, next) => {
   console.error('SERVER ERROR:', err);

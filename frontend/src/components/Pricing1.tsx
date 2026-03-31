@@ -40,7 +40,7 @@ const PLAN_FEATURES: Record<string, Record<string, boolean | string>> = {
     'Theory & Image Course':true,'Create Courses':'1 course only',
     'AI Teacher Chat':true,'Course in 23+ Languages':false,
     'Video & Theory Course':false,'Resume Builder':false,'AI Notebook':false,
-    'Interview Preparation':false,'Certification':true,
+    'Interview Preparation':false,'Certification':false,
     'Priority Support':false,'Advanced Analytics':false,
   },
   monthly: {

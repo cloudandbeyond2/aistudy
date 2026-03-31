@@ -54,9 +54,17 @@ const Login = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    document.body.style.overflow = 'auto';
+    document.documentElement.style.overflow = 'auto';
+    
     if (sessionStorage.getItem('auth')) {
       redirectHome();
     }
+
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
   }, []);
 
   useEffect(() => {
@@ -79,8 +87,8 @@ const Login = () => {
 
   useEffect(() => {
     const updateGoogleButtonWidth = () => {
-      const availableWidth = Math.max(240, window.innerWidth - 48);
-      setGoogleButtonWidth(Math.min(340, availableWidth));
+      const availableWidth = Math.max(240, Math.min(400, window.innerWidth - 48));
+      setGoogleButtonWidth(availableWidth);
     };
 
     updateGoogleButtonWidth();
@@ -177,72 +185,91 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-dvh overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(30,138,138,0.08),transparent_25%),linear-gradient(180deg,hsl(var(--background))_0%,hsl(var(--background))_100%)]">
-      <div className="absolute right-0 top-0 -z-10 h-[28rem] w-[28rem] translate-x-1/3 -translate-y-1/3 rounded-full bg-primary/10 blur-3xl" />
-      <div className="absolute bottom-0 left-0 -z-10 h-[28rem] w-[28rem] -translate-x-1/3 translate-y-1/3 rounded-full bg-cyan-500/10 blur-3xl" />
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-white">
+      {/* Background effects */}
+      <div className="fixed right-0 top-0 -z-10 h-[28rem] w-[28rem] translate-x-1/3 -translate-y-1/3 rounded-full bg-[#14b8a6]/10 blur-3xl" />
+      <div className="fixed bottom-0 left-0 -z-10 h-[28rem] w-[28rem] -translate-x-1/3 translate-y-1/3 rounded-full bg-[#06b6d4]/10 blur-3xl" />
 
-      <div className="relative z-20 bg-[#06101d] px-4 pt-4 sm:px-6 lg:px-8 lg:pt-6">
+      {/* Top Bar */}
+      <div className="relative z-20 bg-[#0f172a] px-4 pt-4 sm:px-6 lg:px-8 lg:pt-6">
         <InnerPageTopBar variant="dark" className="px-0" />
       </div>
 
-      <div className="grid min-h-dvh lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="relative hidden overflow-hidden bg-slate-950 text-white lg:flex lg:items-center lg:justify-center lg:px-12">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(30,138,138,0.18),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.12),transparent_30%)]" />
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-10 mix-blend-screen"
-            style={{ backgroundImage: "url('/bexon/images/pattern-bg.webp')" }}
-          />
+      {/* Main Grid Layout */}
+      <div className="flex min-h-[calc(100vh-80px)] w-full lg:min-h-[calc(100vh-88px)]">
+        <div className="grid w-full grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
+          {/* Left Section - Full Height Dark Background */}
+          <section className="relative hidden min-h-full w-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 lg:block">
+            {/* Background Gradients */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.15),transparent_50%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(6,182,212,0.1),transparent_50%)]" />
+            
+            {/* Pattern Overlay */}
+            <div
+              className="absolute inset-0 bg-cover bg-center opacity-5 mix-blend-overlay"
+              style={{ backgroundImage: "url('/bexon/images/pattern-bg.webp')" }}
+            />
 
-          <motion.div
-            initial={{ opacity: 0, x: -24 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7 }}
-            className="relative z-10 max-w-xl space-y-8"
-          >
-            <div className="flex items-center gap-3">
-              <img src={appWordmarkLight} alt={appName} className="h-10 w-auto max-w-[260px]" />
-            </div>
-
-            <div className="space-y-4">
-              <Badge className="rounded-full bg-white/10 px-4 py-1.5 text-cyan-100 hover:bg-white/10">
-                <Sparkles className="mr-2 h-3.5 w-3.5" />
-                Sign in to your workspace
-              </Badge>
-              <h1 className="max-w-lg text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
-                A corporate learning platform built for clarity and speed.
-              </h1>
-              <p className="max-w-lg text-sm leading-7 text-slate-300 lg:text-base">
-                Access your dashboard, calendars, tasks, AI tools, and role-based panels from one clean entry point.
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                { value: `${stats.totalCourses}+`, label: 'Courses' },
-                { value: `${stats.totalUsers}+`, label: 'Learners' },
-                { value: '24/7', label: 'Access' },
-              ].map((item) => (
-                <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                  <div className="text-2xl font-semibold">{item.value}</div>
-                  <div className="mt-1 text-[11px] uppercase tracking-[0.25em] text-slate-400">{item.label}</div>
+            {/* Content Container */}
+            <div className="relative z-10 flex min-h-full items-center justify-center px-8 py-12 xl:px-12">
+              <motion.div
+                initial={{ opacity: 0, x: -24 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.7 }}
+                className="w-full max-w-xl space-y-8"
+              >
+                {/* Logo */}
+                <div className="flex items-center gap-3">
+                  <img src={appWordmarkLight} alt={appName} className="h-10 w-auto max-w-[260px]" />
                 </div>
-              ))}
-            </div>
 
-            <div className="grid gap-3">
-              {loginHighlights.map((item) => (
-                <div key={item.title} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                  <item.icon className="mt-0.5 h-5 w-5 text-cyan-200" />
-                  <div>
-                    <h3 className="font-semibold text-white">{item.title}</h3>
-                    <p className="text-sm leading-6 text-slate-300">{item.text}</p>
-                  </div>
+                {/* Hero Text */}
+                <div className="space-y-4">
+                  <Badge className="w-fit rounded-full bg-white/10 px-4 py-1.5 text-cyan-100 hover:bg-white/10">
+                    <Sparkles className="mr-2 h-3.5 w-3.5" />
+                    Sign in to your workspace
+                  </Badge>
+                  <h1 className="max-w-lg text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
+                    A corporate learning platform built for clarity and speed.
+                  </h1>
+                  <p className="max-w-lg text-sm leading-7 text-slate-300 lg:text-base">
+                    Access your dashboard, calendars, tasks, AI tools, and role-based panels from one clean entry point.
+                  </p>
                 </div>
-              ))}
-            </div>
-          </motion.div>
-        </section>
 
+                {/* Stats Cards */}
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {[
+                    { value: `${stats.totalCourses}+`, label: 'COURSES' },
+                    { value: `${stats.totalUsers}+`, label: 'LEARNERS' },
+                    { value: '24/7', label: 'ACCESS' },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                      <div className="text-2xl font-semibold text-white">{item.value}</div>
+                      <div className="mt-1 text-[11px] font-medium uppercase tracking-[0.25em] text-slate-400">
+                        {item.label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Highlights */}
+                <div className="grid gap-3">
+                  {loginHighlights.map((item) => (
+                    <div key={item.title} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                      <item.icon className="mt-0.5 h-5 w-5 flex-shrink-0 text-cyan-200" />
+                      <div>
+                        <h3 className="font-semibold text-white">{item.title}</h3>
+                        <p className="text-sm leading-6 text-slate-300">{item.text}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+          </section>
+
+          {/* Right Section - Login Form */}
         <section className="flex items-start justify-center px-4 py-8 sm:px-6 lg:items-center lg:px-8 lg:py-16">
           <motion.div
             initial={{ opacity: 0, x: 20 }}
@@ -408,6 +435,7 @@ const Login = () => {
             </Card>
           </motion.div>
         </section>
+        </div>
       </div>
     </div>
   );

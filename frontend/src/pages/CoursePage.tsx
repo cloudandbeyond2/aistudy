@@ -40,6 +40,56 @@ const getFallbackImage = (topic: string, subtopic: string) => {
   return `https://placehold.co/800x600/4f46e5/ffffff?text=${encodeURIComponent(subtopic.substring(0, 40))}`;
 };
 
+
+// Add this function inside your CoursePage component
+const cleanGeneratedHtml = (htmlContent) => {
+  if (!htmlContent) return '';
+  
+  // Remove common unwanted wrapper tags like <html>, <body>, etc.
+  let cleaned = htmlContent;
+  
+  // Remove <html> tags and their contents if they're wrapping everything
+  cleaned = cleaned.replace(/<html[^>]*>/gi, '');
+  cleaned = cleaned.replace(/<\/html>/gi, '');
+  
+  // Remove <body> tags
+  cleaned = cleaned.replace(/<body[^>]*>/gi, '');
+  cleaned = cleaned.replace(/<\/body>/gi, '');
+  
+  // Remove <head> tags and their contents
+  cleaned = cleaned.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
+  
+  // Remove DOCTYPE declarations
+  cleaned = cleaned.replace(/<!DOCTYPE[^>]*>/gi, '');
+  
+  // Remove XML declarations
+  cleaned = cleaned.replace(/<\?xml[^>]*\?>/gi, '');
+  
+  // Remove meta tags
+  cleaned = cleaned.replace(/<meta[^>]*>/gi, '');
+  
+  // Remove title tags
+  cleaned = cleaned.replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '');
+  
+  // Remove style tags
+  cleaned = cleaned.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+  
+  // Remove script tags
+  cleaned = cleaned.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  
+  // Remove link tags
+  cleaned = cleaned.replace(/<link[^>]*>/gi, '');
+  
+  // Remove unnecessary div wrappers if they're just wrapping content without classes
+  // This preserves divs that have meaningful content or classes
+  cleaned = cleaned.replace(/<div[^>]*>\s*<div[^>]*>/gi, '<div>');
+  cleaned = cleaned.replace(/<\/div>\s*<\/div>/gi, '</div>');
+  
+  // Trim whitespace
+  cleaned = cleaned.trim();
+  
+  return cleaned;
+};
 // Loading Popup Component
 const LoadingPopup = ({ isOpen, stage, subtopic, progress = 0 }) => {
   const getStageContent = () => {
@@ -1010,8 +1060,10 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
       const newTheory = theoryRes.data.topics[0].subtopics[0].theory;
       
       // Set theory content immediately - this should display your example text
-      setTheory(newTheory);
-      updateLocalCache(clickedTopic, clickedSub, { theory: newTheory, done: true });
+  // Set theory content immediately - this should display your example text
+const cleanedTheory = cleanGeneratedHtml(newTheory);
+setTheory(cleanedTheory);
+updateLocalCache(clickedTopic, clickedSub, { theory: cleanedTheory, done: true });
     }
     
     // Switch to image loading stage (but don't block content display)
@@ -1451,8 +1503,11 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
     }
 
     // ✅ SAFE TO MUTATE NOW
-    mSubTopic.theory = theory;
-    mSubTopic.image = image;
+    // mSubTopic.theory = theory;
+    // mSubTopic.image = image;
+    const cleanedTheory = cleanGeneratedHtml(theory);
+mSubTopic.theory = cleanedTheory;
+mSubTopic.image = image;
     mSubTopic.done = true;
 
     // Batch update all states at once
@@ -1637,7 +1692,8 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
       simulateProgress('complete');
       setLoadingProgress(100);
       setTimeout(() => setShowLoadingPopup(false), 1500);
-      sendDataVideo(url, parsedJson, mTopic, mSubTopic);
+     const cleanedTheory = cleanGeneratedHtml(parsedJson);
+sendDataVideo(url, cleanedTheory, mTopic, mSubTopic);
       } catch (error) {
         console.error(error);
         toast({
@@ -2684,12 +2740,12 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                 <span className="lg:hidden">Certificate</span>
               </Button>
             )}
-            <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm" asChild>
+            {/* <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm" asChild>
               <span className="cursor-pointer">
                 <Download className="h-4 w-4 mr-1" />
                 <span className="hidden lg:inline">{exporting ? "Exporting..." : "Export"}</span>
               </span>
-            </Button>
+            </Button> */}
             <ShareOnSocial
               textToShare={sessionStorage.getItem("mName") + " shared you course on " + mainTopic}
               link={websiteURL + "/shareable?id=" + courseId}
@@ -2863,7 +2919,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
 
                   <div className="space-y-4">
                     {/* Video or Image */}
-                    {type === "video & text course" ? (
+                    {/* {type === "video & text course" ? (
                       media ? (
                         <div className="overflow-hidden rounded-[20px] sm:rounded-[28px] border border-border/60 bg-background p-2 sm:p-3 shadow-sm">
                           <div className="aspect-video w-full overflow-hidden rounded-xl sm:rounded-2xl">
@@ -2942,7 +2998,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
                           </div>
                         )}
                       </div>
-                    )}
+                    )} */}
 
                     {/* Theory text */}
                     {theory && (
