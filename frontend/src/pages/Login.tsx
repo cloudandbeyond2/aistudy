@@ -384,7 +384,7 @@ const Login = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-center overflow-hidden">
+                <div className="flex justify-center">
                   <GoogleLogin
                     theme="outline"
                     type="standard"

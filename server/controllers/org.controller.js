@@ -382,73 +382,96 @@ export const deleteStudent = async (req, res) => {
  * BULK UPLOAD STUDENTS
  */
 export const bulkUploadStudents = async (req, res) => {
-    const { students, organizationId } = req.body; // Expects array of student objects
-
-    if (!Array.isArray(students)) {
-        return res.status(400).json({ success: false, message: 'Invalid data format' });
+    const { students, organizationId } = req.body;
+ 
+    if (!organizationId) {
+        return res.status(400).json({ success: false, message: "organizationId is required" });
     }
-
+    if (!Array.isArray(students)) {
+        return res.status(400).json({ success: false, message: "Invalid data format" });
+    }
+ 
     try {
-        // --- STUDENT LIMIT CHECK ---
         const limit = await getOrgStudentLimit(organizationId);
         const currentCount = await User.countDocuments({ organization: organizationId, role: 'student' });
-
+ 
         if (currentCount >= limit) {
-            return res.json({ 
-                success: false, 
-                message: `Student limit reached (${limit}). Bulk upload aborted.`,
-                limitReached: true 
+            return res.json({
+                success: false,
+                message: `Student limit reached (${limit}).`,
+                limitReached: true
             });
         }
-
+ 
+        // ✅ FIX 1: Pre-load all departments for this org once (avoid N+1 DB calls)
+        const allDepartments = await Department.find({ organizationId });
+ 
         const remainingSlots = limit - currentCount;
         const studentsToProcess = students.slice(0, remainingSlots);
-        const droppedCount = students.length - studentsToProcess.length;
-
+ 
         let addedCount = 0;
         const errors = [];
-
-        if (droppedCount > 0) {
-            errors.push(`${droppedCount} students were skipped because the organization limit (${limit}) was reached.`);
-        }
-
+ 
         for (const student of studentsToProcess) {
             const { email, name, password, department, section, rollNo, studentClass, academicYear } = student;
-
-            // Simple validation: skip rows with no email and no name
-            if (!email && !name) continue;
-
-            // If only name is provided but no email, we can't create a user
+ 
             if (!email) {
-                errors.push(`Row for ${name || 'unknown'} skipped because email is missing`);
+                errors.push(`Missing email for ${name || 'unknown'}`);
                 continue;
             }
-
+ 
             const existing = await User.findOne({ email });
             if (existing) {
                 errors.push(`Email ${email} already exists`);
                 continue;
             }
-
-            const hashedPassword = await bcrypt.hash(password || '123456', 10);
-
+ 
+            // ✅ FIX 2: Resolve department name → ObjectId
+            // Excel has "CS", "IT" etc. — find matching dept by name (case-insensitive)
+            let resolvedDepartmentId = null;
+            if (department) {
+                const matchedDept = allDepartments.find(
+                    d => d.name.toLowerCase() === String(department).toLowerCase()
+                );
+                if (matchedDept) {
+                    resolvedDepartmentId = matchedDept._id;
+                } else {
+                    // ✅ FIX 3: Don't fail — just log and continue without dept
+                    console.warn(`⚠️ Department "${department}" not found for org ${organizationId}`);
+                    errors.push(`Warning: Department "${department}" not found for ${email} — added without department`);
+                }
+            }
+ 
+            const hashedPassword = await bcrypt.hash(password || 'Student@123', 10);
+ 
             await new User({
                 email,
-                mName: name || 'Student',
+                mName: name || "Student",
                 password: hashedPassword,
                 role: 'student',
                 organization: organizationId,
-                department: department && department !== 'all' ? department : null,
-                studentDetails: { section, rollNo, studentClass, academicYear },
+                department: resolvedDepartmentId,  // ✅ ObjectId or null — never raw string
+                studentDetails: {
+                    section,
+                    rollNo,
+                    studentClass: studentClass || "",
+                    academicYear
+                },
                 isVerified: true
             }).save();
-
+ 
             addedCount++;
         }
-
-        res.json({ success: true, message: `Added ${addedCount} students`, errors });
+ 
+        res.json({
+            success: true,
+            message: `Successfully added ${addedCount} student${addedCount !== 1 ? 's' : ''}${errors.length > 0 ? ` (${errors.length} warning${errors.length !== 1 ? 's' : ''})` : ''}`,
+            errors
+        });
+ 
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error("🔥 BULK ERROR:", error.message);
+        return res.status(500).json({ success: false, message: error.message || "Server error" });
     }
 };
 
@@ -1690,6 +1713,53 @@ export const addDeptAdmin = async (req, res) => {
         res.json({ success: true, message: 'Department Admin added successfully' });
     } catch (error) {
         console.error('Add Dept Admin Error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+export const updateDeptAdmin = async (req, res) => {
+    const { id } = req.params;
+    const { name, departmentId, courseLimit, password, phone } = req.body;
+    
+    try {
+        const admin = await User.findById(id);
+        if (!admin) {
+            return res.status(404).json({ success: false, message: 'Department admin not found' });
+        }
+        
+        // Check if user is a dept_admin
+        if (admin.role !== 'dept_admin') {
+            return res.status(400).json({ success: false, message: 'User is not a department admin' });
+        }
+        
+        // Update fields
+        if (name) admin.mName = name;
+        if (departmentId) admin.department = departmentId;
+        if (courseLimit !== undefined) admin.courseLimit = courseLimit;
+        if (phone !== undefined) admin.phone = phone;
+        
+        // Update password if provided
+        if (password && password.trim() !== '') {
+            const bcrypt = await import('bcryptjs');
+            admin.password = await bcrypt.hash(password, 10);
+        }
+        
+        await admin.save();
+        
+        res.json({ 
+            success: true, 
+            message: 'Department admin updated successfully',
+            admin: {
+                _id: admin._id,
+                mName: admin.mName,
+                email: admin.email,
+                phone: admin.phone,
+                department: admin.department,
+                courseLimit: admin.courseLimit,
+                role: admin.role
+            }
+        });
+    } catch (error) {
+        console.error('Update Dept Admin Error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };

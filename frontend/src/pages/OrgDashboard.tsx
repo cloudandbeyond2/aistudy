@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle, BookOpen, FileQuestion, Calendar, CheckCircle2, ArrowUpCircle } from 'lucide-react';
+import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle, BookOpen, FileQuestion, Calendar, CheckCircle2, ArrowUpCircle, Edit } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -20,7 +20,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Swal from 'sweetalert2';
 import OrgLandingSetup from "@/components/dashboard/OrgLandingSetup";
 
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { MoreVertical, EyeOff } from "lucide-react"
 const defaultQuizSettings = {
     examMode: true,
     quizMode: 'secure',
@@ -51,6 +57,7 @@ const defaultQuizSettings = {
         detectNoise: true
     }
 };
+
 
 const createEmptyQuiz = () => ({
     question: '',
@@ -762,6 +769,7 @@ const OrgDashboard = () => {
     const [staffLoginLoading, setStaffLoginLoading] = useState(false);
     const [newDept, setNewDept] = useState({ name: '', description: '' });
     const [newDeptAdmin, setNewDeptAdmin] = useState({ name: '', email: '', password: '', phone: '', departmentId: '', courseLimit: 0 });
+    
     // const [newMaterial, setNewMaterial] = useState({ title: '', description: '', fileUrl: '', type: 'PDF', department: '' });
     const [newMaterial, setNewMaterial] = useState({
         title: '',
@@ -904,18 +912,31 @@ const resetProjectForm = () => {
         }
     };
 
-    const handleDeleteDepartment = async (id: string) => {
-        if (!confirm('Delete this department?')) return;
-        try {
-            const res = await axios.delete(`${serverURL}/api/org/department/${id}`);
-            if (res.data.success) {
-                toast({ title: "Success", description: "Department deleted" });
-                fetchOrgDepartments();
-            }
-        } catch (e) {
-            toast({ title: "Error", description: "Failed to delete department" });
-        }
-    };
+const handleDeleteDepartment = async (id: string) => {
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "Delete this department?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, delete",
+    cancelButtonText: "No",
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6b7280",
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const res = await axios.delete(`${serverURL}/api/org/department/${id}`);
+
+    if (res.data.success) {
+      Swal.fire("Deleted!", "Department deleted successfully.", "success");
+      fetchOrgDepartments();
+    }
+  } catch (e) {
+    Swal.fire("Error!", "Failed to delete department.", "error");
+  }
+};
 
     const handleAddDeptAdmin = async () => {
         try {
@@ -944,18 +965,33 @@ const resetProjectForm = () => {
             toast({ title: "Error", description: "Failed to add dept admin" });
         }
     };
-    const handleDeleteDeptAdmin = async (id: string) => {
-        if (!confirm('Delete this department admin?')) return;
-        try {
-            const res = await axios.delete(`${serverURL}/api/org/dept-admin/${id}`);
-            if (res.data.success) {
-                toast({ title: "Success", description: "Dept Admin deleted" });
-                fetchOrgDeptAdmins();
-            }
-        } catch (e) {
-            toast({ title: "Error", description: "Failed to delete dept admin" });
-        }
-    };
+
+
+const handleDeleteDeptAdmin = async (id: string) => {
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "Delete this department admin?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, delete",
+    cancelButtonText: "No",
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6b7280",
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const res = await axios.delete(`${serverURL}/api/org/dept-admin/${id}`);
+
+    if (res.data.success) {
+      Swal.fire("Deleted!", "Dept Admin deleted successfully.", "success");
+      fetchOrgDeptAdmins();
+    }
+  } catch (e) {
+    Swal.fire("Error!", "Failed to delete dept admin.", "error");
+  }
+};
 
     const fetchMeetings = async () => {
         try {
@@ -1088,18 +1124,32 @@ const resetProjectForm = () => {
         }
     };
 
-    const handleDeleteMeeting = async (id: string) => {
-        if (!confirm('Delete this meeting?')) return;
-        try {
-            const res = await axios.delete(`${serverURL}/api/org/meeting/${id}`);
-            if (res.data.success) {
-                toast({ title: "Success", description: "Meeting deleted" });
-                fetchMeetings();
-            }
-        } catch (e) {
-            toast({ title: "Error", description: "Failed to delete meeting" });
-        }
-    };
+
+const handleDeleteMeeting = async (id: string) => {
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "This meeting will be deleted!",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Yes, delete it!",
+    cancelButtonText: "No, cancel",
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const res = await axios.delete(`${serverURL}/api/org/meeting/${id}`);
+
+    if (res.data.success) {
+      Swal.fire("Deleted!", "Meeting has been deleted.", "success");
+      fetchMeetings();
+    }
+  } catch (e) {
+    Swal.fire("Error!", "Failed to delete meeting.", "error");
+  }
+};
 
     const handleCreateProject = async () => {
         try {
@@ -1834,19 +1884,33 @@ const formatGuidanceText = (text: string) => {
         }
     };
 
-    const handleDeleteAssignment = async (id: string) => {
-        if (!window.confirm('Are you sure you want to delete this assignment?')) return;
-        try {
-            const res = await axios.delete(`${serverURL}/api/org/assignment/${id}`);
-            if (res.data.success) {
-                toast({ title: 'Success', description: 'Assignment deleted successfully' });
-                fetchAssignments();
-            }
-        } catch (error) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete assignment' });
-        }
-    };
 
+
+const handleDeleteAssignment = async (id: string) => {
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "You want to delete this assignment?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, delete",
+    cancelButtonText: "No",
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6b7280",
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const res = await axios.delete(`${serverURL}/api/org/assignment/${id}`);
+
+    if (res.data.success) {
+      Swal.fire("Deleted!", "Assignment deleted successfully.", "success");
+      fetchAssignments();
+    }
+  } catch (error) {
+    Swal.fire("Error!", "Failed to delete assignment.", "error");
+  }
+};
     const handleCreateCourse = async (courseData) => {
         try {
             const res = await axios.post(`${serverURL}/api/org/course/create`, {
@@ -1955,18 +2019,32 @@ const formatGuidanceText = (text: string) => {
         }
     };
 
-    const handleDeleteCourse = async (courseId: string) => {
-        if (!window.confirm("Are you sure you want to delete this course?")) return;
-        try {
-            const res = await axios.delete(`${serverURL}/api/org/course/${courseId}`);
-            if (res.data.success) {
-                toast({ title: "Success", description: "Course deleted successfully" });
-                fetchCourses();
-            }
-        } catch (e) {
-            toast({ title: "Error", description: "Failed to delete course" });
-        }
-    };
+
+const handleDeleteCourse = async (courseId: string) => {
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "You want to delete this course?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, delete",
+    cancelButtonText: "No",
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6b7280",
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const res = await axios.delete(`${serverURL}/api/org/course/${courseId}`);
+
+    if (res.data.success) {
+      Swal.fire("Deleted!", "Course deleted successfully.", "success");
+      fetchCourses();
+    }
+  } catch (e) {
+    Swal.fire("Error!", "Failed to delete course.", "error");
+  }
+};
 
     const addTopic = (isEdit: boolean = false) => {
         const topic = { title: '', subtopics: [], order: isEdit ? editCourse.topics.length : newCourse.topics.length };
@@ -2047,22 +2125,40 @@ const formatGuidanceText = (text: string) => {
         }
     };
 
-    const handleDeleteStudent = async (studentId: string) => {
-        if (!confirm('Are you sure you want to delete this student?')) return;
-        try {
-            const res = await axios.delete(`${serverURL}/api/org/student/${studentId}`);
-            if (res.data.success) {
-                toast({ title: "Success", description: "Student deleted successfully" });
-                fetchStudents();
-                fetchStats();
-            } else {
-                toast({ title: "Error", description: res.data.message });
-            }
-        } catch (e: any) {
-            console.error(e);
-            toast({ title: "Error", description: e.response?.data?.message || "Request failed" });
-        }
-    };
+
+const handleDeleteStudent = async (studentId: string) => {
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "You want to delete this student?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, delete",
+    cancelButtonText: "No",
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6b7280",
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const res = await axios.delete(`${serverURL}/api/org/student/${studentId}`);
+
+    if (res.data.success) {
+      Swal.fire("Deleted!", "Student deleted successfully.", "success");
+      fetchStudents();
+      fetchStats();
+    } else {
+      Swal.fire("Error!", res.data.message, "error");
+    }
+  } catch (e: any) {
+    console.error(e);
+    Swal.fire(
+      "Error!",
+      e.response?.data?.message || "Request failed",
+      "error"
+    );
+  }
+};
 
     const handleCreateNotice = async () => {
         try {
@@ -2082,105 +2178,150 @@ const formatGuidanceText = (text: string) => {
         }
     };
 
-    const handleDeleteNotice = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this notice?')) return;
+
+
+const handleDeleteNotice = async (id: string) => {
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "You want to delete this notice?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, delete",
+    cancelButtonText: "No",
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6b7280",
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const res = await axios.delete(`${serverURL}/api/org/notice/${id}`);
+
+    if (res.data.success) {
+      Swal.fire("Deleted!", "Notice deleted successfully.", "success");
+      fetchNotices();
+    }
+  } catch (e) {
+    Swal.fire("Error!", "Failed to delete notice.", "error");
+  }
+};
+
+   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+ 
+    setIsUploading(true);
+ 
+    const reader = new FileReader();
+ 
+    reader.onload = async (evt) => {
         try {
-            const res = await axios.delete(`${serverURL}/api/org/notice/${id}`);
-            if (res.data.success) {
-                toast({ title: "Success", description: "Notice deleted" });
-                fetchNotices();
+            const result = evt.target?.result;
+            if (!result) throw new Error("File read failed");
+ 
+            const data = new Uint8Array(result as ArrayBuffer);
+            const workbook = XLSX.read(data, { type: "array" });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(sheet) as any[];
+ 
+            if (jsonData.length === 0) {
+                toast({ title: "Error", description: "Excel file is empty", variant: "destructive" });
+                return;
             }
-        } catch (e) {
-            toast({ title: "Error", description: "Failed to delete notice" });
+ 
+            const formattedData = jsonData.map((row) => ({
+                name: row["Name"],
+                email: row["Email"],
+                // ✅ Force password to string — Excel may parse it as a number
+                password: String(row["Password"] || "Student@123"),
+                // ✅ Department is sent as-is (name like "CS") — backend resolves to ObjectId
+                department: row["Department"] ? String(row["Department"]).trim() : null,
+                section: row["Section"] ? String(row["Section"]).trim() : null,
+                rollNo: row["Roll No"] || row["rollNo"] ? String(row["Roll No"] || row["rollNo"]).trim() : null,
+                studentClass: row["Class"] || row["studentClass"] || "",
+                academicYear: row["Academic Year"] || row["academicYear"] || "",
+            }));
+ 
+            const res = await axios.post(`${serverURL}/api/org/student/bulk-upload`, {
+                students: formattedData,
+                organizationId: orgId
+            });
+ 
+            if (res.data.success) {
+                toast({
+                    title: "Upload Complete",
+                    description: res.data.message
+                });
+ 
+ 
+              // ✅ Show department warnings if any
+if (res.data.errors?.length > 0) {
+    console.warn("Upload warnings:", res.data.errors);
+    const duplicates = res.data.errors.filter((e: string) => e.includes('already exists'));
+    const others = res.data.errors.filter((e: string) => !e.includes('already exists'));
+ 
+    if (duplicates.length > 0) {
+        toast({
+            title: `${duplicates.length} duplicate email(s) skipped`,
+            description: `These emails already have accounts and were not re-added.`,
+            variant: "destructive"
+        });
+    }
+    if (others.length > 0) {
+        toast({
+            title: "Other warnings",
+            description: others.slice(0, 2).join(" | "),
+            variant: "destructive"
+        });
+    }
+}
+ 
+                fetchStudents();
+                setIsBulkUploadOpen(false);
+            } else {
+                toast({
+                    title: "Upload Failed",
+                    description: res.data.message,
+                    variant: "destructive"
+                });
+            }
+        } catch (error: any) {
+            console.error(error);
+            toast({
+                title: "Error",
+                description: error?.response?.data?.message || "Upload failed. Check console for details.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsUploading(false);
+            // ✅ Reset file input so same file can be re-uploaded
+            e.target.value = "";
         }
     };
+ 
+    reader.readAsArrayBuffer(file);
+};
+ 
+  const downloadTemplate = () => {
+   const template = [
+    {
+        Name: 'John Doe',
+        Email: 'john@example.com',
+        Password: 'Password123',
+        Department: 'Computer Science',  // ✅ Must match exact dept name in your org
+        Section: 'A',
+        'Roll No': '101',
+        Class: 'BSc Computer Science',  
+        'Academic Year': '2024-2025'
+    }
+];
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    XLSX.writeFile(wb, "student_bulk_upload_template.xlsx");
+};
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
 
-        setIsUploading(true);
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            try {
-                const data = new Uint8Array(event.target?.result as ArrayBuffer);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
-
-                if (jsonData.length === 0) {
-                    toast({ title: "Error", description: "The Excel file is empty", variant: "destructive" });
-                    setIsUploading(false);
-                    return;
-                }
-
-                // Map Excel columns to our expected format
-                // Expected columns: Name, Email, Password, Department, Section, Roll No
-                const studentsData = jsonData
-                    .map((row: any) => ({
-                        name: row.Name || row.name || '',
-                        email: row.Email || row.email || '',
-                        password: row.Password || row.password || 'Student@123', // Default password if empty
-                        department: row.Department || row.department || '',
-                        section: row.Section || row.section || '',
-                        rollNo: row.RollNo || row['Roll No'] || row.rollno || '',
-                        academicYear: row['Academic Year'] || row.AcademicYear || row.academicYear || ''
-                    }))
-                    .filter(student => student.name.trim() !== '' || student.email.trim() !== '');
-
-                // Validate data
-                const invalidRows = studentsData.filter(h => !h.email || !h.name);
-                if (invalidRows.length > 0) {
-                    toast({
-                        title: "Warning",
-                        description: `${invalidRows.length} rows are missing Name or Email and will likely fail.`,
-                        variant: "destructive"
-                    });
-                }
-
-                const res = await axios.post(`${serverURL}/api/org/student/bulk-upload`, {
-                    students: studentsData,
-                    organizationId: orgId
-                });
-
-                if (res.data.success) {
-                    toast({
-                        title: "Success",
-                        description: `Successfully added ${res.data.message.split(' ')[1]} students.`
-                    });
-                    if (res.data.errors && res.data.errors.length > 0) {
-                        toast({
-                            title: "Note",
-                            description: `${res.data.errors.length} rows were skipped (possibly existing emails).`,
-                            variant: "destructive"
-                        });
-                    }
-                    setIsBulkUploadOpen(false);
-                    fetchStudents();
-                    fetchStats();
-                } else {
-                    toast({ title: "Error", description: res.data.message, variant: "destructive" });
-                }
-            } catch (error) {
-                console.error("Bulk upload error:", error);
-                toast({ title: "Error", description: "Failed to process the Excel file", variant: "destructive" });
-            } finally {
-                setIsUploading(false);
-            }
-        };
-        reader.readAsArrayBuffer(file);
-    };
-
-    const downloadTemplate = () => {
-        const template = [
-            { Name: 'John Doe', Email: 'john@example.com', Password: 'Password123', Department: 'CS', Section: 'A', 'Roll No': '101', 'Academic Year': '2024-2025' }
-        ];
-        const ws = XLSX.utils.json_to_sheet(template);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Template");
-        XLSX.writeFile(wb, "student_bulk_upload_template.xlsx");
-    };
  
     const handleLimitIncreaseRequest = async () => {
         try {
@@ -2333,6 +2474,154 @@ const formatGuidanceText = (text: string) => {
         </div>
     );
 
+
+    // star bala add edit department
+    // Add these state variables
+const [editingDept, setEditingDept] = useState<any>(null);
+const [editingDeptAdmin, setEditingDeptAdmin] = useState<any>(null);
+// Department Edit Functions
+const handleEditDepartment = (dept: any) => {
+    setEditingDept(dept);
+    setNewDept({
+        name: dept.name,
+        description: dept.description || ''
+    });
+    setOpenDeptDialog(true);
+};
+
+const handleUpdateDepartment = async () => {
+    if (!editingDept) return;
+    
+    try {
+        const res = await axios.put(`${serverURL}/api/org/department/${editingDept._id}`, {
+            name: newDept.name,
+            description: newDept.description
+        });
+        
+        if (res.data.success) {
+            // Refresh departments list - use fetchOrgDepartments instead
+            await fetchOrgDepartments();
+            setOpenDeptDialog(false);
+            setEditingDept(null);
+            setNewDept({ name: '', description: '' });
+            // Show success message
+            toast({ title: "Success", description: "Department updated successfully" });
+        }
+    } catch (error) {
+        console.error('Error updating department:', error);
+        toast({ title: "Error", description: "Failed to update department" });
+    }
+};
+
+// Department Admin Edit Functions
+const handleEditDeptAdmin = (admin: any) => {
+    setEditingDeptAdmin(admin);
+    setNewDeptAdmin({
+        name: admin.mName,
+        email: admin.email,
+        password: '', // Don't populate password for security
+        phone: admin.phone || '',
+        departmentId: admin.department?._id || '',
+        courseLimit: admin.courseLimit || 0
+    });
+    setOpenDeptAdminDialog(true);
+};
+
+const handleUpdateDeptAdmin = async () => {
+    if (!editingDeptAdmin) return;
+    
+    try {
+        const token = sessionStorage.getItem('auth');
+        if (!token) {
+            toast({ 
+                title: "Error", 
+                description: "Authentication token not found. Please login again.", 
+                variant: "destructive" 
+            });
+            return;
+        }
+
+        const updateData: any = {
+            name: newDeptAdmin.name,
+            departmentId: newDeptAdmin.departmentId,
+            courseLimit: newDeptAdmin.courseLimit
+        };
+        
+        if (newDeptAdmin.password && newDeptAdmin.password.trim() !== '') {
+            updateData.password = newDeptAdmin.password;
+        }
+        
+        if (newDeptAdmin.phone) {
+            updateData.phone = newDeptAdmin.phone;
+        }
+        
+        console.log('Updating department admin:', editingDeptAdmin._id, updateData);
+        
+        const res = await axios.put(
+            `${serverURL}/api/org/dept-admin/${editingDeptAdmin._id}`, 
+            updateData,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        
+        if (res.data.success) {
+            toast({ 
+                title: "Success", 
+                description: "Department admin updated successfully" 
+            });
+            
+            // Refresh the admins list
+            await fetchOrgDeptAdmins();
+            
+            // Close dialog and reset form
+            setOpenDeptAdminDialog(false);
+            setEditingDeptAdmin(null);
+            setNewDeptAdmin({ 
+                name: '', 
+                email: '', 
+                password: '',
+                phone: '',
+                departmentId: '', 
+                courseLimit: 0 
+            });
+        } else {
+            toast({ 
+                title: "Error", 
+                description: res.data.message || "Failed to update department admin",
+                variant: "destructive" 
+            });
+        }
+    } catch (error: any) {
+        console.error('Error updating department admin:', error);
+        
+        let errorMessage = "Failed to update department admin";
+        if (error.response) {
+            if (error.response.status === 401) {
+                errorMessage = "Unauthorized. Please login again.";
+            } else if (error.response.status === 403) {
+                errorMessage = "You don't have permission to perform this action.";
+            } else if (error.response.status === 404) {
+                errorMessage = "Department admin not found.";
+            } else {
+                errorMessage = error.response.data?.message || errorMessage;
+            }
+        } else if (error.request) {
+            errorMessage = "Network error. Please check your connection.";
+        }
+        
+        toast({ 
+            title: "Error", 
+            description: errorMessage, 
+            variant: "destructive" 
+        });
+    }
+};
+
+
     return (
         <div className="container mx-auto py-10 space-y-8 animate-fade-in">
             <SEO title="Organization Dashboard" description="Manage your organization, students, and curriculum." />
@@ -2366,7 +2655,7 @@ const formatGuidanceText = (text: string) => {
                             <DialogHeader>
                                 <DialogTitle>Bulk Student Upload</DialogTitle>
                                 <DialogDescription>
-                                    Columns should be: **Name, Email, Password, Department, Section, Roll No**.
+                                   Columns: Name, Email, Password, Department, Section, Roll No, Class (e.g. BSc CS, BA History), Academic Year
                                 </DialogDescription>
                                 <div className="mt-2 p-3 bg-muted rounded-lg flex justify-between items-center text-sm">
                                     <span className="font-medium">Remaining Capacity:</span>
@@ -2405,28 +2694,27 @@ const formatGuidanceText = (text: string) => {
                 </div>
             </div>
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-
-                <AdminStatCard
+  {/* Stats Overview */}
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+  <AdminStatCard
                     title="Total Students"
                     value={role === 'dept_admin' ? students.length : stats.studentCount}
                     icon={Users}
-                    description="+20% from last month"
+                    // description="+20% from last month"
                     className="border-l-4 border-l-emerald-500"
                 />
                 <AdminStatCard
                     title="Active Assignments"
                     value={role === 'dept_admin' ? assignments.length : stats.assignmentCount}
                     icon={FileText}
-                    description="5 due this week"
+                    // description="5 due this week"
                     className="border-l-4 border-l-blue-500"
                 />
                 <AdminStatCard
                     title="Students Placed"
                     value={role === 'dept_admin' ? students.filter((s: any) => s.studentDetails?.isPlacementClosed).length : (stats.placedCount || 0)}
                     icon={Briefcase}
-                    description="Career success"
+                    // description="Career success"
                     className="border-l-4 border-l-indigo-500"
                 />
                 {role !== 'dept_admin' && (
@@ -2434,11 +2722,11 @@ const formatGuidanceText = (text: string) => {
                         title="Submissions"
                         value={stats.submissionCount}
                         icon={BarChart}
-                        description="Pending grading"
+                        // description="Pending grading"
                         className="border-l-4 border-l-amber-500"
                     />
                 )}
-            </div>
+</div>
 
             <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })} className="w-full">
                 {/* <TabsList className="flex flex-wrap h-auto w-full gap-1 p-1 bg-muted rounded-xl mb-6">
@@ -2467,170 +2755,279 @@ const formatGuidanceText = (text: string) => {
                 </TabsList> */}
 
                 {/* DEPARTMENTS TAB */}
-                <TabsContent value="departments" className="space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Departments Management */}
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <div>
-                                    <CardTitle>Departments</CardTitle>
-                                    <CardDescription>Create and manage organizational departments.</CardDescription>
-                                </div>
-                                <Dialog open={openDeptDialog} onOpenChange={setOpenDeptDialog}>
-                                    <DialogTrigger asChild onClick={() => setOpenDeptDialog(true)}>
-                                        <Button size="sm">
-                                            <Plus className="w-4 h-4 mr-2" /> Add Dept
-                                        </Button>
-                                    </DialogTrigger>
+               <TabsContent value="departments" className="space-y-6">
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
+        {/* Departments Management */}
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <div className="space-y-1">
+                    <CardTitle className="text-base md:text-lg">Departments</CardTitle>
+                    <CardDescription className="text-xs md:text-sm">
+                        Create and manage organizational departments.
+                    </CardDescription>
+                </div>
+                <Dialog open={openDeptDialog} onOpenChange={setOpenDeptDialog}>
+                    <DialogTrigger asChild onClick={() => {
+                        setEditingDept(null);
+                        setNewDept({ name: '', description: '' });
+                        setOpenDeptDialog(true);
+                    }}>
+                        <Button size="sm" className="text-xs md:text-sm h-8 md:h-9">
+                            <Plus className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> 
+                            <span className="hidden sm:inline">Add Dept</span>
+                            <span className="sm:hidden">Add</span>
+                        </Button>
+                    </DialogTrigger>
 
-                                    <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>Add New Department</DialogTitle>
-                                        </DialogHeader>
+                    <DialogContent className="w-[95%] max-w-md mx-auto rounded-lg p-4 md:p-6">
+                        <DialogHeader>
+                            <DialogTitle className="text-base md:text-lg">
+                                {editingDept ? 'Edit Department' : 'Add New Department'}
+                            </DialogTitle>
+                        </DialogHeader>
 
-                                        <div className="grid gap-4 py-4">
-                                            <div className="grid gap-2">
-                                                <Label>Department Name</Label>
-                                                <Input
-                                                    value={newDept.name}
-                                                    onChange={(e) =>
-                                                        setNewDept({ ...newDept, name: e.target.value })
-                                                    }
-                                                />
-                                            </div>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label className="text-sm">Department Name</Label>
+                                <Input
+                                    value={newDept.name}
+                                    onChange={(e) =>
+                                        setNewDept({ ...newDept, name: e.target.value })
+                                    }
+                                    className="text-sm"
+                                />
+                            </div>
 
-                                            <div className="grid gap-2">
-                                                <Label>Description</Label>
-                                                <Textarea
-                                                    value={newDept.description}
-                                                    onChange={(e) =>
-                                                        setNewDept({ ...newDept, description: e.target.value })
-                                                    }
-                                                />
-                                            </div>
+                            <div className="grid gap-2">
+                                <Label className="text-sm">Description</Label>
+                                <Textarea
+                                    value={newDept.description}
+                                    onChange={(e) =>
+                                        setNewDept({ ...newDept, description: e.target.value })
+                                    }
+                                    className="text-sm"
+                                    rows={3}
+                                />
+                            </div>
 
-                                            <Button onClick={handleCreateDepartment}>
-                                                Create Department
-                                            </Button>
-                                        </div>
-                                    </DialogContent>
-                                </Dialog>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-3">
-                                    {departmentsList.length > 0 ? departmentsList.map((dept: any) => (
-                                        <div key={dept._id} className="p-3 border rounded-lg flex justify-between items-center bg-muted/20">
-                                            <div>
-                                                <p className="font-semibold text-sm">{dept.name}</p>
-                                                <p className="text-xs text-muted-foreground">{dept.description}</p>
-                                            </div>
-                                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDeleteDepartment(dept._id)}>
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                    )) : (
-                                        <p className="text-center text-sm text-muted-foreground py-4">No departments created yet.</p>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
+                            <Button onClick={editingDept ? handleUpdateDepartment : handleCreateDepartment} className="w-full">
+                                {editingDept ? 'Update Department' : 'Create Department'}
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            </CardHeader>
+            <CardContent className="pt-4">
+                <div className="space-y-3">
+                    {departmentsList.length > 0 ? departmentsList.map((dept: any) => (
+                        <div key={dept._id} className="p-3 border rounded-lg flex justify-between items-start gap-2 bg-muted/20 hover:bg-muted/30 transition-colors">
+                            <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-sm md:text-base truncate">{dept.name}</p>
+                                <p className="text-xs text-muted-foreground break-words">
+                                    {dept.description || "No description provided"}
+                                </p>
+                            </div>
+                            <div className="flex gap-1 flex-shrink-0">
+                                <Button 
+                                    size="icon" 
+                                    variant="ghost" 
+                                    className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                    onClick={() => handleEditDepartment(dept)}
+                                >
+                                    <Edit className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                </Button>
+                                <Button 
+                                    size="icon" 
+                                    variant="ghost" 
+                                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => handleDeleteDepartment(dept._id)}
+                                >
+                                    <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    )) : (
+                        <div className="text-center text-xs md:text-sm text-muted-foreground py-8 md:py-12">
+                            <p>No departments created yet.</p>
+                            <p className="text-xs mt-1">Click "Add Dept" to get started.</p>
+                        </div>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
 
-                        {/* Dept Admins Management */}
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <div>
-                                    <CardTitle>Department Admins</CardTitle>
-                                    <CardDescription>Assign admins to specific departments.</CardDescription>
-                                </div>
-                                <Dialog open={openDeptAdminDialog} onOpenChange={setOpenDeptAdminDialog}>
-                                    <DialogTrigger asChild onClick={() => setOpenDeptAdminDialog(true)}>
-                                        <Button size="sm">
-                                            <Plus className="w-4 h-4 mr-2" /> Add Admin
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>Add Department Admin</DialogTitle>
-                                        </DialogHeader>
-                                        <div className="grid gap-4 py-4">
-                                            <div className="grid gap-2">
-                                                <Label>Full Name</Label>
-                                                <Input value={newDeptAdmin.name} onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, name: e.target.value })} />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label>Email</Label>
-                                                <Input value={newDeptAdmin.email} onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, email: e.target.value })} />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label>Password</Label>
-                                                <Input type="password" value={newDeptAdmin.password} onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, password: e.target.value })} />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label>Department</Label>
-                                                <select
-                                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                    value={newDeptAdmin.departmentId}
-                                                    onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, departmentId: e.target.value })}
-                                                >
-                                                    <option value="">Select Department</option>
-                                                    {departmentsList.map((d: any) => (
-                                                        <option key={d._id} value={d._id}>{d.name}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label>Course Creation Limit</Label>
-                                                <Input 
-                                                    type="number" 
-                                                    value={newDeptAdmin.courseLimit} 
-                                                    onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, courseLimit: parseInt(e.target.value) || 0 })} 
-                                                    placeholder="Max courses this admin can create"
-                                                />
-                                            </div>
-                                            <Button onClick={handleAddDeptAdmin}>Add Admin</Button>
-                                        </div>
-                                    </DialogContent>
-                                </Dialog>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-3">
-                                    {deptAdmins.length > 0 ? deptAdmins.map((admin: any) => (
-                                        <div key={admin._id} className="p-3 border rounded-lg flex justify-between items-center bg-muted/20">
-                                            <div>
-                                                <p className="font-semibold text-sm">{admin.mName}</p>
-                                                <div className="flex gap-2 items-center">
-                                                    <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-bold uppercase tracking-wider">{admin.department?.name || 'No Dept'}</span>
-                                                    <p className="text-xs text-muted-foreground">{admin.email}</p>
-                                                </div>
-                                                <div className="flex gap-4 mt-2">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[10px] text-muted-foreground uppercase font-semibold">Courses Created</span>
-                                                        <span className="text-xs font-bold text-blue-600">{admin.coursesCreatedCount || 0}</span>
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[10px] text-muted-foreground uppercase font-semibold">Courses Left</span>
-                                                        <span className={`text-xs font-bold ${((admin.courseLimit || 0) - (admin.coursesCreatedCount || 0)) <= 0 ? 'text-destructive' : 'text-emerald-600'}`}>
-                                                            {Math.max(0, (admin.courseLimit || 0) - (admin.coursesCreatedCount || 0))}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[10px] text-muted-foreground uppercase font-semibold">Total Limit</span>
-                                                        <span className="text-xs font-bold">{admin.courseLimit || 0}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDeleteDeptAdmin(admin._id)}>
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                    )) : (
-                                        <p className="text-center text-sm text-muted-foreground py-4">No department admins assigned yet.</p>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
+        {/* Dept Admins Management */}
+        <Card>
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <div className="space-y-1">
+            <CardTitle className="text-base md:text-lg">Department Admins</CardTitle>
+            <CardDescription className="text-xs md:text-sm">
+                Assign admins to specific departments.
+            </CardDescription>
+        </div>
+        <Dialog open={openDeptAdminDialog} onOpenChange={setOpenDeptAdminDialog}>
+            <DialogTrigger asChild onClick={() => {
+                setEditingDeptAdmin(null);
+                setNewDeptAdmin({ 
+                    name: '', 
+                    email: '', 
+                    password: '', 
+                    phone: '',  // ← ADD THIS LINE
+                    departmentId: '', 
+                    courseLimit: 0 
+                });
+                setOpenDeptAdminDialog(true);
+            }}>
+                <Button size="sm" className="text-xs md:text-sm h-8 md:h-9">
+                    <Plus className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> 
+                    <span className="hidden sm:inline">Add Admin</span>
+                    <span className="sm:hidden">Add</span>
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="w-[95%] max-w-md mx-auto rounded-lg p-4 md:p-6 max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle className="text-base md:text-lg">
+                        {editingDeptAdmin ? 'Edit Department Admin' : 'Add Department Admin'}
+                    </DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                        <Label className="text-sm">Full Name</Label>
+                        <Input 
+                            value={newDeptAdmin.name} 
+                            onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, name: e.target.value })}
+                            className="text-sm"
+                        />
                     </div>
-                </TabsContent>
+                    <div className="grid gap-2">
+                        <Label className="text-sm">Email</Label>
+                        <Input 
+                            type="email"
+                            value={newDeptAdmin.email} 
+                            onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, email: e.target.value })}
+                            className="text-sm"
+                            disabled={!!editingDeptAdmin}
+                        />
+                        {editingDeptAdmin && (
+                            <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+                        )}
+                    </div>
+                    <div className="grid gap-2">
+                        <Label className="text-sm">Phone (Optional)</Label>
+                        <Input 
+                            type="tel"
+                            value={newDeptAdmin.phone} 
+                            onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, phone: e.target.value })}
+                            className="text-sm"
+                            placeholder="Contact number"
+                        />
+                    </div>
+                    {!editingDeptAdmin && (
+                        <div className="grid gap-2">
+                            <Label className="text-sm">Password</Label>
+                            <Input 
+                                type="password" 
+                                value={newDeptAdmin.password} 
+                                onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, password: e.target.value })}
+                                className="text-sm"
+                            />
+                        </div>
+                    )}
+                    <div className="grid gap-2">
+                        <Label className="text-sm">Department</Label>
+                        <select
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            value={newDeptAdmin.departmentId}
+                            onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, departmentId: e.target.value })}
+                        >
+                            <option value="">Select Department</option>
+                            {departmentsList.map((d: any) => (
+                                <option key={d._id} value={d._id}>{d.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label className="text-sm">Course Creation Limit</Label>
+                        <Input 
+                            type="number" 
+                            value={newDeptAdmin.courseLimit} 
+                            onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, courseLimit: parseInt(e.target.value) || 0 })} 
+                            placeholder="Max courses this admin can create"
+                            className="text-sm"
+                        />
+                    </div>
+                    <Button onClick={editingDeptAdmin ? handleUpdateDeptAdmin : handleAddDeptAdmin} className="w-full">
+                        {editingDeptAdmin ? 'Update Admin' : 'Add Admin'}
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+    </CardHeader>
+    <CardContent className="pt-4">
+        <div className="space-y-3">
+            {deptAdmins.length > 0 ? deptAdmins.map((admin: any) => (
+                <div key={admin._id} className="p-3 border rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors">
+                    <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm md:text-base truncate">{admin.mName}</p>
+                            <div className="flex flex-wrap gap-2 items-center mt-1">
+                                <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-bold uppercase tracking-wider whitespace-nowrap">
+                                    {admin.department?.name || 'No Dept'}
+                                </span>
+                                <p className="text-xs text-muted-foreground break-all">
+                                    {admin.email}
+                                </p>
+                            </div>
+                            
+                            {/* Stats Grid - Responsive */}
+                            <div className="grid grid-cols-3 gap-2 mt-3">
+                                <div className="flex flex-col">
+                                    <span className="text-[9px] md:text-[10px] text-muted-foreground uppercase font-semibold">Courses</span>
+                                    <span className="text-xs md:text-sm font-bold text-blue-600">{admin.coursesCreatedCount || 0}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[9px] md:text-[10px] text-muted-foreground uppercase font-semibold">Remaining</span>
+                                    <span className={`text-xs md:text-sm font-bold ${((admin.courseLimit || 0) - (admin.coursesCreatedCount || 0)) <= 0 ? 'text-destructive' : 'text-emerald-600'}`}>
+                                        {Math.max(0, (admin.courseLimit || 0) - (admin.coursesCreatedCount || 0))}
+                                    </span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[9px] md:text-[10px] text-muted-foreground uppercase font-semibold">Limit</span>
+                                    <span className="text-xs md:text-sm font-bold">{admin.courseLimit || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex gap-1 flex-shrink-0">
+                            <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                onClick={() => handleEditDeptAdmin(admin)}
+                            >
+                                <Edit className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            </Button>
+                            <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => handleDeleteDeptAdmin(admin._id)}
+                            >
+                                <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )) : (
+                <div className="text-center text-xs md:text-sm text-muted-foreground py-8 md:py-12">
+                    <p>No department admins assigned yet.</p>
+                    <p className="text-xs mt-1">Click "Add Admin" to assign one.</p>
+                </div>
+            )}
+        </div>
+    </CardContent>
+</Card>
+    </div>
+               </TabsContent>
 
                 {/* APPROVALS TAB */}
                 {role === 'org_admin' && (
@@ -2738,805 +3135,1021 @@ const formatGuidanceText = (text: string) => {
                     </TabsContent>
                 )}
 
-                {/* STUDENTS TAB */}
-                <TabsContent value="students" className="space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex justify-between items-center">
-                                Manage Students
-                                {role !== 'dept_admin' && (
-                                    <div className="flex items-center gap-4">
-                                        <Badge variant="secondary" className="font-semibold">
-                                            {stats.studentCount} / {stats.studentLimit} Students Used
-                                        </Badge>
-                                        <Dialog open={openLimitIncreaseDialog} onOpenChange={setOpenLimitIncreaseDialog}>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline" size="sm">Request Increase</Button>
-                                            </DialogTrigger>
-                                            <DialogContent>
-                                                <DialogHeader>
-                                                    <DialogTitle>Request Student Limit Increase</DialogTitle>
-                                                    <DialogDescription>
-                                                        Current Limit: {stats.studentLimit} students.
-                                                        Submit a request to increase your student capacity.
-                                                    </DialogDescription>
-                                                </DialogHeader>
-                                                <div className="grid gap-4 py-4">
-                                                    <div className="grid gap-2">
-                                                        <Label>Requested Slot</Label>
-                                                        <select
-                                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                            value={limitIncreaseData.requestedSlot}
-                                                            onChange={(e) => setLimitIncreaseData({ ...limitIncreaseData, requestedSlot: parseInt(e.target.value) })}
-                                                        >
-                                                            <option value={1}>Slot 1 (50 Students)</option>
-                                                            <option value={2}>Slot 2 (100 Students)</option>
-                                                            <option value={3}>Slot 3 (150 Students)</option>
-                                                            <option value={4}>Slot 4 (200 Students)</option>
-                                                        </select>
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label>Custom Limit (Optional - overrides slot)</Label>
-                                                        <Input
-                                                            type="number"
-                                                            value={limitIncreaseData.requestedCustomLimit}
-                                                            onChange={(e) => setLimitIncreaseData({ ...limitIncreaseData, requestedCustomLimit: parseInt(e.target.value) })}
-                                                            placeholder="0 for none"
-                                                        />
-                                                    </div>
-                                                    <Button onClick={handleLimitIncreaseRequest}>Submit Request</Button>
-                                                </div>
-                                            </DialogContent>
-                                        </Dialog>
+          
+                 {/* STUDENTS TAB */}
+                 <TabsContent value="students" className="space-y-4">
+    <Card>
+        <CardHeader>
+            <CardTitle className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <span>Manage Students</span>
+                {role !== 'dept_admin' && (
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
+                        <Badge variant="secondary" className="font-semibold w-full sm:w-auto justify-center">
+                            {stats.studentCount} / {stats.studentLimit} Students Used
+                        </Badge>
+                        <Dialog open={openLimitIncreaseDialog} onOpenChange={setOpenLimitIncreaseDialog}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="sm" className="w-full sm:w-auto">Request Increase</Button>
+                            </DialogTrigger>
+                            <DialogContent className="w-[95%] max-w-md mx-auto">
+                                <DialogHeader>
+                                    <DialogTitle>Request Student Limit Increase</DialogTitle>
+                                    <DialogDescription>
+                                        Current Limit: {stats.studentLimit} students.
+                                        Submit a request to increase your student capacity.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                    <div className="grid gap-2">
+                                        <Label>Requested Slot</Label>
+                                        <select
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                            value={limitIncreaseData.requestedSlot}
+                                            onChange={(e) => setLimitIncreaseData({ ...limitIncreaseData, requestedSlot: parseInt(e.target.value) })}
+                                        >
+                                            <option value={1}>Slot 1 (50 Students)</option>
+                                            <option value={2}>Slot 2 (100 Students)</option>
+                                            <option value={3}>Slot 3 (150 Students)</option>
+                                            <option value={4}>Slot 4 (200 Students)</option>
+                                        </select>
                                     </div>
-                                )}
-                            </CardTitle>
-                            <CardDescription>Add, view, and manage student accounts.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex justify-between">
-                                <Input
-                                    placeholder="Search students..."
-                                    className="max-w-sm"
-                                    value={studentSearch}
-                                    onChange={(e) => setStudentSearch(e.target.value)}
-                                />
-                                <Dialog open={openStudentDialog} onOpenChange={setOpenStudentDialog}>
-                                    <DialogTrigger asChild onClick={() => setOpenStudentDialog(true)}>
-                                        <Button>
-                                            <Plus className="w-4 h-4 mr-2" /> Add Student
-                                        </Button>
+                                    <div className="grid gap-2">
+                                        <Label>Custom Limit (Optional - overrides slot)</Label>
+                                        <Input
+                                            type="number"
+                                            value={limitIncreaseData.requestedCustomLimit}
+                                            onChange={(e) => setLimitIncreaseData({ ...limitIncreaseData, requestedCustomLimit: parseInt(e.target.value) })}
+                                            placeholder="0 for none"
+                                        />
+                                    </div>
+                                    <Button onClick={handleLimitIncreaseRequest}>Submit Request</Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                )}
+            </CardTitle>
+            <CardDescription>Add, view, and manage student accounts.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between gap-4">
+                <Input
+                    placeholder="Search students..."
+                    className="w-full sm:max-w-sm"
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
+                />
+                <Dialog open={openStudentDialog} onOpenChange={setOpenStudentDialog}>
+                    <DialogTrigger asChild onClick={() => setOpenStudentDialog(true)}>
+                        <Button className="w-full sm:w-auto">
+                            <Plus className="w-4 h-4 mr-2" /> Add Student
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="w-[95%] max-w-2xl mx-auto max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                <span>Add New Student</span>
+                                <span className="text-xs font-normal text-muted-foreground">
+                                    {stats.studentCount} / {stats.studentLimit} used
+                                </span>
+                            </DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                <Label className="sm:text-right">Name</Label>
+                                <Input className="sm:col-span-3" value={newStudent.name} onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })} />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                <Label className="sm:text-right">Email</Label>
+                                <Input className="sm:col-span-3" value={newStudent.email} onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                <Label className="sm:text-right">Password</Label>
+                                <Input className="sm:col-span-3" type="password" value={newStudent.password} onChange={(e) => setNewStudent({ ...newStudent, password: e.target.value })} />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                <Label className="sm:text-right">Department</Label>
+                                <select
+                                    className="sm:col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    value={newStudent.department}
+                                    onChange={(e) => setNewStudent({ ...newStudent, department: e.target.value })}
+                                >
+                                    <option value="">Select Department</option>
+                                    {departmentsList.map((d: any) => (
+                                        <option key={d._id} value={d._id}>{d.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                <Label className="sm:text-right">Class</Label>
+                                <Input className="sm:col-span-3" value={newStudent.studentClass} onChange={(e) => setNewStudent({ ...newStudent, studentClass: e.target.value })} placeholder="e.g. 10th" />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                <Label className="sm:text-right">Section</Label>
+                                <Input className="sm:col-span-3" value={newStudent.section} onChange={(e) => setNewStudent({ ...newStudent, section: e.target.value })} />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                <Label className="sm:text-right">Academic Year</Label>
+                                <Input className="sm:col-span-3" value={newStudent.academicYear} onChange={(e) => setNewStudent({ ...newStudent, academicYear: e.target.value })} placeholder="e.g. 2023-2024" />
+                            </div>
+                        </div>
+                        <Button onClick={handleAddStudent}>Save Student</Button>
+                    </DialogContent>
+                </Dialog>
+            </div>
+
+            {/* Student List */}
+            <div className="space-y-2">
+                {students.length > 0 ? (
+                    students.filter((s: any) =>
+                        (s.mName || '').toLowerCase().includes(studentSearch.toLowerCase()) ||
+                        (s.email || '').toLowerCase().includes(studentSearch.toLowerCase())
+                    ).map((student: any) => (
+                        <div key={student._id} className="p-4 border rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card">
+                            <div className="flex items-start sm:items-center gap-4 w-full sm:w-auto">
+                                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                    {student.mName?.substring(0, 2).toUpperCase() || 'ST'}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-medium break-words">{student.mName || student.email}</p>
+                                    <p className="text-sm text-muted-foreground flex flex-wrap gap-1">
+                                        {student.studentDetails?.studentClass && <span>Class {student.studentDetails.studentClass}</span>}
+                                        {student.studentDetails?.section && <span>• Section {student.studentDetails.section}</span>}
+                                        {student.studentDetails?.rollNo && <span>• Roll {student.studentDetails.rollNo}</span>}
+                                        {student.studentDetails?.academicYear && <span>• Year {student.studentDetails.academicYear}</span>}
+                                    </p>
+                                    {(student.studentDetails?.placementCompany || student.studentDetails?.isPlacementClosed) && (
+                                        <p className="text-xs font-semibold text-emerald-600 mt-1 break-words">
+                                            {student.studentDetails?.isPlacementClosed ? 'Placed' : 'Placement Info'}: {student.studentDetails?.placementPosition ? student.studentDetails?.placementPosition + ' @' : ''} {student.studentDetails?.placementCompany}
+                                        </p>
+                                    )}
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Created: {new Date(student.date).toLocaleDateString()}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button variant="ghost" size="sm" onClick={() => setEditStudent(student)}>Edit</Button>
                                     </DialogTrigger>
-                                    <DialogContent>
+                                    <DialogContent className="w-[95%] max-w-2xl mx-auto max-h-[90vh] overflow-y-auto">
                                         <DialogHeader>
-                                            <DialogTitle className="flex justify-between items-center">
-                                                Add New Student
-                                                <span className="text-xs font-normal text-muted-foreground">
-                                                    {stats.studentCount} / {stats.studentLimit} used
-                                                </span>
-                                            </DialogTitle>
+                                            <DialogTitle>Edit Student</DialogTitle>
                                         </DialogHeader>
-                                        <div className="grid gap-4 py-4">
-                                            <div className="grid grid-cols-4 items-center gap-4">
-                                                <Label className="text-right">Name</Label>
-                                                <Input className="col-span-3" value={newStudent.name} onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })} />
+                                        {editStudent && (
+                                            <div className="grid gap-4 py-4">
+                                                <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                                    <Label className="sm:text-right">Name</Label>
+                                                    <Input className="sm:col-span-3" value={editStudent.mName} onChange={(e) => setEditStudent({ ...editStudent, mName: e.target.value })} />
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                                    <Label className="sm:text-right">Email</Label>
+                                                    <Input className="sm:col-span-3" value={editStudent.email} onChange={(e) => setEditStudent({ ...editStudent, email: e.target.value })} />
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                                    <Label className="sm:text-right">Department</Label>
+                                                    <select
+                                                        className="sm:col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        value={editStudent.studentDetails?.department || ''}
+                                                        onChange={(e) => setEditStudent({ ...editStudent, studentDetails: { ...editStudent.studentDetails, department: e.target.value } })}
+                                                    >
+                                                        <option value="">Select Department</option>
+                                                        {departmentsList.map((d: any) => (
+                                                            <option key={d._id} value={d._id}>{d.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                                    <Label className="sm:text-right">Class</Label>
+                                                    <Input className="sm:col-span-3" value={editStudent.studentDetails?.studentClass || ''} onChange={(e) => setEditStudent({ ...editStudent, studentDetails: { ...editStudent.studentDetails, studentClass: e.target.value } })} />
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                                    <Label className="sm:text-right">Section</Label>
+                                                    <Input className="sm:col-span-3" value={editStudent.studentDetails?.section || ''} onChange={(e) => setEditStudent({ ...editStudent, studentDetails: { ...editStudent.studentDetails, section: e.target.value } })} />
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                                    <Label className="sm:text-right">Roll No</Label>
+                                                    <Input className="sm:col-span-3" value={editStudent.studentDetails?.rollNo || ''} onChange={(e) => setEditStudent({ ...editStudent, studentDetails: { ...editStudent.studentDetails, rollNo: e.target.value } })} />
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                                    <Label className="sm:text-right">Academic Year</Label>
+                                                    <Input className="sm:col-span-3" value={editStudent.studentDetails?.academicYear || ''} onChange={(e) => setEditStudent({ ...editStudent, studentDetails: { ...editStudent.studentDetails, academicYear: e.target.value } })} placeholder="e.g. 2023-2024" />
+                                                </div>
+                                                <Button onClick={handleUpdateStudent}>Update Student</Button>
                                             </div>
-                                            <div className="grid grid-cols-4 items-center gap-4">
-                                                <Label className="text-right">Email</Label>
-                                                <Input className="col-span-3" value={newStudent.email} onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} />
-                                            </div>
-                                            <div className="grid grid-cols-4 items-center gap-4">
-                                                <Label className="text-right">Password</Label>
-                                                <Input className="col-span-3" type="password" value={newStudent.password} onChange={(e) => setNewStudent({ ...newStudent, password: e.target.value })} />
-                                            </div>
-                                            <div className="grid grid-cols-4 items-center gap-4">
-                                                <Label className="text-right">Department</Label>
-                                                <select
-                                                    className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                    value={newStudent.department}
-                                                    onChange={(e) => setNewStudent({ ...newStudent, department: e.target.value })}
-                                                >
-                                                    <option value="">Select Department</option>
-                                                    {departmentsList.map((d: any) => (
-                                                        <option key={d._id} value={d._id}>{d.name}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                            <div className="grid grid-cols-4 items-center gap-4">
-                                                <Label className="text-right">Class</Label>
-                                                <Input className="col-span-3" value={newStudent.studentClass} onChange={(e) => setNewStudent({ ...newStudent, studentClass: e.target.value })} placeholder="e.g. 10th" />
-                                            </div>
-                                            <div className="grid grid-cols-4 items-center gap-4">
-                                                <Label className="text-right">Section</Label>
-                                                <Input className="col-span-3" value={newStudent.section} onChange={(e) => setNewStudent({ ...newStudent, section: e.target.value })} />
-                                            </div>
-                                            <div className="grid grid-cols-4 items-center gap-4">
-                                                <Label className="text-right">Academic Year</Label>
-                                                <Input className="col-span-3" value={newStudent.academicYear} onChange={(e) => setNewStudent({ ...newStudent, academicYear: e.target.value })} placeholder="e.g. 2023-2024" />
-                                            </div>
-                                        </div>
-                                        <Button onClick={handleAddStudent}>Save Student</Button>
+                                        )}
                                     </DialogContent>
                                 </Dialog>
-                            </div>
-
-
-                            {/* Student List */}
-                            <div className="space-y-2">
-                                {students.length > 0 ? (
-                                    students.filter((s: any) =>
-                                        (s.mName || '').toLowerCase().includes(studentSearch.toLowerCase()) ||
-                                        (s.email || '').toLowerCase().includes(studentSearch.toLowerCase())
-                                    ).map((student: any) => (
-                                        <div key={student._id} className="p-4 border rounded-lg flex justify-between items-center bg-card">
-                                            <div className="flex items-center gap-4">
-                                                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                                    {student.mName?.substring(0, 2).toUpperCase() || 'ST'}
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" size="sm" onClick={() => setPlacementStudent(student)}>
+                                            <Briefcase className="w-4 h-4 sm:mr-2" />
+                                            <span className="hidden sm:inline">Placement</span>
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="w-[95%] max-w-md mx-auto">
+                                        <DialogHeader>
+                                            <DialogTitle>Update Placement Details</DialogTitle>
+                                        </DialogHeader>
+                                        {placementStudent && (
+                                            <div className="grid gap-4 py-4">
+                                                <div className="grid gap-2">
+                                                    <Label>Company</Label>
+                                                    <Input value={placementStudent.studentDetails?.placementCompany || ''} onChange={(e) => setPlacementStudent({ ...placementStudent, studentDetails: { ...placementStudent.studentDetails, placementCompany: e.target.value } })} />
                                                 </div>
-                                                <div>
-                                                    <p className="font-medium">{student.mName || student.email}</p>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {student.studentDetails?.studentClass && ` • Class ${student.studentDetails.studentClass}`}
-                                                        {student.studentDetails?.section && ` • Section ${student.studentDetails.section}`}
-                                                        {student.studentDetails?.rollNo && ` • Roll ${student.studentDetails.rollNo}`}
-                                                        {student.studentDetails?.academicYear && ` • Year ${student.studentDetails.academicYear}`}
-                                                    </p>
-                                                    {(student.studentDetails?.placementCompany || student.studentDetails?.isPlacementClosed) && (
-                                                        <p className="text-xs font-semibold text-emerald-600 mt-1">
-                                                            {student.studentDetails?.isPlacementClosed ? 'Placed' : 'Placement Info'}: {student.studentDetails?.placementPosition ? student.studentDetails?.placementPosition + ' @' : ''} {student.studentDetails?.placementCompany}
-                                                        </p>
-                                                    )}
-                                                    <p className="text-xs text-muted-foreground mt-1">
-                                                        Created: {new Date(student.date).toLocaleDateString()}
-                                                    </p>
+                                                <div className="grid gap-2">
+                                                    <Label>Position</Label>
+                                                    <Input value={placementStudent.studentDetails?.placementPosition || ''} onChange={(e) => setPlacementStudent({ ...placementStudent, studentDetails: { ...placementStudent.studentDetails, placementPosition: e.target.value } })} />
                                                 </div>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="w-4 h-4"
+                                                        checked={placementStudent.studentDetails?.isPlacementClosed || false}
+                                                        onChange={(e) => setPlacementStudent({ ...placementStudent, studentDetails: { ...placementStudent.studentDetails, isPlacementClosed: e.target.checked } })}
+                                                    />
+                                                    <Label>Placement Closed</Label>
+                                                </div>
+                                                <Button onClick={handleUpdatePlacement}>Save Placement</Button>
                                             </div>
-                                            <div className="flex gap-2">
-                                                <Dialog>
-                                                    <DialogTrigger asChild>
-                                                        <Button variant="ghost" size="sm" onClick={() => setEditStudent(student)}>Edit</Button>
-                                                    </DialogTrigger>
-                                                    <DialogContent>
-                                                        <DialogHeader>
-                                                            <DialogTitle>Edit Student</DialogTitle>
-                                                        </DialogHeader>
-                                                        {editStudent && (
-                                                            <div className="grid gap-4 py-4">
-                                                                <div className="grid grid-cols-4 items-center gap-4">
-                                                                    <Label className="text-right">Name</Label>
-                                                                    <Input className="col-span-3" value={editStudent.mName} onChange={(e) => setEditStudent({ ...editStudent, mName: e.target.value })} />
-                                                                </div>
-                                                                <div className="grid grid-cols-4 items-center gap-4">
-                                                                    <Label className="text-right">Email</Label>
-                                                                    <Input className="col-span-3" value={editStudent.email} onChange={(e) => setEditStudent({ ...editStudent, email: e.target.value })} />
-                                                                </div>
-                                                                <div className="grid grid-cols-4 items-center gap-4">
-                                                                    <Label className="text-right">Department</Label>
-                                                                    <select
-                                                                        className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                                        value={editStudent.studentDetails?.department || ''}
-                                                                        onChange={(e) => setEditStudent({ ...editStudent, studentDetails: { ...editStudent.studentDetails, department: e.target.value } })}
-                                                                    >
-                                                                        <option value="">Select Department</option>
-                                                                        {departmentsList.map((d: any) => (
-                                                                            <option key={d._id} value={d._id}>{d.name}</option>
-                                                                        ))}
-                                                                    </select>
-                                                                </div>
-                                                                <div className="grid grid-cols-4 items-center gap-4">
-                                                                    <Label className="text-right">Class</Label>
-                                                                    <Input className="col-span-3" value={editStudent.studentDetails?.studentClass || ''} onChange={(e) => setEditStudent({ ...editStudent, studentDetails: { ...editStudent.studentDetails, studentClass: e.target.value } })} />
-                                                                </div>
-                                                                <div className="grid grid-cols-4 items-center gap-4">
-                                                                    <Label className="text-right">Section</Label>
-                                                                    <Input className="col-span-3" value={editStudent.studentDetails?.section || ''} onChange={(e) => setEditStudent({ ...editStudent, studentDetails: { ...editStudent.studentDetails, section: e.target.value } })} />
-                                                                </div>
-                                                                <div className="grid grid-cols-4 items-center gap-4">
-                                                                    <Label className="text-right">Roll No</Label>
-                                                                    <Input className="col-span-3" value={editStudent.studentDetails?.rollNo || ''} onChange={(e) => setEditStudent({ ...editStudent, studentDetails: { ...editStudent.studentDetails, rollNo: e.target.value } })} />
-                                                                </div>
-                                                                <div className="grid grid-cols-4 items-center gap-4">
-                                                                    <Label className="text-right">Academic Year</Label>
-                                                                    <Input className="col-span-3" value={editStudent.studentDetails?.academicYear || ''} onChange={(e) => setEditStudent({ ...editStudent, studentDetails: { ...editStudent.studentDetails, academicYear: e.target.value } })} placeholder="e.g. 2023-2024" />
-                                                                </div>
-                                                                <Button onClick={handleUpdateStudent}>Update Student</Button>
-                                                            </div>
-                                                        )}
-                                                    </DialogContent>
-                                                </Dialog>
-                                                <Dialog>
-                                                    <DialogTrigger asChild>
-                                                        <Button variant="outline" size="sm" onClick={() => setPlacementStudent(student)}>
-                                                            <Briefcase className="w-4 h-4 mr-2" /> Placement
-                                                        </Button>
-                                                    </DialogTrigger>
-                                                    <DialogContent>
-                                                        <DialogHeader>
-                                                            <DialogTitle>Update Placement Details</DialogTitle>
-                                                        </DialogHeader>
-                                                        {placementStudent && (
-                                                            <div className="grid gap-4 py-4">
-                                                                <div className="grid grid-cols-4 items-center gap-4">
-                                                                    <Label className="text-right">Company</Label>
-                                                                    <Input className="col-span-3" value={placementStudent.studentDetails?.placementCompany || ''} onChange={(e) => setPlacementStudent({ ...placementStudent, studentDetails: { ...placementStudent.studentDetails, placementCompany: e.target.value } })} />
-                                                                </div>
-                                                                <div className="grid grid-cols-4 items-center gap-4">
-                                                                    <Label className="text-right">Position</Label>
-                                                                    <Input className="col-span-3" value={placementStudent.studentDetails?.placementPosition || ''} onChange={(e) => setPlacementStudent({ ...placementStudent, studentDetails: { ...placementStudent.studentDetails, placementPosition: e.target.value } })} />
-                                                                </div>
-                                                                <div className="grid grid-cols-4 items-center gap-4">
-                                                                    <Label className="text-right">Status</Label>
-                                                                    <div className="col-span-3 flex items-center">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            className="w-4 h-4 mr-2"
-                                                                            checked={placementStudent.studentDetails?.isPlacementClosed || false}
-                                                                            onChange={(e) => setPlacementStudent({ ...placementStudent, studentDetails: { ...placementStudent.studentDetails, isPlacementClosed: e.target.checked } })}
-                                                                        />
-                                                                        <Label>Placement Closed</Label>
-                                                                    </div>
-                                                                </div>
-                                                                <Button onClick={handleUpdatePlacement}>Save Placement</Button>
-                                                            </div>
-                                                        )}
-                                                    </DialogContent>
-                                                </Dialog>
-                                                <Button variant="ghost" size="sm" onClick={() => handleDeleteStudent(student._id)}>
-                                                    <Trash2 className="w-4 h-4 text-destructive" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="text-center py-8 text-muted-foreground">
-                                        No students added yet. Click "Add Student" to get started.
-                                    </div>
-                                )}
+                                        )}
+                                    </DialogContent>
+                                </Dialog>
+                                <Button variant="ghost" size="sm" onClick={() => handleDeleteStudent(student._id)}>
+                                    <Trash2 className="w-4 h-4 text-destructive" />
+                                </Button>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    ))
+                ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                        No students added yet. Click "Add Student" to get started.
+                    </div>
+                )}
+            </div>
+        </CardContent>
+    </Card>
                 </TabsContent>
 
                 {/* COURSES TAB */}
                 <TabsContent value="courses" className="space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Manage Courses</CardTitle>
-                            <CardDescription>Create and assign courses to your students.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <Alert className="border-primary/20 bg-primary/5">
-                                <AlertTitle>Recommended organization flow</AlertTitle>
-                                <AlertDescription>
-                                    Draft the course, assign a department, review it internally, then publish it to the student portal.
-                                    Department admins stay locked to their own department, while organization admins can publish across departments.
-                                </AlertDescription>
-                            </Alert>
-                            <div className="flex justify-between gap-2">
-                                <Input
-                                    placeholder="Search courses..."
-                                    className="max-w-sm"
-                                    value={courseSearch}
-                                    onChange={(e) => setCourseSearch(e.target.value)}
+    <Card>
+        <CardHeader>
+            <CardTitle className="text-xl sm:text-2xl">Manage Courses</CardTitle>
+            <CardDescription>Create and assign courses to your students.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+            <Alert className="border-primary/20 bg-primary/5">
+                <AlertTitle>Recommended organization flow</AlertTitle>
+                <AlertDescription>
+                    Draft the course, assign a department, review it internally, then publish it to the student portal.
+                    Department admins stay locked to their own department, while organization admins can publish across departments.
+                </AlertDescription>
+            </Alert>
+            
+            {/* Responsive Search and Actions */}
+            <div className="flex flex-col md:flex-row justify-between gap-4">
+                <Input
+                    placeholder="Search courses..."
+                    className="w-full md:max-w-sm"
+                    value={courseSearch}
+                    onChange={(e) => setCourseSearch(e.target.value)}
+                />
+                <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                    {role === 'dept_admin' && (
+                        <Dialog open={openDeptCourseLimitDialog} onOpenChange={setOpenDeptCourseLimitDialog}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" className="flex-1 md:flex-none">
+                                    <Plus className="w-4 h-4 mr-2" /> Request Limit Increase
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="w-[95%] max-w-md mx-auto">
+                                <DialogHeader>
+                                    <DialogTitle>Request Course Limit Increase</DialogTitle>
+                                    <DialogDescription>
+                                        Submit a request to your organization's admin to increase your course creation capacity.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                    <div className="grid gap-2">
+                                        <Label>Requested Additional Courses</Label>
+                                        <Input
+                                            type="number"
+                                            min="1"
+                                            value={deptCourseLimitData.requestedCourseLimit}
+                                            onChange={(e) => setDeptCourseLimitData({ ...deptCourseLimitData, requestedCourseLimit: parseInt(e.target.value) || 1 })}
+                                        />
+                                    </div>
+                                    <Button onClick={handleDeptCourseLimitRequest}>Submit Request</Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    )}
+
+                    {(orgSettings?.allowAICreation !== false) && (
+                        <Button variant="outline" onClick={() => window.location.href = '/dashboard/generate-course'} className="flex-1 md:flex-none">
+                            <Sparkles className="w-4 h-4 mr-2" /> AI Generate
+                        </Button>
+                    )}
+                    
+                    {(orgSettings?.allowManualCreation !== false) && (
+                        <Dialog open={openCourseDialog} onOpenChange={setOpenCourseDialog}>
+                            <DialogTrigger asChild onClick={() => {
+                                setNewCourse(role === 'dept_admin'
+                                    ? { ...createEmptyCourse(), department: getDeptScopedDepartment() }
+                                    : createEmptyCourse());
+                                setOpenCourseDialog(true);
+                            }}>
+                                <Button className="flex-1 md:flex-none">
+                                    <Plus className="w-4 h-4 mr-2" /> Create Course
+                                </Button>
+                            </DialogTrigger>
+
+                            <DialogContent className="w-[95%] max-w-4xl max-h-[90vh] overflow-y-auto mx-auto">
+                                <DialogHeader>
+                                    <DialogTitle>Create New Course</DialogTitle>
+                                </DialogHeader>
+
+                                <CourseForm
+                                    course={newCourse}
+                                    setCourse={setNewCourse}
+                                    onSave={() => handleCreateCourse(newCourse)}
+                                    departments={departmentsList}
+                                    role={role}
                                 />
-                                <div className="flex gap-2">
-                                    {role === 'dept_admin' && (
-                                        <Dialog open={openDeptCourseLimitDialog} onOpenChange={setOpenDeptCourseLimitDialog}>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline">
-                                                    <Plus className="w-4 h-4 mr-2" /> Request Limit Increase
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent>
-                                                <DialogHeader>
-                                                    <DialogTitle>Request Course Limit Increase</DialogTitle>
-                                                    <DialogDescription>
-                                                        Submit a request to your organization's admin to increase your course creation capacity.
-                                                    </DialogDescription>
-                                                </DialogHeader>
-                                                <div className="grid gap-4 py-4">
-                                                    <div className="grid gap-2">
-                                                        <Label>Requested Additional Courses</Label>
-                                                        <Input
-                                                            type="number"
-                                                            min="1"
-                                                            value={deptCourseLimitData.requestedCourseLimit}
-                                                            onChange={(e) => setDeptCourseLimitData({ ...deptCourseLimitData, requestedCourseLimit: parseInt(e.target.value) || 1 })}
-                                                        />
-                                                    </div>
-                                                    <Button onClick={handleDeptCourseLimitRequest}>Submit Request</Button>
-                                                </div>
-                                            </DialogContent>
-                                        </Dialog>
-                                    )}
+                            </DialogContent>
+                        </Dialog>
+                    )}
+                </div>
+            </div>
 
-                                    {(orgSettings?.allowAICreation !== false) && (
-                                        <Button variant="outline" onClick={() => window.location.href = '/dashboard/generate-course'}>
-                                            <Sparkles className="w-4 h-4 mr-2" /> AI Generate
+            {/* Course List */}
+            <div className="space-y-4">
+                {courses.length > 0 ? (
+                    courses.filter((c: any) =>
+                        (c.title || c.mainTopic || '').toLowerCase().includes(courseSearch.toLowerCase()) ||
+                        (c.description || '').toLowerCase().includes(courseSearch.toLowerCase())
+                    ).map((course: any) => {
+                        const title = course.title || course.mainTopic;
+                        const description = course.description || (course.content ? "AI Generated Course" : "");
+                        let topicCount = 0;
+                        let quizCount = 0;
+                        const approvalStatus = course.approvalStatus || (course.isPublished === false ? 'pending' : 'approved');
+                        const published = course.isPublished !== undefined ? Boolean(course.isPublished) : (course.content ? false : true);
+
+                        if (course.topics) {
+                            topicCount = course.topics.length;
+                            quizCount = course.quizzes?.length || 0;
+                        } else if (course.content) {
+                            try {
+                                const content = JSON.parse(course.content);
+                                topicCount = content.course_topics?.length || 0;
+                                quizCount = content.quizzes?.length || 0;
+                            } catch (e) {
+                                console.error("Error parsing course content", e);
+                            }
+                        }
+
+                        return (
+                            <div key={course._id} className="p-4 border rounded-lg bg-card relative">
+                                {/* Three-dot menu - Top Right Corner */}
+                                <div className="absolute top-4 right-4 lg:hidden">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                <MoreVertical className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-48">
+                                            <DropdownMenuItem onClick={() => setPreviewCourse({ ...course })}>
+                                                <Eye className="mr-2 h-4 w-4" />
+                                                <span>Preview</span>
+                                            </DropdownMenuItem>
+                                            
+                                            {role === 'org_admin' && (approvalStatus === 'pending' || approvalStatus === 'rejected') && (
+                                                <DropdownMenuItem onClick={() => handleReviewOrgCourse(course._id, 'approved', '')}>
+                                                    <Check className="mr-2 h-4 w-4 text-emerald-600" />
+                                                    <span>Approve</span>
+                                                </DropdownMenuItem>
+                                            )}
+                                            
+                                            {role === 'org_admin' && approvalStatus !== 'rejected' && (
+                                                <DropdownMenuItem 
+                                                    onClick={async () => {
+                                                        const result = await Swal.fire({
+                                                            title: 'Reject this course?',
+                                                            input: 'textarea',
+                                                            inputLabel: 'Reason (optional)',
+                                                            inputPlaceholder: 'Write a short note for the staff member...',
+                                                            showCancelButton: true,
+                                                            confirmButtonText: 'Reject',
+                                                            confirmButtonColor: '#dc2626'
+                                                        });
+
+                                                        if (result.isConfirmed) {
+                                                            await handleReviewOrgCourse(course._id, 'rejected', String(result.value || ''));
+                                                        }
+                                                    }}
+                                                    className="text-red-600"
+                                                >
+                                                    <X className="mr-2 h-4 w-4" />
+                                                    <span>Reject</span>
+                                                </DropdownMenuItem>
+                                            )}
+                                            
+                                            {role === 'org_admin' && approvalStatus === 'approved' && (
+                                                <DropdownMenuItem 
+                                                    onClick={async () => {
+                                                        const nextPublished = !published;
+                                                        const result = await Swal.fire({
+                                                            title: nextPublished ? 'Publish this course?' : 'Unpublish this course?',
+                                                            text: nextPublished
+                                                                ? 'Students will be able to see and open this course in the student portal.'
+                                                                : 'Students will no longer see this course in the student portal.',
+                                                            showCancelButton: true,
+                                                            confirmButtonText: nextPublished ? 'Publish' : 'Unpublish',
+                                                            confirmButtonColor: nextPublished ? '#16a34a' : '#dc2626'
+                                                        });
+
+                                                        if (result.isConfirmed) {
+                                                            await handlePublishOrgCourse(course._id, nextPublished);
+                                                        }
+                                                    }}
+                                                >
+                                                    {published ? (
+                                                        <>
+                                                            <EyeOff className="mr-2 h-4 w-4" />
+                                                            <span>Unpublish</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Eye className="mr-2 h-4 w-4" />
+                                                            <span>Publish</span>
+                                                        </>
+                                                    )}
+                                                </DropdownMenuItem>
+                                            )}
+                                            
+                                            {quizCount > 0 && (
+                                                <DropdownMenuItem 
+                                                    onClick={() => {
+                                                        const report = quizReportsMap[String(course._id)];
+                                                        const normalized = normalizeCourseForEdit(course);
+                                                        setSelectedQuizReport(report || {
+                                                            courseId: String(course._id),
+                                                            title,
+                                                            questionCount: quizCount,
+                                                            quizSettings: normalized.quizSettings,
+                                                            attemptCount: 0,
+                                                            passedCount: 0,
+                                                            flaggedCount: 0,
+                                                            attempts: []
+                                                        });
+                                                        setOpenQuizReportDialog(true);
+                                                    }}
+                                                >
+                                                    <BarChart className="mr-2 h-4 w-4" />
+                                                    <span>Quiz Report</span>
+                                                </DropdownMenuItem>
+                                            )}
+                                            
+                                            <DropdownMenuItem 
+                                                onClick={async () => {
+                                                    const initialDescription = "Generating assignment description...";
+                                                    
+                                                    setNewAssignment({
+                                                        topic: title,
+                                                        description: initialDescription,
+                                                        dueDate: '',
+                                                        department: course.department || ''
+                                                    });
+                                                    setOpenAssignmentDialog(true);
+
+                                                    try {
+                                                        const res = await axios.post(`${serverURL}/api/prompt`, {
+                                                            prompt: `Write a professional 1-2 sentence assignment description for a course titled "${title}". The description should encourage the student to complete the assignment to test their understanding. Return strictly the text.`,
+                                                            systemInstruction: "You are an educational assistant. Return only the 1-2 sentence assignment description text. No quotes, no conversational filler."
+                                                        });
+
+                                                        if (res.data.success && res.data.generatedText) {
+                                                            setNewAssignment(prev => ({
+                                                                ...prev,
+                                                                description: res.data.generatedText
+                                                            }));
+                                                        } else {
+                                                            setNewAssignment(prev => ({
+                                                                ...prev,
+                                                                description: description
+                                                            }));
+                                                        }
+                                                    } catch (e) {
+                                                        console.error("Failed to generate assignment description:", e);
+                                                        setNewAssignment(prev => ({
+                                                            ...prev,
+                                                            description: description
+                                                        }));
+                                                    }
+                                                }}
+                                            >
+                                                <FileText className="mr-2 h-4 w-4" />
+                                                <span>Create Assignment</span>
+                                            </DropdownMenuItem>
+                                            
+                                            {(course.topics || course.content) && (
+                                                <DropdownMenuItem 
+                                                    onClick={() => course.topics ? setEditCourse(normalizeCourseForEdit(course)) : setEditAICourse({ ...course })}
+                                                >
+                                                    <Edit className="mr-2 h-4 w-4" />
+                                                    <span>Edit</span>
+                                                </DropdownMenuItem>
+                                            )}
+                                            
+                                            <DropdownMenuItem 
+                                                onClick={() => handleDeleteCourse(course._id)}
+                                                className="text-red-600 focus:text-red-600"
+                                            >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                <span>Delete</span>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+
+                                {/* Course Content */}
+                                <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
+                                    <div className="flex-1 w-full pr-8 lg:pr-0">
+                                        <h3 className="font-semibold text-lg capitalize break-words">{title}</h3>
+                                        <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: description }} />
+                                        
+                                        <div className="flex flex-wrap gap-4 mt-2 text-xs font-medium text-muted-foreground">
+                                            <span className="whitespace-nowrap">{topicCount} Topics</span>
+                                            {quizCount > 0 && <span className="whitespace-nowrap">{quizCount} Quizzes</span>}
+                                            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded whitespace-nowrap">
+                                                {course.department ? `Dept: ${departmentsList.find(d => d._id === course.department || d.name === course.department)?.name || course.department}` : (course.content ? 'AI Generated' : 'All students')}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                                            {approvalStatus === 'pending' && (
+                                                <Badge variant="outline" className="gap-1 whitespace-nowrap">
+                                                    <Clock className="w-3.5 h-3.5" /> Pending approval
+                                                </Badge>
+                                            )}
+                                            {approvalStatus === 'approved' && (
+                                                <Badge className="bg-emerald-600 text-white border-0 gap-1 whitespace-nowrap">
+                                                    <Check className="w-3.5 h-3.5" /> Approved
+                                                </Badge>
+                                            )}
+                                            {approvalStatus === 'rejected' && (
+                                                <Badge variant="destructive" className="gap-1 whitespace-nowrap">
+                                                    <X className="w-3.5 h-3.5" /> Rejected
+                                                </Badge>
+                                            )}
+                                            <Badge variant={published ? "secondary" : "outline"} className={published ? "bg-blue-500/10 text-blue-700 border-blue-200 whitespace-nowrap" : "whitespace-nowrap"}>
+                                                {published ? 'Published' : 'Unpublished'}
+                                            </Badge>
+                                        </div>
+                                        
+                                        {quizCount > 0 && quizReportsMap[String(course._id)] && (
+                                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                                                {quizReportsMap[String(course._id)]?.quizSettings?.examMode && (
+                                                    <Badge variant="secondary" className="gap-1 whitespace-nowrap">
+                                                        <Shield className="w-3.5 h-3.5" /> Secure
+                                                    </Badge>
+                                                )}
+                                                <Badge variant="outline" className="whitespace-nowrap">Attempts: {quizReportsMap[String(course._id)]?.attemptCount || 0}</Badge>
+                                                <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 whitespace-nowrap">
+                                                    Passed: {quizReportsMap[String(course._id)]?.passedCount || 0}
+                                                </Badge>
+                                                {(quizReportsMap[String(course._id)]?.flaggedCount || 0) > 0 && (
+                                                    <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700 gap-1 whitespace-nowrap">
+                                                        <AlertTriangle className="w-3.5 h-3.5" /> Flagged: {quizReportsMap[String(course._id)]?.flaggedCount || 0}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Desktop buttons - hidden on mobile/tablet */}
+                                    <div className="hidden lg:flex flex-wrap gap-2 w-full lg:w-auto justify-start lg:justify-end">
+                                        <Button variant="ghost" size="sm" onClick={() => setPreviewCourse({ ...course })}>
+                                            <Eye className="w-4 h-4" />
+                                            <span className="ml-2">Preview</span>
                                         </Button>
-                                    )}
-                                    {(orgSettings?.allowManualCreation !== false) && (
-                                        <Dialog open={openCourseDialog} onOpenChange={setOpenCourseDialog}>
-                                            <DialogTrigger asChild onClick={() => {
-                                                setNewCourse(role === 'dept_admin'
-                                                    ? { ...createEmptyCourse(), department: getDeptScopedDepartment() }
-                                                    : createEmptyCourse());
-                                                setOpenCourseDialog(true);
-                                            }}>
-                                                <Button>
-                                                    <Plus className="w-4 h-4 mr-2" /> Create Course
-                                                </Button>
-                                            </DialogTrigger>
+                                        
+                                        {role === 'org_admin' && (approvalStatus === 'pending' || approvalStatus === 'rejected') && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleReviewOrgCourse(course._id, 'approved', '')}
+                                                className="whitespace-nowrap"
+                                            >
+                                                <Check className="w-4 h-4 mr-1" /> Approve
+                                            </Button>
+                                        )}
+                                        
+                                        {role === 'org_admin' && approvalStatus !== 'rejected' && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={async () => {
+                                                    const result = await Swal.fire({
+                                                        title: 'Reject this course?',
+                                                        input: 'textarea',
+                                                        inputLabel: 'Reason (optional)',
+                                                        inputPlaceholder: 'Write a short note for the staff member...',
+                                                        showCancelButton: true,
+                                                        confirmButtonText: 'Reject',
+                                                        confirmButtonColor: '#dc2626'
+                                                    });
 
-                                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                                                <DialogHeader>
-                                                    <DialogTitle>Create New Course</DialogTitle>
-                                                </DialogHeader>
+                                                    if (result.isConfirmed) {
+                                                        await handleReviewOrgCourse(course._id, 'rejected', String(result.value || ''));
+                                                    }
+                                                }}
+                                                className="whitespace-nowrap"
+                                            >
+                                                <X className="w-4 h-4 mr-1" /> Reject
+                                            </Button>
+                                        )}
+                                        
+                                        {role === 'org_admin' && approvalStatus === 'approved' && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={async () => {
+                                                    const nextPublished = !published;
+                                                    const result = await Swal.fire({
+                                                        title: nextPublished ? 'Publish this course?' : 'Unpublish this course?',
+                                                        text: nextPublished
+                                                            ? 'Students will be able to see and open this course in the student portal.'
+                                                            : 'Students will no longer see this course in the student portal.',
+                                                        showCancelButton: true,
+                                                        confirmButtonText: nextPublished ? 'Publish' : 'Unpublish',
+                                                        confirmButtonColor: nextPublished ? '#16a34a' : '#dc2626'
+                                                    });
 
-                                                <CourseForm
-                                                    course={newCourse}
-                                                    setCourse={setNewCourse}
-                                                    onSave={() => handleCreateCourse(newCourse)}
-                                                    departments={departmentsList}
-                                                    role={role}
-                                                />
-                                            </DialogContent>
-                                        </Dialog>
-                                    )}
+                                                    if (result.isConfirmed) {
+                                                        await handlePublishOrgCourse(course._id, nextPublished);
+                                                    }
+                                                }}
+                                                className="whitespace-nowrap"
+                                            >
+                                                {published ? 'Unpublish' : 'Publish'}
+                                            </Button>
+                                        )}
+                                        
+                                        {quizCount > 0 && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                title="Quiz report"
+                                                onClick={() => {
+                                                    const report = quizReportsMap[String(course._id)];
+                                                    const normalized = normalizeCourseForEdit(course);
+                                                    setSelectedQuizReport(report || {
+                                                        courseId: String(course._id),
+                                                        title,
+                                                        questionCount: quizCount,
+                                                        quizSettings: normalized.quizSettings,
+                                                        attemptCount: 0,
+                                                        passedCount: 0,
+                                                        flaggedCount: 0,
+                                                        attempts: []
+                                                    });
+                                                    setOpenQuizReportDialog(true);
+                                                }}
+                                            >
+                                                <BarChart className="w-4 h-4" />
+                                                <span className="ml-2">Report</span>
+                                            </Button>
+                                        )}
+                                        
+                                        <Button variant="ghost" size="sm" onClick={async () => {
+                                            const initialDescription = "Generating assignment description...";
+                                            
+                                            setNewAssignment({
+                                                topic: title,
+                                                description: initialDescription,
+                                                dueDate: '',
+                                                department: course.department || ''
+                                            });
+                                            setOpenAssignmentDialog(true);
+
+                                            try {
+                                                const res = await axios.post(`${serverURL}/api/prompt`, {
+                                                    prompt: `Write a professional 1-2 sentence assignment description for a course titled "${title}". The description should encourage the student to complete the assignment to test their understanding. Return strictly the text.`,
+                                                    systemInstruction: "You are an educational assistant. Return only the 1-2 sentence assignment description text. No quotes, no conversational filler."
+                                                });
+
+                                                if (res.data.success && res.data.generatedText) {
+                                                    setNewAssignment(prev => ({
+                                                        ...prev,
+                                                        description: res.data.generatedText
+                                                    }));
+                                                } else {
+                                                    setNewAssignment(prev => ({
+                                                        ...prev,
+                                                        description: description
+                                                    }));
+                                                }
+                                            } catch (e) {
+                                                console.error("Failed to generate assignment description:", e);
+                                                setNewAssignment(prev => ({
+                                                    ...prev,
+                                                    description: description
+                                                }));
+                                            }
+                                        }}>
+                                            Create Assignment
+                                        </Button>
+                                        
+                                        {course.topics ? (
+                                            <Button variant="ghost" size="sm" onClick={() => setEditCourse(normalizeCourseForEdit(course))}>Edit</Button>
+                                        ) : course.content ? (
+                                            <Button variant="ghost" size="sm" onClick={() => setEditAICourse({ ...course })}>Edit</Button>
+                                        ) : null}
+                                        
+                                        <Button variant="ghost" size="sm" onClick={() => handleDeleteCourse(course._id)}>
+                                            <Trash2 className="w-4 h-4 text-destructive" />
+                                            <span className="ml-2">Delete</span>
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
+                        );
+                    })
+                ) : (
+                    <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
+                        <FileText className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                        <p>No courses created yet. Create your first course or use AI to generate one.</p>
+                    </div>
+                )}
+            </div>
 
-                            {/* Course List */}
+            {/* Add required imports at the top of your file */}
+            {/* 
+            import {
+                DropdownMenu,
+                DropdownMenuContent,
+                DropdownMenuItem,
+                DropdownMenuTrigger,
+            } from "@/components/ui/dropdown-menu"
+            import { MoreVertical, EyeOff, Edit, FileText } from "lucide-react"
+            */}
+
+            <Dialog
+                open={openQuizReportDialog}
+                onOpenChange={(open) => {
+                    setOpenQuizReportDialog(open);
+                    if (!open) {
+                        setSelectedQuizReport(null);
+                        setExpandedQuizAttemptId('');
+                    }
+                }}
+            >
+                <DialogContent className="w-[95%] max-w-4xl max-h-[90vh] overflow-y-auto mx-auto">
+                    <DialogHeader>
+                        <DialogTitle>Quiz Report</DialogTitle>
+                        <DialogDescription>
+                            Attempts, scores, cooldowns, and malpractice flags for this course.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {quizReportsLoading && (
+                        <div className="text-sm text-muted-foreground">Loading reports...</div>
+                    )}
+
+                    {!quizReportsLoading && selectedQuizReport && (() => {
+                        const settings = {
+                            ...defaultQuizSettings,
+                            ...(selectedQuizReport.quizSettings || {}),
+                            proctoring: {
+                                ...defaultQuizSettings.proctoring,
+                                ...(selectedQuizReport.quizSettings?.proctoring || {})
+                            }
+                        };
+                        const attempts = Array.isArray(selectedQuizReport.attempts) ? selectedQuizReport.attempts : [];
+
+                        return (
                             <div className="space-y-4">
-                                {courses.length > 0 ? (
-                                    courses.filter((c: any) =>
-                                        (c.title || c.mainTopic || '').toLowerCase().includes(courseSearch.toLowerCase()) ||
-                                        (c.description || '').toLowerCase().includes(courseSearch.toLowerCase())
-                                    ).map((course: any) => {
-                                        const title = course.title || course.mainTopic;
-                                        const description = course.description || (course.content ? "AI Generated Course" : "");
-                                        let topicCount = 0;
-                                        let quizCount = 0;
-                                        // Both OrgCourse and AI Course now support approval workflow
-                                        const approvalStatus = course.approvalStatus || (course.isPublished === false ? 'pending' : 'approved');
-                                        const published = course.isPublished !== undefined ? Boolean(course.isPublished) : (course.content ? false : true); // AI courses default to unpublished
-
-                                        if (course.topics) {
-                                            topicCount = course.topics.length;
-                                            quizCount = course.quizzes?.length || 0;
-                                        } else if (course.content) {
-                                            try {
-                                                const content = JSON.parse(course.content);
-                                                topicCount = content.course_topics?.length || 0;
-                                                quizCount = content.quizzes?.length || 0;
-                                            } catch (e) {
-                                                console.error("Error parsing course content", e);
-                                            }
-                                        }
-
-                                        return (
-                                            <div key={course._id} className="p-4 border rounded-lg bg-card">
-                                                <div className="flex justify-between items-start">
-                                                    <div className="flex-1">
-                                                        <h3 className="font-semibold text-lg capitalize">{title}</h3>
-                                                        <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: description }} />
-                                                        <div className="flex gap-4 mt-2 text-xs font-medium text-muted-foreground">
-                                                            <span>{topicCount} Topics</span>
-                                                            {quizCount > 0 && <span>{quizCount} Quizzes</span>}
-                                                            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded">
-                                                                {course.department ? `Dept: ${departmentsList.find(d => d._id === course.department || d.name === course.department)?.name || course.department}` : (course.content ? 'AI Generated' : 'All students')}
-                                                            </span>
-                                                        </div>
-                                                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                                                            {approvalStatus === 'pending' && (
-                                                                <Badge variant="outline" className="gap-1">
-                                                                    <Clock className="w-3.5 h-3.5" /> Pending approval
-                                                                </Badge>
-                                                            )}
-                                                            {approvalStatus === 'approved' && (
-                                                                <Badge className="bg-emerald-600 text-white border-0 gap-1">
-                                                                    <Check className="w-3.5 h-3.5" /> Approved
-                                                                </Badge>
-                                                            )}
-                                                            {approvalStatus === 'rejected' && (
-                                                                <Badge variant="destructive" className="gap-1">
-                                                                    <X className="w-3.5 h-3.5" /> Rejected
-                                                                </Badge>
-                                                            )}
-                                                            <Badge variant={published ? "secondary" : "outline"} className={published ? "bg-blue-500/10 text-blue-700 border-blue-200" : ""}>
-                                                                {published ? 'Published' : 'Unpublished'}
-                                                            </Badge>
-                                                        </div>
-                                                        {quizCount > 0 && quizReportsMap[String(course._id)] && (
-                                                            <div className="mt-2 flex flex-wrap items-center gap-2">
-                                                                {quizReportsMap[String(course._id)]?.quizSettings?.examMode && (
-                                                                    <Badge variant="secondary" className="gap-1">
-                                                                        <Shield className="w-3.5 h-3.5" /> Secure
-                                                                    </Badge>
-                                                                )}
-                                                                <Badge variant="outline">Attempts: {quizReportsMap[String(course._id)]?.attemptCount || 0}</Badge>
-                                                                <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
-                                                                    Passed: {quizReportsMap[String(course._id)]?.passedCount || 0}
-                                                                </Badge>
-                                                                {(quizReportsMap[String(course._id)]?.flaggedCount || 0) > 0 && (
-                                                                    <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700 gap-1">
-                                                                        <AlertTriangle className="w-3.5 h-3.5" /> Flagged: {quizReportsMap[String(course._id)]?.flaggedCount || 0}
-                                                                    </Badge>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <Button variant="ghost" size="sm" onClick={() => setPreviewCourse({ ...course })}>
-                                                            <Eye className="w-4 h-4" />
-                                                        </Button>
-                                                        {role === 'org_admin' && (approvalStatus === 'pending' || approvalStatus === 'rejected') && (
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={() => handleReviewOrgCourse(course._id, 'approved', '')}
-                                                            >
-                                                                <Check className="w-4 h-4 mr-1" /> Approve
-                                                            </Button>
-                                                        )}
-                                                        {role === 'org_admin' && approvalStatus !== 'rejected' && (
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={async () => {
-                                                                    const result = await Swal.fire({
-                                                                        title: 'Reject this course?',
-                                                                        input: 'textarea',
-                                                                        inputLabel: 'Reason (optional)',
-                                                                        inputPlaceholder: 'Write a short note for the staff member...',
-                                                                        showCancelButton: true,
-                                                                        confirmButtonText: 'Reject',
-                                                                        confirmButtonColor: '#dc2626'
-                                                                    });
-
-                                                                    if (result.isConfirmed) {
-                                                                        await handleReviewOrgCourse(course._id, 'rejected', String(result.value || ''));
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <X className="w-4 h-4 mr-1" /> Reject
-                                                            </Button>
-                                                        )}
-                                                        {role === 'org_admin' && approvalStatus === 'approved' && (
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={async () => {
-                                                                    const nextPublished = !published;
-                                                                    const result = await Swal.fire({
-                                                                        title: nextPublished ? 'Publish this course?' : 'Unpublish this course?',
-                                                                        text: nextPublished
-                                                                            ? 'Students will be able to see and open this course in the student portal.'
-                                                                            : 'Students will no longer see this course in the student portal.',
-                                                                        showCancelButton: true,
-                                                                        confirmButtonText: nextPublished ? 'Publish' : 'Unpublish',
-                                                                        confirmButtonColor: nextPublished ? '#16a34a' : '#dc2626'
-                                                                    });
-
-                                                                    if (result.isConfirmed) {
-                                                                        await handlePublishOrgCourse(course._id, nextPublished);
-                                                                    }
-                                                                }}
-                                                            >
-                                                                {published ? 'Unpublish' : 'Publish'}
-                                                            </Button>
-                                                        )}
-                                                        {quizCount > 0 && (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                title="Quiz report"
-                                                                onClick={() => {
-                                                                    const report = quizReportsMap[String(course._id)];
-                                                                    const normalized = normalizeCourseForEdit(course);
-                                                                    setSelectedQuizReport(report || {
-                                                                        courseId: String(course._id),
-                                                                        title,
-                                                                        questionCount: quizCount,
-                                                                        quizSettings: normalized.quizSettings,
-                                                                        attemptCount: 0,
-                                                                        passedCount: 0,
-                                                                        flaggedCount: 0,
-                                                                        attempts: []
-                                                                    });
-                                                                    setOpenQuizReportDialog(true);
-                                                                }}
-                                                            >
-                                                                <BarChart className="w-4 h-4" />
-                                                            </Button>
-                                                        )}
-                                                        <Button variant="ghost" size="sm" onClick={async () => {
-                                                            const initialDescription = "Generating assignment description...";
-                                                            
-                                                            setNewAssignment({
-                                                                topic: title,
-                                                                description: initialDescription,
-                                                                dueDate: '',
-                                                                department: course.department || ''
-                                                            });
-                                                            setOpenAssignmentDialog(true);
-
-                                                            try {
-                                                                const res = await axios.post(`${serverURL}/api/prompt`, {
-                                                                    prompt: `Write a professional 1-2 sentence assignment description for a course titled "${title}". The description should encourage the student to complete the assignment to test their understanding. Return strictly the text.`,
-                                                                    systemInstruction: "You are an educational assistant. Return only the 1-2 sentence assignment description text. No quotes, no conversational filler."
-                                                                });
-
-                                                                if (res.data.success && res.data.generatedText) {
-                                                                    setNewAssignment(prev => ({
-                                                                        ...prev,
-                                                                        description: res.data.generatedText
-                                                                    }));
-                                                                } else {
-                                                                    setNewAssignment(prev => ({
-                                                                        ...prev,
-                                                                        description: description
-                                                                    }));
-                                                                }
-                                                            } catch (e) {
-                                                                console.error("Failed to generate assignment description:", e);
-                                                                setNewAssignment(prev => ({
-                                                                    ...prev,
-                                                                    description: description
-                                                                }));
-                                                            }
-                                                        }}>
-                                                            Create Assignment
-                                                        </Button>
-                                                        {course.topics ? (
-                                                            <Button variant="ghost" size="sm" onClick={() => setEditCourse(normalizeCourseForEdit(course))}>Edit</Button>
-                                                        ) : course.content ? (
-                                                            <Button variant="ghost" size="sm" onClick={() => setEditAICourse({ ...course })}>Edit</Button>
-                                                        ) : null}
-                                                        <Button variant="ghost" size="sm" onClick={() => handleDeleteCourse(course._id)}>
-                                                            <Trash2 className="w-4 h-4 text-destructive" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                ) : (
-                                    <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
-                                        <FileText className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                                        <p>No courses created yet. Create your first course or use AI to generate one.</p>
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                    <div>
+                                        <h3 className="text-lg font-semibold break-words">{selectedQuizReport.title || 'Course'}</h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            {selectedQuizReport.questionCount || 0} questions in bank, difficulty: {settings.difficultyMode}, pass mark: {settings.passPercentage}%.
+                                        </p>
                                     </div>
-                                )}
-                            </div>
-
-                            <Dialog
-                                open={openQuizReportDialog}
-                                onOpenChange={(open) => {
-                                    setOpenQuizReportDialog(open);
-                                    if (!open) {
-                                        setSelectedQuizReport(null);
-                                        setExpandedQuizAttemptId('');
-                                    }
-                                }}
-                            >
-                                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                                    <DialogHeader>
-                                        <DialogTitle>Quiz Report</DialogTitle>
-                                        <DialogDescription>
-                                            Attempts, scores, cooldowns, and malpractice flags for this course.
-                                        </DialogDescription>
-                                    </DialogHeader>
-
-                                    {quizReportsLoading && (
-                                        <div className="text-sm text-muted-foreground">Loading reports...</div>
+                                    {settings.examMode ? (
+                                        <Badge variant="secondary" className="gap-1 whitespace-nowrap">
+                                            <Shield className="w-4 h-4" /> Secure exam
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="outline" className="whitespace-nowrap">Standard quiz</Badge>
                                     )}
+                                </div>
 
-                                    {!quizReportsLoading && selectedQuizReport && (() => {
-                                        const settings = {
-                                            ...defaultQuizSettings,
-                                            ...(selectedQuizReport.quizSettings || {}),
-                                            proctoring: {
-                                                ...defaultQuizSettings.proctoring,
-                                                ...(selectedQuizReport.quizSettings?.proctoring || {})
-                                            }
-                                        };
-                                        const attempts = Array.isArray(selectedQuizReport.attempts) ? selectedQuizReport.attempts : [];
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    <div className="p-3 rounded-lg border bg-muted/20">
+                                        <div className="text-xs text-muted-foreground">Attempt policy</div>
+                                        <div className="font-semibold text-sm break-words">{settings.attemptLimit} attempts, cooldown {settings.cooldownMinutes} min</div>
+                                    </div>
+                                    <div className="p-3 rounded-lg border bg-muted/20">
+                                        <div className="text-xs text-muted-foreground">Summary</div>
+                                        <div className="font-semibold text-sm break-words">
+                                            Attempts {selectedQuizReport.attemptCount || 0}, passed {selectedQuizReport.passedCount || 0}, flagged {selectedQuizReport.flaggedCount || 0}
+                                        </div>
+                                    </div>
+                                    <div className="p-3 rounded-lg border bg-muted/20">
+                                        <div className="text-xs text-muted-foreground">Shuffle</div>
+                                        <div className="font-semibold text-sm break-words">
+                                            Questions {settings.shuffleQuestions ? 'on' : 'off'}, options {settings.shuffleOptions ? 'on' : 'off'}
+                                        </div>
+                                    </div>
+                                </div>
 
-                                        return (
-                                            <div className="space-y-4">
-                                                <div className="flex items-start justify-between gap-4">
-                                                    <div>
-                                                        <h3 className="text-lg font-semibold">{selectedQuizReport.title || 'Course'}</h3>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {selectedQuizReport.questionCount || 0} questions in bank, difficulty: {settings.difficultyMode}, pass mark: {settings.passPercentage}%.
-                                                        </p>
-                                                    </div>
-                                                    {settings.examMode ? (
-                                                        <Badge variant="secondary" className="gap-1">
-                                                            <Shield className="w-4 h-4" /> Secure exam
-                                                        </Badge>
-                                                    ) : (
-                                                        <Badge variant="outline">Standard quiz</Badge>
-                                                    )}
-                                                </div>
-
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                                    <div className="p-3 rounded-lg border bg-muted/20">
-                                                        <div className="text-xs text-muted-foreground">Attempt policy</div>
-                                                        <div className="font-semibold text-sm">{settings.attemptLimit} attempts, cooldown {settings.cooldownMinutes} min</div>
-                                                    </div>
-                                                    <div className="p-3 rounded-lg border bg-muted/20">
-                                                        <div className="text-xs text-muted-foreground">Summary</div>
-                                                        <div className="font-semibold text-sm">
-                                                            Attempts {selectedQuizReport.attemptCount || 0}, passed {selectedQuizReport.passedCount || 0}, flagged {selectedQuizReport.flaggedCount || 0}
-                                                        </div>
-                                                    </div>
-                                                    <div className="p-3 rounded-lg border bg-muted/20">
-                                                        <div className="text-xs text-muted-foreground">Shuffle</div>
-                                                        <div className="font-semibold text-sm">
-                                                            Questions {settings.shuffleQuestions ? 'on' : 'off'}, options {settings.shuffleOptions ? 'on' : 'off'}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="border rounded-lg overflow-hidden">
-                                                    <div className="grid grid-cols-12 gap-2 bg-muted/40 px-3 py-2 text-xs font-semibold text-muted-foreground">
-                                                        <div className="col-span-3">Student</div>
-                                                        <div className="col-span-1">Try</div>
-                                                        <div className="col-span-2">Score</div>
-                                                        <div className="col-span-2">Result</div>
-                                                        <div className="col-span-2">Flags</div>
-                                                        <div className="col-span-2">Submitted</div>
-                                                    </div>
-                                                    {attempts.length === 0 ? (
-                                                        <div className="p-4 text-sm text-muted-foreground">No attempts yet.</div>
-                                                    ) : (
-                                                        <div className="divide-y">
-                                                            {attempts.map((a: any) => {
-                                                                const submitted = a.submittedAt ? new Date(a.submittedAt).toLocaleString() : '-';
-                                                                const eventSummary = a.eventSummary || {};
-                                                                const eventBadges = Object.entries(eventSummary).slice(0, 3);
-                                                                const isExpanded = expandedQuizAttemptId === String(a.attemptId);
-                                                                return (
-                                                                    <div key={a.attemptId} className="border-t first:border-t-0">
-                                                                        <div className="grid grid-cols-12 gap-2 px-3 py-2 text-sm items-center">
-                                                                            <div className="col-span-3">
-                                                                                <div className="font-medium truncate">{a.studentName || 'Student'}</div>
-                                                                                <div className="text-xs text-muted-foreground truncate">{a.studentEmail || ''}</div>
-                                                                            </div>
-                                                                            <div className="col-span-1 text-muted-foreground">{a.attemptNumber || 1}</div>
-                                                                            <div className="col-span-2">{a.score || 0}/{a.totalQuestions || 0} ({a.percentage || 0}%)</div>
-                                                                            <div className="col-span-2">
-                                                                                {a.passed ? (
-                                                                                    <Badge className="bg-emerald-600 text-white border-0">Passed</Badge>
-                                                                                ) : (
-                                                                                    <Badge variant="outline">Failed</Badge>
-                                                                                )}
-                                                                            </div>
-                                                                            <div className="col-span-2 flex items-center gap-2">
-                                                                                {a.malpracticeFlag ? (
-                                                                                    <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700 gap-1">
-                                                                                        <AlertTriangle className="w-3.5 h-3.5" /> Malpractice
-                                                                                    </Badge>
-                                                                                ) : (
-                                                                                    <span className="text-xs text-muted-foreground">None</span>
-                                                                                )}
-                                                                                <span className="text-xs text-muted-foreground">{a.securityEventCount || 0} events</span>
-                                                                            </div>
-                                                                            <div className="col-span-2 text-xs text-muted-foreground">
-                                                                                <div>{submitted}</div>
-                                                                                {eventBadges.length > 0 && (
-                                                                                    <div className="mt-1 flex flex-wrap gap-1">
-                                                                                        {eventBadges.map(([eventType, count]) => (
-                                                                                            <Badge key={`${a.attemptId}-${eventType}`} variant="outline" className="text-[10px]">
-                                                                                                {eventType}: {String(count)}
-                                                                                            </Badge>
-                                                                                        ))}
-                                                                                    </div>
-                                                                                )}
-                                                                                {(a.securityEvents?.length || 0) > 0 && (
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        className="mt-2 text-[11px] font-semibold text-primary"
-                                                                                        onClick={() => setExpandedQuizAttemptId(isExpanded ? '' : String(a.attemptId))}
-                                                                                    >
-                                                                                        {isExpanded ? 'Hide details' : 'View details'}
-                                                                                    </button>
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                        {isExpanded && (a.securityEvents?.length || 0) > 0 && (
-                                                                            <div className="border-t bg-muted/20 px-3 py-3">
-                                                                                <div className="space-y-2">
-                                                                                    {a.securityEvents.map((event: any, index: number) => (
-                                                                                        <div key={`${a.attemptId}-event-${index}`} className="rounded-lg border bg-background px-3 py-2">
-                                                                                            <div className="flex items-center justify-between gap-2">
-                                                                                                <div className="flex items-center gap-2">
-                                                                                                    <Badge variant="outline">{event.type}</Badge>
-                                                                                                    <Badge variant={event.severity === 'high' ? 'destructive' : 'secondary'}>
-                                                                                                        {event.severity}
-                                                                                                    </Badge>
-                                                                                                </div>
-                                                                                                <span className="text-[11px] text-muted-foreground">
-                                                                                                    {event.timestamp ? new Date(event.timestamp).toLocaleString() : '-'}
-                                                                                                </span>
-                                                                                            </div>
-                                                                                            {event.details && (
-                                                                                                <p className="mt-2 text-xs text-muted-foreground">{event.details}</p>
-                                                                                            )}
-                                                                                        </div>
-                                                                                    ))}
-                                                                                </div>
-                                                                            </div>
+                                <div className="border rounded-lg overflow-x-auto">
+                                    <div className="min-w-[600px]">
+                                        <div className="grid grid-cols-12 gap-2 bg-muted/40 px-3 py-2 text-xs font-semibold text-muted-foreground">
+                                            <div className="col-span-3">Student</div>
+                                            <div className="col-span-1">Try</div>
+                                            <div className="col-span-2">Score</div>
+                                            <div className="col-span-2">Result</div>
+                                            <div className="col-span-2">Flags</div>
+                                            <div className="col-span-2">Submitted</div>
+                                        </div>
+                                        {attempts.length === 0 ? (
+                                            <div className="p-4 text-sm text-muted-foreground">No attempts yet.</div>
+                                        ) : (
+                                            <div className="divide-y">
+                                                {attempts.map((a: any) => {
+                                                    const submitted = a.submittedAt ? new Date(a.submittedAt).toLocaleString() : '-';
+                                                    const eventSummary = a.eventSummary || {};
+                                                    const eventBadges = Object.entries(eventSummary).slice(0, 3);
+                                                    const isExpanded = expandedQuizAttemptId === String(a.attemptId);
+                                                    return (
+                                                        <div key={a.attemptId} className="border-t first:border-t-0">
+                                                            <div className="grid grid-cols-12 gap-2 px-3 py-2 text-sm items-center">
+                                                                <div className="col-span-3">
+                                                                    <div className="font-medium truncate">{a.studentName || 'Student'}</div>
+                                                                    <div className="text-xs text-muted-foreground truncate">{a.studentEmail || ''}</div>
+                                                                </div>
+                                                                <div className="col-span-1 text-muted-foreground">{a.attemptNumber || 1}</div>
+                                                                <div className="col-span-2">{a.score || 0}/{a.totalQuestions || 0} ({a.percentage || 0}%)</div>
+                                                                <div className="col-span-2">
+                                                                    {a.passed ? (
+                                                                        <Badge className="bg-emerald-600 text-white border-0">Passed</Badge>
+                                                                    ) : (
+                                                                        <Badge variant="outline">Failed</Badge>
+                                                                    )}
+                                                                </div>
+                                                                <div className="col-span-2">
+                                                                    <div className="flex flex-wrap items-center gap-2">
+                                                                        {a.malpracticeFlag ? (
+                                                                            <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700 gap-1 whitespace-nowrap">
+                                                                                <AlertTriangle className="w-3.5 h-3.5" /> Malpractice
+                                                                            </Badge>
+                                                                        ) : (
+                                                                            <span className="text-xs text-muted-foreground whitespace-nowrap">None</span>
                                                                         )}
+                                                                        <span className="text-xs text-muted-foreground whitespace-nowrap">{a.securityEventCount || 0} events</span>
                                                                     </div>
-                                                                );
-                                                            })}
+                                                                </div>
+                                                                <div className="col-span-2 text-xs text-muted-foreground">
+                                                                    <div>{submitted}</div>
+                                                                    {eventBadges.length > 0 && (
+                                                                        <div className="mt-1 flex flex-wrap gap-1">
+                                                                            {eventBadges.map(([eventType, count]) => (
+                                                                                <Badge key={`${a.attemptId}-${eventType}`} variant="outline" className="text-[10px]">
+                                                                                    {eventType}: {String(count)}
+                                                                                </Badge>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                    {(a.securityEvents?.length || 0) > 0 && (
+                                                                        <button
+                                                                            type="button"
+                                                                            className="mt-2 text-[11px] font-semibold text-primary"
+                                                                            onClick={() => setExpandedQuizAttemptId(isExpanded ? '' : String(a.attemptId))}
+                                                                        >
+                                                                            {isExpanded ? 'Hide details' : 'View details'}
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            {isExpanded && (a.securityEvents?.length || 0) > 0 && (
+                                                                <div className="border-t bg-muted/20 px-3 py-3">
+                                                                    <div className="space-y-2">
+                                                                        {a.securityEvents.map((event: any, index: number) => (
+                                                                            <div key={`${a.attemptId}-event-${index}`} className="rounded-lg border bg-background px-3 py-2">
+                                                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                                                    <div className="flex flex-wrap items-center gap-2">
+                                                                                        <Badge variant="outline">{event.type}</Badge>
+                                                                                        <Badge variant={event.severity === 'high' ? 'destructive' : 'secondary'}>
+                                                                                            {event.severity}
+                                                                                        </Badge>
+                                                                                    </div>
+                                                                                    <span className="text-[11px] text-muted-foreground">
+                                                                                        {event.timestamp ? new Date(event.timestamp).toLocaleString() : '-'}
+                                                                                    </span>
+                                                                                </div>
+                                                                                {event.details && (
+                                                                                    <p className="mt-2 text-xs text-muted-foreground break-words">{event.details}</p>
+                                                                                )}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                    )}
-                                                </div>
+                                                    );
+                                                })}
                                             </div>
-                                        );
-                                    })()}
-                                </DialogContent>
-                            </Dialog>
-                        </CardContent>
-                    </Card>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </DialogContent>
+            </Dialog>
+        </CardContent>
+    </Card>
                 </TabsContent>
 
                 {/* STAFF TAB */}
                 {role === 'org_admin' && (
-                    <TabsContent value="staff" className="space-y-4">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Staff Directory</CardTitle>
-                                <CardDescription>Maintain department admins and review their access, load, and activity.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                                    {deptAdmins.length > 0 ? (
-                                        deptAdmins.map((admin: any) => {
-                                            const departmentLabel = admin.department?.name || admin.department?.title || admin.department || 'No department';
-                                            const lastLogin = admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleString() : 'No login activity yet';
-                                            const coursesLeft = Math.max(0, (admin.courseLimit || 0) - (admin.coursesCreatedCount || 0));
+               <TabsContent value="staff" className="space-y-4">
+  <Card className="overflow-hidden">
+    <CardHeader className="p-4 sm:p-6">
+      <CardTitle className="text-xl sm:text-2xl font-bold">Staff Directory</CardTitle>
+      <CardDescription className="text-sm">
+        Maintain department admins and review their access, load, and activity.
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="p-4 sm:p-6">
+      {/* MODIFIED GRID STRATEGY:
+          - grid-cols-1: Mobile and Tablet (768px) with sidebar
+          - lg:grid-cols-2: Laptops
+          - 2xl:grid-cols-3: Large Desktop
+      */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 2xl:grid-cols-3">
+        {deptAdmins.length > 0 ? (
+          deptAdmins.map((admin: any) => {
+            const departmentLabel = admin.department?.name || admin.department?.title || admin.department || 'No department';
+            const lastLogin = admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleString() : 'No login activity yet';
+            const coursesLeft = Math.max(0, (admin.courseLimit || 0) - (admin.coursesCreatedCount || 0));
 
-                                            return (
-                                                <div key={admin._id} className="rounded-xl border bg-card p-4 shadow-sm">
-                                                    <div className="flex items-start justify-between gap-3">
-                                                        <div className="min-w-0">
-                                                            <p className="font-semibold text-base truncate">{admin.mName || 'Staff Member'}</p>
-                                                            <p className="text-sm text-muted-foreground truncate">{admin.email || 'No email'}</p>
-                                                        </div>
-                                                        <Badge variant="secondary">Dept Admin</Badge>
-                                                    </div>
-                                                    <div className="mt-4 space-y-3 text-sm">
-                                                        <div className="flex items-center justify-between gap-3">
-                                                            <span className="text-muted-foreground">Department</span>
-                                                            <span className="font-medium text-right">{departmentLabel}</span>
-                                                        </div>
-                                                        <div className="flex items-center justify-between gap-3">
-                                                            <span className="text-muted-foreground">Courses created</span>
-                                                            <span className="font-medium">{admin.coursesCreatedCount || 0}</span>
-                                                        </div>
-                                                        <div className="flex items-center justify-between gap-3">
-                                                            <span className="text-muted-foreground">Courses left</span>
-                                                            <span className={`font-medium ${coursesLeft <= 0 ? 'text-destructive' : ''}`}>{coursesLeft}</span>
-                                                        </div>
-                                                        <div className="flex items-center justify-between gap-3">
-                                                            <span className="text-muted-foreground">Course limit</span>
-                                                            <span className="font-medium">{admin.courseLimit || 0}</span>
-                                                        </div>
-                                                        <div className="flex items-center justify-between gap-3">
-                                                            <span className="text-muted-foreground">Last login</span>
-                                                            <span className="font-medium text-right">{lastLogin}</span>
-                                                        </div>
-                                                    </div>
+            return (
+              <div key={admin._id} className="flex flex-col rounded-xl border bg-card p-5 shadow-sm hover:border-primary/20 transition-colors">
+                {/* Header: Name and Badge */}
+                <div className="flex items-start justify-between gap-3 mb-6">
+                  <div className="min-w-0">
+                    <p className="font-bold text-lg truncate leading-tight text-foreground">
+                      {admin.mName || 'Staff Member'}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate opacity-80">
+                      {admin.email || 'No email'}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="shrink-0 text-[10px] uppercase font-bold tracking-tight">
+                    Dept Admin
+                  </Badge>
+                </div>
 
-                                                    <div className="mt-4 flex items-center justify-end gap-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={async () => {
+                {/* Stats Info */}
+                <div className="flex-1 space-y-4 text-sm">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <span className="text-muted-foreground">Department</span>
+                    <span className="font-semibold text-right max-w-[140px] truncate">{departmentLabel}</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-[11px] text-muted-foreground uppercase font-bold">Created</p>
+                      <p className="text-lg font-semibold">{admin.coursesCreatedCount || 0}</p>
+                    </div>
+                    <div className="space-y-1 border-l pl-4">
+                      <p className="text-[11px] text-muted-foreground uppercase font-bold">Remaining</p>
+                      <p className={`text-lg font-semibold ${coursesLeft <= 0 ? 'text-destructive' : 'text-primary'}`}>
+                        {coursesLeft}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-muted/30 p-3 rounded-lg space-y-1">
+                    <span className="text-muted-foreground text-[10px] uppercase font-bold">Last Login Activity</span>
+                    <p className="text-xs font-medium">{lastLogin}</p>
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-6 font-semibold"
+                    onClick={async () => {
                                                                 const result = await Swal.fire({
                                                                     title: 'Request course limit change',
                                                                     input: 'number',
@@ -3571,234 +4184,288 @@ const formatGuidanceText = (text: string) => {
                                                                     toast({ title: "Error", description: e.response?.data?.message || e.message || "Request failed", variant: "destructive" });
                                                                 }
                                                             }}
-                                                        >
-                                                            Request Limit Change
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })
-                                    ) : (
-                                        <div className="col-span-full rounded-xl border border-dashed p-8 text-center text-muted-foreground">
-                                            No department admins found for this organization.
-                                        </div>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+                >
+                  Request Limit Change
+                </Button>
+              </div>
+            );
+          })
+        ) : (
+          <div className="col-span-full py-20 text-center border border-dashed rounded-xl">
+             <p className="text-muted-foreground">No department admins found.</p>
+          </div>
+        )}
+      </div>
+    </CardContent>
+  </Card>
+               </TabsContent>
                 )}
 
                 {/* APPROVALS TAB */}
                 {role === 'org_admin' && (
-                    <TabsContent value="approvals" className="space-y-4">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <ArrowUpCircle className="w-5 h-5 text-blue-500" /> Department Course Limit Requests
-                                </CardTitle>
-                                <CardDescription>Review and approve course limit increase requests from department admins.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {(() => {
-                                    const pendingLimitRequests = deptLimitRequests.filter((r: any) => r.status === 'pending');
-                                    return (
-                                        <div className="space-y-3">
-                                            {pendingLimitRequests.length === 0 ? (
-                                                <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
-                                                    No course limit requests pending.
-                                                </div>
-                                            ) : (
-                                                pendingLimitRequests.map((request: any) => (
-                                                    <div key={request._id} className="rounded-xl border bg-card p-4 shadow-sm">
-                                                        <div className="flex items-start justify-between gap-3">
-                                                            <div>
-                                                                <h3 className="font-semibold">{request.deptAdminId?.name || 'Department Admin'}</h3>
-                                                                <p className="mt-1 text-sm text-muted-foreground">Requested Limit Increase: <span className="font-medium text-foreground">{request.requestedCourseLimit}</span> courses</p>
-                                                                <p className="text-xs text-muted-foreground">Submitted: {new Date(request.createdAt).toLocaleDateString()}</p>
-                                                            </div>
-                                                            <div className="flex items-center gap-2">
-                                                                <Button
-                                                                    variant="outline"
-                                                                    className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-none"
-                                                                    size="sm"
-                                                                    onClick={() => handleProcessDeptCourseLimitRequest(request._id, 'approved')}
-                                                                >
-                                                                    <Check className="w-4 h-4 mr-1" /> Approve
-                                                                </Button>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    className="bg-red-50 text-red-600 hover:bg-red-100 border-none"
-                                                                    size="sm"
-                                                                    onClick={async () => {
-                                                                        const result = await Swal.fire({
-                                                                            title: 'Reject Request?',
-                                                                            input: 'text',
-                                                                            inputLabel: 'Reason (optional)',
-                                                                            showCancelButton: true,
-                                                                            confirmButtonText: 'Reject',
-                                                                            confirmButtonColor: '#dc2626'
-                                                                        });
-                                                                        if (result.isConfirmed) {
-                                                                            await handleProcessDeptCourseLimitRequest(request._id, 'rejected', result.value || '');
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    <X className="w-4 h-4 mr-1" /> Reject
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            )}
+                <TabsContent value="approvals" className="space-y-4">
+    {/* --- Course Limit Requests Card --- */}
+    <Card>
+        <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                <ArrowUpCircle className="w-5 h-5 text-blue-500 shrink-0" /> 
+                <span className="leading-tight">Department Course Limit Requests</span>
+            </CardTitle>
+            <CardDescription className="text-sm">
+                Review and approve course limit increase requests from department admins.
+            </CardDescription>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6 space-y-4">
+            {(() => {
+                const pendingLimitRequests = deptLimitRequests.filter((r: any) => r.status === 'pending');
+                return (
+                    <div className="space-y-3">
+                        {pendingLimitRequests.length === 0 ? (
+                            <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground text-sm">
+                                No course limit requests pending.
+                            </div>
+                        ) : (
+                            pendingLimitRequests.map((request: any) => (
+                                <div key={request._id} className="rounded-xl border bg-card p-4 shadow-sm">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                        <div className="min-w-0">
+                                            <h3 className="font-semibold truncate">
+                                                {request.deptAdminId?.name || 'Department Admin'}
+                                            </h3>
+                                            <p className="mt-1 text-sm text-muted-foreground">
+                                                Requested Limit: <span className="font-medium text-foreground">{request.requestedCourseLimit}</span> courses
+                                            </p>
+                                            <p className="text-[11px] text-muted-foreground mt-1">
+                                                Submitted: {new Date(request.createdAt).toLocaleDateString()}
+                                            </p>
                                         </div>
-                                    );
-                                })()}
-                            </CardContent>
-                        </Card>
+                                        {/* Buttons: Stack on mobile, side-by-side on tablet+ */}
+                                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                                            <Button
+                                                variant="outline"
+                                                className="flex-1 sm:flex-none bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-none sm:px-4"
+                                                size="sm"
+                                                onClick={() => handleProcessDeptCourseLimitRequest(request._id, 'approved')}
+                                            >
+                                                <Check className="w-4 h-4 mr-1" /> Approve
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                className="flex-1 sm:flex-none bg-red-50 text-red-600 hover:bg-red-100 border-none sm:px-4"
+                                                size="sm"
+                                                onClick={async () => {
+                                                    const result = await Swal.fire({
+                                                        title: 'Reject Request?',
+                                                        input: 'text',
+                                                        inputLabel: 'Reason (optional)',
+                                                        showCancelButton: true,
+                                                        confirmButtonText: 'Reject',
+                                                        confirmButtonColor: '#dc2626'
+                                                    });
+                                                    if (result.isConfirmed) {
+                                                        await handleProcessDeptCourseLimitRequest(request._id, 'rejected', result.value || '');
+                                                    }
+                                                }}
+                                            >
+                                                <X className="w-4 h-4 mr-1" /> Reject
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                );
+            })()}
+        </CardContent>
+    </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Course Approvals</CardTitle>
-                                <CardDescription>Approve or reject staff-created courses before publishing to the student portal.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {(() => {
-                                    const pendingCourses = courses.filter((c: any) => {
-                                        const isOrgCourse = Boolean(c?.title && !c?.content);
-                                        if (!isOrgCourse) return false;
-                                        const approval = c?.approvalStatus || 'pending';
-                                        return approval === 'pending';
-                                    });
+    {/* --- Course Approvals Card --- */}
+    <Card>
+        <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-lg sm:text-xl">Course Approvals</CardTitle>
+            <CardDescription className="text-sm">
+                Approve or reject staff-created courses before publishing.
+            </CardDescription>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6 space-y-4">
+            {(() => {
+                const pendingCourses = courses.filter((c: any) => {
+                    const isOrgCourse = Boolean(c?.title && !c?.content);
+                    return isOrgCourse && (c?.approvalStatus || 'pending') === 'pending';
+                });
 
-                                    return (
-                                        <div className="space-y-3">
-                                            <div className="flex items-center justify-between gap-2">
-                                                <div className="text-sm text-muted-foreground">
-                                                    Pending: <span className="font-semibold text-foreground">{pendingCourses.length}</span>
-                                                </div>
-                                                <Button variant="outline" size="sm" onClick={fetchCourses}>
-                                                    Refresh
-                                                </Button>
+                return (
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2 bg-muted/30 p-2 rounded-lg">
+                            <div className="text-xs sm:text-sm text-muted-foreground ml-2">
+                                Pending: <span className="font-semibold text-foreground">{pendingCourses.length}</span>
+                            </div>
+                            <Button variant="ghost" size="sm" onClick={fetchCourses} className="h-8 text-xs">
+                                Refresh
+                            </Button>
+                        </div>
+
+                        {pendingCourses.length === 0 ? (
+                            <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground text-sm">
+                                No courses waiting for approval.
+                            </div>
+                        ) : (
+                            pendingCourses.map((course: any) => (
+                                <div key={course._id} className="rounded-xl border bg-card p-4 shadow-sm">
+                                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <h3 className="font-semibold truncate capitalize text-sm sm:text-base">{course.title || 'Untitled'}</h3>
+                                                <Badge variant="outline" className="text-[10px] py-0 h-5 gap-1">
+                                                    <Clock className="w-3 h-3" /> Pending
+                                                </Badge>
                                             </div>
-
-                                            {pendingCourses.length === 0 ? (
-                                                <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
-                                                    No courses waiting for approval.
-                                                </div>
-                                            ) : (
-                                                pendingCourses.map((course: any) => {
-                                                    const title = course.title || 'Untitled';
-                                                    const dept = course.department ? `Dept: ${getDepartmentLabel(course.department) || course.department}` : 'All students';
-
-                                                    return (
-                                                        <div key={course._id} className="rounded-xl border bg-card p-4 shadow-sm">
-                                                            <div className="flex items-start justify-between gap-3">
-                                                                <div className="min-w-0">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <h3 className="font-semibold truncate capitalize">{title}</h3>
-                                                                        <Badge variant="outline" className="gap-1">
-                                                                            <Clock className="w-3.5 h-3.5" /> Pending
-                                                                        </Badge>
-                                                                    </div>
-                                                                    <p className="mt-1 text-xs text-muted-foreground">{dept}</p>
-                                                                </div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <Button variant="ghost" size="sm" title="Preview" onClick={() => setPreviewCourse({ ...course })}>
-                                                                        <Eye className="w-4 h-4" />
-                                                                    </Button>
-                                                                    <Button
-                                                                        variant="outline"
-                                                                        size="sm"
-                                                                        onClick={() => handleReviewOrgCourse(course._id, 'approved', '')}
-                                                                    >
-                                                                        <Check className="w-4 h-4 mr-1" /> Approve
-                                                                    </Button>
-                                                                    <Button
-                                                                        variant="outline"
-                                                                        size="sm"
-                                                                        onClick={async () => {
-                                                                            const result = await Swal.fire({
-                                                                                title: 'Reject this course?',
-                                                                                input: 'textarea',
-                                                                                inputLabel: 'Reason (optional)',
-                                                                                inputPlaceholder: 'Write a short note for the staff member...',
-                                                                                showCancelButton: true,
-                                                                                confirmButtonText: 'Reject',
-                                                                                confirmButtonColor: '#dc2626'
-                                                                            });
-
-                                                                            if (result.isConfirmed) {
-                                                                                await handleReviewOrgCourse(course._id, 'rejected', String(result.value || ''));
-                                                                            }
-                                                                        }}
-                                                                    >
-                                                                        <X className="w-4 h-4 mr-1" /> Reject
-                                                                    </Button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })
-                                            )}
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                {course.department ? `Dept: ${getDepartmentLabel(course.department) || course.department}` : 'All students'}
+                                            </p>
                                         </div>
-                                    );
-                                })()}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+
+                                        {/* Actions Section */}
+                                        <div className="flex items-center gap-2 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="h-9 w-9 p-0 shrink-0 border" 
+                                                onClick={() => setPreviewCourse({ ...course })}
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1 sm:flex-none h-9 text-xs"
+                                                onClick={() => handleReviewOrgCourse(course._id, 'approved', '')}
+                                            >
+                                                <Check className="w-3.5 h-3.5 mr-1" /> Approve
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1 sm:flex-none h-9 text-xs border-red-200 text-red-600 hover:bg-red-50"
+                                                onClick={async () => {
+                                                    const result = await Swal.fire({
+                                                        title: 'Reject this course?',
+                                                        input: 'textarea',
+                                                        inputLabel: 'Reason (optional)',
+                                                        showCancelButton: true,
+                                                        confirmButtonText: 'Reject',
+                                                        confirmButtonColor: '#dc2626'
+                                                    });
+                                                    if (result.isConfirmed) {
+                                                        await handleReviewOrgCourse(course._id, 'rejected', String(result.value || ''));
+                                                    }
+                                                }}
+                                            >
+                                                <X className="w-3.5 h-3.5 mr-1" /> Reject
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                );
+            })()}
+        </CardContent>
+    </Card>
+                </TabsContent>
                 )}
 
                 {/* ACTIVITY TAB */}
                 {role === 'org_admin' && (
-                    <TabsContent value="activity" className="space-y-4">
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between gap-4">
-                                <div>
-                                    <CardTitle>Staff Login Activity</CardTitle>
-                                    <CardDescription>Recent successful sign-ins across your organization.</CardDescription>
+                   <TabsContent value="activity" className="space-y-4">
+    <Card className="overflow-hidden">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6">
+            <div>
+                <CardTitle className="text-xl font-bold">Staff Login Activity</CardTitle>
+                <CardDescription className="text-sm">Recent successful sign-ins.</CardDescription>
+            </div>
+            <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full sm:w-auto"
+                onClick={fetchStaffLoginActivity} 
+                disabled={staffLoginLoading}
+            >
+                {staffLoginLoading ? 'Loading...' : 'Refresh'}
+            </Button>
+        </CardHeader>
+
+        <CardContent className="p-0 sm:p-6">
+            <div className="border-t sm:border sm:rounded-lg overflow-hidden">
+                {/* SCROLLABLE CONTAINER: 
+                    This ensures that on small phones, the table doesn't "squash".
+                    Users can swipe left/right to see the full data.
+                */}
+                <div className="overflow-x-auto">
+                    <div className="min-w-[600px] lg:min-w-full">
+                        
+                        {/* TABLE HEADER - Always visible */}
+                        <div className="grid grid-cols-12 gap-4 bg-muted/50 px-4 py-3 text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest border-b">
+                            <div className="col-span-4">Staff Member</div>
+                            <div className="col-span-2 text-center">Role</div>
+                            <div className="col-span-3">Date & Time</div>
+                            <div className="col-span-3 text-right">IP Address</div>
+                        </div>
+
+                        <div className="divide-y divide-border">
+                            {staffLoginLogs.length === 0 ? (
+                                <div className="p-8 text-center text-muted-foreground text-sm">
+                                    No activity recorded yet.
                                 </div>
-                                <Button variant="outline" size="sm" onClick={fetchStaffLoginActivity} disabled={staffLoginLoading}>
-                                    {staffLoginLoading ? 'Loading…' : 'Refresh'}
-                                </Button>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {staffLoginLogs.length === 0 ? (
-                                    <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
-                                        {staffLoginLoading ? 'Loading activity…' : 'No activity yet.'}
-                                    </div>
-                                ) : (
-                                    <div className="border rounded-lg overflow-hidden">
-                                        <div className="grid grid-cols-12 gap-2 bg-muted/40 px-3 py-2 text-xs font-semibold text-muted-foreground">
-                                            <div className="col-span-4">Staff</div>
-                                            <div className="col-span-2">Role</div>
-                                            <div className="col-span-3">When</div>
-                                            <div className="col-span-3">IP</div>
+                            ) : (
+                                staffLoginLogs.map((log: any) => (
+                                    <div key={log._id} className="grid grid-cols-12 gap-4 px-4 py-3 items-center text-sm hover:bg-muted/30 transition-colors">
+                                        {/* Staff Info */}
+                                        <div className="col-span-4 min-w-0">
+                                            <div className="font-semibold truncate text-foreground text-xs sm:text-sm">
+                                                {log.name || 'Staff Member'}
+                                            </div>
+                                            <div className="text-[10px] sm:text-xs text-muted-foreground truncate opacity-80">
+                                                {log.email || ''}
+                                            </div>
                                         </div>
-                                        <div className="divide-y">
-                                            {staffLoginLogs.map((log: any) => (
-                                                <div key={log._id} className="grid grid-cols-12 gap-2 px-3 py-2 text-sm items-center">
-                                                    <div className="col-span-4 min-w-0">
-                                                        <div className="font-medium truncate">{log.name || 'Staff Member'}</div>
-                                                        <div className="text-xs text-muted-foreground truncate">{log.email || ''}</div>
-                                                    </div>
-                                                    <div className="col-span-2">
-                                                        <Badge variant="secondary">{log.role || 'user'}</Badge>
-                                                    </div>
-                                                    <div className="col-span-3 text-xs text-muted-foreground">
-                                                        {log.createdAt ? new Date(log.createdAt).toLocaleString() : '-'}
-                                                    </div>
-                                                    <div className="col-span-3 text-xs text-muted-foreground truncate" title={log.ipAddress || ''}>
-                                                        {log.ipAddress || '-'}
-                                                    </div>
-                                                </div>
-                                            ))}
+
+                                        {/* Role */}
+                                        <div className="col-span-2 flex justify-center">
+                                            <Badge variant="secondary" className="text-[9px] sm:text-[10px] px-1 sm:px-2 py-0 h-5 sm:h-6 capitalize whitespace-nowrap">
+                                                {log.role?.replace('_', ' ') || 'user'}
+                                            </Badge>
+                                        </div>
+
+                                        {/* Date */}
+                                        <div className="col-span-3 text-[10px] sm:text-xs font-medium text-muted-foreground whitespace-nowrap">
+                                            {log.createdAt ? new Date(log.createdAt).toLocaleDateString() : '-'}
+                                            <span className="block text-[9px] opacity-60">
+                                                {log.createdAt ? new Date(log.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
+                                            </span>
+                                        </div>
+
+                                        {/* IP Address */}
+                                        <div className="col-span-3 text-[10px] sm:text-xs text-right font-mono text-muted-foreground/70 truncate">
+                                            {log.ipAddress || '-'}
                                         </div>
                                     </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {/* Small Hint for Mobile Users */}
+            <div className="lg:hidden p-2 text-center">
+                <p className="text-[10px] text-muted-foreground italic">Swipe horizontally to view full log details →</p>
+            </div>
+        </CardContent>
+    </Card>
+                   </TabsContent>
                 )}
 
                 {/* LANDING PAGE SETUP TAB */}
@@ -3808,254 +4475,280 @@ const formatGuidanceText = (text: string) => {
 
                 {/* ASSIGNMENTS TAB */}
 
-                <TabsContent value="assignments" className="space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Assignment Desk</CardTitle>
-                            <CardDescription>Create assignments and monitor overdue, review-needed, and due-soon work.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                                <div className="rounded-xl border bg-muted/20 p-4">
-                                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Active Assignments</p>
-                                    <p className="mt-2 text-2xl font-bold">{assignments.length}</p>
-                                </div>
-                                <div className="rounded-xl border bg-muted/20 p-4">
-                                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Overdue</p>
-                                    <p className="mt-2 text-2xl font-bold">{overdueAssignments.length}</p>
-                                </div>
-                                <div className="rounded-xl border bg-muted/20 p-4">
-                                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Due In 3 Days</p>
-                                    <p className="mt-2 text-2xl font-bold">{dueSoonAssignments.length}</p>
-                                </div>
-                                <div className="rounded-xl border bg-muted/20 p-4">
-                                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Needs Review</p>
-                                    <p className="mt-2 text-2xl font-bold">{reviewAssignments.length}</p>
-                                </div>
-                            </div>
-                            <div className="flex justify-end">
-                                <Button onClick={() => setOpenAssignmentDialog(true)}><Plus className="w-4 h-4 mr-2" /> New Assignment</Button>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                <Button
-                                    type="button"
-                                    variant={assignmentDeskFilter === 'all' ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setAssignmentDeskFilter('all')}
-                                >
-                                    All
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={assignmentDeskFilter === 'review' ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setAssignmentDeskFilter('review')}
-                                >
-                                    Review Needed
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={assignmentDeskFilter === 'dueSoon' ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setAssignmentDeskFilter('dueSoon')}
-                                >
-                                    Due Soon
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={assignmentDeskFilter === 'overdue' ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setAssignmentDeskFilter('overdue')}
-                                >
-                                    Overdue
-                                </Button>
-                            </div>
-                            <div className="space-y-4">
-                                {assignmentStatsLoading && (
-                                    <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                                        Loading submission insights for assignments...
-                                    </div>
-                                )}
-                                {assignments.length > 0 ? (
-                                    <div className="space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                                                {assignmentDeskFilter === 'review'
-                                                    ? 'Review Needed'
-                                                    : assignmentDeskFilter === 'dueSoon'
-                                                    ? 'Due Soon'
-                                                    : assignmentDeskFilter === 'overdue'
-                                                    ? 'Overdue'
-                                                    : 'All Assignments'}
-                                            </h3>
-                                            <span className="text-xs text-muted-foreground">
-                                                {assignmentDeskFilter === 'review'
-                                                    ? 'Submissions waiting for grading or resubmission follow-up'
-                                                    : assignmentDeskFilter === 'dueSoon'
-                                                    ? 'Assignments closing within the next 3 days'
-                                                    : assignmentDeskFilter === 'overdue'
-                                                    ? 'Assignments that need extension or closeout review'
-                                                    : 'Full assignment register for this workspace'}
-                                            </span>
-                                        </div>
-                                        <div className="space-y-3">
-                                            {filteredAssignmentInsights.length > 0 ? (
-                                                filteredAssignmentInsights.map(renderAssignmentCard)
-                                            ) : (
-                                                <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                                                    No assignments match this filter.
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="text-center text-muted-foreground py-8">
-                                        No assignments active.
-                                    </div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+              <TabsContent value="assignments" className="space-y-4">
+  <Card className="border-none shadow-none sm:border sm:shadow-sm">
+    <CardHeader className="p-4 sm:p-6">
+      <CardTitle className="text-xl sm:text-2xl font-bold">Assignment Desk</CardTitle>
+      <CardDescription className="text-sm">
+        Create assignments and monitor overdue, review-needed, and due-soon work.
+      </CardDescription>
+    </CardHeader>
+    
+    <CardContent className="p-4 sm:p-6 space-y-6">
+      {/* 1. Stat Cards Grid: 1 col on mobile, 2 on tablet, 4 on desktop */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: "Active", count: assignments.length, color: "text-foreground" },
+          { label: "Overdue", count: overdueAssignments.length, color: "text-destructive" },
+          { label: "Due In 3 Days", count: dueSoonAssignments.length, color: "text-amber-600" },
+          { label: "Needs Review", count: reviewAssignments.length, color: "text-blue-600" }
+        ].map((stat, i) => (
+          <div key={i} className="rounded-xl border bg-muted/20 p-4 transition-colors hover:bg-muted/30">
+            <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">{stat.label}</p>
+            <p className={`mt-1 text-2xl font-bold ${stat.color}`}>{stat.count}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* 2. Action Row: Full width on mobile */}
+      <div className="flex flex-col sm:flex-row sm:justify-end">
+        <Button onClick={() => setOpenAssignmentDialog(true)} className="w-full sm:w-auto">
+          <Plus className="w-4 h-4 mr-2" /> New Assignment
+        </Button>
+      </div>
+
+      {/* 3. Filter Buttons: Scrollable on mobile to prevent squishing */}
+      {/* 3. Filter Buttons */}
+<div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
+  {(['all', 'review', 'dueSoon', 'overdue'] as const).map((id) => (
+    <Button
+      key={id}
+      variant={assignmentDeskFilter === id ? 'default' : 'outline'}
+      size="sm"
+      className="whitespace-nowrap h-8 px-3 text-xs capitalize"
+      onClick={() => setAssignmentDeskFilter(id)} // TypeScript now knows id is specifically "all" | "review" | etc.
+    >
+      {id === 'dueSoon' ? 'Due Soon' : id}
+    </Button>
+  ))}
+</div>
+
+      {/* 4. Assignment List Section */}
+      <div className="space-y-4 pt-2">
+        {assignmentStatsLoading && (
+          <div className="rounded-lg border border-dashed p-4 text-xs text-muted-foreground animate-pulse text-center">
+            Loading submission insights...
+          </div>
+        )}
+
+        {assignments.length > 0 ? (
+          <div className="space-y-4">
+            {/* List Header: Stacks on mobile */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 border-b pb-2 items-start md:items-center">
+              <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                {assignmentDeskFilter === 'review' ? 'Review Needed'
+                  : assignmentDeskFilter === 'dueSoon' ? 'Due Soon'
+                  : assignmentDeskFilter === 'overdue' ? 'Overdue'
+                  : 'All Assignments'}
+              </h3>
+              <span className="text-[10px] sm:text-xs text-muted-foreground italic leading-tight">
+                {assignmentDeskFilter === 'review' ? 'Submissions waiting for follow-up'
+                  : assignmentDeskFilter === 'dueSoon' ? 'Closing within 3 days'
+                  : assignmentDeskFilter === 'overdue' ? 'Review extensions or closeouts'
+                  : 'Full assignment register'}
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {filteredAssignmentInsights.length > 0 ? (
+                filteredAssignmentInsights.map(renderAssignmentCard)
+              ) : (
+                <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground bg-muted/5">
+                  No assignments match this filter.
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center text-muted-foreground py-16 border rounded-xl bg-muted/5 flex flex-col items-center">
+            <p className="text-sm font-medium">No assignments active.</p>
+            <p className="text-xs opacity-70 mt-1">Get started by creating your first assignment.</p>
+          </div>
+        )}
+      </div>
+    </CardContent>
+  </Card>
+              </TabsContent>
 
                 {/* MEETINGS TAB */}
                 <TabsContent value="meetings" className="space-y-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Session Desk</CardTitle>
-                                <CardDescription>Plan live classes, mentoring slots, and virtual department sessions.</CardDescription>
-                            </div>
-                            <Dialog open={openMeetingDialog} onOpenChange={setOpenMeetingDialog}>
-                                <DialogTrigger asChild onClick={() => setOpenMeetingDialog(true)}>
-                                    <Button><Plus className="w-4 h-4 mr-2" /> Plan Session</Button>
-                                </DialogTrigger>
-                                <DialogContent
-  className="z-[9999]"
-  onOpenAutoFocus={(e) => e.preventDefault()}
->
-                                    <DialogHeader>
-                                        <DialogTitle>Schedule New Meeting</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="grid gap-4 py-4">
-                                        <div className="grid gap-2">
-                                            <Label>Meeting Title</Label>
-                                            <Input value={newMeeting.title} onChange={(e) => setNewMeeting({ ...newMeeting, title: e.target.value })} placeholder="e.g., Weekly Sync" />
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label>Platform</Label>
-                                            <select
-                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                value={newMeeting.platform}
-                                                onChange={(e) => setNewMeeting({ ...newMeeting, platform: e.target.value as any })}
-                                            >
-                                                <option value="google-meet">Google Meet</option>
-                                                <option value="zoom">Zoom</option>
-                                                <option value="other">Other</option>
-                                            </select>
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label>Meeting Link</Label>
-                                            <Input value={newMeeting.link} onChange={(e) => setNewMeeting({ ...newMeeting, link: e.target.value })} placeholder="https://meet.google.com/..." />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="grid gap-2">
-                                                <Label>Date</Label>
-                                                <Input type="date" value={newMeeting.date} onChange={(e) => setNewMeeting({ ...newMeeting, date: e.target.value })} />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label>Time</Label>
-                                                <Input type="time" value={newMeeting.time} onChange={(e) => setNewMeeting({ ...newMeeting, time: e.target.value })} />
-                                            </div>
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label>Department (Optional)</Label>
-                                            <select
-                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                value={newMeeting.department}
-                                                onChange={(e) => setNewMeeting({ ...newMeeting, department: e.target.value })}
-                                                disabled={role === 'dept_admin'}
-                                            >
-                                                {role !== 'dept_admin' && <option value="">All Students</option>}
-                                                {departmentsList.map((d: any) => (
-                                                    <option key={d._id} value={d._id}>{d.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <Button onClick={handleCreateMeeting}>Schedule Meeting</Button>
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-                                <div className="rounded-xl border bg-muted/20 p-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                                            <Video className="h-4 w-4" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Total Sessions</p>
-                                            <p className="text-2xl font-bold">{meetings.length}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="rounded-xl border bg-muted/20 p-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                            <Clock className="h-4 w-4" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Scheduled Today</p>
-                                            <p className="text-2xl font-bold">{meetingsTodayCount}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="rounded-xl border bg-muted/20 p-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="rounded-lg bg-violet-100 p-2 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
-                                            <TrendingUp className="h-4 w-4" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Upcoming Queue</p>
-                                            <p className="text-2xl font-bold">{upcomingMeetingsCount}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {meetings.length > 0 ? meetings.map((m: any) => (
-                                    <div key={m._id} className="p-4 border rounded-lg flex justify-between items-start bg-card hover:shadow-md transition-all">
-                                        <div className="flex gap-4">
-                                            <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                                <Video className="w-6 h-6" />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-semibold text-lg">{m.title}</h3>
-                                                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
-                                                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(m.date).toLocaleDateString()} at {m.time}</span>
-                                                    <span className="capitalize">{m.platform.replace('-', ' ')}</span>
-                                                    {getDepartmentLabel(m.department) && <span className="text-primary font-medium">Dept: {getDepartmentLabel(m.department)}</span>}
-                                                </div>
-                                                <a href={m.link} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline mt-2 flex items-center gap-1">
-                                                    {m.link.substring(0, 40)}... <ExternalLink className="w-3 h-3" />
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => handleDeleteMeeting(m._id)}><Trash2 className="w-4 h-4" /></Button>
-                                    </div>
-                                )) : (
-                                    <div className="col-span-full py-10 text-center text-muted-foreground border-2 border-dashed rounded-lg">
-                                        No meetings scheduled yet.
-                                    </div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+  <Card className="border-none sm:border shadow-none sm:shadow-sm">
+    {/* Header: Stacks on mobile, side-by-side on tablet/desktop */}
+    <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6">
+      <div className="space-y-1">
+        <CardTitle className="text-xl sm:text-2xl">Session Desk</CardTitle>
+        <CardDescription className="text-sm sm:text-base max-w-xs sm:max-w-none">
+          Plan live classes, mentoring slots, and virtual sessions.
+        </CardDescription>
+      </div>
+
+      <Dialog open={openMeetingDialog} onOpenChange={setOpenMeetingDialog}>
+        <DialogTrigger asChild>
+          <Button className="w-full sm:w-auto h-11 sm:h-10">
+            <Plus className="w-4 h-4 mr-2" /> Plan Session
+          </Button>
+        </DialogTrigger>
+        <DialogContent 
+          className="z-[9999] w-[95vw] max-w-lg rounded-xl overflow-y-auto max-h-[90vh]" 
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>Schedule New Meeting</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Meeting Title</Label>
+              <Input 
+                value={newMeeting.title} 
+                onChange={(e) => setNewMeeting({ ...newMeeting, title: e.target.value })} 
+                placeholder="e.g., Weekly Sync" 
+                className="h-11"
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Platform</Label>
+                <select
+                  className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
+                  value={newMeeting.platform}
+                  onChange={(e) => setNewMeeting({ ...newMeeting, platform: e.target.value as any })}
+                >
+                  <option value="google-meet">Google Meet</option>
+                  <option value="zoom">Zoom</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Department (Optional)</Label>
+                <select
+                  className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50 outline-none"
+                  value={newMeeting.department}
+                  onChange={(e) => setNewMeeting({ ...newMeeting, department: e.target.value })}
+                  disabled={role === 'dept_admin'}
+                >
+                  {role !== 'dept_admin' && <option value="">All Students</option>}
+                  {departmentsList.map((d: any) => (
+                    <option key={d._id} value={d._id}>{d.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Meeting Link</Label>
+              <Input 
+                value={newMeeting.link} 
+                onChange={(e) => setNewMeeting({ ...newMeeting, link: e.target.value })} 
+                placeholder="https://meet.google.com/..." 
+                className="h-11"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Date</Label>
+                <Input type="date" value={newMeeting.date} onChange={(e) => setNewMeeting({ ...newMeeting, date: e.target.value })} className="h-11" />
+              </div>
+              <div className="grid gap-2">
+                <Label>Time</Label>
+                <Input type="time" value={newMeeting.time} onChange={(e) => setNewMeeting({ ...newMeeting, time: e.target.value })} className="h-11" />
+              </div>
+            </div>
+            <Button onClick={handleCreateMeeting} className="h-11 mt-2">Schedule Meeting</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </CardHeader>
+
+    <CardContent className="p-4 sm:p-6">
+      {/* Stats Grid */}
+      <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[
+          { label: 'Total Sessions', val: meetings.length, icon: Video, color: 'blue' },
+          { label: 'Scheduled Today', val: meetingsTodayCount, icon: Clock, color: 'emerald' },
+          { label: 'Upcoming Queue', val: upcomingMeetingsCount, icon: TrendingUp, color: 'violet' }
+        ].map((stat, i) => (
+          <div key={i} className="rounded-xl border bg-muted/10 p-4 flex items-center gap-4 shadow-sm">
+            <div className={`rounded-lg bg-${stat.color}-100 p-3 text-${stat.color}-600 dark:bg-${stat.color}-900/30 dark:text-${stat.color}-400`}>
+              <stat.icon className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">{stat.label}</p>
+              <p className="text-2xl font-bold">{stat.val}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Meeting List */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        {meetings.length > 0 ? meetings.map((m: any) => (
+          <div key={m._id} className="p-4 sm:p-5 border rounded-xl flex items-start gap-4 bg-card hover:border-primary/40 transition-all group">
+            {/* Left Icon */}
+            <div className="h-12 w-12 shrink-0 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
+              <Video className="w-6 h-6" />
+            </div>
+
+            {/* Main Content Area */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-bold text-base sm:text-lg truncate">
+                  {m.title}
+                </h3>
+                {/* Trash button integrated into flex flow */}
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="text-destructive hover:bg-destructive/10 h-8 w-8 shrink-0 -mt-1" 
+                  onClick={() => handleDeleteMeeting(m._id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" /> {m.time}
+                </span>
+                <span className="bg-muted px-2 py-0.5 rounded text-[11px] font-medium uppercase tracking-tight">
+                    {m.platform.replace('-', ' ')}
+                </span>
+                {getDepartmentLabel(m.department) && (
+                  <span className="text-primary font-bold text-xs">
+                    Dept: {getDepartmentLabel(m.department)}
+                  </span>
+                )}
+              </div>
+              
+              <a 
+                href={m.link} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-xs text-blue-600 hover:underline mt-3 flex items-center gap-1"
+              >
+                <span className="truncate block max-w-[200px] sm:max-w-md">
+                    {m.link}
+                </span>
+                <ExternalLink className="w-3 h-3 shrink-0" />
+              </a>
+            </div>
+          </div>
+        )) : (
+          <div className="col-span-full py-16 text-center text-muted-foreground border-2 border-dashed rounded-2xl bg-muted/5">
+            <div className="bg-muted w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+               <Video className="w-6 h-6 opacity-40" />
+            </div>
+            <p className="font-medium">No sessions planned yet.</p>
+          </div>
+        )}
+      </div>
+    </CardContent>
+  </Card>
+</TabsContent>
 
                 {/* PROJECTS TAB */}
-   <TabsContent value="projects" className="space-y-4">
+                    <TabsContent value="projects" className="space-y-4">
     <Card>
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -4358,43 +5051,44 @@ Login:
         </CardHeader>
         
         <CardContent>
-            <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+           {/* Stats - Responsive for Tablet */}
+            <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="rounded-xl border bg-muted/20 p-4">
                     <div className="flex items-center gap-3">
                         <div className="rounded-lg bg-primary/10 p-2 text-primary">
                             <Briefcase className="h-4 w-4" />
                         </div>
                         <div>
-                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Active Projects</p>
+                            <p className="text-xs uppercase font-bold text-muted-foreground">Active Projects</p>
                             <p className="text-2xl font-bold">{projects.length}</p>
                         </div>
                     </div>
                 </div>
                 <div className="rounded-xl border bg-muted/20 p-4">
                     <div className="flex items-center gap-3">
-                        <div className="rounded-lg bg-purple-100 p-2 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                        <div className="rounded-lg bg-purple-100 p-2 text-purple-600 dark:bg-purple-900/30">
                             <Sparkles className="h-4 w-4" />
                         </div>
                         <div>
-                            <p className="text-xs uppercase tracking-wide text-muted-foreground">AI Assisted</p>
+                            <p className="text-xs uppercase font-bold text-muted-foreground">AI Assisted</p>
                             <p className="text-2xl font-bold">{aiProjectCount}</p>
                         </div>
                     </div>
                 </div>
-                <div className="rounded-xl border bg-muted/20 p-4">
+                <div className="rounded-xl border bg-muted/20 p-4 sm:col-span-2 lg:col-span-1">
                     <div className="flex items-center gap-3">
-                        <div className="rounded-lg bg-amber-100 p-2 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                        <div className="rounded-lg bg-amber-100 p-2 text-amber-600 dark:bg-amber-900/30">
                             <Clock className="h-4 w-4" />
                         </div>
                         <div>
-                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Due In 7 Days</p>
+                            <p className="text-xs uppercase font-bold text-muted-foreground">Due Soon</p>
                             <p className="text-2xl font-bold">{dueSoonProjectsCount}</p>
                         </div>
                     </div>
                 </div>
             </div>
             {/* Projects Grid Display with View and Delete Icons */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {projects.length > 0 ? (
                     projects.map((project: any) => (
                         <Card key={project._id} className="group relative overflow-hidden border border-primary/10 hover:border-primary/30 hover:shadow-xl transition-all duration-300">
@@ -4609,191 +5303,250 @@ Login:
             )}
         </DialogContent>
     </Dialog>
-</TabsContent>
+                    </TabsContent>
 
                 {/* MATERIALS TAB */}
-                <TabsContent value="materials" className="space-y-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Study Materials & Notes</CardTitle>
-                                <CardDescription>Share documents, PDF notes, and useful links with students.</CardDescription>
-                            </div>
-                            <Dialog open={openMaterialDialog} onOpenChange={setOpenMaterialDialog}>
-                                <DialogTrigger asChild onClick={() => setOpenMaterialDialog(true)}>
-                                    <Button><Plus className="w-4 h-4 mr-2" /> Add Material</Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Add Study Material</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="grid gap-4 py-4">
-                                        <div className="grid gap-2">
-                                            <Label>Material Title</Label>
-                                            <Input value={newMaterial.title} onChange={(e) => setNewMaterial({ ...newMaterial, title: e.target.value })} placeholder="e.g., Python Course Notes" />
-                                        </div>
-                                        {/* TYPE BASED FIELD */}
-                                        <div className="grid gap-2">
-                                            <Label>
-                                                {newMaterial.type === 'PDF' ? 'Upload PDF File' : 'Link / URL'}
-                                            </Label>
+                  <TabsContent value="materials" className="space-y-4">
+  <Card>
+    <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div>
+        <CardTitle>Study Materials & Notes</CardTitle>
+        <CardDescription>
+          Share documents, PDF notes, and useful links with students.
+        </CardDescription>
+      </div>
+      <Dialog open={openMaterialDialog} onOpenChange={setOpenMaterialDialog}>
+        <DialogTrigger asChild onClick={() => setOpenMaterialDialog(true)}>
+          <Button className="whitespace-nowrap">
+            <Plus className="w-4 h-4 mr-2" /> Add Material
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Study Material</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Material Title</Label>
+              <Input
+                value={newMaterial.title}
+                onChange={(e) => setNewMaterial({ ...newMaterial, title: e.target.value })}
+                placeholder="e.g., Python Course Notes"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>
+                {newMaterial.type === "PDF" ? "Upload PDF File" : "Link / URL"}
+              </Label>
 
-                                            {newMaterial.type === 'PDF' ? (
-                                                <Input
-                                                    type="file"
-                                                    accept="application/pdf"
-                                                    onChange={(e: any) =>
-                                                        setNewMaterial({ ...newMaterial, file: e.target.files[0] })
-                                                    }
-                                                />
-                                            ) : (
-                                                <Input
-                                                    value={newMaterial.fileUrl}
-                                                    onChange={(e) =>
-                                                        setNewMaterial({ ...newMaterial, fileUrl: e.target.value })
-                                                    }
-                                                    placeholder="https://..."
-                                                />
-                                            )}
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label>Type</Label>
-                                            <select
-                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                value={newMaterial.type}
-                                                onChange={(e) => setNewMaterial({ ...newMaterial, type: e.target.value })}
-                                            >
-                                                <option value="PDF">PDF Document</option>
-                                                <option value="Link">External Link</option>
-                                                <option value="Slide">Slides/PPT</option>
-                                                <option value="Video">Video Resource</option>
-                                            </select>
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label>Department (Optional)</Label>
-                                            <select
-                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                value={newMaterial.department}
-                                                onChange={(e) => setNewMaterial({ ...newMaterial, department: e.target.value })}
-                                                disabled={role === 'dept_admin'}
-                                            >
-                                                {role !== 'dept_admin' && <option value="">All Students</option>}
-                                                {departmentsList.map((d: any) => (
-                                                    <option key={d._id} value={d._id}>{d.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <Button onClick={handleCreateMaterial}>Add Material</Button>
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
-                        </CardHeader>
+              {newMaterial.type === "PDF" ? (
+                <Input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(e: any) =>
+                    setNewMaterial({ ...newMaterial, file: e.target.files[0] })
+                  }
+                />
+              ) : (
+                <Input
+                  value={newMaterial.fileUrl}
+                  onChange={(e) =>
+                    setNewMaterial({ ...newMaterial, fileUrl: e.target.value })
+                  }
+                  placeholder="https://..."
+                />
+              )}
+            </div>
+            <div className="grid gap-2">
+              <Label>Type</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={newMaterial.type}
+                onChange={(e) => setNewMaterial({ ...newMaterial, type: e.target.value })}
+              >
+                <option value="PDF">PDF Document</option>
+                <option value="Link">External Link</option>
+                <option value="Slide">Slides/PPT</option>
+                <option value="Video">Video Resource</option>
+              </select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Department (Optional)</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={newMaterial.department}
+                onChange={(e) => setNewMaterial({ ...newMaterial, department: e.target.value })}
+                disabled={role === "dept_admin"}
+              >
+                {role !== "dept_admin" && <option value="">All Students</option>}
+                {departmentsList.map((d: any) => (
+                  <option key={d._id} value={d._id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Button onClick={handleCreateMaterial}>Add Material</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </CardHeader>
 
-                        <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {materials.length > 0 ? materials.map((m: any) => (
-                                    <div key={m._id} className="p-4 border rounded-lg flex items-center justify-between hover:bg-muted/30 transition-colors">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 bg-primary/10 rounded flex items-center justify-center text-primary">
-                                                <Download className="w-5 h-5" />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-sm">{m.title}</p>
-                                                <p className="text-[10px] text-muted-foreground">{m.type} • {m.department ? (departmentsList.find(d => d._id === m.department || d.name === m.department)?.name || m.department) : 'All'}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-1">
-                                            <a href={m.fileUrl} target="_blank" rel="noopener noreferrer" className="p-2 hover:text-primary transition-colors">
-                                                <ExternalLink className="w-4 h-4" />
-                                            </a>
-                                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDeleteMaterial(m._id)}><Trash2 className="w-4 h-4" /></Button>
-                                        </div>
-                                    </div>
-                                )) : (
-                                    <div className="col-span-full py-10 text-center text-muted-foreground border-2 border-dashed rounded-lg">
-                                        No materials added yet.
-                                    </div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+    <CardContent>
+      {/* Updated Grid: 1 column on mobile/tablet, 2 on large tablet/small desktop, 3 on XL */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        {materials.length > 0 ? (
+          materials.map((m: any) => (
+            <div
+              key={m._id}
+              className="p-4 border rounded-lg flex items-center justify-between hover:bg-muted/30 transition-colors gap-3"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                {/* shrink-0 prevents the icon from squishing */}
+                <div className="h-10 w-10 shrink-0 bg-primary/10 rounded flex items-center justify-center text-primary">
+                  <Download className="w-5 h-5" />
+                </div>
+                {/* min-w-0 allows the parent to calculate text truncation properly */}
+                <div className="min-w-0">
+                  <p className="font-medium text-sm truncate">{m.title}</p>
+                  <p className="text-[10px] text-muted-foreground truncate uppercase">
+                    {m.type} •{" "}
+                    {m.department
+                      ? departmentsList.find(
+                          (d) => d._id === m.department || d.name === m.department
+                        )?.name || m.department
+                      : "All"}
+                  </p>
+                </div>
+              </div>
+              
+              {/* shrink-0 keeps the action buttons together and visible */}
+              <div className="flex items-center gap-1 shrink-0">
+                <a
+                  href={m.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 hover:text-primary transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => handleDeleteMaterial(m._id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="col-span-full py-10 text-center text-muted-foreground border-2 border-dashed rounded-lg">
+            No materials added yet.
+          </div>
+        )}
+      </div>
+    </CardContent>
+  </Card>
+                   </TabsContent>
 
                 {/* NOTICES TAB */}
                 <TabsContent value="notices" className="space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Announcement Desk</CardTitle>
-                            <CardDescription>Broadcast updates, exam alerts, and operational notices to learners.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-                                <div className="rounded-xl border bg-muted/20 p-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="rounded-lg bg-sky-100 p-2 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
-                                            <Bell className="h-4 w-4" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Total Notices</p>
-                                            <p className="text-2xl font-bold">{notices.length}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="rounded-xl border bg-muted/20 p-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                            <TrendingUp className="h-4 w-4" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Posted This Week</p>
-                                            <p className="text-2xl font-bold">{recentNoticesCount}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="rounded-xl border bg-muted/20 p-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="rounded-lg bg-violet-100 p-2 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
-                                            <Users className="h-4 w-4" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs uppercase tracking-wide text-muted-foreground">All Learners</p>
-                                            <p className="text-2xl font-bold">{orgWideNoticeCount}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="grid gap-2">
-                                    <Label>Title</Label>
-                                    <Input value={newNotice.title} onChange={(e) => setNewNotice({ ...newNotice, title: e.target.value })} placeholder="Announcement Title" />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label>Message</Label>
-                                    <RichTextEditor
-                                        value={newNotice.content || ''}
-                                        onChange={(content) => setNewNotice({ ...newNotice, content: content })}
-                                        placeholder="Write your message here..."
-                                        className="min-h-[200px]"
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label>Department (Optional)</Label>
-                                    <select
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                        value={newNotice.department || ''}
-                                        onChange={(e) => setNewNotice({ ...newNotice, department: e.target.value })}
-                                        disabled={role === 'dept_admin'}
-                                    >
-                                        {role !== 'dept_admin' && <option value="">All Students</option>}
-                                        {departmentsList.map((d: any) => (
-                                            <option key={d._id} value={d._id}>{d.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <Button onClick={handleCreateNotice}><Bell className="w-4 h-4 mr-2" /> Post Notice</Button>
-                            </div>
-                        </CardContent>
-                    </Card>
+                   <Card className="w-full">
+  <CardHeader>
+    <CardTitle>Announcement Desk</CardTitle>
+    <CardDescription>
+      Broadcast updates, exam alerts, and operational notices to learners.
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    {/* Stats Grid: 1 col on mobile, 2 cols on tablet (md), 3 cols on desktop (lg) */}
+    <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="rounded-xl border bg-muted/20 p-4 transition-all hover:bg-muted/30">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-sky-100 p-2 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
+            <Bell className="h-4 w-4" />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Total Notices</p>
+            <p className="text-2xl font-bold">{notices.length}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border bg-muted/20 p-4 transition-all hover:bg-muted/30">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+            <TrendingUp className="h-4 w-4" />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Posted This Week</p>
+            <p className="text-2xl font-bold">{recentNoticesCount}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* This card spans 2 columns on tablet to maintain symmetry, or stays 1 on desktop */}
+      <div className="rounded-xl border bg-muted/20 p-4 transition-all hover:bg-muted/30 md:col-span-2 lg:col-span-1">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-violet-100 p-2 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+            <Users className="h-4 w-4" />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">All Learners</p>
+            <p className="text-2xl font-bold">{orgWideNoticeCount}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Form Layout: Stacked vertically for clarity on all devices */}
+    <div className="space-y-6">
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-2">
+          <Label htmlFor="title">Title</Label>
+          <Input 
+            id="title"
+            value={newNotice.title} 
+            onChange={(e) => setNewNotice({ ...newNotice, title: e.target.value })} 
+            placeholder="Announcement Title" 
+          />
+        </div>
+        
+        <div className="grid gap-2">
+          <Label htmlFor="department">Department (Optional)</Label>
+          <select
+            id="department"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            value={newNotice.department || ''}
+            onChange={(e) => setNewNotice({ ...newNotice, department: e.target.value })}
+            disabled={role === 'dept_admin'}
+          >
+            {role !== 'dept_admin' && <option value="">All Students</option>}
+            {departmentsList.map((d: any) => (
+              <option key={d._id} value={d._id}>{d.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="grid gap-2">
+        <Label>Message</Label>
+        <RichTextEditor
+          value={newNotice.content || ''}
+          onChange={(content) => setNewNotice({ ...newNotice, content: content })}
+          placeholder="Write your message here..."
+          className="min-h-[200px] w-full"
+        />
+      </div>
+
+      <Button onClick={handleCreateNotice} className="w-full md:w-max px-8">
+        <Bell className="w-4 h-4 mr-2" /> Post Notice
+      </Button>
+    </div>
+  </CardContent>
+</Card>
 
                     <div className="mt-8 space-y-4">
                         <h3 className="text-lg font-medium">Recent Notices</h3>

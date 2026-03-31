@@ -57,6 +57,7 @@ import {
     deleteOrgPlan,
     createDeptCourseLimitRequest,
     getDeptCourseLimitRequests,
+    updateDeptAdmin,
     processDeptCourseLimitRequest
 } from '../controllers/org.controller.js';
 import { getOrgCourseCount } from '../controllers/course.controller.js';
@@ -148,6 +149,7 @@ router.delete('/org/department/:id', deleteDepartment);
 
 // Department Admins
 router.post('/org/dept-admin/add', addDeptAdmin);
+router.put('/org/dept-admin/:id', updateDeptAdmin);
 router.get('/org/dept-admins', getDeptAdmins);
 router.delete('/org/dept-admin/:id', deleteDeptAdmin);
 

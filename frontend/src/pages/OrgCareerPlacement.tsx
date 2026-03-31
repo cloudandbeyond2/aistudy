@@ -15,6 +15,7 @@ import {
     FileText, Star, ArrowLeft, Trash2, Eye, FolderOpen
 } from 'lucide-react';
 import SEO from '@/components/SEO';
+import Swal from "sweetalert2";
 
 const ScoreBadge = ({ score }: { score: number }) => {
     let color = 'bg-red-100 text-red-700 border-red-200';
@@ -164,18 +165,39 @@ const OrgCareerPlacement = () => {
         } catch (e) { console.error(e); }
     };
 
-    const handleDeleteProject = async (id: string) => {
-        if (!confirm('Delete this project?')) return;
-        try {
-            const res = await axios.delete(`${serverURL}/api/career/project/${id}`);
-            if (res.data.success) {
-                toast({ title: 'Deleted', description: 'Project removed' });
-                fetchProjects();
-            }
-        } catch (e) {
-            toast({ title: 'Error', description: 'Failed to delete project', variant: 'destructive' });
+   const handleDeleteProject = async (id: string) => {
+    const result = await Swal.fire({
+        title: "Are you sure?",
+        text: "This project will be permanently deleted!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, delete it!",
+    });
+
+    if (!result.isConfirmed) return;
+
+    Swal.fire({
+        title: "Deleting...",
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        },
+    });
+
+    try {
+        const res = await axios.delete(`${serverURL}/api/career/project/${id}`);
+
+        Swal.close();
+
+        if (res.data.success) {
+            Swal.fire("Deleted!", "Project removed successfully.", "success");
+            fetchProjects();
         }
-    };
+    } catch (e) {
+        Swal.close();
+        Swal.fire("Error", "Failed to delete project", "error");
+    }
+};
 
     const filteredStudents = students.filter(s =>
         s.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -214,372 +236,265 @@ const OrgCareerPlacement = () => {
         );
     }
 
-    return (
-        <div className="space-y-6 animate-fade-in">
-            <SEO title="Career & Placement | Organization Dashboard" description="Track student placement readiness, projects, and certificates." />
+  return (
+  <div className="space-y-6 animate-fade-in px-4 sm:px-0">
+    <SEO title="Career & Placement | Organization Dashboard" description="Track student placement readiness, projects, and certificates." />
 
-            {/* Header */}
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard/org')}>
-                    <ArrowLeft className="w-4 h-4" />
-                </Button>
-                <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-2">
-                        <Briefcase className="w-6 h-6 text-primary" /> Career & Placement
-                    </h1>
-                    <p className="text-muted-foreground text-sm">Track student placement readiness, projects, and certificates.</p>
-                </div>
+    {/* Header - Stacks on mobile */}
+    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+      <div className="p-2 bg-primary/10 rounded-lg w-fit">
+        <Briefcase className="w-6 h-6 text-primary" />
+      </div>
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold">Career & Placement</h1>
+        <p className="text-muted-foreground text-sm">Track student placement readiness, projects, and certificates.</p>
+      </div>
+    </div>
+
+    {/* Summary Cards - 1 col (mobile), 2 cols (tablet), 4 cols (laptop) */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <Card className="border-l-4 border-l-primary shadow-sm">
+        <CardContent className="pt-5 pb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Students</p>
+              <p className="text-2xl sm:text-3xl font-bold">{stats.totalStudents}</p>
+            </div>
+            <Users className="w-8 h-8 text-primary opacity-20" />
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="border-l-4 border-l-emerald-500 shadow-sm">
+        <CardContent className="pt-5 pb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Placement Ready</p>
+              <p className="text-2xl sm:text-3xl font-bold text-emerald-600">{stats.readyCount}</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Score ≥ 60%</p>
+            </div>
+            <CheckCircle className="w-8 h-8 text-emerald-500 opacity-20" />
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="border-l-4 border-l-violet-500 shadow-sm">
+        <CardContent className="pt-5 pb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Students Placed</p>
+              <p className="text-2xl sm:text-3xl font-bold text-violet-600">{stats.placedCount || 0}</p>
+            </div>
+            <Briefcase className="w-8 h-8 text-violet-500 opacity-20" />
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="border-l-4 border-l-blue-500 shadow-sm">
+        <CardContent className="pt-5 pb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Avg. Readiness</p>
+              <p className="text-2xl sm:text-3xl font-bold text-blue-600">{stats.avgScore}%</p>
+            </div>
+            <TrendingUp className="w-8 h-8 text-blue-500 opacity-20" />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+
+    {/* Position Breakdown - Flexible wrapping */}
+    {positionBreakdown.length > 0 && (
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-primary" /> Placement Position Breakdown
+          </CardTitle>
+          <CardDescription>Numbers of students placed in different roles.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2 sm:gap-3">
+            {positionBreakdown.map(([pos, count]) => (
+              <div key={pos} className="flex items-center gap-2 bg-muted/40 border rounded-full px-3 py-1 sm:px-4 sm:py-1.5 hover:bg-muted/60 transition-colors">
+                <span className="font-semibold text-xs sm:text-sm">{pos}</span>
+                <Badge variant="secondary" className="h-5 px-1.5 min-w-[20px] justify-center bg-primary/10 text-primary border-primary/20 text-[10px] sm:text-xs">{count}</Badge>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )}
+
+    {/* Tabs - Scrollable on mobile to prevent squishing */}
+    <Tabs defaultValue="readiness" className="w-full">
+      <div className="overflow-x-auto no-scrollbar pb-2">
+        <TabsList className="inline-flex w-full sm:w-auto justify-start sm:justify-center">
+          <TabsTrigger value="readiness" className="flex-1 sm:flex-none whitespace-nowrap"><BarChart2 className="w-4 h-4 mr-1.5" />Readiness</TabsTrigger>
+          <TabsTrigger value="projects" className="flex-1 sm:flex-none whitespace-nowrap"><FolderOpen className="w-4 h-4 mr-1.5" />Projects</TabsTrigger>
+          <TabsTrigger value="certificates" className="flex-1 sm:flex-none whitespace-nowrap"><Award className="w-4 h-4 mr-1.5" />Certificates</TabsTrigger>
+        </TabsList>
+      </div>
+
+      {/* --- READINESS TAB --- */}
+      <TabsContent value="readiness">
+        <Card className="shadow-none border-0 sm:border sm:shadow-sm">
+          <CardHeader className="px-0 sm:px-6">
+            <CardTitle className="text-lg">Student Placement Readiness</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Score is auto-calculated from resume, projects, and profile links.</CardDescription>
+          </CardHeader>
+          <CardContent className="px-0 sm:px-6">
+            <div className="relative mb-4 px-1 sm:px-0">
+              <Search className="absolute left-4 sm:left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+              <Input
+                className="pl-10 sm:pl-9 h-10 sm:h-9"
+                placeholder="Search by name or email..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
             </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                <Card className="border-l-4 border-l-primary">
-                    <CardContent className="pt-5 pb-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-muted-foreground">Total Students</p>
-                                <p className="text-3xl font-bold">{stats.totalStudents}</p>
+            {/* Table Container with Horizontal Scroll for Tablet/Mobile */}
+            <div className="overflow-x-auto rounded-xl border bg-background">
+              <table className="w-full text-sm min-w-[800px]">
+                <thead>
+                  <tr className="border-b bg-muted/40">
+                    <th className="text-left px-4 py-4 font-semibold">Student</th>
+                    <th className="text-left px-4 py-4 font-semibold">Score</th>
+                    <th className="text-left px-4 py-4 font-semibold">Progress</th>
+                    <th className="text-center px-4 py-4 font-semibold">Resume</th>
+                    <th className="text-center px-4 py-4 font-semibold">Activity</th>
+                    <th className="text-left px-4 py-4 font-semibold">Socials</th>
+                    <th className="text-center px-4 py-4 font-semibold">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {[...filteredStudents].sort((a, b) => b.placementScore - a.placementScore).map((s, i) => {
+                    const isAvailable = s.isAvailableForPlacement === true || s.isAvailableForPlacement === 'true';
+                    return (
+                      <tr key={s.studentId || i} className="hover:bg-muted/20 transition-colors">
+                        <td className="px-4 py-4">
+                          <div className="min-w-[180px]">
+                            <p className="font-bold text-sm">{s.name}</p>
+                            <p className="text-[11px] text-muted-foreground truncate max-w-[150px]">{s.email}</p>
+                            {(s.isPlacementClosed || s.placementCompany) && (
+                              <p className="text-[10px] font-bold text-emerald-600 mt-1 uppercase">
+                                Placed @ {s.placementCompany}
+                              </p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4"><ScoreBadge score={s.placementScore} /></td>
+                        <td className="px-4 py-4 min-w-[100px]"><Progress value={s.placementScore} className="h-1.5" /></td>
+                        <td className="px-4 py-4 text-center">
+                          {s.resumeComplete ? (
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-primary" onClick={() => window.open(`/resume/${s.studentId}`, '_blank')}>
+                              <FileText className="w-4 h-4" />
+                            </Button>
+                          ) : <span className="text-muted-foreground opacity-30">—</span>}
+                        </td>
+                        <td className="px-4 py-4 text-center">
+                            <div className="flex items-center justify-center gap-3 text-xs font-medium">
+                                <span title="Projects" className="flex items-center gap-1"><FolderOpen className="w-3 h-3"/> {s.projectsCount}</span>
+                                <span title="Certificates" className="flex items-center gap-1"><Award className="w-3 h-3"/> {s.certificatesCount}</span>
                             </div>
-                            <Users className="w-8 h-8 text-primary opacity-80" />
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card className="border-l-4 border-l-emerald-500">
-                    <CardContent className="pt-5 pb-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-muted-foreground">Placement Ready</p>
-                                <p className="text-3xl font-bold text-emerald-600">{stats.readyCount}</p>
-                                <p className="text-xs text-muted-foreground">Score ≥ 60%</p>
-                            </div>
-                            <CheckCircle className="w-8 h-8 text-emerald-500 opacity-80" />
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card className="border-l-4 border-l-violet-500">
-                    <CardContent className="pt-5 pb-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-muted-foreground">Students Placed</p>
-                                <p className="text-3xl font-bold text-violet-600">{stats.placedCount || 0}</p>
-                            </div>
-                            <Briefcase className="w-8 h-8 text-violet-500 opacity-80" />
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card className="border-l-4 border-l-blue-500">
-                    <CardContent className="pt-5 pb-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-muted-foreground">Avg. Readiness</p>
-                                <p className="text-3xl font-bold text-blue-600">{stats.avgScore}%</p>
-                            </div>
-                            <TrendingUp className="w-8 h-8 text-blue-500 opacity-80" />
-                        </div>
-                    </CardContent>
-                </Card>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex gap-2.5">
+                            {s.githubUrl && <a href={s.githubUrl} target="_blank" rel="noreferrer"><Github className="w-4 h-4 text-muted-foreground hover:text-foreground" /></a>}
+                            {s.linkedinUrl && <a href={s.linkedinUrl} target="_blank" rel="noreferrer"><Linkedin className="w-4 h-4 text-blue-600 hover:text-blue-700" /></a>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-center">
+                          <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => window.open(`/portfolio/${s.studentId}`, '_blank')}>
+                            <Eye className="w-3.5 h-3.5" /> Portfolio
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
 
-            {/* Position Breakdown */}
-            {positionBreakdown.length > 0 && (
-                <div className="grid grid-cols-1 gap-4">
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4 text-primary" /> Placement Position Breakdown
-                            </CardTitle>
-                            <CardDescription>Numbers of students placed in different roles.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-wrap gap-3">
-                                {positionBreakdown.map(([pos, count]) => (
-                                    <div key={pos} className="flex items-center gap-2 bg-muted/40 border rounded-full px-4 py-1.5 hover:bg-muted/60 transition-colors">
-                                        <span className="font-semibold text-sm">{pos}</span>
-                                        <Badge variant="secondary" className="h-5 px-1.5 min-w-[20px] justify-center bg-primary/10 text-primary border-primary/20">{count}</Badge>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
+      {/* --- PROJECTS TAB --- */}
+      <TabsContent value="projects">
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+            <Input
+              className="pl-9 h-11"
+              placeholder="Search projects..."
+              value={projectSearch}
+              onChange={e => setProjectSearch(e.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredProjects.map((p: any) => (
+              <Card key={p._id} className="overflow-hidden group hover:border-primary/50 transition-all">
+                <div className="relative h-40 w-full bg-muted">
+                  {p.image ? (
+                    <img src={p.image} alt={p.title} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center"><FolderOpen className="w-10 h-10 opacity-20" /></div>
+                  )}
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleDeleteProject(p._id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
-            )}
-
-            {/* Tabs */}
-            <Tabs defaultValue="readiness">
-                <TabsList className="mb-4">
-                    <TabsTrigger value="readiness"><BarChart2 className="w-4 h-4 mr-1.5" />Placement Readiness</TabsTrigger>
-                    <TabsTrigger value="projects"><FolderOpen className="w-4 h-4 mr-1.5" />Project Showcase</TabsTrigger>
-                    <TabsTrigger value="certificates"><Award className="w-4 h-4 mr-1.5" />Verified Certificates</TabsTrigger>
-                </TabsList>
-
-                {/* --- READINESS TAB --- */}
-                <TabsContent value="readiness">
-                    <Card>
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-base">Student Placement Readiness</CardTitle>
-                            <CardDescription>Sorted by placement score. Score is auto-calculated from resume, projects, certs, and profile links.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="relative mb-4">
-                                <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
-                                <Input
-                                    className="pl-9 h-9"
-                                    placeholder="Search by name or email..."
-                                    value={search}
-                                    onChange={e => setSearch(e.target.value)}
-                                />
-                            </div>
-                            {filteredStudents.length === 0 ? (
-                                <div className="text-center py-12 text-muted-foreground">
-                                    <BarChart2 className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                                    <p>No students found. Students need to set up their career profiles.</p>
-                                </div>
-                            ) : (
-                                <div className="overflow-x-auto rounded-lg border">
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="border-b bg-muted/40">
-                                                <th className="text-left px-4 py-3 font-semibold">Student</th>
-                                                <th className="text-left px-4 py-3 font-semibold">Score</th>
-                                                <th className="text-left px-4 py-3 font-semibold">Progress</th>
-                                                <th className="text-center px-4 py-3 font-semibold">Resume</th>
-                                                <th className="text-center px-4 py-3 font-semibold">Projects</th>
-                                                <th className="text-center px-4 py-3 font-semibold">Certs</th>
-                                                <th className="text-left px-4 py-3 font-semibold">Links</th>
-                                                <th className="text-center px-4 py-3 font-semibold">Portfolio</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {[...filteredStudents].sort((a, b) => b.placementScore - a.placementScore).map((s, i) => {
-                                                // Support boolean/string payloads coming from older records.
-                                                const isAvailable = s.isAvailableForPlacement === true || s.isAvailableForPlacement === 'true';
-                                                return (
-                                                <tr key={s.studentId || i} className="border-b hover:bg-muted/20 transition-colors">
-                                                    <td className="px-4 py-3">
-                                                        <p className="font-medium">{s.name}</p>
-                                                        <p className="text-xs text-muted-foreground">{s.email}</p>
-                                                        {s.rollNo && <p className="text-xs text-muted-foreground">Roll: {s.rollNo}</p>}
-                                                        {(s.isPlacementClosed || s.placementCompany) && (
-                                                            <p className="text-xs font-semibold text-emerald-600 mt-0.5">
-                                                                {s.isPlacementClosed ? 'Placed' : 'Placement Info'}: {s.placementPosition ? s.placementPosition + ' @' : ''} {s.placementCompany}
-                                                            </p>
-                                                        )}
-                                                        <Badge
-                                                            variant="outline"
-                                                            className={`text-xs mt-0.5 ${isAvailable ? 'border-emerald-400 text-emerald-600' : 'border-slate-300 text-slate-500'}`}
-                                                        >
-                                                            {isAvailable ? 'Available' : 'Not Available'}
-                                                        </Badge>
-                                                    </td>
-                                                    <td className="px-4 py-3">
-                                                        <ScoreBadge score={s.placementScore} />
-                                                    </td>
-                                                    <td className="px-4 py-3 min-w-[120px]">
-                                                        <Progress value={s.placementScore} className="h-2" />
-                                                    </td>
-                                                    <td className="px-4 py-3 text-center">
-                                                        {s.resumeComplete ? (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-7 px-2 text-primary hover:text-primary hover:bg-primary/10 gap-1"
-                                                                onClick={() => window.open(`/resume/${s.studentId}`, '_blank')}
-                                                            >
-                                                                <FileText className="w-3.5 h-3.5" />
-                                                                <span className="text-xs font-medium">View</span>
-                                                            </Button>
-                                                        ) : (
-                                                            <span className="text-muted-foreground text-xs">—</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-center font-semibold">{s.projectsCount}</td>
-                                                    <td className="px-4 py-3 text-center font-semibold">{s.certificatesCount}</td>
-                                                    <td className="px-4 py-3">
-                                                        <div className="flex gap-2">
-                                                            {s.githubUrl && (
-                                                                <a href={s.githubUrl} target="_blank" rel="noreferrer">
-                                                                    <Github className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
-                                                                </a>
-                                                            )}
-                                                            {s.linkedinUrl && (
-                                                                <a href={s.linkedinUrl} target="_blank" rel="noreferrer">
-                                                                    <Linkedin className="w-4 h-4 text-blue-600 hover:text-blue-700 transition-colors" />
-                                                                </a>
-                                                            )}
-                                                            {s.portfolioUrl && (
-                                                                <a href={s.portfolioUrl} target="_blank" rel="noreferrer">
-                                                                    <Globe className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
-                                                                </a>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-center">
-                                                        <Button
-                                                            size="sm"
-                                                            variant="ghost"
-                                                            className="h-7 px-2"
-                                                            onClick={() => window.open(`/portfolio/${s.studentId}`, '_blank')}
-                                                        >
-                                                            <Eye className="w-3.5 h-3.5" />
-                                                        </Button>
-                                                    </td>
-                                                </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* --- PROJECTS TAB --- */}
-                <TabsContent value="projects">
-                    <Card>
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-base">Student Project Showcase</CardTitle>
-                            <CardDescription>Projects submitted by students for career showcase.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="relative mb-4">
-                                <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
-                                <Input
-                                    className="pl-9 h-9"
-                                    placeholder="Search by project name or student..."
-                                    value={projectSearch}
-                                    onChange={e => setProjectSearch(e.target.value)}
-                                />
-                            </div>
-                            {filteredProjects.length === 0 ? (
-                                <div className="text-center py-12 text-muted-foreground">
-                                    <FolderOpen className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                                    <p>No projects submitted yet.</p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                                    {filteredProjects.map((p: any) => (
-                                        <div key={p._id} className="border rounded-xl overflow-hidden hover:shadow-md transition-shadow bg-card">
-                                            {p.image ? (
-                                                <img src={p.image} alt={p.title} className="w-full h-36 object-cover" />
-                                            ) : (
-                                                <div className="w-full h-36 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
-                                                    <FolderOpen className="w-10 h-10 text-primary/30" />
-                                                </div>
-                                            )}
-                                            <div className="p-4">
-                                                <div className="flex items-start justify-between gap-2 mb-1">
-                                                    <h4 className="font-semibold text-sm leading-snug">{p.title}</h4>
-                                                    <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className="h-7 w-7 shrink-0 text-destructive hover:text-destructive"
-                                                        onClick={() => handleDeleteProject(p._id)}
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                    </Button>
-                                                </div>
-                                                <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{p.description}</p>
-                                                <p className="text-xs text-muted-foreground mb-2">
-                                                    by <span className="font-medium text-foreground">{p.studentId?.mName || 'Student'}</span>
-                                                </p>
-                                                {p.techStack?.length > 0 && (
-                                                    <div className="flex flex-wrap gap-1 mb-3">
-                                                        {p.techStack.slice(0, 4).map((t: string) => (
-                                                            <span key={t} className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">{t}</span>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                                <div className="flex gap-2">
-                                                    {p.githubUrl && (
-                                                        <a href={p.githubUrl} target="_blank" rel="noreferrer"
-                                                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                                                            <Github className="w-3.5 h-3.5" /> Code
-                                                        </a>
-                                                    )}
-                                                    {p.liveUrl && (
-                                                        <a href={p.liveUrl} target="_blank" rel="noreferrer"
-                                                            className="flex items-center gap-1 text-xs text-primary hover:underline">
-                                                            <ExternalLink className="w-3.5 h-3.5" /> Live
-                                                        </a>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* --- CERTIFICATES TAB --- */}
-                <TabsContent value="certificates">
-                    <Card>
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-base">Verified Certificates</CardTitle>
-                            <CardDescription>All platform-issued verified certificates for students in this organization.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="relative mb-4">
-                                <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
-                                <Input
-                                    className="pl-9 h-9"
-                                    placeholder="Search by student or course..."
-                                    value={certSearch}
-                                    onChange={e => setCertSearch(e.target.value)}
-                                />
-                            </div>
-                            {filteredCerts.length === 0 ? (
-                                <div className="text-center py-12 text-muted-foreground">
-                                    <Award className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                                    <p>No verified certificates yet. Students earn certificates by completing courses.</p>
-                                </div>
-                            ) : (
-                                <div className="overflow-x-auto rounded-lg border">
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="border-b bg-muted/40">
-                                                <th className="text-left px-4 py-3 font-semibold">Student</th>
-                                                <th className="text-left px-4 py-3 font-semibold">Course</th>
-                                                <th className="text-left px-4 py-3 font-semibold">Certificate ID</th>
-                                                <th className="text-left px-4 py-3 font-semibold">Issued Date</th>
-                                                <th className="text-center px-4 py-3 font-semibold">Verify</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {filteredCerts.map((c: any) => (
-                                                <tr key={c._id} className="border-b hover:bg-muted/20 transition-colors">
-                                                    <td className="px-4 py-3 font-medium">{c.studentName}</td>
-                                                    <td className="px-4 py-3">{c.courseName}</td>
-                                                    <td className="px-4 py-3">
-                                                        <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{c.certificateId}</code>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-muted-foreground text-xs">
-                                                        {c.date ? new Date(c.date).toLocaleDateString() : '—'}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-center">
-                                                        <Button
-                                                            size="sm"
-                                                            variant="ghost"
-                                                            className="h-7 px-2"
-                                                            onClick={() => window.open(`/verify-certificate?id=${c.certificateId}`, '_blank')}
-                                                        >
-                                                            <ExternalLink className="w-3.5 h-3.5" />
-                                                        </Button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
+                <CardContent className="p-4">
+                  <h4 className="font-bold text-sm mb-1 truncate">{p.title}</h4>
+                  <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{p.description}</p>
+                  <div className="flex items-center justify-between mt-auto">
+                    <span className="text-[10px] font-medium bg-muted px-2 py-1 rounded">by {p.studentId?.mName || 'Student'}</span>
+                    <div className="flex gap-2">
+                       {p.githubUrl && <a href={p.githubUrl} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary"><Github className="w-4 h-4" /></a>}
+                       {p.liveUrl && <a href={p.liveUrl} target="_blank" rel="noreferrer" className="text-primary"><ExternalLink className="w-4 h-4" /></a>}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
-    );
+      </TabsContent>
+
+      {/* --- CERTIFICATES TAB --- */}
+      <TabsContent value="certificates">
+         <div className="overflow-x-auto rounded-xl border bg-background mt-4">
+            <table className="w-full text-sm min-w-[700px]">
+                <thead>
+                    <tr className="border-b bg-muted/40">
+                        <th className="text-left px-4 py-4 font-semibold">Student</th>
+                        <th className="text-left px-4 py-4 font-semibold">Course Name</th>
+                        <th className="text-left px-4 py-4 font-semibold">Certificate ID</th>
+                        <th className="text-center px-4 py-4 font-semibold">Verify</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y">
+                    {filteredCerts.map((c: any) => (
+                        <tr key={c._id} className="hover:bg-muted/20">
+                            <td className="px-4 py-4 font-medium">{c.studentName}</td>
+                            <td className="px-4 py-4">{c.courseName}</td>
+                            <td className="px-4 py-4"><code className="text-xs bg-muted px-1.5 py-0.5 rounded">{c.certificateId}</code></td>
+                            <td className="px-4 py-4 text-center">
+                                <Button variant="ghost" size="sm" onClick={() => window.open(`/verify-certificate?id=${c.certificateId}`, '_blank')}>
+                                    <ExternalLink className="w-4 h-4" />
+                                </Button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+         </div>
+      </TabsContent>
+    </Tabs>
+  </div>
+);
 };
 
 export default OrgCareerPlacement;

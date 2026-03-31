@@ -165,9 +165,9 @@ export default function OrgKpiReports() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <Link to="/dashboard/org" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-2 transition-colors">
+          {/* <Link to="/dashboard/org" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-2 transition-colors">
             <ArrowLeft className="h-4 w-4" /> Back to Dashboard
-          </Link>
+          </Link> */}
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
             <BarChart3 className="h-8 w-8 text-primary" />
             Student KPI Reports

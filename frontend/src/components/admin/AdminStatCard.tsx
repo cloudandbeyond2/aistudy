@@ -5,7 +5,7 @@ interface AdminStatCardProps {
   title: string;
   value: string | number;
   icon: LucideIcon;
-  description: string;
+  // description: string;
   trend?: number; // Optional percentage trend
   className?: string;
 }
@@ -14,7 +14,7 @@ export default function AdminStatCard({
   title,
   value,
   icon: Icon,
-  description,
+  // description,
   trend,
   className,
 }: AdminStatCardProps) {
@@ -35,7 +35,7 @@ export default function AdminStatCard({
       </div>
       <div className="flex flex-col gap-1">
         <div className="text-2xl font-bold tracking-tight">{value}</div>
-        <p className="text-xs text-muted-foreground">{description}</p>
+        {/* <p className="text-xs text-muted-foreground">{description}</p> */}
       </div>
       
       {/* Optional decorative background element */}
