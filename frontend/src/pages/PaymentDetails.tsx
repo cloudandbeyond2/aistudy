@@ -73,7 +73,6 @@ const plansFeartures = [
       "Access valid for 7 days",
       "Theory & Image Course",
       "Ai Teacher Chat",
-      "Course Certification",
     ],
   },
   {
