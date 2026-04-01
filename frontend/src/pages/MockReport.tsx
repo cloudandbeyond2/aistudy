@@ -271,9 +271,22 @@ const MockReport = () => {
                                     </div>
                                 </div>
                                 <div className="pt-2 flex items-center justify-between text-[10px] text-muted-foreground uppercase font-medium tracking-widest">
-                                    <span>Evaluated by Staff</span>
-                                    <span>{new Date(report.tmrFeedback.evaluatedAt).toLocaleDateString()}</span>
-                                </div>
+                                                <span>Evaluated by</span>
+                                                <span>
+                                                    {report.tmrFeedback?.evaluatedBy ? (
+                                                        report.tmrFeedback.evaluatedBy
+                                                    ) : (
+                                                        'Staff'
+                                                    )}
+                                                </span>
+                                            </div>
+                                            <div className="pt-1 text-[10px] text-muted-foreground">
+                                                {report.tmrFeedback?.evaluatedAt && !Number.isNaN(new Date(report.tmrFeedback.evaluatedAt).getTime()) ? (
+                                                    <span>{new Date(report.tmrFeedback.evaluatedAt).toLocaleDateString()}</span>
+                                                ) : (
+                                                    <span>Not evaluated</span>
+                                                )}
+                                            </div>
                             </CardContent>
                         </Card>
                     )}

@@ -526,6 +526,8 @@ export const updateTmrMockFeedback = async (req, res) => {
     const { applicationId, communication, technical, notes } = req.body;
     const userId = req.headers['user-id'];
 
+    console.log(`[TMR Feedback] incoming from user-id: ${userId} for application: ${applicationId}`);
+
     const application = await MockApplication.findById(applicationId);
     if (!application) return res.status(404).json({ success: false, message: 'Application not found' });
 
@@ -541,6 +543,8 @@ export const updateTmrMockFeedback = async (req, res) => {
     application.updatedAt = Date.now();
 
     await application.save();
+
+    console.log(`[TMR Feedback] saved for application ${applicationId} by ${userId}:`, application.tmrFeedback);
 
     res.status(200).json({ success: true, message: 'TMR Mock feedback saved' });
   } catch (error) {
@@ -558,8 +562,8 @@ export const getStudentMockStats = async (req, res) => {
 
     const stats = await checkDailyLimit(user);
     
-    // Average competency from previous applications
-    const apps = await MockApplication.find({ userId, status: 'Finalized' });
+    // Average competency from previous applications (include AI_Completed until TMR finalization)
+    const apps = await MockApplication.find({ userId, status: { $in: ['Finalized', 'AI_Completed'] } });
     const avgScore = apps.length > 0 
       ? Math.round(apps.reduce((acc, app) => acc + (app.genAiFeedback?.score || 0), 0) / apps.length)
       : 0;

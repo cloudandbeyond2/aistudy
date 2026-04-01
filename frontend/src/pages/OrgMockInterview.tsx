@@ -139,20 +139,27 @@ const OrgMockInterview = () => {
     };
 
     const handleSubmitTmr = async () => {
+        if (!selectedApp?._id) return toast({ title: "Error", description: "No application selected", variant: 'destructive' });
         try {
+            const evaluatorId = sessionStorage.getItem('uid') || orgId;
             const res = await axios.post(`${serverURL}/api/mock-interview/tmr-feedback`, {
                 applicationId: selectedApp._id,
                 ...tmrFeedback
             }, {
-                headers: { 'user-id': orgId }
+                headers: { 'user-id': evaluatorId }
             });
             if (res.data.success) {
                 toast({ title: "Success", description: "TMR feedback submitted." });
                 setIsTmrOpen(false);
+                setTmrFeedback({ communication: 5, technical: 5, notes: '' });
+                setSelectedApp(null);
                 fetchApplications();
+            } else {
+                toast({ title: "Error", description: res.data.message || "Failed to submit feedback", variant: 'destructive' });
             }
-        } catch (e) {
-            toast({ title: "Error", description: "Failed to submit feedback" });
+        } catch (e: any) {
+            const msg = e.response?.data?.message || 'Failed to submit feedback';
+            toast({ title: "Error", description: msg, variant: "destructive" });
         }
     };
 
