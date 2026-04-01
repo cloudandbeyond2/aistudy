@@ -1619,18 +1619,43 @@ const formatGuidanceText = (text: string) => {
         }
     };
 
-    const handleDeleteMaterial = async (id: string) => {
-        if (!confirm('Delete this material?')) return;
-        try {
-            const res = await axios.delete(`${serverURL}/api/org/material/${id}`);
-            if (res.data.success) {
-                toast({ title: "Success", description: "Material deleted" });
-                fetchMaterials();
-            }
-        } catch (e) {
-            toast({ title: "Error", description: "Failed to delete material" });
+
+
+const handleDeleteMaterial = async (id: string) => {
+    const result = await Swal.fire({
+        title: "Are you sure?",
+        text: "This material will be permanently deleted!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#6b7280",
+        confirmButtonText: "Yes, delete it!",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        const res = await axios.delete(`${serverURL}/api/org/material/${id}`);
+        
+        if (res.data.success) {
+            Swal.fire({
+                title: "Deleted!",
+                text: "Material has been deleted.",
+                icon: "success",
+                timer: 1500,
+                showConfirmButton: false,
+            });
+
+            fetchMaterials();
         }
-    };
+    } catch (e) {
+        Swal.fire({
+            title: "Error!",
+            text: "Failed to delete material",
+            icon: "error",
+        });
+    }
+};
 
     const fetchAssignments = async () => {
         try {
