@@ -192,6 +192,7 @@ const DashboardLayoutContent = () => {
   const plan = sessionStorage.getItem("type")?.toLowerCase()?.trim();
   const role = sessionStorage.getItem("role");
   const isOrganizationUser = sessionStorage.getItem('isOrganization') === 'true';
+  const hasOrganizationAccess = isOrganizationUser || (role === 'student' && Boolean(sessionStorage.getItem('orgId')));
   const isPaidUser = ["monthly", "yearly"].includes(plan) || admin;
   const isOrganizationStudent = role === 'student' && isOrganizationUser;
 
@@ -465,7 +466,9 @@ const DashboardLayoutContent = () => {
 
                     {!admin && <MenuItem icon={MessageSquare} label="Support" to="/dashboard/support" isActive={isActive('/dashboard/support')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
                     {!admin && <MenuItem icon={Megaphone} label="Global News" to="/dashboard/news" isActive={isActive('/dashboard/news')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
-                    <MenuItem icon={Users} label="Student Portal" to="/dashboard/student" isActive={isActive('/dashboard/student')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    {hasOrganizationAccess && !isOrganizationUser && (
+                      <MenuItem icon={Users} label="Student Portal" to="/dashboard/student" isActive={isActive('/dashboard/student')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    )}
                   </>
                 )}
 

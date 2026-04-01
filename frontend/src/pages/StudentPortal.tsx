@@ -19,6 +19,11 @@ const StudentPortal = () => {
     const [quizSummaries, setQuizSummaries] = useState<Record<string, any>>({});
     const [loading, setLoading] = useState(true); // Add loading state
     const navigate = useNavigate();
+    const role = sessionStorage.getItem('role');
+    const isOrganizationUser = sessionStorage.getItem('isOrganization') === 'true';
+    const orgId = sessionStorage.getItem('orgId');
+    const studentId = sessionStorage.getItem('uid');
+    const canAccessStudentPortal = isOrganizationUser || (role === 'student' && Boolean(orgId));
 
     const collegeName =
         studentInfo?.organizationDetails?.institutionName ||
@@ -75,12 +80,12 @@ const StudentPortal = () => {
         return "https://images.unsplash.com/photo-1516321318423-f06f85e504b3";
     };
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const orgId = sessionStorage.getItem('orgId');
-    const studentId = sessionStorage.getItem('uid');
-
     useEffect(() => {
+        if (!canAccessStudentPortal) {
+            navigate('/dashboard', { replace: true });
+            return;
+        }
+
         if (orgId && studentId) {
             Promise.all([
                 fetchStudentInfo(),
@@ -92,7 +97,11 @@ const StudentPortal = () => {
         } else {
             setLoading(false);
         }
-    }, [orgId, studentId]);
+    }, [canAccessStudentPortal, navigate, orgId, studentId]);
+
+    if (!canAccessStudentPortal) {
+        return null;
+    }
 
     const fetchNotifications = async () => {
         try {
