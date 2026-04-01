@@ -20,18 +20,27 @@ const StudentPortal = () => {
     const [loading, setLoading] = useState(true); // Add loading state
     const navigate = useNavigate();
 
+    const collegeName =
+        studentInfo?.organizationDetails?.institutionName ||
+        studentInfo?.organization?.name ||
+        studentInfo?.organizationDetails?.inchargeName ||
+        studentInfo?.organizationId?.organizationDetails?.institutionName ||
+        studentInfo?.organizationId?.organization?.name ||
+        'Not provided yet';
+
+    const departmentName =
+        studentInfo?.department?.name ||
+        studentInfo?.studentDetails?.department ||
+        'Not provided yet';
+
     const studentSnapshotDetails = [
         {
             label: 'College',
-            value:
-                studentInfo?.organizationDetails?.institutionName ||
-                studentInfo?.organization?.name ||
-                studentInfo?.organizationDetails?.inchargeName ||
-                'Not provided yet'
+            value: collegeName
         },
         {
             label: 'Department',
-            value: studentInfo?.studentDetails?.department || 'Not provided yet'
+            value: departmentName
         },
         {
             label: 'Academic Year',

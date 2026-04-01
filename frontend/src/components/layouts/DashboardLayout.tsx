@@ -191,7 +191,9 @@ const DashboardLayoutContent = () => {
 
   const plan = sessionStorage.getItem("type")?.toLowerCase()?.trim();
   const role = sessionStorage.getItem("role");
+  const isOrganizationUser = sessionStorage.getItem('isOrganization') === 'true';
   const isPaidUser = ["monthly", "yearly"].includes(plan) || admin;
+  const isOrganizationStudent = role === 'student' && isOrganizationUser;
 
   const [installPrompt, setInstallPrompt] = useState(null);
   const { toast } = useToast();
@@ -471,18 +473,27 @@ const DashboardLayoutContent = () => {
                 {sessionStorage.getItem('role') === 'student' && (
                   <>
                     <SectionHeader title="Overview" icon={Gauge} isExpanded={isExpanded} />
-                    <MenuItem icon={Gauge} label="My Learning Hub" to="/dashboard/student" isActive={isActive('/dashboard/student')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
-                    <MenuItem icon={User} label="My Profile" to="/dashboard/student/profile" isActive={isActive('/dashboard/student/profile')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
-
-                    <SectionHeader title="Learning Tools" icon={Zap} isExpanded={isExpanded} />
                     <MenuItem
-                      icon={BookPlus}
-                      label="Add My Course"
-                      to="/dashboard/generate-course"
-                      isActive={isActive('/dashboard/generate-course')}
+                      icon={Gauge}
+                      label={isOrganizationStudent ? "Student Dashboard" : "My Learning Hub"}
+                      to="/dashboard/student"
+                      isActive={isActive('/dashboard/student')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
+                    <MenuItem icon={User} label="My Profile" to="/dashboard/student/profile" isActive={isActive('/dashboard/student/profile')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+
+                    <SectionHeader title="Learning Tools" icon={Zap} isExpanded={isExpanded} />
+                    {!isOrganizationStudent && (
+                      <MenuItem
+                        icon={BookPlus}
+                        label="Add My Course"
+                        to="/dashboard/generate-course"
+                        isActive={isActive('/dashboard/generate-course')}
+                        isExpanded={isExpanded}
+                        onMobileClick={handleMobileMenuClick}
+                      />
+                    )}
                     {notebookEnabled.student && <MenuItem icon={BrainCircuit} label="AI Notebook" to="/dashboard/notebook" isActive={isActive('/dashboard/notebook')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
                     <MenuItem icon={Briefcase} label="Interview Prep" to="/dashboard/interview-prep" isActive={isActive('/dashboard/interview-prep')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Calendar} label="Calendar Scheduler" to="/dashboard/calendar" isActive={isActive('/dashboard/calendar')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
@@ -523,6 +534,14 @@ const DashboardLayoutContent = () => {
                   <>
                     <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     <SectionHeader title="Organization" icon={Building2} isExpanded={isExpanded} />
+                    <MenuItem
+                      icon={Gauge}
+                      label="Student Dashboard"
+                      to="/dashboard/student"
+                      isActive={isActive('/dashboard/student')}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
                     <MenuItem 
                       icon={Gauge} 
                       label="Dashboard" 
