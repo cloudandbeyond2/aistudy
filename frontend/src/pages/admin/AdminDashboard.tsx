@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { format, subDays } from "date-fns";
+import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import {
   Area,
@@ -43,6 +43,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const USER_SEGMENT_COLORS = ["#2563eb", "#0f766e", "#7c3aed", "#f59e0b", "#e11d48"];
 const ORDER_STATUS_COLORS = {
@@ -53,15 +54,11 @@ const ORDER_STATUS_COLORS = {
 };
 
 const formatCurrency = (value = 0) => `INR ${Math.round(Number(value || 0)).toLocaleString("en-IN")}`;
-const getUserJoinDate = (user) => user?.createdAt || user?.date || null;
-const getOrderDate = (order) => order?.createdAt || order?.date || null;
 
-const getPlanLifecycle = (plan) => {
-  if (!plan?.endDate) return "no-plan";
-  const diffDays = Math.ceil((new Date(plan.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return "expired";
-  if (diffDays <= 15) return "expiring-soon";
-  return "active";
+const getRiskTone = (count, type = "warning") => {
+  if (!count) return "border-slate-200 bg-slate-50 text-slate-700";
+  if (type === "danger") return "border-rose-200 bg-rose-50 text-rose-700";
+  return "border-amber-200 bg-amber-50 text-amber-700";
 };
 
 const getOrderStatusClassName = (status) => {
@@ -79,24 +76,30 @@ const getOrderStatusClassName = (status) => {
   }
 };
 
-const getRiskTone = (count, type = "warning") => {
-  if (!count) return "border-slate-200 bg-slate-50 text-slate-700";
-  if (type === "danger") return "border-rose-200 bg-rose-50 text-rose-700";
-  return "border-amber-200 bg-amber-50 text-amber-700";
+const getOrderSearchToken = (order) => {
+  return (
+    order?.transactionId ||
+    order?.subscriptionId ||
+    order?.razorpayPaymentId ||
+    order?.userEmail ||
+    order?.userName ||
+    ""
+  );
 };
 
+const safeParseDate = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
 export default function AdminDashboard() {
   const navigate = useNavigate();
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [timeRange, setTimeRange] = useState("30");
-
-  const [users, setUsers] = useState([]);
-  const [courses, setCourses] = useState([]);
-  const [organizations, setOrganizations] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [enquiries, setEnquiries] = useState([]);
-  const [orgPlans, setOrgPlans] = useState([]);
+  const [kpiWindow, setKpiWindow] = useState("today");
+  const [overview, setOverview] = useState(null);
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -104,186 +107,65 @@ export default function AdminDashboard() {
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
 
-      const [usersRes, coursesRes, orgsRes, ordersRes, enquiriesRes, orgPlansRes] = await Promise.all([
-        axios.get(`${serverURL}/api/getusers`, { headers }),
-        axios.get(`${serverURL}/api/getcourses`, { headers }),
-        axios.get(`${serverURL}/api/organizations`, { headers }),
-        axios.get(`${serverURL}/api/orders`, { headers }),
-        axios.get(`${serverURL}/api/organization-enquiries`, { headers }).catch(() => ({ data: [] })),
-        axios.get(`${serverURL}/api/admin/org-plans`, { headers }).catch(() => ({ data: { plans: [] } })),
-      ]);
+      const response = await axios.get(`${serverURL}/api/admin/dashboard/overview`, {
+        headers,
+        params: { rangeDays: timeRange },
+      });
 
-      setUsers(usersRes.data || []);
-      setCourses(coursesRes.data || []);
-      setOrganizations(orgsRes.data || []);
-      setOrders(ordersRes.data || []);
-      setEnquiries(enquiriesRes.data || []);
-      setOrgPlans(orgPlansRes.data?.plans || []);
+      setOverview(response.data || null);
     } catch (error) {
       console.error("Admin dashboard fetch error:", error);
+      setOverview(null);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [timeRange]);
 
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
-  const userSegments = useMemo(() => {
-    const premium = users.filter((user) => user.adminCategory === "premium").length;
-    const free = users.filter((user) => user.adminCategory === "free").length;
-    const organizationsCount = users.filter((user) => user.adminCategory === "organization").length;
-    const staff = users.filter((user) => user.adminCategory === "organization_staff").length;
-    const students = users.filter((user) => user.adminCategory === "student").length;
 
-    return [
-      { name: "Premium", value: premium },
-      { name: "Free", value: free },
-      { name: "Organizations", value: organizationsCount },
-      { name: "Org Staff", value: staff },
-      { name: "Students", value: students },
-    ].filter((segment) => segment.value > 0);
-  }, [users]);
+  const totals = overview?.totals || {};
+  const planHealth = overview?.planHealth || { active: 0, expiringSoon: 0, expired: 0, pendingPayment: 0, failedPayment: 0 };
 
-  const courseSegments = useMemo(() => {
-    const premiumCourses = courses.filter((course) => course.restricted).length;
-    const freeCourses = courses.length - premiumCourses;
-    return [
-      { name: "Premium Courses", value: premiumCourses },
-      { name: "Free Courses", value: freeCourses },
-    ];
-  }, [courses]);
+  const kpiPayload = overview?.windows?.[kpiWindow] || { signups: 0, orders: { revenue: 0, success: 0, pending: 0, failed: 0, cancelled: 0 } };
+  const kpiOrders = kpiPayload.orders || { revenue: 0, success: 0, pending: 0, failed: 0, cancelled: 0 };
+  const kpiLabel = kpiWindow === "today" ? "Today" : kpiWindow === "week" ? "Last 7 days" : "This month";
+
+  const userSegments = overview?.userSegments || [];
+  const courseSegments = overview?.courseSegments || [];
+  const enquirySources = overview?.enquirySources || [];
+  const topOrganizations = overview?.topOrganizations || [];
+  const recentOrders = overview?.recentOrders || [];
+  const recentUsers = overview?.recentUsers || [];
 
   const orderStatusData = useMemo(() => {
-    const counts = orders.reduce(
-      (acc, order) => {
-        const status = order.status || "unknown";
-        acc[status] = (acc[status] || 0) + 1;
-        return acc;
-      },
-      { success: 0, pending: 0, failed: 0, cancelled: 0 }
-    );
-
-    return [
-      { name: "Success", value: counts.success || 0, fill: ORDER_STATUS_COLORS.success },
-      { name: "Pending", value: counts.pending || 0, fill: ORDER_STATUS_COLORS.pending },
-      { name: "Failed", value: counts.failed || 0, fill: ORDER_STATUS_COLORS.failed },
-      { name: "Cancelled", value: counts.cancelled || 0, fill: ORDER_STATUS_COLORS.cancelled },
-    ];
-  }, [orders]);
-
-  const enquirySources = useMemo(() => {
-    const grouped = enquiries.reduce((acc, enquiry) => {
-      let source = enquiry?.referBy;
-      if (!source || source === "—") source = "Direct";
-      source = source.charAt(0).toUpperCase() + source.slice(1).toLowerCase();
-      acc[source] = (acc[source] || 0) + 1;
-      return acc;
-    }, {});
-
-    return Object.entries(grouped)
-      .map(([name, value]) => ({ name, value }))
-      .sort((left, right) => right.value - left.value)
-      .slice(0, 5);
-  }, [enquiries]);
-
-  const stats = useMemo(() => {
-    const successfulOrders = orders.filter((order) => order.status === "success");
-    const revenue = successfulOrders.reduce((sum, order) => sum + Number(order.price || order.amount || 0), 0);
-
-    const now = new Date();
-    const thisMonthRevenue = successfulOrders
-      .filter((order) => {
-        const orderDate = getOrderDate(order);
-        if (!orderDate) return false;
-        const current = new Date(orderDate);
-        return current.getMonth() === now.getMonth() && current.getFullYear() === now.getFullYear();
-      })
-      .reduce((sum, order) => sum + Number(order.price || order.amount || 0), 0);
-
-    const blockedOrganizations = organizations.filter((org) => Boolean(org?.organizationDetails?.isBlocked)).length;
-    const orgStudents = users.filter((user) => user.adminCategory === "student").length;
-
-    return {
-      totalUsers: users.length,
-      totalCourses: courses.length,
-      organizations: organizations.length,
-      orgStudents,
-      revenue,
-      thisMonthRevenue,
-      blockedOrganizations,
-      paidUsers: userSegments.find((segment) => segment.name === "Premium")?.value || 0,
-      freeUsers: userSegments.find((segment) => segment.name === "Free")?.value || 0,
-    };
-  }, [courses.length, orders, organizations, userSegments, users]);
-
-  const planHealth = useMemo(() => {
-    return orgPlans.reduce(
-      (acc, plan) => {
-        const lifecycle = getPlanLifecycle(plan);
-        if (lifecycle === "active") acc.active += 1;
-        if (lifecycle === "expiring-soon") acc.expiringSoon += 1;
-        if (lifecycle === "expired") acc.expired += 1;
-        if ((plan.paymentStatus || "pending") === "pending") acc.pendingPayment += 1;
-        if ((plan.paymentStatus || "pending") === "failed") acc.failedPayment += 1;
-        return acc;
-      },
-      { active: 0, expiringSoon: 0, expired: 0, pendingPayment: 0, failedPayment: 0 }
-    );
-  }, [orgPlans]);
+    const base = overview?.orderStatus || [];
+    return base.map((item) => {
+      const statusKey = String(item.name || "").toLowerCase();
+      if (statusKey.includes("success")) return { ...item, fill: ORDER_STATUS_COLORS.success };
+      if (statusKey.includes("pending")) return { ...item, fill: ORDER_STATUS_COLORS.pending };
+      if (statusKey.includes("failed")) return { ...item, fill: ORDER_STATUS_COLORS.failed };
+      if (statusKey.includes("cancel")) return { ...item, fill: ORDER_STATUS_COLORS.cancelled };
+      return { ...item, fill: "#94a3b8" };
+    });
+  }, [overview]);
 
   const revenueTrend = useMemo(() => {
-    const days = Number(timeRange);
-    const successfulOrders = orders.filter((order) => order.status === "success");
-    const totals = {};
-
-    successfulOrders.forEach((order) => {
-      const orderDate = getOrderDate(order);
-      if (!orderDate) return;
-      const current = new Date(orderDate);
-      if (Number.isNaN(current.getTime()) || current < subDays(new Date(), days - 1)) return;
-      const key = format(current, "yyyy-MM-dd");
-      totals[key] = (totals[key] || 0) + Number(order.price || order.amount || 0);
-    });
-
-    return Array.from({ length: days }).map((_, index) => {
-      const date = subDays(new Date(), days - index - 1);
-      const key = format(date, "yyyy-MM-dd");
+    const base = overview?.revenueTrend || [];
+    return base.map((point) => {
+      const date = safeParseDate(point.date);
       return {
-        date: format(date, "MMM dd"),
-        revenue: totals[key] || 0,
+        date: date ? format(date, "MMM dd") : "",
+        revenue: Number(point.revenue || 0),
       };
     });
-  }, [orders, timeRange]);
-  const topOrganizations = useMemo(() => {
-    const counts = users.reduce((acc, user) => {
-      const orgName = user.organizationName || user.organizationDetails?.institutionName || "";
-      if (!orgName) return acc;
-      acc[orgName] = (acc[orgName] || 0) + 1;
-      return acc;
-    }, {});
-
-    return Object.entries(counts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((left, right) => right.count - left.count)
-      .slice(0, 6);
-  }, [users]);
-
-  const recentOrders = useMemo(() => {
-    return [...orders]
-      .sort((left, right) => new Date(getOrderDate(right) || 0).getTime() - new Date(getOrderDate(left) || 0).getTime())
-      .slice(0, 6);
-  }, [orders]);
-
-  const recentUsers = useMemo(() => {
-    return [...users]
-      .filter((user) => getUserJoinDate(user))
-      .sort((left, right) => new Date(getUserJoinDate(right)).getTime() - new Date(getUserJoinDate(left)).getTime())
-      .slice(0, 6);
-  }, [users]);
+  }, [overview]);
 
   const operationalCards = useMemo(() => {
+    const failedOrders = orderStatusData.find((item) => String(item.name).toLowerCase().includes("failed"))?.value || 0;
+
     return [
       {
         title: "Expiring organizations",
@@ -296,29 +178,29 @@ export default function AdminDashboard() {
       {
         title: "Pending collections",
         value: planHealth.pendingPayment,
-        description: "Organizations still waiting for payment confirmation.",
+        description: "Institutions waiting for payment confirmation.",
         path: "/admin/org-plans",
         button: "Review billing",
         tone: getRiskTone(planHealth.pendingPayment),
       },
       {
         title: "Failed orders",
-        value: orderStatusData.find((item) => item.name === "Failed")?.value || 0,
+        value: failedOrders,
         description: "Payment failures that may need manual correction.",
         path: "/admin/orders",
         button: "Open orders",
-        tone: getRiskTone(orderStatusData.find((item) => item.name === "Failed")?.value || 0, "danger"),
+        tone: getRiskTone(failedOrders, "danger"),
       },
       {
         title: "Blocked institutions",
-        value: stats.blockedOrganizations,
+        value: totals.blockedOrganizations || 0,
         description: "Institution accounts with restricted access.",
         path: "/admin/orgs",
         button: "Check organizations",
-        tone: getRiskTone(stats.blockedOrganizations, "danger"),
+        tone: getRiskTone(totals.blockedOrganizations || 0, "danger"),
       },
     ];
-  }, [orderStatusData, planHealth, stats.blockedOrganizations]);
+  }, [orderStatusData, planHealth, totals.blockedOrganizations]);
 
   if (loading) {
     return (
@@ -340,12 +222,21 @@ export default function AdminDashboard() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Super Admin Dashboard</h1>
-            <p className="text-muted-foreground">
-              Operational overview for revenue, users, institutions, billing risk, and platform growth.
-            </p>
+            <p className="text-muted-foreground">Operational overview for revenue, users, institutions, billing risk, and growth.</p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <ToggleGroup
+              type="single"
+              value={kpiWindow}
+              onValueChange={(value) => value && setKpiWindow(value)}
+              className="rounded-md border bg-card p-1"
+            >
+              <ToggleGroupItem value="today" className="px-3">Today</ToggleGroupItem>
+              <ToggleGroupItem value="week" className="px-3">This week</ToggleGroupItem>
+              <ToggleGroupItem value="month" className="px-3">This month</ToggleGroupItem>
+            </ToggleGroup>
+
             <Select value={timeRange} onValueChange={setTimeRange}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="Time range" />
@@ -363,20 +254,15 @@ export default function AdminDashboard() {
             </Button>
           </div>
         </div>
-
         <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="space-y-3">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <CardTitle className="text-2xl">Control Center</CardTitle>
-                  <CardDescription>
-                    Priority queues for collections, failed payments, and institutional risk.
-                  </CardDescription>
+                  <CardDescription>Priority queues for collections, failed payments, and institutional risk.</CardDescription>
                 </div>
-                <Badge variant="outline" className="border-sky-200 text-sky-700">
-                  Super Admin View
-                </Badge>
+                <Badge variant="outline" className="border-sky-200 text-sky-700">Super Admin View</Badge>
               </div>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
@@ -390,7 +276,11 @@ export default function AdminDashboard() {
                     <ShieldAlert className="h-5 w-5" />
                   </div>
                   <p className="mb-4 text-sm opacity-90">{item.description}</p>
-                  <Button variant="ghost" className="h-auto px-0 text-current hover:bg-transparent" onClick={() => navigate(item.path)}>
+                  <Button
+                    variant="ghost"
+                    className="h-auto px-0 text-current hover:bg-transparent"
+                    onClick={() => navigate(item.path)}
+                  >
                     {item.button}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -398,20 +288,19 @@ export default function AdminDashboard() {
               ))}
             </CardContent>
           </Card>
+
           <Card className="border-slate-200 shadow-sm">
             <CardHeader>
               <CardTitle className="text-xl">Platform Health</CardTitle>
-              <CardDescription>Core ratios and live operating posture.</CardDescription>
+              <CardDescription>Key ratios and operating posture.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="rounded-xl bg-slate-50 p-4">
                 <div className="text-sm text-muted-foreground">Premium conversion</div>
                 <div className="mt-1 text-3xl font-bold">
-                  {stats.totalUsers ? Math.round((stats.paidUsers / stats.totalUsers) * 100) : 0}%
+                  {totals.totalUsers ? Math.round((Number(totals.paidUsers || 0) / Number(totals.totalUsers || 1)) * 100) : 0}%
                 </div>
-                <div className="mt-1 text-sm text-muted-foreground">
-                  {stats.paidUsers} paid of {stats.totalUsers} total users
-                </div>
+                <div className="mt-1 text-sm text-muted-foreground">{totals.paidUsers || 0} paid of {totals.totalUsers || 0} users</div>
               </div>
 
               <div className="space-y-3">
@@ -424,14 +313,12 @@ export default function AdminDashboard() {
                   <span className="font-semibold text-rose-600">{planHealth.expired}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-lg border p-3">
-                  <span className="text-sm text-muted-foreground">Pending order queue</span>
-                  <span className="font-semibold text-amber-600">
-                    {orderStatusData.find((item) => item.name === "Pending")?.value || 0}
-                  </span>
+                  <span className="text-sm text-muted-foreground">Pending collections</span>
+                  <span className="font-semibold text-amber-600">{planHealth.pendingPayment}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-lg border p-3">
-                  <span className="text-sm text-muted-foreground">Blocked organizations</span>
-                  <span className="font-semibold text-rose-600">{stats.blockedOrganizations}</span>
+                  <span className="text-sm text-muted-foreground">Blocked institutions</span>
+                  <span className="font-semibold text-rose-600">{totals.blockedOrganizations || 0}</span>
                 </div>
               </div>
             </CardContent>
@@ -439,14 +326,15 @@ export default function AdminDashboard() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <AdminStatCard title="Total Revenue" value={formatCurrency(stats.revenue)} icon={DollarSign} className="border-l-4 border-l-emerald-500" />
-          <AdminStatCard title="This Month Revenue" value={formatCurrency(stats.thisMonthRevenue)} icon={Wallet} className="border-l-4 border-l-blue-500" />
-          <AdminStatCard title="Total Users" value={stats.totalUsers} icon={Users} className="border-l-4 border-l-amber-500" />
-          <AdminStatCard title="Total Courses" value={stats.totalCourses} icon={BookOpen} className="border-l-4 border-l-violet-500" />
-          <AdminStatCard title="Organizations" value={stats.organizations} icon={Building2} className="border-l-4 border-l-indigo-500" />
-          <AdminStatCard title="Org Students" value={stats.orgStudents} icon={School} className="border-l-4 border-l-sky-500" />
-          <AdminStatCard title="Premium Users" value={stats.paidUsers} icon={CreditCard} className="border-l-4 border-l-fuchsia-500" />
-          <AdminStatCard title="Free Users" value={stats.freeUsers} icon={GraduationCap} className="border-l-4 border-l-slate-500" />
+          <AdminStatCard title="Total Revenue" value={formatCurrency(totals.revenueAllTime || 0)} icon={DollarSign} className="border-l-4 border-l-emerald-500" />
+          <AdminStatCard title={`Revenue (${kpiLabel})`} value={formatCurrency(kpiOrders.revenue || 0)} icon={Wallet} className="border-l-4 border-l-blue-500" />
+          <AdminStatCard title={`New Users (${kpiLabel})`} value={kpiPayload.signups || 0} icon={Users} className="border-l-4 border-l-amber-500" />
+          <AdminStatCard title={`Successful Orders (${kpiLabel})`} value={kpiOrders.success || 0} icon={CreditCard} className="border-l-4 border-l-violet-500" />
+
+          <AdminStatCard title="Total Users" value={totals.totalUsers || 0} icon={Users} className="border-l-4 border-l-indigo-500" />
+          <AdminStatCard title="Total Courses" value={totals.totalCourses || 0} icon={BookOpen} className="border-l-4 border-l-sky-500" />
+          <AdminStatCard title="Organizations" value={totals.totalOrganizations || 0} icon={Building2} className="border-l-4 border-l-fuchsia-500" />
+          <AdminStatCard title="Free Users" value={totals.freeUsers || 0} icon={GraduationCap} className="border-l-4 border-l-slate-500" />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
@@ -477,7 +365,7 @@ export default function AdminDashboard() {
           <Card className="border-slate-200 shadow-sm">
             <CardHeader>
               <CardTitle>Billing Status</CardTitle>
-              <CardDescription>Current order pipeline by transaction status.</CardDescription>
+              <CardDescription>Order pipeline by transaction status.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <ResponsiveContainer width="100%" height={260}>
@@ -512,7 +400,7 @@ export default function AdminDashboard() {
           <Card className="border-slate-200 shadow-sm">
             <CardHeader>
               <CardTitle>User Mix</CardTitle>
-              <CardDescription>How the platform user base is currently segmented.</CardDescription>
+              <CardDescription>How the platform user base is segmented.</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={240}>
@@ -544,7 +432,7 @@ export default function AdminDashboard() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <div>
                 <CardTitle>Institution Watchlist</CardTitle>
-                <CardDescription>Top organizations by linked users.</CardDescription>
+                <CardDescription>Top organizations by linked accounts.</CardDescription>
               </div>
               <Button variant="ghost" size="sm" onClick={() => navigate("/admin/orgs")}>
                 Open
@@ -553,14 +441,14 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent className="space-y-3">
               {topOrganizations.length ? (
-                topOrganizations.map((organization, index) => (
-                  <div key={organization.name} className="rounded-lg border p-4">
+                topOrganizations.map((org, index) => (
+                  <div key={`${org.name}-${index}`} className="rounded-lg border p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="font-medium">{organization.name}</div>
-                        <div className="text-sm text-muted-foreground">Rank #{index + 1} by active linked accounts</div>
+                        <div className="font-medium">{org.name || "Organization"}</div>
+                        <div className="text-sm text-muted-foreground">Rank #{index + 1}</div>
                       </div>
-                      <Badge variant="outline">{organization.count} users</Badge>
+                      <Badge variant="outline">{org.count || 0} users</Badge>
                     </div>
                   </div>
                 ))
@@ -590,7 +478,10 @@ export default function AdminDashboard() {
                       <Badge variant="outline">{source.value}</Badge>
                     </div>
                     <div className="h-2 rounded-full bg-slate-100">
-                      <div className="h-2 rounded-full bg-primary" style={{ width: `${Math.max(12, (source.value / Math.max(...enquirySources.map((item) => item.value), 1)) * 100)}%` }} />
+                      <div
+                        className="h-2 rounded-full bg-primary"
+                        style={{ width: `${Math.max(12, (source.value / Math.max(...enquirySources.map((item) => item.value), 1)) * 100)}%` }}
+                      />
                     </div>
                   </div>
                 ))
@@ -628,21 +519,29 @@ export default function AdminDashboard() {
                   </TableHeader>
                   <TableBody>
                     {recentOrders.length ? (
-                      recentOrders.map((order) => (
-                        <TableRow key={order._id}>
-                          <TableCell className="font-medium">#{String(order._id || "").slice(-6)}</TableCell>
-                          <TableCell>
-                            <div>{order.userName || "User"}</div>
-                            <div className="text-xs text-muted-foreground">{order.userEmail || "No email"}</div>
-                          </TableCell>
-                          <TableCell>{formatCurrency(order.price || order.amount)}</TableCell>
-                          <TableCell className="capitalize">{order.provider || "N/A"}</TableCell>
-                          <TableCell>{getOrderDate(order) ? format(new Date(getOrderDate(order)), "dd MMM yyyy") : "N/A"}</TableCell>
-                          <TableCell>
-                            <Badge className={getOrderStatusClassName(order.status)}>{order.status || "unknown"}</Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))
+                      recentOrders.map((order) => {
+                        const token = getOrderSearchToken(order);
+                        const orderDate = safeParseDate(order.createdAt || order.date);
+                        return (
+                          <TableRow
+                            key={order._id}
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => token && navigate(`/admin/orders?q=${encodeURIComponent(token)}`)}
+                          >
+                            <TableCell className="font-medium">#{String(order._id || "").slice(-6)}</TableCell>
+                            <TableCell>
+                              <div>{order.userName || "User"}</div>
+                              <div className="text-xs text-muted-foreground">{order.userEmail || "No email"}</div>
+                            </TableCell>
+                            <TableCell>{formatCurrency(order.price || order.amount)}</TableCell>
+                            <TableCell className="capitalize">{order.provider || "N/A"}</TableCell>
+                            <TableCell>{orderDate ? format(orderDate, "dd MMM yyyy") : "N/A"}</TableCell>
+                            <TableCell>
+                              <Badge className={getOrderStatusClassName(order.status)}>{order.status || "unknown"}</Badge>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
                     ) : (
                       <TableRow>
                         <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">No recent orders found.</TableCell>
@@ -653,6 +552,7 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
+
           <div className="space-y-6">
             <Card className="border-slate-200 shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -667,20 +567,26 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {recentUsers.length ? (
-                  recentUsers.map((user) => (
-                    <div key={user._id} className="rounded-lg border p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="font-medium">{user.mName || "Unnamed user"}</div>
-                          <div className="text-sm text-muted-foreground">{user.email || "No email"}</div>
-                          <div className="mt-1 text-xs text-muted-foreground">
-                            Joined {getUserJoinDate(user) ? format(new Date(getUserJoinDate(user)), "dd MMM yyyy") : "N/A"}
+                  recentUsers.map((user) => {
+                    const createdAt = safeParseDate(user.createdAt);
+                    const emailToken = user.email || user.mName || "";
+                    return (
+                      <div
+                        key={user._id}
+                        className="cursor-pointer rounded-lg border p-4 hover:bg-muted/50"
+                        onClick={() => emailToken && navigate(`/admin/users?q=${encodeURIComponent(emailToken)}`)}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="font-medium">{user.mName || "Unnamed user"}</div>
+                            <div className="text-sm text-muted-foreground">{user.email || "No email"}</div>
+                            <div className="mt-1 text-xs text-muted-foreground">Joined {createdAt ? format(createdAt, "dd MMM yyyy") : "N/A"}</div>
                           </div>
+                          <Badge variant="outline">{user.adminCategory || user.role || "user"}</Badge>
                         </div>
-                        <Badge variant="outline">{user.adminCategory || user.role || "user"}</Badge>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">No recent user records found.</div>
                 )}
@@ -690,7 +596,7 @@ export default function AdminDashboard() {
             <Card className="border-slate-200 shadow-sm">
               <CardHeader>
                 <CardTitle>Content Split</CardTitle>
-                <CardDescription>Current premium vs free course inventory.</CardDescription>
+                <CardDescription>Premium vs free course inventory.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <ResponsiveContainer width="100%" height={200}>

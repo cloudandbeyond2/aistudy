@@ -475,6 +475,7 @@
 
 // export default AdminOrders;
 import React, { useEffect, useState, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pencil, Search, Download, RefreshCw, Save } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -557,6 +558,12 @@ const AdminOrders = () => {
   const [isUpdating, setIsUpdating] = useState(false);
 
   const { toast } = useToast();
+  const location = useLocation();
+
+  useEffect(() => {
+    const q = new URLSearchParams(location.search).get('q');
+    if (q) setSearchQuery(q);
+  }, [location.search]);
 
   useEffect(() => {
     fetchOrders();

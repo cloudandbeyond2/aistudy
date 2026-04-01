@@ -5,6 +5,7 @@ import { uploadLogo } from '../config/upload.config.js';
 const router = express.Router();
 
 router.post('/dashboard', adminController.dashboard);
+router.get('/admin/dashboard/overview', adminController.getDashboardOverview);
 
 router.get('/getusers', adminController.getUsers);
 router.get('/getpaid', adminController.getPaidUsers);

@@ -1,4 +1,4 @@
-import User from '../models/User.js';
+﻿import User from '../models/User.js';
 import Organization from '../models/Organization.js';
 import LimitRequest from '../models/LimitRequest.js';
 import StaffCourseLimitRequest from '../models/StaffCourseLimitRequest.js';
@@ -19,6 +19,7 @@ import PlacementProfile from '../models/PlacementProfile.js';
 import DeptCourseLimitRequest from '../models/DeptCourseLimitRequest.js';
 import LoginActivity from '../models/LoginActivity.js';
 import Exam from '../models/Exam.js';
+import OrganizationEnquiry from '../models/OrganizationEnquiry.js';
 
 import { addOneMonthSafe } from '../utils/date.utils.js';
 import { getUserAccessFromOrgPlan } from '../utils/orgPlanAccess.js';
@@ -718,7 +719,7 @@ Your organization account is ready. Access your dashboard now.
 <div style="padding:40px 36px;">
 
 <h2 style="margin:0 0 10px;font-size:22px;color:#111827;">
-🚀 Your Organization is Ready
+?? Your Organization is Ready
 </h2>
 
 <p style="margin:0 0 25px;color:#6b7280;font-size:14px;">
@@ -772,7 +773,7 @@ Use the credentials below to get started.
      text-decoration:none;
      border-radius:8px;
      display:inline-block;">
-     Login to Dashboard →
+     Login to Dashboard ?
   </a>
 </div>
 
@@ -920,3 +921,277 @@ export const toggleBlockOrganization = async (id, isBlocked) => {
 export const toggleBlockUser = async (userId, isBlocked) => {
   await User.findByIdAndUpdate(userId, { isBlocked });
 };
+
+/* ---------------- SUPER ADMIN DASHBOARD OVERVIEW ---------------- */
+const startOfToday = () => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+};
+
+const startOfMonth = () => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+};
+
+const daysAgo = (days) => new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+const getOrgPlanLifecycle = (endDate) => {
+  if (!endDate) return 'no-plan';
+  const diffDays = Math.ceil((new Date(endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return 'expired';
+  if (diffDays <= 15) return 'expiring-soon';
+  return 'active';
+};
+
+const buildOrderWindowStats = async ({ startDate }) => {
+  const grouped = await Order.aggregate([
+    { $match: { createdAt: { $gte: startDate } } },
+    {
+      $group: {
+        _id: '$status',
+        count: { $sum: 1 },
+        revenue: {
+          $sum: {
+            $cond: [
+              { $eq: ['$status', 'success'] },
+              { $ifNull: ['$price', { $ifNull: ['$amount', 0] }] },
+              0
+            ]
+          }
+        }
+      }
+    }
+  ]);
+
+  const byStatus = grouped.reduce((acc, row) => {
+    acc[String(row._id || 'unknown')] = {
+      count: Number(row.count || 0),
+      revenue: Number(row.revenue || 0)
+    };
+    return acc;
+  }, {});
+
+  return {
+    success: byStatus.success?.count || 0,
+    pending: byStatus.pending?.count || 0,
+    failed: byStatus.failed?.count || 0,
+    cancelled: byStatus.cancelled?.count || 0,
+    revenue: byStatus.success?.revenue || 0
+  };
+};
+
+export const getDashboardOverview = async ({ rangeDays = 30 } = {}) => {
+  const safeRangeDays = Math.max(7, Math.min(Number(rangeDays || 30), 90));
+
+  const [
+    totalUsers,
+    totalCourses,
+    totalOrganizations,
+    organizationUsers,
+    blockedOrganizations,
+    organizationStaff,
+    students,
+    premiumUsers,
+    premiumCourseCount,
+    freeCourseCount,
+    recentUsers,
+    recentOrders,
+    orderStatusAgg,
+    revenueAllTimeAgg,
+    revenueTrendAgg,
+    orderToday,
+    orderWeek,
+    orderMonth,
+    signupToday,
+    signupWeek,
+    signupMonth,
+    activeOrgPlans,
+    enquirySourcesAgg,
+    topOrganizationsAgg
+  ] = await Promise.all([
+    User.estimatedDocumentCount(),
+    Course.estimatedDocumentCount(),
+    Organization.estimatedDocumentCount(),
+    User.countDocuments({ $or: [{ isOrganization: true }, { role: 'org_admin' }] }),
+    User.countDocuments({
+      $or: [{ isOrganization: true }, { role: 'org_admin' }],
+      'organizationDetails.isBlocked': true
+    }),
+    User.countDocuments({ role: 'dept_admin' }),
+    User.countDocuments({ role: 'student' }),
+    User.countDocuments({
+      $and: [
+        { type: { $ne: 'free' } },
+        { role: { $nin: ['student', 'dept_admin', 'org_admin'] } },
+        { $or: [{ isOrganization: { $ne: true } }, { isOrganization: { $exists: false } }] }
+      ]
+    }),
+    Course.countDocuments({ restricted: true }),
+    Course.countDocuments({ restricted: { $ne: true } }),
+    User.find({})
+      .select('_id mName email role type isOrganization createdAt date')
+      .sort({ createdAt: -1, date: -1 })
+      .limit(6)
+      .lean(),
+    Order.find({})
+      .select('_id userName userEmail price amount currency provider status transactionId subscriptionId createdAt date razorpayPaymentId')
+      .sort({ createdAt: -1, date: -1 })
+      .limit(6)
+      .lean(),
+    Order.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
+    Order.aggregate([
+      { $match: { status: 'success' } },
+      { $group: { _id: null, revenue: { $sum: { $ifNull: ['$price', { $ifNull: ['$amount', 0] }] } } } }
+    ]),
+    Order.aggregate([
+      { $match: { status: 'success', createdAt: { $gte: daysAgo(safeRangeDays - 1) } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          revenue: { $sum: { $ifNull: ['$price', { $ifNull: ['$amount', 0] }] } }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]),
+    buildOrderWindowStats({ startDate: startOfToday() }),
+    buildOrderWindowStats({ startDate: daysAgo(7) }),
+    buildOrderWindowStats({ startDate: startOfMonth() }),
+    User.countDocuments({ createdAt: { $gte: startOfToday() } }),
+    User.countDocuments({ createdAt: { $gte: daysAgo(7) } }),
+    User.countDocuments({ createdAt: { $gte: startOfMonth() } }),
+    OrganizationPlan.find({ isActive: true }).select('endDate paymentStatus').lean(),
+    OrganizationEnquiry.aggregate([
+      {
+        $group: {
+          _id: { $ifNull: ['$referBy', ''] },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ]),
+    User.aggregate([
+      { $match: { organization: { $exists: true, $ne: null } } },
+      { $group: { _id: '$organization', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 6 },
+      {
+        $lookup: {
+          from: 'organizations',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'org'
+        }
+      },
+      { $unwind: { path: '$org', preserveNullAndEmptyArrays: true } },
+      { $project: { _id: 0, name: '$org.name', count: 1 } }
+    ])
+  ]);
+
+  const freeUsers = Math.max(0, totalUsers - organizationUsers - organizationStaff - students - premiumUsers);
+
+  const orderStatusMap = orderStatusAgg.reduce((acc, row) => {
+    acc[String(row._id || 'unknown')] = Number(row.count || 0);
+    return acc;
+  }, {});
+
+  const orderStatus = [
+    { name: 'Success', value: orderStatusMap.success || 0 },
+    { name: 'Pending', value: orderStatusMap.pending || 0 },
+    { name: 'Failed', value: orderStatusMap.failed || 0 },
+    { name: 'Cancelled', value: orderStatusMap.cancelled || 0 }
+  ];
+
+  const revenueAllTime = Number(revenueAllTimeAgg?.[0]?.revenue || 0);
+
+  const trendByDate = revenueTrendAgg.reduce((acc, row) => {
+    acc[String(row._id)] = Number(row.revenue || 0);
+    return acc;
+  }, {});
+
+  const revenueTrend = Array.from({ length: safeRangeDays }).map((_, index) => {
+    const date = daysAgo(safeRangeDays - index - 1);
+    const key = date.toISOString().slice(0, 10);
+    return { date: key, revenue: trendByDate[key] || 0 };
+  });
+
+  const planHealth = activeOrgPlans.reduce(
+    (acc, plan) => {
+      const lifecycle = getOrgPlanLifecycle(plan.endDate);
+      if (lifecycle === 'active') acc.active += 1;
+      if (lifecycle === 'expiring-soon') acc.expiringSoon += 1;
+      if (lifecycle === 'expired') acc.expired += 1;
+
+      const paymentStatus = plan.paymentStatus || 'pending';
+      if (paymentStatus === 'pending') acc.pendingPayment += 1;
+      if (paymentStatus === 'failed') acc.failedPayment += 1;
+      return acc;
+    },
+    { active: 0, expiringSoon: 0, expired: 0, pendingPayment: 0, failedPayment: 0 }
+  );
+
+  const userSegments = [
+    { name: 'Premium', value: premiumUsers },
+    { name: 'Free', value: freeUsers },
+    { name: 'Organizations', value: organizationUsers },
+    { name: 'Org Staff', value: organizationStaff },
+    { name: 'Students', value: students }
+  ].filter((segment) => segment.value > 0);
+
+  const courseSegments = [
+    { name: 'Premium Courses', value: premiumCourseCount },
+    { name: 'Free Courses', value: freeCourseCount }
+  ];
+
+  const enquirySources = enquirySourcesAgg.map((row) => {
+    const raw = row._id && String(row._id).trim() ? String(row._id).trim() : '';
+    const normalized = raw.replace(/[^a-z0-9 ]/gi, '').trim();
+    const safe = normalized || 'Direct';
+    const name = safe.charAt(0).toUpperCase() + safe.slice(1).toLowerCase();
+    return { name, value: Number(row.count || 0) };
+  });
+
+  const recentUsersPayload = recentUsers.map((user) => ({
+    _id: user._id,
+    mName: user.mName,
+    email: user.email,
+    role: user.role,
+    type: user.type,
+    isOrganization: user.isOrganization,
+    createdAt: user.createdAt || user.date || null,
+    adminCategory: getUserCategory(user)
+  }));
+
+  return {
+    success: true,
+    generatedAt: new Date().toISOString(),
+    rangeDays: safeRangeDays,
+    totals: {
+      totalUsers,
+      totalCourses,
+      totalOrganizations,
+      revenueAllTime,
+      paidUsers: premiumUsers,
+      freeUsers,
+      students,
+      organizationStaff,
+      organizationUsers,
+      blockedOrganizations
+    },
+    windows: {
+      today: { signups: signupToday, orders: orderToday },
+      week: { signups: signupWeek, orders: orderWeek },
+      month: { signups: signupMonth, orders: orderMonth }
+    },
+    userSegments,
+    courseSegments,
+    orderStatus,
+    planHealth,
+    revenueTrend,
+    enquirySources,
+    topOrganizations: topOrganizationsAgg.map((row) => ({ name: row.name || 'Organization', count: Number(row.count || 0) })),
+    recentOrders,
+    recentUsers: recentUsersPayload
+  };
+};
+

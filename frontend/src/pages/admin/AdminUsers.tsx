@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { format } from 'date-fns';
+import { useLocation } from 'react-router-dom';
 import {
   Ban,
   BriefcaseBusiness,
@@ -158,6 +159,7 @@ const getSegment = (user: AdminUser): UserSegment => {
 
 const AdminUsers = () => {
   const { toast } = useToast();
+  const location = useLocation();
 
   const [data, setData] = useState<AdminUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -181,6 +183,11 @@ const AdminUsers = () => {
 
   const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
   const [userToBlock, setUserToBlock] = useState<{ id: string; isBlocked: boolean } | null>(null);
+
+  useEffect(() => {
+    const q = new URLSearchParams(location.search).get('q');
+    if (q) setSearchQuery(q);
+  }, [location.search]);
 
   const fetchData = async () => {
     try {

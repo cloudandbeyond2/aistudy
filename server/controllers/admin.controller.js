@@ -10,6 +10,17 @@ export const dashboard = async (req, res) => {
   }
 };
 
+export const getDashboardOverview = async (req, res) => {
+  try {
+    const rangeDays = req.query?.rangeDays;
+    const data = await adminService.getDashboardOverview({ rangeDays });
+    res.json(data);
+  } catch (err) {
+    console.error('Admin dashboard overview error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 /* USERS */
 export const getUsers = async (req, res) => {
   res.json(await adminService.getAllUsers());
