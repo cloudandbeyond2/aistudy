@@ -7,6 +7,73 @@ import { getGenAI } from '../config/gemini.js';
 import { HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import retryWithBackoff from '../utils/retryWithBackoff.js';
 import mongoose from 'mongoose';
+import OrgCourse from '../models/OrgCourse.js';
+
+const normalizeForMatch = (value) =>
+  String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+const extractOrgCourseTopicTitles = (courses = []) => {
+  const titles = [];
+  for (const course of courses) {
+    const topics = Array.isArray(course?.topics) ? course.topics : [];
+    for (const topic of topics) {
+      if (topic?.title) titles.push(topic.title);
+      const subtopics = Array.isArray(topic?.subtopics) ? topic.subtopics : [];
+      for (const sub of subtopics) {
+        if (sub?.title) titles.push(sub.title);
+      }
+    }
+  }
+
+  // De-dup while preserving order.
+  const seen = new Set();
+  return titles.filter((t) => {
+    const key = normalizeForMatch(t);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
+const getAllowedTopicsForInterview = async ({ organizationId, driveSkills }) => {
+  if (!organizationId) return [];
+
+  const courses = await OrgCourse.find({ organizationId }).select('topics');
+  const allTitles = extractOrgCourseTopicTitles(courses);
+
+  if (!allTitles.length) return [];
+
+  const keywords = Array.isArray(driveSkills)
+    ? driveSkills.map(normalizeForMatch).filter(Boolean)
+    : [];
+
+  if (!keywords.length) return allTitles.slice(0, 30);
+
+  const filtered = allTitles.filter((title) => {
+    const t = normalizeForMatch(title);
+    return keywords.some((k) => t.includes(k) || k.includes(t));
+  });
+
+  return (filtered.length ? filtered : allTitles).slice(0, 30);
+};
+
+const buildFallbackNextQuestion = ({ allowedTopics, targetRole, skills, aiTurnCount }) => {
+  const topicPool = Array.isArray(allowedTopics) && allowedTopics.length
+    ? allowedTopics
+    : String(skills || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+  const topic = topicPool.length
+    ? topicPool[aiTurnCount % topicPool.length]
+    : targetRole || 'software development';
+
+  return `Great. Next question: Can you explain ${topic} with one real project example and your exact implementation steps?`;
+};
 
 // --- MOCK DRIVE MANAGEMENT (Admin/Staff) ---
 
@@ -199,29 +266,74 @@ export const chatWithAiInterviewer = async (req, res) => {
     const skills = drive?.skills?.join(', ') || 'General Technical Skills';
 
     const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-    let systemPrompt = `You are a high-end ${persona} technical interviewer conducting a MOCK INTERVIEW for a ${targetRole} trainee. 
+    // Restrict interviewer topics to the org's training modules only.
+    // Admin chooses `drive.skills`, but we still clamp to topics that exist in OrgCourse for that org.
+    const allowedTopicsDrive = await getAllowedTopicsForInterview({
+      organizationId: drive?.organizationId || null,
+      driveSkills: drive?.skills || []
+    });
+    const allowedTopicsApp = allowedTopicsDrive.length
+      ? []
+      : await getAllowedTopicsForInterview({
+          organizationId: application?.organizationId || null,
+          driveSkills: drive?.skills || []
+        });
+
+    const allowedTopics = allowedTopicsDrive.length ? allowedTopicsDrive : allowedTopicsApp;
+
+    const allowedTopicsText =
+      allowedTopics.length > 0 ? allowedTopics.join(', ') : `(${skills})`;
+
+    const systemPrompt = `You are a high-end ${persona} technical interviewer conducting a MOCK INTERVIEW for a ${targetRole} trainee.
     Your goal is to help them prepare for a real face-to-face interview.
     
     Context:
     - Target Role: ${targetRole}
-    - Required Skills: ${skills}
+    - Allowed Topics (ONLY from the organisation training modules):
+      ${allowedTopicsText}
     - Atmosphere: ${persona} but helpful for training.
     
     Instructions:
     1. Ask one technical or behavioral question at a time.
-    2. Respond briefly to their answer (acknowledge it) and then move to the next question.
+    2. Respond briefly to their answer (acknowledge it) and then ALWAYS ask the next single question in the SAME message.
     3. Keep a professional tone.
-    4. If the user gives a very short or poor answer, provide a small hint or ask for clarification once before moving on.
-    5. After exactly 5-6 questions, wrap up by saying: "Thank you for the session. I will now generate your performance blueprint." 
+    4. Only ask questions that are grounded in the Allowed Topics list. Never use topics outside this list.
+    5. If the user gives a very short or poor answer, provide a small hint or ask for clarification once before moving on.
+    6. After exactly 5-6 questions, wrap up by saying exactly: "Thank you for the session. I will now generate your performance blueprint."
+    
+    Output rule:
+    - Unless you are wrapping up, your message MUST end with exactly one clear question mark (?) and it must be the next question.
+    - When wrapping up, output ONLY the wrap-up sentence above and do NOT include any question marks (?).
     
     IMPORTANT: This is a MOCK interview for training. Do NOT mention job offers.`;
+
+    // Use a model known to be supported by the current Gemini API setup.
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      systemInstruction: systemPrompt
+    });
+
+    // Defensive init for legacy/partial documents where nested paths may be missing.
+    if (!application.genAiFeedback) {
+      application.genAiFeedback = {};
+    }
+    if (!Array.isArray(application.genAiFeedback.transcript)) {
+      application.genAiFeedback.transcript = [];
+    }
 
     const history = application.genAiFeedback.transcript.map(t => ({
       role: t.role === 'ai' ? 'model' : 'user',
       parts: [{ text: t.message }]
     }));
+    // Gemini requires the first history entry to be a 'user' message.
+    // Some legacy sessions may start with an AI greeting; normalize it.
+    if (history.length > 0 && history[0].role === 'model') {
+      history.unshift({
+        role: 'user',
+        parts: [{ text: '(Start the mock interview.)' }]
+      });
+    }
 
     const chat = model.startChat({
       history: history,
@@ -233,19 +345,61 @@ export const chatWithAiInterviewer = async (req, res) => {
       prompt = `(First Round) Hello, I am ready for the mock interview for ${targetRole}. Please start.`;
     }
 
-    const result = await chat.sendMessage(prompt);
-    const aiResponse = result.response.text();
+    const result = await retryWithBackoff(() => chat.sendMessage(prompt), 2, 600);
+    let aiResponse = String(result.response.text() || '').trim();
+
+    const wrapUpPhrase = 'Thank you for the session. I will now generate your performance blueprint.';
+    const lowerWrapUp = wrapUpPhrase.toLowerCase();
+    const aiTurnsBeforeSave = application.genAiFeedback.transcript.filter(t => t.role === 'ai').length;
+    const canWrapUpNow = aiTurnsBeforeSave >= 4; // current response will be at least the 5th AI turn
+    const hasWrapUpText = aiResponse.toLowerCase().includes(lowerWrapUp);
+    const hasQuestionMark = aiResponse.includes('?');
+
+    // Guardrail 1: prevent early closure (before question cycle completes).
+    if (hasWrapUpText && !canWrapUpNow) {
+      aiResponse = buildFallbackNextQuestion({
+        allowedTopics,
+        targetRole,
+        skills,
+        aiTurnCount: aiTurnsBeforeSave
+      });
+    }
+
+    // Guardrail 2: always continue with a next question unless this is final wrap-up.
+    const willWrapNow = aiResponse.toLowerCase().includes(lowerWrapUp) && canWrapUpNow && !aiResponse.includes('?');
+    if (!willWrapNow && !aiResponse.includes('?')) {
+      aiResponse = `${aiResponse}\n\n${buildFallbackNextQuestion({
+        allowedTopics,
+        targetRole,
+        skills,
+        aiTurnCount: aiTurnsBeforeSave
+      })}`.trim();
+    }
 
     // Save history
-    if (!isArrival) {
+    // Ensure transcript always starts with a user message (Gemini chat history requirement).
+    if (isArrival) {
+      application.genAiFeedback.transcript.push({ role: 'user', message: prompt, timestamp: new Date() });
+    } else {
       application.genAiFeedback.transcript.push({ role: 'user', message, timestamp: new Date() });
     }
     application.genAiFeedback.transcript.push({ role: 'ai', message: aiResponse, timestamp: new Date() });
     
+    // Determine if the session should be finalized. We gate this to prevent
+    // accidental early termination when the model mentions the wrap-up phrase too soon.
+    const aiResponseLower = String(aiResponse || '').toLowerCase();
+    const existingAiTurns = application.genAiFeedback.transcript.filter(t => t.role === 'ai').length;
+    const nextAiTurns = existingAiTurns + 1;
+    const shouldFinalize =
+      aiResponseLower.includes(lowerWrapUp) &&
+      nextAiTurns >= 5 &&
+      !aiResponseLower.includes('?');
+
     await application.save();
 
-    res.status(200).json({ success: true, aiResponse });
+    res.status(200).json({ success: true, aiResponse, shouldFinalize });
   } catch (error) {
+    console.error('[MockInterview:chatWithAiInterviewer] Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -261,7 +415,8 @@ export const finalizeMockRound = async (req, res) => {
       .join('\n');
 
     const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    // Keep final evaluation on a supported model.
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const analysisPrompt = `Analyze the following MOCK INTERVIEW transcript for a ${application.driveId?.targetRole || 'Technical Candidate'}.
     Provide a detailed performance blueprint for training purposes.
@@ -284,13 +439,73 @@ export const finalizeMockRound = async (req, res) => {
       .replace(/```/g, '')
       .trim();
 
-    const analysis = JSON.parse(analysisText);
+    const parseAnalysis = (raw) => {
+      const cleaned = String(raw || '').trim();
+      if (!cleaned) return null;
 
-    application.genAiFeedback.score = analysis.score;
-    application.genAiFeedback.strengths = analysis.strengths;
-    application.genAiFeedback.weaknesses = analysis.weaknesses;
-    application.genAiFeedback.technicalGaps = analysis.technicalGaps;
-    application.genAiFeedback.overallAnalysis = analysis.overallAnalysis;
+      try {
+        return JSON.parse(cleaned);
+      } catch {
+        const start = cleaned.indexOf('{');
+        const end = cleaned.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+          const candidate = cleaned.slice(start, end + 1);
+          try {
+            return JSON.parse(candidate);
+          } catch {
+            return null;
+          }
+        }
+      }
+      return null;
+    };
+
+    let analysis = parseAnalysis(analysisText);
+
+    if (!analysis) {
+      const repairPrompt = `Convert the following response into STRICT JSON only with keys:
+score (1-100 number), strengths (string[]), weaknesses (string[]), technicalGaps (string[]), overallAnalysis (string).
+
+Response:
+${analysisText}`;
+
+      const repairResult = await model.generateContent(repairPrompt);
+      analysis = parseAnalysis(repairResult.response.text());
+    }
+
+    if (!analysis) {
+      analysis = {
+        score: 60,
+        strengths: ['Participated actively in the mock interview session'],
+        weaknesses: ['Some answers lacked depth and structure'],
+        technicalGaps: ['Needs stronger fundamentals for role-specific concepts'],
+        overallAnalysis:
+          'You completed the mock interview session. Your responses show potential, but you should improve answer structure, depth, and role-specific technical clarity for better performance.'
+      };
+    }
+
+    const normalizedAnalysis = {
+      score: Number.isFinite(Number(analysis.score))
+        ? Math.max(1, Math.min(100, Number(analysis.score)))
+        : 60,
+      strengths: Array.isArray(analysis.strengths) && analysis.strengths.length
+        ? analysis.strengths.map(String)
+        : ['Participated actively in the mock interview session'],
+      weaknesses: Array.isArray(analysis.weaknesses) && analysis.weaknesses.length
+        ? analysis.weaknesses.map(String)
+        : ['Some answers lacked depth and structure'],
+      technicalGaps: Array.isArray(analysis.technicalGaps) && analysis.technicalGaps.length
+        ? analysis.technicalGaps.map(String)
+        : ['Needs stronger fundamentals for role-specific concepts'],
+      overallAnalysis: String(analysis.overallAnalysis || '').trim() ||
+        'You completed the mock interview session. Keep practicing to improve technical depth and communication clarity.'
+    };
+
+    application.genAiFeedback.score = normalizedAnalysis.score;
+    application.genAiFeedback.strengths = normalizedAnalysis.strengths;
+    application.genAiFeedback.weaknesses = normalizedAnalysis.weaknesses;
+    application.genAiFeedback.technicalGaps = normalizedAnalysis.technicalGaps;
+    application.genAiFeedback.overallAnalysis = normalizedAnalysis.overallAnalysis;
     application.status = 'AI_Completed';
     application.currentRound = 'TMR_Mock'; // Move to TMR Mock round
     application.updatedAt = Date.now();

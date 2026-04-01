@@ -105,8 +105,8 @@ const OrgMockInterview = () => {
     const handleToggleReadiness = async (studentId: string, currentStatus: boolean) => {
         try {
             // Need a backend endpoint for this - will implement in user.controller later if missing
-            // For now, let's assume it exists or mocked
-            const res = await axios.put(`${serverURL}/api/user/placement-ready`, {
+            // Mock Interview Helper endpoint
+            const res = await axios.put(`${serverURL}/api/mock-interview/placement-ready`, {
                 userId: studentId,
                 isReady: !currentStatus
             });
