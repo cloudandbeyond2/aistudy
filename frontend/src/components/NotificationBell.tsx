@@ -15,7 +15,11 @@ import { serverURL } from '@/constants';
 import axios from 'axios';
 import { formatDistanceToNow } from 'date-fns';
 
-const NotificationBell = () => {
+interface NotificationBellProps {
+    onNotificationsChange?: (notifications: any[]) => void;
+}
+
+const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationsChange }) => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
 
@@ -27,26 +31,28 @@ const NotificationBell = () => {
 
     const fetchNotifications = async () => {
         try {
-            // Assuming user ID is handled via auth token or session in backend
-            // But based on controller, it expects userId in body. 
-            // Let's assume we send userId from session storage for now or auth middleware handles it.
-            // Checking admin service, getNotifications expects body { userId }.
-            // Let's rely on sessionStorage 'uid' which seems to be used elsewhere.
             const userId = sessionStorage.getItem('uid');
             if (!userId) return;
 
             const response = await axios.post(`${serverURL}/api/notifications/get`, { userId });
-            setNotifications(response.data);
-            setUnreadCount(response.data.filter(n => !n.isRead).length);
+            const notificationsData = Array.isArray(response.data) ? response.data : [];
+            setNotifications(notificationsData);
+            setUnreadCount(notificationsData.filter(n => !n.isRead).length);
+            onNotificationsChange?.(notificationsData);
         } catch (error) {
             console.error("Failed to fetch notifications");
+            onNotificationsChange?.([]);
         }
     };
 
     const markAsRead = async (id) => {
         try {
             await axios.post(`${serverURL}/api/notifications/read`, { id });
-            setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
+            setNotifications(prev => {
+                const updated = prev.map(n => n._id === id ? { ...n, isRead: true } : n);
+                onNotificationsChange?.(updated);
+                return updated;
+            });
             setUnreadCount(prev => Math.max(0, prev - 1));
         } catch (error) {
             console.error("Failed to mark as read");
@@ -54,20 +60,19 @@ const NotificationBell = () => {
     };
 
     const clearAllNotifications = async () => {
-    try {
+        try {
+            const userId = sessionStorage.getItem('uid');
+            if (!userId) return;
 
-        const userId = sessionStorage.getItem('uid');
-        if (!userId) return;
+            await axios.post(`${serverURL}/api/notifications/clear`, { userId });
 
-        await axios.post(`${serverURL}/api/notifications/clear`, { userId });
-
-        setNotifications([]);
-        setUnreadCount(0);
-
-    } catch (error) {
-        console.error("Failed to clear notifications");
-    }
-};
+            setNotifications([]);
+            setUnreadCount(0);
+            onNotificationsChange?.([]);
+        } catch (error) {
+            console.error("Failed to clear notifications");
+        }
+    };
 
     const handleNotificationClick = (notification) => {
         if (!notification.isRead) {

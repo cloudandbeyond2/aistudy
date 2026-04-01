@@ -52,7 +52,20 @@ export const getUserById = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const user = await User.findById(userId).select('-password');
+    const user = await User.findById(userId)
+      .select('-password')
+      .populate({
+        path: 'organization',
+        select: 'name plan contactNumber logo address'
+      })
+      .populate({
+        path: 'department',
+        select: 'name description'
+      })
+      .populate({
+        path: 'organizationId',
+        select: 'organizationDetails.mName organizationDetails.institutionName mName'
+      });
 
     if (!user) {
       return res.status(404).json({

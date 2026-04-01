@@ -57,6 +57,7 @@ import {
   CheckCircle2,
   ListTodo,  
   Zap,
+  BookPlus,
   Sun,
   Moon
 } from 'lucide-react';
@@ -462,6 +463,7 @@ const DashboardLayoutContent = () => {
 
                     {!admin && <MenuItem icon={MessageSquare} label="Support" to="/dashboard/support" isActive={isActive('/dashboard/support')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
                     {!admin && <MenuItem icon={Megaphone} label="Global News" to="/dashboard/news" isActive={isActive('/dashboard/news')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
+                    <MenuItem icon={Users} label="Student Portal" to="/dashboard/student" isActive={isActive('/dashboard/student')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                   </>
                 )}
 
@@ -469,10 +471,18 @@ const DashboardLayoutContent = () => {
                 {sessionStorage.getItem('role') === 'student' && (
                   <>
                     <SectionHeader title="Overview" icon={Gauge} isExpanded={isExpanded} />
-                    <MenuItem icon={Gauge} label="Dashboard" to="/dashboard/student" isActive={isActive('/dashboard/student')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    <MenuItem icon={Gauge} label="My Learning Hub" to="/dashboard/student" isActive={isActive('/dashboard/student')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={User} label="My Profile" to="/dashboard/student/profile" isActive={isActive('/dashboard/student/profile')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
 
                     <SectionHeader title="Learning Tools" icon={Zap} isExpanded={isExpanded} />
+                    <MenuItem
+                      icon={BookPlus}
+                      label="Add My Course"
+                      to="/dashboard/generate-course"
+                      isActive={isActive('/dashboard/generate-course')}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
                     {notebookEnabled.student && <MenuItem icon={BrainCircuit} label="AI Notebook" to="/dashboard/notebook" isActive={isActive('/dashboard/notebook')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
                     <MenuItem icon={Briefcase} label="Interview Prep" to="/dashboard/interview-prep" isActive={isActive('/dashboard/interview-prep')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Calendar} label="Calendar Scheduler" to="/dashboard/calendar" isActive={isActive('/dashboard/calendar')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
