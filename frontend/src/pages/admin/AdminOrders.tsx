@@ -509,10 +509,41 @@ import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
+const getOrderStatusClassName = (status) => {
+  switch (status) {
+    case 'success':
+      return 'bg-green-100 text-green-800';
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'failed':
+      return 'bg-red-100 text-red-800';
+    case 'cancelled':
+      return 'bg-slate-200 text-slate-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+
+const getOrderRowClassName = (status) => {
+  switch (status) {
+    case 'pending':
+      return 'bg-amber-50/70';
+    case 'failed':
+      return 'bg-rose-50/70';
+    case 'cancelled':
+      return 'bg-slate-100/70';
+    default:
+      return '';
+  }
+};
+
 const AdminOrders = () => {
   const [data, setData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [providerFilter, setProviderFilter] = useState('all');
+  const [orderDateFrom, setOrderDateFrom] = useState('');
+  const [orderDateTo, setOrderDateTo] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -531,6 +562,10 @@ const AdminOrders = () => {
     fetchOrders();
     fetchSettings();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, providerFilter, orderDateFrom, orderDateTo]);
 
   const fetchSettings = async () => {
     try {
@@ -619,15 +654,96 @@ const AdminOrders = () => {
     }, 2000);
   };
 
+  const exportCsv = () => {
+    if (!filteredData.length) {
+      toast({
+        title: 'Nothing to export',
+        description: 'There are no filtered orders to export.',
+      });
+      return;
+    }
+
+    const headers = ['Date', 'User', 'Email', 'Plan', 'Amount', 'Currency', 'Status', 'Provider', 'Transaction ID', 'Subscription ID'];
+    const rows = filteredData.map((order) => [
+      order.createdAt || order.date ? format(new Date(order.createdAt || order.date), 'yyyy-MM-dd HH:mm') : '',
+      order.userName || '',
+      order.userEmail || '',
+      order.planName || '',
+      order.amount || order.price || 0,
+      order.currency || 'INR',
+      order.status || '',
+      order.provider || '',
+      order.transactionId || '',
+      order.subscriptionId || '',
+    ]);
+
+    const csv = [headers, ...rows]
+      .map((row) => row.map((value) => `"${String(value ?? '').replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'orders-filtered-export.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setProviderFilter('all');
+    setOrderDateFrom('');
+    setOrderDateTo('');
+  };
+
+  const providers = useMemo(() => {
+    return [...new Set(data.map((order) => order.provider).filter(Boolean))];
+  }, [data]);
+
   const filteredData = useMemo(() => {
     let filtered = data;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(order => order.userName?.toLowerCase().includes(q) || order.userEmail?.toLowerCase().includes(q));
+      filtered = filtered.filter((order) =>
+        order.userName?.toLowerCase().includes(q) ||
+        order.userEmail?.toLowerCase().includes(q) ||
+        order.transactionId?.toLowerCase().includes(q) ||
+        order.subscriptionId?.toLowerCase().includes(q)
+      );
     }
-    if (statusFilter !== 'all') filtered = filtered.filter(o => o.status === statusFilter);
+    if (statusFilter !== 'all') filtered = filtered.filter((order) => order.status === statusFilter);
+    if (providerFilter !== 'all') filtered = filtered.filter((order) => (order.provider || 'unknown') === providerFilter);
+    if (orderDateFrom) {
+      const fromDate = new Date(`${orderDateFrom}T00:00:00`);
+      filtered = filtered.filter((order) => {
+        const orderDate = order.createdAt || order.date;
+        return orderDate ? new Date(orderDate) >= fromDate : false;
+      });
+    }
+    if (orderDateTo) {
+      const toDate = new Date(`${orderDateTo}T23:59:59`);
+      filtered = filtered.filter((order) => {
+        const orderDate = order.createdAt || order.date;
+        return orderDate ? new Date(orderDate) <= toDate : false;
+      });
+    }
     return filtered;
-  }, [data, searchQuery, statusFilter]);
+  }, [data, orderDateFrom, orderDateTo, providerFilter, searchQuery, statusFilter]);
+
+  const stats = useMemo(() => {
+    return {
+      total: filteredData.length,
+      successful: filteredData.filter((order) => order.status === 'success').length,
+      pending: filteredData.filter((order) => order.status === 'pending').length,
+      revenue: filteredData
+        .filter((order) => order.status === 'success')
+        .reduce((sum, order) => sum + Number(order.amount || order.price || 0), 0),
+    };
+  }, [filteredData]);
 
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -636,23 +752,60 @@ const AdminOrders = () => {
 
   return (
     <div className="space-y-6 animate-fade-in relative">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold">Order History</h1>
-          <p className="text-muted-foreground">Manage all payment transactions</p>
+          <p className="text-muted-foreground">Manage all payment transactions with export-ready filters and date-based tracking.</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => { setIsRefreshing(true); fetchOrders(); }} disabled={isRefreshing}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={exportCsv}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => { setIsRefreshing(true); fetchOrders(); }} disabled={isRefreshing}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="text-sm text-muted-foreground">Filtered orders</div>
+            <CardTitle className="text-3xl">{stats.total}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="text-sm text-muted-foreground">Successful</div>
+            <CardTitle className="text-3xl text-emerald-600">{stats.successful}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="text-sm text-muted-foreground">Pending</div>
+            <CardTitle className="text-3xl text-amber-600">{stats.pending}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="text-sm text-muted-foreground">Tracked revenue</div>
+            <CardTitle className="text-3xl">INR {stats.revenue}</CardTitle>
+          </CardHeader>
+        </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between gap-4">
+          <div className="flex flex-col gap-4">
             <CardTitle>Transactions ({filteredData.length})</CardTitle>
-            <div className="flex gap-3">
-              <Input placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            <div className="grid gap-3 xl:grid-cols-[1.5fr_repeat(4,minmax(0,220px))]">
+              <Input
+                placeholder="Search user, email, transaction, subscription..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -660,8 +813,30 @@ const AdminOrders = () => {
                   <SelectItem value="success">Success</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="failed">Failed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={providerFilter} onValueChange={setProviderFilter}>
+                <SelectTrigger><SelectValue placeholder="Provider" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All providers</SelectItem>
+                  {providers.map((provider) => (
+                    <SelectItem key={provider} value={provider}>{provider}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input type="date" value={orderDateFrom} onChange={(e) => setOrderDateFrom(e.target.value)} />
+              <Input type="date" value={orderDateTo} onChange={(e) => setOrderDateTo(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                <span>Status: {statusFilter}</span>
+                <span>Provider: {providerFilter === 'all' ? 'All' : providerFilter}</span>
+                {(orderDateFrom || orderDateTo) && (
+                  <span>Date range: {orderDateFrom || 'Start'} - {orderDateTo || 'Today'}</span>
+                )}
+              </div>
+              <Button variant="outline" onClick={clearFilters}>Reset filters</Button>
             </div>
           </div>
         </CardHeader>
@@ -673,34 +848,44 @@ const AdminOrders = () => {
                 <TableHead>User</TableHead>
                 <TableHead>Plan</TableHead>
                 <TableHead>Amount</TableHead>
+                <TableHead>Provider</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={6}><Skeleton className="h-5 w-full" /></TableCell></TableRow>
-              ) : paginatedData.map((order) => (
-                <TableRow key={order._id}>
-                  <TableCell>{format(new Date(order.createdAt), 'dd/MM/yy HH:mm')}</TableCell>
-                  <TableCell>{order.userName}<br/><span className="text-xs text-muted-foreground">{order.userEmail}</span></TableCell>
-                  <TableCell>{order.planName}</TableCell>
-                  <TableCell>{order.currency} {order.amount}</TableCell>
-                  <TableCell>
-                    <Badge className={`capitalize ${order.status === 'success' ? 'bg-green-100 text-green-800' : order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>{order.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => { setEditOrder(order); setIsEditModalOpen(true); }}>
-                        <Pencil className="h-4 w-4 text-blue-500" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDownloadReceipt(order)} disabled={isDownloading}>
-                        <Download className="h-4 w-4 text-primary" />
-                      </Button>
-                    </div>
+                <TableRow><TableCell colSpan={7}><Skeleton className="h-5 w-full" /></TableCell></TableRow>
+              ) : paginatedData.length > 0 ? (
+                paginatedData.map((order) => (
+                  <TableRow key={order._id} className={getOrderRowClassName(order.status)}>
+                    <TableCell>{format(new Date(order.createdAt || order.date), 'dd/MM/yy HH:mm')}</TableCell>
+                    <TableCell>{order.userName}<br/><span className="text-xs text-muted-foreground">{order.userEmail}</span></TableCell>
+                    <TableCell>{order.planName}</TableCell>
+                    <TableCell>{order.currency} {order.amount || order.price}</TableCell>
+                    <TableCell className="capitalize">{order.provider || 'N/A'}</TableCell>
+                    <TableCell>
+                      <Badge className={`capitalize ${getOrderStatusClassName(order.status)}`}>{order.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => { setEditOrder(order); setIsEditModalOpen(true); }}>
+                          <Pencil className="h-4 w-4 text-blue-500" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDownloadReceipt(order)} disabled={isDownloading}>
+                          <Download className="h-4 w-4 text-primary" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
+                    No orders matched the current filters.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>

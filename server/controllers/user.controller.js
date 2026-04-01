@@ -157,7 +157,16 @@ export const requestAccountDeletion = async (req, res) => {
 export const getDeletionRequests = async (req, res) => {
   try {
     const requests = await AccountDeleteRequest.find()
-      .populate('user', 'mName email')
+      .populate({
+        path: 'user',
+        select:
+          'mName email role type phone date isOrganization organizationDetails organization organizationId department',
+        populate: [
+          { path: 'department', select: 'name description' },
+          { path: 'organization', select: 'name email' },
+          { path: 'organizationId', select: 'mName organizationDetails email' }
+        ]
+      })
       .sort({ createdAt: -1 });
 
     res.json({

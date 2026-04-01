@@ -65,17 +65,105 @@ export const getDashboardStats = async () => {
 };
 
 /* ---------------- USERS ---------------- */
-export const getAllUsers = async () => User.find({});
+const populateAdminUserQuery = (query) =>
+  query
+    .populate('department', 'name')
+    .populate('organization', 'name email')
+    .populate('organizationId', 'mName email organizationDetails role');
+
+const getUserCategory = (user) => {
+  if (user.isOrganization || user.role === 'org_admin') return 'organization';
+  if (user.role === 'dept_admin') return 'organization_staff';
+  if (user.role === 'student') return 'student';
+  if (user.type && user.type !== 'free') return 'premium';
+  return 'free';
+};
+
+const getOrganizationName = (user) => {
+  return (
+    user.organizationDetails?.institutionName ||
+    user.organizationId?.organizationDetails?.institutionName ||
+    user.organizationId?.mName ||
+    user.organization?.name ||
+    ''
+  );
+};
+
+const getDepartmentName = (user) => {
+  return user.department?.name || user.studentDetails?.department || '';
+};
+
+const enrichUsersForAdmin = async (users) => {
+  if (!users.length) return [];
+
+  const userIds = users.map((user) => user._id);
+  const userEmails = users
+    .map((user) => user.email)
+    .filter(Boolean);
+
+  const [subscriptions, orders] = await Promise.all([
+    Subscription.find({ user: { $in: userIds } }).lean(),
+    Order.find({
+      $or: [
+        { userId: { $in: userIds } },
+        { userEmail: { $in: userEmails } }
+      ]
+    })
+      .sort({ date: -1, createdAt: -1 })
+      .lean()
+  ]);
+
+  const subscriptionMap = new Map(
+    subscriptions.map((subscription) => [String(subscription.user), subscription])
+  );
+
+  const latestOrderByUserId = new Map();
+  const latestOrderByEmail = new Map();
+
+  orders.forEach((order) => {
+    if (order.userId) {
+      const key = String(order.userId);
+      if (!latestOrderByUserId.has(key)) {
+        latestOrderByUserId.set(key, order);
+      }
+    }
+
+    if (order.userEmail) {
+      const emailKey = String(order.userEmail).toLowerCase();
+      if (!latestOrderByEmail.has(emailKey)) {
+        latestOrderByEmail.set(emailKey, order);
+      }
+    }
+  });
+
+  return users.map((user) => {
+    const latestOrder =
+      latestOrderByUserId.get(String(user._id)) ||
+      latestOrderByEmail.get(String(user.email || '').toLowerCase()) ||
+      null;
+
+    return {
+      ...user,
+      adminCategory: getUserCategory(user),
+      organizationName: getOrganizationName(user) || null,
+      departmentName: getDepartmentName(user) || null,
+      subscription: subscriptionMap.get(String(user._id)) || null,
+      latestOrder
+    };
+  });
+};
+
+export const getAllUsers = async () => {
+  const users = await populateAdminUserQuery(User.find({})).lean();
+  return enrichUsersForAdmin(users);
+};
 
 export const getPaidUsers = async () => {
-  const paidUsers = await User.find({ type: { $ne: 'free' } });
+  const paidUsers = await populateAdminUserQuery(
+    User.find({ type: { $ne: 'free' } })
+  ).lean();
 
-  return Promise.all(
-    paidUsers.map(async (user) => {
-      const subscription = await Subscription.findOne({ user: user._id });
-      return { ...user.toObject(), subscription };
-    })
-  );
+  return enrichUsersForAdmin(paidUsers);
 };
 
 

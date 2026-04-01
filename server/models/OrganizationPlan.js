@@ -38,6 +38,32 @@ const organizationPlanSchema = new mongoose.Schema(
       type: Number,
       description: 'Total price = totalStudentSlots * studentSlotPrice'
     },
+    paymentMode: {
+      type: String,
+      enum: ['cash', 'bank_transfer', 'upi', 'card', 'cheque', 'online', 'other'],
+      default: 'online'
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['paid', 'pending', 'failed', 'partial'],
+      default: 'paid'
+    },
+    paidByName: {
+      type: String,
+      default: ''
+    },
+    paidByEmail: {
+      type: String,
+      default: ''
+    },
+    transactionId: {
+      type: String,
+      default: ''
+    },
+    paymentDate: {
+      type: Date,
+      default: Date.now
+    },
     startDate: {
       type: Date,
       default: Date.now

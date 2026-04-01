@@ -53,6 +53,8 @@ import {
     createOrgPlan,
     getOrgPlan,
     getAllOrgPlans,
+    sendOrgPlanReminder,
+    sendBulkOrgPlanReminders,
     updateOrgPlanFeatures,
     deleteOrgPlan,
     createDeptCourseLimitRequest,
@@ -169,6 +171,8 @@ router.post('/org/project/generate', generateProjectContent);
 router.post('/admin/org-plan/create', createOrgPlan);
 router.get('/admin/org-plan', getOrgPlan);
 router.get('/admin/org-plans', getAllOrgPlans);
+router.post('/admin/org-plan/:organizationId/reminder', sendOrgPlanReminder);
+router.post('/admin/org-plans/reminders', sendBulkOrgPlanReminders);
 router.put('/admin/org-plan/:organizationId/features', updateOrgPlanFeatures);
 router.delete('/admin/org-plan/:organizationId', deleteOrgPlan);
 

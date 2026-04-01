@@ -199,13 +199,13 @@ const AdminLayout = () => {
                 </SidebarMenuItem>
 
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Organization Plans" isActive={isActive('/admin/org-plans')} className={cn(
+                  <SidebarMenuButton asChild tooltip="Organization Collections" isActive={isActive('/admin/org-plans')} className={cn(
                     "rounded-xl transition-all duration-200",
                     isActive('/admin/org-plans') ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "hover:bg-white/10 hover:text-white"
                   )}>
                     <Link to="/admin/org-plans">
                       <Tag />
-                      <span>Organization Plans</span>
+                      <span>Organization Collections</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

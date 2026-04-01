@@ -2074,7 +2074,18 @@ function getPlanDuration(planName) {
  * CREATE OR UPDATE ORGANIZATION PLAN (ADMIN)
  */
 export const createOrgPlan = async (req, res) => {
-    const { organizationId, planName, additionalRequestSlots, studentSlotPrice } = req.body;
+    const {
+        organizationId,
+        planName,
+        additionalRequestSlots,
+        studentSlotPrice,
+        paymentMode,
+        paymentStatus,
+        paidByName,
+        paidByEmail,
+        transactionId,
+        paymentDate
+    } = req.body;
 
     try {
         console.log('🔍 Creating plan for org:', organizationId, 'Plan:', planName);
@@ -2108,6 +2119,12 @@ export const createOrgPlan = async (req, res) => {
             plan.planName = planName;
             plan.additionalRequestSlots = additionalRequestSlots || 0;
             plan.studentSlotPrice = studentSlotPrice || 1000;
+            plan.paymentMode = paymentMode || 'online';
+            plan.paymentStatus = paymentStatus || 'paid';
+            plan.paidByName = paidByName || '';
+            plan.paidByEmail = paidByEmail || '';
+            plan.transactionId = transactionId || '';
+            plan.paymentDate = paymentDate ? new Date(paymentDate) : new Date();
             plan.isActive = true;
             plan.startDate = new Date();
         } else {
@@ -2118,6 +2135,12 @@ export const createOrgPlan = async (req, res) => {
                 planName,
                 additionalRequestSlots: additionalRequestSlots || 0,
                 studentSlotPrice: studentSlotPrice || 1000,
+                paymentMode: paymentMode || 'online',
+                paymentStatus: paymentStatus || 'paid',
+                paidByName: paidByName || '',
+                paidByEmail: paidByEmail || '',
+                transactionId: transactionId || '',
+                paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
                 features: {
                     allowAICreation: org.allowAICreation,
                     allowManualCreation: org.allowManualCreation,
@@ -2215,6 +2238,161 @@ export const getAllOrgPlans = async (req, res) => {
         });
     } catch (error) {
         console.error('Get all org plans error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+const formatOrgPlanLabel = (planName) => {
+    if (planName === '1months') return '1 Month';
+    if (planName === '3months') return '3 Months';
+    if (planName === '6months') return '6 Months';
+    return planName || 'Custom Plan';
+};
+
+const sendOrgPlanReminderMail = async (plan) => {
+    const organizationName = plan.organization?.name || 'Organization';
+    const adminEmail = plan.organization?.email || '';
+    const recipients = [adminEmail, plan.paidByEmail].filter(Boolean);
+    const uniqueRecipients = [...new Set(recipients)];
+
+    if (uniqueRecipients.length === 0) {
+        return { success: false, reason: 'No recipient email is available for this organization' };
+    }
+
+    const daysRemaining = Math.ceil((new Date(plan.endDate) - new Date()) / (1000 * 60 * 60 * 24));
+
+    await sendMail({
+        to: uniqueRecipients.join(','),
+        subject: `${organizationName} plan reminder`,
+        html: `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
+                <h2 style="margin-bottom: 12px;">Plan renewal reminder</h2>
+                <p>Your organization plan for <strong>${organizationName}</strong> is approaching expiry.</p>
+                <table style="border-collapse: collapse; margin: 16px 0;">
+                    <tr><td style="padding: 6px 12px 6px 0;"><strong>Plan</strong></td><td>${formatOrgPlanLabel(plan.planName)}</td></tr>
+                    <tr><td style="padding: 6px 12px 6px 0;"><strong>Payment status</strong></td><td>${plan.paymentStatus || 'pending'}</td></tr>
+                    <tr><td style="padding: 6px 12px 6px 0;"><strong>Payment mode</strong></td><td>${plan.paymentMode || 'online'}</td></tr>
+                    <tr><td style="padding: 6px 12px 6px 0;"><strong>Plan end date</strong></td><td>${plan.endDate ? new Date(plan.endDate).toLocaleDateString() : 'N/A'}</td></tr>
+                    <tr><td style="padding: 6px 12px 6px 0;"><strong>Days remaining</strong></td><td>${daysRemaining}</td></tr>
+                    <tr><td style="padding: 6px 12px 6px 0;"><strong>Tracked amount</strong></td><td>INR ${plan.totalPrice || 0}</td></tr>
+                </table>
+                <p>Please review the renewal and payment status to avoid interruption for institutional access.</p>
+            </div>
+        `
+    });
+
+    plan.metadata = {
+        ...(plan.metadata || {}),
+        reminderLastSentAt: new Date()
+    };
+    await plan.save();
+
+    return { success: true };
+};
+
+/**
+ * SEND ORGANIZATION PLAN EXPIRY REMINDER (ADMIN)
+ */
+export const sendOrgPlanReminder = async (req, res) => {
+    const { organizationId } = req.params;
+
+    try {
+        const plan = await OrganizationPlan.findOne({ organization: organizationId, isActive: true })
+            .populate('organization', 'name email');
+
+        if (!plan) {
+            return res.status(404).json({
+                success: false,
+                message: 'Active organization plan not found'
+            });
+        }
+
+        const result = await sendOrgPlanReminderMail(plan);
+
+        if (!result.success) {
+            return res.status(400).json({
+                success: false,
+                message: result.reason
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Reminder sent successfully'
+        });
+    } catch (error) {
+        console.error('Send org plan reminder error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * SEND BULK ORGANIZATION PLAN REMINDERS (ADMIN)
+ */
+export const sendBulkOrgPlanReminders = async (req, res) => {
+    const { organizationIds = [], lifecycle = 'expiring-soon' } = req.body || {};
+
+    try {
+        const plans = await OrganizationPlan.find({ isActive: true })
+            .populate('organization', 'name email')
+            .sort({ endDate: 1 });
+
+        const now = new Date();
+        const lifecycleMatchedPlans = plans.filter((plan) => {
+            if (!plan.endDate) return false;
+
+            const diffDays = Math.ceil((new Date(plan.endDate) - now) / (1000 * 60 * 60 * 24));
+            if (lifecycle === 'expired') return diffDays < 0;
+            if (lifecycle === 'all') return diffDays <= 15;
+            return diffDays >= 0 && diffDays <= 15;
+        });
+
+        const targetPlans = organizationIds.length
+            ? lifecycleMatchedPlans.filter((plan) => organizationIds.includes(String(plan.organization?._id || plan.organization)))
+            : lifecycleMatchedPlans;
+
+        if (!targetPlans.length) {
+            return res.status(404).json({
+                success: false,
+                message: 'No matching organization plans found for reminder sending'
+            });
+        }
+
+        const sent = [];
+        const failed = [];
+
+        for (const plan of targetPlans) {
+            try {
+                const result = await sendOrgPlanReminderMail(plan);
+                if (result.success) {
+                    sent.push({
+                        organizationId: String(plan.organization?._id || plan.organization),
+                        organizationName: plan.organization?.name || 'Organization'
+                    });
+                } else {
+                    failed.push({
+                        organizationId: String(plan.organization?._id || plan.organization),
+                        organizationName: plan.organization?.name || 'Organization',
+                        reason: result.reason
+                    });
+                }
+            } catch (error) {
+                failed.push({
+                    organizationId: String(plan.organization?._id || plan.organization),
+                    organizationName: plan.organization?.name || 'Organization',
+                    reason: error.message || 'Reminder sending failed'
+                });
+            }
+        }
+
+        res.json({
+            success: true,
+            message: `Reminder process completed. Sent: ${sent.length}, Failed: ${failed.length}`,
+            sent,
+            failed
+        });
+    } catch (error) {
+        console.error('Bulk org plan reminder error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };
