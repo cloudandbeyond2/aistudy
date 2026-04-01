@@ -545,16 +545,16 @@ const DashboardLayoutContent = () => {
                     <MenuItem 
                       icon={Gauge} 
                       label="Dashboard" 
-                      to="/dashboard/org" 
-                      isActive={isActive('/dashboard/org') && !location.search}
+                      to="/dashboard/org?tab=landing" 
+                      isActive={isActive('/dashboard/org') && (!location.search || location.search === '?tab=landing')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
                     <MenuItem 
                       icon={Globe} 
-                      label="Landing Page" 
-                      to="/dashboard/org?tab=landing" 
-                      isActive={location.search === '?tab=landing'}
+                      label="Portal Site" 
+                      to="/dashboard/org?tab=portal" 
+                      isActive={location.search === '?tab=portal'}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />

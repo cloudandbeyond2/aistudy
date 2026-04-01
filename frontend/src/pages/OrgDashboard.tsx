@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle, BookOpen, FileQuestion, Calendar, CheckCircle2, ArrowUpCircle, Edit, Globe, BarChart3 } from 'lucide-react';
+import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle, BookOpen, FileQuestion, Calendar, CheckCircle2, ArrowUpCircle, Edit, Globe, BarChart3, Building2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -704,7 +704,7 @@ const OrgDashboard = () => {
     const navigate = useNavigate();
     const role = sessionStorage.getItem('role');
     const deptId = sessionStorage.getItem('deptId');
-    const activeTab = searchParams.get('tab') || (role === 'dept_admin' ? 'courses' : 'students');
+    const activeTab = searchParams.get('tab') || (role === 'dept_admin' ? 'courses' : 'landing');
     const { toast } = useToast();
     const [stats, setStats] = useState<{ studentCount: number; studentLimit: number; assignmentCount: number; submissionCount: number; placedCount: number }>({ studentCount: 0, studentLimit: 50, assignmentCount: 0, submissionCount: 0, placedCount: 0 });
     const [students, setStudents] = useState([]); // Simplified for now
@@ -2647,6 +2647,204 @@ const handleUpdateDeptAdmin = async () => {
 };
 
 
+    const orgAdminSectionMeta: Record<string, { title: string; description: string }> = {
+        landing: {
+            title: 'Operations Hub',
+            description: 'Choose a workspace to manage one area at a time.'
+        },
+        departments: {
+            title: 'Department Desk',
+            description: 'Create departments, assign structure, and keep academic ownership clear.'
+        },
+        staff: {
+            title: 'Staff Desk',
+            description: 'Manage staff accounts, access, and academic responsibilities.'
+        },
+        students: {
+            title: 'Student Directory',
+            description: 'Review students, enrollment status, and profile details in one place.'
+        },
+        courses: {
+            title: 'Course Workspace',
+            description: 'Create, review, and publish learning content for the organization.'
+        },
+        approvals: {
+            title: 'Approval Center',
+            description: 'Track pending requests and resolve publishing or quota approvals.'
+        },
+        activity: {
+            title: 'Activity Feed',
+            description: 'Monitor recent admin actions and operational audit activity.'
+        },
+        assignments: {
+            title: 'Assignment Desk',
+            description: 'Create assessments and track submissions, overdue work, and review queues.'
+        },
+        meetings: {
+            title: 'Meeting Scheduler',
+            description: 'Organize live sessions, meeting links, and student-facing schedules.'
+        },
+        projects: {
+            title: 'Projects and Research',
+            description: 'Publish project briefs, practical work, and research opportunities.'
+        },
+        materials: {
+            title: 'Resource Library',
+            description: 'Manage handouts, PDFs, and supporting learning resources.'
+        },
+        notices: {
+            title: 'Noticeboard',
+            description: 'Send announcements and keep departments or students informed.'
+        },
+        career: {
+            title: 'Career and Placement',
+            description: 'Track readiness, placement activity, and career progress signals.'
+        },
+        portal: {
+            title: 'Portal Customization',
+            description: 'Shape the public-facing organization portal experience and branding.'
+        }
+    };
+
+    const currentOrgSection = orgAdminSectionMeta[activeTab];
+
+    const orgAdminModuleCards = role === 'org_admin'
+        ? [
+            {
+                key: 'students',
+                title: 'Students',
+                description: 'Manage enrollment, profile data, sections, and student visibility.',
+                metricLabel: 'Learners',
+                metricValue: stats.studentCount || students.length || 0,
+                icon: Users,
+                accent: 'from-cyan-500/15 to-cyan-500/5',
+                border: 'border-cyan-200/80',
+                onClick: () => setSearchParams({ tab: 'students' })
+            },
+            {
+                key: 'departments',
+                title: 'Departments',
+                description: 'Keep departments structured and route learners into the right unit.',
+                metricLabel: 'Units',
+                metricValue: departmentsList.length || 0,
+                icon: Building2,
+                accent: 'from-emerald-500/15 to-emerald-500/5',
+                border: 'border-emerald-200/80',
+                onClick: () => setSearchParams({ tab: 'departments' })
+            },
+            {
+                key: 'staff',
+                title: 'Staff',
+                description: 'Review staff accounts and assign academic responsibility cleanly.',
+                metricLabel: 'Members',
+                metricValue: deptAdmins.length || 0,
+                icon: Shield,
+                accent: 'from-violet-500/15 to-violet-500/5',
+                border: 'border-violet-200/80',
+                onClick: () => setSearchParams({ tab: 'staff' })
+            },
+            {
+                key: 'courses',
+                title: 'Courses',
+                description: 'Publish curated learning tracks and maintain course quality.',
+                metricLabel: 'Courses',
+                metricValue: courses.length || 0,
+                icon: BookOpen,
+                accent: 'from-blue-500/15 to-blue-500/5',
+                border: 'border-blue-200/80',
+                onClick: () => setSearchParams({ tab: 'courses' })
+            },
+            {
+                key: 'assignments',
+                title: 'Assignments',
+                description: 'Manage assessments, deadlines, and review queues from one desk.',
+                metricLabel: 'Active',
+                metricValue: assignments.length || 0,
+                icon: FileText,
+                accent: 'from-amber-500/15 to-amber-500/5',
+                border: 'border-amber-200/80',
+                onClick: () => setSearchParams({ tab: 'assignments' })
+            },
+            {
+                key: 'meetings',
+                title: 'Meetings',
+                description: 'Schedule live sessions and keep classroom communication organized.',
+                metricLabel: 'Sessions',
+                metricValue: meetings.length || 0,
+                icon: Video,
+                accent: 'from-sky-500/15 to-sky-500/5',
+                border: 'border-sky-200/80',
+                onClick: () => setSearchParams({ tab: 'meetings' })
+            },
+            {
+                key: 'projects',
+                title: 'Projects and Research',
+                description: 'Publish project briefs and practical work without crowding the dashboard.',
+                metricLabel: 'Items',
+                metricValue: projects.length || 0,
+                icon: Briefcase,
+                accent: 'from-fuchsia-500/15 to-fuchsia-500/5',
+                border: 'border-fuchsia-200/80',
+                onClick: () => setSearchParams({ tab: 'projects' })
+            },
+            {
+                key: 'materials',
+                title: 'Materials',
+                description: 'Store notes, downloads, and classroom resource packs.',
+                metricLabel: 'Assets',
+                metricValue: materials.length || 0,
+                icon: Download,
+                accent: 'from-indigo-500/15 to-indigo-500/5',
+                border: 'border-indigo-200/80',
+                onClick: () => setSearchParams({ tab: 'materials' })
+            },
+            {
+                key: 'notices',
+                title: 'Noticeboard',
+                description: 'Post announcements and distribute institution-wide updates.',
+                metricLabel: 'Notices',
+                metricValue: notices.length || 0,
+                icon: Bell,
+                accent: 'from-rose-500/15 to-rose-500/5',
+                border: 'border-rose-200/80',
+                onClick: () => setSearchParams({ tab: 'notices' })
+            },
+            {
+                key: 'approvals',
+                title: 'Approvals',
+                description: 'Handle publishing, request queues, and admin approvals quickly.',
+                metricLabel: 'Pending',
+                metricValue: deptLimitRequests.length || 0,
+                icon: CheckCircle2,
+                accent: 'from-lime-500/15 to-lime-500/5',
+                border: 'border-lime-200/80',
+                onClick: () => setSearchParams({ tab: 'approvals' })
+            },
+            {
+                key: 'career',
+                title: 'Career and Placement',
+                description: 'Open the placement workspace focused on readiness and outcomes.',
+                metricLabel: 'Placed',
+                metricValue: stats.placedCount || 0,
+                icon: Award,
+                accent: 'from-orange-500/15 to-orange-500/5',
+                border: 'border-orange-200/80',
+                onClick: () => navigate('/dashboard/org/career')
+            },
+            {
+                key: 'portal',
+                title: 'Portal Customization',
+                description: 'Edit the public landing experience, branding, and published presence.',
+                metricLabel: 'Public Site',
+                metricValue: 'Live',
+                icon: Globe,
+                accent: 'from-slate-500/15 to-slate-500/5',
+                border: 'border-slate-200/80',
+                onClick: () => setSearchParams({ tab: 'portal' })
+            }
+        ]
+        : [];
+
     return (
         <div className="container mx-auto py-10 space-y-8 animate-fade-in">
             <SEO title="Organization Dashboard" description="Manage your organization, students, and curriculum." />
@@ -2754,25 +2952,79 @@ const handleUpdateDeptAdmin = async () => {
 </div>
 
             <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })} className="w-full">
-                <TabsList className="flex flex-wrap h-auto w-full gap-1 p-1 bg-muted rounded-xl mb-6">
-                    {role !== 'dept_admin' && <TabsTrigger value="departments" className="flex-1 min-w-[120px]">Departments</TabsTrigger>}
-                    {role === 'org_admin' && (
-                        <>
-                            <TabsTrigger value="staff" className="flex-1 min-w-[120px]">Staff</TabsTrigger>
-                            <TabsTrigger value="students" className="flex-1 min-w-[120px]">Students</TabsTrigger>
-                        </>
-                    )}
-                    <TabsTrigger value="courses" className="flex-1 min-w-[120px]">Courses</TabsTrigger>
-                    <TabsTrigger value="assignments" className="flex-1 min-w-[120px]">Assignments</TabsTrigger>
-                    <TabsTrigger value="meetings" className="flex-1 min-w-[120px]">Meetings</TabsTrigger>
-                    <TabsTrigger value="projects" className="flex-1 min-w-[120px]">Projects/Research</TabsTrigger>
-                    <TabsTrigger value="materials" className="flex-1 min-w-[120px]">Materials</TabsTrigger>
-                    <TabsTrigger value="notices" className="flex-1 min-w-[120px]">Noticeboard</TabsTrigger>
-                    <TabsTrigger value="career" className="flex-1 min-w-[120px]"><Briefcase className="w-3.5 h-3.5 mr-1" />Career & Placement</TabsTrigger>
-                    {role === 'org_admin' && (
-                        <TabsTrigger value="landing" className="flex-1 min-w-[120px]"><Globe className="w-3.5 h-3.5 mr-1" />Landing Page</TabsTrigger>
-                    )}
-                </TabsList>
+                {role === 'org_admin' ? (
+                    activeTab === 'landing' ? (
+                        <div className="mb-8 rounded-[28px] border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-sky-50 p-6 shadow-sm">
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                                <div className="max-w-2xl">
+                                    <Badge className="mb-3 rounded-full bg-sky-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700 hover:bg-sky-100">
+                                        Org Admin Flow
+                                    </Badge>
+                                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                                        Open one workspace at a time.
+                                    </h2>
+                                    <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+                                        Each card takes you into a focused management page, so the overview stays clean while every module can grow independently.
+                                    </p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                    <div className="rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm">
+                                        <p className="text-[11px] uppercase tracking-wide text-slate-500">Students</p>
+                                        <p className="mt-1 text-2xl font-semibold text-slate-900">{stats.studentCount || 0}</p>
+                                    </div>
+                                    <div className="rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm">
+                                        <p className="text-[11px] uppercase tracking-wide text-slate-500">Courses</p>
+                                        <p className="mt-1 text-2xl font-semibold text-slate-900">{courses.length || 0}</p>
+                                    </div>
+                                    <div className="rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm">
+                                        <p className="text-[11px] uppercase tracking-wide text-slate-500">Assignments</p>
+                                        <p className="mt-1 text-2xl font-semibold text-slate-900">{assignments.length || 0}</p>
+                                    </div>
+                                    <div className="rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm">
+                                        <p className="text-[11px] uppercase tracking-wide text-slate-500">Placed</p>
+                                        <p className="mt-1 text-2xl font-semibold text-slate-900">{stats.placedCount || 0}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : currentOrgSection ? (
+                        <Card className="mb-6 overflow-hidden border-slate-200 bg-gradient-to-r from-slate-50 via-white to-sky-50 shadow-sm">
+                            <CardContent className="flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">
+                                <div>
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                                        Workspace
+                                    </p>
+                                    <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+                                        {currentOrgSection.title}
+                                    </h2>
+                                    <p className="mt-2 max-w-2xl text-sm text-slate-600">
+                                        {currentOrgSection.description}
+                                    </p>
+                                </div>
+                                <Button variant="outline" onClick={() => setSearchParams({ tab: 'landing' })}>
+                                    Back to overview
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    ) : null
+                ) : (
+                    <TabsList className="mb-6 flex h-auto w-full flex-wrap gap-1 rounded-xl bg-muted p-1">
+                        {role !== 'dept_admin' && <TabsTrigger value="departments" className="flex-1 min-w-[120px]">Departments</TabsTrigger>}
+                        {role === 'org_admin' && (
+                            <>
+                                <TabsTrigger value="staff" className="flex-1 min-w-[120px]">Staff</TabsTrigger>
+                                <TabsTrigger value="students" className="flex-1 min-w-[120px]">Students</TabsTrigger>
+                            </>
+                        )}
+                        <TabsTrigger value="courses" className="flex-1 min-w-[120px]">Courses</TabsTrigger>
+                        <TabsTrigger value="assignments" className="flex-1 min-w-[120px]">Assignments</TabsTrigger>
+                        <TabsTrigger value="meetings" className="flex-1 min-w-[120px]">Meetings</TabsTrigger>
+                        <TabsTrigger value="projects" className="flex-1 min-w-[120px]">Projects/Research</TabsTrigger>
+                        <TabsTrigger value="materials" className="flex-1 min-w-[120px]">Materials</TabsTrigger>
+                        <TabsTrigger value="notices" className="flex-1 min-w-[120px]">Noticeboard</TabsTrigger>
+                        <TabsTrigger value="career" className="flex-1 min-w-[120px]"><Briefcase className="mr-1 h-3.5 w-3.5" />Career & Placement</TabsTrigger>
+                    </TabsList>
+                )}
 
                 {/* DEPARTMENTS TAB */}
                <TabsContent value="departments" className="space-y-6">
@@ -4488,9 +4740,55 @@ const handleUpdateDeptAdmin = async () => {
                    </TabsContent>
                 )}
 
-                {/* LANDING PAGE SETUP TAB */}
-                <TabsContent value="landing" className="space-y-4">
-                    <OrgLandingSetup organizationId={orgId} />
+                {/* ORG ADMIN OVERVIEW TAB */}
+                <TabsContent value="landing" className="space-y-6">
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                        {orgAdminModuleCards.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                                <Card
+                                    key={item.key}
+                                    className={`group overflow-hidden rounded-[26px] border bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${item.border}`}
+                                >
+                                    <CardContent className="p-0">
+                                        <div className={`bg-gradient-to-br ${item.accent} p-6`}>
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div>
+                                                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                                        {item.metricLabel}
+                                                    </p>
+                                                    <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+                                                        {item.metricValue}
+                                                    </p>
+                                                </div>
+                                                <div className="rounded-2xl border border-white/70 bg-white/80 p-3 shadow-sm">
+                                                    <Icon className="h-5 w-5 text-slate-700" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4 p-6">
+                                            <div>
+                                                <h3 className="text-xl font-semibold tracking-tight text-slate-900">
+                                                    {item.title}
+                                                </h3>
+                                                <p className="mt-2 text-sm leading-6 text-slate-600">
+                                                    {item.description}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
+                                                    Focused workspace
+                                                </span>
+                                                <Button variant="outline" className="rounded-full" onClick={item.onClick}>
+                                                    Visit now <ExternalLink className="ml-2 h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+                    </div>
                 </TabsContent>
 
                 {/* ASSIGNMENTS TAB */}
@@ -5648,9 +5946,9 @@ Login:
                     </Card>
                 </TabsContent>
                 
-                {/* LANDING PAGE TAB */}
+                {/* PORTAL CUSTOMIZATION TAB */}
                 {role === 'org_admin' && (
-                    <TabsContent value="landing" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <TabsContent value="portal" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                         <OrgLandingSetup organizationId={orgId} />
                     </TabsContent>
                 )}
