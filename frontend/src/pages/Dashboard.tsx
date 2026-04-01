@@ -9,7 +9,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import { appLogo, serverURL, websiteURL } from '@/constants';
 import axios from 'axios';
-import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
@@ -114,8 +113,6 @@ const Dashboard = () => {
   const [modules, setTotalModules] = useState({});
   const [quizSummaries, setQuizSummaries] = useState({});
   const [isLoading, setIsLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState<any>();
-  const [dashboardNotifications, setDashboardNotifications] = useState<any[] | null>(null);
   const { toast } = useToast();
   const userRole = sessionStorage.getItem('role');
   const isOrgAdmin = userRole === 'org_admin' || sessionStorage.getItem('isOrganization') === 'true';
@@ -181,7 +178,6 @@ const Dashboard = () => {
     try {
       const response = await axios.get(`${serverURL}/api/user/${uid}`);
       const user = response.data.user;
-      setUserProfile(user || null);
       if (user) {
         const endDate = user.subscriptionEnd;
         if (endDate === null) {
@@ -435,45 +431,6 @@ const Dashboard = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const profileReady = userProfile !== undefined;
-  const institutionCandidate =
-    userProfile?.organizationDetails?.institutionName ||
-    userProfile?.organization?.name ||
-    userProfile?.organizationId?.organizationDetails?.institutionName;
-  const institutionName = profileReady
-    ? institutionCandidate || 'Institution not linked yet'
-    : 'Loading profile...';
-  const departmentCandidate =
-    userProfile?.department?.name ||
-    userProfile?.studentDetails?.department;
-  const departmentName = profileReady
-    ? departmentCandidate || 'Department not assigned yet'
-    : 'Loading profile...';
-  const academicYearLabel = profileReady
-    ? userProfile?.studentDetails?.academicYear || 'Not provided yet'
-    : 'Loading profile...';
-  const sectionLabel = profileReady
-    ? userProfile?.studentDetails?.section || 'Not provided yet'
-    : 'Loading profile...';
-  const rollNumberLabel = profileReady
-    ? userProfile?.studentDetails?.rollNo || 'Not provided yet'
-    : 'Loading profile...';
-  const studentClassLabel = profileReady
-    ? userProfile?.studentDetails?.studentClass || 'Not provided yet'
-    : 'Loading profile...';
-  const profileDetails = [
-    { label: 'College', value: institutionName },
-    { label: 'Department', value: departmentName },
-    { label: 'Academic Year', value: academicYearLabel },
-    { label: 'Section', value: sectionLabel },
-    { label: 'Roll Number', value: rollNumberLabel },
-    { label: 'Class', value: studentClassLabel }
-  ];
-  const notificationsList = dashboardNotifications ?? [];
-  const latestNotifications = notificationsList.slice(0, 3);
-  const unreadNotificationCount = notificationsList.filter(n => !n.isRead).length;
-  const notificationsReady = dashboardNotifications !== null;
-
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -615,126 +572,8 @@ const Dashboard = () => {
               </Button>
             </motion.div>
 
-            <NotificationBell onNotificationsChange={setDashboardNotifications} />
+            <NotificationBell />
           </div>
-        </motion.div>
-
-        {/* Student profile snapshot + notifications summary */}
-        <motion.div
-          variants={containerVariants}
-          className="grid gap-4 xl:grid-cols-[1.4fr_0.9fr]"
-        >
-          <motion.div variants={itemVariants}>
-            <Card className="overflow-hidden border border-border/60 bg-card/50 backdrop-blur-md shadow-xl">
-              <CardHeader className="space-y-2 pb-2">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <CardTitle className="text-lg font-semibold">Student Snapshot</CardTitle>
-                    <CardDescription className="text-xs text-muted-foreground max-w-xl">
-                      College, department, and academic details just for you.
-                    </CardDescription>
-                  </div>
-                  <Badge variant="outline" className="text-[11px] uppercase">
-                    Profile
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {profileDetails.map((detail) => (
-                  <div
-                    key={detail.label}
-                    className="rounded-2xl border border-border/50 bg-background/60 p-3 text-sm"
-                  >
-                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                      {detail.label}
-                    </p>
-                    <p className="mt-1 text-base font-semibold text-foreground">{detail.value}</p>
-                  </div>
-                ))}
-              </CardContent>
-              <CardFooter className="flex flex-wrap gap-2 pt-0">
-                <Badge variant="outline" className="text-xs capitalize">
-                  {userProfile?.role || 'Student'}
-                </Badge>
-                {userProfile?.organization?.plan && (
-                  <Badge variant="secondary" className="text-xs">
-                    {userProfile.organization.plan}
-                  </Badge>
-                )}
-              </CardFooter>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={itemVariants}>
-            <Card className="overflow-hidden border border-border/60 bg-card/50 backdrop-blur-md shadow-lg">
-              <CardHeader className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-lg font-semibold">Notifications</CardTitle>
-                  <CardDescription className="text-xs text-muted-foreground max-w-[15rem]">
-                    The latest alerts from your dashboard — tap the bell to open the full list.
-                  </CardDescription>
-                </div>
-                <div className="flex flex-col items-end">
-                  {notificationsReady ? (
-                    <>
-                      <span className="text-[11px] text-muted-foreground">
-                        {notificationsList.length} total
-                      </span>
-                      <Badge variant="destructive" className="text-[11px] mt-1">
-                        {unreadNotificationCount} unread
-                      </Badge>
-                    </>
-                  ) : (
-                    <span className="text-[11px] text-muted-foreground">Loading...</span>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {!notificationsReady ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((placeholder) => (
-                      <Skeleton key={placeholder} className="h-12 w-full rounded-2xl" />
-                    ))}
-                  </div>
-                ) : latestNotifications.length === 0 ? (
-                  <div className="flex min-h-[120px] flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-border/60 bg-background/60 p-4 text-center text-sm text-muted-foreground">
-                    <p>No notifications at the moment.</p>
-                    <p>Important updates will appear here and inside the bell icon.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                    {latestNotifications.map((notification) => (
-                      <div
-                        key={notification._id}
-                        className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/60 p-3 text-sm transition-colors hover:border-primary/60"
-                      >
-                        <div className="flex-1">
-                          <p
-                            className={`text-sm font-medium ${
-                              notification.isRead ? 'text-muted-foreground' : 'text-foreground'
-                            }`}
-                          >
-                            {notification.message}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {notification.date
-                              ? formatDistanceToNow(new Date(notification.date), { addSuffix: true })
-                              : 'Just now'}
-                          </p>
-                        </div>
-                        {!notification.isRead && (
-                          <span className="mt-1 h-2 w-2 rounded-full bg-blue-500" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter className="text-xs text-muted-foreground">
-                Tap the bell icon at the top-right to mark read or clear these alerts.
-              </CardFooter>
-            </Card>
-          </motion.div>
         </motion.div>
 
         {/* Search and Filter with Glass Effect */}

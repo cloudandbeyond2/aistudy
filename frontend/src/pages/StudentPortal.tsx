@@ -20,6 +20,37 @@ const StudentPortal = () => {
     const [loading, setLoading] = useState(true); // Add loading state
     const navigate = useNavigate();
 
+    const studentSnapshotDetails = [
+        {
+            label: 'College',
+            value:
+                studentInfo?.organizationDetails?.institutionName ||
+                studentInfo?.organization?.name ||
+                studentInfo?.organizationDetails?.inchargeName ||
+                'Not provided yet'
+        },
+        {
+            label: 'Department',
+            value: studentInfo?.studentDetails?.department || 'Not provided yet'
+        },
+        {
+            label: 'Academic Year',
+            value: studentInfo?.studentDetails?.academicYear || 'Not provided yet'
+        },
+        {
+            label: 'Section',
+            value: studentInfo?.studentDetails?.section || 'Not provided yet'
+        },
+        {
+            label: 'Roll Number',
+            value: studentInfo?.studentDetails?.rollNo || 'Not provided yet'
+        },
+        {
+            label: 'Class',
+            value: studentInfo?.studentDetails?.studentClass || 'Not provided yet'
+        }
+    ];
+
     const getCourseThumbnail = (course) => {
         try {
             const jsonData = JSON.parse(course.content);
@@ -176,6 +207,55 @@ const StudentPortal = () => {
                         </div>
                     )}
                 </div>
+            </div>
+
+            <div className="grid gap-4 mt-6 lg:grid-cols-[1.25fr_0.9fr]">
+                <Card className="border-border/60 bg-card/50 shadow-xl">
+                    <CardHeader className="space-y-2 pb-2">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle className="text-lg font-semibold">Student Snapshot</CardTitle>
+                                <CardDescription className="text-xs text-muted-foreground max-w-xl">
+                                    Organization-specific profile data sourced from your institution.
+                                </CardDescription>
+                            </div>
+                            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                                Profile
+                            </span>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {studentSnapshotDetails.map((detail) => (
+                            <div
+                                key={detail.label}
+                                className="rounded-2xl border border-border/60 bg-background/60 p-3 text-sm"
+                            >
+                                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                                    {detail.label}
+                                </p>
+                                <p className="mt-1 text-base font-semibold text-foreground">
+                                    {detail.value}
+                                </p>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+                <Card className="border-border/60 bg-card/50 shadow-lg">
+                    <CardHeader className="flex items-center justify-between">
+                        <div>
+                            <CardTitle className="text-lg font-semibold">Notifications</CardTitle>
+                            <CardDescription className="text-xs text-muted-foreground max-w-[15rem]">
+                                Stay on top of organization updates and alerts.
+                            </CardDescription>
+                        </div>
+                        <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                            Inbox
+                        </span>
+                    </CardHeader>
+                    <CardContent className="text-sm text-muted-foreground">
+                        <p className="text-xs">Use the bell icon to mark notifications as read or clear them.</p>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Notifications Section */}
