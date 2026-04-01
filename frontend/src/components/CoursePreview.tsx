@@ -1176,10 +1176,10 @@
 
 
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CheckCircle, Loader, Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -1212,13 +1212,13 @@ const defaultQuizSettings = {
     difficult: 0
   },
   proctoring: {
-    requireCamera: true,
-    requireMicrophone: true,
+    requireCamera: false,
+    requireMicrophone: false,
     detectFullscreenExit: true,
     detectTabSwitch: true,
     detectCopyPaste: true,
     detectContextMenu: true,
-    detectNoise: true
+    detectNoise: false
   }
 };
 
@@ -1313,6 +1313,16 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
       }
     }));
   };
+
+  const disableAllProctoring = () => ({
+    requireCamera: false,
+    requireMicrophone: false,
+    detectFullscreenExit: false,
+    detectTabSwitch: false,
+    detectCopyPaste: false,
+    detectContextMenu: false,
+    detectNoise: false
+  });
 
   const updateOrgProctoringSetting = (field: string, value: boolean) => {
     setOrgSaveConfig((prev) => ({
@@ -1415,6 +1425,15 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
   async function handleCreateCourse() {
     if (isLoadingCourse) return;
 
+    if (isOrgStaff && extractCourseQuizzes().length === 0) {
+      toast({
+        title: 'Quiz not generated yet',
+        description: 'Generate quiz questions first, then request approval.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     if (role === 'dept_admin') {
       const courseLimit = parseInt(sessionStorage.getItem('courseLimit') || '0', 10) || 0;
       const coursesCreatedCount = parseInt(sessionStorage.getItem('coursesCreatedCount') || '0', 10) || 0;
@@ -1487,6 +1506,31 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
         }
 
         savedCourseId = res.data?.course?._id || '';
+
+        if (savedCourseId && role === 'dept_admin') {
+          try {
+            setLoadingMessage('Submitting course for organization approval...');
+            await axios.post(`${serverURL}/api/org/course/${savedCourseId}/review`, {
+              reviewerId: sessionStorage.getItem('uid'),
+              approvalStatus: 'pending',
+              approvalNote: ''
+            });
+            toast({
+              title: 'Submitted for approval',
+              description: 'Your course is now pending organization admin review.'
+            });
+          } catch (submitError: any) {
+            console.error('Failed to submit course for approval:', submitError);
+            toast({
+              title: 'Saved, but not submitted',
+              description:
+                submitError?.response?.data?.message ||
+                submitError?.message ||
+                'Unable to submit for approval.',
+              variant: 'destructive'
+            });
+          }
+        }
       } else {
         setLoadingMessage('Saving course structure...');
         const res = await axios.post(serverURL + '/api/course', {
@@ -1553,9 +1597,22 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
   const viewerCourseLimit = parseInt(sessionStorage.getItem('courseLimit') || '0', 10) || 0;
   const viewerCoursesCreated = parseInt(sessionStorage.getItem('coursesCreatedCount') || '0', 10) || 0;
   const isDeptAdminLimitReached = viewerRole === 'dept_admin' && viewerCoursesCreated >= viewerCourseLimit;
+  const courseTopics = Array.isArray(getCourseTopics()) ? getCourseTopics() : [];
+  const hasGeneratedQuizzes = extractCourseQuizzes().length > 0;
 
   return (
     <div className="space-y-6 py-8">
+      {isLoadingCourse && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 px-4 backdrop-blur-sm">
+          <div className="mx-auto w-full max-w-md space-y-4 rounded-2xl border bg-card p-6 shadow-2xl">
+            <div className="text-center space-y-2">
+              <Loader className="h-10 w-10 animate-spin text-primary mx-auto" />
+              <p className="text-lg font-semibold">Saving course…</p>
+              <p className="text-sm text-muted-foreground">{loadingMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="mx-auto max-w-5xl space-y-4 px-2">
         <div className="rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-indigo-500/10 p-6 shadow-lg">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -1596,45 +1653,60 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
         </div>
 
         <ScrollArea className="h-[70vh] rounded-3xl border bg-card/60 p-4 shadow-sm">
-          <div className="mx-auto max-w-4xl space-y-5 pb-2">
-            {getCourseTopics()?.map((topic: any, i: number) => (
-              <Card key={i} className="overflow-hidden border-border/70 shadow-sm">
-                <CardContent className="p-0">
-                  <div className="border-b bg-muted/40 px-5 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-9 w-9 items-center justify-center rounded-xl text-sm font-semibold ${presentationMeta.badgeClass}`}>
-                        {i + 1}
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                          Module {i + 1}
-                        </p>
-                        <h2 className="text-lg font-semibold">{topic.title}</h2>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 px-5 py-4">
-                    {topic.subtopics?.map((subtopic: any, j: number) => (
-                      <div
-                        key={j}
-                        className="flex items-start gap-3 rounded-2xl border border-border/70 bg-background px-4 py-3"
-                      >
-                        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                          {j + 1}
+          <div className="mx-auto max-w-4xl pb-2">
+            <Accordion
+              type="single"
+              collapsible
+              className="space-y-3"
+              defaultValue={courseTopics.length ? 'module-0' : undefined}
+            >
+              {courseTopics.map((topic: any, i: number) => (
+                <AccordionItem
+                  key={`${i}-${topic?.title || 'module'}`}
+                  value={`module-${i}`}
+                  className="overflow-hidden rounded-3xl border border-border/70 bg-background/70 shadow-sm"
+                >
+                  <AccordionTrigger className="px-5 py-4 text-left hover:no-underline">
+                    <div className="flex w-full items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-semibold ${presentationMeta.badgeClass}`}>
+                          {i + 1}
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{subtopic.title}</p>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                            Module {i + 1}
+                          </p>
+                          <h2 className="mt-1 truncate text-lg font-semibold">{topic?.title || `Module ${i + 1}`}</h2>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            This lesson will follow the {presentationMeta.shortLabel.toLowerCase()} pattern after generation.
+                            {Array.isArray(topic?.subtopics) ? `${topic.subtopics.length} lessons` : 'Lessons'}
                           </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-5 pb-4 pt-0">
+                    <div className="space-y-3">
+                      {(Array.isArray(topic?.subtopics) ? topic.subtopics : []).map((subtopic: any, j: number) => (
+                        <div
+                          key={`${i}-${j}-${subtopic?.title || 'lesson'}`}
+                          className="flex items-start gap-3 rounded-2xl border border-border/70 bg-background px-4 py-3"
+                        >
+                          <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                            {j + 1}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-foreground">{subtopic?.title || `Lesson ${j + 1}`}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              This lesson will follow the {presentationMeta.shortLabel.toLowerCase()} pattern after generation.
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
         </ScrollArea>
       </div>
@@ -1644,13 +1716,20 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
           Cancel
         </Button>
         {sessionStorage.getItem('role') !== 'student' && (
-          <Button onClick={handleCreateCourse} disabled={isLoadingCourse || isDeptAdminLimitReached}>
+          <Button
+            onClick={handleCreateCourse}
+            disabled={isLoadingCourse || isDeptAdminLimitReached || (isOrgStaff && !hasGeneratedQuizzes)}
+          >
             {isLoadingCourse ? (
               <Loader className="animate-spin mr-2 h-4 w-4" />
             ) : (
               <CheckCircle className="mr-2 h-4 w-4" />
             )}
-            Generate Course
+            {isOrgStaff && role === 'dept_admin'
+              ? 'Save & Request Approval'
+              : isOrgStaff
+                ? 'Save Course Draft'
+                : 'Generate Course'}
           </Button>
         )}
       </div>
@@ -1664,6 +1743,12 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
       {isLoadingCourse && (
         <p className="text-center text-sm text-muted-foreground">
           {loadingMessage}
+        </p>
+      )}
+
+      {isOrgStaff && !hasGeneratedQuizzes && (
+        <p className="text-center text-sm text-amber-700 dark:text-amber-300">
+          Quiz questions are missing. Generate quizzes before requesting approval.
         </p>
       )}
 
@@ -1717,8 +1802,17 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
                 <Select
                   value={orgSaveConfig.quizSettings.quizMode}
                   onValueChange={(value) => {
-                    updateOrgQuizSetting('quizMode', value);
-                    updateOrgQuizSetting('examMode', value === 'secure');
+                    setOrgSaveConfig((prev) => ({
+                      ...prev,
+                      quizSettings: {
+                        ...prev.quizSettings,
+                        quizMode: value,
+                        examMode: value === 'secure',
+                        proctoring: value === 'secure'
+                          ? prev.quizSettings.proctoring
+                          : disableAllProctoring()
+                      }
+                    }));
                   }}
                 >
                   <SelectTrigger className="h-10">
@@ -1791,8 +1885,8 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
                 Malpractice Monitoring
               </div>
               <p className="mt-2 text-xs text-amber-700/80 dark:text-amber-300/80">
-                Camera is requested only when camera access is enabled. Microphone is requested when microphone access
-                or external noise detection is enabled.
+                Malpractice monitoring applies only in <span className="font-semibold">Secure Exam</span> mode.
+                Camera/microphone permissions are requested when learners start the quiz (not during course creation).
               </p>
               <div className="mt-3 grid gap-3 md:grid-cols-2">
                 {[
@@ -1806,13 +1900,14 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
                 ].map(([field, label]) => (
                   <label
                     key={field}
-                    className="flex items-center justify-between gap-3 rounded-xl border bg-background px-3 py-2 text-sm"
+                    className={`flex items-center justify-between gap-3 rounded-xl border bg-background px-3 py-2 text-sm ${orgSaveConfig.quizSettings.quizMode === 'secure' ? '' : 'opacity-60'}`}
                   >
                     <span>{label}</span>
                     <input
                       type="checkbox"
                       checked={Boolean(orgSaveConfig.quizSettings.proctoring[field as keyof typeof defaultQuizSettings.proctoring])}
                       onChange={(e) => updateOrgProctoringSetting(field, e.target.checked)}
+                      disabled={orgSaveConfig.quizSettings.quizMode !== 'secure'}
                     />
                   </label>
                 ))}
@@ -1840,8 +1935,8 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
               >
                 Reset Controls to Defaults
               </Button>
-              <Button onClick={handleSaveOrgCourseWithSettings}>
-                Save with Current Controls
+              <Button onClick={handleSaveOrgCourseWithSettings} disabled={!hasGeneratedQuizzes}>
+                {role === 'dept_admin' ? 'Save & Request Approval' : 'Save with Current Controls'}
               </Button>
             </div>
           </DialogFooter>

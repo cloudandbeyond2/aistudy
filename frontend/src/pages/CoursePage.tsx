@@ -20,7 +20,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
@@ -329,6 +329,9 @@ const CoursePage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [isLessonFlowOpen, setIsLessonFlowOpen] = useState(false);
+  const [lessonFlowChapter, setLessonFlowChapter] = useState('');
+  const [lessonFlowSearch, setLessonFlowSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -2370,13 +2373,13 @@ sendDataVideo(url, cleanedTheory, mTopic, mSubTopic);
     shuffleOptions: true,
     ...(jsonData?.quizSettings || {}),
     proctoring: {
-      requireCamera: true,
-      requireMicrophone: true,
+      requireCamera: false,
+      requireMicrophone: false,
       detectFullscreenExit: true,
       detectTabSwitch: true,
       detectCopyPaste: true,
       detectContextMenu: true,
-      detectNoise: true,
+      detectNoise: false,
       ...(jsonData?.quizSettings?.proctoring || {})
     }
   };
@@ -2472,6 +2475,14 @@ sendDataVideo(url, cleanedTheory, mTopic, mSubTopic);
       </div>
     </section>
   ) : null;
+
+  const openLessonFlow = (chapterTitle?: string) => {
+    const targetChapter = chapterTitle || currentTopicTitle || courseTopics[0]?.title || '';
+    setLessonFlowChapter(targetChapter);
+    setLessonFlowSearch('');
+    setIsLessonFlowOpen(true);
+  };
+
   const roadmapSection = courseTopics.length > 0 ? (
     <section className="mb-6 rounded-[28px] border border-border/60 bg-gradient-to-br from-background via-background to-muted/50 p-4 shadow-sm md:p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -2499,7 +2510,7 @@ sendDataVideo(url, cleanedTheory, mTopic, mSubTopic);
       <Accordion
         type="single"
         collapsible
-        className="mt-5 space-y-3"
+        className="mt-5 space-y-3 hidden"
         defaultValue={currentTopicTitle || courseTopics[0]?.title}
       >
         {courseTopics.map((topic, topicIndex) => {
@@ -2600,6 +2611,241 @@ sendDataVideo(url, cleanedTheory, mTopic, mSubTopic);
           );
         })}
       </Accordion>
+
+      <div className="mt-5 rounded-3xl border border-border/60 bg-background/80 p-4 shadow-sm md:p-5">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold">Lesson flow</p>
+            <p className="text-xs text-muted-foreground">
+              Hidden by default. Open the popup to browse all chapters and lessons.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button onClick={() => openLessonFlow()} className="rounded-2xl">
+              <BookOpen className="mr-2 h-4 w-4" />
+              Open lesson flow
+            </Button>
+            {currentTopicTitle && (
+              <Button variant="outline" onClick={() => openLessonFlow(currentTopicTitle)} className="rounded-2xl">
+                <ChevronDown className="mr-2 h-4 w-4" />
+                Current chapter
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {courseTopics.slice(0, 4).map((topic, topicIndex) => {
+            const topicSubtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
+            const topicCompletedCount = topicSubtopics.filter((subtopic) =>
+              completedSubtopics.some(
+                (entry) => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title
+              )
+            ).length;
+            const isTopicActive = topic.title === currentTopicTitle;
+
+            return (
+              <button
+                type="button"
+                key={topic.title}
+                onClick={() => openLessonFlow(topic.title)}
+                className={cn(
+                  "group flex w-full items-start justify-between gap-3 rounded-3xl border px-4 py-4 text-left transition-all",
+                  "hover:border-primary/30 hover:bg-primary/[0.04]",
+                  isTopicActive ? "border-primary/30 bg-primary/[0.05]" : "border-border/60 bg-background"
+                )}
+              >
+                <div className="min-w-0">
+                  <span className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                    Chapter {topicIndex + 1}
+                  </span>
+                  <h3 className="mt-3 line-clamp-2 text-sm font-semibold leading-6 md:text-base">
+                    {topic.title}
+                  </h3>
+                  <p className="mt-2 text-xs text-muted-foreground">Tap to open lessons</p>
+                </div>
+                <div className="rounded-2xl bg-muted px-3 py-2 text-right">
+                  <div className="text-base font-semibold">{topicCompletedCount}/{topicSubtopics.length}</div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    done
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {courseTopics.length > 4 && (
+          <div className="mt-4 flex justify-center">
+            <Button variant="ghost" className="rounded-2xl" onClick={() => openLessonFlow()}>
+              View all chapters
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <Dialog open={isLessonFlowOpen} onOpenChange={setIsLessonFlowOpen}>
+        <DialogContent className="w-[95vw] max-w-5xl overflow-hidden p-0 sm:rounded-3xl">
+          <DialogHeader className="border-b border-border/60 bg-gradient-to-r from-primary/10 via-background to-indigo-500/10 p-5 sm:p-6">
+            <DialogTitle className="text-xl">Lesson flow</DialogTitle>
+            <DialogDescription>
+              Browse chapters and jump directly to any unlocked lesson.
+            </DialogDescription>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Input
+                value={lessonFlowSearch}
+                onChange={(e) => setLessonFlowSearch(e.target.value)}
+                placeholder="Search lesson…"
+                className="h-11 rounded-2xl bg-background/80"
+              />
+              <Button
+                variant="outline"
+                className="h-11 rounded-2xl"
+                onClick={() => {
+                  setLessonFlowSearch('');
+                  setLessonFlowChapter(currentTopicTitle || courseTopics[0]?.title || '');
+                }}
+              >
+                Reset
+              </Button>
+            </div>
+          </DialogHeader>
+
+          <ScrollArea className="max-h-[70vh]">
+            <div className="p-4 sm:p-6">
+              <Accordion
+                type="single"
+                collapsible
+                className="space-y-3"
+                value={lessonFlowChapter}
+                onValueChange={setLessonFlowChapter}
+              >
+                {courseTopics
+                  .map((topic, topicIndex) => {
+                    const topicSubtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
+                    const query = lessonFlowSearch.trim().toLowerCase();
+                    const filteredSubtopics = query
+                      ? topicSubtopics.filter((sub: any) => String(sub?.title || '').toLowerCase().includes(query))
+                      : topicSubtopics;
+
+                    return { topic, topicIndex, topicSubtopics, filteredSubtopics };
+                  })
+                  .filter(({ topic, filteredSubtopics }) => {
+                    const query = lessonFlowSearch.trim().toLowerCase();
+                    if (!query) return true;
+                    return (
+                      filteredSubtopics.length > 0 ||
+                      String(topic?.title || '').toLowerCase().includes(query)
+                    );
+                  })
+                  .map(({ topic, topicIndex, topicSubtopics, filteredSubtopics }) => {
+                    const topicCompletedCount = topicSubtopics.filter((subtopic) =>
+                      completedSubtopics.some(
+                        (entry) => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title
+                      )
+                    ).length;
+                    const isTopicActive = topic.title === currentTopicTitle;
+
+                    return (
+                      <AccordionItem
+                        key={topic.title}
+                        value={topic.title}
+                        className={cn(
+                          "overflow-hidden rounded-3xl border transition-colors",
+                          isTopicActive
+                            ? "border-primary/30 bg-primary/[0.05]"
+                            : "border-border/60 bg-background"
+                        )}
+                      >
+                        <AccordionTrigger className="px-4 py-4 text-left hover:no-underline">
+                          <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <span className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                                Chapter {topicIndex + 1}
+                              </span>
+                              <h3 className="mt-3 text-base font-semibold leading-6 md:text-lg">{topic.title}</h3>
+                              <p className="mt-2 text-sm text-muted-foreground">
+                                Click to view lessons in this chapter
+                              </p>
+                            </div>
+                            <div className="rounded-2xl bg-muted px-3 py-2 text-right">
+                              <div className="text-base font-semibold">{topicCompletedCount}/{topicSubtopics.length}</div>
+                              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                                done
+                              </div>
+                            </div>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-4 pb-4 pt-0">
+                          {filteredSubtopics.length === 0 ? (
+                            <div className="rounded-2xl border border-dashed bg-muted/20 p-5 text-center text-sm text-muted-foreground">
+                              No lessons match your search.
+                            </div>
+                          ) : (
+                            <div className="grid gap-2 md:grid-cols-2">
+                              {filteredSubtopics.map((subtopic: any, subtopicIndex: number) => {
+                                const isUnlocked = isSubtopicUnlocked(topic.title, subtopic.title);
+                                const isActive = selected === subtopic.title;
+                                const isCompleted = completedSubtopics.some(
+                                  (entry) => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title
+                                );
+
+                                return (
+                                  <button
+                                    type="button"
+                                    key={subtopic.title}
+                                    onClick={() => {
+                                      if (isUnlocked) {
+                                        handleSelect(topic.title, subtopic.title);
+                                        setIsLessonFlowOpen(false);
+                                      } else {
+                                        toast({ title: "Locked", description: "Complete previous lessons to unlock this one." });
+                                      }
+                                    }}
+                                    className={cn(
+                                      "flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition-all",
+                                      isUnlocked
+                                        ? "hover:border-primary/30 hover:bg-primary/[0.04]"
+                                        : "cursor-not-allowed opacity-60",
+                                      isActive
+                                        ? "border-primary/35 bg-primary/[0.08]"
+                                        : "border-border/50 bg-background"
+                                    )}
+                                  >
+                                    <span
+                                      className={cn(
+                                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                                        isCompleted
+                                          ? "bg-emerald-500 text-white"
+                                          : isActive
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-muted text-muted-foreground"
+                                      )}
+                                    >
+                                      {isCompleted ? "âœ“" : subtopicIndex + 1}
+                                    </span>
+                                    <span className="min-w-0 flex-1">
+                                      <span className="block truncate text-sm font-medium text-foreground">
+                                        {subtopic.title}
+                                      </span>
+                                      <span className="mt-1 block text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                                        {isCompleted ? "Completed" : isActive ? "Current lesson" : isUnlocked ? "Available now" : "Locked"}
+                                      </span>
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+              </Accordion>
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </section>
   ) : null;
 

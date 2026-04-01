@@ -48,13 +48,13 @@ const defaultQuizSettings = {
         difficult: 0
     },
     proctoring: {
-        requireCamera: true,
-        requireMicrophone: true,
+        requireCamera: false,
+        requireMicrophone: false,
         detectFullscreenExit: true,
         detectTabSwitch: true,
         detectCopyPaste: true,
         detectContextMenu: true,
-        detectNoise: true
+        detectNoise: false
     }
 };
 
@@ -103,6 +103,75 @@ const normalizeCourseForEdit = (course: any) => {
         quizzes,
         quizSettings
     };
+};
+
+const buildPublishVerificationHtml = (quizSettings: any, nextPublished: boolean) => {
+    const mode = String(quizSettings?.quizMode || 'secure');
+    const modeLabel = mode === 'secure' ? 'Secure Exam' : mode === 'assessment' ? 'Assessment' : 'Practice';
+    const isSecure = mode === 'secure';
+    const proctoring = quizSettings?.proctoring || {};
+
+    const effective = isSecure
+        ? {
+            requireCamera: Boolean(proctoring.requireCamera),
+            requireMicrophone: Boolean(proctoring.requireMicrophone),
+            detectNoise: Boolean(proctoring.detectNoise),
+            detectTabSwitch: Boolean(proctoring.detectTabSwitch),
+            detectFullscreenExit: Boolean(proctoring.detectFullscreenExit),
+            detectCopyPaste: Boolean(proctoring.detectCopyPaste),
+            detectContextMenu: Boolean(proctoring.detectContextMenu)
+        }
+        : {
+            requireCamera: false,
+            requireMicrophone: false,
+            detectNoise: false,
+            detectTabSwitch: false,
+            detectFullscreenExit: false,
+            detectCopyPaste: false,
+            detectContextMenu: false
+        };
+
+    const anyMonitoring = Object.values(effective).some(Boolean);
+    const deviceRequired = effective.requireCamera || effective.requireMicrophone || effective.detectNoise;
+
+    const itemRow = (label: string, value: string) =>
+        `<div style="display:flex;justify-content:space-between;gap:12px"><span>${label}</span><b>${value}</b></div>`;
+
+    const listRow = (label: string, enabled: boolean) =>
+        `<li style="margin:2px 0">${label}: <b>${enabled ? 'On' : 'Off'}</b></li>`;
+
+    return `
+      <div style="text-align:left;font-size:13px;line-height:1.45">
+        <div style="margin-bottom:10px;color:#475569">
+          ${nextPublished
+            ? 'Students will be able to see and open this course in the student portal.'
+            : 'Students will no longer see this course in the student portal.'}
+        </div>
+        <div style="border:1px solid rgba(148,163,184,0.35);border-radius:12px;padding:10px 12px;background:rgba(2,6,23,0.02)">
+          ${itemRow('Quiz mode', modeLabel)}
+          ${itemRow('Malpractice monitoring', isSecure ? (anyMonitoring ? 'Configured' : 'Off') : 'Disabled (not Secure Exam)')}
+          ${itemRow('Device access', isSecure && deviceRequired ? 'May request camera/mic' : 'No device access')}
+          <div style="margin-top:8px;color:#64748b;font-size:12px">
+            Permissions are requested when learners start the quiz.
+          </div>
+          ${isSecure ? `
+            <ul style="margin:8px 0 0 18px;padding:0">
+              ${listRow('Require camera', effective.requireCamera)}
+              ${listRow('Require microphone', effective.requireMicrophone)}
+              ${listRow('Detect external noise', effective.detectNoise)}
+              ${listRow('Detect tab switches', effective.detectTabSwitch)}
+              ${listRow('Detect fullscreen exit', effective.detectFullscreenExit)}
+              ${listRow('Detect copy/paste', effective.detectCopyPaste)}
+              ${listRow('Detect context menu', effective.detectContextMenu)}
+            </ul>
+          ` : `
+            <div style="margin-top:8px;color:#64748b;font-size:12px">
+              Switch to <b>Secure Exam</b> to enable malpractice monitoring settings.
+            </div>
+          `}
+        </div>
+      </div>
+    `;
 };
 
 const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [], role }: any) => {
@@ -185,13 +254,25 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
     };
 
     const updateProctoringSetting = (field: string, value: boolean) => {
+        const nextProctoring = {
+            ...quizSettings.proctoring,
+            [field]: value
+        };
+
+        if (field === 'requireMicrophone' && !value) {
+            nextProctoring.detectNoise = false;
+        }
+
+        if (field === 'detectNoise' && value) {
+            nextProctoring.requireMicrophone = true;
+        }
+
         setCourse({
             ...course,
             quizSettings: {
                 ...quizSettings,
                 proctoring: {
-                    ...quizSettings.proctoring,
-                    [field]: value
+                    ...nextProctoring
                 }
             }
         });
@@ -402,12 +483,24 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
                                 value={quizSettings.quizMode}
                                 onChange={(e) => {
                                     const nextMode = e.target.value;
+                                    const nextProctoring = nextMode === 'secure'
+                                        ? quizSettings.proctoring
+                                        : {
+                                            requireCamera: false,
+                                            requireMicrophone: false,
+                                            detectFullscreenExit: false,
+                                            detectTabSwitch: false,
+                                            detectCopyPaste: false,
+                                            detectContextMenu: false,
+                                            detectNoise: false
+                                        };
                                     setCourse({
                                         ...course,
                                         quizSettings: {
                                             ...quizSettings,
                                             quizMode: nextMode,
-                                            examMode: nextMode === 'secure'
+                                            examMode: nextMode === 'secure',
+                                            proctoring: nextProctoring
                                         }
                                     });
                                 }}
@@ -556,34 +649,37 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
                             <AlertTriangle className="w-4 h-4" />
                             Malpractice Monitoring
                         </div>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                            Available only in <span className="font-semibold">Secure Exam</span> mode. Learner device permissions are requested when they start the quiz.
+                        </p>
                         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-background">
+                            <label className={`flex items-center justify-between rounded-xl border px-4 py-3 bg-background ${quizSettings.quizMode === 'secure' ? '' : 'opacity-60'}`}>
                                 <span className="flex items-center gap-2 text-sm font-medium"><Camera className="w-4 h-4 text-primary" /> Require camera access</span>
-                                <input type="checkbox" checked={quizSettings.proctoring.requireCamera} onChange={(e) => updateProctoringSetting('requireCamera', e.target.checked)} />
+                                <input type="checkbox" disabled={quizSettings.quizMode !== 'secure'} checked={quizSettings.proctoring.requireCamera} onChange={(e) => updateProctoringSetting('requireCamera', e.target.checked)} />
                             </label>
-                            <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-background">
+                            <label className={`flex items-center justify-between rounded-xl border px-4 py-3 bg-background ${quizSettings.quizMode === 'secure' ? '' : 'opacity-60'}`}>
                                 <span className="flex items-center gap-2 text-sm font-medium"><Mic className="w-4 h-4 text-primary" /> Require microphone access</span>
-                                <input type="checkbox" checked={quizSettings.proctoring.requireMicrophone} onChange={(e) => updateProctoringSetting('requireMicrophone', e.target.checked)} />
+                                <input type="checkbox" disabled={quizSettings.quizMode !== 'secure'} checked={quizSettings.proctoring.requireMicrophone} onChange={(e) => updateProctoringSetting('requireMicrophone', e.target.checked)} />
                             </label>
-                            <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-background">
+                            <label className={`flex items-center justify-between rounded-xl border px-4 py-3 bg-background ${quizSettings.quizMode === 'secure' ? '' : 'opacity-60'}`}>
                                 <span className="text-sm font-medium">Detect tab switches</span>
-                                <input type="checkbox" checked={quizSettings.proctoring.detectTabSwitch} onChange={(e) => updateProctoringSetting('detectTabSwitch', e.target.checked)} />
+                                <input type="checkbox" disabled={quizSettings.quizMode !== 'secure'} checked={quizSettings.proctoring.detectTabSwitch} onChange={(e) => updateProctoringSetting('detectTabSwitch', e.target.checked)} />
                             </label>
-                            <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-background">
+                            <label className={`flex items-center justify-between rounded-xl border px-4 py-3 bg-background ${quizSettings.quizMode === 'secure' ? '' : 'opacity-60'}`}>
                                 <span className="text-sm font-medium">Detect fullscreen exit</span>
-                                <input type="checkbox" checked={quizSettings.proctoring.detectFullscreenExit} onChange={(e) => updateProctoringSetting('detectFullscreenExit', e.target.checked)} />
+                                <input type="checkbox" disabled={quizSettings.quizMode !== 'secure'} checked={quizSettings.proctoring.detectFullscreenExit} onChange={(e) => updateProctoringSetting('detectFullscreenExit', e.target.checked)} />
                             </label>
-                            <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-background">
+                            <label className={`flex items-center justify-between rounded-xl border px-4 py-3 bg-background ${quizSettings.quizMode === 'secure' ? '' : 'opacity-60'}`}>
                                 <span className="text-sm font-medium">Detect copy/paste</span>
-                                <input type="checkbox" checked={quizSettings.proctoring.detectCopyPaste} onChange={(e) => updateProctoringSetting('detectCopyPaste', e.target.checked)} />
+                                <input type="checkbox" disabled={quizSettings.quizMode !== 'secure'} checked={quizSettings.proctoring.detectCopyPaste} onChange={(e) => updateProctoringSetting('detectCopyPaste', e.target.checked)} />
                             </label>
-                            <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-background">
+                            <label className={`flex items-center justify-between rounded-xl border px-4 py-3 bg-background ${quizSettings.quizMode === 'secure' ? '' : 'opacity-60'}`}>
                                 <span className="text-sm font-medium">Detect context menu</span>
-                                <input type="checkbox" checked={quizSettings.proctoring.detectContextMenu} onChange={(e) => updateProctoringSetting('detectContextMenu', e.target.checked)} />
+                                <input type="checkbox" disabled={quizSettings.quizMode !== 'secure'} checked={quizSettings.proctoring.detectContextMenu} onChange={(e) => updateProctoringSetting('detectContextMenu', e.target.checked)} />
                             </label>
-                            <label className="flex items-center justify-between rounded-xl border px-4 py-3 bg-background md:col-span-2">
+                            <label className={`flex items-center justify-between rounded-xl border px-4 py-3 bg-background md:col-span-2 ${quizSettings.quizMode === 'secure' ? '' : 'opacity-60'}`}>
                                 <span className="text-sm font-medium">Detect external noise spikes</span>
-                                <input type="checkbox" checked={quizSettings.proctoring.detectNoise} onChange={(e) => updateProctoringSetting('detectNoise', e.target.checked)} />
+                                <input type="checkbox" disabled={quizSettings.quizMode !== 'secure'} checked={quizSettings.proctoring.detectNoise} onChange={(e) => updateProctoringSetting('detectNoise', e.target.checked)} />
                             </label>
                         </div>
                     </div>
@@ -3834,11 +3930,10 @@ const handleUpdateDeptAdmin = async () => {
                                                 <DropdownMenuItem 
                                                     onClick={async () => {
                                                         const nextPublished = !published;
+                                                        const normalized = normalizeCourseForEdit(course);
                                                         const result = await Swal.fire({
                                                             title: nextPublished ? 'Publish this course?' : 'Unpublish this course?',
-                                                            text: nextPublished
-                                                                ? 'Students will be able to see and open this course in the student portal.'
-                                                                : 'Students will no longer see this course in the student portal.',
+                                                            html: buildPublishVerificationHtml(normalized.quizSettings, nextPublished),
                                                             showCancelButton: true,
                                                             confirmButtonText: nextPublished ? 'Publish' : 'Unpublish',
                                                             confirmButtonColor: nextPublished ? '#16a34a' : '#dc2626'
@@ -4052,11 +4147,10 @@ const handleUpdateDeptAdmin = async () => {
                                                 size="sm"
                                                 onClick={async () => {
                                                     const nextPublished = !published;
+                                                    const normalized = normalizeCourseForEdit(course);
                                                     const result = await Swal.fire({
                                                         title: nextPublished ? 'Publish this course?' : 'Unpublish this course?',
-                                                        text: nextPublished
-                                                            ? 'Students will be able to see and open this course in the student portal.'
-                                                            : 'Students will no longer see this course in the student portal.',
+                                                        html: buildPublishVerificationHtml(normalized.quizSettings, nextPublished),
                                                         showCancelButton: true,
                                                         confirmButtonText: nextPublished ? 'Publish' : 'Unpublish',
                                                         confirmButtonColor: nextPublished ? '#16a34a' : '#dc2626'
@@ -4502,7 +4596,7 @@ const handleUpdateDeptAdmin = async () => {
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                         <div className="min-w-0">
                                             <h3 className="font-semibold truncate">
-                                                {request.deptAdminId?.name || 'Department Admin'}
+                                                {request.deptAdminId?.mName || request.deptAdminId?.email || 'Department Admin'}
                                             </h3>
                                             <p className="mt-1 text-sm text-muted-foreground">
                                                 Requested Limit: <span className="font-medium text-foreground">{request.requestedCourseLimit}</span> courses

@@ -59,6 +59,7 @@ import {
     deleteOrgPlan,
     createDeptCourseLimitRequest,
     getDeptCourseLimitRequests,
+    getOrgApprovalCounts,
     updateDeptAdmin,
     processDeptCourseLimitRequest
 } from '../controllers/org.controller.js';
@@ -163,6 +164,7 @@ router.post('/org/staff/course-limit/request', requestStaffCourseLimitIncrease);
 router.post('/org/dept-admin/course-limit/request', createDeptCourseLimitRequest);
 router.get('/org/dept-admin/course-limit/requests', getDeptCourseLimitRequests);
 router.post('/org/dept-admin/course-limit/process', processDeptCourseLimitRequest);
+router.get('/org/approvals/count', getOrgApprovalCounts);
 
 // Project AI Generation
 router.post('/org/project/generate', generateProjectContent);

@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { serverURL } from '@/constants';
 import axios from 'axios';
 import { formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 interface NotificationBellProps {
     onNotificationsChange?: (notifications: any[]) => void;
@@ -22,6 +23,7 @@ interface NotificationBellProps {
 const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationsChange }) => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchNotifications();
@@ -77,6 +79,9 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationsChan
     const handleNotificationClick = (notification) => {
         if (!notification.isRead) {
             markAsRead(notification._id);
+        }
+        if (notification.link) {
+            navigate(notification.link);
         }
     };
 

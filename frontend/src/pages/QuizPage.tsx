@@ -55,13 +55,13 @@ const defaultManualQuizSettings = {
         difficult: 0
     },
     proctoring: {
-        requireCamera: true,
-        requireMicrophone: true,
+        requireCamera: false,
+        requireMicrophone: false,
         detectFullscreenExit: true,
         detectTabSwitch: true,
         detectCopyPaste: true,
         detectContextMenu: true,
-        detectNoise: true
+        detectNoise: false
     }
 };
 
@@ -379,7 +379,7 @@ const QuizPage = () => {
     };
 
     const getEffectiveProctoring = (settings: any) => {
-        if ((settings?.quizMode || 'secure') === 'practice') {
+        if ((settings?.quizMode || 'secure') !== 'secure') {
             return {
                 requireCamera: false,
                 requireMicrophone: false,

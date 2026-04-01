@@ -136,14 +136,17 @@ const MenuItem = ({ icon: Icon, label, to, isActive, badge, onClick, className, 
           {isExpanded && (
             <>
               <span className="font-medium whitespace-nowrap">{label}</span>
-              {badge && (
-                <span className={cn(
-                  "ml-auto text-xs px-2 py-0.5 rounded-full font-semibold",
-                  badge === "PRO" && "bg-gradient-to-r from-amber-500 to-orange-500 text-white",
-                  badge === "NEW" && "bg-gradient-to-r from-emerald-500 to-teal-500 text-white",
-                  badge === "BETA" && "bg-gradient-to-r from-blue-500 to-indigo-500 text-white",
-                  badge === "ADMIN" && "bg-gradient-to-r from-rose-500 to-pink-500 text-white"
-                )}>
+              {badge !== undefined && badge !== null && badge !== false && (
+                <span
+                  className={cn(
+                    "ml-auto text-xs px-2 py-0.5 rounded-full font-semibold",
+                    typeof badge === "number" && "bg-red-600 text-white",
+                    badge === "PRO" && "bg-gradient-to-r from-amber-500 to-orange-500 text-white",
+                    badge === "NEW" && "bg-gradient-to-r from-emerald-500 to-teal-500 text-white",
+                    badge === "BETA" && "bg-gradient-to-r from-blue-500 to-indigo-500 text-white",
+                    badge === "ADMIN" && "bg-gradient-to-r from-rose-500 to-pink-500 text-white"
+                  )}
+                >
                   {badge}
                 </span>
               )}
@@ -199,6 +202,7 @@ const DashboardLayoutContent = () => {
   const [installPrompt, setInstallPrompt] = useState(null);
   const { toast } = useToast();
   const uid = sessionStorage.getItem('uid') || '';
+  const [pendingApprovals, setPendingApprovals] = useState(0);
 
   // Helper to check active route
   const isActive = (path: string) => location.pathname === path;
@@ -255,6 +259,36 @@ const DashboardLayoutContent = () => {
       setInstallPrompt(e);
     });
   }, []);
+
+  useEffect(() => {
+    const orgId = sessionStorage.getItem('orgId') || '';
+    if (!uid || !orgId) return undefined;
+    if (sessionStorage.getItem('role') !== 'org_admin') return undefined;
+    if (sessionStorage.getItem('isOrganization') !== 'true') return undefined;
+
+    let ignore = false;
+
+    const fetchApprovalCounts = async () => {
+      try {
+        const res = await axios.get(`${serverURL}/api/org/approvals/count`, {
+          params: { organizationId: orgId, requesterId: uid }
+        });
+        if (ignore) return;
+        const total = Number(res.data?.counts?.totalPending || 0);
+        setPendingApprovals(Number.isFinite(total) ? total : 0);
+      } catch (e) {
+        if (ignore) return;
+        setPendingApprovals(0);
+      }
+    };
+
+    void fetchApprovalCounts();
+    const interval = setInterval(fetchApprovalCounts, 60000);
+    return () => {
+      ignore = true;
+      clearInterval(interval);
+    };
+  }, [uid]);
 
   useEffect(() => {
     if (!uid || typeof window === 'undefined') return undefined;
@@ -603,6 +637,7 @@ const DashboardLayoutContent = () => {
                         isActive={location.search === '?tab=approvals'}
                         isExpanded={isExpanded}
                         onMobileClick={handleMobileMenuClick}
+                        badge={pendingApprovals > 0 ? pendingApprovals : undefined}
                       />
                     )}
                     {sessionStorage.getItem('role') === 'org_admin' && (

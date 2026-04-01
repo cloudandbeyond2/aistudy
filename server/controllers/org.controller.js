@@ -1123,6 +1123,7 @@ export const reviewOrgCourse = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Course does not belong to this organization' });
         }
 
+        const previousApprovalStatus = String(course.approvalStatus || '');
         course.approvalStatus = String(approvalStatus);
         course.reviewedBy = reviewer._id;
         course.reviewedAt = new Date();
@@ -1136,6 +1137,26 @@ export const reviewOrgCourse = async (req, res) => {
         }
 
         await course.save();
+
+        if (String(approvalStatus) === 'pending' && previousApprovalStatus !== 'pending') {
+            try {
+                const orgAdmins = await User.find({
+                    role: 'org_admin',
+                    organization: reviewer.organization,
+                    isBlocked: { $ne: true }
+                }).select('_id');
+                await Promise.all(orgAdmins
+                    .filter((admin) => String(admin._id) !== String(reviewer._id))
+                    .map((admin) => createNotification({
+                        user: admin._id,
+                        type: 'approval',
+                        message: `Course pending approval: ${course.title || 'Untitled course'}`,
+                        link: '/dashboard/org?tab=approvals'
+                    })));
+            } catch (notifyError) {
+                console.error('Failed to notify org admins about pending course approval:', notifyError);
+            }
+        }
         res.json({ success: true, message: 'Course review updated', course });
     } catch (error) {
         console.error('Review org course error:', error);
@@ -1936,13 +1957,28 @@ export const createDeptCourseLimitRequest = async (req, res) => {
     }
 
     try {
-        const staff = await User.findById(deptAdminId).select('_id role organization isBlocked');
+        const staff = await User.findById(deptAdminId).select('_id role organization isBlocked mName email');
         if (!staff || staff.isBlocked || staff.role !== 'dept_admin') {
             return res.status(404).json({ success: false, message: 'Department admin not found or blocked' });
         }
         if (String(staff.organization) !== String(organizationId)) {
             return res.status(403).json({ success: false, message: 'Department admin does not belong to this organization' });
         }
+
+        const notifyOrgAdmins = async (requestDoc) => {
+            try {
+                const orgAdmins = await User.find({ role: 'org_admin', organization: organizationId, isBlocked: { $ne: true } }).select('_id');
+                const staffLabel = staff.mName || staff.email || 'A department admin';
+                await Promise.all(orgAdmins.map((admin) => createNotification({
+                    user: admin._id,
+                    type: 'approval',
+                    message: `${staffLabel} requested +${parsedRequested} course slots.`,
+                    link: '/dashboard/org?tab=approvals'
+                })));
+            } catch (notifyError) {
+                console.error('Failed to notify org admins of dept course limit request:', notifyError);
+            }
+        };
 
         // Check for existing pending request to prevent spam
         const existingPending = await DeptCourseLimitRequest.findOne({
@@ -1954,6 +1990,7 @@ export const createDeptCourseLimitRequest = async (req, res) => {
         if (existingPending) {
             existingPending.requestedCourseLimit = parsedRequested;
             await existingPending.save();
+            await notifyOrgAdmins(existingPending);
             return res.json({ success: true, message: 'Existing request updated successfully', request: existingPending });
         }
 
@@ -1964,6 +2001,7 @@ export const createDeptCourseLimitRequest = async (req, res) => {
         });
 
         await newRequest.save();
+        await notifyOrgAdmins(newRequest);
         res.json({ success: true, message: 'Course limit request submitted to Organization Admin', request: newRequest });
     } catch (error) {
         console.error('createDeptCourseLimitRequest error:', error);
@@ -2028,20 +2066,23 @@ export const processDeptCourseLimitRequest = async (req, res) => {
         if (normalizedStatus === 'approved') {
             const requestedAmount = request.requestedCourseLimit;
             
-            // Check if Org Admin has enough limit
-            const orgAdminAvailable = (orgAdmin.courseLimit || 0) - (orgAdmin.coursesCreatedCount || 0);
-            if (orgAdminAvailable < requestedAmount) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: `Organization Admin does not have enough remaining limit. (Available: ${orgAdminAvailable}, Requested: ${requestedAmount})` 
+            const poolLimit = Number(orgAdmin.courseLimit || 0);
+            const createdCount = Number(orgAdmin.coursesCreatedCount || 0);
+            const usesPool = poolLimit > 0;
+            const orgAdminAvailable = usesPool ? Math.max(poolLimit - createdCount, 0) : Infinity;
+
+            // If org_admin has a configured pool (courseLimit > 0), enforce it. Otherwise treat as unlimited.
+            if (usesPool && orgAdminAvailable < requestedAmount) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Organization Admin does not have enough remaining limit. (Available: ${orgAdminAvailable}, Requested: ${requestedAmount})`
                 });
             }
 
-            // Deduct from Org Admin courseLimit
-            // Wait, does deducting from courseLimit make sense, or should we increase coursesCreatedCount?
-            // If we reduce orgAdmin's courseLimit, their available quota decreases.
-            orgAdmin.courseLimit -= requestedAmount;
-            await orgAdmin.save();
+            if (usesPool) {
+                orgAdmin.courseLimit = Math.max(0, poolLimit - requestedAmount);
+                await orgAdmin.save();
+            }
 
             // Add to Dept Admin courseLimit
             const deptAdmin = await User.findById(request.deptAdminId);
@@ -2238,6 +2279,46 @@ export const getAllOrgPlans = async (req, res) => {
         });
     } catch (error) {
         console.error('Get all org plans error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// 2b. Org Admin pending-approvals count (for sidebar badges)
+export const getOrgApprovalCounts = async (req, res) => {
+    const { organizationId, requesterId } = req.query;
+
+    if (!organizationId || !requesterId) {
+        return res.status(400).json({ success: false, message: 'Missing organizationId or requesterId' });
+    }
+
+    try {
+        const requester = await User.findById(requesterId).select('_id role organization isBlocked');
+        if (!requester || requester.isBlocked || requester.role !== 'org_admin') {
+            return res.status(403).json({ success: false, message: 'Unauthorized org_admin' });
+        }
+        if (String(requester.organization) !== String(organizationId)) {
+            return res.status(403).json({ success: false, message: 'Requester does not belong to this organization' });
+        }
+
+        const [pendingOrgCourses, pendingAiCourses, pendingLimitRequests] = await Promise.all([
+            OrgCourse.countDocuments({ organizationId, approvalStatus: 'pending' }),
+            Course.countDocuments({ organizationId, approvalStatus: 'pending' }),
+            DeptCourseLimitRequest.countDocuments({ organizationId, status: 'pending' })
+        ]);
+
+        const pendingCourseApprovals = pendingOrgCourses + pendingAiCourses;
+        const totalPending = pendingCourseApprovals + pendingLimitRequests;
+
+        res.json({
+            success: true,
+            counts: {
+                pendingCourseApprovals,
+                pendingLimitRequests,
+                totalPending
+            }
+        });
+    } catch (error) {
+        console.error('getOrgApprovalCounts error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };

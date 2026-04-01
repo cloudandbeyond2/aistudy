@@ -38,7 +38,7 @@ const orgCourseSchema = new mongoose.Schema({
         difficulty: { type: String, enum: ['easy', 'medium', 'difficult'], default: 'medium' }
     }],
     quizSettings: {
-        examMode: { type: Boolean, default: false },
+        examMode: { type: Boolean, default: true },
         quizMode: { type: String, enum: ['practice', 'assessment', 'secure'], default: 'secure' },
         attemptLimit: { type: Number, default: 2 },
         cooldownMinutes: { type: Number, default: 60 },
@@ -62,13 +62,13 @@ const orgCourseSchema = new mongoose.Schema({
             difficult: { type: Number, default: 0 }
         },
         proctoring: {
-            requireCamera: { type: Boolean, default: true },
-            requireMicrophone: { type: Boolean, default: true },
+            requireCamera: { type: Boolean, default: false },
+            requireMicrophone: { type: Boolean, default: false },
             detectFullscreenExit: { type: Boolean, default: true },
             detectTabSwitch: { type: Boolean, default: true },
             detectCopyPaste: { type: Boolean, default: true },
             detectContextMenu: { type: Boolean, default: true },
-            detectNoise: { type: Boolean, default: true }
+            detectNoise: { type: Boolean, default: false }
         }
     },
     assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Specific students or empty for all

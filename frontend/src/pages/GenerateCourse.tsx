@@ -1569,6 +1569,70 @@ Return only valid JSON that matches the schema.`;
             courseType: courseOptions.courseType,
           },
         };
+
+        setGenerationProgress(90);
+        setProgressMessage("Generating quiz questions...");
+
+        try {
+          const quizPrompt = `Course: "${courseOptions.topic}"
+Language: ${selectedLanguage}
+Chapters (overview): ${JSON.stringify(parsedJson?.course_topics || [])}
+
+Generate exactly 10 multiple-choice quiz questions that evaluate the learner's understanding across the course.
+Rules:
+- Provide 4 options per question.
+- "answer" must match exactly one of the option strings.
+- Include a 1-2 sentence explanation.
+- difficulty must be one of: easy, medium, difficult.
+Return only valid JSON.`;
+
+          const quizRes = await axios.post(postURL, {
+            prompt: quizPrompt,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "object",
+              properties: {
+                course_quizzes: {
+                  type: "array",
+                  minItems: 10,
+                  maxItems: 10,
+                  items: {
+                    type: "object",
+                    properties: {
+                      question: { type: "string" },
+                      options: {
+                        type: "array",
+                        minItems: 4,
+                        maxItems: 4,
+                        items: { type: "string" }
+                      },
+                      answer: { type: "string" },
+                      explanation: { type: "string" },
+                      difficulty: { type: "string", enum: ["easy", "medium", "difficult"] }
+                    },
+                    required: ["question", "options", "answer", "explanation", "difficulty"]
+                  }
+                }
+              },
+              required: ["course_quizzes"]
+            }
+          });
+
+          const quizParsed = JSON.parse(quizRes.data?.generatedText || '{}');
+          const quizzes = Array.isArray(quizParsed?.course_quizzes) ? quizParsed.course_quizzes : [];
+          if (quizzes.length) {
+            (coursePreviewPayload as any).course_quizzes = quizzes;
+          } else {
+            throw new Error('No quiz questions returned');
+          }
+        } catch (quizError: any) {
+          console.error('Quiz generation error:', quizError);
+          toast({
+            title: "Quiz generation failed",
+            description: quizError?.response?.data?.message || quizError?.message || "The course was generated, but quiz questions could not be created.",
+            variant: "destructive"
+          });
+        }
         
         setGenerationProgress(95);
         setProgressMessage("Finalizing course...");

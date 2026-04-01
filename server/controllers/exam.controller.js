@@ -35,13 +35,13 @@ const DEFAULT_QUIZ_SETTINGS = {
     difficult: 0
   },
   proctoring: {
-    requireCamera: true,
-    requireMicrophone: true,
+    requireCamera: false,
+    requireMicrophone: false,
     detectFullscreenExit: true,
     detectTabSwitch: true,
     detectCopyPaste: true,
     detectContextMenu: true,
-    detectNoise: true
+    detectNoise: false
   }
 };
 
@@ -72,6 +72,15 @@ const mergeQuizSettings = (settings = {}) => {
     };
   } else if (merged.quizMode === 'assessment') {
     merged.examMode = false;
+    merged.proctoring = {
+      requireCamera: false,
+      requireMicrophone: false,
+      detectFullscreenExit: false,
+      detectTabSwitch: false,
+      detectCopyPaste: false,
+      detectContextMenu: false,
+      detectNoise: false
+    };
   } else {
     merged.examMode = true;
   }
