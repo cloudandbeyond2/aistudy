@@ -454,6 +454,9 @@ const DashboardLayoutContent = () => {
                     )}
 
                     <MenuItem icon={Briefcase} label="Interview Prep" to="/dashboard/interview-prep" isActive={isActive('/dashboard/interview-prep')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    {interviewEnabled[sessionStorage.getItem('role') === 'org_admin' ? 'org_admin' : (sessionStorage.getItem('type') as keyof typeof interviewEnabled)] && (
+                      <MenuItem icon={Brain} label="Mock Training" to="/dashboard/interview-training" isActive={isActive('/dashboard/interview-training')} badge={isPaidUser ? "PRO" : "READY"} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    )}
                     <MenuItem icon={Calendar} label="Calendar Scheduler" to="/dashboard/calendar" isActive={isActive('/dashboard/calendar')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={ListTodo} label="Todo Center" to="/dashboard/todo" isActive={isActive('/dashboard/todo')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
 
