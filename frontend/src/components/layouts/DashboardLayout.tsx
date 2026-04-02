@@ -571,17 +571,9 @@ const DashboardLayoutContent = () => {
                   <>
                     <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     <SectionHeader title="Organization" icon={Building2} isExpanded={isExpanded} />
-                    <MenuItem
-                      icon={Gauge}
-                      label="Student Dashboard"
-                      to="/dashboard/student"
-                      isActive={isActive('/dashboard/student')}
-                      isExpanded={isExpanded}
-                      onMobileClick={handleMobileMenuClick}
-                    />
                     <MenuItem 
                       icon={Gauge} 
-                      label="Dashboard" 
+                      label="Organization Dashboard" 
                       to="/dashboard/org?tab=landing" 
                       isActive={isActive('/dashboard/org') && (!location.search || location.search === '?tab=landing')}
                       isExpanded={isExpanded}
@@ -632,7 +624,7 @@ const DashboardLayoutContent = () => {
                     {sessionStorage.getItem('role') === 'org_admin' && (
                       <MenuItem 
                         icon={CheckCircle2} 
-                        label="Approvals" 
+                        label="Approval Center" 
                         to="/dashboard/org?tab=approvals" 
                         isActive={location.search === '?tab=approvals'}
                         isExpanded={isExpanded}
