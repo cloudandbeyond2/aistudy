@@ -50,8 +50,8 @@ const readTodos = (storageKey: string): TodoItem[] => {
 };
 
 const PC = {
-  High:   { dot: 'bg-rose-400',    badge: 'bg-rose-50 text-rose-600 border-rose-200',     bar: 'bg-rose-400'    },
-  Medium: { dot: 'bg-amber-400',   badge: 'bg-amber-50 text-amber-600 border-amber-200',   bar: 'bg-amber-400'   },
+  High:   { dot: 'bg-rose-400',    badge: 'bg-rose-50 text-rose-600 border-rose-200',         bar: 'bg-rose-400'    },
+  Medium: { dot: 'bg-amber-400',   badge: 'bg-amber-50 text-amber-600 border-amber-200',       bar: 'bg-amber-400'   },
   Low:    { dot: 'bg-emerald-400', badge: 'bg-emerald-50 text-emerald-600 border-emerald-200', bar: 'bg-emerald-400' },
 };
 
@@ -89,13 +89,11 @@ export default function TodoCenter() {
   };
 
   const stats = {
-  total: todos.length,
-  high: todos.filter(t => t.priority === 'High').length,
-  medium: todos.filter(t => t.priority === 'Medium').length,
-  low: todos.filter(t => t.priority === 'Low').length,
-};
-
-   
+    total:  todos.length,
+    high:   todos.filter(t => t.priority === 'High').length,
+    medium: todos.filter(t => t.priority === 'Medium').length,
+    low:    todos.filter(t => t.priority === 'Low').length,
+  };
 
   const filtered = todos.filter(t => {
     if (filter === 'High' || filter === 'Medium' || filter === 'Low') return t.priority === filter;
@@ -124,6 +122,7 @@ export default function TodoCenter() {
       .then(r => {
         if (!r.isConfirmed) return;
         setTodos(p => [{ id: crypto.randomUUID?.() || `${Date.now()}`, title: clean, notes: notes.trim(), dueDate, priority, completed: false, createdAt: new Date().toISOString() }, ...p]);
+        // Reset form fields
         setTitle(''); setNotes(''); setDueDate(''); setPriority('Medium');
         Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1400, ...SW }).fire({ icon: 'success', title: 'Task added' });
       });
@@ -137,9 +136,17 @@ export default function TodoCenter() {
     Swal.fire({ ...SW, title: 'Reset all?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#94a3b8', confirmButtonText: 'Clear all', reverseButtons: true })
       .then(r => { if (r.isConfirmed) setTodos([]); });
 
-  const toggle   = (id: string) => setTodos(p => p.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+  // Clear only the form fields (not the todo list)
+  const handleClearForm = () => {
+    setTitle('');
+    setNotes('');
+    setDueDate('');
+    setPriority('Medium');
+  };
+
+  const toggle    = (id: string) => setTodos(p => p.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
   const clearDone = () => setTodos(p => p.filter(t => !t.completed));
-  const fmtDate  = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+  const fmtDate   = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
 
   const inp = 'w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100';
 
@@ -161,65 +168,72 @@ export default function TodoCenter() {
                 <p className="text-sm text-slate-400">Welcome, <span className="font-semibold text-indigo-500">{userName}</span></p>
               </div>
             </div>
-            
-            
+          </div>
+
+          {/* Compact Stats Row */}
+          <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+
+            {/* Total */}
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                <LayoutList className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-lg font-bold leading-none text-slate-700">{stats.total}</p>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Total</p>
+              </div>
+            </div>
+
+            {/* High */}
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-500">
+                <AlertTriangle className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-lg font-bold leading-none text-rose-500">{stats.high}</p>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">High</p>
+              </div>
+            </div>
+
+            {/* Medium */}
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-500">
+                <Clock className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-lg font-bold leading-none text-amber-600">{stats.medium}</p>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Med</p>
+              </div>
+            </div>
+
+            {/* Low */}
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-500">
+                <CheckCheck className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-lg font-bold leading-none text-emerald-600">{stats.low}</p>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Low</p>
+              </div>
             </div>
           </div>
 
-         {/* Compact Stats Row */}
-<div className="mb-6 grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
-  
-  {/* Total */}
-  <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:flex-col md:items-start md:p-4">
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
-      <LayoutList className="h-4 w-4"/>
-    </div>
-    <div>
-      <p className="text-lg font-bold leading-none text-slate-700 md:text-2xl">{stats.total}</p>
-      <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Total</p>
-    </div>
-  </div>
+          {/* Main grid — proportional columns on large screens */}
+          <div className="grid gap-5 lg:grid-cols-[minmax(320px,380px)_1fr]">
 
-  {/* High */}
-  <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:flex-col md:items-start md:p-4">
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-500">
-      <AlertTriangle className="h-4 w-4"/>
-    </div>
-    <div>
-      <p className="text-lg font-bold leading-none text-rose-500 md:text-2xl">{stats.high}</p>
-      <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">High</p>
-    </div>
-  </div>
-
-  {/* Medium */}
-  <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:flex-col md:items-start md:p-4">
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-500">
-      <Clock className="h-4 w-4"/>
-    </div>
-    <div>
-      <p className="text-lg font-bold leading-none text-amber-600 md:text-2xl">{stats.medium}</p>
-      <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Med</p>
-    </div>
-  </div>
-
-  {/* Low */}
-  <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:flex-col md:items-start md:p-4">
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-500">
-      <CheckCheck className="h-4 w-4"/>
-    </div>
-    <div>
-      <p className="text-lg font-bold leading-none text-emerald-600 md:text-2xl">{stats.low}</p>
-      <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Low</p>
-    </div>
-  </div>
-</div>
-          {/* Main grid */}
-          <div className="grid gap-5 xl:grid-cols-[400px_1fr]">
-
-            {/* Add task */}
+            {/* Add task panel */}
             <div className="space-y-3">
               <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <p className="mb-5 text-xs font-bold uppercase tracking-widest text-slate-400">New Task</p>
+                <div className="mb-5 flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">New Task</p>
+                  {/* Clear form button */}
+                  <button
+                    onClick={handleClearForm}
+                    className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+                  >
+                    <X className="h-3 w-3" /> Clear
+                  </button>
+                </div>
 
                 <div className="space-y-3">
                   <div>
@@ -266,12 +280,14 @@ export default function TodoCenter() {
               </div>
 
               <div className="flex gap-2">
-                <button onClick={clearDone} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2 text-xs font-medium text-slate-500 shadow-sm hover:border-emerald-200 hover:text-emerald-600">
-                  <CheckCheck className="h-3.5 w-3.5" /> Clear Done
-                </button>
                 <button onClick={handleReset} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2 text-xs font-medium text-slate-500 shadow-sm hover:border-rose-200 hover:text-rose-500">
                   <RotateCcw className="h-3.5 w-3.5" /> Reset All
                 </button>
+                {todos.some(t => t.completed) && (
+                  <button onClick={clearDone} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2 text-xs font-medium text-slate-500 shadow-sm hover:border-emerald-200 hover:text-emerald-600">
+                    <CheckCheck className="h-3.5 w-3.5" /> Clear Done
+                  </button>
+                )}
               </div>
             </div>
 
@@ -408,7 +424,7 @@ export default function TodoCenter() {
           </div>
 
         </div>
-      
+      </div>
     </>
   );
 }
