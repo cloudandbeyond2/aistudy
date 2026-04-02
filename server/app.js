@@ -64,6 +64,7 @@ import reportRoutes from "./routes/report.routes.js";
 import analyticsRoutes from "./routes/analytics.routes.js";
 import superAdminRoutes from "./routes/superAdmin.routes.js";
 import mockTrainingRoutes from "./routes/mockTraining.routes.js";
+import internshipRoutes from './routes/internship.routes.js';
 
 
 // -------------------- INIT --------------------
@@ -161,6 +162,7 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api", orgLandingRoutes);
 app.use("/api", superAdminRoutes);
 app.use("/api", mockTrainingRoutes);
+app.use("/api", internshipRoutes);
 
 // -------------------- ERROR HANDLER --------------------
 app.use((err, req, res, next) => {
