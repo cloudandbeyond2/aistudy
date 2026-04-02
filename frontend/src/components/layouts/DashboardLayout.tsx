@@ -71,7 +71,7 @@ import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import NotificationBell from '../NotificationBell';
-
+import mainlogo from "@/assets/images/logo-colossus-dark 1.png";
 const combineDateAndTime = (dateValue?: string, timeValue?: string) => {
   if (!dateValue || !timeValue) return null;
   const baseDate = new Date(dateValue);
@@ -954,7 +954,7 @@ const DashboardLayoutContent = () => {
             <SidebarTrigger className="mr-2">
               <Menu className="h-6 w-6" />
             </SidebarTrigger>
-            <img src={appWordmarkLight} alt={appName} className="h-7 w-auto max-w-[150px]" />
+            <img src={mainlogo} alt={appName} className="h-7 w-auto max-w-[150px]" />
             <div className="ml-auto flex items-center gap-2">
               <NotificationBell />
             </div>
