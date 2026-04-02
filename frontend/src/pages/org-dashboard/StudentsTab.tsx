@@ -34,6 +34,7 @@ const StudentsTab = () => {
     const [selectedDepartment, setSelectedDepartment] = useState('all');
     const [selectedClass, setSelectedClass] = useState('all');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [currentPage, setCurrentPage] = useState(1);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
     
@@ -49,8 +50,19 @@ const StudentsTab = () => {
         rollNo: '', 
         academicYear: '' 
     });
+    const [isAddingStudent, setIsAddingStudent] = useState(false);
+    const [newStudentErrors, setNewStudentErrors] = useState({
+        name: '',
+        email: '',
+        password: '',
+        department: ''
+    });
     const [editStudent, setEditStudent] = useState<any>(null);
     const [placementStudent, setPlacementStudent] = useState(null);
+    const studentsPerPage = 8;
+    const primaryGradient = "from-[#11405f] to-[#11a5e4]";
+    const secondaryGradient = "from-[#0f4d73] to-[#1597d6]";
+    const accentGradient = "from-[#0d3552] to-[#1a6a9e]";
 
     // Animation variants
     const containerVariants = {
@@ -136,14 +148,34 @@ const StudentsTab = () => {
 
     // Add single student
     const handleAddStudent = async () => {
-        if (!newStudent.name || !newStudent.email) {
-            toast({ title: "Error", description: "Name and email are required", variant: "destructive" });
-            return;
-        }
+        if (isAddingStudent) return;
+
+        const trimmedName = newStudent.name.trim();
+        const trimmedEmail = newStudent.email.trim();
+        const trimmedPassword = newStudent.password.trim();
+        const validationErrors = {
+            name: trimmedName ? '' : 'Full name is required.',
+            email: !trimmedEmail
+                ? 'Email is required.'
+                : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)
+                    ? 'Enter a valid email address.'
+                    : '',
+            password: trimmedPassword ? '' : 'Password is required.',
+            department: role === 'dept_admin' || newStudent.department
+                ? ''
+                : 'Department is required.'
+        };
+
+        setNewStudentErrors(validationErrors);
+        if (Object.values(validationErrors).some(Boolean)) return;
         
         try {
+            setIsAddingStudent(true);
             const res = await axios.post(`${serverURL}/api/org/student/add`, { 
                 ...newStudent, 
+                name: trimmedName,
+                email: trimmedEmail,
+                password: trimmedPassword,
                 organizationId: orgId 
             });
             if (res.data.success) {
@@ -151,6 +183,12 @@ const StudentsTab = () => {
                 setNewStudent({ 
                     name: '', email: '', password: '', department: role === 'dept_admin' ? deptId : '', 
                     section: '', studentClass: '', rollNo: '', academicYear: '' 
+                });
+                setNewStudentErrors({
+                    name: '',
+                    email: '',
+                    password: '',
+                    department: ''
                 });
                 setOpenStudentDialog(false);
                 fetchStudents();
@@ -161,6 +199,8 @@ const StudentsTab = () => {
         } catch (e) {
             console.error(e);
             toast({ title: "Error", description: e.response?.data?.message || "Request failed", variant: "destructive" });
+        } finally {
+            setIsAddingStudent(false);
         }
     };
 
@@ -347,9 +387,31 @@ const StudentsTab = () => {
         return matchesSearch && matchesDept && matchesClass;
     });
 
+    const totalPages = Math.max(1, Math.ceil(filteredStudents.length / studentsPerPage));
+    const paginatedStudents = filteredStudents.slice(
+        (currentPage - 1) * studentsPerPage,
+        currentPage * studentsPerPage
+    );
+    const paginationStart = filteredStudents.length === 0 ? 0 : (currentPage - 1) * studentsPerPage + 1;
+    const paginationEnd = Math.min(currentPage * studentsPerPage, filteredStudents.length);
+    const visiblePageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1).filter((page) => {
+        if (totalPages <= 5) return true;
+        return Math.abs(page - currentPage) <= 1 || page === 1 || page === totalPages;
+    });
+
     // Calculate stats
     const placedCount = students.filter((s: any) => s.studentDetails?.isPlacementClosed).length;
     const placementRate = students.length > 0 ? ((placedCount / students.length) * 100).toFixed(1) : 0;
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [studentSearch, selectedDepartment, selectedClass, viewMode]);
+
+    useEffect(() => {
+        if (currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        }
+    }, [currentPage, totalPages]);
 
     useEffect(() => {
         if (!orgId) {
@@ -379,7 +441,7 @@ const StudentsTab = () => {
                 {/* Page Header */}
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 md:mb-8">
                     <div>
-                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        <h1 className={`text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r ${primaryGradient} bg-clip-text text-transparent`}>
                             Student Management
                         </h1>
                         <p className="text-xs sm:text-sm text-muted-foreground mt-1">
@@ -408,14 +470,14 @@ const StudentsTab = () => {
 >
     {/* Total Students Card */}
     <motion.div variants={itemVariants} className="h-full">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-full">
+        <Card className={`bg-gradient-to-br ${primaryGradient} text-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-full`}>
             <CardContent className="p-4 md:p-5 lg:p-6 flex flex-col justify-between h-full">
                 <div>
                     <div className="flex items-start justify-between mb-3 md:mb-4">
                         <div className="flex-1">
-                            <p className="text-blue-100 text-xs sm:text-sm font-medium uppercase tracking-wide">Total Students</p>
+                            <p className="text-cyan-100 text-xs sm:text-sm font-medium uppercase tracking-wide">Total Students</p>
                             <p className="text-2xl sm:text-3xl lg:text-4xl font-bold mt-1 lg:mt-2">{stats.studentCount}</p>
-                            <p className="text-[10px] sm:text-xs text-blue-100 mt-1 lg:mt-2">Capacity: {stats.studentLimit} students</p>
+                            <p className="text-[10px] sm:text-xs text-cyan-100 mt-1 lg:mt-2">Capacity: {stats.studentLimit} students</p>
                         </div>
                         <div className="bg-white/15 rounded-xl p-2 md:p-2.5 lg:p-3 backdrop-blur-sm">
                             <Users className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-white" />
@@ -424,7 +486,7 @@ const StudentsTab = () => {
                     
                     {/* Stats Row */}
                     <div className="flex justify-between items-baseline mb-3">
-                        <span className="text-blue-100 text-[10px] sm:text-xs">Utilization</span>
+                        <span className="text-cyan-100 text-[10px] sm:text-xs">Utilization</span>
                         <span className="text-white text-sm sm:text-base font-semibold">
                             {((stats.studentCount / (stats.studentLimit || 1)) * 100).toFixed(1)}%
                         </span>
@@ -446,14 +508,14 @@ const StudentsTab = () => {
 
     {/* Placed Students Card */}
     <motion.div variants={itemVariants} className="h-full">
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-full">
+        <Card className={`bg-gradient-to-br ${secondaryGradient} text-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-full`}>
             <CardContent className="p-4 md:p-5 lg:p-6 flex flex-col justify-between h-full">
                 <div>
                     <div className="flex items-start justify-between mb-3 md:mb-4">
                         <div className="flex-1">
-                            <p className="text-green-100 text-xs sm:text-sm font-medium uppercase tracking-wide">Placed Students</p>
+                            <p className="text-cyan-100 text-xs sm:text-sm font-medium uppercase tracking-wide">Placed Students</p>
                             <p className="text-2xl sm:text-3xl lg:text-4xl font-bold mt-1 lg:mt-2">{placedCount}</p>
-                            <p className="text-[10px] sm:text-xs text-green-100 mt-1 lg:mt-2">Placement Rate: {placementRate}%</p>
+                            <p className="text-[10px] sm:text-xs text-cyan-100 mt-1 lg:mt-2">Placement Rate: {placementRate}%</p>
                         </div>
                         <div className="bg-white/15 rounded-xl p-2 md:p-2.5 lg:p-3 backdrop-blur-sm">
                             <Award className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-white" />
@@ -462,7 +524,7 @@ const StudentsTab = () => {
                     
                     {/* Stats Row */}
                     <div className="flex justify-between items-baseline mb-3">
-                        <span className="text-green-100 text-[10px] sm:text-xs">Success Rate</span>
+                        <span className="text-cyan-100 text-[10px] sm:text-xs">Success Rate</span>
                         <span className="text-white text-sm sm:text-base font-semibold">{placementRate}%</span>
                     </div>
                 </div>
@@ -482,14 +544,14 @@ const StudentsTab = () => {
 
     {/* Departments Card */}
     <motion.div variants={itemVariants} className="h-full">
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-full">
+        <Card className={`bg-gradient-to-br ${accentGradient} text-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-full`}>
             <CardContent className="p-4 md:p-5 lg:p-6 flex flex-col justify-between h-full">
                 <div>
                     <div className="flex items-start justify-between mb-3 md:mb-4">
                         <div className="flex-1">
-                            <p className="text-purple-100 text-xs sm:text-sm font-medium uppercase tracking-wide">Departments</p>
+                            <p className="text-cyan-100 text-xs sm:text-sm font-medium uppercase tracking-wide">Departments</p>
                             <p className="text-2xl sm:text-3xl lg:text-4xl font-bold mt-1 lg:mt-2">{departmentsList.length}</p>
-                            <p className="text-[10px] sm:text-xs text-purple-100 mt-1 lg:mt-2">Active Departments</p>
+                            <p className="text-[10px] sm:text-xs text-cyan-100 mt-1 lg:mt-2">Active Departments</p>
                         </div>
                         <div className="bg-white/15 rounded-xl p-2 md:p-2.5 lg:p-3 backdrop-blur-sm">
                             <BookOpen className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-white" />
@@ -498,7 +560,7 @@ const StudentsTab = () => {
                     
                     {/* Department Stats */}
                     <div className="flex justify-between items-baseline mb-3">
-                        <span className="text-purple-100 text-[10px] sm:text-xs">Distribution</span>
+                        <span className="text-cyan-100 text-[10px] sm:text-xs">Distribution</span>
                         <span className="text-white text-sm sm:text-base font-semibold">{departmentsList.length} Total</span>
                     </div>
                 </div>
@@ -513,7 +575,7 @@ const StudentsTab = () => {
                     {departmentsList.length > 5 && (
                         <div className="flex-1 bg-white/20 rounded-full h-2 relative group">
                             <div className="bg-white/40 rounded-full h-2 w-full" />
-                            <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-white text-purple-600 text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-white text-[#11405f] text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                                 +{departmentsList.length - 5} more
                             </div>
                         </div>
@@ -525,16 +587,16 @@ const StudentsTab = () => {
 
     {/* Capacity Used Card */}
     <motion.div variants={itemVariants} className="h-full">
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-full">
+        <Card className={`bg-gradient-to-br ${primaryGradient} text-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-full`}>
             <CardContent className="p-4 md:p-5 lg:p-6 flex flex-col justify-between h-full">
                 <div>
                     <div className="flex items-start justify-between mb-3 md:mb-4">
                         <div className="flex-1">
-                            <p className="text-orange-100 text-xs sm:text-sm font-medium uppercase tracking-wide">Capacity Used</p>
+                            <p className="text-cyan-100 text-xs sm:text-sm font-medium uppercase tracking-wide">Capacity Used</p>
                             <p className="text-2xl sm:text-3xl lg:text-4xl font-bold mt-1 lg:mt-2">
                                 {stats.studentLimit > 0 ? ((stats.studentCount / stats.studentLimit) * 100).toFixed(1) : 0}%
                             </p>
-                            <p className="text-[10px] sm:text-xs text-orange-100 mt-1 lg:mt-2">
+                            <p className="text-[10px] sm:text-xs text-cyan-100 mt-1 lg:mt-2">
                                 {stats.studentCount} of {stats.studentLimit} students
                             </p>
                         </div>
@@ -545,7 +607,7 @@ const StudentsTab = () => {
                     
                     {/* Stats Row */}
                     <div className="flex justify-between items-baseline mb-3">
-                        <span className="text-orange-100 text-[10px] sm:text-xs">Available Slots</span>
+                        <span className="text-cyan-100 text-[10px] sm:text-xs">Available Slots</span>
                         <span className="text-white text-sm sm:text-base font-semibold">
                             {stats.studentLimit - stats.studentCount} left
                         </span>
@@ -734,9 +796,23 @@ const StudentsTab = () => {
                                     </DialogContent>
                                 </Dialog>
                                 
-                                <Dialog open={openStudentDialog} onOpenChange={setOpenStudentDialog}>
+                                <Dialog
+                                    open={openStudentDialog}
+                                    onOpenChange={(open) => {
+                                        setOpenStudentDialog(open);
+                                        if (open) {
+                                            setIsAddingStudent(false);
+                                            setNewStudentErrors({
+                                                name: '',
+                                                email: '',
+                                                password: '',
+                                                department: ''
+                                            });
+                                        }
+                                    }}
+                                >
                                     <DialogTrigger asChild>
-                                        <Button className="gap-1 sm:gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-xs sm:text-sm">
+                                        <Button className={`gap-1 sm:gap-2 bg-gradient-to-r ${primaryGradient} hover:opacity-90 text-xs sm:text-sm`}>
                                             <UserPlus className="w-3 h-3 sm:w-4 sm:h-4" />
                                             <span className="hidden xs:inline">Add Student</span>
                                         </Button>
@@ -756,10 +832,18 @@ const StudentsTab = () => {
                                                     <Input 
                                                         className="pl-8 sm:pl-9 text-sm"
                                                         value={newStudent.name} 
-                                                        onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })} 
+                                                        onChange={(e) => {
+                                                            setNewStudent({ ...newStudent, name: e.target.value });
+                                                            if (newStudentErrors.name) {
+                                                                setNewStudentErrors({ ...newStudentErrors, name: '' });
+                                                            }
+                                                        }} 
                                                         placeholder="Enter full name"
                                                     />
                                                 </div>
+                                                {newStudentErrors.name ? (
+                                                    <p className="text-xs text-red-600">{newStudentErrors.name}</p>
+                                                ) : null}
                                             </div>
                                             <div className="space-y-2">
                                                 <Label className="text-xs sm:text-sm">Email *</Label>
@@ -769,10 +853,18 @@ const StudentsTab = () => {
                                                         type="email"
                                                         className="pl-8 sm:pl-9 text-sm"
                                                         value={newStudent.email} 
-                                                        onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} 
+                                                        onChange={(e) => {
+                                                            setNewStudent({ ...newStudent, email: e.target.value });
+                                                            if (newStudentErrors.email) {
+                                                                setNewStudentErrors({ ...newStudentErrors, email: '' });
+                                                            }
+                                                        }} 
                                                         placeholder="student@example.com"
                                                     />
                                                 </div>
+                                                {newStudentErrors.email ? (
+                                                    <p className="text-xs text-red-600">{newStudentErrors.email}</p>
+                                                ) : null}
                                             </div>
                                             <div className="space-y-2">
                                                 <Label className="text-xs sm:text-sm">Password *</Label>
@@ -782,10 +874,18 @@ const StudentsTab = () => {
                                                         type="password"
                                                         className="pl-8 sm:pl-9 text-sm"
                                                         value={newStudent.password} 
-                                                        onChange={(e) => setNewStudent({ ...newStudent, password: e.target.value })} 
+                                                        onChange={(e) => {
+                                                            setNewStudent({ ...newStudent, password: e.target.value });
+                                                            if (newStudentErrors.password) {
+                                                                setNewStudentErrors({ ...newStudentErrors, password: '' });
+                                                            }
+                                                        }} 
                                                         placeholder="Enter password"
                                                     />
                                                 </div>
+                                                {newStudentErrors.password ? (
+                                                    <p className="text-xs text-red-600">{newStudentErrors.password}</p>
+                                                ) : null}
                                             </div>
                                             <div className="space-y-2">
                                                 <Label className="text-xs sm:text-sm">Department</Label>
@@ -794,7 +894,12 @@ const StudentsTab = () => {
                                                     <select
                                                         className="w-full pl-8 sm:pl-9 pr-3 py-2 rounded-md border bg-background text-sm"
                                                         value={newStudent.department}
-                                                        onChange={(e) => setNewStudent({ ...newStudent, department: e.target.value })}
+                                                        onChange={(e) => {
+                                                            setNewStudent({ ...newStudent, department: e.target.value });
+                                                            if (newStudentErrors.department) {
+                                                                setNewStudentErrors({ ...newStudentErrors, department: '' });
+                                                            }
+                                                        }}
                                                         disabled={role === 'dept_admin'}
                                                     >
                                                         <option value="">Select Department</option>
@@ -808,6 +913,9 @@ const StudentsTab = () => {
                                                         Department is set to your assigned department
                                                     </p>
                                                 )}
+                                                {newStudentErrors.department ? (
+                                                    <p className="text-xs text-red-600">{newStudentErrors.department}</p>
+                                                ) : null}
                                             </div>
                                             <div className="space-y-2">
                                                 <Label className="text-xs sm:text-sm">Class</Label>
@@ -855,8 +963,8 @@ const StudentsTab = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <Button onClick={handleAddStudent} className="w-full">
-                                            Add Student
+                                        <Button onClick={handleAddStudent} disabled={isAddingStudent} className="w-full">
+                                            {isAddingStudent ? 'Adding...' : 'Add Student'}
                                         </Button>
                                     </DialogContent>
                                 </Dialog>
@@ -875,7 +983,7 @@ const StudentsTab = () => {
                                         exit={{ opacity: 0 }}
                                         className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4"
                                     >
-                                        {filteredStudents.map((student: any) => {
+                                        {paginatedStudents.map((student: any) => {
                                             const studentDeptId = getDepartmentId(student);
                                             const departmentName = getDepartmentName(studentDeptId);
                                             
@@ -891,12 +999,12 @@ const StudentsTab = () => {
                                                         <CardContent className="p-3 sm:p-4 md:p-6">
                                                             <div className="flex items-start justify-between mb-3 sm:mb-4">
                                                                 <div className="relative">
-                                                                    <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-base sm:text-lg font-bold">
+                                                                    <div className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br ${primaryGradient} flex items-center justify-center text-white text-base sm:text-lg font-bold`}>
                                                                         {student.mName?.substring(0, 2).toUpperCase() || 'ST'}
                                                                     </div>
                                                                     {student.studentDetails?.isPlacementClosed && (
                                                                         <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2">
-                                                                            <Badge className="bg-green-500 text-white text-[10px] sm:text-xs">
+                                                                            <Badge className="bg-[#11a5e4] text-white text-[10px] sm:text-xs">
                                                                                 <Award className="w-2 h-2 sm:w-3 sm:h-3 mr-1" />
                                                                                 Placed
                                                                             </Badge>
@@ -947,7 +1055,7 @@ const StudentsTab = () => {
                                                                 )}
                                                                 {student.studentDetails?.placementCompany && (
                                                                     <div className="mt-1 sm:mt-2 pt-1 sm:pt-2 border-t">
-                                                                        <p className="text-[10px] sm:text-xs font-semibold text-green-600 flex items-center gap-1 truncate">
+                                                                        <p className="text-[10px] sm:text-xs font-semibold text-[#11405f] flex items-center gap-1 truncate">
                                                                             <Briefcase className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
                                                                             <span className="truncate">
                                                                                 {student.studentDetails.placementPosition || 'Placed'} @ {student.studentDetails.placementCompany}
@@ -982,7 +1090,7 @@ const StudentsTab = () => {
                                         exit={{ opacity: 0 }}
                                         className="space-y-2"
                                     >
-                                        {filteredStudents.map((student: any, index: number) => {
+                                        {paginatedStudents.map((student: any, index: number) => {
                                             const studentDeptId = getDepartmentId(student);
                                             const departmentName = getDepartmentName(studentDeptId);
                                             
@@ -996,14 +1104,14 @@ const StudentsTab = () => {
                                                 >
                                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                                         <div className="flex items-center gap-2 sm:gap-3 flex-1 w-full sm:w-auto">
-                                                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
+                                                            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br ${primaryGradient} flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0`}>
                                                                 {student.mName?.substring(0, 2).toUpperCase() || 'ST'}
                                                             </div>
                                                             <div className="flex-1 min-w-0">
                                                                 <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                                                                     <p className="font-semibold text-sm sm:text-base truncate">{student.mName}</p>
                                                                     {student.studentDetails?.isPlacementClosed && (
-                                                                        <Badge className="bg-green-500 text-white text-[10px] sm:text-xs">
+                                                                        <Badge className="bg-[#11a5e4] text-white text-[10px] sm:text-xs">
                                                                             Placed
                                                                         </Badge>
                                                                     )}
@@ -1072,6 +1180,60 @@ const StudentsTab = () => {
                                 </motion.div>
                             )}
                         </AnimatePresence>
+                        {filteredStudents.length > 0 && (
+                            <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+                                <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
+                                    Showing {paginationStart}-{paginationEnd} of {filteredStudents.length} students
+                                </p>
+                                <div className="flex flex-col gap-2 xs:flex-row xs:items-center xs:justify-center sm:justify-end">
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                                            disabled={currentPage === 1}
+                                            className="min-w-[88px]"
+                                        >
+                                            Previous
+                                        </Button>
+                                        <span className="min-w-[96px] text-center text-xs sm:text-sm text-muted-foreground">
+                                            Page {currentPage} of {totalPages}
+                                        </span>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                                            disabled={currentPage === totalPages}
+                                            className="min-w-[88px]"
+                                        >
+                                            Next
+                                        </Button>
+                                    </div>
+                                    <div className="flex flex-wrap items-center justify-center gap-1">
+                                        {visiblePageNumbers.map((page, index) => {
+                                            const previousPage = visiblePageNumbers[index - 1];
+                                            const showGap = previousPage && page - previousPage > 1;
+
+                                            return (
+                                                <React.Fragment key={page}>
+                                                    {showGap ? (
+                                                        <span className="px-1 text-xs text-muted-foreground">...</span>
+                                                    ) : null}
+                                                    <Button
+                                                        variant={currentPage === page ? 'default' : 'outline'}
+                                                        size="sm"
+                                                        onClick={() => setCurrentPage(page)}
+                                                        className="h-8 min-w-[2rem] px-2 text-xs sm:text-sm"
+                                                    >
+                                                        {page}
+                                                    </Button>
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -1252,7 +1414,7 @@ const StudentsTab = () => {
                                         placeholder="e.g., Software Engineer"
                                     />
                                 </div>
-                                <div className="flex items-center gap-2 p-2 sm:p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                                <div className="flex items-center gap-2 p-2 sm:p-3 bg-[#11405f]/10 dark:bg-[#11405f]/20 rounded-lg">
                                     <input
                                         type="checkbox"
                                         id="placementClosed"
