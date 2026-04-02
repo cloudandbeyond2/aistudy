@@ -13,7 +13,7 @@ import { Content } from '@tiptap/react'
 import { MinimalTiptapEditor } from '../minimal-tiptap'
 import YouTube from 'react-youtube';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2, Loader2, Sparkles, BookOpen, Image as ImageIcon, Brain, Video, FileText, ArrowLeft, ArrowRight, X } from 'lucide-react';
+import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2, Loader2, Sparkles, BookOpen, Image as ImageIcon, Brain, Video, FileText, ArrowLeft, ArrowRight, X, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getCoursePresentationMeta } from '@/lib/coursePresentation';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -41,65 +41,241 @@ const getFallbackImage = (topic: string, subtopic: string) => {
 };
 
 
-// Add this function inside your CoursePage component
-const cleanGeneratedHtml = (htmlContent) => {
-  if (!htmlContent) return '';
-  
-  // Remove common unwanted wrapper tags like <html>, <body>, etc.
-  let cleaned = String(htmlContent);
 
-  // Remove markdown code fences that sometimes wrap generated HTML.
-  cleaned = cleaned.replace(/^\s*```html\s*/i, '');
-  cleaned = cleaned.replace(/^\s*```\s*/i, '');
-  cleaned = cleaned.replace(/\s*```\s*$/i, '');
-
-  // Remove stray leading "html" text left behind by partial fence stripping.
-  cleaned = cleaned.replace(/^\s*html\s*(?:\r?\n|\s)+/i, '');
-  
-  // Remove <html> tags and their contents if they're wrapping everything
-  cleaned = cleaned.replace(/<html[^>]*>/gi, '');
-  cleaned = cleaned.replace(/<\/html>/gi, '');
-  
-  // Remove <body> tags
-  cleaned = cleaned.replace(/<body[^>]*>/gi, '');
-  cleaned = cleaned.replace(/<\/body>/gi, '');
-  
-  // Remove <head> tags and their contents
-  cleaned = cleaned.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
-  
-  // Remove DOCTYPE declarations
-  cleaned = cleaned.replace(/<!DOCTYPE[^>]*>/gi, '');
-  
-  // Remove XML declarations
-  cleaned = cleaned.replace(/<\?xml[^>]*\?>/gi, '');
-  
-  // Remove meta tags
-  cleaned = cleaned.replace(/<meta[^>]*>/gi, '');
-  
-  // Remove title tags
-  cleaned = cleaned.replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '');
-  
-  // Remove style tags
-  cleaned = cleaned.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-  
-  // Remove script tags
-  cleaned = cleaned.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-  
-  // Remove link tags
-  cleaned = cleaned.replace(/<link[^>]*>/gi, '');
-  
-  // Remove unnecessary div wrappers if they're just wrapping content without classes
-  // This preserves divs that have meaningful content or classes
-  cleaned = cleaned.replace(/<div[^>]*>\s*<div[^>]*>/gi, '<div>');
-  cleaned = cleaned.replace(/<\/div>\s*<\/div>/gi, '</div>');
-  
-  // Trim whitespace
-  cleaned = cleaned.trim();
-  
-  return cleaned;
-};
 // Loading Popup Component
-const LoadingPopup = ({ isOpen, stage, subtopic, progress = 0 }) => {
+// Loading Popup Component
+// const LoadingPopup = ({ isOpen, stage, subtopic, progress = 0 }) => {
+//   // Calculate content vs visuals progress
+//   // Total 100%: 0-50% is content generation, 50-100% is fetching visuals
+//   const getAdjustedProgress = () => {
+//     if (stage === 'theory' || stage === 'video' || stage === 'transcript') {
+//       // Content generation stages: progress from 0 to 50%
+//       return Math.min(progress * 0.5, 50);
+//     } else if (stage === 'image') {
+//       // Image/visuals stage: progress from 50% to 100%
+//       // When progress is 0 in image stage, show 50%
+//       // When progress is 100 in image stage, show 100%
+//       return 50 + (progress * 0.5);
+//     } else if (stage === 'complete') {
+//       return 100;
+//     }
+//     return Math.min(progress, 100);
+//   };
+
+//   const adjustedProgress = getAdjustedProgress();
+  
+//   const getStageContent = () => {
+//     switch(stage) {
+//       case 'video':
+//         return {
+//           icon: <Video className="w-8 h-8 text-red-500 animate-pulse" />,
+//           title: 'Searching Video',
+//           message: `Finding the best tutorial for "${subtopic}"`,
+//           details: 'Analyzing YouTube for high-quality content...',
+//           color: 'red'
+//         };
+//       case 'transcript':
+//         return {
+//           icon: <FileText className="w-8 h-8 text-orange-500 animate-bounce" />,
+//           title: 'Extracting Knowledge',
+//           message: `Processing video transcript for "${subtopic}"`,
+//           details: 'Summarizing key points for fast learning...',
+//           color: 'orange'
+//         };
+//       case 'theory':
+//         return {
+//           icon: <BookOpen className="w-8 h-8 text-blue-500 animate-pulse" />,
+//           title: 'Generating Content',
+//           message: `AI is creating learning material for "${subtopic}"`,
+//           details: 'This usually takes a few seconds...',
+//           color: 'blue'
+//         };
+//       case 'image':
+//         return {
+//           icon: <ImageIcon className="w-8 h-8 text-green-500 animate-bounce" />,
+//           title: 'Fetching Visuals',
+//           message: `Finding the perfect image for "${subtopic}"`,
+//           details: 'Optimizing visuals for better learning...',
+//           color: 'green'
+//         };
+//       case 'complete':
+//         return {
+//           icon: <Sparkles className="w-8 h-8 text-yellow-500 animate-spin" />,
+//           title: 'Finalizing',
+//           message: 'Polishing the content for best experience',
+//           details: 'Almost there...',
+//           color: 'yellow'
+//         };
+//       default:
+//         return {
+//           icon: <Brain className="w-8 h-8 text-purple-500 animate-pulse" />,
+//           title: 'AI is Thinking',
+//           message: `Preparing your subtopic "${subtopic}"`,
+//           details: 'This may take a few seconds...',
+//           color: 'purple'
+//         };
+//     }
+//   };
+
+//   const content = getStageContent();
+
+//   if (!isOpen) return null;
+
+//   // Determine which phase we're in for the label
+//   const isContentPhase = stage === 'theory' || stage === 'video' || stage === 'transcript' || (!stage && adjustedProgress <= 50);
+//   const phaseLabel = isContentPhase ? 'Generating Content' : 'Fetching Visuals';
+//   const phaseProgress = isContentPhase ? adjustedProgress : adjustedProgress - 50;
+
+//   return (
+//     <Dialog open={isOpen} onOpenChange={() => {}}>
+//       <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
+//         {/* Hidden title for accessibility */}
+//         <DialogTitle className="sr-only">
+//           {content.title}
+//         </DialogTitle>
+//         <div className="flex flex-col items-center py-8 px-4">
+//           {/* Animated Icon */}
+//           <div className={`relative mb-6`}>
+//             <div className={`absolute inset-0 rounded-full bg-${content.color}-500/20 animate-ping`}></div>
+//             <div className={`relative z-10 p-4 rounded-full bg-${content.color}-500/10`}>
+//               {content.icon}
+//             </div>
+//           </div>
+
+//           {/* Visible Title - Dynamic based on phase */}
+//           <h2 className="text-2xl font-bold text-center mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+//             {isContentPhase ? 'Generating Content' : 'Fetching Visuals'}
+//           </h2>
+
+//           {/* Subtitle showing current stage */}
+//           <p className="text-sm text-center text-muted-foreground mb-1">
+//             {content.title} • {content.message}
+//           </p>
+
+//           {/* Progress Bar - Split View */}
+//           <div className="w-full mt-4 mb-2">
+//             {/* <div className="flex justify-between text-xs text-muted-foreground mb-1">
+//               <span>Generating Content</span>
+//               <span>Fetching Visuals</span>
+//             </div> */}
+//             <div className="w-full h-3 bg-muted rounded-full overflow-hidden flex">
+//               {/* Content section (0-50%) */}
+//               <div 
+//                 className="h-full bg-blue-500 transition-all duration-300 rounded-l-full"
+//                 style={{ width: `${Math.min(adjustedProgress, 50)}%` }}
+//               />
+//               {/* Visuals section (50-100%) */}
+//               <div 
+//                 className="h-full bg-blue-500 transition-all duration-300 rounded-r-full"
+//                 style={{ width: `${Math.max(0, adjustedProgress - 50)}%` }}
+//               />
+//             </div>
+//           </div>
+
+//           {/* Phase-specific progress text */}
+//           {/* <div className="flex justify-between w-full text-sm font-medium text-muted-foreground mb-1">
+//             <span className={isContentPhase ? "text-blue-600 dark:text-blue-400 font-semibold" : ""}>
+//               {Math.min(adjustedProgress, 50)}%
+//             </span>
+//             <span className={!isContentPhase ? "text-green-600 dark:text-green-400 font-semibold" : ""}>
+//               {Math.max(0, adjustedProgress - 50)}%
+//             </span>
+//           </div> */}
+
+//           {/* Total Percentage */}
+//           <p className="text-lg font-bold text-primary mt-1">
+//            {Math.round(adjustedProgress)}% Complete
+//           </p>
+
+//           {/* Loading Details */}
+//           <div className="w-full space-y-3 mt-4">
+//             <div className="flex items-center gap-3">
+//               {adjustedProgress === 100 ? (
+//                 <CheckCircle2 className="w-4 h-4 text-green-500" />
+//               ) : (
+//                 <Loader2 className="w-4 h-4 animate-spin text-primary" />
+//               )}
+//               <span className="text-sm">
+//                 {adjustedProgress === 100 
+//                   ? 'Complete! Loading content...' 
+//                   : isContentPhase 
+//                     ? `Creating learning material... (${Math.round(phaseProgress)}% of content phase)`
+//                     : `Finding and optimizing visuals... (${Math.round(phaseProgress)}% of visuals phase)`}
+//               </span>
+//             </div>
+            
+//             {/* Show skeletons only when not complete */}
+//             {adjustedProgress < 100 && (
+//               <div className="grid grid-cols-2 gap-2 mt-4">
+//                 <Skeleton className="h-12 rounded-lg" />
+//                 <Skeleton className="h-12 rounded-lg" />
+//                 <Skeleton className="h-12 rounded-lg" />
+//                 <Skeleton className="h-12 rounded-lg" />
+//               </div>
+//             )}
+            
+//             {/* Show success message when complete */}
+//             {adjustedProgress === 100 && (
+//               <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+//                 <p className="text-sm text-green-600 dark:text-green-400 text-center">
+//                   ✓ Content and visuals ready!
+//                 </p>
+//               </div>
+//             )}
+//           </div>
+
+//           {/* Fun Fact or Tip */}
+//           {adjustedProgress < 100 && (
+//             <p className="text-xs text-muted-foreground/60 mt-6 italic">
+//               ✨ {isContentPhase 
+//                 ? 'AI is crafting personalized content just for you...' 
+//                 : 'Finding the perfect visuals to enhance your learning...'}
+//             </p>
+//           )}
+//         </div>
+//       </DialogContent>
+//     </Dialog>
+//   );
+// };
+
+
+// Loading Popup Component - Fixed version
+const LoadingPopup = ({ 
+  isOpen, 
+  stage, 
+  subtopic, 
+  progress = 0, 
+  onContinue,
+  showContinueButton, // Add this prop
+  remainingSeconds    // Add this prop to show the timer
+}) => {
+  // Calculate content vs visuals progress
+  // Total 100%: 0-50% is content generation, 50-100% is fetching visuals
+  const getAdjustedProgress = () => {
+    if (stage === 'theory' || stage === 'video' || stage === 'transcript') {
+      // Content generation stages: progress from 0 to 50%
+      return Math.min(progress * 0.5, 50);
+    } else if (stage === 'image') {
+      // Image/visuals stage: progress from 50% to 100%
+      // When progress is 0 in image stage, show 50%
+      // When progress is 100 in image stage, show 100%
+      return 50 + (progress * 0.5);
+    } else if (stage === 'complete') {
+      return 100;
+    }
+    return Math.min(progress, 100);
+  };
+
+  const adjustedProgress = getAdjustedProgress();
+  const isComplete = adjustedProgress === 100;
+  
+  // Format time for display (MM:SS)
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+  
   const getStageContent = () => {
     switch(stage) {
       case 'video':
@@ -157,6 +333,10 @@ const LoadingPopup = ({ isOpen, stage, subtopic, progress = 0 }) => {
 
   if (!isOpen) return null;
 
+  // Determine which phase we're in for the label
+  const isContentPhase = stage === 'theory' || stage === 'video' || stage === 'transcript' || (!stage && adjustedProgress <= 50);
+  const phaseProgress = isContentPhase ? adjustedProgress : adjustedProgress - 50;
+
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
@@ -173,74 +353,115 @@ const LoadingPopup = ({ isOpen, stage, subtopic, progress = 0 }) => {
             </div>
           </div>
 
-          {/* Visible Title */}
+          {/* Visible Title - Dynamic based on phase */}
           <h2 className="text-2xl font-bold text-center mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            {content.title}
+            {isComplete ? 'Ready to Continue!' : (isContentPhase ? 'Generating Content' : 'Fetching Visuals')}
           </h2>
 
-          {/* Message */}
-          <p className="text-center text-muted-foreground mb-4">
-            {content.message}
+          {/* Subtitle showing current stage */}
+          <p className="text-sm text-center text-muted-foreground mb-1">
+            {isComplete 
+              ? 'All content has been prepared for you' 
+              : `${content.title} • ${content.message}`}
           </p>
 
-          {/* Progress Bar */}
-          <div className="w-full h-2 bg-muted rounded-full overflow-hidden mb-3">
-            <div 
-              className={`h-full bg-${content.color}-500 transition-all duration-300 rounded-full`}
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          {/* Progress Percentage */}
-          <p className="text-sm font-medium text-muted-foreground mb-2">
-            {progress}% Complete
-          </p>
-
-          {/* Loading Details */}
-          <div className="w-full space-y-3 mt-4">
-            <div className="flex items-center gap-3">
-              {progress === 100 ? (
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-              ) : (
-                <Loader2 className="w-4 h-4 animate-spin text-primary" />
-              )}
-              <span className="text-sm">
-                {progress === 100 ? 'Complete! Loading content...' : content.details}
-              </span>
+          {/* Progress Bar - Split View */}
+          <div className="w-full mt-4 mb-2">
+            <div className="w-full h-3 bg-muted rounded-full overflow-hidden flex">
+              {/* Content section (0-50%) */}
+              <div 
+                className="h-full bg-blue-500 transition-all duration-300 rounded-l-full"
+                style={{ width: `${Math.min(adjustedProgress, 50)}%` }}
+              />
+              {/* Visuals section (50-100%) */}
+              <div 
+                className="h-full bg-blue-500 transition-all duration-300 rounded-r-full"
+                style={{ width: `${Math.max(0, adjustedProgress - 50)}%` }}
+              />
             </div>
-            
-            {/* Show skeletons only when not complete */}
-            {progress < 100 && (
-              <div className="grid grid-cols-2 gap-2 mt-4">
-                <Skeleton className="h-12 rounded-lg" />
-                <Skeleton className="h-12 rounded-lg" />
-                <Skeleton className="h-12 rounded-lg" />
-                <Skeleton className="h-12 rounded-lg" />
-              </div>
-            )}
-            
-            {/* Show success message when complete */}
-            {progress === 100 && (
-              <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                <p className="text-sm text-green-600 dark:text-green-400 text-center">
-                  ✓ Content generated successfully!
-                </p>
-              </div>
-            )}
           </div>
 
-          {/* Fun Fact or Tip */}
-          {progress < 100 && (
-            <p className="text-xs text-muted-foreground/60 mt-6 italic">
-              ✨ AI is crafting personalized content just for you...
-            </p>
-          )}
+          {/* Total Percentage */}
+          <p className="text-lg font-bold text-primary mt-1">
+           {Math.round(adjustedProgress)}% Complete
+          </p>
+
+          {/* Loading Details or Success Message */}
+          <div className="w-full space-y-3 mt-4">
+            {isComplete ? (
+              <>
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                    ✓ Content generation complete!
+                  </span>
+                </div>
+                
+                {/* 20-minute waiting message */}
+                <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="w-4 h-4 text-yellow-500" />
+                    <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                      Please wait 20 minutes before continuing
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    This pause helps with knowledge retention. Take a short break!
+                  </p>
+                </div>
+
+                {/* Continue Review Button - Only appears after 20 minutes */}
+                <Button 
+                  onClick={onContinue}
+                  disabled={!showContinueButton}
+                  className="w-full mt-4 gap-2 bg-green-600 hover:bg-green-700"
+                >
+                  {!showContinueButton ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Please wait {formatTime(remainingSeconds)}...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRight className="w-4 h-4" />
+                      Continue Review
+                    </>
+                  )}
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-3">
+                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  <span className="text-sm">
+                    {isContentPhase 
+                      ? `Creating learning material... (${Math.round(phaseProgress)}% of content phase)`
+                      : `Finding and optimizing visuals... (${Math.round(phaseProgress)}% of visuals phase)`}
+                  </span>
+                </div>
+                
+                {/* Show skeletons only when not complete */}
+                <div className="grid grid-cols-2 gap-2 mt-4">
+                  <Skeleton className="h-12 rounded-lg" />
+                  <Skeleton className="h-12 rounded-lg" />
+                  <Skeleton className="h-12 rounded-lg" />
+                  <Skeleton className="h-12 rounded-lg" />
+                </div>
+                
+                {/* Fun Fact or Tip */}
+                <p className="text-xs text-muted-foreground/60 mt-6 italic">
+                  ✨ {isContentPhase 
+                    ? 'AI is crafting personalized content just for you...' 
+                    : 'Finding the perfect visuals to enhance your learning...'}
+                </p>
+              </>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 };
-
 const QuizLoadingPopup = ({ isOpen, topic }) => {
   if (!isOpen) return null;
 
@@ -983,17 +1204,76 @@ Requirements:
   }
 
   // Add this helper function outside CoursePage or inside as a useCallback
-  const updateLocalCache = (clickedTopic, clickedSub, updates) => {
-    const updatedData = { ...jsonData };
-    const topicsList = updatedData['course_topics'] || updatedData[mainTopic?.toLowerCase()];
-    const targetSub = topicsList?.find(t => t.title === clickedTopic)?.subtopics.find(s => s.title === clickedSub);
+const updateLocalCache = (clickedTopic, clickedSub, updates) => {
+  const updatedData = { ...jsonData };
+  const topicsList = updatedData['course_topics'] || updatedData[mainTopic?.toLowerCase()];
+  const targetTopic = topicsList?.find(t => t.title === clickedTopic);
+  const targetSub = targetTopic?.subtopics.find(s => s.title === clickedSub);
+  
+  if (targetSub) {
+    Object.assign(targetSub, updates);
+    setJsonData(updatedData);
+    sessionStorage.setItem('jsonData', JSON.stringify(updatedData));
     
-    if (targetSub) {
-      Object.assign(targetSub, updates);
-      setJsonData(updatedData);
-      sessionStorage.setItem('jsonData', JSON.stringify(updatedData));
+    // If theory was updated and it's the currently selected subtopic, update the display
+    if (updates.theory && selected === clickedSub) {
+      setTheory(updates.theory);
     }
-  };
+  }
+};
+
+const cleanGeneratedHtml = (htmlContent) => {
+  if (!htmlContent) return '';
+  
+  // Convert to string if needed
+  let cleaned = String(htmlContent);
+
+  // Remove markdown code fences
+  cleaned = cleaned.replace(/^\s*```html?\s*/i, '');
+  cleaned = cleaned.replace(/^\s*```\s*/i, '');
+  cleaned = cleaned.replace(/\s*```\s*$/i, '');
+
+  // Remove stray leading "html" text
+  cleaned = cleaned.replace(/^\s*html\s*(?:\r?\n|\s)+/i, '');
+  
+  // Remove wrapper tags
+  cleaned = cleaned.replace(/<html[^>]*>[\s\S]*?<\/html>/gi, (match) => {
+    // Extract just the body content if it exists
+    const bodyMatch = match.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    return bodyMatch ? bodyMatch[1] : '';
+  });
+  
+  cleaned = cleaned.replace(/<body[^>]*>|<\/body>/gi, '');
+  cleaned = cleaned.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
+  cleaned = cleaned.replace(/<!DOCTYPE[^>]*>/gi, '');
+  cleaned = cleaned.replace(/<\?xml[^>]*\?>/gi, '');
+  
+  // Remove meta, title, style, script tags
+  cleaned = cleaned.replace(/<meta[^>]*>/gi, '');
+  cleaned = cleaned.replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '');
+  cleaned = cleaned.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+  cleaned = cleaned.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  cleaned = cleaned.replace(/<link[^>]*>/gi, '');
+  
+  // Remove empty paragraphs
+  cleaned = cleaned.replace(/<p>\s*<\/p>/gi, '');
+  
+  // Clean up multiple line breaks
+  cleaned = cleaned.replace(/\n\s*\n/g, '\n');
+  
+  // Trim whitespace
+  cleaned = cleaned.trim();
+  
+  // If result is empty, return a fallback
+  if (!cleaned || cleaned.length < 50) {
+    return `<div class="prose dark:prose-invert max-w-none">
+      <h2>${htmlContent.substring(0, 100)}</h2>
+      <p>Content is being processed. Please refresh the page in a moment.</p>
+    </div>`;
+  }
+  
+  return cleaned;
+};
 
   const isSubtopicReadyForDisplay = (subtopic) => {
     if (!subtopic?.theory) return false;
@@ -1011,35 +1291,45 @@ Requirements:
       : !!subtopic.image;
   };
 
-  const startSubtopicPreparation = (topicTitle, subtopicTitle, subtopicData) => {
-    setShowLoadingPopup(true);
-    setLoadingSubtopic(subtopicTitle);
-    setLoadingProgress(0);
+const startSubtopicPreparation = (topicTitle, subtopicTitle, subtopicData) => {
+  // If content already exists, just display it
+  if (subtopicData?.theory && subtopicData.theory.length > 500) {
+    setShowLoadingPopup(false);
     setSelectedTopicTitle(topicTitle);
     setSelected(subtopicTitle);
+    setTheory(cleanGeneratedHtml(subtopicData.theory));
+    setMedia(type === 'video & text course' ? subtopicData.youtube : subtopicData.image);
+    return;
+  }
+  
+  setShowLoadingPopup(true);
+  setLoadingSubtopic(subtopicTitle);
+  setLoadingProgress(0);
+  setSelectedTopicTitle(topicTitle);
+  setSelected(subtopicTitle);
 
-    if (subtopicData?.theory) {
-      setTheory(cleanGeneratedHtml(subtopicData.theory));
-      setMedia(type === 'video & text course' ? subtopicData.youtube || '' : subtopicData.image || '');
-    } else {
-      setTheory(`<div class="prose dark:prose-invert max-w-none">
-        <h2>${subtopicTitle}</h2>
-        <p>AI is crafting personalized content for you...</p>
-        <div class="flex items-center justify-center p-8">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </div>`);
-      setMedia(null);
-    }
+  if (subtopicData?.theory) {
+    setTheory(cleanGeneratedHtml(subtopicData.theory));
+    setMedia(type === 'video & text course' ? subtopicData.youtube || '' : subtopicData.image || '');
+  } else {
+    setTheory(`<div class="prose dark:prose-invert max-w-none">
+      <h2>${subtopicTitle}</h2>
+      <p>AI is crafting personalized content for you...</p>
+      <div class="flex items-center justify-center p-8">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    </div>`);
+    setMedia(null);
+  }
 
-    if (type === 'video & text course') {
-      sendVideo(`${subtopicTitle} ${mainTopic}`, topicTitle, subtopicTitle, subtopicTitle);
-    } else if (subtopicData?.theory) {
-      sendImageForBatch(`${subtopicTitle} in ${mainTopic}`, topicTitle, subtopicTitle, subtopicData.theory);
-    } else {
-      sendBulkCourseContent(topicTitle, subtopicTitle);
-    }
-  };
+  if (type === 'video & text course') {
+    sendVideo(`${subtopicTitle} ${mainTopic}`, topicTitle, subtopicTitle, subtopicTitle);
+  } else if (subtopicData?.theory) {
+    sendImageForBatch(`${subtopicTitle} in ${mainTopic}`, topicTitle, subtopicTitle, subtopicData.theory);
+  } else {
+    sendBulkCourseContent(topicTitle, subtopicTitle);
+  }
+};
 
 async function sendBulkCourseContent(clickedTopic, clickedSub) {
   setShowLoadingPopup(true);
@@ -1048,7 +1338,7 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
   // Start theory generation progress
   const clearTheoryProgress = simulateProgress('theory');
   
-  // Instant UI Feedback - show loading state
+  // Instant UI Feedback
   setSelectedTopicTitle(clickedTopic);
   setSelected(clickedSub);
   setTheory(`<div class="prose dark:prose-invert max-w-none">
@@ -1059,7 +1349,6 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
     </div>
   </div>`);
   
-  // Set a subtle placeholder for image
   setMedia(null);
   
   try {
@@ -1074,41 +1363,59 @@ async function sendBulkCourseContent(clickedTopic, clickedSub) {
     
     const theoryRes = await axios.post(serverURL + '/api/generate-batch', theoryPayload);
     
-    // IMPORTANT: Update theory content FIRST before handling images
     if (theoryRes.data && theoryRes.data.success && theoryRes.data.topics && theoryRes.data.topics[0]) {
       const newTheory = theoryRes.data.topics[0].subtopics[0].theory;
       
-      // Set theory content immediately - this should display your example text
-  // Set theory content immediately - this should display your example text
-const cleanedTheory = cleanGeneratedHtml(newTheory);
-setTheory(cleanedTheory);
-updateLocalCache(clickedTopic, clickedSub, { theory: cleanedTheory, done: true });
+      // Clean the HTML content
+      const cleanedTheory = cleanGeneratedHtml(newTheory);
+      
+      // IMPORTANT: Store in jsonData immediately
+      const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+      const targetTopic = topicsList?.find(t => t.title === clickedTopic);
+      const targetSub = targetTopic?.subtopics.find(s => s.title === clickedSub);
+      
+      if (targetSub) {
+        // Store the cleaned theory
+        targetSub.theory = cleanedTheory;
+        targetSub.done = true;
+        
+        // Update state and storage
+        setJsonData({ ...jsonData });
+        sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+        
+        // Display the content
+        setTheory(cleanedTheory);
+      }
     }
     
-    // Switch to image loading stage (but don't block content display)
-    clearTheoryProgress();
+    // Switch to image loading
+    if (clearTheoryProgress) clearTheoryProgress();
     simulateProgress('image');
     
-    // Fetch image in background - don't let image failure block theory display
+    // Fetch image in background
     const imagePrompt = `${clickedSub} in ${mainTopic}`;
     try {
       const imageRes = await axios.post(serverURL + '/api/image', { prompt: imagePrompt }, { timeout: 10000 });
       if (imageRes.data?.url) {
         setMedia(imageRes.data.url);
-        updateLocalCache(clickedTopic, clickedSub, { image: imageRes.data.url });
-      } else {
-        // Don't set a generic placeholder - just leave media as null
-        setMedia(null);
+        
+        // Also store the image
+        const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+        const targetTopic = topicsList?.find(t => t.title === clickedTopic);
+        const targetSub = targetTopic?.subtopics.find(s => s.title === clickedSub);
+        if (targetSub) {
+          targetSub.image = imageRes.data.url;
+          setJsonData({ ...jsonData });
+          sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+        }
       }
     } catch (imageErr) {
       console.error("Image fetch failed:", imageErr);
-      // Keep media as null - theory content will display normally
-      setMedia(null);
     }
     
-    updateCourse();
+    await updateCourse();
     
-    // Complete the loading process
+    // Complete
     simulateProgress('complete');
     setLoadingProgress(100);
     
@@ -1124,6 +1431,7 @@ updateLocalCache(clickedTopic, clickedSub, { theory: cleanedTheory, done: true }
     setTheory(`<div class="prose dark:prose-invert max-w-none">
       <h2>${clickedSub}</h2>
       <p>Sorry, we encountered an error loading the content. Please try again.</p>
+      <p class="text-sm text-muted-foreground mt-2">Error: ${error.message}</p>
     </div>`);
     setShowLoadingPopup(false);
     if (window.progressInterval) {
@@ -1131,150 +1439,6 @@ updateLocalCache(clickedTopic, clickedSub, { theory: cleanedTheory, done: true }
     }
   }
 }
-
-  // sendImageForBatch is called inside sendBulkCourseContent
-      
-  //     // Try to get AI-generated image first, but with better error handling
-  //     let imageUrl = '';
-      
-  //     try {
-  //       // Add timeout to prevent hanging
-  //       const controller = new AbortController();
-  //       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-        
-  //       const postURL = serverURL + '/api/image';
-  //       const res = await axios.post(postURL, { prompt: promptImage }, {
-  //         signal: controller.signal,
-  //         timeout: 8000 // 8 second timeout
-  //       }).catch(error => {
-  //         console.error("Image API error:", error);
-  //         return { data: { url: null } };
-  //       });
-        
-  //       clearTimeout(timeoutId);
-  //       imageUrl = res.data?.url || '';
-  //     } catch (apiError) {
-  //       console.error("Image generation failed:", apiError);
-  //       imageUrl = '';
-  //     }
-      
-  //     // If AI image generation failed or returned empty, use Unsplash
-  //     if (!imageUrl) {
-  //       console.log("Using Unsplash fallback for:", sub);
-        
-  //       // Try multiple Unsplash queries for better results
-  //       const fallbackQueries = [
-  //         `${sub} ${mainTopic}`,
-  //         sub,
-  //         `${mainTopic} concept`,
-  //         'education learning'
-  //       ];
-        
-  //       // Use the first one that works
-  //       imageUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(fallbackQueries[0])}`;
-  //     }
-      
-  //     // Update image in cache immediately
-  //     if (imageUrl) {
-  //       preloadImageWithCache(imageUrl, sub);
-  //       setMedia(imageUrl);
-  //     }
-      
-  //     // Find the subtopic and update its image
-  //     const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
-  //     if (topicsList) {
-  //       const mTopic = topicsList.find((t: any) => t.title === topics);
-  //       const mSubTopic = mTopic?.subtopics.find((s: any) => s.title === sub);
-        
-  //       if (mSubTopic) {
-  //         mSubTopic.image = imageUrl;
-  //         mSubTopic.done = true;
-          
-  //         // Save to sessionStorage and update course
-  //         sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
-  //         updateCourse();
-  //       }
-  //     }
-      
-  //     setImageLoading(prev => {
-  //       const newMap = new Map(prev);
-  //       newMap.delete(sub);
-  //       return newMap;
-  //     });
-      
-  //     setIsLoading(false);
-      
-  //   } catch (error) {
-  //     console.error("Image generation error:", error);
-      
-  //     // Multiple fallback strategies
-  //     let fallbackUrl = '';
-      
-  //     try {
-  //       // Try Unsplash with different query combinations
-  //       const fallbackQueries = [
-  //         `${sub} ${mainTopic}`,
-  //         sub,
-  //         `${mainTopic} concept`,
-  //         'education',
-  //         'learning',
-  //         'study'
-  //       ];
-        
-  //       // Try each query until one works
-  //       for (const query of fallbackQueries) {
-  //         const testUrl = `https://source.unsplash.com/featured/800x600/?${encodeURIComponent(query)}`;
-          
-  //         // Test if image loads (simple check)
-  //         const img = new Image();
-  //         await new Promise((resolve, reject) => {
-  //           img.onload = resolve;
-  //           img.onerror = reject;
-  //           img.src = testUrl;
-            
-  //           // Timeout after 2 seconds
-  //           setTimeout(reject, 2000);
-  //         }).catch(() => {
-  //           // Continue to next query
-  //           return;
-  //         });
-          
-  //         fallbackUrl = testUrl;
-  //         break;
-  //       }
-  //     } catch (fallbackError) {
-  //       console.error("All fallbacks failed:", fallbackError);
-  //     }
-      
-  //     // Ultimate fallback - use a reliable placeholder service
-  //     if (!fallbackUrl) {
-  //       fallbackUrl = `https://picsum.photos/800/600?random=${encodeURIComponent(sub)}`;
-  //     }
-      
-  //     setMedia(fallbackUrl);
-      
-  //     // Update the cache with fallback
-  //     const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
-  //     if (topicsList) {
-  //       const mTopic = topicsList.find((t: any) => t.title === topics);
-  //       const mSubTopic = mTopic?.subtopics.find((s: any) => s.title === sub);
-        
-  //       if (mSubTopic) {
-  //         mSubTopic.image = fallbackUrl;
-  //         mSubTopic.done = true;
-  //         sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
-  //       }
-  //     }
-      
-  //     setImageLoading(prev => {
-  //       const newMap = new Map(prev);
-  //       newMap.delete(sub);
-  //       return newMap;
-  //     });
-      
-  //     setIsLoading(false);
-  //   }
-  // }
 
 
   async function sendImageForBatch(promptImage: string, topics: string, sub: string, theory: string) {
@@ -1396,32 +1560,72 @@ updateLocalCache(clickedTopic, clickedSub, { theory: cleanedTheory, done: true }
     setIsLoading(false);
   }
 }
-  const selectSubtopic = useCallback((topicTitle, subtopicTitle) => {
-    if (!jsonData) return;
+const selectSubtopic = useCallback((topicTitle, subtopicTitle) => {
+  if (!jsonData) return;
 
-    const topicsList = jsonData['course_topics'] || jsonData[mainTopic.toLowerCase()];
-    const mTopic = topicsList.find(topic => topic.title === topicTitle);
-    const mSubTopic = mTopic?.subtopics.find(subtopic => subtopic.title === subtopicTitle);
+  const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+  const mTopic = topicsList?.find(topic => topic.title === topicTitle);
+  const mSubTopic = mTopic?.subtopics?.find(subtopic => subtopic.title === subtopicTitle);
 
-    if (!mSubTopic) return;
+  if (!mSubTopic) return;
 
-    // Clear any existing intervals
-    if (window.progressInterval) {
-      clearInterval(window.progressInterval);
-    }
+  // Clear any existing intervals
+  if (window.progressInterval) {
+    clearInterval(window.progressInterval);
+  }
 
-    // INSTANT: Change the title
-    setSelectedTopicTitle(topicTitle);
-    setSelected(subtopicTitle);
+  // INSTANT: Change the title
+  setSelectedTopicTitle(topicTitle);
+  setSelected(subtopicTitle);
 
-    if (isSubtopicReadyForDisplay(mSubTopic)) {
-      // CACHE HIT: Show immediately
-      setTheory(cleanGeneratedHtml(mSubTopic.theory));
-      setMedia(type === 'video & text course' ? mSubTopic.youtube : mSubTopic.image);
-    } else {
-      startSubtopicPreparation(topicTitle, subtopicTitle, mSubTopic);
-    }
-  }, [jsonData, mainTopic, type]);
+  // Check if content exists and has sufficient length
+  const hasValidTheory = mSubTopic.theory && 
+                        mSubTopic.theory.length > 500 && 
+                        !mSubTopic.theory.includes("AI is crafting personalized content");
+  
+  const hasValidMedia = type === 'video & text course' 
+    ? mSubTopic.youtube 
+    : mSubTopic.image;
+
+  if (hasValidTheory && hasValidMedia) {
+    // CACHE HIT: Show immediately with cleaned HTML
+    const cleanedTheory = cleanGeneratedHtml(mSubTopic.theory);
+    setTheory(cleanedTheory);
+    setMedia(type === 'video & text course' ? mSubTopic.youtube : mSubTopic.image);
+  } else if (hasValidTheory) {
+    // Has theory but no media yet
+    const cleanedTheory = cleanGeneratedHtml(mSubTopic.theory);
+    setTheory(cleanedTheory);
+    startSubtopicPreparation(topicTitle, subtopicTitle, mSubTopic);
+  } else {
+    // No content at all - generate fresh
+    startSubtopicPreparation(topicTitle, subtopicTitle, mSubTopic);
+  }
+}, [jsonData, mainTopic, type]);
+
+// Add this helper function to debug content issues
+const debugStoredContent = useCallback(() => {
+  if (!jsonData) return;
+  
+  const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+  console.log("=== DEBUG: Stored Content ===");
+  
+  topicsList?.forEach(topic => {
+    console.log(`\nTopic: ${topic.title}`);
+    topic.subtopics?.forEach(sub => {
+      const theoryLength = sub.theory?.length || 0;
+      const hasTheory = theoryLength > 0;
+      const preview = sub.theory?.substring(0, 100) || "No content";
+      console.log(`  - ${sub.title}: ${hasTheory ? `✅ ${theoryLength} chars` : "❌ No content"}`);
+      if (hasTheory) {
+        console.log(`    Preview: ${preview}...`);
+      }
+    });
+  });
+}, [jsonData, mainTopic]);
+
+// Call this when needed to debug
+// debugStoredContent();
 
   const handleSelect = useCallback((topicTitle, subtopicTitle) => {
     if (!isSubtopicUnlocked(topicTitle, subtopicTitle)) {
@@ -2849,15 +3053,65 @@ sendDataVideo(url, cleanedTheory, mTopic, mSubTopic);
     </section>
   ) : null;
 
+// Add these state variables in your parent component (CoursePage)
+const [isButtonDisabled, setIsButtonDisabled] = React.useState(false);
+const [remainingSeconds, setRemainingSeconds] = React.useState(0);
+const [showContinueButton, setShowContinueButton] = React.useState(false);
+
+// Update the handleNextLessonWithDelay function
+const handleNextLessonWithDelay = () => {
+  if (isButtonDisabled) return;
+  
+  setIsButtonDisabled(true);
+  setRemainingSeconds(80); // 2 minutes = 120 seconds
+  setShowContinueButton(false);
+  handleNextLesson();
+  
+  const interval = setInterval(() => {
+    setRemainingSeconds(prev => {
+      if (prev <= 1) {
+        clearInterval(interval);
+        setIsButtonDisabled(false);
+        setShowContinueButton(true);
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+};
+
+// Format time for display (MM:SS)
+const formatTime = (seconds) => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+};
+
  return (
     <div className="flex min-h-[100dvh] flex-col bg-background overflow-x-hidden md:h-screen md:overflow-hidden">
       {/* Loading Popup */}
-      <LoadingPopup 
+      {/* <LoadingPopup 
         isOpen={showLoadingPopup}
         stage={loadingStage}
         subtopic={loadingSubtopic}
         progress={loadingProgress}
-      />
+      /> */}
+     <LoadingPopup 
+  isOpen={showLoadingPopup}
+  stage={loadingStage}
+        subtopic={loadingSubtopic}
+        progress={loadingProgress}
+  onContinue={() => {
+    // Handle continue review action
+    setShowContinueButton(false);
+    setIsButtonDisabled(false);
+    // Close popup or navigate to next lesson
+    setIsLoadingPopupOpen(false);
+    // Add your continue review logic here
+  }}
+  showContinueButton={showContinueButton}  // Pass this prop
+  remainingSeconds={remainingSeconds}      // Pass this prop
+/>
       <QuizLoadingPopup
         isOpen={isQuizLoading}
         topic={mainTopic}
@@ -3264,13 +3518,36 @@ sendDataVideo(url, cleanedTheory, mTopic, mSubTopic);
                         )}
                       </div>
                     )} */}
-
+{/* Add this near the theory section for debugging */}
+{theory && theory.length < 200 && (
+  <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+    <p className="text-sm text-yellow-600 dark:text-yellow-400 mb-2">
+      Content appears truncated. 
+    </p>
+    <Button 
+      variant="outline" 
+      size="sm"
+      onClick={() => {
+        if (currentLesson) {
+          startSubtopicPreparation(currentLesson.topicTitle, currentLesson.subtopicTitle, 
+            jsonData['course_topics']?.find(t => t.title === currentLesson.topicTitle)
+              ?.subtopics.find(s => s.title === currentLesson.subtopicTitle)
+          );
+        }
+      }}
+    >
+      <RefreshCw className="h-3 w-3 mr-1" />
+      Regenerate Content
+    </Button>
+  </div>
+)}
                     {/* Theory text */}
                     {theory && (
                       <div className="rounded-[20px] md:rounded-[28px] border border-border/60 bg-background p-3 sm:p-5 md:p-7 shadow-sm">
                         <StyledText text={theory} />
                       </div>
                     )}
+                    
 
                     {/* Learning note */}
                     <div className="rounded-[20px] border border-primary/20 bg-primary/5 p-3 sm:p-4 text-primary shadow-sm">
@@ -3369,14 +3646,28 @@ sendDataVideo(url, cleanedTheory, mTopic, mSubTopic);
                               <ArrowLeft className="h-4 w-4" />
                               Previous
                             </Button>
-                            <Button
+                            {/* <Button
                               onClick={handleNextLesson}
                               disabled={isQuizLoading}
                               className="gap-2"
                             >
                               {isQuizLoading ? 'Preparing Quiz...' : nextLesson ? 'Continue Review' : 'Take Review Quiz'}
                               {isQuizLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-                            </Button>
+                            </Button> */}
+<Button
+  onClick={handleNextLessonWithDelay}
+  disabled={isQuizLoading || isButtonDisabled}
+  className="gap-2"
+>
+  {isQuizLoading 
+    ? 'Preparing Quiz...' 
+    : isButtonDisabled 
+      ? `Wait ${formatTime(remainingSeconds)}` 
+      : nextLesson 
+        ? 'Continue Review' 
+        : 'Take Review Quiz'
+  }
+</Button>
                           </div>
                         </div>
                       </div>
