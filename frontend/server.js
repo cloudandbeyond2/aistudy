@@ -17,6 +17,7 @@ import axios from 'axios';
 import Stripe from 'stripe';
 import Flutterwave from 'flutterwave-node-v3';
 import { fileURLToPath } from 'url';
+import connectDB from '../server/config/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -91,14 +92,8 @@ const PORT = process.env.PORT || 5001;
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(express.json({ limit: '50mb' }));
 
-// MongoDB connection with error handling
-if (process.env.MONGODB_URI) {
-    mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-        .then(() => console.log('MongoDB connected successfully'))
-        .catch(err => console.error('MongoDB connection error:', err));
-} else {
-    console.error('CRITICAL: MONGODB_URI is undefined. Database connection skipped.');
-}
+// MongoDB connection with shared error handling
+connectDB();
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',

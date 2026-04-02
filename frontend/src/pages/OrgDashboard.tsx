@@ -2907,7 +2907,7 @@ const handleUpdateDeptAdmin = async () => {
             },
             {
                 key: 'approvals',
-                title: 'Approvals',
+                title: 'Approval Center',
                 description: 'Handle publishing, request queues, and admin approvals quickly.',
                 metricLabel: 'Pending',
                 metricValue: deptLimitRequests.length || 0,
@@ -3397,113 +3397,6 @@ const handleUpdateDeptAdmin = async () => {
     </div>
                </TabsContent>
 
-                {/* APPROVALS TAB */}
-                {role === 'org_admin' && (
-                    <TabsContent value="approvals" className="space-y-4">
-                        <Card className="border-none shadow-none bg-transparent">
-                            <CardHeader className="px-0 pt-0">
-                                <CardTitle className="text-2xl flex items-center gap-2">
-                                    <Clock className="w-6 h-6 text-blue-500" /> Pending Approval Requests
-                                </CardTitle>
-                                <CardDescription>Review and approve courses submitted by department admins or other staff members.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="px-0 space-y-4">
-                                {courses.filter((c: any) => c.approvalStatus === 'pending').length > 0 ? (
-                                    <div className="grid gap-4">
-                                        {courses.filter((c: any) => c.approvalStatus === 'pending').map((course: any) => (
-                                            <div key={course._id} className="group p-6 border rounded-2xl bg-card hover:shadow-md transition-all duration-300 border-blue-100 hover:border-blue-200">
-                                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                                    <div className="flex-1 space-y-1">
-                                                        <div className="flex items-center gap-2">
-                                                            <h3 className="font-bold text-xl text-foreground group-hover:text-blue-600 transition-colors capitalize">
-                                                                {course.title || course.mainTopic}
-                                                            </h3>
-                                                            <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200">
-                                                                {departmentsList.find(d => d._id === course.department || d.name === course.department)?.name || course.department || 'General'}
-                                                            </Badge>
-                                                        </div>
-                                                        <p className="text-muted-foreground line-clamp-2 text-sm italic">"{course.description || 'No description provided'}"</p>
-                                                        <div className="flex flex-wrap gap-4 mt-3 text-xs font-semibold text-muted-foreground items-center">
-                                                            <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-md">
-                                                                <BookOpen className="w-3.5 h-3.5 text-blue-500" />
-                                                                <span>{course.topics?.length || 0} Lessons</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-md">
-                                                                <FileQuestion className="w-3.5 h-3.5 text-indigo-500" />
-                                                                <span>{course.quizzes?.length || 0} Quizzes</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-md">
-                                                                <Calendar className="w-3.5 h-3.5 text-emerald-500" />
-                                                                <span>Submitted: {new Date(course.updatedAt || course.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex flex-wrap gap-2 w-full md:w-auto shrink-0">
-                                                        <Button 
-                                                            variant="outline" 
-                                                            size="sm" 
-                                                            className="flex-1 md:flex-none h-10 px-4 rounded-xl border-blue-200 hover:bg-blue-50 hover:text-blue-600"
-                                                            onClick={() => setPreviewCourse({ ...course })}
-                                                        >
-                                                            <Eye className="w-4 h-4 mr-2" /> Preview
-                                                        </Button>
-                                                        <Button 
-                                                            className="flex-1 md:flex-none h-10 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-200"
-                                                            size="sm"
-                                                            onClick={() => handleReviewOrgCourse(course._id, 'approved', 'Course approved for students.')}
-                                                        >
-                                                            <Check className="w-4 h-4 mr-2" /> Approve
-                                                        </Button>
-                                                        <Button 
-                                                            variant="ghost" 
-                                                            size="sm"
-                                                            className="flex-1 md:flex-none h-10 px-4 rounded-xl text-destructive hover:bg-red-50 hover:text-red-600"
-                                                            onClick={async () => {
-                                                                const result = await Swal.fire({
-                                                                    title: 'Reject this course?',
-                                                                    input: 'textarea',
-                                                                    inputLabel: 'Feedback for the creator',
-                                                                    inputPlaceholder: 'Explain what needs to be changed before approval...',
-                                                                    showCancelButton: true,
-                                                                    confirmButtonText: 'Reject Course',
-                                                                    confirmButtonColor: '#dc2626',
-                                                                    cancelButtonText: 'Cancel',
-                                                                    customClass: {
-                                                                        popup: 'rounded-3xl',
-                                                                        confirmButton: 'rounded-xl',
-                                                                        cancelButton: 'rounded-xl'
-                                                                    }
-                                                                });
-
-                                                                if (result.isConfirmed) {
-                                                                    await handleReviewOrgCourse(course._id, 'rejected', String(result.value || ''));
-                                                                }
-                                                            }}
-                                                        >
-                                                            <X className="w-4 h-4 mr-2" /> Reject
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center py-20 bg-muted/20 border-2 border-dashed rounded-3xl animate-in fade-in zoom-in duration-500">
-                                        <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
-                                            <CheckCircle2 className="w-8 h-8" />
-                                        </div>
-                                        <h3 className="text-xl font-bold text-foreground">All Caught Up!</h3>
-                                        <p className="text-muted-foreground text-center max-w-xs mt-2">
-                                            There are no courses waiting for your approval at this time.
-                                        </p>
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                )}
-
-          
                  {/* STUDENTS TAB */}
                  <TabsContent value="students" className="space-y-4">
     <Card>
@@ -4570,6 +4463,23 @@ const handleUpdateDeptAdmin = async () => {
                 {/* APPROVALS TAB */}
                 {role === 'org_admin' && (
                 <TabsContent value="approvals" className="space-y-4">
+                    <Alert className="bg-blue-50/50 border-blue-200 mb-6 relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                        <AlertTitle className="text-blue-900 font-bold flex items-center gap-2 text-lg">
+                            <BookOpen className="w-5 h-5 text-blue-600" /> About the Approval Center
+                        </AlertTitle>
+                        <AlertDescription className="text-blue-800/90 mt-2 text-sm leading-relaxed">
+                            This workspace is your central governance hub. As an Organization Admin, here you can:
+                            <ul className="list-disc pl-5 mt-3 space-y-2 font-medium">
+                                <li>
+                                    <strong className="text-blue-950">Manage Resources:</strong> Review and authorize requests from department admins who need to increase their course creation limits.
+                                </li>
+                                <li>
+                                    <strong className="text-blue-950">Quality Control:</strong> Review and approve courses created by your staff. Courses will only become visible to students after you approve them.
+                                </li>
+                            </ul>
+                        </AlertDescription>
+                    </Alert>
     {/* --- Course Limit Requests Card --- */}
     <Card>
         <CardHeader className="p-4 sm:p-6">

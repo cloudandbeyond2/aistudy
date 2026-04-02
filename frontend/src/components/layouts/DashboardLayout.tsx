@@ -206,10 +206,7 @@ const DashboardLayoutContent = () => {
 
   // Helper to check active route
   const isActive = (path: string) => location.pathname === path;
-  
-  const isOrgTabActive = (tab: string) => {
-    return location.search === `?tab=${tab}` || location.pathname.includes(tab);
-  };
+
   // Close sidebar on mobile/tablet when menu item is clicked
   const handleMobileMenuClick = () => {
     if (isMobile || isTablet) {
@@ -598,27 +595,27 @@ const DashboardLayoutContent = () => {
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
-                   <MenuItem 
+                    <MenuItem 
                       icon={Building2} 
                       label="Departments" 
-                      to="/dashboard/org-departments" 
-                      isActive={isOrgTabActive('departments')}
+                      to="/dashboard/org?tab=departments" 
+                      isActive={location.search === '?tab=departments'}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
                     <MenuItem 
                       icon={Users} 
                       label="Students" 
-                      to="/dashboard/org-students" 
-                      isActive={isOrgTabActive('students')}
+                      to="/dashboard/org?tab=students" 
+                      isActive={location.search === '?tab=students'}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
                     <MenuItem 
                       icon={BookOpen} 
                       label="Courses" 
-                      to="/dashboard/org-courses" 
-                      isActive={isOrgTabActive('courses')}
+                      to="/dashboard/org?tab=courses" 
+                      isActive={location.search === '?tab=courses'}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
@@ -626,8 +623,8 @@ const DashboardLayoutContent = () => {
                       <MenuItem 
                         icon={Users} 
                         label="Staff" 
-                        to="/dashboard/org-staff" 
-                        isActive={isOrgTabActive('staff')}
+                        to="/dashboard/org?tab=staff" 
+                        isActive={location.search === '?tab=staff'}
                         isExpanded={isExpanded}
                         onMobileClick={handleMobileMenuClick}
                       />
@@ -636,18 +633,19 @@ const DashboardLayoutContent = () => {
                       <MenuItem 
                         icon={CheckCircle2} 
                         label="Approvals" 
-                        to="/dashboard/org-approvals" 
-                        isActive={isOrgTabActive('approvals')}
+                        to="/dashboard/org?tab=approvals" 
+                        isActive={location.search === '?tab=approvals'}
                         isExpanded={isExpanded}
                         onMobileClick={handleMobileMenuClick}
+                        badge={pendingApprovals > 0 ? pendingApprovals : undefined}
                       />
                     )}
                     {sessionStorage.getItem('role') === 'org_admin' && (
                       <MenuItem 
                         icon={Clock} 
                         label="Activity" 
-                        to="/dashboard/org-activity" 
-                        isActive={isOrgTabActive('activity')}
+                        to="/dashboard/org?tab=activity" 
+                        isActive={location.search === '?tab=activity'}
                         isExpanded={isExpanded}
                         onMobileClick={handleMobileMenuClick}
                       />
@@ -655,40 +653,40 @@ const DashboardLayoutContent = () => {
                     <MenuItem 
                       icon={FileText} 
                       label="Assignments" 
-                      to="/dashboard/org-assignments" 
-                      isActive={isOrgTabActive('assignments')}
+                      to="/dashboard/org?tab=assignments" 
+                      isActive={location.search === '?tab=assignments'}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
                     <MenuItem 
                       icon={Video} 
                       label="Meetings" 
-                      to="/dashboard/org-meetings" 
-                      isActive={isOrgTabActive('meetings')}
+                      to="/dashboard/org?tab=meetings" 
+                      isActive={location.search === '?tab=meetings'}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
                     <MenuItem 
                       icon={Briefcase} 
                       label="Projects" 
-                      to="/dashboard/org-projects" 
-                      isActive={isOrgTabActive('projects')}
+                      to="/dashboard/org?tab=projects" 
+                      isActive={location.search === '?tab=projects'}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
                     <MenuItem 
                       icon={Download} 
                       label="Materials" 
-                      to="/dashboard/org-materials" 
-                      isActive={isOrgTabActive('materials')}
+                      to="/dashboard/org?tab=materials" 
+                      isActive={location.search === '?tab=materials'}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
                     <MenuItem 
                       icon={Bell} 
                       label="Noticeboard" 
-                      to="/dashboard/org-notices" 
-                      isActive={isActive('notices')}
+                      to="/dashboard/org?tab=notices" 
+                      isActive={location.search === '?tab=notices'}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
@@ -697,13 +695,11 @@ const DashboardLayoutContent = () => {
                         icon={Award} 
                         label="Career & Placement" 
                         to="/dashboard/org/career" 
-                        isActive={isActive('/dashboard/org/career') || isOrgTabActive('career')}
+                        isActive={isActive('/dashboard/org/career') || location.search === '?tab=career'}
                         isExpanded={isExpanded}
                         onMobileClick={handleMobileMenuClick}
                       />
                     )}
-
-                    
                     {interviewEnabled.org_admin && (
                       <MenuItem 
                         icon={Brain} 
