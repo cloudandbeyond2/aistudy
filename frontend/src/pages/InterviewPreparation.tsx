@@ -525,7 +525,7 @@ const InterviewPreparation = () => {
   const [loadingInitial, setLoadingInitial] = useState(true);
 
   // States for features
-  const [currentAffairs, setCurrentAffairs] = useState([]);
+  const [topHeadlines, setTopHeadlines] = useState([]);
   const [dailyAptitudes, setDailyAptitudes] = useState([]);
   const [loadingAptitude, setLoadingAptitude] = useState(false);
   const [loadingNews, setLoadingNews] = useState(false);
@@ -555,7 +555,7 @@ const InterviewPreparation = () => {
     const interval = setInterval(() => {
       const uid = sessionStorage.getItem('uid');
       if (uid) {
-        fetchCurrentAffairs(uid);
+        fetchTopHeadlines(uid);
       }
     }, 2 * 60 * 60 * 1000); // 2 hours in milliseconds
 
@@ -577,7 +577,7 @@ const InterviewPreparation = () => {
 
         if (paidTypes.includes(type) || orgId || isOrg) {
           setIsPaidUser(true);
-          fetchCurrentAffairs(uid);
+          fetchTopHeadlines(uid);
           fetchDailyAptitude(uid);
         } else {
           setIsPaidUser(false);
@@ -590,19 +590,29 @@ const InterviewPreparation = () => {
     }
   };
 
-  const fetchCurrentAffairs = async (uid: string, showLoading = false) => {
+  const fetchTopHeadlines = async (uid: string, showLoading = false) => {
     if (showLoading) setLoadingNews(true);
     try {
-      console.log("Fetching current affairs for:", uid);
-      const resp = await axios.get(`${serverURL}/api/interview-prep/current-affairs`, {
+      console.log("Fetching worldwide top headlines for:", uid);
+      const resp = await axios.get(`${serverURL}/api/global-news`, {
         headers: { 'user-id': uid }
       });
-      console.log("Current affairs response:", resp.data);
-      if (resp.data.success) {
-        setCurrentAffairs(resp.data.data);
-      }
+      console.log("Top headlines response:", resp.data);
+      const newsData = Array.isArray(resp.data)
+        ? resp.data
+        : Array.isArray(resp.data?.news)
+          ? resp.data.news
+          : Array.isArray(resp.data?.data)
+            ? resp.data.data
+            : [];
+
+      const sortedNews = newsData.sort((a: any, b: any) =>
+        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+      );
+
+      setTopHeadlines(sortedNews);
     } catch (e) {
-      console.error("Fetch current affairs error:", e);
+      console.error("Fetch worldwide top headlines error:", e);
     } finally {
       if (showLoading) setLoadingNews(false);
     }
@@ -703,7 +713,7 @@ const InterviewPreparation = () => {
           <div>
             <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-1 md:mb-2">Interview Preparation Hub</h1>
             <p className="text-xs md:text-sm lg:text-base text-muted-foreground max-w-2xl">
-              Stay ahead with curated current affairs, sharpen your logic with daily aptitude tests, and generate infinite quizzes on any category with AI.
+              Stay ahead with worldwide top headlines, sharpen your logic with daily aptitude tests, and generate infinite quizzes on any category with AI.
             </p>
           </div>
         </div>
@@ -713,7 +723,7 @@ const InterviewPreparation = () => {
           <TabsList className="grid w-full grid-cols-3 mb-6 md:mb-8 h-auto bg-muted/50 rounded-xl p-1 gap-1">
             <TabsTrigger value="news" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all text-xs md:text-sm py-2 md:py-3">
               <Newspaper className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> 
-              <span className="hidden xs:inline">Current Affairs & News</span>
+              <span className="hidden xs:inline">Worldwide Headlines</span>
               <span className="xs:hidden">News</span>
             </TabsTrigger>
             <TabsTrigger value="aptitude" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all text-xs md:text-sm py-2 md:py-3">
@@ -728,11 +738,11 @@ const InterviewPreparation = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Current Affairs Content */}
+          {/* Worldwide Headlines Content */}
           <TabsContent value="news" className="space-y-4 outline-none">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
               <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
-                <Newspaper className="h-4 w-4 md:h-5 md:w-5 text-primary" /> Latest News
+                <Newspaper className="h-4 w-4 md:h-5 md:w-5 text-primary" /> Worldwide Top Headlines
               </h2>
               <div className="flex items-center gap-2">
                 <Button
@@ -740,7 +750,7 @@ const InterviewPreparation = () => {
                   size="sm"
                   onClick={() => {
                     const uid = sessionStorage.getItem('uid');
-                    if (uid) fetchCurrentAffairs(uid, true);
+                    if (uid) fetchTopHeadlines(uid, true);
                   }}
                   disabled={loadingNews}
                   className="h-8 px-3"
@@ -757,14 +767,14 @@ const InterviewPreparation = () => {
                 </span>
               </div>
             </div>
-            {currentAffairs.length === 0 ? (
+            {topHeadlines.length === 0 ? (
               <div className="text-center py-8 md:py-12 text-muted-foreground bg-card/50 rounded-xl md:rounded-2xl border border-dashed">
                 <Newspaper className="h-8 w-8 md:h-10 md:w-10 mx-auto text-muted-foreground/50 mb-3 md:mb-4" />
-                <p className="text-sm md:text-base">No news available. Check back later!</p>
+                <p className="text-sm md:text-base">No worldwide headlines available right now. Check back later!</p>
               </div>
             ) : (
               <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {currentAffairs.map((item: any) => (
+                {topHeadlines.map((item: any) => (
                   <Card
                     key={item._id}
                     className="cursor-pointer hover:shadow-md transition-all h-full flex flex-col group border-border/50"
@@ -776,7 +786,9 @@ const InterviewPreparation = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="flex-1 pt-0 px-3 md:px-6 pb-3 md:pb-6">
-                      <div className="text-muted-foreground text-xs md:text-sm leading-relaxed line-clamp-3 prose dark:prose-invert" dangerouslySetInnerHTML={{ __html: item.content }} />
+                      <div className="text-muted-foreground text-xs md:text-sm leading-relaxed line-clamp-3">
+                        {item.content}
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -796,9 +808,10 @@ const InterviewPreparation = () => {
                     {selectedNewsItem?.createdAt && <span>{new Date(selectedNewsItem.createdAt).toLocaleDateString()}</span>}
                   </div>
                   <div
-                    className="text-sm md:text-base text-foreground/90 leading-relaxed prose dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: selectedNewsItem?.content || '' }}
-                  />
+                    className="text-sm md:text-base text-foreground/90 leading-relaxed whitespace-pre-wrap"
+                  >
+                    {selectedNewsItem?.content || ''}
+                  </div>
                 </div>
               </DialogContent>
             </Dialog>
