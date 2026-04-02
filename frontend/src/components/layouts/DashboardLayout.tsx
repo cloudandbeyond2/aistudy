@@ -941,9 +941,9 @@ const DashboardLayoutContent = () => {
         {(isMobile || isTablet) && (
           <div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm border border-border/40">
             <SidebarTrigger className="mr-2">
-              <Menu className="h-6 w-6" />
+              <PanelRightOpen className="h-6 w-6" />
             </SidebarTrigger>
-            <img src={appWordmarkLight} alt={appName} className="h-7 w-auto max-w-[150px]" />
+            <img src="\src\assets\images\logo-colossus-dark 1.png" alt={appName} className="h-7 w-auto max-w-[150px]" />
             <div className="ml-auto flex items-center gap-2">
               <NotificationBell />
             </div>
