@@ -907,7 +907,7 @@ const DashboardLayoutContent = () => {
             )}
 
             {isExpanded && (
-              <Link to="/dashboard/profile" onClick={handleMobileMenuClick} className="relative z-10 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+              <Link to="/dashboard/student/profile" onClick={handleMobileMenuClick} className="relative z-10 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
                 <Settings2 className="h-4 w-4" />
               </Link>
             )}

@@ -38,6 +38,7 @@ type ScheduleCategory = 'Lecture' | 'Lab' | 'Meeting' | 'Workshop' | 'Deadline' 
 
 interface ScheduleItem {
   _id?: string;
+  linkedMeetingId?: string;
   date?: string;
   day: string;
   name: string;
@@ -53,6 +54,8 @@ interface ScheduleItem {
   ownerRole?: string;
   color?: string;
   status?: 'planned' | 'in-progress' | 'done';
+  sourceType?: 'schedule' | 'meeting';
+  readOnly?: boolean;
 }
 
 interface FormState {
@@ -108,6 +111,10 @@ const visibilityTone = (visibility?: ScheduleVisibility) =>
     : visibility === 'public'
       ? 'bg-fuchsia-500/10 text-fuchsia-700 border-fuchsia-200'
       : 'bg-indigo-500/10 text-indigo-700 border-indigo-200';
+const sourceTone = (sourceType?: ScheduleItem['sourceType']) =>
+  sourceType === 'meeting'
+    ? 'bg-cyan-500/10 text-cyan-700 border-cyan-200'
+    : 'bg-slate-500/10 text-slate-700 border-slate-200';
 
 const compactCalendarClasses = {
   months: 'flex flex-col',
@@ -277,6 +284,10 @@ export default function CalendarScheduler() {
   };
 
   const editSchedule = (item: ScheduleItem) => {
+    if (item.readOnly) {
+      toast({ title: 'Meeting event', description: 'Scheduled meetings can be managed from the meetings module.' });
+      return;
+    }
     setEditingId(item._id || null);
     const nextDate = item.date ? new Date(item.date) : selectedDate;
     if (!Number.isNaN(nextDate.getTime())) setSelectedDate(nextDate);
@@ -500,6 +511,9 @@ export default function CalendarScheduler() {
                         <Badge className={`border ${visibilityTone(item.visibility)}`}>
                           {item.visibility || defaultVisibility()}
                         </Badge>
+                        {item.sourceType === 'meeting' && (
+                          <Badge className={`border ${sourceTone(item.sourceType)}`}>Meeting Sync</Badge>
+                        )}
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {item.startTime} - {item.endTime}
@@ -507,14 +521,16 @@ export default function CalendarScheduler() {
                         {item.location ? ` - ${item.location}` : ''}
                       </p>
                     </div>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => editSchedule(item)}>
-                        <Edit3 className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteSchedule(item._id)}>
-                        <Trash2 className="h-4 w-4 text-rose-500" />
-                      </Button>
-                    </div>
+                    {!item.readOnly && (
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => editSchedule(item)}>
+                          <Edit3 className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => deleteSchedule(item._id)}>
+                          <Trash2 className="h-4 w-4 text-rose-500" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   {item.description && <p className="mt-2 text-sm text-muted-foreground">{item.description}</p>}
                 </div>
@@ -570,7 +586,9 @@ export default function CalendarScheduler() {
                     key={item._id}
                     onClick={() => {
                       setSelectedDate(resolveDate(item, selectedDate) || selectedDate);
-                      editSchedule(item);
+                      if (!item.readOnly) {
+                        editSchedule(item);
+                      }
                     }}
                     className="w-full rounded-3xl border border-slate-200/80 bg-white p-3 text-left transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
                   >
@@ -581,7 +599,12 @@ export default function CalendarScheduler() {
                           {item.startTime} - {item.endTime}
                         </p>
                       </div>
-                      <Badge className={`border ${categoryTone(item.type)}`}>{item.type}</Badge>
+                      <div className="flex items-center gap-2">
+                        {item.sourceType === 'meeting' && (
+                          <Badge className={`border ${sourceTone(item.sourceType)}`}>Sync</Badge>
+                        )}
+                        <Badge className={`border ${categoryTone(item.type)}`}>{item.type}</Badge>
+                      </div>
                     </div>
                   </button>
                 ))}
@@ -778,7 +801,12 @@ export default function CalendarScheduler() {
                       {dayItems.length > 0 ? dayItems.slice(0, 3).map((item) => (
                         <button
                           key={item._id}
-                          onClick={() => { setSelectedDate(day); editSchedule(item); }}
+                          onClick={() => {
+                            setSelectedDate(day);
+                            if (!item.readOnly) {
+                              editSchedule(item);
+                            }
+                          }}
                           className="w-full rounded-2xl border border-slate-200/80 bg-white p-2 text-left transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
                         >
                           <div className="flex items-center gap-2">
