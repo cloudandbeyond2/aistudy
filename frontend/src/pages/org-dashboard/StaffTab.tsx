@@ -68,8 +68,10 @@ const StaffTab = () => {
     const [selectedDepartment, setSelectedDepartment] = useState('all');
     const [sortBy, setSortBy] = useState('name');
     const [viewMode, setViewMode] = useState('grid');
+    const [currentPage, setCurrentPage] = useState(1);
     
     const orgId = sessionStorage.getItem('orgId') || sessionStorage.getItem('uid');
+    const staffPerPage = 6;
 
     const getInitials = (name) => {
         return name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'NA';
@@ -290,14 +292,36 @@ const StaffTab = () => {
     }).length;
 
     // Gradient styles
-    const gradientPrimary = 'bg-gradient-to-r from-[#1b253f] via-[#2d3a8c] via-[#4b3bb0] to-[#6b2cc1]';
-    const gradientText = 'bg-gradient-to-r from-[#1b253f] via-[#2d3a8c] via-[#4b3bb0] to-[#6b2cc1] bg-clip-text text-transparent';
+    const gradientPrimary = 'bg-gradient-to-r from-[#11405f] to-[#11a5e4]';
+    const gradientSecondary = 'bg-gradient-to-r from-[#0d3552] to-[#1a6a9e]';
+    const gradientText = 'bg-gradient-to-r from-[#11405f] to-[#11a5e4] bg-clip-text text-transparent';
+    const totalPages = Math.max(1, Math.ceil(filteredAdmins.length / staffPerPage));
+    const paginatedAdmins = filteredAdmins.slice(
+        (currentPage - 1) * staffPerPage,
+        currentPage * staffPerPage
+    );
+    const paginationStart = filteredAdmins.length === 0 ? 0 : (currentPage - 1) * staffPerPage + 1;
+    const paginationEnd = Math.min(currentPage * staffPerPage, filteredAdmins.length);
+    const visiblePageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1).filter((page) => {
+        if (totalPages <= 5) return true;
+        return Math.abs(page - currentPage) <= 1 || page === 1 || page === totalPages;
+    });
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, selectedDepartment, sortBy, viewMode]);
+
+    useEffect(() => {
+        if (currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        }
+    }, [currentPage, totalPages]);
 
     return (
         <>
             {role === 'org_admin' && (
-                <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-                    <div className="container mx-auto px-4 py-8 space-y-8">
+                <div className="min-h-screen bg-gradient-to-br from-[#11405f]/5 via-white to-[#11a5e4]/10 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+                    <div className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8 space-y-6 sm:space-y-8">
                         {/* Header Section */}
                         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                             <div className="space-y-2">
@@ -318,9 +342,9 @@ const StaffTab = () => {
                         </div>
 
                         {/* Stats Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-blue-50/50 dark:from-slate-900 dark:to-slate-800/50">
-                                <CardContent className="p-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+                            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-[#11405f]/5 dark:from-slate-900 dark:to-slate-800/50">
+                                <CardContent className="p-4 sm:p-5 lg:p-6">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-muted-foreground">Total Staff</p>
@@ -334,8 +358,8 @@ const StaffTab = () => {
                                 </CardContent>
                             </Card>
 
-                            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-emerald-50/50 dark:from-slate-900 dark:to-slate-800/50">
-                                <CardContent className="p-6">
+                            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-[#11a5e4]/10 dark:from-slate-900 dark:to-slate-800/50">
+                                <CardContent className="p-4 sm:p-5 lg:p-6">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-muted-foreground">Active Staff</p>
@@ -349,8 +373,8 @@ const StaffTab = () => {
                                 </CardContent>
                             </Card>
 
-                            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-purple-50/50 dark:from-slate-900 dark:to-slate-800/50">
-                                <CardContent className="p-6">
+                            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-[#1a6a9e]/10 dark:from-slate-900 dark:to-slate-800/50">
+                                <CardContent className="p-4 sm:p-5 lg:p-6">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-muted-foreground">Avg. Courses/Admin</p>
@@ -364,8 +388,8 @@ const StaffTab = () => {
                                 </CardContent>
                             </Card>
 
-                            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-amber-50/50 dark:from-slate-900 dark:to-slate-800/50">
-                                <CardContent className="p-6">
+                            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-[#11405f]/10 dark:from-slate-900 dark:to-slate-800/50">
+                                <CardContent className="p-4 sm:p-5 lg:p-6">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-muted-foreground">At Course Limit</p>
@@ -381,25 +405,25 @@ const StaffTab = () => {
                         </div>
 
                         {/* Filters Section */}
-                        <Card className="border-0 shadow-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-                            <CardContent className="p-6">
-                                <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-                                    <div className="flex flex-wrap gap-3">
-                                        <div className="relative">
+                            <Card className="border-0 shadow-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+                            <CardContent className="p-4 sm:p-5 lg:p-6">
+                                <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                                    <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-2 xl:flex xl:items-center xl:gap-3">
+                                        <div className="relative w-full xl:w-[320px] xl:flex-none">
                                             <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <input
                                                 type="text"
                                                 placeholder="Search staff..."
                                                 value={searchQuery}
                                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                                className="pl-10 pr-4 py-2 rounded-lg border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2d3a8c]"
+                                                className="w-full pl-10 pr-4 py-2 rounded-lg border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#11a5e4]"
                                             />
                                         </div>
                                         
                                         <select
                                             value={selectedDepartment}
                                             onChange={(e) => setSelectedDepartment(e.target.value)}
-                                            className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-[#2d3a8c]"
+                                            className="w-full xl:w-[220px] xl:flex-none px-3 py-2 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-[#11a5e4]"
                                         >
                                             <option value="all">All Departments</option>
                                             {departmentsList.map((dept) => (
@@ -410,7 +434,7 @@ const StaffTab = () => {
                                         <select
                                             value={sortBy}
                                             onChange={(e) => setSortBy(e.target.value)}
-                                            className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-[#2d3a8c]"
+                                            className="w-full xl:w-[220px] xl:flex-none px-3 py-2 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-[#11a5e4]"
                                         >
                                             <option value="name">Sort by Name</option>
                                             <option value="courses">Sort by Courses Created</option>
@@ -418,12 +442,12 @@ const StaffTab = () => {
                                         </select>
                                     </div>
                                     
-                                    <div className="flex gap-2">
+                                    <div className="grid w-full grid-cols-2 gap-2 md:w-full md:grid-cols-2 xl:w-auto xl:flex xl:items-center xl:gap-2 xl:flex-none">
                                         <Button
                                             variant={viewMode === 'grid' ? 'default' : 'outline'}
                                             size="sm"
                                             onClick={() => setViewMode('grid')}
-                                            className={`gap-2 ${viewMode === 'grid' ? gradientPrimary : ''}`}
+                                            className={`w-full gap-2 xl:min-w-[92px] ${viewMode === 'grid' ? gradientPrimary : ''}`}
                                         >
                                             <BarChart3 className="h-4 w-4" />
                                             Grid
@@ -432,7 +456,7 @@ const StaffTab = () => {
                                             variant={viewMode === 'list' ? 'default' : 'outline'}
                                             size="sm"
                                             onClick={() => setViewMode('list')}
-                                            className={`gap-2 ${viewMode === 'list' ? gradientPrimary : ''}`}
+                                            className={`w-full gap-2 xl:min-w-[92px] ${viewMode === 'list' ? gradientPrimary : ''}`}
                                         >
                                             <Users className="h-4 w-4" />
                                             List
@@ -443,8 +467,8 @@ const StaffTab = () => {
                         </Card>
 
                         {/* Staff Cards Grid */}
-                        <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'} gap-6`}>
-                            {filteredAdmins.map((admin) => {
+                        <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3' : 'grid-cols-1'} gap-4 sm:gap-5 lg:gap-6`}>
+                            {paginatedAdmins.map((admin) => {
                                 const departmentLabel = admin.department?.name || admin.department?.title || admin.department || 'No department';
                                 const lastLogin = admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleString() : 'No login activity';
                                 const coursesCreated = admin.coursesCreatedCount || 0;
@@ -464,8 +488,8 @@ const StaffTab = () => {
                                 
                                 const activityStatus = getActivityStatus();
                                 const statusColors = {
-                                    active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-                                    moderate: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                                    active: 'bg-[#11a5e4]/15 text-[#11405f] dark:bg-[#11a5e4]/20 dark:text-[#8fdcff]',
+                                    moderate: 'bg-[#11405f]/10 text-[#11405f] dark:bg-[#11405f]/20 dark:text-[#8fdcff]',
                                     inactive: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'
                                 };
                                 
@@ -482,24 +506,24 @@ const StaffTab = () => {
                                             <div className="absolute inset-0 bg-white dark:bg-slate-900 rounded-xl m-[1px]" />
                                         </div>
                                         
-                                        <CardContent className="p-6 relative">
+                                        <CardContent className="p-4 sm:p-5 lg:p-6 relative">
                                             {/* Header Section */}
-                                            <div className="flex items-start justify-between mb-4">
-                                                <div className="flex items-center gap-4">
-                                                    <Avatar className="h-16 w-16 ring-4 ring-blue-100 dark:ring-blue-900/30">
+                                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4">
+                                                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                                                    <Avatar className="h-14 w-14 sm:h-16 sm:w-16 ring-4 ring-[#11a5e4]/15 dark:ring-[#11a5e4]/20 flex-shrink-0">
                                                         <AvatarFallback className={`${gradientPrimary} text-white text-lg`}>
                                                             {getInitials(admin.mName)}
                                                         </AvatarFallback>
                                                     </Avatar>
-                                                    <div>
-                                                        <h3 className="font-semibold text-lg">{admin.mName || 'Staff Member'}</h3>
-                                                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                                    <div className="min-w-0">
+                                                        <h3 className="font-semibold text-base sm:text-lg truncate">{admin.mName || 'Staff Member'}</h3>
+                                                        <p className="text-sm text-muted-foreground flex items-center gap-1 min-w-0">
                                                             <Mail className="h-3 w-3" />
-                                                            {admin.email || 'No email'}
+                                                            <span className="truncate">{admin.email || 'No email'}</span>
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <Badge className={`${gradientPrimary} text-white border-0`}>
+                                                <Badge className={`${gradientPrimary} text-white border-0 w-fit`}>
                                                     Dept Admin
                                                 </Badge>
                                             </div>
@@ -512,7 +536,7 @@ const StaffTab = () => {
                                                 </div>
                                                 <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
                                                     <p className="text-xs text-muted-foreground mb-1">Remaining Slots</p>
-                                                    <p className={`text-2xl font-bold ${coursesLeft <= 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                                                    <p className={`text-2xl font-bold ${coursesLeft <= 0 ? 'text-red-500' : 'text-[#11a5e4]'}`}>
                                                         {coursesLeft}
                                                     </p>
                                                 </div>
@@ -528,7 +552,7 @@ const StaffTab = () => {
                                                     value={usagePercentage} 
                                                     className="h-2"
                                                     style={{
-                                                        background: 'linear-gradient(90deg, #1b253f 0%, #2d3a8c 30%, #4b3bb0 65%, #6b2cc1 100%)'
+                                                        background: 'linear-gradient(90deg, #11405f 0%, #1a6a9e 45%, #11a5e4 100%)'
                                                     }}
                                                 />
                                             </div>
@@ -539,11 +563,11 @@ const StaffTab = () => {
                                                     <Building2 className="h-4 w-4 text-muted-foreground" />
                                                     <span>{departmentLabel}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                                                     <div className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[activityStatus]}`}>
                                                         {statusLabels[activityStatus]}
                                                     </div>
-                                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                    <div className="flex items-center gap-1 text-xs text-muted-foreground break-all sm:break-normal">
                                                         <Clock className="h-3 w-3" />
                                                         Last login: {lastLogin}
                                                     </div>
@@ -551,11 +575,11 @@ const StaffTab = () => {
                                             </div>
                                             
                                             {/* Action Buttons */}
-                                            <div className="flex gap-2">
+                                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    className="flex-1 gap-2 hover:border-[#2d3a8c] hover:text-[#2d3a8c] transition-colors"
+                                                    className="w-full gap-2 hover:border-[#11a5e4] hover:text-[#11405f] transition-colors"
                                                     onClick={async () => {
                                                         const result = await Swal.fire({
                                                             title: 'Request course limit change',
@@ -599,7 +623,7 @@ const StaffTab = () => {
                                                     <Settings className="h-3 w-3" />
                                                     Request Limit
                                                 </Button>
-                                                <Button size="sm" variant="ghost" className="hover:bg-[#2d3a8c]/10">
+                                                <Button size="sm" variant="ghost" className="w-full sm:w-auto hover:bg-[#11a5e4]/10">
                                                     <MoreVertical className="h-4 w-4" />
                                                 </Button>
                                             </div>
@@ -607,26 +631,26 @@ const StaffTab = () => {
                                     </Card>
                                 ) : (
                                     <Card key={admin._id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                                        <CardContent className="p-4">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-4 flex-1">
-                                                    <Avatar className="h-12 w-12">
+                                        <CardContent className="p-4 sm:p-5">
+                                            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                                                <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                                                    <Avatar className="h-12 w-12 flex-shrink-0">
                                                         <AvatarFallback className={`${gradientPrimary} text-white`}>
                                                             {getInitials(admin.mName)}
                                                         </AvatarFallback>
                                                     </Avatar>
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-3">
-                                                            <h3 className="font-semibold">{admin.mName || 'Staff Member'}</h3>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                                            <h3 className="font-semibold truncate">{admin.mName || 'Staff Member'}</h3>
                                                             <Badge className={`${gradientPrimary} text-white border-0 text-xs`}>
                                                                 Dept Admin
                                                             </Badge>
                                                         </div>
-                                                        <p className="text-sm text-muted-foreground">{admin.email || 'No email'}</p>
+                                                        <p className="text-sm text-muted-foreground truncate">{admin.email || 'No email'}</p>
                                                     </div>
                                                 </div>
                                                 
-                                                <div className="flex items-center gap-6">
+                                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:flex xl:flex-wrap xl:items-center xl:justify-end xl:gap-6 w-full xl:w-auto">
                                                     <div className="text-center">
                                                         <p className="text-xs text-muted-foreground">Courses</p>
                                                         <p className="text-lg font-bold">{coursesCreated}</p>
@@ -637,17 +661,17 @@ const StaffTab = () => {
                                                     </div>
                                                     <div className="text-center">
                                                         <p className="text-xs text-muted-foreground">Remaining</p>
-                                                        <p className={`text-lg font-bold ${coursesLeft <= 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                                                        <p className={`text-lg font-bold ${coursesLeft <= 0 ? 'text-red-500' : 'text-[#11a5e4]'}`}>
                                                             {coursesLeft}
                                                         </p>
                                                     </div>
-                                                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[activityStatus]}`}>
+                                                    <div className={`px-2 py-1 rounded-full text-xs font-medium text-center ${statusColors[activityStatus]}`}>
                                                         {statusLabels[activityStatus]}
                                                     </div>
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        className="gap-2 hover:border-[#2d3a8c] hover:text-[#2d3a8c] transition-colors"
+                                                        className="col-span-2 sm:col-span-4 xl:col-span-1 gap-2 hover:border-[#11a5e4] hover:text-[#11405f] transition-colors w-full xl:w-auto"
                                                         onClick={async () => {
                                                             const result = await Swal.fire({
                                                                 title: 'Request course limit change',
@@ -710,10 +734,68 @@ const StaffTab = () => {
                                                 setSearchQuery('');
                                                 setSelectedDepartment('all');
                                             }}
-                                            className="mt-2 hover:border-[#2d3a8c] hover:text-[#2d3a8c] transition-colors"
+                                            className="mt-2 hover:border-[#11a5e4] hover:text-[#11405f] transition-colors"
                                         >
                                             Clear Filters
                                         </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+                        {filteredAdmins.length > 0 && (
+                            <Card className="border-0 shadow-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+                                <CardContent className="p-4">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                        <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
+                                            Showing {paginationStart}-{paginationEnd} of {filteredAdmins.length} staff members
+                                        </p>
+                                        <div className="flex flex-col gap-2 sm:items-end">
+                                            <div className="grid w-full grid-cols-3 items-center gap-2 sm:flex sm:w-auto sm:justify-center">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                                                    disabled={currentPage === 1}
+                                                    className="w-full sm:w-auto min-w-0 sm:min-w-[88px]"
+                                                >
+                                                    Previous
+                                                </Button>
+                                                <span className="text-center text-xs sm:text-sm text-muted-foreground px-1">
+                                                    Page {currentPage} of {totalPages}
+                                                </span>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                                                    disabled={currentPage === totalPages}
+                                                    className="w-full sm:w-auto min-w-0 sm:min-w-[88px]"
+                                                >
+                                                    Next
+                                                </Button>
+                                            </div>
+                                            <div className="hidden md:flex flex-wrap items-center justify-center gap-1">
+                                                {visiblePageNumbers.map((page, index) => {
+                                                    const previousPage = visiblePageNumbers[index - 1];
+                                                    const showGap = previousPage && page - previousPage > 1;
+
+                                                    return (
+                                                        <React.Fragment key={page}>
+                                                            {showGap ? (
+                                                                <span className="px-1 text-xs text-muted-foreground">...</span>
+                                                            ) : null}
+                                                            <Button
+                                                                variant={currentPage === page ? 'default' : 'outline'}
+                                                                size="sm"
+                                                                onClick={() => setCurrentPage(page)}
+                                                                className={`h-8 min-w-[2rem] px-2 text-xs sm:text-sm ${currentPage === page ? gradientPrimary : ''}`}
+                                                            >
+                                                                {page}
+                                                            </Button>
+                                                        </React.Fragment>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>
