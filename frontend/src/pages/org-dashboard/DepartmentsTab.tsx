@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { 
     Plus, Trash2, Building2, Users, Mail, Phone, 
     BookOpen, TrendingUp, Shield, Calendar, 
-    ChevronRight, UserPlus, Award, Clock, Menu, X
+    ChevronRight, UserPlus, Award, Clock, Menu, X, Edit2
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,6 +25,8 @@ import Swal from 'sweetalert2';
 const DepartmentsTab = () => {
     const [openDeptDialog, setOpenDeptDialog] = useState(false);
     const [openDeptAdminDialog, setOpenDeptAdminDialog] = useState(false);
+    const [openEditDeptDialog, setOpenEditDeptDialog] = useState(false);
+    const [openEditAdminDialog, setOpenEditAdminDialog] = useState(false);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const role = sessionStorage.getItem('role');
@@ -50,10 +52,15 @@ const DepartmentsTab = () => {
     const [departmentsList, setDepartmentsList] = useState<any[]>([]);
     const [deptAdmins, setDeptAdmins] = useState<any[]>([]);
     const [selectedDept, setSelectedDept] = useState<any>(null);
+    const [selectedAdmin, setSelectedAdmin] = useState<any>(null);
     const [activeAdminTab, setActiveAdminTab] = useState('all');
     const [activeTabState, setActiveTabState] = useState('departments');
 
     const [newDept, setNewDept] = useState({ name: '', description: '' });
+    const [isCreatingDepartment, setIsCreatingDepartment] = useState(false);
+    const [createDeptError, setCreateDeptError] = useState('');
+    const [isUpdatingDepartment, setIsUpdatingDepartment] = useState(false);
+    const [editDept, setEditDept] = useState({ id: '', name: '', description: '' });
     const [newDeptAdmin, setNewDeptAdmin] = useState({ 
         name: '', 
         email: '', 
@@ -62,21 +69,37 @@ const DepartmentsTab = () => {
         departmentId: '', 
         courseLimit: 0 
     });
+    const [isCreatingDeptAdmin, setIsCreatingDeptAdmin] = useState(false);
+    const [createDeptAdminErrors, setCreateDeptAdminErrors] = useState({
+        name: '',
+        email: '',
+        password: '',
+        departmentId: ''
+    });
+    const [isUpdatingDeptAdmin, setIsUpdatingDeptAdmin] = useState(false);
+    const [editDeptAdmin, setEditDeptAdmin] = useState({ 
+        id: '',
+        name: '', 
+        email: '', 
+        phone: '', 
+        departmentId: '', 
+        courseLimit: 0 
+    });
 
-    // Gradient colors matching the theme
-    const themeGradient = "from-[#1b253f] via-[#2d3a8c] to-[#6b2cc1]";
-    const themeGradientLight = "from-[#1b253f]/10 via-[#2d3a8c]/10 to-[#6b2cc1]/10";
+    // New color theme
+    const themeGradient = "from-[#11405f] to-[#11a5e4]";
+    const themeGradientLight = "from-[#11405f]/10 to-[#11a5e4]/10";
     
-    // Predefined gradient colors for avatars based on theme
+    // Predefined gradient colors for avatars based on new theme
     const avatarGradients = [
-        'from-[#1b253f] to-[#2d3a8c]',
-        'from-[#2d3a8c] to-[#4b3bb0]',
-        'from-[#4b3bb0] to-[#6b2cc1]',
-        'from-[#6b2cc1] to-[#8a3dd4]',
-        'from-[#1b253f] to-[#4b3bb0]',
-        'from-[#2d3a8c] to-[#6b2cc1]',
-        'from-[#1b253f] to-[#6b2cc1]',
-        'from-[#2d3a8c] to-[#8a3dd4]',
+        'from-[#11405f] to-[#1a6a9e]',
+        'from-[#1a6a9e] to-[#11a5e4]',
+        'from-[#11405f] to-[#11a5e4]',
+        'from-[#0d3552] to-[#0e8fc9]',
+        'from-[#11405f] to-[#1e7ab3]',
+        'from-[#1e7ab3] to-[#11a5e4]',
+        'from-[#0a2d45] to-[#11a5e4]',
+        'from-[#11405f] to-[#2090c9]',
     ];
 
     const getAvatarGradient = (adminId: string) => {
@@ -173,9 +196,18 @@ const DepartmentsTab = () => {
     };
 
     const handleCreateDepartment = async () => {
+        if (isCreatingDepartment) return;
+        if (!newDept.name.trim()) {
+            setCreateDeptError('Department name is required.');
+            return;
+        }
+
         try {
+            setCreateDeptError('');
+            setIsCreatingDepartment(true);
             const res = await axios.post(`${serverURL}/api/org/department/create`, {
                 ...newDept,
+                name: newDept.name.trim(),
                 organizationId: orgId
             });
 
@@ -189,6 +221,33 @@ const DepartmentsTab = () => {
             }
         } catch (e: any) {
             toast({ title: "Error", description: e.response?.data?.message || "Failed to create department", variant: "destructive" });
+        } finally {
+            setIsCreatingDepartment(false);
+        }
+    };
+
+    const handleUpdateDepartment = async () => {
+        if (isUpdatingDepartment) return;
+
+        try {
+            setIsUpdatingDepartment(true);
+            const res = await axios.put(`${serverURL}/api/org/department/${editDept.id}`, {
+                name: editDept.name,
+                description: editDept.description
+            });
+
+            if (res.data.success) {
+                toast({ title: "Success", description: "Department updated successfully" });
+                setOpenEditDeptDialog(false);
+                setEditDept({ id: '', name: '', description: '' });
+                fetchOrgDepartments();
+            } else {
+                toast({ title: "Error", description: res.data.message || "Failed to update department", variant: "destructive" });
+            }
+        } catch (e: any) {
+            toast({ title: "Error", description: e.response?.data?.message || "Failed to update department", variant: "destructive" });
+        } finally {
+            setIsUpdatingDepartment(false);
         }
     };
 
@@ -199,7 +258,7 @@ const DepartmentsTab = () => {
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc2626',
-            cancelButtonColor: '#6b2cc1',
+            cancelButtonColor: '#11a5e4',
             confirmButtonText: 'Yes, delete it!',
             cancelButtonText: 'Cancel',
             background: '#ffffff',
@@ -210,7 +269,7 @@ const DepartmentsTab = () => {
                 title: 'text-xl font-bold',
                 htmlContainer: 'text-gray-600',
                 confirmButton: 'bg-red-600 hover:bg-red-700 transition-all duration-200 px-6 py-2 rounded-lg',
-                cancelButton: 'bg-gradient-to-r from-[#2d3a8c] to-[#6b2cc1] hover:opacity-90 transition-all duration-200 px-6 py-2 rounded-lg text-white'
+                cancelButton: 'bg-gradient-to-r from-[#11405f] to-[#11a5e4] hover:opacity-90 transition-all duration-200 px-6 py-2 rounded-lg text-white'
             }
         });
 
@@ -239,9 +298,32 @@ const DepartmentsTab = () => {
     };
 
     const handleAddDeptAdmin = async () => {
+        if (isCreatingDeptAdmin) return;
+
+        const trimmedName = newDeptAdmin.name.trim();
+        const trimmedEmail = newDeptAdmin.email.trim();
+        const trimmedPassword = newDeptAdmin.password.trim();
+        const validationErrors = {
+            name: trimmedName ? '' : 'Full name is required.',
+            email: !trimmedEmail
+                ? 'Email is required.'
+                : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)
+                    ? 'Enter a valid email address.'
+                    : '',
+            password: trimmedPassword ? '' : 'Password is required.',
+            departmentId: newDeptAdmin.departmentId ? '' : 'Department is required.'
+        };
+
+        setCreateDeptAdminErrors(validationErrors);
+        if (Object.values(validationErrors).some(Boolean)) return;
+
         try {
+            setIsCreatingDeptAdmin(true);
             const res = await axios.post(`${serverURL}/api/org/dept-admin/add`, {
                 ...newDeptAdmin,
+                name: trimmedName,
+                email: trimmedEmail,
+                password: trimmedPassword,
                 organizationId: orgId
             });
 
@@ -255,6 +337,12 @@ const DepartmentsTab = () => {
                     departmentId: '',
                     courseLimit: 0
                 });
+                setCreateDeptAdminErrors({
+                    name: '',
+                    email: '',
+                    password: '',
+                    departmentId: ''
+                });
                 setOpenDeptAdminDialog(false);
                 fetchOrgDeptAdmins();
             } else {
@@ -262,6 +350,43 @@ const DepartmentsTab = () => {
             }
         } catch (e: any) {
             toast({ title: "Error", description: e.response?.data?.message || "Failed to add dept admin", variant: "destructive" });
+        } finally {
+            setIsCreatingDeptAdmin(false);
+        }
+    };
+
+    const handleUpdateDeptAdmin = async () => {
+        if (isUpdatingDeptAdmin) return;
+
+        try {
+            setIsUpdatingDeptAdmin(true);
+            const res = await axios.put(`${serverURL}/api/org/dept-admin/${editDeptAdmin.id}`, {
+                name: editDeptAdmin.name,
+                email: editDeptAdmin.email,
+                phone: editDeptAdmin.phone,
+                departmentId: editDeptAdmin.departmentId,
+                courseLimit: editDeptAdmin.courseLimit
+            });
+
+            if (res.data.success) {
+                toast({ title: "Success", description: "Department Admin updated successfully" });
+                setOpenEditAdminDialog(false);
+                setEditDeptAdmin({ 
+                    id: '', 
+                    name: '', 
+                    email: '', 
+                    phone: '', 
+                    departmentId: '', 
+                    courseLimit: 0 
+                });
+                fetchOrgDeptAdmins();
+            } else {
+                toast({ title: "Error", description: res.data.message || "Failed to update department admin", variant: "destructive" });
+            }
+        } catch (e: any) {
+            toast({ title: "Error", description: e.response?.data?.message || "Failed to update department admin", variant: "destructive" });
+        } finally {
+            setIsUpdatingDeptAdmin(false);
         }
     };
 
@@ -272,7 +397,7 @@ const DepartmentsTab = () => {
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc2626',
-            cancelButtonColor: '#6b2cc1',
+            cancelButtonColor: '#11a5e4',
             confirmButtonText: 'Yes, delete it!',
             cancelButtonText: 'Cancel',
             background: '#ffffff',
@@ -283,7 +408,7 @@ const DepartmentsTab = () => {
                 title: 'text-xl font-bold',
                 htmlContainer: 'text-gray-600',
                 confirmButton: 'bg-red-600 hover:bg-red-700 transition-all duration-200 px-6 py-2 rounded-lg',
-                cancelButton: 'bg-gradient-to-r from-[#2d3a8c] to-[#6b2cc1] hover:opacity-90 transition-all duration-200 px-6 py-2 rounded-lg text-white'
+                cancelButton: 'bg-gradient-to-r from-[#11405f] to-[#11a5e4] hover:opacity-90 transition-all duration-200 px-6 py-2 rounded-lg text-white'
             }
         });
 
@@ -392,10 +517,10 @@ const DepartmentsTab = () => {
         : deptAdmins.filter(admin => admin.department?._id === activeAdminTab);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50  dark:from-slate-950 dark:to-slate-900">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-                {/* Header Section with Theme Gradient */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1b253f] via-[#2d3a8c] to-[#6b2cc1] p-6 mb-6 lg:mb-8 text-white shadow-lg">
+                {/* Header Section with New Theme Gradient */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#11405f] to-[#11a5e4] p-6 mb-6 lg:mb-8 text-white shadow-lg">
                     <div className="absolute right-0 top-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
                     <div className="absolute bottom-0 left-0 -mb-16 -ml-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
                     <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
@@ -413,7 +538,14 @@ const DepartmentsTab = () => {
                             </div>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                            <Dialog open={openDeptDialog} onOpenChange={setOpenDeptDialog}>
+                            <Dialog
+                                open={openDeptDialog}
+                                onOpenChange={(open) => {
+                                    setOpenDeptDialog(open);
+                                    if (open) setIsCreatingDepartment(false);
+                                    if (open) setCreateDeptError('');
+                                }}
+                            >
                                 <DialogTrigger asChild>
                                     <Button className="bg-white/20 hover:bg-white/30 backdrop-blur-sm shadow-lg transform hover:scale-105 transition-all duration-300 w-full sm:w-auto text-white border border-white/30">
                                         <Plus className="w-4 h-4 mr-2" />
@@ -422,7 +554,7 @@ const DepartmentsTab = () => {
                                 </DialogTrigger>
                                 <DialogContent className="w-[95%] sm:max-w-md mx-auto rounded-xl">
                                     <DialogHeader>
-                                        <DialogTitle className="text-xl sm:text-2xl bg-gradient-to-r from-[#1b253f] to-[#6b2cc1] bg-clip-text text-transparent">
+                                        <DialogTitle className="text-xl sm:text-2xl bg-gradient-to-r from-[#11405f] to-[#11a5e4] bg-clip-text text-transparent">
                                             Create New Department
                                         </DialogTitle>
                                     </DialogHeader>
@@ -432,9 +564,15 @@ const DepartmentsTab = () => {
                                             <Input
                                                 placeholder="e.g., Computer Science"
                                                 value={newDept.name}
-                                                onChange={(e) => setNewDept({ ...newDept, name: e.target.value })}
-                                                className="focus:outline-none focus:ring-2 focus:ring-[#6b2cc1] focus:border-transparent"
+                                                onChange={(e) => {
+                                                    setNewDept({ ...newDept, name: e.target.value });
+                                                    if (createDeptError) setCreateDeptError('');
+                                                }}
+                                                className="focus:outline-none focus:ring-2 focus:ring-[#11a5e4] focus:border-transparent"
                                             />
+                                            {createDeptError ? (
+                                                <p className="text-sm text-red-600">{createDeptError}</p>
+                                            ) : null}
                                         </div>
                                         <div className="grid gap-2">
                                             <Label className="text-sm font-semibold">Description</Label>
@@ -442,20 +580,35 @@ const DepartmentsTab = () => {
                                                 placeholder="Describe the department's focus and objectives..."
                                                 value={newDept.description}
                                                 onChange={(e) => setNewDept({ ...newDept, description: e.target.value })}
-                                                className="min-h-[100px] focus:outline-none focus:ring-2 focus:ring-[#6b2cc1] focus:border-transparent"
+                                                className="min-h-[100px] focus:outline-none focus:ring-2 focus:ring-[#11a5e4] focus:border-transparent"
                                             />
                                         </div>
                                         <Button 
                                             onClick={handleCreateDepartment} 
-                                            className="mt-2 bg-gradient-to-r from-[#2d3a8c] to-[#6b2cc1] hover:opacity-90 transition-all"
+                                            disabled={isCreatingDepartment}
+                                            className="mt-2 bg-gradient-to-r from-[#11405f] to-[#11a5e4] hover:opacity-90 transition-all"
                                         >
-                                            Create Department
+                                            {isCreatingDepartment ? 'Creating...' : 'Create Department'}
                                         </Button>
                                     </div>
                                 </DialogContent>
                             </Dialog>
 
-                            <Dialog open={openDeptAdminDialog} onOpenChange={setOpenDeptAdminDialog}>
+                            <Dialog
+                                open={openDeptAdminDialog}
+                                onOpenChange={(open) => {
+                                    setOpenDeptAdminDialog(open);
+                                    if (open) {
+                                        setIsCreatingDeptAdmin(false);
+                                        setCreateDeptAdminErrors({
+                                            name: '',
+                                            email: '',
+                                            password: '',
+                                            departmentId: ''
+                                        });
+                                    }
+                                }}
+                            >
                                 <DialogTrigger asChild>
                                     <Button 
                                         variant="outline" 
@@ -467,7 +620,7 @@ const DepartmentsTab = () => {
                                 </DialogTrigger>
                                 <DialogContent className="w-[95%] sm:max-w-md mx-auto rounded-xl">
                                     <DialogHeader>
-                                        <DialogTitle className="text-xl sm:text-2xl bg-gradient-to-r from-[#1b253f] to-[#6b2cc1] bg-clip-text text-transparent">
+                                        <DialogTitle className="text-xl sm:text-2xl bg-gradient-to-r from-[#11405f] to-[#11a5e4] bg-clip-text text-transparent">
                                             Add Department Admin
                                         </DialogTitle>
                                     </DialogHeader>
@@ -478,9 +631,17 @@ const DepartmentsTab = () => {
                                                 <Input
                                                     placeholder="John Doe"
                                                     value={newDeptAdmin.name}
-                                                    onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, name: e.target.value })}
-                                                    className="focus:outline-none focus:ring-2 focus:ring-[#6b2cc1] focus:border-transparent"
+                                                    onChange={(e) => {
+                                                        setNewDeptAdmin({ ...newDeptAdmin, name: e.target.value });
+                                                        if (createDeptAdminErrors.name) {
+                                                            setCreateDeptAdminErrors({ ...createDeptAdminErrors, name: '' });
+                                                        }
+                                                    }}
+                                                    className="focus:outline-none focus:ring-2 focus:ring-[#11a5e4] focus:border-transparent"
                                                 />
+                                                {createDeptAdminErrors.name ? (
+                                                    <p className="text-sm text-red-600">{createDeptAdminErrors.name}</p>
+                                                ) : null}
                                             </div>
                                             <div className="grid gap-2">
                                                 <Label className="text-sm font-semibold">Email</Label>
@@ -488,9 +649,17 @@ const DepartmentsTab = () => {
                                                     type="email"
                                                     placeholder="john@example.com"
                                                     value={newDeptAdmin.email}
-                                                    onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, email: e.target.value })}
-                                                    className="focus:outline-none focus:ring-2 focus:ring-[#6b2cc1] focus:border-transparent"
+                                                    onChange={(e) => {
+                                                        setNewDeptAdmin({ ...newDeptAdmin, email: e.target.value });
+                                                        if (createDeptAdminErrors.email) {
+                                                            setCreateDeptAdminErrors({ ...createDeptAdminErrors, email: '' });
+                                                        }
+                                                    }}
+                                                    className="focus:outline-none focus:ring-2 focus:ring-[#11a5e4] focus:border-transparent"
                                                 />
+                                                {createDeptAdminErrors.email ? (
+                                                    <p className="text-sm text-red-600">{createDeptAdminErrors.email}</p>
+                                                ) : null}
                                             </div>
                                             <div className="grid gap-2">
                                                 <Label className="text-sm font-semibold">Password</Label>
@@ -498,9 +667,17 @@ const DepartmentsTab = () => {
                                                     type="password"
                                                     placeholder="••••••••"
                                                     value={newDeptAdmin.password}
-                                                    onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, password: e.target.value })}
-                                                    className="focus:outline-none focus:ring-2 focus:ring-[#6b2cc1] focus:border-transparent"
+                                                    onChange={(e) => {
+                                                        setNewDeptAdmin({ ...newDeptAdmin, password: e.target.value });
+                                                        if (createDeptAdminErrors.password) {
+                                                            setCreateDeptAdminErrors({ ...createDeptAdminErrors, password: '' });
+                                                        }
+                                                    }}
+                                                    className="focus:outline-none focus:ring-2 focus:ring-[#11a5e4] focus:border-transparent"
                                                 />
+                                                {createDeptAdminErrors.password ? (
+                                                    <p className="text-sm text-red-600">{createDeptAdminErrors.password}</p>
+                                                ) : null}
                                             </div>
                                             <div className="grid gap-2">
                                                 <Label className="text-sm font-semibold">Phone (Optional)</Label>
@@ -508,15 +685,20 @@ const DepartmentsTab = () => {
                                                     placeholder="+1 234 567 8900"
                                                     value={newDeptAdmin.phone}
                                                     onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, phone: e.target.value })}
-                                                    className="focus:outline-none focus:ring-2 focus:ring-[#6b2cc1] focus:border-transparent"
+                                                    className="focus:outline-none focus:ring-2 focus:ring-[#11a5e4] focus:border-transparent"
                                                 />
                                             </div>
                                             <div className="grid gap-2">
                                                 <Label className="text-sm font-semibold">Department</Label>
                                                 <select
-                                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6b2cc1] focus:border-transparent"
+                                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#11a5e4] focus:border-transparent"
                                                     value={newDeptAdmin.departmentId}
-                                                    onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, departmentId: e.target.value })}
+                                                    onChange={(e) => {
+                                                        setNewDeptAdmin({ ...newDeptAdmin, departmentId: e.target.value });
+                                                        if (createDeptAdminErrors.departmentId) {
+                                                            setCreateDeptAdminErrors({ ...createDeptAdminErrors, departmentId: '' });
+                                                        }
+                                                    }}
                                                 >
                                                     <option value="">Select Department</option>
                                                     {departmentsList.map((dept) => (
@@ -525,6 +707,9 @@ const DepartmentsTab = () => {
                                                         </option>
                                                     ))}
                                                 </select>
+                                                {createDeptAdminErrors.departmentId ? (
+                                                    <p className="text-sm text-red-600">{createDeptAdminErrors.departmentId}</p>
+                                                ) : null}
                                             </div>
                                             <div className="grid gap-2">
                                                 <Label className="text-sm font-semibold">Course Creation Limit</Label>
@@ -538,14 +723,15 @@ const DepartmentsTab = () => {
                                                         })
                                                     }
                                                     placeholder="Max courses this admin can create"
-                                                    className="focus:outline-none focus:ring-2 focus:ring-[#6b2cc1] focus:border-transparent"
+                                                    className="focus:outline-none focus:ring-2 focus:ring-[#11a5e4] focus:border-transparent"
                                                 />
                                             </div>
                                             <Button 
                                                 onClick={handleAddDeptAdmin} 
-                                                className="mt-2 bg-gradient-to-r from-[#2d3a8c] to-[#6b2cc1] hover:opacity-90 transition-all"
+                                                disabled={isCreatingDeptAdmin}
+                                                className="mt-2 bg-gradient-to-r from-[#11405f] to-[#11a5e4] hover:opacity-90 transition-all"
                                             >
-                                                Add Department Admin
+                                                {isCreatingDeptAdmin ? 'Adding...' : 'Add Department Admin'}
                                             </Button>
                                         </div>
                                     </ScrollArea>
@@ -555,103 +741,101 @@ const DepartmentsTab = () => {
                     </div>
                 </div>
 
-           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
-    
-    {/* Card 1 */}
-    <Card className="bg-white dark:bg-gray-900 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700">
-        <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-muted-foreground text-sm">Total Departments</p>
-                    <p className="text-2xl sm:text-3xl font-bold mt-1 text-[#1b253f]">
-                        {departmentsList.length}
-                    </p>
-                </div>
-                <div className="p-3 rounded-lg bg-[#1b253f]/10">
-                    <Building2 className="w-6 h-6 sm:w-7 sm:h-7 text-[#1b253f]" />
-                </div>
-            </div>
-        </CardContent>
-    </Card>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
+                    {/* Card 1 */}
+                    <Card className="bg-white dark:bg-gray-900 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700">
+                        <CardContent className="p-4 sm:p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-muted-foreground text-sm">Total Departments</p>
+                                    <p className="text-2xl sm:text-3xl font-bold mt-1 text-[#11405f]">
+                                        {departmentsList.length}
+                                    </p>
+                                </div>
+                                <div className="p-3 rounded-lg bg-[#11405f]/10">
+                                    <Building2 className="w-6 h-6 sm:w-7 sm:h-7 text-[#11405f]" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
 
-    {/* Card 2 */}
-    <Card className="bg-white dark:bg-gray-900 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700">
-        <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-muted-foreground text-sm">Department Admins</p>
-                    <p className="text-2xl sm:text-3xl font-bold mt-1 text-[#2d3a8c]">
-                        {deptAdmins.length}
-                    </p>
-                </div>
-                <div className="p-3 rounded-lg bg-[#2d3a8c]/10">
-                    <Users className="w-6 h-6 sm:w-7 sm:h-7 text-[#2d3a8c]" />
-                </div>
-            </div>
-        </CardContent>
-    </Card>
+                    {/* Card 2 */}
+                    <Card className="bg-white dark:bg-gray-900 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700">
+                        <CardContent className="p-4 sm:p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-muted-foreground text-sm">Department Admins</p>
+                                    <p className="text-2xl sm:text-3xl font-bold mt-1 text-[#1a6a9e]">
+                                        {deptAdmins.length}
+                                    </p>
+                                </div>
+                                <div className="p-3 rounded-lg bg-[#11a5e4]/10">
+                                    <Users className="w-6 h-6 sm:w-7 sm:h-7 text-[#11a5e4]" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
 
-    {/* Card 3 */}
-    <Card className="bg-white dark:bg-gray-900 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700">
-        <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-muted-foreground text-sm">Total Students</p>
-                    <p className="text-2xl sm:text-3xl font-bold mt-1 text-[#4b3bb0]">
-                        {stats.studentCount}
-                    </p>
-                </div>
-                <div className="p-3 rounded-lg bg-[#4b3bb0]/10">
-                    <BookOpen className="w-6 h-6 sm:w-7 sm:h-7 text-[#4b3bb0]" />
-                </div>
-            </div>
-        </CardContent>
-    </Card>
+                    {/* Card 3 */}
+                    <Card className="bg-white dark:bg-gray-900 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700">
+                        <CardContent className="p-4 sm:p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-muted-foreground text-sm">Total Students</p>
+                                    <p className="text-2xl sm:text-3xl font-bold mt-1 text-[#1e7ab3]">
+                                        {stats.studentCount}
+                                    </p>
+                                </div>
+                                <div className="p-3 rounded-lg bg-[#11a5e4]/10">
+                                    <BookOpen className="w-6 h-6 sm:w-7 sm:h-7 text-[#11a5e4]" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
 
-    {/* Card 4 */}
-    <Card className="bg-white dark:bg-gray-900 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700">
-        <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-muted-foreground text-sm">Active Courses</p>
-                    <p className="text-2xl sm:text-3xl font-bold mt-1 text-[#6b2cc1]">
-                        {courses.length}
-                    </p>
+                    {/* Card 4 */}
+                    <Card className="bg-white dark:bg-gray-900 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700">
+                        <CardContent className="p-4 sm:p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-muted-foreground text-sm">Active Courses</p>
+                                    <p className="text-2xl sm:text-3xl font-bold mt-1 text-[#11a5e4]">
+                                        {courses.length}
+                                    </p>
+                                </div>
+                                <div className="p-3 rounded-lg bg-[#11a5e4]/10">
+                                    <TrendingUp className="w-6 h-6 sm:w-7 sm:h-7 text-[#11a5e4]" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
-                <div className="p-3 rounded-lg bg-[#6b2cc1]/10">
-                    <TrendingUp className="w-6 h-6 sm:w-7 sm:h-7 text-[#6b2cc1]" />
-                </div>
-            </div>
-        </CardContent>
-    </Card>
-
-</div>
 
                 {/* Main Content Tabs */}
                 <Tabs defaultValue="departments" className="space-y-4 lg:space-y-6" onValueChange={setActiveTabState}>
                     <TabsList className="grid w-full max-w-[300px] sm:max-w-md grid-cols-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg mx-auto sm:mx-0">
-                       <TabsTrigger 
-    value="departments" 
-    className={`flex items-center gap-2 transition-all duration-300 text-sm sm:text-base ${
-        activeTabState === 'departments' 
-            ? 'bg-gradient-to-r from-[#2d3a8c] to-[#6b2cc1] !text-white shadow-lg transform scale-105' 
-            : 'hover:scale-105'
-    }`}
->
-    <Building2 className={`w-4 h-4 transition-all duration-300 ${activeTabState === 'departments' ? 'animate-pulse' : ''}`} />
-    Departments
-</TabsTrigger>
-<TabsTrigger 
-    value="admins" 
-    className={`flex items-center gap-2 transition-all duration-300 text-sm sm:text-base ${
-        activeTabState === 'admins' 
-            ? 'bg-gradient-to-r from-[#2d3a8c] to-[#6b2cc1] !text-white shadow-lg transform scale-105' 
-            : 'hover:scale-105'
-    }`}
->
-    <Shield className={`w-4 h-4 transition-all duration-300 ${activeTabState === 'admins' ? 'animate-pulse' : ''}`} />
-    Department Admins
-</TabsTrigger>
+                        <TabsTrigger 
+                            value="departments" 
+                            className={`flex items-center gap-2 transition-all duration-300 text-sm sm:text-base ${
+                                activeTabState === 'departments' 
+                                    ? 'bg-gradient-to-r from-[#11405f] to-[#11a5e4] !text-white shadow-lg transform scale-105' 
+                                    : 'hover:scale-105'
+                            }`}
+                        >
+                            <Building2 className={`w-4 h-4 transition-all duration-300 ${activeTabState === 'departments' ? 'animate-pulse' : ''}`} />
+                            Departments
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="admins" 
+                            className={`flex items-center gap-2 transition-all duration-300 text-sm sm:text-base ${
+                                activeTabState === 'admins' 
+                                    ? 'bg-gradient-to-r from-[#11405f] to-[#11a5e4] !text-white shadow-lg transform scale-105' 
+                                    : 'hover:scale-105'
+                            }`}
+                        >
+                            <Shield className={`w-4 h-4 transition-all duration-300 ${activeTabState === 'admins' ? 'animate-pulse' : ''}`} />
+                            Department Admins
+                        </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="departments" className="space-y-4 lg:space-y-6 animate-fadeIn">
@@ -667,7 +851,7 @@ const DepartmentsTab = () => {
                                                         <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                                                     </div>
                                                     <div>
-                                                        <CardTitle className="text-base sm:text-xl bg-gradient-to-r from-[#1b253f] to-[#6b2cc1] bg-clip-text text-transparent">
+                                                        <CardTitle className="text-base sm:text-xl bg-gradient-to-r from-[#11405f] to-[#11a5e4] bg-clip-text text-transparent">
                                                             {dept.name}
                                                         </CardTitle>
                                                         <CardDescription className="text-xs sm:text-sm mt-1">
@@ -675,14 +859,31 @@ const DepartmentsTab = () => {
                                                         </CardDescription>
                                                     </div>
                                                 </div>
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    className="opacity-0 group-hover:opacity-100 transition-all duration-300 text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950 h-8 w-8 sm:h-10 sm:w-10"
-                                                    onClick={() => handleDeleteDepartment(dept._id, dept.name)}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="opacity-0 group-hover:opacity-100 transition-all duration-300 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950 h-8 w-8 sm:h-10 sm:w-10"
+                                                        onClick={() => {
+                                                            setEditDept({
+                                                                id: dept._id,
+                                                                name: dept.name,
+                                                                description: dept.description || ''
+                                                            });
+                                                            setOpenEditDeptDialog(true);
+                                                        }}
+                                                    >
+                                                        <Edit2 className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="opacity-0 group-hover:opacity-100 transition-all duration-300 text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950 h-8 w-8 sm:h-10 sm:w-10"
+                                                        onClick={() => handleDeleteDepartment(dept._id, dept.name)}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </CardHeader>
                                         <CardContent className="p-4 sm:p-6 pt-0">
@@ -721,8 +922,8 @@ const DepartmentsTab = () => {
                                 onClick={() => setActiveAdminTab('all')}
                                 className={`rounded-full transition-all duration-300 text-sm ${
                                     activeAdminTab === 'all' 
-                                        ? 'bg-gradient-to-r from-[#2d3a8c] to-[#6b2cc1] shadow-lg transform scale-105' 
-                                        : 'hover:scale-105 border-[#2d3a8c]/30 hover:border-[#6b2cc1]'
+                                        ? 'bg-gradient-to-r from-[#11405f] to-[#11a5e4] shadow-lg transform scale-105' 
+                                        : 'hover:scale-105 border-[#11405f]/30 hover:border-[#11a5e4]'
                                 }`}
                             >
                                 All Departments
@@ -735,8 +936,8 @@ const DepartmentsTab = () => {
                                     onClick={() => setActiveAdminTab(dept._id)}
                                     className={`rounded-full transition-all duration-300 text-sm ${
                                         activeAdminTab === dept._id 
-                                            ? 'bg-gradient-to-r from-[#2d3a8c] to-[#6b2cc1] shadow-lg transform scale-105' 
-                                            : 'hover:scale-105 border-[#2d3a8c]/30 hover:border-[#6b2cc1]'
+                                            ? 'bg-gradient-to-r from-[#11405f] to-[#11a5e4] shadow-lg transform scale-105' 
+                                            : 'hover:scale-105 border-[#11405f]/30 hover:border-[#11a5e4]'
                                     }`}
                                 >
                                     {dept.name.length > 12 ? `${dept.name.substring(0, 10)}...` : dept.name}
@@ -762,7 +963,7 @@ const DepartmentsTab = () => {
                                                             </AvatarFallback>
                                                         </Avatar>
                                                         <div className="min-w-0 flex-1">
-                                                            <CardTitle className="text-base sm:text-lg truncate bg-gradient-to-r from-[#1b253f] to-[#6b2cc1] bg-clip-text text-transparent">
+                                                            <CardTitle className="text-base sm:text-lg truncate bg-gradient-to-r from-[#11405f] to-[#11a5e4] bg-clip-text text-transparent">
                                                                 {admin.mName}
                                                             </CardTitle>
                                                             <CardDescription className="flex items-center gap-1 mt-1 text-xs sm:text-sm">
@@ -771,24 +972,47 @@ const DepartmentsTab = () => {
                                                             </CardDescription>
                                                         </div>
                                                     </div>
-                                                    <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className="opacity-0 group-hover:opacity-100 transition-all duration-300 text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950 h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0"
-                                                        onClick={() => handleDeleteDeptAdmin(admin._id, admin.mName)}
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="opacity-0 group-hover:opacity-100 transition-all duration-300 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950 h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0"
+                                                            onClick={() => {
+                                                                setEditDeptAdmin({
+                                                                    id: admin._id,
+                                                                    name: admin.mName,
+                                                                    email: admin.email,
+                                                                    phone: admin.phone || '',
+                                                                    departmentId: admin.department?._id || '',
+                                                                    courseLimit: admin.courseLimit || 0
+                                                                });
+                                                                setOpenEditAdminDialog(true);
+                                                            }}
+                                                        >
+                                                            <Edit2 className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="opacity-0 group-hover:opacity-100 transition-all duration-300 text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950 h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0"
+                                                            onClick={() => handleDeleteDeptAdmin(admin._id, admin.mName)}
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             </CardHeader>
                                             <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0">
                                                 <div className="flex flex-wrap items-center gap-2 text-sm">
-                                                    <Badge variant="secondary" className="gap-1 bg-gradient-to-r from-[#2d3a8c]/10 to-[#6b2cc1]/10 text-[#2d3a8c] border-0">
-                                                        <Building2 className="w-3 h-3" />
-                                                        {admin.department?.name || 'No Department'}
-                                                    </Badge>
+                                                    <Badge
+  variant="secondary"
+  className="gap-1 bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white border-0"
+>
+  <Building2 className="w-3 h-3 text-white" />
+  {admin.department?.name || 'No Department'}
+</Badge>
                                                     {admin.phone && (
-                                                        <Badge variant="outline" className="gap-1 border-[#2d3a8c]/30">
+                                                        <Badge variant="outline" className="gap-1 border-[#11405f]/30">
                                                             <Phone className="w-3 h-3" />
                                                             <span className="truncate max-w-[120px]">{admin.phone}</span>
                                                         </Badge>
@@ -798,17 +1022,17 @@ const DepartmentsTab = () => {
                                                 <div className="space-y-2">
                                                     <div className="flex justify-between text-sm">
                                                         <span className="text-muted-foreground">Course Usage</span>
-                                                        <span className="font-semibold text-[#6b2cc1]">{coursesUsed} / {admin.courseLimit || 0}</span>
+                                                        <span className="font-semibold text-[#11a5e4]">{coursesUsed} / {admin.courseLimit || 0}</span>
                                                     </div>
                                                     <Progress 
                                                         value={usagePercentage} 
                                                         className="h-2"
-                                                        style={{ background: 'rgba(107, 44, 193, 0.1)' }}
+                                                        style={{ background: 'rgba(17, 165, 228, 0.1)' }}
                                                     />
                                                     <div className="flex justify-between text-xs text-muted-foreground mt-1">
                                                         <span>Available: {coursesLeft} courses left</span>
                                                         <span className="flex items-center gap-1">
-                                                            <Award className="w-3 h-3 text-[#6b2cc1]" />
+                                                            <Award className="w-3 h-3 text-[#11a5e4]" />
                                                             Limit: {admin.courseLimit || 0}
                                                         </span>
                                                     </div>
@@ -817,7 +1041,7 @@ const DepartmentsTab = () => {
                                                 <Separator />
 
                                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                    <Calendar className="w-4 h-4 text-[#6b2cc1]" />
+                                                    <Calendar className="w-4 h-4 text-[#11a5e4]" />
                                                     <span>Joined: {formatDate(admin.createdAt)}</span>
                                                 </div>
                                             </CardContent>
@@ -838,6 +1062,154 @@ const DepartmentsTab = () => {
                     </TabsContent>
                 </Tabs>
             </div>
+
+            {/* Edit Department Dialog */}
+            <Dialog
+                open={openEditDeptDialog}
+                onOpenChange={(open) => {
+                    setOpenEditDeptDialog(open);
+                    if (open) setIsUpdatingDepartment(false);
+                }}
+            >
+                <DialogContent className="w-[95%] sm:max-w-md mx-auto rounded-xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl sm:text-2xl bg-gradient-to-r from-[#11405f] to-[#11a5e4] bg-clip-text text-transparent">
+                            Edit Department
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label className="text-sm font-semibold">Department Name</Label>
+                            <Input
+                                placeholder="e.g., Computer Science"
+                                value={editDept.name}
+                                onChange={(e) => setEditDept({ ...editDept, name: e.target.value })}
+                                className="focus:outline-none focus:ring-2 focus:ring-[#11a5e4] focus:border-transparent"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label className="text-sm font-semibold">Description</Label>
+                            <Textarea
+                                placeholder="Describe the department's focus and objectives..."
+                                value={editDept.description}
+                                onChange={(e) => setEditDept({ ...editDept, description: e.target.value })}
+                                className="min-h-[100px] focus:outline-none focus:ring-2 focus:ring-[#11a5e4] focus:border-transparent"
+                            />
+                        </div>
+                        <div className="flex gap-3 mt-2">
+                            <Button 
+                                onClick={handleUpdateDepartment} 
+                                disabled={isUpdatingDepartment}
+                                className="flex-1 bg-gradient-to-r from-[#11405f] to-[#11a5e4] hover:opacity-90 transition-all"
+                            >
+                                {isUpdatingDepartment ? 'Updating...' : 'Update Department'}
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                onClick={() => setOpenEditDeptDialog(false)}
+                                className="flex-1"
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Department Admin Dialog */}
+            <Dialog
+                open={openEditAdminDialog}
+                onOpenChange={(open) => {
+                    setOpenEditAdminDialog(open);
+                    if (open) setIsUpdatingDeptAdmin(false);
+                }}
+            >
+                <DialogContent className="w-[95%] sm:max-w-md mx-auto rounded-xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl sm:text-2xl bg-gradient-to-r from-[#11405f] to-[#11a5e4] bg-clip-text text-transparent">
+                            Edit Department Admin
+                        </DialogTitle>
+                    </DialogHeader>
+                    <ScrollArea className="max-h-[70vh]">
+                        <div className="grid gap-4 py-4 pr-2">
+                            <div className="grid gap-2">
+                                <Label className="text-sm font-semibold">Full Name</Label>
+                                <Input
+                                    placeholder="John Doe"
+                                    value={editDeptAdmin.name}
+                                    onChange={(e) => setEditDeptAdmin({ ...editDeptAdmin, name: e.target.value })}
+                                    className="focus:outline-none focus:ring-2 focus:ring-[#11a5e4] focus:border-transparent"
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label className="text-sm font-semibold">Email</Label>
+                                <Input
+                                    type="email"
+                                    placeholder="john@example.com"
+                                    value={editDeptAdmin.email}
+                                    onChange={(e) => setEditDeptAdmin({ ...editDeptAdmin, email: e.target.value })}
+                                    className="focus:outline-none focus:ring-2 focus:ring-[#11a5e4] focus:border-transparent"
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label className="text-sm font-semibold">Phone (Optional)</Label>
+                                <Input
+                                    placeholder="+1 234 567 8900"
+                                    value={editDeptAdmin.phone}
+                                    onChange={(e) => setEditDeptAdmin({ ...editDeptAdmin, phone: e.target.value })}
+                                    className="focus:outline-none focus:ring-2 focus:ring-[#11a5e4] focus:border-transparent"
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label className="text-sm font-semibold">Department</Label>
+                                <select
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#11a5e4] focus:border-transparent"
+                                    value={editDeptAdmin.departmentId}
+                                    onChange={(e) => setEditDeptAdmin({ ...editDeptAdmin, departmentId: e.target.value })}
+                                >
+                                    <option value="">Select Department</option>
+                                    {departmentsList.map((dept) => (
+                                        <option key={dept._id} value={dept._id}>
+                                            {dept.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label className="text-sm font-semibold">Course Creation Limit</Label>
+                                <Input
+                                    type="number"
+                                    value={editDeptAdmin.courseLimit}
+                                    onChange={(e) =>
+                                        setEditDeptAdmin({
+                                            ...editDeptAdmin,
+                                            courseLimit: parseInt(e.target.value) || 0
+                                        })
+                                    }
+                                    placeholder="Max courses this admin can create"
+                                    className="focus:outline-none focus:ring-2 focus:ring-[#11a5e4] focus:border-transparent"
+                                />
+                            </div>
+                            <div className="flex gap-3 mt-2">
+                                <Button 
+                                    onClick={handleUpdateDeptAdmin} 
+                                    disabled={isUpdatingDeptAdmin}
+                                    className="flex-1 bg-gradient-to-r from-[#11405f] to-[#11a5e4] hover:opacity-90 transition-all"
+                                >
+                                    {isUpdatingDeptAdmin ? 'Updating...' : 'Update Admin'}
+                                </Button>
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => setOpenEditAdminDialog(false)}
+                                    className="flex-1"
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
+                        </div>
+                    </ScrollArea>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
