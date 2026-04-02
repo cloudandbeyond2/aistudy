@@ -466,7 +466,7 @@ const Dashboard = () => {
         initial="hidden"
         animate="visible"
         variants={containerVariants}
-        className="space-y-6 sm:space-y-8 animate-fade-in px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto relative z-10"
+        className="space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-2 lg:px-4 max-w-[1400px] mx-auto relative z-10"
       >
         
         {/* AI-Powered Welcome Section with Glow Effect */}
@@ -531,91 +531,99 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
-        {/* Header Section with Glassmorphism */}
-        <motion.div 
-          variants={itemVariants}
-          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6"
-        >
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-indigo-500 bg-clip-text text-transparent flex items-center gap-2">
-              My Learning Hub
-              <Sparkles className="h-5 w-5 text-yellow-500 animate-pulse" />
-            </h1>
-            <p className="text-sm sm:text-base text-muted-foreground mt-1">
-              {courses.length} {courses.length === 1 ? 'course' : 'courses'} crafted by AI for you
-            </p>
-          </div>
-          
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                onClick={() => (window.location.href = websiteURL)}
-                variant="outline"
-                size="sm"
-                className="hidden sm:inline-flex shadow-md backdrop-blur-sm bg-background/50"
-              >
-                <Globe className="mr-2 h-4 w-4" />
-                View Website
-              </Button>
-            </motion.div>
+       {/* Header Section */}
+<motion.div 
+  variants={itemVariants}
+  className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8"
+>
+  <div className="flex-1">
+    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent flex items-center gap-2">
+      My Learning Hub
+      <Sparkles className="h-4 w-4 sm:h-5 w-5 text-yellow-500 animate-pulse" />
+    </h1>
+    <p className="text-xs sm:text-sm text-slate-500 mt-1">
+      {courses.length} {courses.length === 1 ? 'course' : 'courses'} crafted by AI for you
+    </p>
+  </div>
+  
+  {/* Compact Action Buttons */}
+  <div className="flex items-center gap-2">
+    <Button
+      onClick={() => (window.location.href = websiteURL)}
+      variant="outline"
+      size="sm"
+      className="flex-1 sm:flex-none h-9 px-3 text-xs font-semibold shadow-sm border-slate-200 hover:bg-slate-50"
+    >
+      <Globe className="mr-1.5 h-3.5 w-3.5 text-slate-500" />
+      Website
+    </Button>
 
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                onClick={() => navigate('/dashboard/todo')}
-                variant="outline"
-                size="sm"
-                className="hidden sm:inline-flex shadow-md backdrop-blur-sm bg-background/50"
-              >
-                <ListTodo className="mr-2 h-4 w-4" />
-                Todo Center
-              </Button>
-            </motion.div>
+    <Button
+      onClick={() => navigate('/dashboard/todo')}
+      variant="outline"
+      size="sm"
+      className="flex-1 sm:flex-none h-9 px-3 text-xs font-semibold shadow-sm border-slate-200 hover:bg-slate-50"
+    >
+      <ListTodo className="mr-1.5 h-3.5 w-3.5 text-slate-500" />
+      Todo
+    </Button>
 
-            <NotificationBell />
-          </div>
-        </motion.div>
+    {/* Notification: Visible only on Desktop (min-width: 1024px) */}
+    <div className="hidden lg:block ml-1">
+      <NotificationBell />
+    </div>
+  </div>
+</motion.div>
 
         {/* Search and Filter with Glass Effect */}
-        <motion.div 
-          variants={itemVariants}
-          className="rounded-2xl border border-border/60 bg-card/50 backdrop-blur-md p-4 shadow-lg"
-        >
-          <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-            <div className="flex flex-col sm:flex-row gap-3 flex-1">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search courses by topic or type..."
-                  className="pl-10 text-sm bg-background/50 backdrop-blur-sm border-border/50 focus:border-primary/50"
-                />
-              </div>
-              <div className="w-full sm:w-48">
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger className="text-sm bg-background/50 backdrop-blur-sm border-border/50">
-                    <div className="flex items-center gap-2">
-                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                      <SelectValue placeholder="Filter by year" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All years</SelectItem>
-                    {availableYears.map((year) => (
-                      <SelectItem key={year} value={year}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+<motion.div 
+  variants={itemVariants}
+  className="rounded-2xl border border-border/60 bg-card/50 backdrop-blur-md p-3 sm:p-4 shadow-lg"
+>
+  <div className="flex flex-col gap-4">
+    {/* Top Row: Search and Select */}
+    <div className="flex flex-col md:flex-row gap-3">
+      {/* Search Input - Full width on mobile, flexible on desktop */}
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search courses..."
+          className="pl-10 h-10 sm:h-11 text-sm bg-background/50 backdrop-blur-sm border-border/50 focus:border-primary/50 w-full"
+        />
+      </div>
+
+      {/* Select Filter - Full width on mobile, fixed width on desktop */}
+      <div className="w-full md:w-56">
+        <Select value={selectedYear} onValueChange={setSelectedYear}>
+          <SelectTrigger className="h-10 sm:h-11 text-sm bg-background/50 backdrop-blur-sm border-border/50">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+              <SelectValue placeholder="Filter by year" />
             </div>
-            <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-right">
-              Showing {filteredCourses.length} of {totalCourses} course{totalCourses === 1 ? '' : 's'}
-            </p>
-          </div>
-        </motion.div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All years</SelectItem>
+            {availableYears.map((year) => (
+              <SelectItem key={year} value={year}>{year}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+
+    {/* Bottom Row: Results Counter */}
+    <div className="flex items-center justify-between border-t border-border/40 pt-3 md:pt-0 md:border-none">
+      <p className="text-[11px] sm:text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        Current Filters
+      </p>
+      <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+        Showing <span className="text-foreground">{filteredCourses.length}</span> of <span className="text-foreground">{totalCourses}</span>
+      </p>
+    </div>
+  </div>
+</motion.div>
 
         {/* Stats Cards with Neumorphic Design */}
         {!isLoading && (courses.length > 0 || isOrgAdmin) && (
@@ -655,32 +663,46 @@ const Dashboard = () => {
 
         {/* AI Learning Tip Banner */}
         {courses.length > 0 && !isLoading && (
-          <motion.div 
-            variants={itemVariants}
-            className="rounded-2xl bg-gradient-to-r from-primary/10 via-indigo-500/10 to-purple-500/10 p-4 border border-primary/20"
-          >
-            <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-              <div className="flex-shrink-0">
-                <div className="p-2 rounded-xl bg-primary/20">
-                  <Cpu className="h-5 w-5 text-primary" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">🤖 AI Learning Tip</p>
-                <p className="text-xs text-muted-foreground">
-                  Based on your learning patterns, we recommend focusing on courses with 70% completion rate to maximize retention. 
-                  Your average completion rate is <span className="text-primary font-semibold">
-                    {Math.round(courses.reduce((acc, c) => acc + (courseProgress[c._id] || 0), 0) / courses.length)}%
-                  </span>
-                </p>
-              </div>
-              <Button variant="ghost" size="sm" className="text-xs">
-                <Target className="h-3 w-3 mr-1" />
-                View Insights
-              </Button>
-            </div>
-          </motion.div>
-        )}
+  <motion.div 
+    variants={itemVariants}
+    className="rounded-2xl bg-gradient-to-br from-primary/10 via-indigo-500/5 to-purple-500/10 p-4 border border-primary/10 shadow-sm"
+  >
+    {/* Use flex-col on mobile, flex-row on desktop */}
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+      
+      {/* Icon and Title Header for Mobile */}
+      <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex-shrink-0 p-2.5 rounded-xl bg-white/50 border border-primary/20 shadow-sm">
+          <Cpu className="h-5 w-5 text-primary" />
+        </div>
+        <div className="sm:hidden">
+          <p className="text-sm font-bold text-slate-800">AI Learning Tip</p>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 space-y-1">
+        <p className="hidden sm:block text-sm font-bold text-slate-800">🤖 AI Learning Tip</p>
+        <p className="text-xs leading-relaxed text-slate-600">
+          Based on your patterns, we recommend focusing on courses with <span className="font-semibold text-slate-900">70% completion</span> to maximize retention. 
+          Your average is <span className="text-primary font-bold">
+            {Math.round(courses.reduce((acc, c) => acc + (courseProgress[c._id] || 0), 0) / courses.length)}%
+          </span>
+        </p>
+      </div>
+
+      {/* Button: Full width on mobile, auto width on desktop */}
+      <Button 
+        variant="secondary" 
+        size="sm" 
+        className="w-full sm:w-auto text-xs bg-[#1998e5]  border-slate-200 shadow-sm h-9 "
+      >
+        
+        View Insights
+      </Button>
+    </div>
+  </motion.div>
+)}
 
    {/* Courses Grid with Modern Cards */}
 {isLoading ? (
