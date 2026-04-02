@@ -97,9 +97,19 @@ app.use((req, res, next) => {
 app.use(async (req, res, next) => {
   if (mongoose.connection.readyState !== 1) {
     try {
-      await connectDB();
+      const connected = await connectDB();
+      if (!connected) {
+        return res.status(503).json({
+          success: false,
+          message: 'Database unavailable. Check MongoDB connection and TLS settings.'
+        });
+      }
     } catch (err) {
       console.error('DB Connection Middleware Error:', err);
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection failed'
+      });
     }
   }
   next();

@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -142,6 +142,18 @@ const PublicThemeGuard = () => {
 
 const queryClient = new QueryClient();
 
+const OrganizationStudentGuard = () => {
+  const role = sessionStorage.getItem("role");
+  const orgId = sessionStorage.getItem("orgId");
+  const isOrganizationStudent = role === "student" && Boolean(orgId);
+
+  if (!isOrganizationStudent) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Outlet />;
+};
+
 const App = () => (
   <GoogleOAuthProvider clientId={googleClientId}>
     <QueryClientProvider client={queryClient}>
@@ -179,18 +191,22 @@ const App = () => (
 
 
                     <Route path="org/assignment/:assignmentId/submissions" element={<OrgAssignmentSubmissions />} />
-                    <Route path="student" element={<StudentPortal />} />
-                    <Route path="student/career" element={<StudentCareer />} />
-                    <Route path="student/assignments" element={<StudentAssignments />} />
-                    <Route path="student/assignment/certificate/:submissionId" element={<OrgAssignmentCertificate />} />
-                    <Route path="student/notices" element={<StudentNotices />} />
-                    <Route path="student/blogs" element={<StudentBlogs />} />
-                    <Route path="student/news" element={<StudentNews />} />
-                    <Route path="student/meetings" element={<StudentMeetings />} />
-                    <Route path="student/projects" element={<StudentProjects />} />
-                    <Route path="student/materials" element={<StudentMaterials />} />
-                    <Route path="student/attendance" element={<StudentAttendance />} />
-                    <Route path="student/assignment/:assignmentId" element={<AssignmentPage />} />
+                    <Route path="student" element={<OrganizationStudentGuard />}>
+                      <Route index element={<StudentPortal />} />
+                      <Route path="career" element={<StudentCareer />} />
+                      <Route path="assignments" element={<StudentAssignments />} />
+                      <Route path="assignment/certificate/:submissionId" element={<OrgAssignmentCertificate />} />
+                      <Route path="notices" element={<StudentNotices />} />
+                      <Route path="blogs" element={<StudentBlogs />} />
+                      <Route path="news" element={<StudentNews />} />
+                      <Route path="meetings" element={<StudentMeetings />} />
+                      <Route path="projects" element={<StudentProjects />} />
+                      <Route path="materials" element={<StudentMaterials />} />
+                      <Route path="attendance" element={<StudentAttendance />} />
+                      <Route path="assignment/:assignmentId" element={<AssignmentPage />} />
+                      <Route path="support-tickets" element={<StudentSupportTickets />} />
+                      <Route path="profile" element={<StudentProfile />} />
+                    </Route>
                     <Route path="news" element={<GlobalNews />} />
 
                     <Route path="notebook" element={<AINotebook />} />
@@ -200,10 +216,8 @@ const App = () => (
                  
 
                     <Route path="support" element={<SupportTickets />} />
-                    <Route path="student/support-tickets" element={<StudentSupportTickets />} />
 
                     <Route path="org/student-tickets" element={<OrgStudentTickets />} />
-                    <Route path="student/profile" element={<StudentProfile />} />
                     <Route path="dept" element={<DeptDashboard />} />
                     <Route path="interview-prep" element={<InterviewPreparation />} />
                   </Route>
