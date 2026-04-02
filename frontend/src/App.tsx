@@ -127,6 +127,18 @@ import LandingPage from "./pages/LandingPage";
 import OrgLandingPage from "./pages/OrgLandingPage";
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import DepartmentsTab from "./pages/org-dashboard/DepartmentsTab";
+import StaffTab from "./pages/org-dashboard/StaffTab";
+import ApprovalsTab from "./pages/org-dashboard/ApprovalsTab";
+import ActivityTab from "./pages/org-dashboard/ActivityTab";
+import StudentsTab from "./pages/org-dashboard/StudentsTab";
+import CoursesTab from "./pages/org-dashboard/CoursesTab";
+import AssignmentsTab from "./pages/org-dashboard/AssignmentsTab";
+import MeetingTab from "./pages/org-dashboard/MeetingsTab";
+import ProjectTab from "./pages/org-dashboard/ProjectsTab";
+import MaterialsTab from "./pages/org-dashboard/MaterialsTab";
+import NoticesTab from "./pages/org-dashboard/NoticesTab";
+import CareerTab from "./pages/org-dashboard/CareerTab";
 
 const PublicThemeGuard = () => {
   const location = useLocation();
@@ -188,7 +200,18 @@ const App = () => (
                     <Route path="ai-mock-room" element={<AiMockRoom />} />
                     <Route path="mock-report/:applicationId" element={<MockReport />} />
                     <Route path="org/reports" element={<OrgKpiReports />} />
-
+                    <Route path="org-departments" element={<DepartmentsTab />} />
+                     <Route path="org-staff" element={<StaffTab />} />
+                     <Route path="org-approvals" element={<ApprovalsTab />} />
+                     <Route path="org-activity" element={<ActivityTab />} />
+                     <Route path="org-students" element={<StudentsTab />} />
+                     <Route path="org-courses" element={<CoursesTab />} />
+                     <Route path="org-assignments" element={<AssignmentsTab />} />
+                     <Route path="org-meetings" element={<MeetingTab />} />
+                     <Route path="org-projects" element={<ProjectTab />} />
+                     <Route path="org-materials" element={<MaterialsTab />} />
+                     <Route path="org-notices" element={<NoticesTab />} />
+                     <Route path="org-career" element={<CareerTab />} />
 
                     <Route path="org/assignment/:assignmentId/submissions" element={<OrgAssignmentSubmissions />} />
                     <Route path="student" element={<OrganizationStudentGuard />}>

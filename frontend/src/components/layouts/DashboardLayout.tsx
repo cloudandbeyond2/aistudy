@@ -59,8 +59,7 @@ import {
   Zap,
   BookPlus,
   Sun,
-  Moon,
-  PanelRightOpen
+  Moon
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -208,6 +207,10 @@ const DashboardLayoutContent = () => {
   // Helper to check active route
   const isActive = (path: string) => location.pathname === path;
 
+  // Helper to check active organization tab
+  const isOrgTabActive = (tab: string) => {
+    return location.search === `?tab=${tab}` || location.pathname.includes(tab);
+  };
   // Close sidebar on mobile/tablet when menu item is clicked
   const handleMobileMenuClick = () => {
     if (isMobile || isTablet) {
@@ -572,9 +575,17 @@ const DashboardLayoutContent = () => {
                   <>
                     <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     <SectionHeader title="Organization" icon={Building2} isExpanded={isExpanded} />
+                    <MenuItem
+                      icon={Gauge}
+                      label="Student Dashboard"
+                      to="/dashboard/student"
+                      isActive={isActive('/dashboard/student')}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
                     <MenuItem 
                       icon={Gauge} 
-                      label="Organization Dashboard" 
+                      label="Dashboard" 
                       to="/dashboard/org?tab=landing" 
                       isActive={isActive('/dashboard/org') && (!location.search || location.search === '?tab=landing')}
                       isExpanded={isExpanded}
@@ -591,24 +602,24 @@ const DashboardLayoutContent = () => {
                     <MenuItem 
                       icon={Building2} 
                       label="Departments" 
-                      to="/dashboard/org?tab=departments" 
-                      isActive={location.search === '?tab=departments'}
+                      to="/dashboard/org-departments" 
+                      isActive={isOrgTabActive('departments')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
                     <MenuItem 
                       icon={Users} 
                       label="Students" 
-                      to="/dashboard/org?tab=students" 
-                      isActive={location.search === '?tab=students'}
+                      to="/dashboard/org-students" 
+                      isActive={isOrgTabActive('students')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
                     <MenuItem 
                       icon={BookOpen} 
                       label="Courses" 
-                      to="/dashboard/org?tab=courses" 
-                      isActive={location.search === '?tab=courses'}
+                      to="/dashboard/org-courses" 
+                      isActive={isOrgTabActive('courses')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
@@ -616,8 +627,8 @@ const DashboardLayoutContent = () => {
                       <MenuItem 
                         icon={Users} 
                         label="Staff" 
-                        to="/dashboard/org?tab=staff" 
-                        isActive={location.search === '?tab=staff'}
+                        to="/dashboard/org-staff" 
+                        isActive={isOrgTabActive('staff')}
                         isExpanded={isExpanded}
                         onMobileClick={handleMobileMenuClick}
                       />
@@ -625,20 +636,19 @@ const DashboardLayoutContent = () => {
                     {sessionStorage.getItem('role') === 'org_admin' && (
                       <MenuItem 
                         icon={CheckCircle2} 
-                        label="Approval Center" 
-                        to="/dashboard/org?tab=approvals" 
-                        isActive={location.search === '?tab=approvals'}
+                        label="Approvals" 
+                        to="/dashboard/org-approvals" 
+                        isActive={isOrgTabActive('approvals')}
                         isExpanded={isExpanded}
                         onMobileClick={handleMobileMenuClick}
-                        badge={pendingApprovals > 0 ? pendingApprovals : undefined}
                       />
                     )}
                     {sessionStorage.getItem('role') === 'org_admin' && (
                       <MenuItem 
                         icon={Clock} 
                         label="Activity" 
-                        to="/dashboard/org?tab=activity" 
-                        isActive={location.search === '?tab=activity'}
+                        to="/dashboard/org-activity" 
+                        isActive={isOrgTabActive('activity')}
                         isExpanded={isExpanded}
                         onMobileClick={handleMobileMenuClick}
                       />
@@ -646,40 +656,40 @@ const DashboardLayoutContent = () => {
                     <MenuItem 
                       icon={FileText} 
                       label="Assignments" 
-                      to="/dashboard/org?tab=assignments" 
-                      isActive={location.search === '?tab=assignments'}
+                      to="/dashboard/org-assignments" 
+                      isActive={isOrgTabActive('assignments')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
                     <MenuItem 
                       icon={Video} 
                       label="Meetings" 
-                      to="/dashboard/org?tab=meetings" 
-                      isActive={location.search === '?tab=meetings'}
+                      to="/dashboard/org-meetings" 
+                      isActive={isOrgTabActive('meetings')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
                     <MenuItem 
                       icon={Briefcase} 
                       label="Projects" 
-                      to="/dashboard/org?tab=projects" 
-                      isActive={location.search === '?tab=projects'}
+                      to="/dashboard/org-projects" 
+                      isActive={isOrgTabActive('projects')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
                     <MenuItem 
                       icon={Download} 
                       label="Materials" 
-                      to="/dashboard/org?tab=materials" 
-                      isActive={location.search === '?tab=materials'}
+                      to="/dashboard/org-materials" 
+                      isActive={isOrgTabActive('materials')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
                     <MenuItem 
                       icon={Bell} 
                       label="Noticeboard" 
-                      to="/dashboard/org?tab=notices" 
-                      isActive={location.search === '?tab=notices'}
+                      to="/dashboard/org-notices" 
+                      isActive={isOrgTabActive('notices')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
@@ -942,9 +952,9 @@ const DashboardLayoutContent = () => {
         {(isMobile || isTablet) && (
           <div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm border border-border/40">
             <SidebarTrigger className="mr-2">
-              <PanelRightOpen className="h-6 w-6" />
+              <Menu className="h-6 w-6" />
             </SidebarTrigger>
-            <img src="\src\assets\images\logo-colossus-dark 1.png" alt={appName} className="h-7 w-auto max-w-[150px]" />
+            <img src={appWordmarkLight} alt={appName} className="h-7 w-auto max-w-[150px]" />
             <div className="ml-auto flex items-center gap-2">
               <NotificationBell />
             </div>

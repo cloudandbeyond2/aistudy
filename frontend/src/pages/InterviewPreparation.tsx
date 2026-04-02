@@ -3,18 +3,179 @@ import { serverURL } from '@/constants';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Newspaper, Target, Network, Lock, Sparkles, Brain, CheckCircle2, XCircle, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { Loader2, Newspaper, Target, Network, Lock, Sparkles, Brain, CheckCircle2, XCircle, ChevronLeft, ChevronRight, RefreshCw, Trophy, BookOpenCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import SEO from '@/components/SEO';
 import { useNavigate } from 'react-router-dom';
+
+const getScoreAppearance = (score: number) => {
+  if (score >= 80) {
+    return {
+      accent: 'text-emerald-600 dark:text-emerald-400',
+      soft: 'border-emerald-200/80 bg-emerald-50/80 dark:border-emerald-900/50 dark:bg-emerald-950/20',
+      badge: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300',
+      progress: '[&>div]:bg-emerald-500',
+      label: 'Excellent work'
+    };
+  }
+
+  if (score >= 60) {
+    return {
+      accent: 'text-blue-600 dark:text-blue-400',
+      soft: 'border-blue-200/80 bg-blue-50/80 dark:border-blue-900/50 dark:bg-blue-950/20',
+      badge: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-300',
+      progress: '[&>div]:bg-blue-500',
+      label: 'Good progress'
+    };
+  }
+
+  if (score >= 40) {
+    return {
+      accent: 'text-amber-600 dark:text-amber-400',
+      soft: 'border-amber-200/80 bg-amber-50/80 dark:border-amber-900/50 dark:bg-amber-950/20',
+      badge: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300',
+      progress: '[&>div]:bg-amber-500',
+      label: 'Keep practicing'
+    };
+  }
+
+  return {
+    accent: 'text-rose-600 dark:text-rose-400',
+    soft: 'border-rose-200/80 bg-rose-50/80 dark:border-rose-900/50 dark:bg-rose-950/20',
+    badge: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300',
+    progress: '[&>div]:bg-rose-500',
+    label: 'Warm up more'
+  };
+};
+
+const ScoreSummaryCard = ({
+  title,
+  subtitle,
+  score,
+  correctCount,
+  wrongCount,
+  unansweredCount,
+  totalQuestions,
+  onRetake,
+  onReview
+}: {
+  title: string;
+  subtitle: string;
+  score: number;
+  correctCount: number;
+  wrongCount: number;
+  unansweredCount: number;
+  totalQuestions: number;
+  onRetake: () => void;
+  onReview: () => void;
+}) => {
+  const appearance = getScoreAppearance(score);
+  const circumference = 2 * Math.PI * 54;
+  const offset = circumference - (score / 100) * circumference;
+
+  return (
+    <Card className="overflow-hidden rounded-[28px] border border-border/60 bg-gradient-to-br from-background via-background to-muted/20 shadow-sm">
+      <CardHeader className="border-b border-border/40 bg-muted/20 pb-5">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Session Complete</p>
+            <CardTitle className="text-xl md:text-2xl">{title}</CardTitle>
+            <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+          </div>
+          <Badge variant="outline" className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${appearance.badge}`}>
+            <Trophy className="mr-1.5 h-3.5 w-3.5" />
+            {appearance.label}
+          </Badge>
+        </div>
+      </CardHeader>
+
+      <CardContent className="p-5 md:p-7">
+        <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+          <div className={`rounded-[24px] border p-5 ${appearance.soft}`}>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Final Score</p>
+                <p className={`mt-2 text-4xl font-black ${appearance.accent}`}>{score}%</p>
+              </div>
+              <div className="relative h-24 w-24">
+                <svg className="h-full w-full -rotate-90" viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="54" stroke="currentColor" strokeWidth="10" fill="none" className="text-muted/30" />
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="54"
+                    stroke="currentColor"
+                    strokeWidth="10"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={offset}
+                    className={appearance.accent}
+                    style={{ transition: 'stroke-dashoffset 0.9s ease' }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className={`text-lg font-bold ${appearance.accent}`}>{score}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                <span>Accuracy</span>
+                <span>{correctCount}/{totalQuestions} correct</span>
+              </div>
+              <Progress value={score} className={`h-2 bg-muted/60 ${appearance.progress}`} />
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/70 p-4 shadow-sm dark:border-emerald-900/50 dark:bg-emerald-950/20">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700/80 dark:text-emerald-300/80">Correct</p>
+                <p className="mt-2 text-2xl font-bold text-emerald-600 dark:text-emerald-400">{correctCount}</p>
+              </div>
+              <div className="rounded-2xl border border-rose-200/70 bg-rose-50/70 p-4 shadow-sm dark:border-rose-900/50 dark:bg-rose-950/20">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-rose-700/80 dark:text-rose-300/80">Wrong</p>
+                <p className="mt-2 text-2xl font-bold text-rose-600 dark:text-rose-400">{wrongCount}</p>
+              </div>
+              <div className="rounded-2xl border border-amber-200/70 bg-amber-50/70 p-4 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/20">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-700/80 dark:text-amber-300/80">Unanswered</p>
+                <p className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400">{unansweredCount}</p>
+              </div>
+              <div className="rounded-2xl border border-border/60 bg-background p-4 shadow-sm">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Questions</p>
+                <p className="mt-2 text-2xl font-bold">{totalQuestions}</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button onClick={onRetake} className="gap-2 rounded-full sm:flex-1">
+                <RefreshCw className="h-4 w-4" />
+                Retake Test
+              </Button>
+              <Button variant="outline" onClick={onReview} className="gap-2 rounded-full sm:flex-1">
+                <BookOpenCheck className="h-4 w-4" />
+                Review Questions
+              </Button>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const AptitudeTestViewer = ({ test }: { test: any }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [showResults, setShowResults] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -31,22 +192,60 @@ const AptitudeTestViewer = ({ test }: { test: any }) => {
   if (questions.length === 0) return null;
 
   const q = questions[currentIndex];
+  const selectedAnswer = answers[currentIndex] ?? null;
+  const correctCount = questions.filter((question: any, index: number) => answers[index] === question.answer).length;
+  const answeredCount = Object.keys(answers).length;
+  const unansweredCount = Math.max(questions.length - answeredCount, 0);
+  const wrongCount = Math.max(answeredCount - correctCount, 0);
+  const score = Math.round((correctCount / questions.length) * 100);
 
   const handleNext = () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setShowAnswer(false);
-      setSelectedAnswer(null);
+      return;
     }
+
+    setShowResults(true);
   };
 
   const handlePrev = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
       setShowAnswer(false);
-      setSelectedAnswer(null);
     }
   };
+
+  const handleRetake = () => {
+    setCurrentIndex(0);
+    setShowAnswer(false);
+    setAnswers({});
+    setShowResults(false);
+  };
+
+  const handleReview = () => {
+    setCurrentIndex(0);
+    setShowAnswer(true);
+    setShowResults(false);
+  };
+
+  if (showResults) {
+    return (
+      <div className="mb-6 md:mb-8">
+        <ScoreSummaryCard
+          title={test.title}
+          subtitle="You completed the daily aptitude round. Review your performance and jump back in for another attempt anytime."
+          score={score}
+          correctCount={correctCount}
+          wrongCount={wrongCount}
+          unansweredCount={unansweredCount}
+          totalQuestions={questions.length}
+          onRetake={handleRetake}
+          onReview={handleReview}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="mb-6 md:mb-8">
@@ -96,7 +295,7 @@ const AptitudeTestViewer = ({ test }: { test: any }) => {
               return (
                 <div
                   key={j}
-                  onClick={() => !showAnswer && setSelectedAnswer(opt)}
+                  onClick={() => !showAnswer && setAnswers((prev) => ({ ...prev, [currentIndex]: opt }))}
                   className={`p-2 md:p-3 rounded-lg border transition-all text-xs md:text-sm flex items-center gap-2 md:gap-3 ${!showAnswer ? 'cursor-pointer hover:border-primary/50 hover:bg-muted/60' : ''} ${optionStyle}`}
                 >
                   {indicator}
@@ -136,7 +335,6 @@ const AptitudeTestViewer = ({ test }: { test: any }) => {
               <Button
                 size={isMobile ? "sm" : "default"}
                 onClick={handleNext}
-                disabled={currentIndex === questions.length - 1}
                 className="gap-1"
               >
                 <span className="hidden sm:inline">{currentIndex === questions.length - 1 ? 'Finish' : 'Next Question'}</span>
@@ -154,7 +352,8 @@ const AptitudeTestViewer = ({ test }: { test: any }) => {
 const AiQuizViewer = ({ questions, category }: { questions: any[], category: string }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [showResults, setShowResults] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -169,22 +368,58 @@ const AiQuizViewer = ({ questions, category }: { questions: any[], category: str
   if (questions.length === 0) return null;
 
   const q = questions[currentIndex];
+  const selectedAnswer = answers[currentIndex] ?? null;
+  const correctCount = questions.filter((question: any, index: number) => answers[index] === question.answer).length;
+  const answeredCount = Object.keys(answers).length;
+  const unansweredCount = Math.max(questions.length - answeredCount, 0);
+  const wrongCount = Math.max(answeredCount - correctCount, 0);
+  const score = Math.round((correctCount / questions.length) * 100);
 
   const handleNext = () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setShowAnswer(false);
-      setSelectedAnswer(null);
+      return;
     }
+
+    setShowResults(true);
   };
 
   const handlePrev = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
       setShowAnswer(false);
-      setSelectedAnswer(null);
     }
   };
+
+  const handleRetake = () => {
+    setCurrentIndex(0);
+    setShowAnswer(false);
+    setAnswers({});
+    setShowResults(false);
+  };
+
+  const handleReview = () => {
+    setCurrentIndex(0);
+    setShowAnswer(true);
+    setShowResults(false);
+  };
+
+  if (showResults) {
+    return (
+      <ScoreSummaryCard
+        title={`AI Quiz: ${category}`}
+        subtitle="Your custom interview quiz is complete. Check your score, review mistakes, and generate another round whenever you're ready."
+        score={score}
+        correctCount={correctCount}
+        wrongCount={wrongCount}
+        unansweredCount={unansweredCount}
+        totalQuestions={questions.length}
+        onRetake={handleRetake}
+        onReview={handleReview}
+      />
+    );
+  }
 
   return (
     <div className="space-y-4 md:space-y-6 animate-in slide-in-from-bottom-4 duration-500">
@@ -231,7 +466,7 @@ const AiQuizViewer = ({ questions, category }: { questions: any[], category: str
               return (
                 <div
                   key={oi}
-                  onClick={() => !showAnswer && setSelectedAnswer(opt)}
+                  onClick={() => !showAnswer && setAnswers((prev) => ({ ...prev, [currentIndex]: opt }))}
                   className={`p-2 md:p-3 rounded-lg border transition-all text-xs md:text-sm flex items-center gap-2 md:gap-3 ${!showAnswer ? 'cursor-pointer hover:border-primary/50 hover:bg-muted/60' : ''} ${optionStyle}`}
                 >
                   {indicator}
@@ -271,7 +506,6 @@ const AiQuizViewer = ({ questions, category }: { questions: any[], category: str
               <Button
                 size={isMobile ? "sm" : "default"}
                 onClick={handleNext}
-                disabled={currentIndex === questions.length - 1}
                 className="gap-1"
               >
                 <span className="hidden sm:inline">{currentIndex === questions.length - 1 ? 'Finish' : 'Next Question'}</span>
