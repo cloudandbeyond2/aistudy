@@ -324,7 +324,7 @@ export const getStudents = async (req, res) => {
 export const updateStudent = async (req, res) => {
     const { studentId } = req.params;
     // const { name, email, department, section, rollNo, studentClass, class: className } = req.body;
-    const { name, email, department, section, rollNo, studentClass, classId, academicYear, placementCompany, placementPosition, isPlacementClosed } = req.body;
+    const { name, email, department, section, rollNo, studentClass, classId, academicYear, placementCompany, placementPosition, isPlacementClosed, password } = req.body;
 
     try {
         // const updates = {
@@ -351,6 +351,9 @@ export const updateStudent = async (req, res) => {
         if (placementCompany !== undefined) updates['studentDetails.placementCompany'] = placementCompany;
         if (placementPosition !== undefined) updates['studentDetails.placementPosition'] = placementPosition;
         if (isPlacementClosed !== undefined) updates['studentDetails.isPlacementClosed'] = isPlacementClosed;
+        if (password && password.trim() !== '') {
+            updates.password = await bcrypt.hash(password, 10);
+        }
 
         const student = await User.findByIdAndUpdate(studentId, updates, { new: true });
         if (!student) {
