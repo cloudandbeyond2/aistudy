@@ -578,14 +578,16 @@ const DashboardLayoutContent = () => {
                   <>
                     <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     <SectionHeader title="Organization" icon={Building2} isExpanded={isExpanded} />
-                    <MenuItem
-                      icon={Gauge}
-                      label="Student Dashboard"
-                      to="/dashboard/student"
-                      isActive={isActive('/dashboard/student')}
-                      isExpanded={isExpanded}
-                      onMobileClick={handleMobileMenuClick}
-                    />
+                    {isOrganizationStudent && (
+                      <MenuItem
+                        icon={Gauge}
+                        label="Student Dashboard"
+                        to="/dashboard/student"
+                        isActive={isActive('/dashboard/student')}
+                        isExpanded={isExpanded}
+                        onMobileClick={handleMobileMenuClick}
+                      />
+                    )}
                     <MenuItem 
                       icon={Gauge} 
                       label="Dashboard" 
