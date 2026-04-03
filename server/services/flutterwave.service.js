@@ -80,7 +80,7 @@ export const getFlutterwaveSubscriptionDetails = async ({
   );
 
   // Update user plan
-  const updatedUser = await User.findByIdAndUpdate(uid, { type: plan }, { new: true });
+  const updatedUser = await User.findByIdAndUpdate(uid, { type: plan }, { returnDocument: 'after' });
 
   // Fetch Flutterwave subscription
   const payload = { email };

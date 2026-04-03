@@ -101,7 +101,7 @@ export const updateSettings = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       userId,
       { $set: { notifications } },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!user) {
@@ -279,7 +279,7 @@ export const updatePlacementReady = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       userId,
       { $set: { 'studentDetails.isPlacementReady': isReady } },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!user) {
@@ -296,4 +296,3 @@ export const updatePlacementReady = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
-
