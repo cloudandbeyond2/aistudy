@@ -518,7 +518,7 @@ const DashboardLayoutContent = () => {
                     <SectionHeader title="Overview" icon={Gauge} isExpanded={isExpanded} />
                     <MenuItem
                       icon={Gauge}
-                      label={isOrganizationStudent ? "Student Dashboard" : "My Learning Hub"}
+                      label={isOrganizationStudent ? "Student Dashboard" : "Student Dashboard"}
                       to="/dashboard/student"
                       isActive={isActive('/dashboard/student')}
                       isExpanded={isExpanded}
@@ -527,7 +527,7 @@ const DashboardLayoutContent = () => {
                     <MenuItem icon={User} label="My Profile" to="/dashboard/student/profile" isActive={isActive('/dashboard/student/profile')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
 
                     <SectionHeader title="Learning Tools" icon={Zap} isExpanded={isExpanded} />
-                    {!isOrganizationStudent && (
+                    {/* {!isOrganizationStudent && (
                       <MenuItem
                         icon={BookPlus}
                         label="Add My Course"
@@ -536,7 +536,7 @@ const DashboardLayoutContent = () => {
                         isExpanded={isExpanded}
                         onMobileClick={handleMobileMenuClick}
                       />
-                    )}
+                    )} */}
                     {notebookEnabled.student && <MenuItem icon={BrainCircuit} label="AI Notebook" to="/dashboard/notebook" isActive={isActive('/dashboard/notebook')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
                     <MenuItem icon={Briefcase} label="Interview Prep" to="/dashboard/interview-prep" isActive={isActive('/dashboard/interview-prep')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Calendar} label="Calendar Scheduler" to="/dashboard/calendar" isActive={isActive('/dashboard/calendar')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
