@@ -69,7 +69,7 @@ export const checkPaidUser = async (req, res, next) => {
 
     const PAID_TYPES = ["monthly", "yearly", "forever"];
     const isPaid = PAID_TYPES.includes(user.type);
-    const isOrgUser = !!user.organizationId || user.isOrganization;
+    const isOrgUser = !!user.organizationId || !!user.organization || user.isOrganization;
 
     if (!isPaid && !isOrgUser) {
       return res.status(403).json({

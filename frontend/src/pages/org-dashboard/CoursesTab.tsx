@@ -3609,8 +3609,15 @@ const CoursesTab = () => {
                                                            }
                                                        }
                
+                                                       const courseCardClassName =
+                                                           approvalStatus === 'rejected'
+                                                               ? 'rounded-lg border border-red-200 bg-red-50 p-4'
+                                                               : published
+                                                               ? 'rounded-lg border border-emerald-200 bg-emerald-50 p-4'
+                                                               : 'rounded-lg border bg-card p-4';
+
                                                        return (
-                                                           <div key={course._id} className="rounded-lg border bg-card p-4">
+                                                           <div key={course._id} className={courseCardClassName}>
                                                                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                                                                    <div className="min-w-0 flex-1">
                                                                        <h3 className="font-semibold text-lg capitalize">{title}</h3>
@@ -3683,6 +3690,7 @@ const CoursesTab = () => {
                                                                            <Button
                                                                                variant="outline"
                                                                                size="sm"
+                                                                               className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
                                                                                onClick={async () => {
                                                                                    const result = await Swal.fire({
                                                                                        title: 'Reject this course?',
@@ -3706,6 +3714,7 @@ const CoursesTab = () => {
                                                                            <Button
                                                                                variant="outline"
                                                                                size="sm"
+                                                                               className={published ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"}
                                                                                onClick={async () => {
                                                                                    const nextPublished = !published;
                                                                                    const result = await Swal.fire({
@@ -3750,7 +3759,7 @@ const CoursesTab = () => {
                                                                                <BarChart className="w-4 h-4" />
                                                                            </Button>
                                                                        )}
-                                                                       <Button variant="ghost" size="sm" onClick={async () => {
+                                                                       <Button className="bg-blue-600 text-white hover:bg-blue-700" size="sm" onClick={async () => {
                                                                            const initialDescription = "Generating assignment description...";
                                                                            
                                                                            setNewAssignment({
@@ -4015,7 +4024,7 @@ const CoursesTab = () => {
                             ))}
                         </select>
                     </div>
-                    <Button onClick={handleCreateAssignment}>Create</Button>
+                    <Button className="bg-blue-600 text-white hover:bg-blue-700" onClick={handleCreateAssignment}>Create</Button>
                 </DialogContent>
             </Dialog>
 

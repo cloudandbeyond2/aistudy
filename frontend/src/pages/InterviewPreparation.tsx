@@ -572,10 +572,12 @@ const InterviewPreparation = () => {
       if (user) {
         const type = user.type;
         const orgId = user.organizationId;
+        const organization = user.organization;
         const isOrg = user.isOrganization;
+        const role = user.role;
         const paidTypes = ['monthly', 'yearly', 'forever'];
 
-        if (paidTypes.includes(type) || orgId || isOrg) {
+        if (paidTypes.includes(type) || orgId || organization || isOrg || role === 'student') {
           setIsPaidUser(true);
           fetchTopHeadlines(uid);
           fetchDailyAptitude(uid);
