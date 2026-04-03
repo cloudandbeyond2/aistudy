@@ -26,6 +26,17 @@ import {
   X as CloseIcon
 } from 'lucide-react';
 
+const themeStyles = {
+    hero: 'bg-brand-gradient text-primary-foreground',
+    heroGlass: 'bg-background/15 text-primary-foreground border-primary-foreground/20',
+    primaryButton: 'bg-primary text-primary-foreground hover:bg-primary/90 transition-all',
+    statCard: 'border-0 shadow-lg overflow-hidden',
+    statBar: 'h-1 bg-brand-gradient',
+    iconPrimary: 'rounded-lg bg-brand-gradient p-2 sm:p-3 text-primary-foreground shadow-lg',
+    iconSoft: 'rounded-lg bg-brand-gradient-soft p-2 sm:p-3 text-primary shadow-lg',
+    focusSelect: 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+};
+
 const defaultQuizSettings = {
     examMode: true,
     quizMode: 'secure',
@@ -335,8 +346,11 @@ const MeetingTab = () => {
             showCancelButton: true,
             confirmButtonText: 'Yes, delete',
             cancelButtonText: 'No',
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#6b7280',
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: 'inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 ml-2',
+                cancelButton: 'inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground',
+            },
         });
 
         if (!result.isConfirmed) return;
@@ -585,31 +599,21 @@ const MeetingTab = () => {
             ? overdueAssignments
             : assignmentInsights;
 
-    const gradientBg = {
-        background: 'linear-gradient(90deg, #1b253f 0%, #2d3a8c 30%, #4b3bb0 65%, #6b2cc1 100%)'
-    };
-
-    const gradientButtonStyle = {
-        background: 'linear-gradient(90deg, #2d3a8c 0%, #4b3bb0 50%, #6b2cc1 100%)',
-        border: 'none',
-        color: 'white'
-    };
-
     return (
         <>
             <div className="space-y-4 py-4 sm:py-6 md:py-8 lg:py-10 px-3 sm:px-4 md:px-6">
                 {/* Hero Section */}
-                <div className="rounded-xl p-4 sm:p-5 md:p-6 text-white" style={gradientBg}>
+                <div className={`rounded-xl p-4 sm:p-5 md:p-6 ${themeStyles.hero}`}>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
                             <h2 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">Session Desk</h2>
-                            <p className="text-sm sm:text-base text-white/80">
+                            <p className="text-sm sm:text-base text-primary-foreground/80">
                                 {isMobile ? 'Plan live sessions' : 'Plan live classes, mentoring slots, and virtual department sessions.'}
                             </p>
                         </div>
                         <Dialog open={openMeetingDialog} onOpenChange={setOpenMeetingDialog}>
                             <DialogTrigger asChild onClick={() => setOpenMeetingDialog(true)}>
-                                <Button className="bg-white/20 hover:bg-white/30 text-white border-white/30 w-full sm:w-auto">
+                                <Button className={`w-full sm:w-auto ${themeStyles.heroGlass}`}>
                                     <Plus className="w-4 h-4 mr-2" /> 
                                     {isMobile ? 'Schedule' : 'Plan Session'}
                                 </Button>
@@ -626,7 +630,7 @@ const MeetingTab = () => {
                                     <div className="grid gap-2">
                                         <Label>Platform</Label>
                                         <select
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                            className={themeStyles.focusSelect}
                                             value={newMeeting.platform}
                                             onChange={(e) => setNewMeeting({ ...newMeeting, platform: e.target.value as any })}
                                         >
@@ -652,7 +656,7 @@ const MeetingTab = () => {
                                     <div className="grid gap-2">
                                         <Label>Department (Optional)</Label>
                                         <select
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                            className={themeStyles.focusSelect}
                                             value={newMeeting.department}
                                             onChange={(e) => setNewMeeting({ ...newMeeting, department: e.target.value })}
                                             disabled={role === 'dept_admin'}
@@ -663,7 +667,7 @@ const MeetingTab = () => {
                                             ))}
                                         </select>
                                     </div>
-                                    <Button onClick={handleCreateMeeting} style={gradientButtonStyle}>Schedule Meeting</Button>
+                                    <Button onClick={handleCreateMeeting} className={themeStyles.primaryButton}>Schedule Meeting</Button>
                                 </div>
                             </DialogContent>
                         </Dialog>
@@ -672,11 +676,11 @@ const MeetingTab = () => {
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
-                    <Card className="border-0 shadow-lg overflow-hidden">
-                        <div className="h-1" style={gradientBg}></div>
+                    <Card className={themeStyles.statCard}>
+                        <div className={themeStyles.statBar}></div>
                         <CardContent className="p-4 sm:p-6">
                             <div className="flex items-center gap-3 sm:gap-4">
-                                <div className="rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 p-2 sm:p-3 text-white shadow-lg">
+                                <div className={themeStyles.iconPrimary}>
                                     <Video className="h-4 w-4 sm:h-5 sm:w-5" />
                                 </div>
                                 <div>
@@ -687,11 +691,11 @@ const MeetingTab = () => {
                         </CardContent>
                     </Card>
                     
-                    <Card className="border-0 shadow-lg overflow-hidden">
-                        <div className="h-1" style={gradientBg}></div>
+                    <Card className={themeStyles.statCard}>
+                        <div className={themeStyles.statBar}></div>
                         <CardContent className="p-4 sm:p-6">
                             <div className="flex items-center gap-3 sm:gap-4">
-                                <div className="rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 p-2 sm:p-3 text-white shadow-lg">
+                                <div className={themeStyles.iconSoft}>
                                     <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
                                 </div>
                                 <div>
@@ -702,11 +706,11 @@ const MeetingTab = () => {
                         </CardContent>
                     </Card>
                     
-                    <Card className="border-0 shadow-lg overflow-hidden sm:col-span-2 lg:col-span-1">
-                        <div className="h-1" style={gradientBg}></div>
+                    <Card className={`${themeStyles.statCard} sm:col-span-2 lg:col-span-1`}>
+                        <div className={themeStyles.statBar}></div>
                         <CardContent className="p-4 sm:p-6">
                             <div className="flex items-center gap-3 sm:gap-4">
-                                <div className="rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 p-2 sm:p-3 text-white shadow-lg">
+                                <div className={themeStyles.iconPrimary}>
                                     <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
                                 </div>
                                 <div>
@@ -730,7 +734,7 @@ const MeetingTab = () => {
                                 <div key={m._id} className="p-3 sm:p-4 rounded-xl border bg-card hover:shadow-xl transition-all duration-300 group">
                                     <div className="flex justify-between items-start gap-2">
                                         <div className="flex gap-3 sm:gap-4 flex-1 min-w-0">
-                                            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform flex-shrink-0">
+                                            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-brand-gradient flex items-center justify-center text-primary-foreground shadow-lg group-hover:scale-110 transition-transform flex-shrink-0">
                                                 <Video className="w-5 h-5 sm:w-6 sm:h-6" />
                                             </div>
                                             <div className="flex-1 min-w-0">
@@ -753,7 +757,7 @@ const MeetingTab = () => {
                                                     href={m.link} 
                                                     target="_blank" 
                                                     rel="noopener noreferrer" 
-                                                    className="text-xs text-purple-600 hover:text-purple-700 hover:underline mt-2 flex items-center gap-1 truncate"
+                                                    className="text-xs text-primary hover:text-primary/80 hover:underline mt-2 flex items-center gap-1 truncate"
                                                 >
                                                     <ExternalLink className="w-3 h-3 flex-shrink-0" />
                                                     <span className="truncate">{m.link.length > 40 ? `${m.link.substring(0, 40)}...` : m.link}</span>
