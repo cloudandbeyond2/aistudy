@@ -895,9 +895,8 @@ const OrgDashboard = () => {
         endDate: '',
         tasks: [] as any[],
         exerciseTopics: [] as string[],
-        studyPlan: {
-            resources: [] as any[]
-        }
+        studyPlan: [] as any[],
+        resources: [] as any[]
     });
 
     const [internshipDeptFilter, setInternshipDeptFilter] = useState('');
@@ -1271,9 +1270,8 @@ const handleDeleteDeptAdmin = async (id: string) => {
                     description: res.data.description || newInternship.description,
                     tasks: roadmapTasks,
                     exerciseTopics: res.data.exerciseTopics,
-                    studyPlan: {
-                        resources: res.data.resources || []
-                    }
+                    resources: res.data.resources || [],
+                    studyPlan: []
                 });
                 toast({ title: "Roadmap Generated", description: "AI has created an MNC-style training plan for this student." });
             }
@@ -1302,9 +1300,8 @@ const handleDeleteDeptAdmin = async (id: string) => {
                     endDate: '',
                     tasks: [],
                     exerciseTopics: [],
-                    studyPlan: {
-                        resources: []
-                    }
+                    studyPlan: [],
+                    resources: []
                 });
                 setOpenInternshipDialog(false);
                 fetchInternships();
@@ -6383,7 +6380,8 @@ Login:
                                                                                 endDate: '',
                                                                                 tasks: [],
                                                                                 exerciseTopics: [],
-                                                                                studyPlan: { resources: [] }
+                                                                                resources: [],
+                                                                                studyPlan: []
                                                                             });
                                                                             setOpenInternshipDialog(true);
                                                                         }}

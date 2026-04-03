@@ -4,7 +4,7 @@ import { generateAIText } from '../config/aiProvider.js';
 
 export const createInternship = async (req, res) => {
     try {
-        const { studentId, organizationId, title, description, domain, internshipType, startDate, endDate, status, tasks, studyPlan, exerciseTopics } = req.body;
+        const { studentId, organizationId, title, description, domain, internshipType, startDate, endDate, status, tasks, studyPlan, exerciseTopics, resources } = req.body;
         
         if (!studentId || !organizationId || !title) {
             return res.status(400).json({ success: false, message: 'Missing required fields' });
@@ -22,7 +22,8 @@ export const createInternship = async (req, res) => {
             status: status || 'active',
             tasks: tasks || [],
             studyPlan: studyPlan || [],
-            exerciseTopics: exerciseTopics || []
+            exerciseTopics: exerciseTopics || [],
+            resources: resources || []
         });
 
         await newInternship.save();
