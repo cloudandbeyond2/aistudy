@@ -86,19 +86,46 @@ const StudentsTab = () => {
         exit: { opacity: 0, scale: 0.95 }
     };
 
-    // Helper function to get department value consistently
-    const getDepartmentId = (student: any) => {
-        if (student.studentDetails?.departmentId) return student.studentDetails.departmentId;
-        if (student.studentDetails?.department) return student.studentDetails.department;
-        if (student.departmentId) return student.departmentId;
-        if (student.department) return student.department;
-        return '';
+    const resolveDepartmentId = (value: any) => {
+        const normalizedValue = String(value || '').trim();
+        if (!normalizedValue) return '';
+
+        const matchedDepartment = departmentsList.find((department: any) =>
+            department._id === normalizedValue ||
+            department.name === normalizedValue ||
+            department.name?.toLowerCase() === normalizedValue.toLowerCase()
+        );
+
+        return matchedDepartment?._id || normalizedValue;
     };
 
-    const getDepartmentName = (departmentId: string) => {
-        const dept = departmentsList.find((d: any) => d._id === departmentId);
-        return dept ? dept.name : departmentId;
+    // Helper function to get department value consistently
+    const getDepartmentId = (student: any) => {
+        const departmentValue =
+            student.studentDetails?.departmentId ||
+            student.studentDetails?.department ||
+            student.departmentId ||
+            student.department ||
+            '';
+
+        return resolveDepartmentId(departmentValue);
     };
+
+    const getDepartmentName = (departmentValue: string) => {
+        const departmentId = resolveDepartmentId(departmentValue);
+        const dept = departmentsList.find((d: any) => d._id === departmentId);
+        return dept ? dept.name : departmentValue;
+    };
+
+    const prepareStudentForEdit = (student: any) => ({
+        ...student,
+        password: '',
+        studentDetails: {
+            ...student?.studentDetails,
+            department: role === 'dept_admin' && deptId ? deptId : getDepartmentId(student),
+            departmentId: role === 'dept_admin' && deptId ? deptId : getDepartmentId(student),
+        }
+    });
 
     // Fetch departments
     const fetchOrgDepartments = async () => {
@@ -295,6 +322,7 @@ const StudentsTab = () => {
     const handleUpdateStudent = async () => {
         if (!editStudent) return;
         try {
+            const trimmedPassword = editStudent.password?.trim() || '';
             const res = await axios.put(`${serverURL}/api/org/student/${editStudent._id}`, {
                 name: editStudent.mName,
                 email: editStudent.email,
@@ -303,6 +331,7 @@ const StudentsTab = () => {
                 rollNo: editStudent.studentDetails?.rollNo,
                 studentClass: editStudent.studentDetails?.studentClass,
                 academicYear: editStudent.studentDetails?.academicYear,
+                ...(trimmedPassword ? { password: trimmedPassword } : {}),
             });
             if (res.data.success) {
                 toast({ title: "Success", description: "Student updated successfully" });
@@ -435,28 +464,37 @@ const StudentsTab = () => {
         <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="min-h-screen bg-gray-50 dark:bg-gray-900"
+            className="students-theme min-h-screen"
         >
-            <div className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
                 {/* Page Header */}
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 md:mb-8">
-                    <div>
-                        <h1 className={`text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r ${primaryGradient} bg-clip-text text-transparent`}>
-                            Student Management
-                        </h1>
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                            Manage student accounts, track placements, and monitor academic progress
-                        </p>
-                    </div>
-                    <div className="flex gap-2">
-                        <Badge variant="outline" className="px-2 sm:px-3 py-1 text-xs sm:text-sm">
-                            <UsersRound className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                            {stats.studentCount} Active
-                        </Badge>
-                        <Badge variant="outline" className="px-2 sm:px-3 py-1 text-xs sm:text-sm">
-                            <PieChart className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                            {placementRate}% Placed
-                        </Badge>
+                <div className="students-theme-hero relative overflow-hidden rounded-2xl p-6 mb-6 lg:mb-8 text-white shadow-lg">
+                    <div className="absolute right-0 top-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+                    <div className="absolute bottom-0 left-0 -mb-16 -ml-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
+                    <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="students-theme-hero-icon rounded-xl p-2 backdrop-blur-sm">
+                                <UsersRound className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
+                                    Student Management
+                                </h1>
+                                <p className="students-theme-hero-subtitle text-sm sm:text-base mt-1">
+                                    Manage student accounts, track placements, and monitor academic progress
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                            <Badge variant="outline" className="students-theme-hero-badge px-3 py-2 text-sm">
+                                <UsersRound className="w-4 h-4 mr-2" />
+                                {stats.studentCount} Active
+                            </Badge>
+                            <Badge variant="outline" className="students-theme-hero-badge px-3 py-2 text-sm">
+                                <PieChart className="w-4 h-4 mr-2" />
+                                {placementRate}% Placed
+                            </Badge>
+                        </div>
                     </div>
                 </div>
 
@@ -470,7 +508,7 @@ const StudentsTab = () => {
 >
     {/* Total Students Card */}
     <motion.div variants={itemVariants} className="h-full">
-        <Card className={`bg-gradient-to-br ${primaryGradient} text-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-full`}>
+        <Card className={`bg-gradient-to-br ${accentGradient} text-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-full`}>
             <CardContent className="p-4 md:p-5 lg:p-6 flex flex-col justify-between h-full">
                 <div>
                     <div className="flex items-start justify-between mb-3 md:mb-4">
@@ -508,7 +546,8 @@ const StudentsTab = () => {
 
     {/* Placed Students Card */}
     <motion.div variants={itemVariants} className="h-full">
-        <Card className={`bg-gradient-to-br ${secondaryGradient} text-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-full`}>
+        <Card className={`bg-gradient-to-br ${accentGradient} text-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-full`}>
+            
             <CardContent className="p-4 md:p-5 lg:p-6 flex flex-col justify-between h-full">
                 <div>
                     <div className="flex items-start justify-between mb-3 md:mb-4">
@@ -587,7 +626,7 @@ const StudentsTab = () => {
 
     {/* Capacity Used Card */}
     <motion.div variants={itemVariants} className="h-full">
-        <Card className={`bg-gradient-to-br ${primaryGradient} text-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-full`}>
+        <Card className={`bg-gradient-to-br ${accentGradient} text-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-full`}>
             <CardContent className="p-4 md:p-5 lg:p-6 flex flex-col justify-between h-full">
                 <div>
                     <div className="flex items-start justify-between mb-3 md:mb-4">
@@ -629,18 +668,20 @@ const StudentsTab = () => {
 </motion.div>
 
                 {/* Main Card */}
-                <Card className="shadow-lg">
-                    <CardHeader className="border-b p-3 sm:p-4 md:p-6">
+                <Card className="students-theme-surface">
+                    <CardHeader className="students-theme-surface-header p-3 sm:p-4 md:p-6">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                             <div>
-                                <CardTitle className="text-lg sm:text-xl md:text-2xl">Student Directory</CardTitle>
-                                <CardDescription className="text-xs sm:text-sm">View and manage all student records</CardDescription>
+                                <CardTitle className="students-theme-title text-lg sm:text-xl md:text-2xl">Student Directory</CardTitle>
+                                <CardDescription className="students-theme-description text-xs sm:text-sm">View and manage all student records</CardDescription>
                             </div>
                             <div className="flex gap-2">
                                 <Button 
                                     variant={viewMode === 'grid' ? 'default' : 'outline'}
                                     onClick={() => setViewMode('grid')}
-                                    className="gap-1 sm:gap-2 px-2 sm:px-3"
+                                    className={viewMode === 'grid'
+                                        ? `gap-1 sm:gap-2 px-2 sm:px-3 bg-gradient-to-r ${accentGradient} text-white hover:opacity-95`
+                                        : `gap-1 sm:gap-2 px-2 sm:px-3 students-theme-outline-btn`}
                                     size="sm"
                                 >
                                     <LayoutGrid className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -649,7 +690,9 @@ const StudentsTab = () => {
                                 <Button 
                                     variant={viewMode === 'list' ? 'default' : 'outline'}
                                     onClick={() => setViewMode('list')}
-                                    className="gap-1 sm:gap-2 px-2 sm:px-3"
+                                    className={viewMode === 'list'
+                                        ? `gap-1 sm:gap-2 px-2 sm:px-3 bg-gradient-to-r ${accentGradient} text-white hover:opacity-95`
+                                        : `gap-1 sm:gap-2 px-2 sm:px-3 students-theme-outline-btn`}
                                     size="sm"
                                 >
                                     <List className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -666,7 +709,7 @@ const StudentsTab = () => {
                                 <Button 
                                     variant="outline" 
                                     onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-                                    className="w-full gap-2"
+                                    className="students-theme-outline-btn w-full gap-2"
                                 >
                                     <Menu className="w-4 h-4" />
                                     {mobileFiltersOpen ? 'Hide Filters' : 'Show Filters'}
@@ -679,13 +722,13 @@ const StudentsTab = () => {
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                     <Input
                                         placeholder="Search by name or email..."
-                                        className="pl-9 text-sm"
+                                        className="students-theme-input pl-9 text-sm"
                                         value={studentSearch}
                                         onChange={(e) => setStudentSearch(e.target.value)}
                                     />
                                 </div>
                                 <select
-                                    className="px-3 py-2 rounded-md border bg-background text-sm"
+                                    className="students-theme-select px-3 py-2"
                                     value={selectedDepartment}
                                     onChange={(e) => setSelectedDepartment(e.target.value)}
                                     disabled={role === 'dept_admin'}
@@ -696,7 +739,7 @@ const StudentsTab = () => {
                                     ))}
                                 </select>
                                 <select
-                                    className="px-3 py-2 rounded-md border bg-background text-sm"
+                                    className="students-theme-select px-3 py-2"
                                     value={selectedClass}
                                     onChange={(e) => setSelectedClass(e.target.value)}
                                 >
@@ -719,13 +762,13 @@ const StudentsTab = () => {
                                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                         <Input
                                             placeholder="Search by name or email..."
-                                            className="pl-9 text-sm"
+                                            className="students-theme-input pl-9 text-sm"
                                             value={studentSearch}
                                             onChange={(e) => setStudentSearch(e.target.value)}
                                         />
                                     </div>
                                     <select
-                                        className="w-full px-3 py-2 rounded-md border bg-background text-sm"
+                                        className="students-theme-select w-full px-3 py-2"
                                         value={selectedDepartment}
                                         onChange={(e) => setSelectedDepartment(e.target.value)}
                                         disabled={role === 'dept_admin'}
@@ -736,7 +779,7 @@ const StudentsTab = () => {
                                         ))}
                                     </select>
                                     <select
-                                        className="w-full px-3 py-2 rounded-md border bg-background text-sm"
+                                        className="students-theme-select w-full px-3 py-2"
                                         value={selectedClass}
                                         onChange={(e) => setSelectedClass(e.target.value)}
                                     >
@@ -752,24 +795,24 @@ const StudentsTab = () => {
                             <div className="flex gap-2">
                                 <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
                                     <DialogTrigger asChild>
-                                        <Button variant="outline" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+                                        <Button variant="outline" className="students-theme-outline-btn gap-1 sm:gap-2 text-xs sm:text-sm">
                                             <FileSpreadsheet className="w-3 h-3 sm:w-4 sm:h-4" />
                                             <span className="hidden xs:inline">Bulk Upload</span>
                                         </Button>
                                     </DialogTrigger>
-                                    <DialogContent className="max-w-md mx-4">
+                                    <DialogContent className="students-theme-dialog max-w-md mx-4">
                                         <DialogHeader>
-                                            <DialogTitle className="text-lg">Bulk Upload Students</DialogTitle>
-                                            <DialogDescription className="text-xs sm:text-sm">
+                                            <DialogTitle className="students-theme-title text-lg">Bulk Upload Students</DialogTitle>
+                                            <DialogDescription className="students-theme-description text-xs sm:text-sm">
                                                 Upload an Excel file with student details. Download the template to get started.
                                             </DialogDescription>
                                         </DialogHeader>
                                         <div className="grid gap-4 py-4">
-                                            <Button variant="outline" onClick={downloadTemplate} className="gap-2">
+                                            <Button variant="outline" onClick={downloadTemplate} className="students-theme-outline-btn gap-2">
                                                 <Download className="w-4 h-4" />
                                                 Download Template
                                             </Button>
-                                            <div className="border-2 border-dashed rounded-lg p-4 sm:p-6 text-center hover:border-primary transition-colors">
+                                            <div className="students-theme-dropzone border-2 border-dashed rounded-lg p-4 sm:p-6 text-center transition-colors">
                                                 <input
                                                     type="file"
                                                     accept=".xlsx, .xls, .csv"
@@ -817,10 +860,10 @@ const StudentsTab = () => {
                                             <span className="hidden xs:inline">Add Student</span>
                                         </Button>
                                     </DialogTrigger>
-                                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+                                    <DialogContent className="students-theme-dialog max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
                                         <DialogHeader>
-                                            <DialogTitle className="text-lg">Add New Student</DialogTitle>
-                                            <DialogDescription className="text-xs sm:text-sm">
+                                            <DialogTitle className="students-theme-title text-lg">Add New Student</DialogTitle>
+                                            <DialogDescription className="students-theme-description text-xs sm:text-sm">
                                                 Fill in the details to add a new student to the system.
                                             </DialogDescription>
                                         </DialogHeader>
@@ -830,7 +873,7 @@ const StudentsTab = () => {
                                                 <div className="relative">
                                                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
                                                     <Input 
-                                                        className="pl-8 sm:pl-9 text-sm"
+                                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
                                                         value={newStudent.name} 
                                                         onChange={(e) => {
                                                             setNewStudent({ ...newStudent, name: e.target.value });
@@ -851,7 +894,7 @@ const StudentsTab = () => {
                                                     <AtSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
                                                     <Input 
                                                         type="email"
-                                                        className="pl-8 sm:pl-9 text-sm"
+                                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
                                                         value={newStudent.email} 
                                                         onChange={(e) => {
                                                             setNewStudent({ ...newStudent, email: e.target.value });
@@ -872,7 +915,7 @@ const StudentsTab = () => {
                                                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
                                                     <Input 
                                                         type="password"
-                                                        className="pl-8 sm:pl-9 text-sm"
+                                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
                                                         value={newStudent.password} 
                                                         onChange={(e) => {
                                                             setNewStudent({ ...newStudent, password: e.target.value });
@@ -892,7 +935,7 @@ const StudentsTab = () => {
                                                 <div className="relative">
                                                     <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
                                                     <select
-                                                        className="w-full pl-8 sm:pl-9 pr-3 py-2 rounded-md border bg-background text-sm"
+                                                        className="students-theme-select w-full pl-8 sm:pl-9 pr-3 py-2"
                                                         value={newStudent.department}
                                                         onChange={(e) => {
                                                             setNewStudent({ ...newStudent, department: e.target.value });
@@ -922,7 +965,7 @@ const StudentsTab = () => {
                                                 <div className="relative">
                                                     <School className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
                                                     <Input 
-                                                        className="pl-8 sm:pl-9 text-sm"
+                                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
                                                         value={newStudent.studentClass} 
                                                         onChange={(e) => setNewStudent({ ...newStudent, studentClass: e.target.value })} 
                                                         placeholder="e.g., 10th, 12th"
@@ -932,7 +975,7 @@ const StudentsTab = () => {
                                             <div className="space-y-2">
                                                 <Label className="text-xs sm:text-sm">Section</Label>
                                                 <Input 
-                                                    className="text-sm"
+                                                    className="students-theme-input text-sm"
                                                     value={newStudent.section} 
                                                     onChange={(e) => setNewStudent({ ...newStudent, section: e.target.value })} 
                                                     placeholder="A, B, C"
@@ -943,7 +986,7 @@ const StudentsTab = () => {
                                                 <div className="relative">
                                                     <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
                                                     <Input 
-                                                        className="pl-8 sm:pl-9 text-sm"
+                                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
                                                         value={newStudent.rollNo} 
                                                         onChange={(e) => setNewStudent({ ...newStudent, rollNo: e.target.value })} 
                                                         placeholder="Enter roll number"
@@ -955,7 +998,7 @@ const StudentsTab = () => {
                                                 <div className="relative">
                                                     <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
                                                     <Input 
-                                                        className="pl-8 sm:pl-9 text-sm"
+                                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
                                                         value={newStudent.academicYear} 
                                                         onChange={(e) => setNewStudent({ ...newStudent, academicYear: e.target.value })} 
                                                         placeholder="2023-2024"
@@ -963,7 +1006,7 @@ const StudentsTab = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <Button onClick={handleAddStudent} disabled={isAddingStudent} className="w-full">
+                                        <Button onClick={handleAddStudent} disabled={isAddingStudent} className={`w-full bg-gradient-to-r ${accentGradient} text-white hover:opacity-95`}>
                                             {isAddingStudent ? 'Adding...' : 'Add Student'}
                                         </Button>
                                     </DialogContent>
@@ -995,7 +1038,7 @@ const StudentsTab = () => {
                                                     whileHover={{ y: -4 }}
                                                     className="group"
                                                 >
-                                                    <Card className="hover:shadow-xl transition-all duration-300 cursor-pointer h-full">
+                                                    <Card className="students-theme-student-card transition-all duration-300 cursor-pointer h-full">
                                                         <CardContent className="p-3 sm:p-4 md:p-6">
                                                             <div className="flex items-start justify-between mb-3 sm:mb-4">
                                                                 <div className="relative">
@@ -1017,7 +1060,7 @@ const StudentsTab = () => {
                                                                         size="sm"
                                                                         className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                                                                         onClick={() => {
-                                                                            setEditStudent(student);
+                                                                            setEditStudent(prepareStudentForEdit(student));
                                                                             setEditDialogOpen(true);
                                                                         }}
                                                                     >
@@ -1054,7 +1097,7 @@ const StudentsTab = () => {
                                                                     </p>
                                                                 )}
                                                                 {student.studentDetails?.placementCompany && (
-                                                                    <div className="mt-1 sm:mt-2 pt-1 sm:pt-2 border-t">
+                                                                        <div className="students-theme-card-divider mt-1 sm:mt-2 pt-1 sm:pt-2 border-t">
                                                                         <p className="text-[10px] sm:text-xs font-semibold text-[#11405f] flex items-center gap-1 truncate">
                                                                             <Briefcase className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
                                                                             <span className="truncate">
@@ -1069,7 +1112,7 @@ const StudentsTab = () => {
                                                                 <Button 
                                                                     variant="outline" 
                                                                     size="sm" 
-                                                                    className="w-full text-[11px] sm:text-xs"
+                                                                    className="students-theme-outline-btn w-full text-[11px] sm:text-xs"
                                                                     onClick={() => setPlacementStudent(student)}
                                                                 >
                                                                     <Briefcase className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 sm:mr-2" />
@@ -1100,7 +1143,7 @@ const StudentsTab = () => {
                                                     initial={{ opacity: 0, x: -20 }}
                                                     animate={{ opacity: 1, x: 0 }}
                                                     transition={{ delay: index * 0.05 }}
-                                                    className="p-3 sm:p-4 border rounded-lg hover:shadow-md transition-all duration-300"
+                                                    className="students-theme-list-card p-3 sm:p-4 border rounded-lg hover:shadow-md transition-all duration-300"
                                                 >
                                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                                         <div className="flex items-center gap-2 sm:gap-3 flex-1 w-full sm:w-auto">
@@ -1139,7 +1182,7 @@ const StudentsTab = () => {
                                                                 size="sm"
                                                                 className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                                                                 onClick={() => {
-                                                                    setEditStudent(student);
+                                                                    setEditStudent(prepareStudentForEdit(student));
                                                                     setEditDialogOpen(true);
                                                                 }}
                                                             >
@@ -1181,7 +1224,7 @@ const StudentsTab = () => {
                             )}
                         </AnimatePresence>
                         {filteredStudents.length > 0 && (
-                            <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="students-theme-pagination flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
                                 <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
                                     Showing {paginationStart}-{paginationEnd} of {filteredStudents.length} students
                                 </p>
@@ -1192,7 +1235,7 @@ const StudentsTab = () => {
                                             size="sm"
                                             onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                                             disabled={currentPage === 1}
-                                            className="min-w-[88px]"
+                                            className="students-theme-outline-btn min-w-[88px]"
                                         >
                                             Previous
                                         </Button>
@@ -1204,7 +1247,7 @@ const StudentsTab = () => {
                                             size="sm"
                                             onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
                                             disabled={currentPage === totalPages}
-                                            className="min-w-[88px]"
+                                            className="students-theme-outline-btn min-w-[88px]"
                                         >
                                             Next
                                         </Button>
@@ -1223,7 +1266,9 @@ const StudentsTab = () => {
                                                         variant={currentPage === page ? 'default' : 'outline'}
                                                         size="sm"
                                                         onClick={() => setCurrentPage(page)}
-                                                        className="h-8 min-w-[2rem] px-2 text-xs sm:text-sm"
+                                                        className={currentPage === page
+                                                            ? `h-8 min-w-[2rem] px-2 text-xs sm:text-sm bg-gradient-to-r ${accentGradient} text-white hover:opacity-95`
+                                                            : `h-8 min-w-[2rem] px-2 text-xs sm:text-sm students-theme-outline-btn`}
                                                     >
                                                         {page}
                                                     </Button>
@@ -1242,13 +1287,13 @@ const StudentsTab = () => {
                     setEditDialogOpen(open);
                     if (!open) setEditStudent(null);
                 }}>
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+                    <DialogContent className="students-theme-dialog max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
                         <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2 text-lg">
+                            <DialogTitle className="students-theme-title flex items-center gap-2 text-lg">
                                 <Edit2 className="w-4 h-4 sm:w-5 sm:h-5" />
                                 Edit Student Details
                             </DialogTitle>
-                            <DialogDescription className="text-xs sm:text-sm">
+                            <DialogDescription className="students-theme-description text-xs sm:text-sm">
                                 Update the student's information below.
                             </DialogDescription>
                         </DialogHeader>
@@ -1261,7 +1306,7 @@ const StudentsTab = () => {
                                             Full Name
                                         </Label>
                                         <Input 
-                                            className="text-sm"
+                                            className="students-theme-input text-sm"
                                             value={editStudent.mName || ''} 
                                             onChange={(e) => setEditStudent({ ...editStudent, mName: e.target.value })} 
                                             placeholder="Enter full name"
@@ -1274,10 +1319,23 @@ const StudentsTab = () => {
                                         </Label>
                                         <Input 
                                             type="email"
-                                            className="text-sm"
+                                            className="students-theme-input text-sm"
                                             value={editStudent.email || ''} 
                                             onChange={(e) => setEditStudent({ ...editStudent, email: e.target.value })} 
                                             placeholder="student@example.com"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="flex items-center gap-2 text-xs sm:text-sm">
+                                            <Lock className="w-3 h-3 sm:w-4 sm:h-4" />
+                                            Password
+                                        </Label>
+                                        <Input
+                                            type="password"
+                                            className="students-theme-input text-sm"
+                                            value={editStudent.password || ''}
+                                            onChange={(e) => setEditStudent({ ...editStudent, password: e.target.value })}
+                                            placeholder="Leave blank to keep current password"
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -1286,7 +1344,7 @@ const StudentsTab = () => {
                                             Department
                                         </Label>
                                         <select
-                                            className="w-full px-3 py-2 rounded-md border bg-background text-sm"
+                                            className="students-theme-select w-full px-3 py-2"
                                             value={editStudent.studentDetails?.department || editStudent.studentDetails?.departmentId || ''}
                                             onChange={(e) => setEditStudent({ 
                                                 ...editStudent, 
@@ -1306,7 +1364,7 @@ const StudentsTab = () => {
                                             Class
                                         </Label>
                                         <Input 
-                                            className="text-sm"
+                                            className="students-theme-input text-sm"
                                             value={editStudent.studentDetails?.studentClass || ''} 
                                             onChange={(e) => setEditStudent({ 
                                                 ...editStudent, 
@@ -1320,7 +1378,7 @@ const StudentsTab = () => {
                                             Section
                                         </Label>
                                         <Input 
-                                            className="text-sm"
+                                            className="students-theme-input text-sm"
                                             value={editStudent.studentDetails?.section || ''} 
                                             onChange={(e) => setEditStudent({ 
                                                 ...editStudent, 
@@ -1335,7 +1393,7 @@ const StudentsTab = () => {
                                             Roll Number
                                         </Label>
                                         <Input 
-                                            className="text-sm"
+                                            className="students-theme-input text-sm"
                                             value={editStudent.studentDetails?.rollNo || ''} 
                                             onChange={(e) => setEditStudent({ 
                                                 ...editStudent, 
@@ -1350,7 +1408,7 @@ const StudentsTab = () => {
                                             Academic Year
                                         </Label>
                                         <Input 
-                                            className="text-sm"
+                                            className="students-theme-input text-sm"
                                             value={editStudent.studentDetails?.academicYear || ''} 
                                             onChange={(e) => setEditStudent({ 
                                                 ...editStudent, 
@@ -1362,11 +1420,11 @@ const StudentsTab = () => {
                                 </div>
                                 
                                 <div className="flex gap-2 pt-4">
-                                    <Button onClick={handleUpdateStudent} className="flex-1 gap-2 text-sm">
+                                    <Button onClick={handleUpdateStudent} className={`flex-1 gap-2 text-sm bg-gradient-to-r ${accentGradient} text-white hover:opacity-95`}>
                                         <Save className="w-3 h-3 sm:w-4 sm:h-4" />
                                         Save Changes
                                     </Button>
-                                    <Button variant="outline" onClick={() => setEditDialogOpen(false)} className="gap-2 text-sm">
+                                    <Button variant="outline" onClick={() => setEditDialogOpen(false)} className="students-theme-outline-btn gap-2 text-sm">
                                         <X className="w-3 h-3 sm:w-4 sm:h-4" />
                                         Cancel
                                     </Button>
@@ -1378,10 +1436,10 @@ const StudentsTab = () => {
 
                 {/* Placement Dialog */}
                 <Dialog open={!!placementStudent} onOpenChange={() => setPlacementStudent(null)}>
-                    <DialogContent className="mx-4">
+                    <DialogContent className="students-theme-dialog mx-4">
                         <DialogHeader>
-                            <DialogTitle className="text-lg">Update Placement Details</DialogTitle>
-                            <DialogDescription className="text-xs sm:text-sm">
+                            <DialogTitle className="students-theme-title text-lg">Update Placement Details</DialogTitle>
+                            <DialogDescription className="students-theme-description text-xs sm:text-sm">
                                 Enter placement information for {placementStudent?.mName}
                             </DialogDescription>
                         </DialogHeader>
@@ -1392,7 +1450,7 @@ const StudentsTab = () => {
                                     <div className="relative">
                                         <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
                                         <Input 
-                                            className="pl-8 sm:pl-9 text-sm"
+                                            className="students-theme-input pl-8 sm:pl-9 text-sm"
                                             value={placementStudent.studentDetails?.placementCompany || ''} 
                                             onChange={(e) => setPlacementStudent({ 
                                                 ...placementStudent, 
@@ -1405,7 +1463,7 @@ const StudentsTab = () => {
                                 <div className="space-y-2">
                                     <Label className="text-xs sm:text-sm">Position/Role</Label>
                                     <Input 
-                                        className="text-sm"
+                                        className="students-theme-input text-sm"
                                         value={placementStudent.studentDetails?.placementPosition || ''} 
                                         onChange={(e) => setPlacementStudent({ 
                                             ...placementStudent, 
@@ -1414,7 +1472,7 @@ const StudentsTab = () => {
                                         placeholder="e.g., Software Engineer"
                                     />
                                 </div>
-                                <div className="flex items-center gap-2 p-2 sm:p-3 bg-[#11405f]/10 dark:bg-[#11405f]/20 rounded-lg">
+                                <div className="students-theme-checkbox flex items-center gap-2 p-2 sm:p-3 rounded-lg border">
                                     <input
                                         type="checkbox"
                                         id="placementClosed"
@@ -1430,11 +1488,11 @@ const StudentsTab = () => {
                                     </Label>
                                 </div>
                                 <div className="flex gap-2 pt-4">
-                                    <Button onClick={handleUpdatePlacement} className="flex-1 gap-2 text-sm">
+                                    <Button onClick={handleUpdatePlacement} className={`flex-1 gap-2 text-sm bg-gradient-to-r ${accentGradient} text-white hover:opacity-95`}>
                                         <Save className="w-3 h-3 sm:w-4 sm:h-4" />
                                         Save Placement
                                     </Button>
-                                    <Button variant="outline" onClick={() => setPlacementStudent(null)} className="gap-2 text-sm">
+                                    <Button variant="outline" onClick={() => setPlacementStudent(null)} className="students-theme-outline-btn gap-2 text-sm">
                                         <X className="w-3 h-3 sm:w-4 sm:h-4" />
                                         Cancel
                                     </Button>

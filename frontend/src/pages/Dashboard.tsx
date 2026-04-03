@@ -462,12 +462,12 @@ const Dashboard = () => {
         keywords="dashboard, AI courses, learning, education, AI-generated courses"
       />
       <AnimatedGradient />
-      <motion.div 
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-        className="space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-2 lg:px-4 max-w-[1400px] mx-auto relative z-10"
-      >
+ <motion.div 
+  initial="hidden"
+  animate="visible"
+  variants={containerVariants}
+  className="space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-2 lg:px-4 max-w-[1400px] mx-auto relative pt-0 lg:pt-[65px]"
+>
         
         {/* AI-Powered Welcome Section with Glow Effect */}
  <motion.div 
@@ -532,7 +532,7 @@ const Dashboard = () => {
         </motion.div>
 
        {/* Header Section */}
-<motion.div 
+{/* <motion.div 
   variants={itemVariants}
   className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8"
 >
@@ -546,7 +546,7 @@ const Dashboard = () => {
     </p>
   </div>
   
-  {/* Compact Action Buttons */}
+
   <div className="flex items-center gap-2">
     <Button
       onClick={() => (window.location.href = websiteURL)}
@@ -568,12 +568,12 @@ const Dashboard = () => {
       Todo
     </Button>
 
-    {/* Notification: Visible only on Desktop (min-width: 1024px) */}
+
     <div className="hidden lg:block ml-1">
       <NotificationBell />
     </div>
   </div>
-</motion.div>
+</motion.div> */}
 
         {/* Search and Filter with Glass Effect */}
 <motion.div 

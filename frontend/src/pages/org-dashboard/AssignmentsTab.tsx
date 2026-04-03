@@ -22,15 +22,15 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
-// Gradient styles with responsive adjustments
-const gradientStyles = {
-  primary: 'bg-gradient-to-r from-[#1b253f] via-[#2d3a8c] via-[#4b3bb0] to-[#6b2cc1]',
-  cardHeader: 'bg-gradient-to-r from-[#1b253f] via-[#2d3a8c] to-[#4b3bb0]',
-  statCard: 'bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 border-l-4 border-l-[#4b3bb0]',
-  buttonGradient: 'bg-gradient-to-r from-[#2d3a8c] to-[#6b2cc1] hover:shadow-lg transition-all duration-300',
-  badgeGradient: 'bg-gradient-to-r from-[#1b253f] to-[#2d3a8c]',
-  overlayGradient: 'bg-gradient-to-t from-[#1b253f]/90 to-transparent',
-  mobileHeader: 'bg-gradient-to-r from-[#1b253f] via-[#2d3a8c] to-[#4b3bb0]',
+const themeStyles = {
+  hero: 'bg-brand-gradient text-primary-foreground',
+  statCard: 'border border-border bg-card',
+  primaryButton: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-all duration-300',
+  primaryBadge: 'bg-primary text-primary-foreground',
+  brandHover: 'hover:border-primary/40 hover:text-primary transition-colors',
+  brandGhost: 'hover:bg-primary/10 hover:text-primary transition-colors',
+  focusRing: 'focus:ring-ring focus:border-ring',
+  select: 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
 };
 
 const defaultQuizSettings = {
@@ -568,8 +568,11 @@ const handleDeleteAssignment = async (id: string) => {
         showCancelButton: true,
         confirmButtonText: 'Yes, delete it',
         cancelButtonText: 'No, cancel',
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
+        buttonsStyling: false,
+        customClass: {
+            confirmButton: 'inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 ml-2',
+            cancelButton: 'inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground',
+        },
     });
 
     if (!result.isConfirmed) return;
@@ -642,15 +645,15 @@ const handleDeleteAssignment = async (id: string) => {
     const getStatusColor = (status: string) => {
         switch(status) {
             case 'overdue':
-                return 'bg-gradient-to-r from-red-500 to-red-600';
+                return 'bg-destructive';
             case 'dueSoon':
-                return 'bg-gradient-to-r from-orange-500 to-amber-500';
+                return 'bg-accent';
             case 'active':
-                return 'bg-gradient-to-r from-emerald-500 to-teal-500';
+                return 'bg-primary';
             case 'review':
-                return 'bg-gradient-to-r from-amber-500 to-yellow-500';
+                return 'bg-secondary';
             default:
-                return gradientStyles.badgeGradient;
+                return 'bg-primary';
         }
     };
 
@@ -664,21 +667,21 @@ const handleDeleteAssignment = async (id: string) => {
                     <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
                         <div className="min-w-0 flex-1 w-full">
                             <div className="flex flex-wrap items-center gap-2 mb-3">
-                                <h3 className="font-semibold text-base sm:text-lg group-hover:text-[#4b3bb0] transition-colors break-words">
+                                <h3 className="font-semibold text-base sm:text-lg group-hover:text-primary transition-colors break-words">
                                     {assignment.topic}
                                 </h3>
                                 {isOverdue && (
-                                    <Badge className="bg-red-500/10 text-red-600 border-red-200 hover:bg-red-500/20 text-xs">
+                                    <Badge className="border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/15 text-xs">
                                         <AlertTriangle className="w-3 h-3 mr-1" /> Overdue
                                     </Badge>
                                 )}
                                 {isDueSoon && !isOverdue && (
-                                    <Badge className="bg-orange-500/10 text-orange-600 border-orange-200 hover:bg-orange-500/20 text-xs">
+                                    <Badge className="border-accent/20 bg-accent/10 text-accent hover:bg-accent/15 text-xs">
                                         <Clock className="w-3 h-3 mr-1" /> Due Soon
                                     </Badge>
                                 )}
                                 {needsReview && !isOverdue && !isDueSoon && (
-                                    <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300 text-xs">
+                                    <Badge variant="outline" className="border-secondary/20 bg-secondary/10 text-secondary-foreground text-xs">
                                         <Eye className="w-3 h-3 mr-1" /> Review Needed
                                     </Badge>
                                 )}
@@ -698,13 +701,13 @@ const handleDeleteAssignment = async (id: string) => {
                                     <span>Submissions: {statsForAssignment.total}</span>
                                 </div>
                                 {statsForAssignment.pending > 0 && (
-                                    <div className="flex items-center gap-1 text-amber-600">
+                                    <div className="flex items-center gap-1 text-secondary">
                                         <Clock className="w-3 h-3 flex-shrink-0" />
                                         <span>Pending: {statsForAssignment.pending}</span>
                                     </div>
                                 )}
                                 {statsForAssignment.resubmit > 0 && (
-                                    <div className="flex items-center gap-1 text-orange-600">
+                                    <div className="flex items-center gap-1 text-accent">
                                         <RotateCcw className="w-3 h-3 flex-shrink-0" />
                                         <span>Resubmit: {statsForAssignment.resubmit}</span>
                                     </div>
@@ -722,7 +725,7 @@ const handleDeleteAssignment = async (id: string) => {
                                 variant="outline" 
                                 size={isMobile ? "default" : "sm"} 
                                 onClick={() => handleViewSubmissions(assignment)}
-                                className="flex-1 lg:flex-none hover:border-[#4b3bb0] hover:text-[#4b3bb0] transition-colors"
+                                className={`flex-1 lg:flex-none ${themeStyles.brandHover}`}
                             >
                                 <Eye className="w-4 h-4 mr-1" /> Submissions
                             </Button>
@@ -735,7 +738,7 @@ const handleDeleteAssignment = async (id: string) => {
                                             ...assignment,
                                             dueDate: assignment.dueDate ? new Date(assignment.dueDate).toISOString().split('T')[0] : ''
                                         })}
-                                        className="flex-1 lg:flex-none hover:bg-[#4b3bb0]/10 hover:text-[#4b3bb0]"
+                                        className={`flex-1 lg:flex-none ${themeStyles.brandGhost}`}
                                     >
                                         Edit
                                     </Button>
@@ -743,7 +746,7 @@ const handleDeleteAssignment = async (id: string) => {
                                 {editAssignment && editAssignment._id === assignment._id && (
                                     <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto">
                                         <DialogHeader>
-                                            <DialogTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-[#1b253f] to-[#4b3bb0] bg-clip-text text-transparent">
+                                            <DialogTitle className="text-lg sm:text-xl font-bold text-brand-gradient">
                                                 Edit Assignment
                                             </DialogTitle>
                                         </DialogHeader>
@@ -753,7 +756,7 @@ const handleDeleteAssignment = async (id: string) => {
                                                 <Input 
                                                     value={editAssignment.topic} 
                                                     onChange={(e) => setEditAssignment({ ...editAssignment, topic: e.target.value })}
-                                                    className="focus:ring-[#4b3bb0] focus:border-[#4b3bb0]"
+                                                    className={themeStyles.focusRing}
                                                 />
                                             </div>
                                             <div>
@@ -771,13 +774,13 @@ const handleDeleteAssignment = async (id: string) => {
                                                     type="date" 
                                                     value={editAssignment.dueDate} 
                                                     onChange={(e) => setEditAssignment({ ...editAssignment, dueDate: e.target.value })}
-                                                    className="focus:ring-[#4b3bb0] focus:border-[#4b3bb0]"
+                                                    className={themeStyles.focusRing}
                                                 />
                                             </div>
                                             <div>
                                                 <Label className="text-sm font-semibold mb-2 block">Department (Optional)</Label>
                                                 <select
-                                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4b3bb0] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className={themeStyles.select}
                                                     value={editAssignment.department || ''}
                                                     onChange={(e) => setEditAssignment({ ...editAssignment, department: e.target.value })}
                                                     disabled={role === 'dept_admin'}
@@ -791,7 +794,7 @@ const handleDeleteAssignment = async (id: string) => {
                                         </div>
                                         <Button 
                                             onClick={handleUpdateAssignment}
-                                            className={gradientStyles.buttonGradient}
+                                            className={themeStyles.primaryButton}
                                         >
                                             Update Assignment
                                         </Button>
@@ -802,7 +805,7 @@ const handleDeleteAssignment = async (id: string) => {
                                 variant="ghost" 
                                 size={isMobile ? "default" : "sm"} 
                                 onClick={() => handleDeleteAssignment(assignment._id)}
-                                className="flex-1 lg:flex-none hover:bg-red-500/10 hover:text-red-500"
+                                className="flex-1 lg:flex-none hover:bg-destructive/10 hover:text-destructive transition-colors"
                             >
                                 <Trash2 className="w-4 h-4" />
                             </Button>
@@ -825,7 +828,7 @@ const handleDeleteAssignment = async (id: string) => {
                     setAssignmentDeskFilter('all');
                     setMobileFilterOpen(false);
                 }}
-                className={assignmentDeskFilter === 'all' ? gradientStyles.buttonGradient : 'hover:border-[#4b3bb0] hover:text-[#4b3bb0]'}
+                className={assignmentDeskFilter === 'all' ? themeStyles.primaryButton : themeStyles.brandHover}
             >
                 All Assignments
             </Button>
@@ -838,7 +841,7 @@ const handleDeleteAssignment = async (id: string) => {
                     setAssignmentDeskFilter('review');
                     setMobileFilterOpen(false);
                 }}
-                className={assignmentDeskFilter === 'review' ? 'bg-amber-500 hover:bg-amber-600' : 'hover:border-amber-500 hover:text-amber-500'}
+                className={assignmentDeskFilter === 'review' ? 'bg-secondary text-secondary-foreground hover:bg-secondary/90' : 'hover:border-secondary/40 hover:text-secondary'}
             >
                 <Eye className="w-4 h-4 mr-2" /> Review Needed
             </Button>
@@ -851,7 +854,7 @@ const handleDeleteAssignment = async (id: string) => {
                     setAssignmentDeskFilter('dueSoon');
                     setMobileFilterOpen(false);
                 }}
-                className={assignmentDeskFilter === 'dueSoon' ? 'bg-orange-500 hover:bg-orange-600' : 'hover:border-orange-500 hover:text-orange-500'}
+                className={assignmentDeskFilter === 'dueSoon' ? 'bg-accent text-accent-foreground hover:bg-accent/90' : 'hover:border-accent/40 hover:text-accent'}
             >
                 <Clock className="w-4 h-4 mr-2" /> Due Soon
             </Button>
@@ -864,7 +867,7 @@ const handleDeleteAssignment = async (id: string) => {
                     setAssignmentDeskFilter('overdue');
                     setMobileFilterOpen(false);
                 }}
-                className={assignmentDeskFilter === 'overdue' ? 'bg-red-500 hover:bg-red-600' : 'hover:border-red-500 hover:text-red-500'}
+                className={assignmentDeskFilter === 'overdue' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 'hover:border-destructive/40 hover:text-destructive'}
             >
                 <AlertTriangle className="w-4 h-4 mr-2" /> Overdue
             </Button>
@@ -876,15 +879,15 @@ const handleDeleteAssignment = async (id: string) => {
             {/* ASSIGNMENTS TAB */}
             <div className="space-y-4 sm:space-y-6 px-2 sm:px-4 md:px-6 pb-8 py-10">
                 {/* Header Section with Gradient - Responsive */}
-                <div className={`${gradientStyles.primary} rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white shadow-lg`} >
+                <div className={`${themeStyles.hero} rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg`} >
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div className="w-full sm:w-auto">
                             <h1 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">Assignment Desk</h1>
-                            <p className="text-white/70 text-xs sm:text-sm">Create assignments and monitor overdue, review-needed, and due-soon work</p>
+                            <p className="text-primary-foreground/70 text-xs sm:text-sm">Create assignments and monitor overdue, review-needed, and due-soon work</p>
                         </div>
                         <Button 
                             onClick={() => setOpenAssignmentDialog(true)}
-                            className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm w-full sm:w-auto"
+                            className="bg-background/15 hover:bg-background/25 text-primary-foreground border-primary-foreground/20 backdrop-blur-sm w-full sm:w-auto"
                             size={isMobile ? "default" : "default"}
                         >
                             <Plus className="w-4 h-4 mr-2" /> New Assignment
@@ -894,55 +897,55 @@ const handleDeleteAssignment = async (id: string) => {
 
                 {/* Stats Cards - Responsive Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-                    <div className={`${gradientStyles.statCard} rounded-xl p-3 sm:p-5 shadow-sm hover:shadow-md transition-all duration-300`}>
+                    <div className={`${themeStyles.statCard} rounded-xl p-3 sm:p-5 shadow-sm hover:shadow-md transition-all duration-300`}>
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] sm:text-xs uppercase tracking-wide text-muted-foreground font-semibold">Active Assignments</p>
-                                <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-bold bg-gradient-to-r from-[#1b253f] to-[#4b3bb0] bg-clip-text text-transparent">
+                                <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-bold text-brand-gradient">
                                     {assignments.length}
                                 </p>
                             </div>
-                            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-[#1b253f]/10 to-[#4b3bb0]/10 flex items-center justify-center">
-                                <FileText className="w-4 h-4 sm:w-6 sm:h-6 text-[#4b3bb0]" />
+                            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-brand-gradient-soft flex items-center justify-center">
+                                <FileText className="w-4 h-4 sm:w-6 sm:h-6 text-primary" />
                             </div>
                         </div>
                     </div>
-                    <div className={`${gradientStyles.statCard} rounded-xl p-3 sm:p-5 shadow-sm hover:shadow-md transition-all duration-300`}>
+                    <div className={`${themeStyles.statCard} rounded-xl p-3 sm:p-5 shadow-sm hover:shadow-md transition-all duration-300`}>
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] sm:text-xs uppercase tracking-wide text-muted-foreground font-semibold">Overdue</p>
-                                <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-bold text-red-600">
+                                <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-bold text-destructive">
                                     {overdueAssignments.length}
                                 </p>
                             </div>
-                            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-red-500/10 flex items-center justify-center">
-                                <AlertTriangle className="w-4 h-4 sm:w-6 sm:h-6 text-red-500" />
+                            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                                <AlertTriangle className="w-4 h-4 sm:w-6 sm:h-6 text-destructive" />
                             </div>
                         </div>
                     </div>
-                    <div className={`${gradientStyles.statCard} rounded-xl p-3 sm:p-5 shadow-sm hover:shadow-md transition-all duration-300`}>
+                    <div className={`${themeStyles.statCard} rounded-xl p-3 sm:p-5 shadow-sm hover:shadow-md transition-all duration-300`}>
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] sm:text-xs uppercase tracking-wide text-muted-foreground font-semibold">Due In 3 Days</p>
-                                <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-bold text-orange-600">
+                                <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-bold text-accent">
                                     {dueSoonAssignments.length}
                                 </p>
                             </div>
-                            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-orange-500/10 flex items-center justify-center">
-                                <Clock className="w-4 h-4 sm:w-6 sm:h-6 text-orange-500" />
+                            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-accent/10 flex items-center justify-center">
+                                <Clock className="w-4 h-4 sm:w-6 sm:h-6 text-accent" />
                             </div>
                         </div>
                     </div>
-                    <div className={`${gradientStyles.statCard} rounded-xl p-3 sm:p-5 shadow-sm hover:shadow-md transition-all duration-300`}>
+                    <div className={`${themeStyles.statCard} rounded-xl p-3 sm:p-5 shadow-sm hover:shadow-md transition-all duration-300`}>
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] sm:text-xs uppercase tracking-wide text-muted-foreground font-semibold">Needs Review</p>
-                                <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-bold text-amber-600">
+                                <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-bold text-secondary">
                                     {reviewAssignments.length}
                                 </p>
                             </div>
-                            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-amber-500/10 flex items-center justify-center">
-                                <Eye className="w-4 h-4 sm:w-6 sm:h-6 text-amber-500" />
+                            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-secondary/10 flex items-center justify-center">
+                                <Eye className="w-4 h-4 sm:w-6 sm:h-6 text-secondary" />
                             </div>
                         </div>
                     </div>
@@ -990,7 +993,7 @@ const handleDeleteAssignment = async (id: string) => {
                             {assignmentStatsLoading && (
                                 <div key="loading" className="rounded-lg border border-dashed p-6 sm:p-8 text-center">
                                     <div className="animate-pulse flex flex-col items-center">
-                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-[#1b253f] to-[#4b3bb0] opacity-50 mb-3"></div>
+                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-brand-gradient opacity-50 mb-3"></div>
                                         <p className="text-xs sm:text-sm text-muted-foreground">Loading submission insights...</p>
                                     </div>
                                 </div>
@@ -1007,7 +1010,7 @@ const handleDeleteAssignment = async (id: string) => {
                                                 ? 'Overdue Assignments'
                                                 : 'All Assignments'}
                                         </h3>
-                                        <Badge variant="secondary" className="bg-gradient-to-r from-[#1b253f] to-[#4b3bb0] text-white text-xs">
+                                        <Badge variant="secondary" className={`${themeStyles.primaryBadge} text-xs`}>
                                             {filteredAssignmentInsights.length} {filteredAssignmentInsights.length === 1 ? 'item' : 'items'}
                                         </Badge>
                                     </div>
@@ -1034,7 +1037,7 @@ const handleDeleteAssignment = async (id: string) => {
                                         <Button 
                                             onClick={() => setOpenAssignmentDialog(true)}
                                             variant="outline"
-                                            className="mt-2 hover:border-[#4b3bb0] hover:text-[#4b3bb0]"
+                                            className={`mt-2 ${themeStyles.brandHover}`}
                                         >
                                             <Plus className="w-4 h-4 mr-2" /> Create First Assignment
                                         </Button>
@@ -1050,7 +1053,7 @@ const handleDeleteAssignment = async (id: string) => {
             <Dialog open={openAssignmentDialog} onOpenChange={setOpenAssignmentDialog}>
                 <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-[#1b253f] to-[#4b3bb0] bg-clip-text text-transparent">
+                        <DialogTitle className="text-lg sm:text-xl font-bold text-brand-gradient">
                             Create Assignment / Assessment
                         </DialogTitle>
                         <DialogDescription className="text-xs sm:text-sm">
@@ -1064,7 +1067,7 @@ const handleDeleteAssignment = async (id: string) => {
                                 value={newAssignment.topic} 
                                 onChange={(e) => setNewAssignment({ ...newAssignment, topic: e.target.value })}
                                 placeholder="Enter assignment topic"
-                                className="focus:ring-[#4b3bb0] focus:border-[#4b3bb0]"
+                                className={themeStyles.focusRing}
                             />
                         </div>
                         <div>
@@ -1082,13 +1085,13 @@ const handleDeleteAssignment = async (id: string) => {
                                 type="date" 
                                 value={newAssignment.dueDate} 
                                 onChange={(e) => setNewAssignment({ ...newAssignment, dueDate: e.target.value })}
-                                className="focus:ring-[#4b3bb0] focus:border-[#4b3bb0]"
+                                className={themeStyles.focusRing}
                             />
                         </div>
                         <div>
                             <Label className="text-sm font-semibold mb-2 block">Department (Optional)</Label>
                             <select
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4b3bb0] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                className={themeStyles.select}
                                 value={newAssignment.department}
                                 onChange={(e) => setNewAssignment({ ...newAssignment, department: e.target.value })}
                                 disabled={role === 'dept_admin'}
@@ -1102,7 +1105,7 @@ const handleDeleteAssignment = async (id: string) => {
                     </div>
                     <Button 
                         onClick={handleCreateAssignment}
-                        className={gradientStyles.buttonGradient}
+                        className={themeStyles.primaryButton}
                     >
                         Create Assignment
                     </Button>

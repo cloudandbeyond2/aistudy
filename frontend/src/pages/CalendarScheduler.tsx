@@ -372,7 +372,6 @@ export default function CalendarScheduler() {
     personal: filteredEvents.filter((item) => item.visibility === 'personal').length,
   };
   const heroStats = [
-    { label: 'Selected day', value: format(selectedDate, 'EEE, MMM d') },
     { label: 'Today', value: `${counts.today} items` },
     { label: 'Week load', value: `${counts.week} items` },
   ];
@@ -430,7 +429,7 @@ export default function CalendarScheduler() {
 
           <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
             <div className="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-300">Selected date</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-300">Selected Day</p>
               <p className="mt-2 text-lg font-semibold">{format(selectedDate, 'EEEE')}</p>
               <p className="text-sm text-slate-300">{format(selectedDate, 'MMMM d, yyyy')}</p>
             </div>
