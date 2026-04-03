@@ -207,7 +207,7 @@ const StudentPortal = () => {
         navigate('/dashboard/todo');
     } else if (value === 'career') {
         if (existingInternship) {
-            navigate('/dashboard/student/career'); // ✅ This will run when Career Hub is clicked
+            navigate('/dashboard/student/career');
         } else {
             setOpenRequestDialog(true);
         }
@@ -219,7 +219,6 @@ const StudentPortal = () => {
         }
     }
 };
-
 
     const LoadingSpinner = () => (
         <div className="flex flex-col items-center justify-center py-20">
@@ -237,182 +236,190 @@ const StudentPortal = () => {
         <div className="min-h-screen bg-white">
             <SEO title="Student Portal" description="Access your courses and learning materials." />
             
-            <div className="container mx-auto py-6 px-4 md:px-6 lg:px-8 space-y-8">
+            <div className="container mx-auto py-4 sm:py-6 md:py-8 px-3 sm:px-4 md:px-6 lg:px-8 space-y-4 sm:space-y-6 md:space-y-8">
                 
-                {/* Modern Hero Section with Stats */}
-                <div className="relative overflow-hidden rounded-3xl to-pink-600 p-8 text-white shadow-xl" style={{
-  background: "linear-gradient(135deg, #0B2B5E 0%, #1A6B8A 50%, #2BA0B8 100%)"
-}}>
+                {/* Modern Hero Section with Stats - Responsive */}
+                <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl p-5 sm:p-6 md:p-8 text-white shadow-xl" style={{
+                    background: "linear-gradient(135deg, #0B2B5E 0%, #1A6B8A 50%, #2BA0B8 100%)"
+                }}>
                     <div className="absolute inset-0 bg-black/10"></div>
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full -ml-32 -mb-32 blur-3xl"></div>
+                    <div className="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-white/10 rounded-full -mr-16 sm:-mr-24 md:-mr-32 -mt-16 sm:-mt-24 md:-mt-32 blur-3xl"></div>
+                    <div className="absolute bottom-0 left-0 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-white/10 rounded-full -ml-16 sm:-ml-24 md:-ml-32 -mb-16 sm:-mb-24 md:-mb-32 blur-3xl"></div>
                     
-                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                        <div className="space-y-3">
+                    <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 sm:gap-6">
+                        <div className="space-y-2 sm:space-y-3 w-full lg:w-auto">
                             <div className="flex items-center gap-2">
-                                <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur-sm">
-                                    <Sparkles className="w-3 h-3 mr-1" /> Learning Platform
+                                <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur-sm text-xs sm:text-sm">
+                                    <Sparkles className="w-2 h-2 sm:w-3 sm:h-3 mr-1" /> Learning Platform
                                 </Badge>
                             </div>
-                            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-                                Welcome back, {studentInfo?.mName || "Scholar"}! 👋
+                            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight">
+                                Welcome, {studentInfo?.mName || "Scholar"}! 👋
                             </h1>
-                            <p className="text-indigo-100 text-lg">Continue your journey to excellence</p>
+                            <p className="text-indigo-100 text-sm sm:text-base md:text-lg">Continue your journey to excellence</p>
                         </div>
                         
-                        <div className="flex gap-4">
-                            <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-3 text-center border border-white/20">
-                                <div className="text-2xl font-bold">{totalCourses}</div>
-                                <div className="text-xs text-indigo-100">Total Courses</div>
+                        <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 w-full lg:w-auto">
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-center border border-white/20">
+                                <div className="text-lg sm:text-xl md:text-2xl font-bold">{totalCourses}</div>
+                                <div className="text-[10px] sm:text-xs text-indigo-100">Total Courses</div>
                             </div>
-                            <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-3 text-center border border-white/20">
-                                <div className="text-2xl font-bold">{completedCourses}</div>
-                                <div className="text-xs text-indigo-100">Completed</div>
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-center border border-white/20">
+                                <div className="text-lg sm:text-xl md:text-2xl font-bold">{completedCourses}</div>
+                                <div className="text-[10px] sm:text-xs text-indigo-100">Completed</div>
                             </div>
-                            <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-3 text-center border border-white/20">
-                                <div className="text-2xl font-bold">{averageProgress}%</div>
-                                <div className="text-xs text-indigo-100">Avg Progress</div>
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-center border border-white/20">
+                                <div className="text-lg sm:text-xl md:text-2xl font-bold">{averageProgress}%</div>
+                                <div className="text-[10px] sm:text-xs text-indigo-100">Avg Progress</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-            
-
-                {/* Main Content Tabs */}
-                <Tabs defaultValue="overview" className="space-y-6" onValueChange={handleTabChange}>
+                {/* Main Content Tabs - Responsive */}
+                <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6" onValueChange={handleTabChange}>
          
-    <TabsList className="bg-gray-100 shadow-sm rounded-full p-1 h-auto">
-        <TabsTrigger 
-            value="overview"
-            className="rounded-full px-6 py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0B2B5E] data-[state=active]:via-[#1A6B8A] data-[state=active]:to-[#2BA0B8] data-[state=active]:text-white data-[state=inactive]:text-gray-600"
-        >
-            <Compass className="w-4 h-4 mr-2" /> Overview
-        </TabsTrigger>
-        
-        <TabsTrigger 
-            value="courses"
-            className="rounded-full px-6 py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0B2B5E] data-[state=active]:via-[#1A6B8A] data-[state=active]:to-[#2BA0B8] data-[state=active]:text-white data-[state=inactive]:text-gray-600"
-        >
-            <BookOpen className="w-4 h-4 mr-2" /> My Courses
-        </TabsTrigger>
-        
-        <TabsTrigger 
-            value="todo"
-            className="rounded-full px-6 py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0B2B5E] data-[state=active]:via-[#1A6B8A] data-[state=active]:to-[#2BA0B8] data-[state=active]:text-white data-[state=inactive]:text-gray-600"
-        >
-            <TrendingUp className="w-4 h-4 mr-2" /> Todo Center
-        </TabsTrigger>
-        
-        <TabsTrigger 
-            value="career"
-            className="rounded-full px-6 py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0B2B5E] data-[state=active]:via-[#1A6B8A] data-[state=active]:to-[#2BA0B8] data-[state=active]:text-white data-[state=inactive]:text-gray-600"
-        >
-            <TrendingUp className="w-4 h-4 mr-2" /> Career Hub
-        </TabsTrigger>
-        
-        <TabsTrigger 
-            value="internship"
-            className="rounded-full px-6 py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0B2B5E] data-[state=active]:via-[#1A6B8A] data-[state=active]:to-[#2BA0B8] data-[state=active]:text-white data-[state=inactive]:text-gray-600"
-        >
-            <TrendingUp className="w-4 h-4 mr-2" /> Internship Portal
-        </TabsTrigger>
-    </TabsList>
+                    {/* Horizontal scrollable tabs for mobile */}
+                    <div className="overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0">
+                        <TabsList className="bg-gray-100 shadow-sm rounded-full p-1 h-auto inline-flex w-auto min-w-max sm:min-w-0">
+                            <TabsTrigger 
+                                value="overview"
+                                className="rounded-full px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0B2B5E] data-[state=active]:via-[#1A6B8A] data-[state=active]:to-[#2BA0B8] data-[state=active]:text-white data-[state=inactive]:text-gray-600"
+                            >
+                                <Compass className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> 
+                                <span className="hidden xs:inline">Overview</span>
+                                <span className="xs:hidden">Home</span>
+                            </TabsTrigger>
+                            
+                            <TabsTrigger 
+                                value="courses"
+                                className="rounded-full px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0B2B5E] data-[state=active]:via-[#1A6B8A] data-[state=active]:to-[#2BA0B8] data-[state=active]:text-white data-[state=inactive]:text-gray-600"
+                            >
+                                <BookOpen className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> 
+                                <span className="hidden xs:inline">My Courses</span>
+                                <span className="xs:hidden">Courses</span>
+                            </TabsTrigger>
+                            
+                            <TabsTrigger 
+                                value="todo"
+                                className="rounded-full px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0B2B5E] data-[state=active]:via-[#1A6B8A] data-[state=active]:to-[#2BA0B8] data-[state=active]:text-white data-[state=inactive]:text-gray-600"
+                            >
+                                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> 
+                                <span className="hidden xs:inline">Todo Center</span>
+                                <span className="xs:hidden">Todo</span>
+                            </TabsTrigger>
+                            
+                            <TabsTrigger 
+                                value="career"
+                                className="rounded-full px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0B2B5E] data-[state=active]:via-[#1A6B8A] data-[state=active]:to-[#2BA0B8] data-[state=active]:text-white data-[state=inactive]:text-gray-600"
+                            >
+                                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> 
+                                <span className="hidden xs:inline">Career Hub</span>
+                                <span className="xs:hidden">Career</span>
+                            </TabsTrigger>
+                            
+                            <TabsTrigger 
+                                value="internship"
+                                className="rounded-full px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0B2B5E] data-[state=active]:via-[#1A6B8A] data-[state=active]:to-[#2BA0B8] data-[state=active]:text-white data-[state=inactive]:text-gray-600"
+                            >
+                                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> 
+                                <span className="hidden xs:inline">Internship Portal</span>
+                                <span className="xs:hidden">Internship</span>
+                            </TabsTrigger>
+                        </TabsList>
+                    </div>
 
-
-                    <TabsContent value="overview" className="space-y-6">
-                        {/* Two Column Layout for Overview */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            {/* Left Column - Student Info & Activities */}
-                            <div className="lg:col-span-2 space-y-6">
+                    {/* Overview Tab - Responsive Grid Layout */}
+                    <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                            {/* Left Column - Takes full width on mobile, 2 cols on desktop */}
+                            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
                                 {/* Student Profile Card */}
                                 <Card className="border-0 shadow-lg bg-white">
-                                    <CardHeader>
-                                        <CardTitle className="flex items-center gap-2 text-gray-800">
-                                            <GraduationCap className="w-5 h-5 text-indigo-600" />
+                                    <CardHeader className="p-4 sm:p-6">
+                                        <CardTitle className="flex items-center gap-2 text-gray-800 text-base sm:text-lg md:text-xl">
+                                            <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
                                             Student Information
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                             <div className="space-y-3">
-                                                <div className="flex items-center gap-3 p-3 bg-indigo-50 rounded-xl">
-                                                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                                                        <Users className="w-5 h-5 text-indigo-600" />
+                                                <div className="flex items-center gap-3 p-2 sm:p-3 bg-indigo-50 rounded-xl">
+                                                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                        <Users className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
                                                     </div>
-                                                    <div>
-                                                        <p className="text-xs text-gray-500">College</p>
-                                                        <p className="font-semibold text-gray-800">{collegeName}</p>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[10px] sm:text-xs text-gray-500">College</p>
+                                                        <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate">{collegeName}</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
-                                                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                                                        <Layers className="w-5 h-5 text-purple-600" />
+                                                <div className="flex items-center gap-3 p-2 sm:p-3 bg-purple-50 rounded-xl">
+                                                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                        <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
                                                     </div>
-                                                    <div>
-                                                        <p className="text-xs text-gray-500">Department</p>
-                                                        <p className="font-semibold text-gray-800">{departmentName}</p>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[10px] sm:text-xs text-gray-500">Department</p>
+                                                        <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate">{departmentName}</p>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="space-y-3">
-                                                <div className="flex items-center gap-3 p-3 bg-pink-50 rounded-xl">
-                                                    <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
-                                                        <Calendar className="w-5 h-5 text-pink-600" />
+                                                <div className="flex items-center gap-3 p-2 sm:p-3 bg-pink-50 rounded-xl">
+                                                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                        <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-pink-600" />
                                                     </div>
-                                                    <div>
-                                                        <p className="text-xs text-gray-500">Academic Year</p>
-                                                        <p className="font-semibold text-gray-800">{studentInfo?.studentDetails?.academicYear || 'Not provided'}</p>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[10px] sm:text-xs text-gray-500">Academic Year</p>
+                                                        <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate">{studentInfo?.studentDetails?.academicYear || 'Not provided'}</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-3 p-3 bg-cyan-50 rounded-xl">
-                                                    <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">
-                                                        <Target className="w-5 h-5 text-cyan-600" />
+                                                <div className="flex items-center gap-3 p-2 sm:p-3 bg-cyan-50 rounded-xl">
+                                                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                        <Target className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-600" />
                                                     </div>
-                                                    <div>
-                                                        <p className="text-xs text-gray-500">Roll Number</p>
-                                                        <p className="font-semibold text-gray-800">{studentInfo?.studentDetails?.rollNo || 'Not provided'}</p>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[10px] sm:text-xs text-gray-500">Roll Number</p>
+                                                        <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate">{studentInfo?.studentDetails?.rollNo || 'Not provided'}</p>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </CardContent>
                                 </Card>
-
-                        
                             </div>
 
-                            {/* Right Column - Notifications & Deadlines */}
-                            <div className="space-y-6">
+                            {/* Right Column - Notifications */}
+                            <div className="space-y-4 sm:space-y-6">
                                 {/* Notifications Panel */}
                                 <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-amber-50">
-                                    <CardHeader>
+                                    <CardHeader className="p-4 sm:p-6">
                                         <CardTitle className="flex items-center justify-between">
-                                            <span className="flex items-center gap-2 text-gray-800">
-                                                <MessageSquare className="w-5 h-5 text-orange-600" />
+                                            <span className="flex items-center gap-2 text-gray-800 text-base sm:text-lg md:text-xl">
+                                                <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
                                                 Notifications
                                             </span>
                                             {notifications.length > 0 && (
-                                                <Badge variant="destructive" className="rounded-full">New</Badge>
+                                                <Badge variant="destructive" className="rounded-full text-xs">New</Badge>
                                             )}
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent>
+                                    <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
                                         {notifications.length > 0 ? (
-                                            <div className="space-y-3">
+                                            <div className="space-y-2 sm:space-y-3">
                                                 {notifications.slice(0, 3).map((notif) => (
-                                                    <div key={notif._id} className="p-3 bg-white rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-all" onClick={() => notif.link && navigate(notif.link)}>
-                                                        <p className="text-sm font-medium text-gray-800">{notif.message}</p>
-                                                        <p className="text-xs text-gray-500 mt-1">Just now</p>
+                                                    <div key={notif._id} className="p-2 sm:p-3 bg-white rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-all" onClick={() => notif.link && navigate(notif.link)}>
+                                                        <p className="text-xs sm:text-sm font-medium text-gray-800 line-clamp-2">{notif.message}</p>
+                                                        <p className="text-[10px] sm:text-xs text-gray-500 mt-1">Just now</p>
                                                     </div>
                                                 ))}
                                             </div>
                                         ) : (
-                                            <div className="text-center py-8">
-                                                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                    <Bell className="w-6 h-6 text-gray-400" />
+                                            <div className="text-center py-6 sm:py-8">
+                                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                                                    <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
                                                 </div>
-                                                <p className="text-gray-500">No new notifications</p>
+                                                <p className="text-gray-500 text-xs sm:text-sm">No new notifications</p>
                                             </div>
                                         )}
                                     </CardContent>
@@ -421,17 +428,18 @@ const StudentPortal = () => {
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="courses" className="space-y-6">
+                    {/* Courses Tab - Responsive Grid */}
+                    <TabsContent value="courses" className="space-y-4 sm:space-y-6">
                         {loading ? <LoadingSpinner /> : (
                             <>
                                 {courses.length === 0 ? (
-                                    <div className="text-center py-20 bg-gray-50 rounded-2xl shadow-sm">
-                                        <BookOpen className="w-20 h-20 mx-auto text-gray-300 mb-4" />
-                                        <h3 className="text-xl font-semibold text-gray-800 mb-2">No courses assigned yet</h3>
-                                        <p className="text-gray-500">Your organization will assign courses to you soon.</p>
+                                    <div className="text-center py-12 sm:py-16 md:py-20 bg-gray-50 rounded-2xl shadow-sm">
+                                        <BookOpen className="w-16 h-16 sm:w-20 sm:h-20 mx-auto text-gray-300 mb-3 sm:mb-4" />
+                                        <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">No courses assigned yet</h3>
+                                        <p className="text-gray-500 text-xs sm:text-sm px-4">Your organization will assign courses to you soon.</p>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
                                         {courses.map((course: any, index) => {
                                             const progress = course.progressPercentage || 0;
                                             const thumbnail = getCourseThumbnail(course);
@@ -446,60 +454,60 @@ const StudentPortal = () => {
                                                     onClick={() => navigate(`/course/${course._id}`)}
                                                 >
                                                     <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-0 shadow-lg bg-white h-full flex flex-col">
-                                                        <div className="relative h-48 overflow-hidden">
+                                                        <div className="relative h-36 sm:h-40 md:h-48 overflow-hidden">
                                                             <img 
                                                                 src={thumbnail} 
                                                                 alt={course.title} 
                                                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                                             />
                                                             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                                                            <div className="absolute bottom-3 left-3 right-3">
-                                                                <Badge className={`${progress === 100 ? 'bg-green-500' : 'bg-orange-500'} text-white`}>
+                                                            <div className="absolute bottom-2 left-2 right-2 sm:bottom-3 sm:left-3 sm:right-3">
+                                                                <Badge className={`${progress === 100 ? 'bg-green-500' : 'bg-orange-500'} text-white text-xs`}>
                                                                     {progress === 100 ? 'Completed' : `${progress}% Complete`}
                                                                 </Badge>
                                                             </div>
                                                         </div>
-                                                        <CardHeader>
-                                                            <CardTitle className="text-lg line-clamp-2 group-hover:text-indigo-600 transition-colors text-gray-800">
+                                                        <CardHeader className="p-3 sm:p-4">
+                                                            <CardTitle className="text-sm sm:text-base md:text-lg line-clamp-2 group-hover:text-indigo-600 transition-colors text-gray-800">
                                                                 {course.title || course.mainTopic}
                                                             </CardTitle>
-                                                            <CardDescription className="flex items-center gap-2 text-gray-500">
-                                                                <Zap className="w-3 h-3" />
+                                                            <CardDescription className="flex items-center gap-2 text-gray-500 text-xs sm:text-sm">
+                                                                <Zap className="w-2 h-2 sm:w-3 sm:h-3" />
                                                                 {course.type || "AI Generated Course"}
                                                             </CardDescription>
                                                         </CardHeader>
-                                                        <CardContent className="flex-1">
-                                                            <div className="space-y-3">
+                                                        <CardContent className="p-3 sm:p-4 pt-0 flex-1">
+                                                            <div className="space-y-2 sm:space-y-3">
                                                                 <div>
-                                                                    <div className="flex justify-between text-xs mb-1">
+                                                                    <div className="flex justify-between text-[10px] sm:text-xs mb-1">
                                                                         <span className="text-gray-500">Progress</span>
                                                                         <span className="font-semibold text-indigo-600">{progress}%</span>
                                                                     </div>
-                                                                    <Progress value={progress} className="h-2" />
+                                                                    <Progress value={progress} className="h-1.5 sm:h-2" />
                                                                 </div>
                                                                 {averageScore > 0 && (
-                                                                    <div className="flex items-center justify-between text-sm">
+                                                                    <div className="flex items-center justify-between text-xs sm:text-sm">
                                                                         <span className="text-gray-500">Quiz Avg Score</span>
                                                                         <div className="flex items-center gap-1">
-                                                                            <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                                                            <Star className="w-2 h-2 sm:w-3 sm:h-3 text-yellow-500 fill-yellow-500" />
                                                                             <span className="font-semibold text-gray-800">{averageScore}%</span>
                                                                         </div>
                                                                     </div>
                                                                 )}
-                                                                <div className="flex items-center gap-4 text-xs text-gray-500">
+                                                                <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs text-gray-500">
                                                                     <span className="flex items-center gap-1">
-                                                                        <Layers className="w-3 h-3" /> {course.topics?.length || 0} topics
+                                                                        <Layers className="w-2 h-2 sm:w-3 sm:h-3" /> {course.topics?.length || 0} topics
                                                                     </span>
                                                                     <span className="flex items-center gap-1">
-                                                                        <Brain className="w-3 h-3" /> AI Curated
+                                                                        <Brain className="w-2 h-2 sm:w-3 sm:h-3" /> AI Curated
                                                                     </span>
                                                                 </div>
                                                             </div>
                                                         </CardContent>
-                                                        <div className="p-4 pt-0">
-                                                            <Button variant="ghost" className="w-full group-hover:bg-indigo-50 transition-colors text-gray-700 hover:text-indigo-700">
+                                                        <div className="p-3 sm:p-4 pt-0">
+                                                            <Button variant="ghost" className="w-full group-hover:bg-indigo-50 transition-colors text-gray-700 hover:text-indigo-700 text-xs sm:text-sm">
                                                                 {progress === 0 ? 'Start Learning' : progress === 100 ? 'Review Course' : 'Continue Learning'}
-                                                                <ExternalLink className="w-3 h-3 ml-2" />
+                                                                <ExternalLink className="w-2 h-2 sm:w-3 sm:h-3 ml-1 sm:ml-2" />
                                                             </Button>
                                                         </div>
                                                     </Card>
@@ -511,27 +519,25 @@ const StudentPortal = () => {
                             </>
                         )}
                     </TabsContent>
-
-            
                 </Tabs>
 
-                {/* Internship Request Dialog */}
+                {/* Internship Request Dialog - Responsive */}
                 <Dialog open={openRequestDialog} onOpenChange={setOpenRequestDialog}>
-                    <DialogContent className="max-w-md rounded-2xl bg-white">
+                    <DialogContent className="max-w-[90vw] sm:max-w-md rounded-2xl bg-white mx-auto">
                         <DialogHeader>
-                            <DialogTitle className="text-2xl font-bold flex items-center gap-2 text-gray-800">
-                                <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center">
-                                    <Briefcase className="w-4 h-4 text-white" />
+                            <DialogTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2 text-gray-800">
+                                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center">
+                                    <Briefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                                 </div>
                                 Request Internship
                             </DialogTitle>
-                            <CardDescription className="text-gray-500">Fill out the details below to request an internship opportunity</CardDescription>
+                            <CardDescription className="text-gray-500 text-xs sm:text-sm">Fill out the details below to request an internship opportunity</CardDescription>
                         </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <div className="grid gap-2">
-                                <Label className="text-gray-700">Preferred Domain</Label>
+                        <div className="grid gap-3 sm:gap-4 py-3 sm:py-4">
+                            <div className="grid gap-1.5 sm:gap-2">
+                                <Label className="text-gray-700 text-xs sm:text-sm">Preferred Domain</Label>
                                 <select
-                                    className="flex h-11 w-full rounded-xl border border-gray-200 bg-white text-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="flex h-9 sm:h-11 w-full rounded-xl border border-gray-200 bg-white text-gray-800 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     value={requestData.domain}
                                     onChange={(e) => setRequestData({ ...requestData, domain: e.target.value })}
                                 >
@@ -544,17 +550,17 @@ const StudentPortal = () => {
                                     <option value="UI/UX Design">🎨 UI/UX Design</option>
                                 </select>
                             </div>
-                            <div className="grid gap-2">
-                                <Label className="text-gray-700">Work Nature / Specific Interest</Label>
+                            <div className="grid gap-1.5 sm:gap-2">
+                                <Label className="text-gray-700 text-xs sm:text-sm">Work Nature / Specific Interest</Label>
                                 <Textarea 
                                     placeholder="Describe your areas of interest and what you hope to learn..."
                                     value={requestData.workNature}
                                     onChange={(e) => setRequestData({ ...requestData, workNature: e.target.value })}
-                                    className="rounded-xl focus:ring-2 focus:ring-indigo-500 border-gray-200"
-                                    rows={4}
+                                    className="rounded-xl focus:ring-2 focus:ring-indigo-500 border-gray-200 text-xs sm:text-sm"
+                                    rows={3}
                                 />
                             </div>
-                            <Button onClick={handleRequestInternship} className="h-12 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl shadow-lg mt-2">
+                            <Button onClick={handleRequestInternship} className="h-10 sm:h-12 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl shadow-lg mt-1 sm:mt-2 text-xs sm:text-sm">
                                 Submit Request
                             </Button>
                         </div>
