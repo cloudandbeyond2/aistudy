@@ -165,7 +165,7 @@ export default function TodoCenter() {
               </button>
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900">Todo Center</h1>
-                <p className="text-sm text-slate-400">Welcome, <span className="font-semibold text-indigo-500">{userName}</span></p>
+                {/* <p className="text-sm text-slate-400">Welcome, <span className="font-semibold text-indigo-500">{userName}</span></p> */}
               </div>
             </div>
           </div>
@@ -251,18 +251,20 @@ export default function TodoCenter() {
                       <label className="mb-1 block text-xs font-medium text-slate-500">Due Date</label>
                       <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className={inp} />
                     </div>
-                    <div>
+                    {/* <div>
                       <label className="mb-1 block text-xs font-medium text-slate-500">Priority</label>
                       <select value={priority} onChange={e => setPriority(e.target.value as TodoPriority)} className={inp}>
                         <option value="Low">Low</option>
                         <option value="Medium">Medium</option>
                         <option value="High">High</option>
                       </select>
-                    </div>
+                    </div> */}
                   </div>
 
                   {/* Priority pills */}
+                     <label className="mb-1 block text-xs font-medium text-slate-500">Priority</label>
                   <div className="flex gap-1.5">
+                    
                     {(['Low', 'Medium', 'High'] as TodoPriority[]).map(p => (
                       <button key={p} onClick={() => setPriority(p)}
                         className={`flex flex-1 items-center justify-center gap-1 rounded-lg border py-1.5 text-xs font-medium transition-all ${priority === p ? `${PC[p].badge} border-current` : 'border-slate-200 text-slate-400 hover:text-slate-600'}`}>
