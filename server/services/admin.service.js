@@ -1,4 +1,4 @@
-﻿import User from '../models/User.js';
+import User from '../models/User.js';
 import Organization from '../models/Organization.js';
 import LimitRequest from '../models/LimitRequest.js';
 import StaffCourseLimitRequest from '../models/StaffCourseLimitRequest.js';
@@ -362,7 +362,7 @@ export const updateOrder = async (id, updateData) => {
     const order = await Order.findByIdAndUpdate(
       id, 
       { $set: updateData }, 
-      { new: true } // returns the updated document
+      { returnDocument: 'after' } // returns the updated document
     );
     
     if (!order) {
@@ -395,7 +395,7 @@ export const updatePaymentSetting = async ({ provider, isEnabled, isLive, public
       monthlyPlanId,
       yearlyPlanId
     },
-    { new: true, upsert: true }
+    { returnDocument: 'after', upsert: true }
   );
 };
 
@@ -518,7 +518,7 @@ export const updateOrganization = async (id, data) => {
         aiCourseSlots: aiCourseSlots,
         isActive: true
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     const userAccess = getUserAccessFromOrgPlan(data.planDuration, updatedPlan?.startDate || new Date());

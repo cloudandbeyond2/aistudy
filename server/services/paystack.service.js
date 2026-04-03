@@ -58,7 +58,7 @@ export const fetchSubscription = async ({ email, uid, plan }) => {
   cost = cost / 4;
 
   await Admin.findOneAndUpdate({ type: 'main' }, { $inc: { total: cost } });
-  const updatedUser = await User.findByIdAndUpdate(uid, { type: plan }, { new: true });
+  const updatedUser = await User.findByIdAndUpdate(uid, { type: plan }, { returnDocument: 'after' });
 
   return {
     subscription_code: subscription.subscription_code,

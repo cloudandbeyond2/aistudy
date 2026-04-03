@@ -4,7 +4,7 @@ import { generateAIText } from '../config/aiProvider.js';
 
 export const createInternship = async (req, res) => {
     try {
-        const { studentId, organizationId, title, description, domain, internshipType, startDate, endDate, status, tasks, studyPlan, exerciseTopics } = req.body;
+        const { studentId, organizationId, title, description, domain, internshipType, startDate, endDate, status, tasks, studyPlan, exerciseTopics, resources } = req.body;
         
         if (!studentId || !organizationId || !title) {
             return res.status(400).json({ success: false, message: 'Missing required fields' });
@@ -22,7 +22,8 @@ export const createInternship = async (req, res) => {
             status: status || 'active',
             tasks: tasks || [],
             studyPlan: studyPlan || [],
-            exerciseTopics: exerciseTopics || []
+            exerciseTopics: exerciseTopics || [],
+            resources: resources || []
         });
 
         await newInternship.save();
@@ -85,7 +86,7 @@ export const getInternshipById = async (req, res) => {
 
 export const updateInternship = async (req, res) => {
     try {
-        const internship = await Internship.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const internship = await Internship.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after' });
         if (!internship) {
             return res.status(404).json({ success: false, message: 'Internship not found' });
         }
@@ -124,7 +125,7 @@ export const updateTask = async (req, res) => {
         const internship = await Internship.findOneAndUpdate(
             { _id: req.params.id, 'tasks._id': taskId },
             { $set: updateFields },
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         if (!internship) return res.status(404).json({ success: false, message: 'Internship or task not found' });
@@ -162,7 +163,7 @@ export const updateFollowup = async (req, res) => {
         const internship = await Internship.findOneAndUpdate(
             { _id: req.params.id, 'dailyFollowups._id': followupId },
             { $set: updateFields },
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         if (!internship) return res.status(404).json({ success: false, message: 'Internship or followup not found' });
@@ -179,7 +180,7 @@ export const updateStudyPlan = async (req, res) => {
         const internship = await Internship.findByIdAndUpdate(
             req.params.id,
             { $set: { studyPlan } },
-            { new: true }
+            { returnDocument: 'after' }
         );
         res.status(200).json({ success: true, internship });
     } catch (error) {
@@ -197,18 +198,20 @@ export const generateRoadmap = async (req, res) => {
 
         const systemInstruction = `You are an expert MNC Internship Mentor. Your goal is to generate a structured, professional, practical-oriented ${weeks}-week training roadmap for a ${domain} internship at a ${level} level. 
         Each week should have 1-2 key tasks that mirror real-world corporate workflows (e.g., Code Review, Unit Testing, Documentation, Scalability). 
-        Format the response in JSON ONLY with keys "roadmap" and "exerciseTopics".
-        roadmap should be an array of objects: { title, tasks: [{ title, description, suggestedDuration }] }
-        exerciseTopics should be a flat array of strings.`;
+        Format the response in JSON ONLY with exactly these keys: "title", "description", "roadmap", "exerciseTopics", and "resources".
+        - "title": A professional internship title (e.g., "Associate Cloud Engineer Intern").
+        - "description": A detailed, MNC-style work nature description (1-2 paragraphs).
+        - "roadmap": An array of objects: { title, tasks: [{ title, description, suggestedDuration }] }
+        - "exerciseTopics": A flat array of technical topics.
+        - "resources": A list of 3-5 high-quality reference links: [{ title, link }]. Use real domains like docs.microsoft.com, react.dev, developer.mozilla.org, etc.`;
 
-        const prompt = `Generate a JSON object with a key "roadmap" containing an array of ${weeks} weeks. 
-        Each week object should have:
-        "title": String (e.g., "Week 1: Foundations & Setup"),
-        "tasks": Array of objects, each with:
-            "title": String,
-            "description": String (detailed MNC-style instructions),
-            "suggestedDuration": String
-        Also include a key "exerciseTopics" which is an array of 5-8 related technical topics the student should learn.
+        const prompt = `Generate a comprehensive internship plan for a ${domain} internship. 
+        Return a JSON object containing:
+        "title": String,
+        "description": String,
+        "roadmap": Array of ${weeks} weeks,
+        "exerciseTopics": Array of technical topics,
+        "resources": Array of objects { title, link }
         
         Domain: ${domain}`;
 
@@ -218,12 +221,15 @@ export const generateRoadmap = async (req, res) => {
             responseMimeType: 'application/json'
         });
 
-        const roadmapData = JSON.parse(generatedText);
+        const data = JSON.parse(generatedText);
 
         res.status(200).json({
             success: true,
-            roadmap: roadmapData.roadmap,
-            exerciseTopics: roadmapData.exerciseTopics
+            title: data.title,
+            description: data.description,
+            roadmap: data.roadmap,
+            exerciseTopics: data.exerciseTopics,
+            resources: data.resources
         });
     } catch (error) {
         console.error('AI Roadmap Generation Error:', error);

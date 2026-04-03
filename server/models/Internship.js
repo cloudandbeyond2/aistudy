@@ -61,6 +61,7 @@ const internshipSchema = new mongoose.Schema({
     tasks: [taskSchema],
     dailyFollowups: [dailyFollowupSchema],
     studyPlan: [studyPlanItemSchema],
+    resources: [{ title: String, link: String }],
     exerciseTopics: [String],
     overallFeedback: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now }
