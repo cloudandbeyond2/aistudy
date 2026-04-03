@@ -58,6 +58,7 @@ import {
   ListTodo,  
   Zap,
   BookPlus,
+  Activity,
   Sun,
   Moon
 } from 'lucide-react';
@@ -548,6 +549,7 @@ const DashboardLayoutContent = () => {
                     <MenuItem icon={Bell} label="Noticeboard" to="/dashboard/student/notices" isActive={isActive('/dashboard/student/notices')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Briefcase} label="Projects" to="/dashboard/student/projects" isActive={isActive('/dashboard/student/projects')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={BookOpen} label="Materials" to="/dashboard/student/materials" isActive={isActive('/dashboard/student/materials')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    <MenuItem icon={Activity} label="Internship" to="/dashboard/student/internship" isActive={isActive('/dashboard/student/internship')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
 
                     <SectionHeader title="Community" icon={Users} isExpanded={isExpanded} />
                     <MenuItem icon={Menu} label="Meetings" to="/dashboard/student/meetings" isActive={isActive('/dashboard/student/meetings')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
@@ -596,6 +598,14 @@ const DashboardLayoutContent = () => {
                       label="Portal Site" 
                       to="/dashboard/org?tab=portal" 
                       isActive={location.search === '?tab=portal'}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
+                    <MenuItem 
+                      icon={Activity} 
+                      label="Internships" 
+                      to="/dashboard/org?tab=internships" 
+                      isActive={location.search === '?tab=internships'}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />

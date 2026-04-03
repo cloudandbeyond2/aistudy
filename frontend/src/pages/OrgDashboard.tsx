@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle, BookOpen, FileQuestion, Calendar, CheckCircle2, ArrowUpCircle, Edit, Globe, BarChart3, Building2 } from 'lucide-react';
+import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle, BookOpen, FileQuestion, Calendar, CheckCircle2, ArrowUpCircle, Edit, Globe, BarChart3, Building2, Activity, Loader2, MoreVertical, EyeOff } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -26,7 +26,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical, EyeOff } from "lucide-react"
 const defaultQuizSettings = {
     examMode: true,
     quizMode: 'secure',
@@ -846,8 +845,24 @@ const OrgDashboard = () => {
     const [meetings, setMeetings] = useState<any[]>([]);
     const [projects, setProjects] = useState<any[]>([]);
     const [materials, setMaterials] = useState<any[]>([]);
+    const [internships, setInternships] = useState<any[]>([]);
+    const [loadingInternships, setLoadingInternships] = useState(false);
+    const [loadingRoadmap, setLoadingRoadmap] = useState(false);
     const [openMeetingDialog, setOpenMeetingDialog] = useState(false);
     const [openProjectDialog, setOpenProjectDialog] = useState(false);
+    const [openInternshipDialog, setOpenInternshipDialog] = useState(false);
+    const [selectedInternship, setSelectedInternship] = useState<any>(null);
+    const [newInternship, setNewInternship] = useState({
+        studentId: '',
+        title: '',
+        description: '',
+        domain: 'Web Development',
+        internshipType: 'training',
+        startDate: '',
+        endDate: '',
+        tasks: [] as any[],
+        exerciseTopics: [] as string[]
+    });
 
 
 
@@ -929,6 +944,7 @@ const resetProjectForm = () => {
         fetchOrgDeptAdmins();
         fetchNotices();
         fetchDeptLimitRequests();
+        fetchInternships();
     }, [orgId]);
 
     useEffect(() => {
@@ -1134,6 +1150,20 @@ const handleDeleteDeptAdmin = async (id: string) => {
         }
     };
 
+    const fetchInternships = async () => {
+        try {
+            setLoadingInternships(true);
+            const res = await axios.get(`${serverURL}/api/internship?organizationId=${orgId}`);
+            if (res.data.success) {
+                setInternships(res.data.internships);
+            }
+        } catch (e) {
+            console.error("Failed to fetch internships", e);
+        } finally {
+            setLoadingInternships(false);
+        }
+    };
+
     const fetchDeptLimitRequests = async () => {
         try {
             const endpoint = role === 'dept_admin' 
@@ -1170,6 +1200,100 @@ const handleDeleteDeptAdmin = async (id: string) => {
             }
         } catch (e: any) {
             toast({ title: "Error", description: e.response?.data?.message || e.message || "Failed to submit request", variant: "destructive" });
+        }
+    };
+
+    const handleGenerateRoadmap = async () => {
+        if (!newInternship.domain) {
+            toast({ title: "Error", description: "Please select a domain first" });
+            return;
+        }
+        try {
+            setLoadingRoadmap(true);
+            const res = await axios.post(`${serverURL}/api/internship/generate-roadmap`, {
+                domain: newInternship.domain
+            });
+            if (res.data.success) {
+                const roadmapTasks = res.data.roadmap.flatMap((week: any) => 
+                    week.tasks.map((t: any) => ({
+                        ...t,
+                        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // Default 1 week out
+                    }))
+                );
+                setNewInternship({
+                    ...newInternship,
+                    tasks: roadmapTasks,
+                    exerciseTopics: res.data.exerciseTopics
+                });
+                toast({ title: "Roadmap Generated", description: "AI has created an MNC-style training plan for this student." });
+            }
+        } catch (e) {
+            toast({ title: "Error", description: "Failed to generate AI roadmap" });
+        } finally {
+            setLoadingRoadmap(false);
+        }
+    };
+
+    const handleCreateInternship = async () => {
+        try {
+            const res = await axios.post(`${serverURL}/api/internship`, { 
+                ...newInternship, 
+                organizationId: orgId 
+            });
+            if (res.data.success) {
+                toast({ title: "Success", description: "Internship created successfully" });
+                setNewInternship({
+                    studentId: '',
+                    title: '',
+                    description: '',
+                    domain: 'Web Development',
+                    internshipType: 'training',
+                    startDate: '',
+                    endDate: '',
+                    tasks: [],
+                    exerciseTopics: []
+                });
+                setOpenInternshipDialog(false);
+                fetchInternships();
+            }
+        } catch (e: any) {
+            toast({ title: "Error", description: e.response?.data?.message || "Failed to create internship" });
+        }
+    };
+
+    const handleUpdateInternship = async (id: string, updates: any) => {
+        try {
+            const res = await axios.patch(`${serverURL}/api/internship/${id}`, updates);
+            if (res.data.success) {
+                toast({ title: "Updated", description: "Internship updated" });
+                fetchInternships();
+            }
+        } catch (e: any) {
+            toast({ title: "Error", description: e.response?.data?.message || "Update failed" });
+        }
+    };
+
+    const handleUpdateInternshipTask = async (internshipId: string, taskId: string, updates: any) => {
+        try {
+            const res = await axios.patch(`${serverURL}/api/internship/${internshipId}/task/${taskId}`, updates);
+            if (res.data.success) {
+                toast({ title: "Success", description: "Task updated" });
+                fetchInternships();
+            }
+        } catch (e: any) {
+            toast({ title: "Error", description: "Task update failed" });
+        }
+    };
+
+    const handleUpdateInternshipFollowup = async (internshipId: string, followupId: string, updates: any) => {
+        try {
+            const res = await axios.patch(`${serverURL}/api/internship/${internshipId}/followup/${followupId}`, updates);
+            if (res.data.success) {
+                toast({ title: "Success", description: "Followup updated" });
+                fetchInternships();
+            }
+        } catch (e: any) {
+            toast({ title: "Error", description: "Followup update failed" });
         }
     };
 
@@ -2764,6 +2888,10 @@ const handleUpdateDeptAdmin = async () => {
             title: 'Course Workspace',
             description: 'Create, review, and publish learning content for the organization.'
         },
+        internships: {
+            title: 'Internship Program',
+            description: 'Assign industry-ready tasks, monitor real-world progress, and guide your students.'
+        },
         approvals: {
             title: 'Approval Center',
             description: 'Track pending requests and resolve publishing or quota approvals.'
@@ -2895,6 +3023,17 @@ const handleUpdateDeptAdmin = async () => {
                 onClick: () => setSearchParams({ tab: 'materials' })
             },
             {
+                key: 'internships',
+                title: 'Internship Hub',
+                description: 'Manage tasks, daily follow-ups, and study plans for student interns.',
+                metricLabel: 'Active',
+                metricValue: internships.length || 0,
+                icon: Activity,
+                accent: 'from-blue-600/15 to-indigo-600/5',
+                border: 'border-blue-300/80',
+                onClick: () => setSearchParams({ tab: 'internships' })
+            },
+            {
                 key: 'notices',
                 title: 'Noticeboard',
                 description: 'Post announcements and distribute institution-wide updates.',
@@ -2926,6 +3065,17 @@ const handleUpdateDeptAdmin = async () => {
                 accent: 'from-orange-500/15 to-orange-500/5',
                 border: 'border-orange-200/80',
                 onClick: () => navigate('/dashboard/org/career')
+            },
+            {
+                key: 'internships',
+                title: 'Internships',
+                description: 'Assign tasks, monitor daily follow-ups, and guide students through their internship journey.',
+                metricLabel: 'Active',
+                metricValue: internships.length || 0,
+                icon: Activity,
+                accent: 'from-blue-600/15 to-indigo-600/5',
+                border: 'border-blue-300/80',
+                onClick: () => setSearchParams({ tab: 'internships' })
             },
             {
                 key: 'portal',
@@ -3119,6 +3269,7 @@ const handleUpdateDeptAdmin = async () => {
                         <TabsTrigger value="materials" className="flex-1 min-w-[120px]">Materials</TabsTrigger>
                         <TabsTrigger value="notices" className="flex-1 min-w-[120px]">Noticeboard</TabsTrigger>
                         <TabsTrigger value="career" className="flex-1 min-w-[120px]"><Briefcase className="mr-1 h-3.5 w-3.5" />Career & Placement</TabsTrigger>
+                        <TabsTrigger value="internships" className="flex-1 min-w-[120px]"><Activity className="mr-1 h-3.5 w-3.5" />Internships</TabsTrigger>
                     </TabsList>
                 )}
 
@@ -5909,6 +6060,7 @@ Login:
 
                 {/* CAREER TAB */}
                 <TabsContent value="career" className="space-y-6">
+                    {/* ... existing career content ... */}
                     <Card className="border-l-4 border-l-blue-600">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -5949,7 +6101,382 @@ Login:
                         </CardContent>
                     </Card>
                 </TabsContent>
-                
+
+                {/* INTERNSHIPS TAB */}
+                <TabsContent value="internships" className="space-y-6">
+                    <Card className="border-l-4 border-l-indigo-600">
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Activity className="w-5 h-5 text-indigo-600" />
+                                    Internship Management
+                                </CardTitle>
+                                <CardDescription>
+                                    Manage student internships, assign tasks, and track daily progress.
+                                </CardDescription>
+                            </div>
+                            <Dialog open={openInternshipDialog} onOpenChange={setOpenInternshipDialog}>
+                                <DialogTrigger asChild>
+                                    <Button className="bg-indigo-600 hover:bg-indigo-700">
+                                        <Plus className="w-4 h-4 mr-2" /> Assign Internship
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-2xl overflow-y-auto max-h-[90vh]">
+                                    <DialogHeader>
+                                        <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                                            <Sparkles className="w-6 h-6 text-indigo-600" />
+                                            Professional Internship Setup
+                                        </DialogTitle>
+                                    </DialogHeader>
+                                    <div className="grid gap-6 py-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid gap-2">
+                                                <Label>Student</Label>
+                                                <select
+                                                    className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                    value={newInternship.studentId}
+                                                    onChange={(e) => setNewInternship({ ...newInternship, studentId: e.target.value })}
+                                                >
+                                                    <option value="">Select Student</option>
+                                                    {students.map((s: any) => (
+                                                        <option key={s._id} value={s._id}>{s.mName} ({s.email})</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label>Domain / Track</Label>
+                                                <select
+                                                    className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                    value={newInternship.domain}
+                                                    onChange={(e) => setNewInternship({ ...newInternship, domain: e.target.value })}
+                                                >
+                                                    <option value="Web Development">Web Development</option>
+                                                    <option value="AI / Machine Learning">AI / Machine Learning</option>
+                                                    <option value="Data Science">Data Science</option>
+                                                    <option value="Mobile App Dev">Mobile App Dev</option>
+                                                    <option value="Cloud Computing">Cloud Computing</option>
+                                                    <option value="Digital Marketing">Digital Marketing</option>
+                                                    <option value="UI/UX Design">UI/UX Design</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl flex items-center justify-between">
+                                            <div className="space-y-1">
+                                                <p className="text-sm font-semibold text-indigo-900">MNC-Style Training</p>
+                                                <p className="text-xs text-indigo-700">Auto-generate a 4-week practical roadmap based on the domain.</p>
+                                            </div>
+                                            <Button 
+                                                variant="outline" 
+                                                className="bg-white border-indigo-200 hover:bg-indigo-100 text-indigo-600"
+                                                onClick={handleGenerateRoadmap}
+                                                disabled={loadingRoadmap}
+                                            >
+                                                {loadingRoadmap ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                                                Generate Tasks
+                                            </Button>
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label>Internship Title</Label>
+                                            <Input 
+                                                value={newInternship.title} 
+                                                onChange={(e) => setNewInternship({ ...newInternship, title: e.target.value })}
+                                                placeholder="e.g. Associate Cloud Engineer Intern"
+                                                className="h-11"
+                                            />
+                                        </div>
+
+                                        {newInternship.tasks.length > 0 && (
+                                            <div className="space-y-3">
+                                                <Label className="text-indigo-600 font-bold">Planned Roadmap Tasks ({newInternship.tasks.length})</Label>
+                                                <div className="max-h-[200px] overflow-y-auto space-y-2 pr-2">
+                                                    {newInternship.tasks.map((task, idx) => (
+                                                        <div key={idx} className="p-3 bg-muted/30 border rounded-lg text-xs">
+                                                            <p className="font-bold">{task.title}</p>
+                                                            <p className="text-muted-foreground line-clamp-1">{task.description}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="grid gap-2">
+                                            <Label>Description (Work Nature)</Label>
+                                            <Textarea 
+                                                value={newInternship.description} 
+                                                onChange={(e) => setNewInternship({ ...newInternship, description: e.target.value })}
+                                                placeholder="Describe the practical work nature..."
+                                                className="min-h-[100px]"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid gap-2">
+                                                <Label>Start Date</Label>
+                                                <Input type="date" value={newInternship.startDate} onChange={(e) => setNewInternship({ ...newInternship, startDate: e.target.value })} className="h-11" />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label>Training Type</Label>
+                                                <select
+                                                    className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                    value={newInternship.internshipType}
+                                                    onChange={(e) => setNewInternship({ ...newInternship, internshipType: e.target.value })}
+                                                >
+                                                    <option value="training">Practical Training</option>
+                                                    <option value="professional">Professional Project</option>
+                                                    <option value="research">Research Intern</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <Button onClick={handleCreateInternship} size="lg" className="h-12 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200">
+                                            Launch Internship Program
+                                        </Button>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {internships.length > 0 ? (
+                                    internships.map((internship: any) => (
+                                        <Card key={internship._id} className="hover:shadow-md transition-shadow">
+                                            <CardHeader className="pb-2">
+                                                <div className="flex justify-between items-start">
+                                                    <Badge className={internship.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'}>
+                                                        {internship.status}
+                                                    </Badge>
+                                                    <Button variant="ghost" size="icon" onClick={() => setSelectedInternship(internship)}>
+                                                        <ExternalLink className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                                <CardTitle className="text-lg mt-2">{internship.title}</CardTitle>
+                                                <CardDescription className="text-xs">
+                                                    Student: {internship.studentId?.mName || 'Unknown'}
+                                                </CardDescription>
+                                            </CardHeader>
+                                            <CardContent className="text-sm">
+                                                <div className="space-y-2 mt-2">
+                                                    <div className="flex justify-between text-xs text-muted-foreground">
+                                                        <span>Tasks: {internship.tasks?.length || 0}</span>
+                                                        <span>Followups: {internship.dailyFollowups?.length || 0}</span>
+                                                    </div>
+                                                    <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden">
+                                                        <div 
+                                                            className="bg-indigo-600 h-full" 
+                                                            style={{ width: `${(internship.tasks?.filter((t:any) => t.status === 'completed').length / (internship.tasks?.length || 1)) * 100}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="w-full mt-4"
+                                                    onClick={() => setSelectedInternship(internship)}
+                                                >
+                                                    Manage Internship
+                                                </Button>
+                                            </CardContent>
+                                        </Card>
+                                    ))
+                                ) : (
+                                    <div className="col-span-full py-12 text-center border-2 border-dashed rounded-xl">
+                                        <Activity className="w-12 h-12 mx-auto text-muted-foreground opacity-20" />
+                                        <p className="mt-2 text-muted-foreground">No internships assigned yet.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* INTERNSHIP DETAILS DIALOG */}
+                    {selectedInternship && (
+                        <Dialog open={!!selectedInternship} onOpenChange={(o) => !o && setSelectedInternship(null)}>
+                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                    <DialogTitle className="text-2xl">{selectedInternship.title}</DialogTitle>
+                                    <DialogDescription>
+                                        Student: {selectedInternship.studentId?.mName} ({selectedInternship.studentId?.email})
+                                    </DialogDescription>
+                                </DialogHeader>
+                                
+                                <div className="space-y-6 py-4">
+                                    <Tabs defaultValue="tasks">
+                                        <TabsList className="grid grid-cols-3 w-full">
+                                            <TabsTrigger value="tasks">Tasks ({selectedInternship.tasks?.length || 0})</TabsTrigger>
+                                            <TabsTrigger value="followups">Daily Logs ({selectedInternship.dailyFollowups?.length || 0})</TabsTrigger>
+                                            <TabsTrigger value="studyplan">Study Plan</TabsTrigger>
+                                        </TabsList>
+
+                                        <TabsContent value="tasks" className="space-y-4 pt-4">
+                                            <div className="flex justify-between items-center">
+                                                <h4 className="font-bold">Internship Tasks</h4>
+                                                <Button size="sm" onClick={async () => {
+                                                    const { value: title } = await Swal.fire({
+                                                        title: 'Task Title',
+                                                        input: 'text',
+                                                        inputPlaceholder: 'e.g., Build REST API module',
+                                                        showCancelButton: true,
+                                                        confirmButtonText: 'Next →',
+                                                        confirmButtonColor: '#4f46e5',
+                                                        inputValidator: (v) => !v && 'Please enter a task title'
+                                                    });
+                                                    if (!title) return;
+
+                                                    const { value: description } = await Swal.fire({
+                                                        title: 'Task Description',
+                                                        input: 'textarea',
+                                                        inputPlaceholder: 'Describe what the student needs to do...',
+                                                        showCancelButton: true,
+                                                        confirmButtonText: 'Next →',
+                                                        confirmButtonColor: '#4f46e5'
+                                                    });
+                                                    if (description === undefined) return;
+
+                                                    const { value: dueDate } = await Swal.fire({
+                                                        title: 'Due Date',
+                                                        input: 'date',
+                                                        showCancelButton: true,
+                                                        confirmButtonText: 'Add Task ✓',
+                                                        confirmButtonColor: '#059669',
+                                                        inputValidator: (v) => !v && 'Please pick a due date'
+                                                    });
+                                                    if (!dueDate) return;
+
+                                                    try {
+                                                        const res = await axios.post(`${serverURL}/api/internship/${selectedInternship._id}/task`, { title, description, dueDate });
+                                                        if (res.data.success) {
+                                                            setSelectedInternship(res.data.internship);
+                                                            fetchInternships();
+                                                            toast({ title: 'Task Added', description: `"${title}" has been added to the internship.` });
+                                                        }
+                                                    } catch (e: any) {
+                                                        toast({ title: 'Error', description: e.response?.data?.message || 'Failed to add task', variant: 'destructive' });
+                                                    }
+                                                }}>
+                                                    <Plus className="w-4 h-4 mr-2" /> Add Task
+                                                </Button>
+                                            </div>
+                                            <div className="grid gap-3">
+                                                {selectedInternship.tasks?.map((task: any) => (
+                                                    <div key={task._id} className="p-4 border rounded-lg flex justify-between items-center bg-muted/20">
+                                                        <div>
+                                                            <p className="font-bold">{task.title}</p>
+                                                            <p className="text-sm text-muted-foreground">{task.description}</p>
+                                                            <div className="flex gap-4 mt-2 text-xs">
+                                                                <span className={new Date(task.dueDate) < new Date() ? 'text-red-500 font-bold' : ''}>
+                                                                    Due: {new Date(task.dueDate).toLocaleDateString()}
+                                                                </span>
+                                                                <Badge variant="outline">{task.status}</Badge>
+                                                                {task.submissionUrl && (
+                                                                    <a href={task.submissionUrl} target="_blank" rel="noopener" className="text-blue-600 flex items-center gap-1">
+                                                                        <ExternalLink className="h-3 w-3" /> View Submission
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex flex-col gap-2">
+                                                            <select 
+                                                                className="text-xs border p-1 rounded"
+                                                                value={task.status}
+                                                                onChange={(e) => handleUpdateInternshipTask(selectedInternship._id, task._id, { status: e.target.value })}
+                                                            >
+                                                                <option value="pending">Pending</option>
+                                                                <option value="submitted">Submitted</option>
+                                                                <option value="completed">Completed</option>
+                                                                <option value="revision">Revision Needed</option>
+                                                            </select>
+                                                            <Button size="sm" variant="ghost" onClick={async () => {
+                                                                const { value: feedback } = await Swal.fire({
+                                                                    title: 'Mentor Feedback',
+                                                                    input: 'textarea',
+                                                                    inputValue: task.feedback || '',
+                                                                    showCancelButton: true
+                                                                });
+                                                                if (feedback !== undefined) {
+                                                                    handleUpdateInternshipTask(selectedInternship._id, task._id, { feedback });
+                                                                }
+                                                            }}>
+                                                                <MessageSquare className="h-3 w-3 mr-1" /> Feedback
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </TabsContent>
+
+                                        <TabsContent value="followups" className="space-y-4 pt-4">
+                                            <h4 className="font-bold">Student Progress Logs</h4>
+                                            <div className="grid gap-3">
+                                                {selectedInternship.dailyFollowups?.map((log: any) => (
+                                                    <div key={log._id} className="p-4 border rounded-lg bg-muted/10">
+                                                        <div className="flex justify-between">
+                                                            <span className="font-bold text-sm">Date: {new Date(log.date).toLocaleDateString()}</span>
+                                                            {log.reviewedBy && <Badge variant="secondary">Reviewed</Badge>}
+                                                        </div>
+                                                        <p className="text-sm mt-1 bg-white p-3 rounded-lg border italic">"{log.log}"</p>
+                                                        <div className="mt-3 flex gap-2">
+                                                            <Input 
+                                                                placeholder="Add mentor notes..." 
+                                                                className="text-sm h-8"
+                                                                defaultValue={log.mentorNote}
+                                                                onBlur={(e) => handleUpdateInternshipFollowup(selectedInternship._id, log._id, { mentorNote: e.target.value, reviewedBy: sessionStorage.getItem('uid') })}
+                                                            />
+                                                            <Button size="sm" variant="secondary" onClick={() => handleUpdateInternshipFollowup(selectedInternship._id, log._id, { reviewedBy: sessionStorage.getItem('uid') })}>
+                                                                Approve
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </TabsContent>
+
+                                        <TabsContent value="studyplan" className="space-y-4 pt-4">
+                                            <div className="flex justify-between items-center">
+                                                <h4 className="font-bold">Personalized Study Plan</h4>
+                                                <Button size="sm" onClick={async () => {
+                                                    const { value: url } = await Swal.fire({
+                                                        title: 'Add Learning Resource',
+                                                        input: 'url',
+                                                        inputPlaceholder: 'https://...',
+                                                        showCancelButton: true
+                                                    });
+                                                    if (url) {
+                                                        const { value: title } = await Swal.fire({
+                                                            title: 'Resource Title',
+                                                            input: 'text',
+                                                            showCancelButton: true
+                                                        });
+                                                        if (title) {
+                                                            const newResources = [...(selectedInternship.studyPlan?.resources || []), { title, link: url }];
+                                                            handleUpdateInternship(selectedInternship._id, { studyPlan: { ...selectedInternship.studyPlan, resources: newResources } });
+                                                        }
+                                                    }
+                                                }}>
+                                                    <Plus className="w-4 h-4 mr-2" /> Add Resource
+                                                </Button>
+                                            </div>
+                                            <div className="grid gap-2">
+                                                {selectedInternship.studyPlan?.resources?.map((res: any, i: number) => (
+                                                    <div key={i} className="flex justify-between items-center p-3 border rounded-lg bg-indigo-50/50">
+                                                        <div className="flex items-center gap-2">
+                                                            <BookOpen className="h-4 w-4 text-indigo-600" />
+                                                            <span className="font-medium text-sm">{res.title}</span>
+                                                        </div>
+                                                        <a href={res.link} target="_blank" rel="noopener" className="text-secondary hover:underline text-sm">
+                                                            View Resource <ExternalLink className="h-3 w-3 inline" />
+                                                        </a>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </TabsContent>
+                                    </Tabs>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    )}
+                </TabsContent>
+
                 {/* PORTAL CUSTOMIZATION TAB */}
                 {role === 'org_admin' && (
                     <TabsContent value="portal" className="animate-in fade-in slide-in-from-bottom-4 duration-700">

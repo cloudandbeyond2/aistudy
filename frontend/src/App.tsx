@@ -53,6 +53,7 @@ import StudentNews from "./pages/StudentNews";
 import StudentMeetings from "./pages/StudentMeetings";
 import StudentProjects from "./pages/StudentProjects";
 import StudentMaterials from "./pages/StudentMaterials";
+import StudentInternship from "./pages/StudentInternship";
 import AssignmentPage from "./pages/AssignmentPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -226,6 +227,7 @@ const App = () => (
                       <Route path="projects" element={<StudentProjects />} />
                       <Route path="materials" element={<StudentMaterials />} />
                       <Route path="attendance" element={<StudentAttendance />} />
+                      <Route path="internship" element={<StudentInternship />} />
                       <Route path="assignment/:assignmentId" element={<AssignmentPage />} />
                       <Route path="support-tickets" element={<StudentSupportTickets />} />
                       <Route path="profile" element={<StudentProfile />} />
