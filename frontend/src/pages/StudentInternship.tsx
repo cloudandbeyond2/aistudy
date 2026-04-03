@@ -43,7 +43,7 @@ const StudentInternship = () => {
 
     const fetchInternship = async () => {
         try {
-            const res = await axios.get(`${serverURL}/api/internship/student/${studentId}?organizationId=${orgId}`);
+            const res = await axios.get(`${serverURL}/api/internship/student/${studentId}`);
             if (res.data.success && res.data.internship) {
                 setInternship(res.data.internship);
             }

@@ -120,7 +120,7 @@ const StudentPortal = () => {
 
     const fetchInternshipStatus = async () => {
         try {
-            const res = await axios.get(`${serverURL}/api/internship/student/${studentId}?organizationId=${orgId}`);
+            const res = await axios.get(`${serverURL}/api/internship/student/${studentId}`);
             if (res.data.success) {
                 setExistingInternship(res.data.internship);
             }
