@@ -151,7 +151,7 @@ const materialStorage = process.env.VERCEL
 
 export const uploadMaterial = multer({
     storage: materialStorage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+    limits: { fileSize: 50 * 1024 * 1024 }, // 10MB
     fileFilter: (req, file, cb) => {
         if (file.mimetype !== 'application/pdf') {
             return cb(new Error('Only PDF files are allowed!'), false);
