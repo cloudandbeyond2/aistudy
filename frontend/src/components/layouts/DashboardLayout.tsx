@@ -981,7 +981,7 @@ const DashboardLayoutContent = () => {
   location.pathname.startsWith("/dashboard/org") ||
   location.pathname.startsWith("/dashboard/student")
 )) && (
-  <div className="absolute top-4 right-8 z-10 flex items-center gap-4">
+  <div className="absolute top-4 right-8 z-15 flex items-center gap-4">
     <NotificationBell />
     
     <div className="relative group">
