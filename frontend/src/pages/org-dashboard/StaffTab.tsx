@@ -623,9 +623,9 @@ const StaffTab = () => {
                                                     <Settings className="h-3 w-3" />
                                                     Request Limit
                                                 </Button>
-                                                <Button size="sm" variant="ghost" className="w-full sm:w-auto hover:bg-[#11a5e4]/10">
+                                                {/* <Button size="sm" variant="ghost" className="w-full sm:w-auto hover:bg-[#11a5e4]/10">
                                                     <MoreVertical className="h-4 w-4" />
-                                                </Button>
+                                                </Button> */}
                                             </div>
                                         </CardContent>
                                     </Card>
