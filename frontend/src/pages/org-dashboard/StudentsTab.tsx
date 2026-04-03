@@ -14,7 +14,7 @@ import {
     Plus, Upload, Trash2, Briefcase, Users, Download, FileSpreadsheet, 
     UserPlus, GraduationCap, Mail, BookOpen, Award, TrendingUp, Loader2, Search,
     X, Save, Edit2, User, AtSign, Lock, Building, Hash, Calendar as CalendarIcon,
-    School, UsersRound, PieChart, Menu, LayoutGrid, List
+    School, UsersRound, PieChart, Menu, LayoutGrid, List, MessageSquare, Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -58,7 +58,10 @@ const StudentsTab = () => {
         department: ''
     });
     const [editStudent, setEditStudent] = useState<any>(null);
-    const [placementStudent, setPlacementStudent] = useState(null);
+    const [placementStudent, setPlacementStudent] = useState<any>(null);
+    const [notifyStudent, setNotifyStudent] = useState<any>(null);
+    const [notificationMessage, setNotificationMessage] = useState('');
+    const [isSendingNotification, setIsSendingNotification] = useState(false);
     const studentsPerPage = 8;
     const primaryGradient = "from-[#11405f] to-[#11a5e4]";
     const secondaryGradient = "from-[#0f4d73] to-[#1597d6]";
@@ -383,9 +386,36 @@ const StudentsTab = () => {
             } else {
                 toast({ title: "Error", description: res.data.message, variant: "destructive" });
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
             toast({ title: "Error", description: e.response?.data?.message || "Request failed", variant: "destructive" });
+        }
+    };
+    
+    // Send Individual Notification
+    const handleSendNotification = async () => {
+        if (!notifyStudent || !notificationMessage.trim()) {
+            toast({ title: "Error", description: "Please enter a message", variant: "destructive" });
+            return;
+        }
+        try {
+            setIsSendingNotification(true);
+            const res = await axios.post(`${serverURL}/api/notifications/send-individual`, {
+                userId: notifyStudent._id,
+                message: notificationMessage.trim()
+            });
+            if (res.data.success) {
+                toast({ title: "Success", description: "Notification sent successfully" });
+                setNotifyStudent(null);
+                setNotificationMessage('');
+            } else {
+                toast({ title: "Error", description: res.data.message, variant: "destructive" });
+            }
+        } catch (e: any) {
+            console.error(e);
+            toast({ title: "Error", description: e.response?.data?.message || "Failed to send notification", variant: "destructive" });
+        } finally {
+            setIsSendingNotification(false);
         }
     };
 
@@ -1070,6 +1100,18 @@ const StudentsTab = () => {
                                                                         variant="ghost" 
                                                                         size="sm"
                                                                         className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setNotifyStudent(student);
+                                                                        }}
+                                                                        title="Send Notification"
+                                                                    >
+                                                                        <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
+                                                                    </Button>
+                                                                    <Button 
+                                                                        variant="ghost" 
+                                                                        size="sm"
+                                                                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                                                                         onClick={() => handleDeleteStudent(student._id)}
                                                                     >
                                                                         <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
@@ -1195,6 +1237,15 @@ const StudentsTab = () => {
                                                                 onClick={() => setPlacementStudent(student)}
                                                             >
                                                                 <Briefcase className="w-3 h-3 sm:w-4 sm:h-4" />
+                                                            </Button>
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="sm"
+                                                                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                                                                onClick={() => setNotifyStudent(student)}
+                                                                title="Send Notification"
+                                                            >
+                                                                <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
                                                             </Button>
                                                             <Button 
                                                                 variant="ghost" 
@@ -1499,6 +1550,49 @@ const StudentsTab = () => {
                                 </div>
                             </div>
                         )}
+                    </DialogContent>
+                </Dialog>
+
+                {/* Send Notification Dialog */}
+                <Dialog open={!!notifyStudent} onOpenChange={() => {
+                    setNotifyStudent(null);
+                    setNotificationMessage('');
+                }}>
+                    <DialogContent className="students-theme-dialog mx-4">
+                        <DialogHeader>
+                            <DialogTitle className="students-theme-title flex items-center gap-2 text-lg">
+                                <MessageSquare className="w-4 h-4 text-emerald-500" />
+                                Send Message to {notifyStudent?.mName}
+                            </DialogTitle>
+                            <DialogDescription className="students-theme-description text-xs sm:text-sm">
+                                The student will receive this notification in their portal.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                                <Label className="text-xs sm:text-sm">Message Content</Label>
+                                <textarea
+                                    className="students-theme-textarea min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    placeholder="Type your message here..."
+                                    value={notificationMessage}
+                                    onChange={(e) => setNotificationMessage(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                                <Button 
+                                    onClick={handleSendNotification} 
+                                    disabled={isSendingNotification}
+                                    className={`flex-1 gap-2 text-sm bg-gradient-to-r from-emerald-600 to-teal-500 text-white hover:opacity-95`}
+                                >
+                                    {isSendingNotification ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-3 h-3 sm:w-4 sm:h-4" />}
+                                    Send Notification
+                                </Button>
+                                <Button variant="outline" onClick={() => setNotifyStudent(null)} className="students-theme-outline-btn gap-2 text-sm">
+                                    <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    Cancel
+                                </Button>
+                            </div>
+                        </div>
                     </DialogContent>
                 </Dialog>
             </div>
