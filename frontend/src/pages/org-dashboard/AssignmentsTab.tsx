@@ -27,8 +27,8 @@ const themeStyles = {
   statCard: 'border border-border bg-card',
   primaryButton: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-all duration-300',
   primaryBadge: 'bg-primary text-primary-foreground',
-  brandHover: 'hover:border-primary/40 hover:text-primary transition-colors',
-  brandGhost: 'hover:bg-primary/10 hover:text-primary transition-colors',
+  brandHover: 'hover:border-primary hover:bg-primary hover:text-white transition-colors',
+  brandGhost: 'hover:bg-primary hover:text-white transition-colors',
   focusRing: 'focus:ring-ring focus:border-ring',
   select: 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
 };
@@ -805,7 +805,7 @@ const handleDeleteAssignment = async (id: string) => {
                                 variant="ghost" 
                                 size={isMobile ? "default" : "sm"} 
                                 onClick={() => handleDeleteAssignment(assignment._id)}
-                                className="flex-1 lg:flex-none hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                className="flex-1 lg:flex-none hover:bg-destructive hover:text-white transition-colors"
                             >
                                 <Trash2 className="w-4 h-4" />
                             </Button>
@@ -841,7 +841,7 @@ const handleDeleteAssignment = async (id: string) => {
                     setAssignmentDeskFilter('review');
                     setMobileFilterOpen(false);
                 }}
-                className={assignmentDeskFilter === 'review' ? 'bg-secondary text-secondary-foreground hover:bg-secondary/90' : 'hover:border-secondary/40 hover:text-secondary'}
+                className={assignmentDeskFilter === 'review' ? 'bg-secondary text-secondary-foreground hover:bg-secondary/90' : 'hover:border-secondary hover:bg-secondary hover:text-white'}
             >
                 <Eye className="w-4 h-4 mr-2" /> Review Needed
             </Button>
@@ -854,7 +854,7 @@ const handleDeleteAssignment = async (id: string) => {
                     setAssignmentDeskFilter('dueSoon');
                     setMobileFilterOpen(false);
                 }}
-                className={assignmentDeskFilter === 'dueSoon' ? 'bg-accent text-accent-foreground hover:bg-accent/90' : 'hover:border-accent/40 hover:text-accent'}
+                className={assignmentDeskFilter === 'dueSoon' ? 'bg-accent text-accent-foreground hover:bg-accent/90' : 'hover:border-accent hover:bg-accent hover:text-white'}
             >
                 <Clock className="w-4 h-4 mr-2" /> Due Soon
             </Button>
@@ -867,7 +867,7 @@ const handleDeleteAssignment = async (id: string) => {
                     setAssignmentDeskFilter('overdue');
                     setMobileFilterOpen(false);
                 }}
-                className={assignmentDeskFilter === 'overdue' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 'hover:border-destructive/40 hover:text-destructive'}
+                className={assignmentDeskFilter === 'overdue' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 'hover:border-destructive hover:bg-destructive hover:text-white'}
             >
                 <AlertTriangle className="w-4 h-4 mr-2" /> Overdue
             </Button>
