@@ -232,6 +232,9 @@ const DashboardLayoutContent = () => {
   const [interviewEnabled, setInterviewEnabled] = useState({
     free: false, monthly: true, yearly: true, forever: true, org_admin: true, student: true
   });
+  const [skillBoosterEnabled, setSkillBoosterEnabled] = useState({
+    free: false, monthly: true, yearly: true, forever: true, org_admin: true, student: true
+  });
 
 
   useEffect(() => {
@@ -249,6 +252,7 @@ const DashboardLayoutContent = () => {
       if (response.data.admin.resumeEnabled) setResumeEnabled(response.data.admin.resumeEnabled);
       if (response.data.admin.careerEnabled) setCareerEnabled(response.data.admin.careerEnabled);
       if (response.data.admin.interviewEnabled) setInterviewEnabled(response.data.admin.interviewEnabled);
+      if (response.data.admin.skillBoosterEnabled) setSkillBoosterEnabled(response.data.admin.skillBoosterEnabled);
     }
 
     if (sessionStorage.getItem('adminEmail')) {
@@ -501,6 +505,9 @@ const DashboardLayoutContent = () => {
                     {interviewEnabled[sessionStorage.getItem('role') === 'org_admin' ? 'org_admin' : (sessionStorage.getItem('type') as keyof typeof interviewEnabled)] && (
                       <MenuItem icon={Brain} label="Mock Training" to="/dashboard/interview-training" isActive={isActive('/dashboard/interview-training')} badge={isPaidUser ? "PRO" : "READY"} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     )}
+                    {skillBoosterEnabled[sessionStorage.getItem('role') === 'org_admin' ? 'org_admin' : (sessionStorage.getItem('type') as keyof typeof skillBoosterEnabled)] && (
+                      <MenuItem icon={Zap} label="Skill Booster" to="/dashboard/skill-booster" isActive={isActive('/dashboard/skill-booster')} badge="PRO" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    )}
                     <MenuItem icon={Calendar} label="Calendar Scheduler" to="/dashboard/calendar" isActive={isActive('/dashboard/calendar')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={ListTodo} label="Todo Center" to="/dashboard/todo" isActive={isActive('/dashboard/todo')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
 
@@ -547,6 +554,7 @@ const DashboardLayoutContent = () => {
                       />
                     )} */}
                     {notebookEnabled.student && <MenuItem icon={BrainCircuit} label="AI Notebook" to="/dashboard/notebook" isActive={isActive('/dashboard/notebook')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
+                    {skillBoosterEnabled.student && <MenuItem icon={Zap} label="Skill Booster" to="/dashboard/skill-booster" isActive={isActive('/dashboard/skill-booster')} badge="PRO" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
                     <MenuItem icon={Briefcase} label="Interview Prep" to="/dashboard/interview-prep" isActive={isActive('/dashboard/interview-prep')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                    
                     {careerEnabled.student && <MenuItem icon={Award} label="Career Hub" to="/dashboard/student/career" isActive={isActive('/dashboard/student/career')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}

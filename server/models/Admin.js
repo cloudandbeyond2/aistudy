@@ -51,6 +51,14 @@ const adminSchema = new mongoose.Schema({
     forever: { type: Boolean, default: true },
     org_admin: { type: Boolean, default: true },
     student: { type: Boolean, default: false }
+  },
+  skillBoosterEnabled: {
+    free: { type: Boolean, default: false },
+    monthly: { type: Boolean, default: true },
+    yearly: { type: Boolean, default: true },
+    forever: { type: Boolean, default: true },
+    org_admin: { type: Boolean, default: true },
+    student: { type: Boolean, default: true }
   }
 });
 

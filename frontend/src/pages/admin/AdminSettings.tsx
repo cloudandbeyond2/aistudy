@@ -51,6 +51,14 @@ const AdminSettings = () => {
         org_admin: true,
         student: false
     });
+    const [skillBoosterEnabled, setSkillBoosterEnabled] = useState({
+        free: false,
+        monthly: true,
+        yearly: true,
+        forever: true,
+        org_admin: true,
+        student: true
+    });
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -84,6 +92,9 @@ const AdminSettings = () => {
             }
             if (res.data.interviewEnabled) {
                 setInterviewEnabled(res.data.interviewEnabled);
+            }
+            if (res.data.skillBoosterEnabled) {
+                setSkillBoosterEnabled(res.data.skillBoosterEnabled);
             }
 
         } catch (error) {
@@ -170,7 +181,8 @@ const AdminSettings = () => {
                 notebookEnabled,
                 resumeEnabled,
                 careerEnabled,
-                interviewEnabled
+                interviewEnabled,
+                skillBoosterEnabled
             });
 
             if (res.data.success) {
@@ -216,6 +228,13 @@ const AdminSettings = () => {
 
     const handleInterviewToggle = (role: keyof typeof interviewEnabled) => {
         setInterviewEnabled(prev => ({
+            ...prev,
+            [role]: !prev[role]
+        }));
+    };
+
+    const handleSkillBoosterToggle = (role: keyof typeof skillBoosterEnabled) => {
+        setSkillBoosterEnabled(prev => ({
             ...prev,
             [role]: !prev[role]
         }));
@@ -775,6 +794,76 @@ const AdminSettings = () => {
                                             id="mi-student"
                                             checked={interviewEnabled.student}
                                             onChange={() => handleInterviewToggle('student')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between border-b pb-4 border-border/30 pt-4">
+                                    <div>
+                                        <Label className="text-base font-semibold">Skill Booster Visibility</Label>
+                                        <p className="text-sm text-muted-foreground">Control which users can see the Skill Booster section.</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="sb-free" className="cursor-pointer font-medium">Free Users</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="sb-free"
+                                            checked={skillBoosterEnabled.free}
+                                            onChange={() => handleSkillBoosterToggle('free')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="sb-monthly" className="cursor-pointer font-medium">Monthly Paid</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="sb-monthly"
+                                            checked={skillBoosterEnabled.monthly}
+                                            onChange={() => handleSkillBoosterToggle('monthly')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="sb-yearly" className="cursor-pointer font-medium">Yearly Paid</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="sb-yearly"
+                                            checked={skillBoosterEnabled.yearly}
+                                            onChange={() => handleSkillBoosterToggle('yearly')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="sb-forever" className="cursor-pointer font-medium">Lifetime Access</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="sb-forever"
+                                            checked={skillBoosterEnabled.forever}
+                                            onChange={() => handleSkillBoosterToggle('forever')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="sb-org" className="cursor-pointer font-medium">Organization Admins</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="sb-org"
+                                            checked={skillBoosterEnabled.org_admin}
+                                            onChange={() => handleSkillBoosterToggle('org_admin')}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                        <Label htmlFor="sb-student" className="cursor-pointer font-medium">Organization Students</Label>
+                                        <input
+                                            type="checkbox"
+                                            id="sb-student"
+                                            checked={skillBoosterEnabled.student}
+                                            onChange={() => handleSkillBoosterToggle('student')}
                                             className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
                                         />
                                     </div>
