@@ -37,6 +37,19 @@ interface Stats {
   importantNotices: number;
 }
 
+const themeStyles = {
+  hero: 'bg-brand-gradient text-primary-foreground',
+  heroGlass: 'bg-background/15 text-primary-foreground border-primary-foreground/20',
+  statCard: 'border border-border bg-card',
+  statIcon: 'bg-brand-gradient text-primary-foreground',
+  cardGlow: 'bg-brand-gradient-soft',
+  titleGradient: 'text-brand-gradient',
+  primaryButton: 'bg-primary text-primary-foreground hover:bg-primary/90 transition-all',
+  primaryBadge: 'bg-primary/10 text-primary border-primary/20',
+  focusRing: 'border-2 focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2',
+  select: 'flex h-10 w-full rounded-md border-2 border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+};
+
 const NoticesTab = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -131,13 +144,12 @@ const NoticesTab = () => {
         title: 'Error!',
         text: 'Please fill in both title and content',
         icon: 'error',
-        confirmButtonColor: '#6b2cc1',
-        background: '#ffffff',
+        buttonsStyling: false,
         customClass: {
           popup: 'rounded-xl shadow-xl',
-          title: 'text-lg font-semibold text-gray-900',
-          htmlContainer: 'text-gray-600',
-          confirmButton: 'px-4 py-2 rounded-lg font-medium'
+          title: 'text-lg font-semibold text-foreground',
+          htmlContainer: 'text-muted-foreground',
+          confirmButton: 'inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium bg-primary text-primary-foreground hover:bg-primary/90'
         }
       });
       return;
@@ -155,17 +167,16 @@ const NoticesTab = () => {
           title: 'Success!',
           text: 'Notice posted successfully',
           icon: 'success',
-          confirmButtonColor: '#6b2cc1',
-          background: '#ffffff',
+          buttonsStyling: false,
           timer: 2000,
           timerProgressBar: true,
           showConfirmButton: true,
           customClass: {
             popup: 'rounded-xl shadow-xl',
-            title: 'text-lg font-semibold text-gray-900',
-            htmlContainer: 'text-gray-600',
-            confirmButton: 'px-4 py-2 rounded-lg font-medium',
-            timerProgressBar: 'bg-gradient-to-r from-[#2d3a8c] to-[#6b2cc1]'
+            title: 'text-lg font-semibold text-foreground',
+            htmlContainer: 'text-muted-foreground',
+            confirmButton: 'inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium bg-primary text-primary-foreground hover:bg-primary/90',
+            timerProgressBar: 'bg-brand-gradient'
           }
         });
         setNewNotice({
@@ -183,13 +194,12 @@ const NoticesTab = () => {
         title: 'Error!',
         text: 'Failed to post notice',
         icon: 'error',
-        confirmButtonColor: '#6b2cc1',
-        background: '#ffffff',
+        buttonsStyling: false,
         customClass: {
           popup: 'rounded-xl shadow-xl',
-          title: 'text-lg font-semibold text-gray-900',
-          htmlContainer: 'text-gray-600',
-          confirmButton: 'px-4 py-2 rounded-lg font-medium'
+          title: 'text-lg font-semibold text-foreground',
+          htmlContainer: 'text-muted-foreground',
+          confirmButton: 'inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium bg-primary text-primary-foreground hover:bg-primary/90'
         }
       });
     } finally {
@@ -203,22 +213,19 @@ const NoticesTab = () => {
     // SweetAlert confirmation dialog with white background
     const result = await Swal.fire({
       title: 'Delete Notice?',
-      html: `Are you sure you want to delete "<strong class="text-red-600">${title}</strong>"?`,
+      html: `Are you sure you want to delete "<strong class="text-destructive">${title}</strong>"?`,
       text: "This action cannot be undone!",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#6b2cc1',
       confirmButtonText: 'Yes, delete it!',
       cancelButtonText: 'Cancel',
-      background: '#ffffff',
       backdrop: 'rgba(0,0,0,0.4)',
       customClass: {
         popup: 'rounded-xl shadow-2xl',
-        title: 'text-xl font-bold text-gray-900',
-        htmlContainer: 'text-gray-700',
-        confirmButton: 'px-5 py-2.5 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all',
-        cancelButton: 'px-5 py-2.5 rounded-lg font-medium text-white bg-gradient-to-r from-[#2d3a8c] to-[#6b2cc1] hover:opacity-90 focus:ring-2 focus:ring-[#6b2cc1] focus:ring-offset-2 transition-all ml-3',
+        title: 'text-xl font-bold text-foreground',
+        htmlContainer: 'text-muted-foreground',
+        confirmButton: 'px-5 py-2.5 rounded-lg font-medium text-destructive-foreground bg-destructive hover:bg-destructive/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all',
+        cancelButton: 'px-5 py-2.5 rounded-lg font-medium text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all ml-3',
         icon: 'scale-110'
       },
       buttonsStyling: false
@@ -236,17 +243,16 @@ const NoticesTab = () => {
             title: 'Deleted!',
             text: 'Notice has been deleted successfully.',
             icon: 'success',
-            confirmButtonColor: '#6b2cc1',
-            background: '#ffffff',
+            buttonsStyling: false,
             timer: 2000,
             timerProgressBar: true,
             showConfirmButton: true,
             customClass: {
               popup: 'rounded-xl shadow-xl',
-              title: 'text-lg font-semibold text-gray-900',
-              htmlContainer: 'text-gray-600',
-              confirmButton: 'px-4 py-2 rounded-lg font-medium',
-              timerProgressBar: 'bg-gradient-to-r from-[#2d3a8c] to-[#6b2cc1]'
+              title: 'text-lg font-semibold text-foreground',
+              htmlContainer: 'text-muted-foreground',
+              confirmButton: 'inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium bg-primary text-primary-foreground hover:bg-primary/90',
+              timerProgressBar: 'bg-brand-gradient'
             }
           });
           
@@ -261,13 +267,12 @@ const NoticesTab = () => {
           title: 'Error!',
           text: 'Failed to delete notice. Please try again.',
           icon: 'error',
-          confirmButtonColor: '#6b2cc1',
-          background: '#ffffff',
+          buttonsStyling: false,
           customClass: {
             popup: 'rounded-xl shadow-xl',
-            title: 'text-lg font-semibold text-gray-900',
-            htmlContainer: 'text-gray-600',
-            confirmButton: 'px-4 py-2 rounded-lg font-medium'
+            title: 'text-lg font-semibold text-foreground',
+            htmlContainer: 'text-muted-foreground',
+            confirmButton: 'inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium bg-primary text-primary-foreground hover:bg-primary/90'
           }
         });
       }
@@ -318,76 +323,68 @@ const NoticesTab = () => {
     {
       title: "Total Notices",
       value: stats.totalNotices,
-      icon: Bell,
-      gradient: "from-sky-500 to-blue-600",
-      bgGradient: "bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/30"
+      icon: Bell
     },
     {
       title: "This Week",
       value: stats.recentNotices,
-      icon: TrendingUp,
-      gradient: "from-emerald-500 to-teal-600",
-      bgGradient: "bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30"
+      icon: TrendingUp
     },
     {
       title: "Department",
       value: stats.departmentNotices,
-      icon: Users,
-      gradient: "from-violet-500 to-purple-600",
-      bgGradient: "bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30"
+      icon: Users
     },
     {
       title: "Important",
       value: stats.importantNotices,
-      icon: Star,
-      gradient: "from-amber-500 to-orange-600",
-      bgGradient: "bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30"
+      icon: Star
     }
   ];
 
   // Different card designs for variety
   const cardDesigns = [
     {
-      borderGradient: "from-rose-500 to-orange-500",
-      bgGradient: "from-rose-50/50 to-orange-50/50 dark:from-rose-950/20 dark:to-orange-950/20",
-      iconBg: "bg-gradient-to-br from-rose-500 to-orange-500"
+      borderGradient: "bg-brand-gradient",
+      bgGradient: "bg-brand-gradient-soft",
+      iconBg: "bg-primary"
     },
     {
-      borderGradient: "from-blue-500 to-cyan-500",
-      bgGradient: "from-blue-50/50 to-cyan-50/50 dark:from-blue-950/20 dark:to-cyan-950/20",
-      iconBg: "bg-gradient-to-br from-blue-500 to-cyan-500"
+      borderGradient: "bg-brand-gradient",
+      bgGradient: "bg-brand-gradient-soft",
+      iconBg: "bg-secondary"
     },
     {
-      borderGradient: "from-emerald-500 to-teal-500",
-      bgGradient: "from-emerald-50/50 to-teal-50/50 dark:from-emerald-950/20 dark:to-teal-950/20",
-      iconBg: "bg-gradient-to-br from-emerald-500 to-teal-500"
+      borderGradient: "bg-brand-gradient",
+      bgGradient: "bg-brand-gradient-soft",
+      iconBg: "bg-accent"
     },
     {
-      borderGradient: "from-purple-500 to-pink-500",
-      bgGradient: "from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20",
-      iconBg: "bg-gradient-to-br from-purple-500 to-pink-500"
+      borderGradient: "bg-brand-gradient",
+      bgGradient: "bg-brand-gradient-soft",
+      iconBg: "bg-primary"
     }
   ];
 
   return (
     <div className="space-y-8 py-10">
       {/* Gradient Header with Time Greeting */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1b253f] via-[#2d3a8c] to-[#6b2cc1] p-6 text-white shadow-lg">
-        <div className="absolute right-0 top-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute bottom-0 left-0 -mb-16 -ml-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
+      <div className={`relative overflow-hidden rounded-2xl p-6 shadow-lg ${themeStyles.hero}`}>
+        <div className="absolute right-0 top-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-background/10 blur-3xl" />
+        <div className="absolute bottom-0 left-0 -mb-16 -ml-16 h-48 w-48 rounded-full bg-background/10 blur-2xl" />
         <div className="relative z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-white/20 p-2 backdrop-blur-sm">
+              <div className={`rounded-xl p-2 backdrop-blur-sm ${themeStyles.heroGlass}`}>
                 <Bell className="h-6 w-6" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold">Announcement Desk</h1>
-                <p className="text-white/80">Good {getTimeOfDay()}! Share updates with your learners</p>
+                <p className="text-primary-foreground/80">Good {getTimeOfDay()}! Share updates with your learners</p>
               </div>
             </div>
             <div className="hidden md:block">
-              <div className="rounded-full bg-white/20 px-4 py-2 text-sm backdrop-blur-sm">
+              <div className={`rounded-full px-4 py-2 text-sm backdrop-blur-sm ${themeStyles.heroGlass}`}>
                 <Clock className="inline h-4 w-4 mr-2" />
                 {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
               </div>
@@ -399,14 +396,14 @@ const NoticesTab = () => {
       {/* Stats Row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat, index) => (
-          <Card key={index} className={`border-0 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 ${stat.bgGradient}`}>
+          <Card key={index} className={`${themeStyles.statCard} shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
                   <p className="mt-2 text-3xl font-bold tracking-tight">{stat.value}</p>
                 </div>
-                <div className={`rounded-xl bg-gradient-to-br ${stat.gradient} p-3 text-white shadow-lg`}>
+                <div className={`rounded-xl p-3 shadow-lg ${themeStyles.statIcon}`}>
                   <stat.icon className="h-5 w-5" />
                 </div>
               </div>
@@ -417,10 +414,9 @@ const NoticesTab = () => {
 
       {/* Create Notice Card */}
       <Card className="border-0 shadow-lg overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1b253f]/5 to-[#6b2cc1]/5" />
         <CardHeader className="relative">
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-[#6b2cc1]" />
+            <Sparkles className={`h-5 w-5 ${themeStyles.titleGradient}`} />
             Create New Notice
           </CardTitle>
           <CardDescription>Share important updates with your students and staff</CardDescription>
@@ -434,14 +430,14 @@ const NoticesTab = () => {
                 value={newNotice.title}
                 onChange={(e) => setNewNotice({ ...newNotice, title: e.target.value })}
                 placeholder="Enter a clear title for your announcement"
-                className="border-2 focus-visible:ring-[#6b2cc1]"
+                className={themeStyles.focusRing}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="department">Target Department</Label>
               <select
                 id="department"
-                className="flex h-10 w-full rounded-md border-2 border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6b2cc1] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className={themeStyles.select}
                 value={newNotice.department || ''}
                 onChange={(e) => setNewNotice({ ...newNotice, department: e.target.value })}
                 disabled={role === 'dept_admin'}
@@ -460,7 +456,7 @@ const NoticesTab = () => {
                 type="checkbox"
                 checked={newNotice.isImportant}
                 onChange={(e) => setNewNotice({ ...newNotice, isImportant: e.target.checked })}
-                className="rounded border-gray-300 text-[#6b2cc1] focus:ring-[#6b2cc1]"
+                className="rounded border-input text-primary focus:ring-ring"
               />
               <span className="text-sm">Mark as Important</span>
             </label>
@@ -469,7 +465,7 @@ const NoticesTab = () => {
                 type="checkbox"
                 checked={newNotice.isPinned}
                 onChange={(e) => setNewNotice({ ...newNotice, isPinned: e.target.checked })}
-                className="rounded border-gray-300 text-[#6b2cc1] focus:ring-[#6b2cc1]"
+                className="rounded border-input text-primary focus:ring-ring"
               />
               <span className="text-sm">Pin to Top</span>
             </label>
@@ -488,7 +484,7 @@ const NoticesTab = () => {
             <Button
               onClick={handleCreateNotice}
               disabled={isSubmitting}
-              className="bg-gradient-to-r from-[#2d3a8c] to-[#6b2cc1] hover:opacity-90 transition-opacity"
+              className={themeStyles.primaryButton}
             >
               {isSubmitting ? (
                 <>Posting...</>
@@ -507,7 +503,7 @@ const NoticesTab = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold tracking-tight">All Notices</h2>
-          <Badge variant="secondary" className="px-3 py-1 bg-gradient-to-r from-[#2d3a8c]/10 to-[#6b2cc1]/10">
+          <Badge variant="secondary" className={`px-3 py-1 ${themeStyles.primaryBadge}`}>
             {notices.length} {notices.length === 1 ? 'Notice' : 'Notices'}
           </Badge>
         </div>
@@ -535,17 +531,17 @@ const NoticesTab = () => {
                   }`}
                 >
                   {/* Gradient Border Card */}
-                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${design.borderGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm`} />
+                  <div className={`absolute inset-0 rounded-2xl ${design.borderGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm`} />
                   <Card className={`relative overflow-hidden border-0 shadow-lg transition-all duration-300 h-full flex flex-col ${
-                    isPinned ? 'ring-2 ring-[#6b2cc1] ring-offset-2 ring-offset-background' : ''
+                    isPinned ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''
                   }`}>
                     {/* Background Gradient */}
-                    <div className={`absolute inset-0 bg-gradient-to-br ${design.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                    <div className={`absolute inset-0 ${design.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
                     
                     {/* Pinned Badge */}
                     {isPinned && (
                       <div className="absolute top-4 right-4 z-10">
-                        <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 px-2 py-1">
+                        <Badge className="bg-accent text-accent-foreground border-0 px-2 py-1">
                           <Pin className="h-3 w-3 mr-1" />
                           Pinned
                         </Badge>
@@ -556,7 +552,7 @@ const NoticesTab = () => {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <div className={`rounded-lg ${design.iconBg} p-2 text-white shadow-md`}>
+                            <div className={`rounded-lg ${design.iconBg} p-2 text-primary-foreground shadow-md`}>
                               {isImportant ? (
                                 <AlertCircle className="h-4 w-4" />
                               ) : (
@@ -564,12 +560,12 @@ const NoticesTab = () => {
                               )}
                             </div>
                             {isImportant && (
-                              <Badge variant="destructive" className="bg-red-500">
+                              <Badge variant="destructive" className="bg-destructive text-destructive-foreground">
                                 Important
                               </Badge>
                             )}
                           </div>
-                          <CardTitle className={`text-base line-clamp-2 ${isImportant ? 'text-red-600 dark:text-red-400' : ''}`}>
+                          <CardTitle className={`text-base line-clamp-2 ${isImportant ? 'text-destructive' : ''}`}>
                             {notice.title}
                           </CardTitle>
                           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -587,12 +583,12 @@ const NoticesTab = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-red-500 opacity-0 group-hover:opacity-100 transition-all duration-300 flex-shrink-0 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+                          className="h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-all duration-300 flex-shrink-0 hover:bg-destructive/10 hover:text-destructive"
                           onClick={() => handleDeleteNotice(notice._id, notice.title)}
                           disabled={deletingId === notice._id}
                         >
                           {deletingId === notice._id ? (
-                            <div className="h-4 w-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                            <div className="h-4 w-4 border-2 border-destructive border-t-transparent rounded-full animate-spin" />
                           ) : (
                             <Trash2 className="h-4 w-4" />
                           )}
@@ -611,7 +607,7 @@ const NoticesTab = () => {
                         <Button
                           variant="link"
                           size="sm"
-                          className="mt-2 p-0 h-auto text-[#6b2cc1]"
+                          className="mt-2 p-0 h-auto text-primary"
                           onClick={() => setExpandedNotice(expandedNotice === notice._id ? null : notice._id)}
                         >
                           {expandedNotice === notice._id ? (
@@ -627,8 +623,8 @@ const NoticesTab = () => {
                       
                       {/* Decorative element */}
                       <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="rounded-full bg-gradient-to-r from-[#2d3a8c]/10 to-[#6b2cc1]/10 p-1.5">
-                          <CheckCircle2 className="h-3 w-3 text-[#6b2cc1]" />
+                        <div className="rounded-full bg-primary/10 p-1.5">
+                          <CheckCircle2 className="h-3 w-3 text-primary" />
                         </div>
                       </div>
                     </CardContent>

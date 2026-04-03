@@ -829,28 +829,28 @@ const DepartmentsTab = () => {
 
                 {/* Main Content Tabs */}
                 <Tabs defaultValue="departments" className="space-y-4 lg:space-y-6" onValueChange={setActiveTabState}>
-                    <TabsList className="students-theme-surface grid w-full max-w-[300px] sm:max-w-md grid-cols-2 p-1 rounded-lg mx-auto sm:mx-0">
+                    <TabsList className="students-theme-surface grid w-full max-w-full sm:max-w-md grid-cols-2 p-1 rounded-lg mx-auto sm:mx-0 h-auto gap-1">
                         <TabsTrigger 
                             value="departments" 
-                            className={`flex items-center gap-2 transition-all duration-300 text-sm sm:text-base ${
+                            className={`min-w-0 h-auto flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 py-2.5 sm:py-2 text-center whitespace-normal break-words leading-tight transition-all duration-300 text-xs sm:text-base ${
                                 activeTabState === 'departments' 
                                     ? 'bg-gradient-to-r from-[#11405f] to-[#11a5e4] !text-white shadow-lg transform scale-105' 
                                     : 'students-theme-outline-btn hover:scale-105'
                             }`}
                         >
                             <Building2 className={`w-4 h-4 transition-all duration-300 ${activeTabState === 'departments' ? 'animate-pulse' : ''}`} />
-                            Departments
+                            <span className="block max-w-full">Departments</span>
                         </TabsTrigger>
                         <TabsTrigger 
                             value="admins" 
-                            className={`flex items-center gap-2 transition-all duration-300 text-sm sm:text-base ${
+                            className={`min-w-0 h-auto flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 py-2.5 sm:py-2 text-center whitespace-normal break-words leading-tight transition-all duration-300 text-xs sm:text-base ${
                                 activeTabState === 'admins' 
                                     ? 'bg-gradient-to-r from-[#11405f] to-[#11a5e4] !text-white shadow-lg transform scale-105' 
                                     : 'students-theme-outline-btn hover:scale-105'
                             }`}
                         >
                             <Shield className={`w-4 h-4 transition-all duration-300 ${activeTabState === 'admins' ? 'animate-pulse' : ''}`} />
-                            Department Admins
+                            <span className="block max-w-full">Department Admins</span>
                         </TabsTrigger>
                     </TabsList>
 

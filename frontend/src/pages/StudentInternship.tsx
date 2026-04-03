@@ -43,7 +43,7 @@ const StudentInternship = () => {
 
     const fetchInternship = async () => {
         try {
-            const res = await axios.get(`${serverURL}/api/internship/student/${studentId}?organizationId=${orgId}`);
+            const res = await axios.get(`${serverURL}/api/internship/student/${studentId}`);
             if (res.data.success && res.data.internship) {
                 setInternship(res.data.internship);
             }
@@ -301,7 +301,7 @@ const StudentInternship = () => {
                         {/* RESOURCES CONTENT */}
                         <TabsContent value="resources" className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {internship.studyPlan?.resources?.length > 0 ? internship.studyPlan.resources.map((res: any, idx: number) => (
+                                {internship.resources?.length > 0 ? internship.resources.map((res: any, idx: number) => (
                                     <a 
                                         key={idx} 
                                         href={res.link} 
