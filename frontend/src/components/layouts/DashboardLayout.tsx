@@ -62,6 +62,7 @@ import {
   Sun,
   Moon
 } from 'lucide-react';
+   import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { appWordmarkLight, websiteURL, serverURL } from '@/constants';
@@ -972,11 +973,273 @@ const DashboardLayoutContent = () => {
         )}
 
         {/* Desktop Header */}
-        {(!isMobile && !isTablet) && (location.pathname.startsWith("/dashboard/org") || location.pathname.startsWith("/dashboard/student")) && (
-          <div className="absolute top-4 right-8 z-10 flex items-center gap-4">
-            <NotificationBell />
+    {(
+      !isMobile && 
+!isTablet && 
+(
+  location.pathname.startsWith("/dashboard") ||
+  location.pathname.startsWith("/dashboard/org") ||
+  location.pathname.startsWith("/dashboard/student")
+)) && (
+  <div className="absolute top-4 right-8 z-10 flex items-center gap-4">
+    <NotificationBell />
+    
+    <div className="relative group">
+      <Avatar className="w-9 h-9 cursor-pointer ring-2 ring-primary/20 transition-all hover:ring-primary/40">
+        <AvatarImage src={sessionStorage.getItem('profileImage') || ''} />
+        <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-white">
+          {(sessionStorage.getItem('mName') || 'U').charAt(0).toUpperCase()}
+        </AvatarFallback>
+      </Avatar>
+      
+      {/* Dropdown menu on hover */}
+      <div className="absolute right-0 top-full mt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden min-w-[280px] border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
+          
+          {/* User Info Card */}
+          <div className="relative bg-gradient-to-br from-primary/5 via-transparent to-transparent">
+            <div className="px-4 pt-4 pb-3">
+              <div className="flex items-center gap-3">
+                {/* Avatar with online status */}
+                <div className="relative">
+                  <Avatar className="w-14 h-14 ring-2 ring-primary/30 shadow-lg">
+                    <AvatarImage src={sessionStorage.getItem('profileImage') || ''} />
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-white text-lg font-bold">
+                      {(sessionStorage.getItem('mName') || 'U').charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Active Status Green Dot */}
+                  <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-gray-900 rounded-full"></div>
+                </div>
+                
+                <div className="flex-1">
+                  <p className="text-base font-bold text-gray-900 dark:text-white">
+                    {sessionStorage.getItem('mName') || 'User'}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[160px]">
+                    {sessionStorage.getItem('email') || 'No email'}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+          
+          {/* Role Badge with Icon */}
+          <div className="px-4 pb-3">
+            <div className={cn(
+              "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold w-full justify-center",
+              sessionStorage.getItem('role') === 'org_admin' && "bg-violet-100 dark:bg-violet-950/70 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800",
+              sessionStorage.getItem('role') === 'dept_admin' && "bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800",
+              sessionStorage.getItem('role') === 'student' && "bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800",
+              !['org_admin', 'dept_admin', 'student'].includes(sessionStorage.getItem('role') || '') && "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
+            )}>
+              {/* Role Icon */}
+              {sessionStorage.getItem('role') === 'org_admin' && <Building2 className="h-3.5 w-3.5" />}
+              {sessionStorage.getItem('role') === 'dept_admin' && <Users className="h-3.5 w-3.5" />}
+              {sessionStorage.getItem('role') === 'student' && <User className="h-3.5 w-3.5" />}
+              {!['org_admin', 'dept_admin', 'student'].includes(sessionStorage.getItem('role') || '') && <User className="h-3.5 w-3.5" />}
+              
+              <span className="uppercase tracking-wider">
+                {sessionStorage.getItem('role')?.replace('_', ' ') || 'User'}
+              </span>
+              
+              {/* Active Green Dot Indicator */}
+              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse ml-1"></div>
+            </div>
+          </div>
+          
+          <div className="h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent"></div>
+          
+          {/* Menu Items */}
+          <div className="py-2">
+            {/* Profile */}
+            <Link
+              to={
+                sessionStorage.getItem('role') === 'student' 
+                  ? "/dashboard/student/profile"
+                  : sessionStorage.getItem('role') === 'org_admin'
+                  ? "/dashboard/profile"
+                  : "/dashboard/profile"
+              }
+              onClick={handleMobileMenuClick}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+            >
+              <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                <User className="h-4 w-4" />
+              </div>
+              <span>Profile</span>
+              {/* Active indicator for current page */}
+              {location.pathname.includes('/profile') && (
+                <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+              )}
+            </Link>
+            
+            {/* Role-specific menu items */}
+            {sessionStorage.getItem('role') === 'org_admin' && (
+              <>
+                <Link
+                  to="/dashboard/org?tab=students"
+                  onClick={handleMobileMenuClick}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <Users className="h-4 w-4" />
+                  </div>
+                  <span>Manage Students</span>
+                  {location.search.includes('tab=students') && (
+                    <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  )}
+                </Link>
+                
+                <Link
+                  to="/dashboard/org?tab=courses"
+                  onClick={handleMobileMenuClick}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <BookOpen className="h-4 w-4" />
+                  </div>
+                  <span>Manage Courses</span>
+                  {location.search.includes('tab=courses') && (
+                    <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  )}
+                </Link>
+              </>
+            )}
+            
+            {sessionStorage.getItem('role') === 'dept_admin' && (
+              <>
+                <Link
+                  to="/dashboard/staff"
+                  onClick={handleMobileMenuClick}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <LayoutDashboard className="h-4 w-4" />
+                  </div>
+                  <span>Workboard</span>
+                  {location.pathname === '/dashboard/staff' && (
+                    <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  )}
+                </Link>
+                
+                <Link
+                  to="/dashboard/org?tab=assignments"
+                  onClick={handleMobileMenuClick}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <span>Assignments</span>
+                  {location.search.includes('tab=assignments') && (
+                    <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  )}
+                </Link>
+              </>
+            )}
+            
+            {sessionStorage.getItem('role') === 'student' && (
+              <>
+                <Link
+                  to="/dashboard/student/assignments"
+                  onClick={handleMobileMenuClick}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <span>My Assignments</span>
+                  {location.pathname.includes('/assignments') && (
+                    <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  )}
+                </Link>
+                
+                <Link
+                  to="/dashboard/student/career"
+                  onClick={handleMobileMenuClick}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <Award className="h-4 w-4" />
+                  </div>
+                  <span>Career Hub</span>
+                  {location.pathname.includes('/career') && (
+                    <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  )}
+                </Link>
+                
+                <Link
+                  to="/dashboard/student/notices"
+                  onClick={handleMobileMenuClick}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <Bell className="h-4 w-4" />
+                  </div>
+                  <span>Noticeboard</span>
+                  {location.pathname.includes('/notices') && (
+                    <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  )}
+                </Link>
+              </>
+            )}
+            
+            {/* Settings */}
+           <Link
+  to="https://aistudy-infilabs.vercel.app"
+  target="_blank"
+  rel="noopener noreferrer"
+  onClick={handleMobileMenuClick}
+  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+>
+  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+    <Globe className="h-4 w-4" />
+  </div>
+  <span>View Website</span>
+  {/* Optional external link indicator */}
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className="h-3 w-3 ml-auto opacity-50" 
+    fill="none" 
+    viewBox="0 0 24 24" 
+    stroke="currentColor"
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+  </svg>
+</Link>
+            
+            <div className="h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent my-1"></div>
+            
+            {/* Logout */}
+            <button
+              onClick={() => {
+                handleMobileMenuClick();
+                Logout();
+              }}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 transition-all duration-200 w-full text-left group"
+            >
+              <div className="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-950/50 flex items-center justify-center group-hover:bg-red-100 dark:group-hover:bg-red-900/30 transition-colors">
+                <LogOut className="h-4 w-4" />
+              </div>
+              <span>Sign Out</span>
+            </button>
+          </div>
+          
+          {/* Footer Info */}
+          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800">
+            <p className="text-[10px] text-center text-gray-500 dark:text-gray-400">
+              Logged in as <span className="font-medium">{sessionStorage.getItem('role')?.replace('_', ' ') || 'User'}</span>
+            </p>
+          </div>
+        </div>
+        
+        {/* Arrow */}
+        <div className="absolute right-3 -top-1 w-2 h-2 bg-white dark:bg-gray-900 rotate-45 border-l border-t border-gray-200 dark:border-gray-700"></div>
+      </div>
+    </div>
+  </div>
+)}
 
         <Outlet />
       </main>
