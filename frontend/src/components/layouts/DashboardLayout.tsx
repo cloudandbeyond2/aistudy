@@ -963,7 +963,7 @@ const DashboardLayoutContent = () => {
       <main className="thin-scrollbar flex-1 h-screen overflow-y-auto p-4 md:p-6 lg:p-8 relative ">
         {/* Mobile & Tablet Header */}
      {(isMobile || isTablet) && (
-  <div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm border border-border/40">
+   <div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm border border-border/40">
     <SidebarTrigger className="mr-2">
       <Menu className="h-6 w-6" />
     </SidebarTrigger>
@@ -1237,7 +1237,7 @@ const DashboardLayoutContent = () => {
   location.pathname.startsWith("/dashboard/org") ||
   location.pathname.startsWith("/dashboard/student")
 )) && (
-  <div className="absolute top-4 right-8 z-10 flex items-center gap-4">
+  <div className="absolute top-4 right-8 flex items-center gap-4">
     <NotificationBell />
     
     <div className="relative group">
