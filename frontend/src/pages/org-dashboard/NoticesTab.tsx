@@ -372,7 +372,7 @@ const NoticesTab = () => {
       <div className={`relative overflow-hidden rounded-2xl p-6 shadow-lg ${themeStyles.hero}`}>
         <div className="absolute right-0 top-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-background/10 blur-3xl" />
         <div className="absolute bottom-0 left-0 -mb-16 -ml-16 h-48 w-48 rounded-full bg-background/10 blur-2xl" />
-        <div className="relative z-10">
+        <div className="relative">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`rounded-xl p-2 backdrop-blur-sm ${themeStyles.heroGlass}`}>

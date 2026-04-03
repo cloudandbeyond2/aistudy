@@ -2392,10 +2392,8 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
             }
         });
     };
-
-
     return (
-        <div className="space-y-8 py-4 px-1 max-w-4xl mx-auto">
+        <div className="mx-auto max-w-4xl space-y-8 px-0 py-4 sm:px-1">
             {/* Basic Information */}
             <div className="space-y-4">
                 <div className="border-b pb-2">
@@ -2463,7 +2461,7 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
 
             {/* Curriculum */}
             <div className="space-y-4">
-                <div className="border-b pb-2 flex justify-between items-end">
+                <div className="flex flex-col gap-3 border-b pb-2 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <h3 className="text-lg font-semibold flex items-center gap-2"><Video className="w-5 h-5 text-blue-500" /> Curriculum Setup</h3>
                         <p className="text-sm text-muted-foreground">Structure your course into lessons and topics.</p>
@@ -2487,22 +2485,22 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
                     {course.topics.map((topic: any, tIdx: number) => (
                         <div key={tIdx} className="border rounded-xl bg-card shadow-sm overflow-hidden transition-all duration-200">
                             <div
-                                className={`flex justify-between items-center p-4 cursor-pointer transition-colors ${expandedTopic === tIdx ? 'bg-primary/5 border-b' : 'hover:bg-muted/50'}`}
+                                className={`flex cursor-pointer flex-col gap-3 p-4 transition-colors sm:flex-row sm:items-center sm:justify-between ${expandedTopic === tIdx ? 'bg-primary/5 border-b' : 'hover:bg-muted/50'}`}
                                 onClick={() => setExpandedTopic(expandedTopic === tIdx ? null : tIdx)}
                             >
-                                <div className="flex items-center gap-3 flex-1">
+                                <div className="flex min-w-0 flex-1 items-center gap-3">
                                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
                                         {tIdx + 1}
                                     </div>
                                     <Input
-                                        className="h-9 max-w-md bg-transparent border-transparent hover:border-input focus:bg-background focus:border-input font-semibold text-base transition-all"
+                                        className="h-9 w-full bg-transparent border-transparent font-semibold text-base transition-all hover:border-input focus:border-input focus:bg-background sm:max-w-md"
                                         value={topic.title}
                                         onChange={(e) => updateTopic(tIdx, 'title', e.target.value)}
                                         placeholder="Lesson Title"
                                         onClick={(e) => e.stopPropagation()}
                                     />
                                 </div>
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center justify-end gap-1">
                                     <Badge variant="secondary" className="mr-2">{topic.subtopics.length} items</Badge>
                                     <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={(e) => { e.stopPropagation(); setExpandedTopic(expandedTopic === tIdx ? null : tIdx); }}>
                                         {expandedTopic === tIdx ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -2520,7 +2518,7 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
                                         <div key={sIdx} className="relative pl-8 before:absolute before:left-[11px] before:top-2 before:bottom-0 before:w-0.5 before:bg-border last:before:bottom-auto last:before:h-2">
                                             <div className="absolute left-1.5 top-2 w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-background z-10"></div>
                                             <div className="bg-card border rounded-lg p-4 shadow-sm hover:border-primary/30 transition-colors space-y-4">
-                                                <div className="flex justify-between items-start gap-4">
+                                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                                     <div className="flex-1 space-y-1">
                                                         <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Subtopic Title</Label>
                                                         <Input
@@ -2775,7 +2773,7 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
 
             {/* Quizzes */}
             <div className="space-y-4 pt-4 border-t">
-                <div className="border-b pb-2 flex justify-between items-end">
+                <div className="flex flex-col gap-3 border-b pb-2 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <h3 className="text-lg font-semibold flex items-center gap-2"><CheckCircle className="w-5 h-5 text-emerald-500" /> Assessment Quizzes</h3>
                         <p className="text-sm text-muted-foreground">Add multiple choice questions to test knowledge.</p>
@@ -2797,7 +2795,7 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
                     )}
                     {course.quizzes.map((quiz: any, qIdx: number) => (
                         <div key={qIdx} className="p-5 border rounded-xl shadow-sm bg-card hover:border-emerald-500/30 transition-colors">
-                            <div className="flex justify-between items-start gap-4 mb-4">
+                            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div className="flex-1 space-y-1.5">
                                     <Label className="text-sm text-muted-foreground font-semibold flex items-center gap-2">
                                         <span className="bg-muted px-2 py-0.5 rounded text-xs text-foreground">Q{qIdx + 1}</span>
@@ -2810,7 +2808,7 @@ const CourseForm = ({ course, setCourse, onSave, isEdit = false, departments = [
                                         placeholder="What is..."
                                     />
                                 </div>
-                                <div className="w-36 space-y-1.5">
+                                <div className="w-full space-y-1.5 sm:w-36">
                                     <Label className="text-xs text-muted-foreground font-semibold uppercase">Difficulty</Label>
                                     <select
                                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -3481,6 +3479,14 @@ const CoursesTab = () => {
             ? overdueAssignments
             : assignmentInsights;
 
+    const visibleCourses = courses.filter((course: any) => {
+        const approvalStatus = course.approvalStatus || (course.isPublished === false ? 'draft' : 'approved');
+        if (role === 'org_admin') {
+            return approvalStatus !== 'draft';
+        }
+        return true;
+    });
+
    
 
     return (
@@ -3501,22 +3507,22 @@ const CoursesTab = () => {
                                                    Department admins stay locked to their own department, while organization admins can publish across departments.
                                                </AlertDescription>
                                            </Alert>
-                                           <div className="flex justify-between gap-2">
+                                           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                                <Input
                                                    placeholder="Search courses..."
-                                                   className="max-w-sm"
+                                                   className="w-full md:max-w-sm md:flex-1 lg:max-w-sm"
                                                    value={courseSearch}
                                                    onChange={(e) => setCourseSearch(e.target.value)}
                                                />
-                                               <div className="flex gap-2">
+                                               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap md:justify-end md:gap-2.5">
                                                    {role === 'dept_admin' && (
                                                        <Dialog open={openDeptCourseLimitDialog} onOpenChange={setOpenDeptCourseLimitDialog}>
                                                            <DialogTrigger asChild>
-                                                               <Button variant="outline">
+                                                               <Button variant="outline" className="w-full sm:w-auto">
                                                                    <Plus className="w-4 h-4 mr-2" /> Request Limit Increase
                                                                </Button>
                                                            </DialogTrigger>
-                                                           <DialogContent>
+                                                           <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-lg">
                                                                <DialogHeader>
                                                                    <DialogTitle>Request Course Limit Increase</DialogTitle>
                                                                    <DialogDescription>
@@ -3540,7 +3546,7 @@ const CoursesTab = () => {
                                                    )}
                
                                                    {(orgSettings?.allowAICreation !== false) && (
-                                                       <Button variant="outline" onClick={() => window.location.href = '/dashboard/generate-course'}>
+                                                       <Button variant="outline" className="w-full sm:w-auto" onClick={() => window.location.href = '/dashboard/generate-course'}>
                                                            <Sparkles className="w-4 h-4 mr-2" /> AI Generate
                                                        </Button>
                                                    )}
@@ -3552,12 +3558,12 @@ const CoursesTab = () => {
                                                                    : createEmptyCourse());
                                                                setOpenCourseDialog(true);
                                                            }}>
-                                                               <Button>
+                                                               <Button className="w-full sm:w-auto">
                                                                    <Plus className="w-4 h-4 mr-2" /> Create Course
                                                                </Button>
                                                            </DialogTrigger>
                
-                                                           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                                           <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto sm:max-w-4xl">
                                                                <DialogHeader>
                                                                    <DialogTitle>Create New Course</DialogTitle>
                                                                </DialogHeader>
@@ -3577,8 +3583,8 @@ const CoursesTab = () => {
                
                                            {/* Course List */}
                                            <div className="space-y-4">
-                                               {courses.length > 0 ? (
-                                                   courses.filter((c: any) =>
+                                               {visibleCourses.length > 0 ? (
+                                                   visibleCourses.filter((c: any) =>
                                                        (c.title || c.mainTopic || '').toLowerCase().includes(courseSearch.toLowerCase()) ||
                                                        (c.description || '').toLowerCase().includes(courseSearch.toLowerCase())
                                                    ).map((course: any) => {
@@ -3587,7 +3593,7 @@ const CoursesTab = () => {
                                                        let topicCount = 0;
                                                        let quizCount = 0;
                                                        // Both OrgCourse and AI Course now support approval workflow
-                                                       const approvalStatus = course.approvalStatus || (course.isPublished === false ? 'pending' : 'approved');
+                                                       const approvalStatus = course.approvalStatus || (course.isPublished === false ? 'draft' : 'approved');
                                                        const published = course.isPublished !== undefined ? Boolean(course.isPublished) : (course.content ? false : true); // AI courses default to unpublished
                
                                                        if (course.topics) {
@@ -3604,12 +3610,12 @@ const CoursesTab = () => {
                                                        }
                
                                                        return (
-                                                           <div key={course._id} className="p-4 border rounded-lg bg-card">
-                                                               <div className="flex justify-between items-start">
-                                                                   <div className="flex-1">
+                                                           <div key={course._id} className="rounded-lg border bg-card p-4">
+                                                               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                                                                   <div className="min-w-0 flex-1">
                                                                        <h3 className="font-semibold text-lg capitalize">{title}</h3>
                                                                        <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: description }} />
-                                                                       <div className="flex gap-4 mt-2 text-xs font-medium text-muted-foreground">
+                                                                       <div className="mt-2 flex flex-wrap gap-3 text-xs font-medium text-muted-foreground">
                                                                            <span>{topicCount} Topics</span>
                                                                            {quizCount > 0 && <span>{quizCount} Quizzes</span>}
                                                                            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded">
@@ -3617,6 +3623,11 @@ const CoursesTab = () => {
                                                                            </span>
                                                                        </div>
                                                                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                                                                           {approvalStatus === 'draft' && (
+                                                                               <Badge variant="secondary" className="gap-1">
+                                                                                   Draft
+                                                                               </Badge>
+                                                                           )}
                                                                            {approvalStatus === 'pending' && (
                                                                                <Badge variant="outline" className="gap-1">
                                                                                    <Clock className="w-3.5 h-3.5" /> Pending approval
@@ -3655,7 +3666,7 @@ const CoursesTab = () => {
                                                                            </div>
                                                                        )}
                                                                    </div>
-                                                                   <div className="flex gap-2">
+                                                                   <div className="flex flex-wrap gap-2 md:max-w-[15rem] md:justify-end lg:max-w-none">
                                                                        <Button variant="ghost" size="sm" onClick={() => setPreviewCourse({ ...course })}>
                                                                            <Eye className="w-4 h-4" />
                                                                        </Button>
@@ -3808,7 +3819,7 @@ const CoursesTab = () => {
                                                    }
                                                }}
                                            >
-                                               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                               <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto sm:max-w-4xl">
                                                    <DialogHeader>
                                                        <DialogTitle>Quiz Report</DialogTitle>
                                                        <DialogDescription>
@@ -3833,7 +3844,7 @@ const CoursesTab = () => {
                
                                                        return (
                                                            <div className="space-y-4">
-                                                               <div className="flex items-start justify-between gap-4">
+                                                               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                                                    <div>
                                                                        <h3 className="text-lg font-semibold">{selectedQuizReport.title || 'Course'}</h3>
                                                                        <p className="text-sm text-muted-foreground">
@@ -3868,7 +3879,8 @@ const CoursesTab = () => {
                                                                    </div>
                                                                </div>
                
-                                                               <div className="border rounded-lg overflow-hidden">
+                                                               <div className="overflow-x-auto rounded-lg border">
+                                                                   <div className="min-w-[720px]">
                                                                    <div className="grid grid-cols-12 gap-2 bg-muted/40 px-3 py-2 text-xs font-semibold text-muted-foreground">
                                                                        <div className="col-span-3">Student</div>
                                                                        <div className="col-span-1">Try</div>
@@ -3963,6 +3975,7 @@ const CoursesTab = () => {
                                                                            })}
                                                                        </div>
                                                                    )}
+                                                                   </div>
                                                                </div>
                                                            </div>
                                                        );
@@ -3975,7 +3988,7 @@ const CoursesTab = () => {
                
  {/* Create Assignment Dialog - Moved outside loop for global access */}
             <Dialog open={openAssignmentDialog} onOpenChange={setOpenAssignmentDialog}>
-                <DialogContent>
+                <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-lg">
                     <DialogHeader><DialogTitle>Create Assignment/ Assessment</DialogTitle></DialogHeader>
                     <div className="grid gap-4 py-4">
                         <Label>Topic</Label>
@@ -4008,7 +4021,7 @@ const CoursesTab = () => {
 
 
                 <Dialog open={!!editCourse} onOpenChange={(open) => !open && setEditCourse(null)}>
-                               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                               <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto sm:max-w-4xl">
                                    <DialogHeader>
                                        <DialogTitle>Edit Course: {editCourse?.title}</DialogTitle>
                                    </DialogHeader>
@@ -4027,7 +4040,7 @@ const CoursesTab = () => {
                
                            {/* Course Preview Dialog */}
                            <Dialog open={!!previewCourse} onOpenChange={(open) => !open && setPreviewCourse(null)}>
-                               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                               <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto sm:max-w-4xl">
                                    <DialogHeader>
                                        <DialogTitle>{previewCourse?.title || previewCourse?.mainTopic || 'Course Preview'}</DialogTitle>
                                        <DialogDescription>
@@ -4049,7 +4062,7 @@ const CoursesTab = () => {
                                        const quizzes = previewCourse.quizzes || parsedContent?.quizzes || [];
                
                                        return (
-                                           <div className="py-4 space-y-6">
+                                                           <div className="py-4 space-y-6">
                                                {description && (
                                                    <div>
                                                        <h4 className="font-semibold mb-2">Description</h4>
@@ -4062,8 +4075,8 @@ const CoursesTab = () => {
                                                    <h4 className="font-semibold mb-3">Course Content</h4>
                                                    <div className="space-y-4">
                                                        {topics.length > 0 ? topics.map((topic: any, idx: number) => (
-                                                           <div key={idx} className="border rounded-lg overflow-hidden">
-                                                               <div className="bg-muted/50 p-3 font-medium flex gap-3">
+                                                           <div key={idx} className="overflow-hidden rounded-lg border">
+                                                               <div className="flex flex-col gap-2 bg-muted/50 p-3 font-medium sm:flex-row sm:items-center">
                                                                    <span className="text-xs bg-muted px-2 py-1 rounded font-bold">{idx + 1}</span>
                                                                    {topic.title || topic.topic}
                                                                </div>
@@ -4119,7 +4132,7 @@ const CoursesTab = () => {
                
                            {/* Edit AI Course Dialog */}
                            <Dialog open={!!editAICourse} onOpenChange={(open) => !open && setEditAICourse(null)}>
-                               <DialogContent className="max-w-2xl">
+                               <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-2xl">
                                    <DialogHeader>
                                        <DialogTitle>Edit AI-Generated Course</DialogTitle>
                                        <DialogDescription>Update the course title and department assignment</DialogDescription>

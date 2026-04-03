@@ -540,7 +540,7 @@ const DepartmentsTab = () => {
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#294861] via-[#2d5876] to-[#3b7398] p-6 mb-6 lg:mb-8 text-white shadow-lg">
                     <div className="absolute right-0 top-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-white/6 blur-3xl" />
                     <div className="absolute bottom-0 left-0 -mb-16 -ml-16 h-48 w-48 rounded-full bg-white/5 blur-2xl" />
-                    <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <div className="relative flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                         <div className="flex items-center gap-3">
                             <div className="students-theme-hero-icon rounded-xl p-2 backdrop-blur-sm">
                                 <Building2 className="h-6 w-6" />
