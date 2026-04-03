@@ -442,13 +442,14 @@ export const getDashboardStatsWithOrgs = async () => {
         org_admin: true,
         student: true
       },
-      interviewEnabled: admin?.interviewEnabled || {
+      interviewEnabled: admin?.interviewEnabled || { free: false, monthly: true, yearly: true, forever: true, org_admin: true, student: false }, skillBoosterEnabled: admin?.skillBoosterEnabled || { free: false, monthly: true, yearly: true, forever: true, org_admin: true, student: true },
+      skillBoosterEnabled: admin?.skillBoosterEnabled || {
         free: false,
         monthly: true,
         yearly: true,
         forever: true,
         org_admin: true,
-        student: false
+        student: true
       }
     }
   };
@@ -895,7 +896,7 @@ export const updateAdminSettings = async (data) => {
     notebookEnabled: data.notebookEnabled,
     resumeEnabled: data.resumeEnabled,
     careerEnabled: data.careerEnabled,
-    interviewEnabled: data.interviewEnabled
+    interviewEnabled: data.interviewEnabled, skillBoosterEnabled: data.skillBoosterEnabled
   };
 
   Object.assign(admin, updatePayload);

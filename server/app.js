@@ -65,6 +65,7 @@ import analyticsRoutes from "./routes/analytics.routes.js";
 import superAdminRoutes from "./routes/superAdmin.routes.js";
 import mockTrainingRoutes from "./routes/mockTraining.routes.js";
 import internshipRoutes from './routes/internship.routes.js';
+import skillBoosterRoutes from './routes/skillBooster.routes.js';
 
 
 // -------------------- INIT --------------------
@@ -163,6 +164,7 @@ app.use("/api", orgLandingRoutes);
 app.use("/api", superAdminRoutes);
 app.use("/api", mockTrainingRoutes);
 app.use("/api", internshipRoutes);
+app.use("/api", skillBoosterRoutes);
 
 // -------------------- ERROR HANDLER --------------------
 app.use((err, req, res, next) => {

@@ -140,6 +140,7 @@ import ProjectTab from "./pages/org-dashboard/ProjectsTab";
 import MaterialsTab from "./pages/org-dashboard/MaterialsTab";
 import NoticesTab from "./pages/org-dashboard/NoticesTab";
 import CareerTab from "./pages/org-dashboard/CareerTab";
+import SkillBooster from "./pages/SkillBooster";
 
 const PublicThemeGuard = () => {
   const location = useLocation();
@@ -238,6 +239,7 @@ const App = () => (
                     <Route path="resume-builder" element={<ResumeBuilder />} />
                     <Route path="calendar" element={<CalendarScheduler />} />
                     <Route path="todo" element={<TodoCenter />} />
+                    <Route path="skill-booster" element={<SkillBooster />} />
                  
 
                     <Route path="support" element={<SupportTickets />} />
