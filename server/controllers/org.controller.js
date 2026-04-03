@@ -1743,6 +1743,7 @@ export const addDeptAdmin = async (req, res) => {
 export const updateDeptAdmin = async (req, res) => {
     const { id } = req.params;
     const { name, departmentId, courseLimit, password, phone } = req.body;
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
     
     try {
         const admin = await User.findById(id);
@@ -1763,7 +1764,12 @@ export const updateDeptAdmin = async (req, res) => {
         
         // Update password if provided
         if (password && password.trim() !== '') {
-            const bcrypt = await import('bcryptjs');
+            if (!strongPasswordRegex.test(password.trim())) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Password must contain uppercase, lowercase, number & special character'
+                });
+            }
             admin.password = await bcrypt.hash(password, 10);
         }
         
