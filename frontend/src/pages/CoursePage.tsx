@@ -38,7 +38,7 @@ const getFallbackImage = (topic: string, subtopic: string) => {
   return `https://placehold.co/800x600/4f46e5/ffffff?text=${encodeURIComponent(subtopic.substring(0, 40))}`;
 };
 
-// Loading Popup Component
+// Loading Popup Component - Responsive
 const LoadingPopup = ({ 
   isOpen, 
   stage, 
@@ -71,17 +71,17 @@ const LoadingPopup = ({
   const getStageContent = () => {
     switch(stage) {
       case 'video':
-        return { icon: <Video className="w-8 h-8 text-red-500 animate-pulse" />, title: 'Searching Video', message: `Finding the best tutorial for "${subtopic}"`, color: 'red' };
+        return { icon: <Video className="w-6 h-6 sm:w-8 sm:h-8 text-red-500 animate-pulse" />, title: 'Searching Video', message: `Finding the best tutorial for "${subtopic}"`, color: 'red' };
       case 'transcript':
-        return { icon: <FileText className="w-8 h-8 text-orange-500 animate-bounce" />, title: 'Extracting Knowledge', message: `Processing video transcript for "${subtopic}"`, color: 'orange' };
+        return { icon: <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500 animate-bounce" />, title: 'Extracting Knowledge', message: `Processing video transcript for "${subtopic}"`, color: 'orange' };
       case 'theory':
-        return { icon: <BookOpen className="w-8 h-8 text-blue-500 animate-pulse" />, title: 'Generating Content', message: `AI is creating learning material for "${subtopic}"`, color: 'blue' };
+        return { icon: <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 animate-pulse" />, title: 'Generating Content', message: `AI is creating learning material for "${subtopic}"`, color: 'blue' };
       case 'image':
-        return { icon: <ImageIcon className="w-8 h-8 text-green-500 animate-bounce" />, title: 'Fetching Visuals', message: `Finding the perfect image for "${subtopic}"`, color: 'green' };
+        return { icon: <ImageIcon className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 animate-bounce" />, title: 'Fetching Visuals', message: `Finding the perfect image for "${subtopic}"`, color: 'green' };
       case 'complete':
-        return { icon: <Sparkles className="w-8 h-8 text-yellow-500 animate-spin" />, title: 'Finalizing', message: 'Polishing the content for best experience', color: 'yellow' };
+        return { icon: <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 animate-spin" />, title: 'Finalizing', message: 'Polishing the content for best experience', color: 'yellow' };
       default:
-        return { icon: <Brain className="w-8 h-8 text-purple-500 animate-pulse" />, title: 'AI is Thinking', message: `Preparing your subtopic "${subtopic}"`, color: 'purple' };
+        return { icon: <Brain className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500 animate-pulse" />, title: 'AI is Thinking', message: `Preparing your subtopic "${subtopic}"`, color: 'purple' };
     }
   };
 
@@ -92,41 +92,41 @@ const LoadingPopup = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
+      <DialogContent className="sm:max-w-md w-[95vw] max-w-[95vw] sm:w-full rounded-2xl sm:rounded-lg" aria-describedby={undefined}>
         <DialogTitle className="sr-only">{content.title}</DialogTitle>
-        <div className="flex flex-col items-center py-8 px-4">
-          <div className={`relative mb-6`}>
+        <div className="flex flex-col items-center py-6 sm:py-8 px-3 sm:px-4">
+          <div className={`relative mb-4 sm:mb-6`}>
             <div className={`absolute inset-0 rounded-full bg-${content.color}-500/20 animate-ping`}></div>
-            <div className={`relative z-10 p-4 rounded-full bg-${content.color}-500/10`}>{content.icon}</div>
+            <div className={`relative z-10 p-3 sm:p-4 rounded-full bg-${content.color}-500/10`}>{content.icon}</div>
           </div>
-          <h2 className="text-2xl font-bold text-center mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+          <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             {isComplete ? 'Ready to Continue!' : (isContentPhase ? 'Generating Content' : 'Fetching Visuals')}
           </h2>
-          <p className="text-sm text-center text-muted-foreground mb-1">
+          <p className="text-xs sm:text-sm text-center text-muted-foreground mb-1">
             {isComplete ? 'All content has been prepared for you' : `${content.title} • ${content.message}`}
           </p>
           <div className="w-full mt-4 mb-2">
-            <div className="w-full h-3 bg-muted rounded-full overflow-hidden flex">
+            <div className="w-full h-2 sm:h-3 bg-muted rounded-full overflow-hidden flex">
               <div className="h-full bg-blue-500 transition-all duration-300 rounded-l-full" style={{ width: `${Math.min(adjustedProgress, 50)}%` }} />
               <div className="h-full bg-blue-500 transition-all duration-300 rounded-r-full" style={{ width: `${Math.max(0, adjustedProgress - 50)}%` }} />
             </div>
           </div>
-          <p className="text-lg font-bold text-primary mt-1">{Math.round(adjustedProgress)}% Complete</p>
+          <p className="text-base sm:text-lg font-bold text-primary mt-1">{Math.round(adjustedProgress)}% Complete</p>
           <div className="w-full space-y-3 mt-4">
             {isComplete ? (
               <>
                 <div className="flex items-center gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
-                  <span className="text-sm font-medium text-green-600 dark:text-green-400">✓ Content generation complete!</span>
+                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm font-medium text-green-600 dark:text-green-400">✓ Content generation complete!</span>
                 </div>
-                <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                <div className="mt-4 p-3 sm:p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <Clock className="w-4 h-4 text-yellow-500" />
-                    <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">Please wait 20 minutes before continuing</p>
+                    <Clock className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                    <p className="text-xs sm:text-sm font-medium text-yellow-600 dark:text-yellow-400">Please wait 20 minutes before continuing</p>
                   </div>
                   <p className="text-xs text-muted-foreground text-center">This pause helps with knowledge retention. Take a short break!</p>
                 </div>
-                <Button onClick={onContinue} disabled={!showContinueButton} className="w-full mt-4 gap-2 bg-green-600 hover:bg-green-700">
+                <Button onClick={onContinue} disabled={!showContinueButton} className="w-full mt-4 gap-2 bg-green-600 hover:bg-green-700 text-sm sm:text-base">
                   {!showContinueButton ? (
                     <><Loader2 className="w-4 h-4 animate-spin" />Please wait {formatTime(remainingSeconds)}...</>
                   ) : (
@@ -137,18 +137,18 @@ const LoadingPopup = ({
             ) : (
               <>
                 <div className="flex items-center gap-3">
-                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                  <span className="text-sm">
+                  <Loader2 className="w-4 h-4 animate-spin text-primary flex-shrink-0" />
+                  <span className="text-xs sm:text-sm">
                     {isContentPhase
                       ? `Creating learning material... (${Math.round(phaseProgress)}% of content phase)`
                       : `Finding and optimizing visuals... (${Math.round(phaseProgress)}% of visuals phase)`}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 mt-4">
-                  <Skeleton className="h-12 rounded-lg" />
-                  <Skeleton className="h-12 rounded-lg" />
-                  <Skeleton className="h-12 rounded-lg" />
-                  <Skeleton className="h-12 rounded-lg" />
+                  <Skeleton className="h-10 sm:h-12 rounded-lg" />
+                  <Skeleton className="h-10 sm:h-12 rounded-lg" />
+                  <Skeleton className="h-10 sm:h-12 rounded-lg" />
+                  <Skeleton className="h-10 sm:h-12 rounded-lg" />
                 </div>
                 <p className="text-xs text-muted-foreground/60 mt-6 italic">
                   ✨ {isContentPhase ? 'AI is crafting personalized content just for you...' : 'Finding the perfect visuals to enhance your learning...'}
@@ -166,15 +166,15 @@ const QuizLoadingPopup = ({ isOpen, topic }) => {
   if (!isOpen) return null;
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
+      <DialogContent className="sm:max-w-md w-[95vw] max-w-[95vw] sm:w-full rounded-2xl sm:rounded-lg" aria-describedby={undefined}>
         <DialogTitle className="sr-only">Preparing Quiz</DialogTitle>
-        <div className="flex flex-col items-center py-8 px-4">
-          <div className="mb-6 rounded-full bg-primary/10 p-4">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <div className="flex flex-col items-center py-6 sm:py-8 px-3 sm:px-4">
+          <div className="mb-6 rounded-full bg-primary/10 p-3 sm:p-4">
+            <Loader2 className="h-8 w-8 sm:h-10 sm:w-10 animate-spin text-primary" />
           </div>
-          <h2 className="text-2xl font-bold text-center mb-2">Preparing Quiz</h2>
-          <p className="text-center text-muted-foreground mb-4">Generating the assessment for {topic || 'this course'}.</p>
-          <div className="w-full rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm text-muted-foreground">
+          <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">Preparing Quiz</h2>
+          <p className="text-center text-muted-foreground mb-4 text-sm sm:text-base">Generating the assessment for {topic || 'this course'}.</p>
+          <div className="w-full rounded-2xl border border-primary/15 bg-primary/5 p-3 sm:p-4 text-xs sm:text-sm text-muted-foreground">
             Please wait while we collect course topics, build questions, and open the quiz page.
           </div>
         </div>
@@ -183,25 +183,25 @@ const QuizLoadingPopup = ({ isOpen, topic }) => {
   );
 };
 
-// ── REGENERATE CHAPTER POPUP ──
+// Regenerate Chapter Popup - Responsive
 const RegenerateChapterPopup = ({ isOpen, chapterTitle, progress }) => {
   if (!isOpen) return null;
   const pct = progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
+      <DialogContent className="sm:max-w-md w-[95vw] max-w-[95vw] sm:w-full rounded-2xl sm:rounded-lg" aria-describedby={undefined}>
         <DialogTitle className="sr-only">Regenerating Chapter</DialogTitle>
-        <div className="flex flex-col items-center py-8 px-4">
-          <div className="relative mb-6">
+        <div className="flex flex-col items-center py-6 sm:py-8 px-3 sm:px-4">
+          <div className="relative mb-4 sm:mb-6">
             <div className="absolute inset-0 rounded-full bg-violet-500/20 animate-ping"></div>
-            <div className="relative z-10 p-4 rounded-full bg-violet-500/10">
-              <RefreshCw className="w-8 h-8 text-violet-500 animate-spin" />
+            <div className="relative z-10 p-3 sm:p-4 rounded-full bg-violet-500/10">
+              <RefreshCw className="w-6 h-6 sm:w-8 sm:h-8 text-violet-500 animate-spin" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-center mb-2 bg-gradient-to-r from-violet-600 to-primary/60 bg-clip-text text-transparent">
+          <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 bg-gradient-to-r from-violet-600 to-primary/60 bg-clip-text text-transparent">
             Regenerating Chapter
           </h2>
-          <p className="text-sm text-center text-muted-foreground mb-1 px-4">
+          <p className="text-xs sm:text-sm text-center text-muted-foreground mb-1 px-4">
             Refreshing all lessons in <span className="font-semibold text-foreground">"{chapterTitle}"</span>
           </p>
           <div className="w-full mt-5 mb-2">
@@ -209,7 +209,7 @@ const RegenerateChapterPopup = ({ isOpen, chapterTitle, progress }) => {
               <span>{progress.done} of {progress.total} lessons done</span>
               <span className="font-semibold text-primary">{pct}%</span>
             </div>
-            <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+            <div className="w-full h-2 sm:h-3 bg-muted rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-violet-500 to-primary transition-all duration-500 rounded-full"
                 style={{ width: `${pct}%` }}
@@ -218,18 +218,18 @@ const RegenerateChapterPopup = ({ isOpen, chapterTitle, progress }) => {
           </div>
           <div className="w-full space-y-3 mt-5">
             <div className="flex items-center gap-3">
-              <Loader2 className="w-4 h-4 animate-spin text-primary" />
-              <span className="text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin text-primary flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-muted-foreground">
                 {progress.done < progress.total
                   ? `Generating theory and visuals for lesson ${progress.done + 1}…`
                   : 'Finalising and saving…'}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <Skeleton className="h-10 rounded-lg" />
-              <Skeleton className="h-10 rounded-lg" />
-              <Skeleton className="h-10 rounded-lg" />
-              <Skeleton className="h-10 rounded-lg" />
+              <Skeleton className="h-8 sm:h-10 rounded-lg" />
+              <Skeleton className="h-8 sm:h-10 rounded-lg" />
+              <Skeleton className="h-8 sm:h-10 rounded-lg" />
+              <Skeleton className="h-8 sm:h-10 rounded-lg" />
             </div>
           </div>
           <p className="text-xs text-muted-foreground/60 mt-6 italic">
@@ -258,7 +258,7 @@ const CoursePage = () => {
   const [loadingSubtopic, setLoadingSubtopic] = useState('');
   const [isQuizLoading, setIsQuizLoading] = useState(false);
 
-  // ── REGENERATE CHAPTER STATES ──
+  // Regenerate Chapter States
   const [regeneratingChapter, setRegeneratingChapter] = useState<string | null>(null);
   const [regenerateProgress, setRegenerateProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
 
@@ -514,18 +514,18 @@ Requirements:
   };
 
   const CourseContentSkeleton = () => (
-    <div className="space-y-6 animate-pulse">
-      <Skeleton className="h-8 w-3/4 mb-8" />
-      <div className="space-y-6">
-        <div><Skeleton className="h-7 w-1/2 mb-4" /><Skeleton className="h-5 w-full mb-2" /><Skeleton className="h-5 w-full mb-2" /><Skeleton className="h-5 w-3/4" /></div>
-        <div><Skeleton className="h-7 w-1/3 mb-4" /><Skeleton className="h-5 w-full mb-2" /><Skeleton className="h-5 w-full mb-2" /><Skeleton className="h-5 w-5/6" /></div>
-        <div><Skeleton className="h-7 w-2/5 mb-4" /><Skeleton className="h-5 w-full mb-2" /><Skeleton className="h-5 w-full mb-2" /><Skeleton className="h-36 w-full rounded-md bg-muted/30" /></div>
+    <div className="space-y-4 sm:space-y-6 animate-pulse">
+      <Skeleton className="h-6 sm:h-8 w-3/4 mb-6 sm:mb-8" />
+      <div className="space-y-4 sm:space-y-6">
+        <div><Skeleton className="h-5 sm:h-7 w-1/2 mb-3 sm:mb-4" /><Skeleton className="h-4 sm:h-5 w-full mb-2" /><Skeleton className="h-4 sm:h-5 w-full mb-2" /><Skeleton className="h-4 sm:h-5 w-3/4" /></div>
+        <div><Skeleton className="h-5 sm:h-7 w-1/3 mb-3 sm:mb-4" /><Skeleton className="h-4 sm:h-5 w-full mb-2" /><Skeleton className="h-4 sm:h-5 w-full mb-2" /><Skeleton className="h-4 sm:h-5 w-5/6" /></div>
+        <div><Skeleton className="h-5 sm:h-7 w-2/5 mb-3 sm:mb-4" /><Skeleton className="h-4 sm:h-5 w-full mb-2" /><Skeleton className="h-4 sm:h-5 w-full mb-2" /><Skeleton className="h-28 sm:h-36 w-full rounded-md bg-muted/30" /></div>
       </div>
     </div>
   );
 
   const opts = { height: '390', width: '640' };
-  const optsMobile = { height: '250px', width: '100%' };
+  const optsMobile = { height: '200px', width: '100%' };
 
   const isSubtopicUnlocked = (topicTitle, subtopicTitle) => {
     if (isOrgAdmin) return true;
@@ -662,7 +662,7 @@ Requirements:
     cleaned = cleaned.replace(/\n\s*\n/g, '\n');
     cleaned = cleaned.trim();
     if (!cleaned || cleaned.length < 50) {
-      return `<div class="prose dark:prose-invert max-w-none"><h2>${htmlContent.substring(0, 100)}</h2><p>Content is being processed. Please refresh the page in a moment.</p></div>`;
+      return `<div class="prose dark:prose-invert max-w-none"><h2 class="text-lg sm:text-xl">${htmlContent.substring(0, 100)}</h2><p class="text-sm">Content is being processed. Please refresh the page in a moment.</p></div>`;
     }
     return cleaned;
   };
@@ -694,7 +694,7 @@ Requirements:
       setTheory(cleanGeneratedHtml(subtopicData.theory));
       setMedia(type === 'video & text course' ? subtopicData.youtube || '' : subtopicData.image || '');
     } else {
-      setTheory(`<div class="prose dark:prose-invert max-w-none"><h2>${subtopicTitle}</h2><p>AI is crafting personalized content for you...</p><div class="flex items-center justify-center p-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div></div>`);
+      setTheory(`<div class="prose dark:prose-invert max-w-none"><h2 class="text-xl sm:text-2xl">${subtopicTitle}</h2><p class="text-sm sm:text-base">AI is crafting personalized content for you...</p><div class="flex items-center justify-center p-6 sm:p-8"><div class="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div></div></div>`);
       setMedia(null);
     }
     if (type === 'video & text course') sendVideo(`${subtopicTitle} ${mainTopic}`, topicTitle, subtopicTitle, subtopicTitle);
@@ -708,7 +708,7 @@ Requirements:
     const clearTheoryProgress = simulateProgress('theory');
     setSelectedTopicTitle(clickedTopic);
     setSelected(clickedSub);
-    setTheory(`<div class="prose dark:prose-invert max-w-none"><h2>${clickedSub}</h2><p>AI is crafting personalized content for you...</p><div class="flex items-center justify-center p-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div></div>`);
+    setTheory(`<div class="prose dark:prose-invert max-w-none"><h2 class="text-xl sm:text-2xl">${clickedSub}</h2><p class="text-sm sm:text-base">AI is crafting personalized content for you...</p><div class="flex items-center justify-center p-6 sm:p-8"><div class="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div></div></div>`);
     setMedia(null);
     try {
       const theoryRes = await axios.post(serverURL + '/api/generate-batch', {
@@ -740,7 +740,7 @@ Requirements:
       setTimeout(() => { setShowLoadingPopup(false); if (window.progressInterval) clearInterval(window.progressInterval); }, 1500);
     } catch (error) {
       console.error("Theory generation failed:", error);
-      setTheory(`<div class="prose dark:prose-invert max-w-none"><h2>${clickedSub}</h2><p>Sorry, we encountered an error loading the content. Please try again.</p><p class="text-sm text-muted-foreground mt-2">Error: ${error.message}</p></div>`);
+      setTheory(`<div class="prose dark:prose-invert max-w-none"><h2 class="text-xl sm:text-2xl">${clickedSub}</h2><p class="text-sm sm:text-base">Sorry, we encountered an error loading the content. Please try again.</p><p class="text-xs sm:text-sm text-muted-foreground mt-2">Error: ${error.message}</p></div>`);
       setShowLoadingPopup(false);
       if (window.progressInterval) clearInterval(window.progressInterval);
     }
@@ -823,7 +823,6 @@ Requirements:
     selectSubtopic(topicTitle, subtopicTitle);
   }, [isSubtopicUnlocked, selectSubtopic]);
 
-  // ── REGENERATE CHAPTER HANDLER ──
   const handleRegenerateChapter = async (topicTitle: string) => {
     if (!jsonData || !mainTopic || !userId || regeneratingChapter) return;
 
@@ -841,7 +840,6 @@ Requirements:
       for (let i = 0; i < subtopics.length; i++) {
         const sub = subtopics[i];
 
-        // Step 1: Generate theory
         try {
           const theoryRes = await axios.post(serverURL + '/api/generate-batch', {
             mainTopic,
@@ -857,14 +855,12 @@ Requirements:
             sub.theory = cleanedTheory;
             sub.done = false;
 
-            // If this is the currently displayed subtopic, update the view
             if (selected === sub.title) setTheory(cleanedTheory);
           }
         } catch (theoryErr) {
           console.error(`Theory generation failed for ${sub.title}:`, theoryErr);
         }
 
-        // Step 2: Fetch image (or video for video courses)
         if (type === 'video & text course') {
           try {
             const query = `${sub.title} ${mainTopic} in english`;
@@ -900,7 +896,6 @@ Requirements:
           }
         }
 
-        // Persist after each lesson so progress is not lost on error
         setJsonData({ ...jsonData });
         sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
         setRegenerateProgress({ done: i + 1, total: subtopics.length });
@@ -1139,7 +1134,7 @@ Requirements:
     if (!topics || !Array.isArray(topics)) return null;
     return (
       <Accordion
-        type="single" collapsible className="w-full space-y-3"
+        type="single" collapsible className="w-full space-y-2 sm:space-y-3"
         defaultValue={topics.find((topic) => topic.subtopics?.some((subtopic) => subtopic.title === selected))?.title || topics[0]?.title}
       >
         {topics.map((topic, topicIndex) => {
@@ -1152,36 +1147,36 @@ Requirements:
           return (
             <AccordionItem
               key={topic.title} value={topic.title}
-              className={cn("overflow-hidden rounded-2xl border bg-background/90 shadow-sm transition-colors", isTopicActive ? "border-primary/35 shadow-primary/10" : "border-border/60")}
+              className={cn("overflow-hidden rounded-xl sm:rounded-2xl border bg-background/90 shadow-sm transition-colors", isTopicActive ? "border-primary/35 shadow-primary/10" : "border-border/60")}
             >
-              <AccordionTrigger className={cn("px-4 py-4 text-left hover:no-underline", isTopicActive ? "bg-primary/[0.07]" : "hover:bg-muted/60")}>
-                <div className="flex min-w-0 flex-1 items-start gap-3">
-                  <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold", isTopicActive ? "bg-primary text-primary-foreground" : "border border-border bg-muted text-foreground")}>
+              <AccordionTrigger className={cn("px-3 sm:px-4 py-3 sm:py-4 text-left hover:no-underline", isTopicActive ? "bg-primary/[0.07]" : "hover:bg-muted/60")}>
+                <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
+                  <div className={cn("flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold", isTopicActive ? "bg-primary text-primary-foreground" : "border border-border bg-muted text-foreground")}>
                     {topicIndex + 1}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Chapter {topicIndex + 1}</span>
-                      <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">{topicCompletedCount}/{topicSubtopics.length} done</span>
+                    <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                      <span className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Chapter {topicIndex + 1}</span>
+                      <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[11px] font-medium text-muted-foreground">{topicCompletedCount}/{topicSubtopics.length} done</span>
                       {isThisChapterRegenerating && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2.5 py-1 text-[11px] font-semibold text-violet-600 dark:text-violet-400">
-                          <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                        <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[11px] font-semibold text-violet-600 dark:text-violet-400">
+                          <Loader2 className="h-2 w-2 sm:h-2.5 sm:w-2.5 animate-spin" />
                           {regenerateProgress.done}/{regenerateProgress.total}
                         </span>
                       )}
                     </div>
-                    <p className="mt-2 line-clamp-2 text-sm font-semibold leading-6 text-foreground">{topic.title}</p>
-                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-border/70">
+                    <p className="mt-1 sm:mt-2 line-clamp-2 text-xs sm:text-sm font-semibold leading-5 sm:leading-6 text-foreground">{topic.title}</p>
+                    <div className="mt-2 sm:mt-3 h-1 sm:h-1.5 overflow-hidden rounded-full bg-border/70">
                       <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${topicProgress}%` }} />
                     </div>
                   </div>
                 </div>
               </AccordionTrigger>
 
-              <AccordionContent className="px-3 pb-3 pt-1">
-                <div className="space-y-2">
+              <AccordionContent className="px-2 sm:px-3 pb-2 sm:pb-3 pt-1">
+                <div className="space-y-1.5 sm:space-y-2">
 
-                  {/* ── REGENERATE CHAPTER BUTTON ── */}
+                  {/* Regenerate Chapter Button */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -1190,7 +1185,7 @@ Requirements:
                     }}
                     disabled={!!regeneratingChapter}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left transition-all",
+                      "flex w-full items-center justify-between rounded-lg sm:rounded-xl border px-2 sm:px-3 py-2 sm:py-2.5 text-left transition-all",
                       isThisChapterRegenerating
                         ? "border-violet-400/40 bg-violet-500/10 cursor-wait"
                         : regeneratingChapter
@@ -1198,34 +1193,34 @@ Requirements:
                         : "border-dashed border-border/50 hover:border-violet-400/50 hover:bg-violet-500/5 cursor-pointer group"
                     )}
                   >
-                    <span className="flex items-center gap-2">
+                    <span className="flex items-center gap-1.5 sm:gap-2">
                       {isThisChapterRegenerating ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin text-violet-500 flex-shrink-0" />
+                        <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin text-violet-500 flex-shrink-0" />
                       ) : (
-                        <RefreshCw className={cn("h-3.5 w-3.5 flex-shrink-0 transition-colors", regeneratingChapter ? "text-muted-foreground/40" : "text-muted-foreground group-hover:text-violet-500")} />
+                        <RefreshCw className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0 transition-colors", regeneratingChapter ? "text-muted-foreground/40" : "text-muted-foreground group-hover:text-violet-500")} />
                       )}
-                      <span className={cn("text-xs font-medium transition-colors", isThisChapterRegenerating ? "text-violet-600 dark:text-violet-400" : regeneratingChapter ? "text-muted-foreground/40" : "text-muted-foreground group-hover:text-violet-600 dark:group-hover:text-violet-400")}>
+                      <span className={cn("text-[10px] sm:text-xs font-medium transition-colors", isThisChapterRegenerating ? "text-violet-600 dark:text-violet-400" : regeneratingChapter ? "text-muted-foreground/40" : "text-muted-foreground group-hover:text-violet-600 dark:group-hover:text-violet-400")}>
                         {isThisChapterRegenerating
                           ? `Regenerating… ${regenerateProgress.done}/${regenerateProgress.total} lessons`
                           : "Regenerate chapter content"}
                       </span>
                     </span>
                     {isThisChapterRegenerating && regenerateProgress.total > 0 && (
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                        <div className="w-12 sm:w-16 h-1 sm:h-1.5 bg-muted rounded-full overflow-hidden">
                           <div
                             className="h-full bg-violet-500 rounded-full transition-all duration-500"
                             style={{ width: `${Math.round((regenerateProgress.done / regenerateProgress.total) * 100)}%` }}
                           />
                         </div>
-                        <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400">
+                        <span className="text-[8px] sm:text-[10px] font-semibold text-violet-600 dark:text-violet-400">
                           {Math.round((regenerateProgress.done / regenerateProgress.total) * 100)}%
                         </span>
                       </div>
                     )}
                   </button>
 
-                  {/* ── SUBTOPIC LIST ── */}
+                  {/* Subtopics List */}
                   {topicSubtopics.map((subtopic, subtopicIndex) => {
                     const isUnlocked = isSubtopicUnlocked(topic.title, subtopic.title);
                     const isActive = selected === subtopic.title;
@@ -1239,21 +1234,21 @@ Requirements:
                         }}
                         key={subtopic.title}
                         className={cn(
-                          "group flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition-all",
+                          "group flex w-full items-start gap-2 sm:gap-3 rounded-lg sm:rounded-xl border px-2 sm:px-3 py-2 sm:py-3 text-left transition-all",
                           isUnlocked ? "cursor-pointer hover:border-primary/30 hover:bg-primary/[0.05]" : "cursor-not-allowed opacity-60",
                           isActive ? "border-primary/35 bg-primary/[0.08] shadow-sm" : "border-transparent bg-muted/50"
                         )}
                       >
-                        <span className={cn("mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
+                        <span className={cn("mt-0.5 flex h-5 w-5 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-full text-[9px] sm:text-[11px] font-semibold",
                           isCompleted ? "bg-emerald-500 text-white" : isActive ? "bg-primary text-primary-foreground" : isUnlocked ? "border border-border bg-background text-muted-foreground" : "bg-muted-foreground/15 text-muted-foreground"
                         )}>
                           {isCompleted ? "✓" : subtopicIndex + 1}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-medium leading-5 text-foreground">{subtopic.title}</span>
-                          <span className="mt-1 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                          <span className="block text-xs sm:text-sm font-medium leading-4 sm:leading-5 text-foreground">{subtopic.title}</span>
+                          <span className="mt-0.5 sm:mt-1 flex items-center gap-1 sm:gap-2 text-[9px] sm:text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                             <span>{isCompleted ? "Completed" : isActive ? "Current lesson" : isUnlocked ? "Open lesson" : "Locked"}</span>
-                            {!isCompleted && !isUnlocked && <Lock className="h-3 w-3" />}
+                            {!isCompleted && !isUnlocked && <Lock className="h-2 w-2 sm:h-3 sm:w-3" />}
                           </span>
                         </span>
                       </button>
@@ -1288,7 +1283,7 @@ Requirements:
   async function sendEmail(formattedDate) {
     const userName = sessionStorage.getItem('mName');
     const email = sessionStorage.getItem('email');
-    const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><meta http-equiv="Content-Type" content="text/html charset=UTF-8" /><html lang="en"><head></head><body style="padding:20px; margin-left:auto;margin-right:auto;margin-top:auto;margin-bottom:auto;background-color:#f6f9fc;font-family:ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;"><table align="center" role="presentation" cellSpacing="0" cellPadding="0" border="0" height="80%" width="100%" style="max-width:37.5em;max-height:80%; margin-left:auto;margin-right:auto;margin-top:80px;margin-bottom:80px;width:465px;border-radius:0.25rem;border-width:1px;background-color:#fff;padding:20px"><tr style="width:100%"><td><table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%" style="margin-top:32px"><tbody><tr><td><img alt="Logo" src="${appLogo}" width="40" height="37" style="display:block;outline:none;border:none;text-decoration:none;margin-left:auto;margin-right:auto;margin-top:0px;margin-bottom:0px" /></td></tr></tbody></table><h1 style="margin-left:0px;margin-right:0px;margin-top:30px;margin-bottom:30px;padding:0px;text-align:center;font-size:24px;font-weight:400;color:rgb(0,0,0)">Completion Certificate </h1><p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Hello <strong>${userName}</strong>,</p><p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">We are pleased to inform you that you have successfully completed the ${mainTopic} and are now eligible for your course completion certificate.</p><table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%" style="margin-bottom:32px;margin-top:32px;text-align:center"><tbody><tr><td><a href="${websiteURL}" target="_blank" style="p-x:20px;p-y:12px;line-height:100%;text-decoration:none;display:inline-block;max-width:100%;padding:12px 20px;border-radius:0.25rem;background-color: #007BFF;text-align:center;font-size:12px;font-weight:600;color:rgb(255,255,255)"><span>Get Certificate</span></a></td></tr></tbody></table><p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Best,<p target="_blank" style="color:rgb(0,0,0);text-decoration:none;text-decoration-line:none">The <strong>${companyName}</strong> Team</p></p></td></tr></table></body></html>`;
+    const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><meta http-equiv="Content-Type" content="text/html charset=UTF-8" /><html lang="en"><head></head><body style="padding:20px; margin-left:auto;margin-right:auto;margin-top:auto;margin-bottom:auto;background-color:#f6f9fc;font-family:ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;"><table align="center" role="presentation" cellSpacing="0" cellPadding="0" border="0" height="80%" width="100%" style="max-width:37.5em;max-height:80%; margin-left:auto;margin-right:auto;margin-top:80px;margin-bottom:80px;width:465px;border-radius:0.25rem;border-width:1px;background-color:#fff;padding:20px"><tr style="width:100%"><td><table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%" style="margin-top:32px"><tbody><tr><td><img alt="Logo" src="${appLogo}" width="40" height="37" style="display:block;outline:none;border:none;text-decoration:none;margin-left:auto;margin-right:auto;margin-top:0px;margin-bottom:0px" /><tr></tr></tbody></table><h1 style="margin-left:0px;margin-right:0px;margin-top:30px;margin-bottom:30px;padding:0px;text-align:center;font-size:24px;font-weight:400;color:rgb(0,0,0)">Completion Certificate </h1><p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Hello <strong>${userName}</strong>,</p><p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">We are pleased to inform you that you have successfully completed the ${mainTopic} and are now eligible for your course completion certificate.</p><table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%" style="margin-bottom:32px;margin-top:32px;text-align:center"><tbody><tr><td><a href="${websiteURL}" target="_blank" style="p-x:20px;p-y:12px;line-height:100%;text-decoration:none;display:inline-block;max-width:100%;padding:12px 20px;border-radius:0.25rem;background-color: #007BFF;text-align:center;font-size:12px;font-weight:600;color:rgb(255,255,255)"><span>Get Certificate</span></a></td></tr></tbody></table><p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Best,<p target="_blank" style="color:rgb(0,0,0);text-decoration:none;text-decoration-line:none">The <strong>${companyName}</strong> Team</p></p></td></tr></body></html>`;
     try {
       await axios.post(serverURL + '/api/sendcertificate', { html, email }).then(res => {
         navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: formattedDate } });
@@ -1377,23 +1372,23 @@ Requirements:
   };
 
   const examRulesSection = hasManualQuiz ? (
-    <section className="mb-6 rounded-[28px] border border-primary/15 bg-gradient-to-br from-primary/[0.07] via-background to-background p-4 shadow-sm md:p-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <section className="mb-4 sm:mb-6 rounded-2xl sm:rounded-[28px] border border-primary/15 bg-gradient-to-br from-primary/[0.07] via-background to-background p-3 sm:p-4 md:p-5 shadow-sm">
+      <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-primary/75">Exam Rules</p>
-          <h2 className="mt-2 text-xl font-semibold md:text-2xl">{mainTopic} Assessment</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Final quiz unlocks after every lesson is completed. Attempt rules and basic proctoring are controlled by the organization.</p>
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.28em] text-primary/75">Exam Rules</p>
+          <h2 className="mt-1 sm:mt-2 text-lg sm:text-xl md:text-2xl font-semibold">{mainTopic} Assessment</h2>
+          <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-muted-foreground">Final quiz unlocks after every lesson is completed. Attempt rules and basic proctoring are controlled by the organization.</p>
         </div>
-        <div className="rounded-2xl border border-primary/15 bg-background px-4 py-3 text-sm shadow-sm">
+        <div className="rounded-xl sm:rounded-2xl border border-primary/15 bg-background px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm shadow-sm">
           <div className="font-semibold text-foreground">{quizLockedByCourseProgress ? 'Locked until course completion' : 'Ready when you are'}</div>
           <div className="mt-1 text-muted-foreground">{completedLessonCount}/{orderedLessons.length} lessons completed</div>
         </div>
       </div>
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-border/60 bg-background p-3"><div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Attempts</div><div className="mt-1 text-sm font-semibold">{manualQuizSettings.attemptLimit} total attempts</div><div className="mt-1 text-xs text-muted-foreground">{quizAttemptSummary?.attemptCount || 0} used, {quizAttemptSummary?.remainingAttempts ?? manualQuizSettings.attemptLimit} left</div></div>
-        <div className="rounded-2xl border border-border/60 bg-background p-3"><div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Passing</div><div className="mt-1 text-sm font-semibold">{manualQuizSettings.passPercentage}% required</div><div className="mt-1 text-xs text-muted-foreground">{manualQuizSettings.questionCount} questions per attempt</div></div>
-        <div className="rounded-2xl border border-border/60 bg-background p-3"><div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Cooldown</div><div className="mt-1 text-sm font-semibold">{manualQuizSettings.cooldownMinutes} minutes after a failed attempt</div><div className="mt-1 text-xs text-muted-foreground">Difficulty mode: {manualQuizSettings.difficultyMode}</div></div>
-        <div className="rounded-2xl border border-border/60 bg-background p-3"><div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Monitoring</div><div className="mt-1 text-sm font-semibold">{[manualQuizSettings.proctoring.detectTabSwitch && 'tab switch', manualQuizSettings.proctoring.detectFullscreenExit && 'fullscreen', manualQuizSettings.proctoring.detectCopyPaste && 'clipboard', manualQuizSettings.proctoring.detectNoise && 'noise'].filter(Boolean).join(', ') || 'standard'}</div><div className="mt-1 text-xs text-muted-foreground">{manualQuizSettings.proctoring.requireCamera || manualQuizSettings.proctoring.requireMicrophone ? 'Camera/mic permissions may be requested' : 'No device access required'}</div></div>
+      <div className="mt-3 sm:mt-4 grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3"><div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Attempts</div><div className="mt-1 text-xs sm:text-sm font-semibold">{manualQuizSettings.attemptLimit} total attempts</div><div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">{quizAttemptSummary?.attemptCount || 0} used, {quizAttemptSummary?.remainingAttempts ?? manualQuizSettings.attemptLimit} left</div></div>
+        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3"><div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Passing</div><div className="mt-1 text-xs sm:text-sm font-semibold">{manualQuizSettings.passPercentage}% required</div><div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">{manualQuizSettings.questionCount} questions per attempt</div></div>
+        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3"><div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Cooldown</div><div className="mt-1 text-xs sm:text-sm font-semibold">{manualQuizSettings.cooldownMinutes} minutes after a failed attempt</div><div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">Difficulty mode: {manualQuizSettings.difficultyMode}</div></div>
+        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3"><div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Monitoring</div><div className="mt-1 text-xs sm:text-sm font-semibold">{[manualQuizSettings.proctoring.detectTabSwitch && 'tab switch', manualQuizSettings.proctoring.detectFullscreenExit && 'fullscreen', manualQuizSettings.proctoring.detectCopyPaste && 'clipboard', manualQuizSettings.proctoring.detectNoise && 'noise'].filter(Boolean).join(', ') || 'standard'}</div><div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">{manualQuizSettings.proctoring.requireCamera || manualQuizSettings.proctoring.requireMicrophone ? 'Camera/mic permissions may be requested' : 'No device access required'}</div></div>
       </div>
     </section>
   ) : null;
@@ -1404,64 +1399,64 @@ Requirements:
   };
 
   const roadmapSection = courseTopics.length > 0 ? (
-    <section className="mb-6 rounded-[28px] border border-border/60 bg-gradient-to-br from-background via-background to-muted/50 p-4 shadow-sm md:p-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <section className="mb-4 sm:mb-6 rounded-2xl sm:rounded-[28px] border border-border/60 bg-gradient-to-br from-background via-background to-muted/50 p-3 sm:p-4 md:p-5 shadow-sm">
+      <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">Course Roadmap</p>
-          <h2 className="mt-2 text-xl font-semibold md:text-2xl">All chapters and lesson flow</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Review the full structure here and jump into any unlocked lesson without relying only on the sidebar.</p>
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">Course Roadmap</p>
+          <h2 className="mt-1 sm:mt-2 text-lg sm:text-xl md:text-2xl font-semibold">All chapters and lesson flow</h2>
+          <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-muted-foreground">Review the full structure here and jump into any unlocked lesson without relying only on the sidebar.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">{courseTopics.length} chapters</span>
-          <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">{orderedLessons.length} lessons</span>
-          <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">{completedLessonCount} completed</span>
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">{courseTopics.length} chapters</span>
+          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">{orderedLessons.length} lessons</span>
+          <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-primary">{completedLessonCount} completed</span>
         </div>
       </div>
-      <div className="mt-5 rounded-3xl border border-border/60 bg-background/80 p-4 shadow-sm md:p-5">
+      <div className="mt-4 sm:mt-5 rounded-2xl sm:rounded-3xl border border-border/60 bg-background/80 p-3 sm:p-4 md:p-5 shadow-sm">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
-            <p className="text-sm font-semibold">Lesson flow</p>
-            <p className="text-xs text-muted-foreground">Hidden by default. Open the popup to browse all chapters and lessons.</p>
+            <p className="text-xs sm:text-sm font-semibold">Lesson flow</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Hidden by default. Open the popup to browse all chapters and lessons.</p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button onClick={() => openLessonFlow()} className="rounded-2xl"><BookOpen className="mr-2 h-4 w-4" />Open lesson flow</Button>
-            {currentTopicTitle && (<Button variant="outline" onClick={() => openLessonFlow(currentTopicTitle)} className="rounded-2xl"><ChevronDown className="mr-2 h-4 w-4" />Current chapter</Button>)}
+            <Button onClick={() => openLessonFlow()} className="rounded-xl sm:rounded-2xl text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2"><BookOpen className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />Open lesson flow</Button>
+            {currentTopicTitle && (<Button variant="outline" onClick={() => openLessonFlow(currentTopicTitle)} className="rounded-xl sm:rounded-2xl text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2"><ChevronDown className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />Current chapter</Button>)}
           </div>
         </div>
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <div className="mt-4 sm:mt-5 grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2">
           {courseTopics.slice(0, 4).map((topic, topicIndex) => {
             const topicSubtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
             const topicCompletedCount = topicSubtopics.filter(subtopic => completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title)).length;
             const isTopicActive = topic.title === currentTopicTitle;
             return (
               <button type="button" key={topic.title} onClick={() => openLessonFlow(topic.title)}
-                className={cn("group flex w-full items-start justify-between gap-3 rounded-3xl border px-4 py-4 text-left transition-all hover:border-primary/30 hover:bg-primary/[0.04]", isTopicActive ? "border-primary/30 bg-primary/[0.05]" : "border-border/60 bg-background")}
+                className={cn("group flex w-full items-start justify-between gap-2 sm:gap-3 rounded-2xl sm:rounded-3xl border px-3 sm:px-4 py-3 sm:py-4 text-left transition-all hover:border-primary/30 hover:bg-primary/[0.04]", isTopicActive ? "border-primary/30 bg-primary/[0.05]" : "border-border/60 bg-background")}
               >
                 <div className="min-w-0">
-                  <span className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Chapter {topicIndex + 1}</span>
-                  <h3 className="mt-3 line-clamp-2 text-sm font-semibold leading-6 md:text-base">{topic.title}</h3>
-                  <p className="mt-2 text-xs text-muted-foreground">Tap to open lessons</p>
+                  <span className="inline-flex items-center rounded-full bg-muted px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Chapter {topicIndex + 1}</span>
+                  <h3 className="mt-2 sm:mt-3 line-clamp-2 text-xs sm:text-sm font-semibold leading-5 sm:leading-6 md:text-base">{topic.title}</h3>
+                  <p className="mt-1 sm:mt-2 text-[10px] sm:text-xs text-muted-foreground">Tap to open lessons</p>
                 </div>
-                <div className="rounded-2xl bg-muted px-3 py-2 text-right"><div className="text-base font-semibold">{topicCompletedCount}/{topicSubtopics.length}</div><div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">done</div></div>
+                <div className="rounded-xl sm:rounded-2xl bg-muted px-2 sm:px-3 py-1.5 sm:py-2 text-right"><div className="text-sm sm:text-base font-semibold">{topicCompletedCount}/{topicSubtopics.length}</div><div className="text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">done</div></div>
               </button>
             );
           })}
         </div>
-        {courseTopics.length > 4 && (<div className="mt-4 flex justify-center"><Button variant="ghost" className="rounded-2xl" onClick={() => openLessonFlow()}>View all chapters</Button></div>)}
+        {courseTopics.length > 4 && (<div className="mt-3 sm:mt-4 flex justify-center"><Button variant="ghost" className="rounded-xl sm:rounded-2xl text-xs sm:text-sm" onClick={() => openLessonFlow()}>View all chapters</Button></div>)}
       </div>
       <Dialog open={isLessonFlowOpen} onOpenChange={setIsLessonFlowOpen}>
-        <DialogContent className="w-[95vw] max-w-5xl overflow-hidden p-0 sm:rounded-3xl">
-          <DialogHeader className="border-b border-border/60 bg-gradient-to-r from-primary/10 via-background to-indigo-500/10 p-5 sm:p-6">
-            <DialogTitle className="text-xl">Lesson flow</DialogTitle>
-            <DialogDescription>Browse chapters and jump directly to any unlocked lesson.</DialogDescription>
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Input value={lessonFlowSearch} onChange={(e) => setLessonFlowSearch(e.target.value)} placeholder="Search lesson…" className="h-11 rounded-2xl bg-background/80" />
-              <Button variant="outline" className="h-11 rounded-2xl" onClick={() => { setLessonFlowSearch(''); setLessonFlowChapter(currentTopicTitle || courseTopics[0]?.title || ''); }}>Reset</Button>
+        <DialogContent className="w-[95vw] max-w-4xl overflow-hidden p-0 rounded-2xl sm:rounded-3xl">
+          <DialogHeader className="border-b border-border/60 bg-gradient-to-r from-primary/10 via-background to-indigo-500/10 p-4 sm:p-5 md:p-6">
+            <DialogTitle className="text-lg sm:text-xl">Lesson flow</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">Browse chapters and jump directly to any unlocked lesson.</DialogDescription>
+            <div className="mt-3 sm:mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Input value={lessonFlowSearch} onChange={(e) => setLessonFlowSearch(e.target.value)} placeholder="Search lesson…" className="h-9 sm:h-11 rounded-xl sm:rounded-2xl bg-background/80 text-sm" />
+              <Button variant="outline" className="h-9 sm:h-11 rounded-xl sm:rounded-2xl text-xs sm:text-sm" onClick={() => { setLessonFlowSearch(''); setLessonFlowChapter(currentTopicTitle || courseTopics[0]?.title || ''); }}>Reset</Button>
             </div>
           </DialogHeader>
-          <ScrollArea className="max-h-[70vh]">
-            <div className="p-4 sm:p-6">
-              <Accordion type="single" collapsible className="space-y-3" value={lessonFlowChapter} onValueChange={setLessonFlowChapter}>
+          <ScrollArea className="max-h-[60vh] sm:max-h-[70vh]">
+            <div className="p-3 sm:p-4 md:p-6">
+              <Accordion type="single" collapsible className="space-y-2 sm:space-y-3" value={lessonFlowChapter} onValueChange={setLessonFlowChapter}>
                 {courseTopics.map((topic, topicIndex) => {
                   const topicSubtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
                   const query = lessonFlowSearch.trim().toLowerCase();
@@ -1470,22 +1465,22 @@ Requirements:
                   const topicCompletedCount = topicSubtopics.filter(subtopic => completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title)).length;
                   const isTopicActive = topic.title === currentTopicTitle;
                   return (
-                    <AccordionItem key={topic.title} value={topic.title} className={cn("overflow-hidden rounded-3xl border transition-colors", isTopicActive ? "border-primary/30 bg-primary/[0.05]" : "border-border/60 bg-background")}>
-                      <AccordionTrigger className="px-4 py-4 text-left hover:no-underline">
-                        <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                    <AccordionItem key={topic.title} value={topic.title} className={cn("overflow-hidden rounded-2xl sm:rounded-3xl border transition-colors", isTopicActive ? "border-primary/30 bg-primary/[0.05]" : "border-border/60 bg-background")}>
+                      <AccordionTrigger className="px-3 sm:px-4 py-3 sm:py-4 text-left hover:no-underline">
+                        <div className="flex min-w-0 flex-1 items-start justify-between gap-2 sm:gap-3">
                           <div className="min-w-0">
-                            <span className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Chapter {topicIndex + 1}</span>
-                            <h3 className="mt-3 text-base font-semibold leading-6 md:text-lg">{topic.title}</h3>
-                            <p className="mt-2 text-sm text-muted-foreground">Click to view lessons in this chapter</p>
+                            <span className="inline-flex items-center rounded-full bg-muted px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Chapter {topicIndex + 1}</span>
+                            <h3 className="mt-2 sm:mt-3 text-sm sm:text-base font-semibold leading-5 sm:leading-6 md:text-lg">{topic.title}</h3>
+                            <p className="mt-1 sm:mt-2 text-[10px] sm:text-xs text-muted-foreground">Click to view lessons in this chapter</p>
                           </div>
-                          <div className="rounded-2xl bg-muted px-3 py-2 text-right"><div className="text-base font-semibold">{topicCompletedCount}/{topicSubtopics.length}</div><div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">done</div></div>
+                          <div className="rounded-xl sm:rounded-2xl bg-muted px-2 sm:px-3 py-1.5 sm:py-2 text-right"><div className="text-sm sm:text-base font-semibold">{topicCompletedCount}/{topicSubtopics.length}</div><div className="text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">done</div></div>
                         </div>
                       </AccordionTrigger>
-                      <AccordionContent className="px-4 pb-4 pt-0">
+                      <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0">
                         {filteredSubtopics.length === 0 ? (
-                          <div className="rounded-2xl border border-dashed bg-muted/20 p-5 text-center text-sm text-muted-foreground">No lessons match your search.</div>
+                          <div className="rounded-xl sm:rounded-2xl border border-dashed bg-muted/20 p-4 sm:p-5 text-center text-xs sm:text-sm text-muted-foreground">No lessons match your search.</div>
                         ) : (
-                          <div className="grid gap-2 md:grid-cols-2">
+                          <div className="grid gap-1.5 sm:gap-2 grid-cols-1 sm:grid-cols-2">
                             {filteredSubtopics.map((subtopic: any, subtopicIndex: number) => {
                               const isUnlocked = isSubtopicUnlocked(topic.title, subtopic.title);
                               const isActive = selected === subtopic.title;
@@ -1493,14 +1488,14 @@ Requirements:
                               return (
                                 <button type="button" key={subtopic.title}
                                   onClick={() => { if (isUnlocked) { handleSelect(topic.title, subtopic.title); setIsLessonFlowOpen(false); } else toast({ title: "Locked", description: "Complete previous lessons to unlock this one." }); }}
-                                  className={cn("flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition-all", isUnlocked ? "hover:border-primary/30 hover:bg-primary/[0.04]" : "cursor-not-allowed opacity-60", isActive ? "border-primary/35 bg-primary/[0.08]" : "border-border/50 bg-background")}
+                                  className={cn("flex w-full items-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-2 sm:py-3 text-left transition-all", isUnlocked ? "hover:border-primary/30 hover:bg-primary/[0.04]" : "cursor-not-allowed opacity-60", isActive ? "border-primary/35 bg-primary/[0.08]" : "border-border/50 bg-background")}
                                 >
-                                  <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold", isCompleted ? "bg-emerald-500 text-white" : isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
+                                  <span className={cn("flex h-6 w-6 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-[10px] sm:text-xs font-semibold", isCompleted ? "bg-emerald-500 text-white" : isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
                                     {isCompleted ? "✓" : subtopicIndex + 1}
                                   </span>
                                   <span className="min-w-0 flex-1">
-                                    <span className="block truncate text-sm font-medium text-foreground">{subtopic.title}</span>
-                                    <span className="mt-1 block text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">{isCompleted ? "Completed" : isActive ? "Current lesson" : isUnlocked ? "Available now" : "Locked"}</span>
+                                    <span className="block truncate text-xs sm:text-sm font-medium text-foreground">{subtopic.title}</span>
+                                    <span className="mt-0.5 sm:mt-1 block text-[9px] sm:text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">{isCompleted ? "Completed" : isActive ? "Current lesson" : isUnlocked ? "Available now" : "Locked"}</span>
                                   </span>
                                 </button>
                               );
@@ -1564,158 +1559,158 @@ Requirements:
       />
       <QuizLoadingPopup isOpen={isQuizLoading} topic={mainTopic} />
 
-      {/* ── HEADER ── */}
-      <header className="border-b border-border/40 py-2 px-3 md:px-4 flex justify-between items-center sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
-        <div className="flex items-center gap-2 md:gap-4 shrink min-w-0">
+      {/* Header - Responsive */}
+      <header className="border-b border-border/40 py-1.5 sm:py-2 px-2 sm:px-3 md:px-4 flex justify-between items-center sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
+        <div className="flex items-center gap-1.5 sm:gap-2 md:gap-4 shrink min-w-0">
           <Drawer>
             <DrawerTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden flex-shrink-0"><Menu className="h-5 w-5" /></Button>
+              <Button variant="ghost" size="icon" className="md:hidden flex-shrink-0 h-8 w-8 sm:h-9 sm:w-9"><Menu className="h-4 w-4 sm:h-5 sm:w-5" /></Button>
             </DrawerTrigger>
             <DrawerContent className="max-h-[85vh]">
-              <div className="p-4">
-                <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-background via-background to-muted/60 p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
+              <div className="p-3 sm:p-4">
+                <div className="rounded-2xl sm:rounded-3xl border border-border/60 bg-gradient-to-br from-background via-background to-muted/60 p-3 sm:p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-2 sm:gap-3">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">Course Navigation</p>
-                      <h2 className="mt-2 text-lg font-semibold">Course Content</h2>
-                      <p className="mt-1 text-sm text-muted-foreground">{completedLessonCount}/{orderedLessons.length} lessons completed</p>
+                      <p className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">Course Navigation</p>
+                      <h2 className="mt-1 sm:mt-2 text-base sm:text-lg font-semibold">Course Content</h2>
+                      <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-muted-foreground">{completedLessonCount}/{orderedLessons.length} lessons completed</p>
                     </div>
-                    <div className="rounded-2xl bg-primary/10 px-3 py-2 text-right text-primary flex-shrink-0">
-                      <div className="text-lg font-semibold leading-none">{percentage}%</div>
-                      <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary/70">Progress</div>
+                    <div className="rounded-xl sm:rounded-2xl bg-primary/10 px-2 sm:px-3 py-1.5 sm:py-2 text-right text-primary flex-shrink-0">
+                      <div className="text-base sm:text-lg font-semibold leading-none">{percentage}%</div>
+                      <div className="mt-0.5 sm:mt-1 text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.22em] text-primary/70">Progress</div>
                     </div>
                   </div>
                 </div>
-                <ScrollArea className="h-[60vh]">
-                  <div className="pr-2 pt-4">
+                <ScrollArea className="h-[55vh] sm:h-[60vh]">
+                  <div className="pr-1 sm:pr-2 pt-3 sm:pt-4">
                     {courseTopics.length > 0 && renderTopicsList(courseTopics)}
                     <button type="button" onClick={redirectExam} disabled={quizLockedByCourseProgress || isQuizLoading}
-                      className={cn("mt-4 flex w-full items-center justify-between rounded-2xl border border-border/60 bg-background px-4 py-3 text-left transition-colors", quizLockedByCourseProgress || isQuizLoading ? "cursor-not-allowed opacity-60" : "hover:bg-muted/60")}
+                      className={cn("mt-3 sm:mt-4 flex w-full items-center justify-between rounded-xl sm:rounded-2xl border border-border/60 bg-background px-3 sm:px-4 py-2.5 sm:py-3 text-left transition-colors", quizLockedByCourseProgress || isQuizLoading ? "cursor-not-allowed opacity-60" : "hover:bg-muted/60")}
                     >
                       <span>
-                        <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Final Assessment</span>
-                        <span className="mt-1 block text-sm font-semibold text-foreground">{mainTopic} Quiz</span>
-                        {quizLockedByCourseProgress && <span className="mt-1 block text-xs text-muted-foreground">Complete every lesson to unlock the quiz</span>}
+                        <span className="block text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Final Assessment</span>
+                        <span className="mt-0.5 sm:mt-1 block text-xs sm:text-sm font-semibold text-foreground">{mainTopic} Quiz</span>
+                        {quizLockedByCourseProgress && <span className="mt-0.5 sm:mt-1 block text-[10px] sm:text-xs text-muted-foreground">Complete every lesson to unlock the quiz</span>}
                       </span>
-                      {isQuizLoading ? <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" /> : quizLockedByCourseProgress ? <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" /> : isQuizPassed === true ? <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" /> : <BookOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+                      {isQuizLoading ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin text-primary flex-shrink-0" /> : quizLockedByCourseProgress ? <Lock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" /> : isQuizPassed === true ? <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-primary flex-shrink-0" /> : <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />}
                     </button>
                   </div>
                 </ScrollArea>
               </div>
             </DrawerContent>
           </Drawer>
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             {!isOrgAdmin && (
-              <div className="relative w-8 h-8 flex-shrink-0">
-                <svg className="w-8 h-8" viewBox="0 0 36 36">
+              <div className="relative w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 flex-shrink-0">
+                <svg className="w-full h-full" viewBox="0 0 36 36">
                   <circle cx="18" cy="18" r="16" fill="none" className="stroke-muted-foreground/20" strokeWidth="2" />
                   <circle cx="18" cy="18" r="16" fill="none" className="stroke-primary" strokeWidth="2" strokeDasharray="100" strokeDashoffset={100 - percentage} transform="rotate(-90 18 18)" />
-                  <text x="18" y="18" dominantBaseline="middle" textAnchor="middle" className="fill-foreground text-[10px] font-medium">{percentage}%</text>
+                  <text x="18" y="18" dominantBaseline="middle" textAnchor="middle" className="fill-foreground text-[8px] sm:text-[9px] md:text-[10px] font-medium">{percentage}%</text>
                 </svg>
               </div>
             )}
-            <h1 className="text-base sm:text-lg md:text-xl font-bold truncate max-w-[130px] xs:max-w-[160px] sm:max-w-[220px] md:max-w-none">{mainTopic}</h1>
+            <h1 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold truncate max-w-[120px] xs:max-w-[160px] sm:max-w-[220px] md:max-w-[280px] lg:max-w-none">{mainTopic}</h1>
           </div>
         </div>
         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(!isMenuOpen)} className="hidden md:flex"><Menu className="h-5 w-5" /></Button>
-          <div className="hidden sm:flex items-center gap-1">
-            <Button variant="ghost" size="sm" asChild><Link to="/dashboard"><Home className="h-4 w-4 mr-1" /> Home</Link></Button>
+          <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(!isMenuOpen)} className="hidden md:flex h-8 w-8 lg:h-9 lg:w-9"><Menu className="h-4 w-4 lg:h-5 lg:w-5" /></Button>
+          <div className="hidden sm:flex items-center gap-0.5 sm:gap-1">
+            <Button variant="ghost" size="sm" asChild className="text-xs sm:text-sm px-2 sm:px-3"><Link to="/dashboard"><Home className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" /> Home</Link></Button>
             {(plan !== "free" || isOrgAdmin || userRole === "student") && isQuizPassed && (
               <Button onClick={certificateCheck} variant="default" size="sm"
-                className={cn("shadow-none", userRole === "student" || !!sessionStorage.getItem("orgId") ? "bg-yellow-600 hover:bg-yellow-700 text-white border-none" : "bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20")}
+                className={cn("shadow-none text-xs sm:text-sm px-2 sm:px-3", userRole === "student" || !!sessionStorage.getItem("orgId") ? "bg-yellow-600 hover:bg-yellow-700 text-white border-none" : "bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20")}
               >
-                <Award className="h-4 w-4 mr-1" />
+                <Award className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
                 <span className="hidden lg:inline">Download Certificate</span>
                 <span className="lg:hidden">Certificate</span>
               </Button>
             )}
             <ShareOnSocial textToShare={sessionStorage.getItem("mName") + " shared you course on " + mainTopic} link={websiteURL + "/shareable?id=" + courseId} linkTitle={sessionStorage.getItem("mName") + " shared you course on " + mainTopic} linkMetaDesc={sessionStorage.getItem("mName") + " shared you course on " + mainTopic} linkFavicon={appLogo} noReferer>
-              <Button variant="ghost" size="sm" asChild><span className="cursor-pointer"><Share className="h-4 w-4 mr-1" /><span className="hidden lg:inline">Share</span></span></Button>
+              <Button variant="ghost" size="sm" asChild><span className="cursor-pointer text-xs sm:text-sm px-2 sm:px-3"><Share className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" /><span className="hidden lg:inline">Share</span></span></Button>
             </ShareOnSocial>
           </div>
         </div>
       </header>
 
-      {/* ── BODY ── */}
+      {/* Body - Responsive */}
       <div className="flex flex-1 overflow-visible md:overflow-hidden">
         {/* Desktop sidebar */}
         <div className={cn("hidden overflow-hidden border-r border-border/40 bg-gradient-to-b from-slate-50 via-background to-background transition-all duration-300 dark:from-slate-950/30 md:block", isMenuOpen ? "w-72 lg:w-[22rem]" : "w-0")}>
           <ScrollArea className="h-full">
-            <div className="p-4">
-              <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-background via-background to-muted/60 p-4 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
+            <div className="p-3 sm:p-4">
+              <div className="rounded-2xl sm:rounded-3xl border border-border/60 bg-gradient-to-br from-background via-background to-muted/60 p-3 sm:p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-2 sm:gap-3">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">Course Navigation</p>
-                    <h2 className="mt-2 text-lg font-semibold">Course Content</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">{completedLessonCount}/{orderedLessons.length} lessons completed</p>
+                    <p className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">Course Navigation</p>
+                    <h2 className="mt-1 sm:mt-2 text-base sm:text-lg font-semibold">Course Content</h2>
+                    <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-muted-foreground">{completedLessonCount}/{orderedLessons.length} lessons completed</p>
                   </div>
-                  <div className="rounded-2xl bg-primary/10 px-3 py-2 text-right text-primary flex-shrink-0">
-                    <div className="text-lg font-semibold leading-none">{percentage}%</div>
-                    <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary/70">Progress</div>
+                  <div className="rounded-xl sm:rounded-2xl bg-primary/10 px-2 sm:px-3 py-1.5 sm:py-2 text-right text-primary flex-shrink-0">
+                    <div className="text-base sm:text-lg font-semibold leading-none">{percentage}%</div>
+                    <div className="mt-0.5 sm:mt-1 text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.22em] text-primary/70">Progress</div>
                   </div>
                 </div>
               </div>
-              <div className="mt-4">{courseTopics.length > 0 && renderTopicsList(courseTopics)}</div>
+              <div className="mt-3 sm:mt-4">{courseTopics.length > 0 && renderTopicsList(courseTopics)}</div>
               <button type="button" onClick={redirectExam} disabled={quizLockedByCourseProgress || isQuizLoading}
-                className={cn("mt-4 flex w-full items-center justify-between rounded-2xl border border-border/60 bg-background px-4 py-3 text-left transition-colors", quizLockedByCourseProgress || isQuizLoading ? "cursor-not-allowed opacity-60" : "hover:bg-muted/60")}
+                className={cn("mt-3 sm:mt-4 flex w-full items-center justify-between rounded-xl sm:rounded-2xl border border-border/60 bg-background px-3 sm:px-4 py-2.5 sm:py-3 text-left transition-colors", quizLockedByCourseProgress || isQuizLoading ? "cursor-not-allowed opacity-60" : "hover:bg-muted/60")}
               >
                 <span>
-                  <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Final Assessment</span>
-                  <span className="mt-1 block text-sm font-semibold text-foreground">{mainTopic} Quiz</span>
-                  {quizLockedByCourseProgress && <span className="mt-1 block text-xs text-muted-foreground">Complete every lesson to unlock the quiz</span>}
+                  <span className="block text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Final Assessment</span>
+                  <span className="mt-0.5 sm:mt-1 block text-xs sm:text-sm font-semibold text-foreground">{mainTopic} Quiz</span>
+                  {quizLockedByCourseProgress && <span className="mt-0.5 sm:mt-1 block text-[10px] sm:text-xs text-muted-foreground">Complete every lesson to unlock the quiz</span>}
                 </span>
-                {isQuizLoading ? <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" /> : quizLockedByCourseProgress ? <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" /> : isQuizPassed === true ? <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" /> : <BookOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+                {isQuizLoading ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin text-primary flex-shrink-0" /> : quizLockedByCourseProgress ? <Lock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" /> : isQuizPassed === true ? <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-primary flex-shrink-0" /> : <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />}
               </button>
             </div>
           </ScrollArea>
         </div>
 
-        {/* ── MAIN CONTENT ── */}
+        {/* Main Content */}
         <div className="min-h-0 flex-1 overflow-visible md:overflow-hidden">
           <ScrollArea className="h-auto md:h-full" viewportRef={mainContentRef}>
-            <main className="mx-auto max-w-6xl p-3 pb-36 sm:p-4 sm:pb-36 md:p-6 md:pb-10">
+            <main className="mx-auto max-w-6xl p-2 sm:p-3 md:p-4 lg:p-6 pb-24 sm:pb-32 md:pb-10">
               {isLoading ? <CourseContentSkeleton /> : (
                 <>
-                  {/* Hero banner */}
-                  <div className="mb-4 md:mb-6 overflow-hidden rounded-[20px] md:rounded-[30px] border border-slate-800/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/80 p-3 sm:p-4 md:p-6 text-white shadow-xl">
-                    <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                  {/* Hero banner - Responsive */}
+                  <div className="mb-3 sm:mb-4 md:mb-6 overflow-hidden rounded-2xl sm:rounded-[20px] md:rounded-[30px] border border-slate-800/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/80 p-3 sm:p-4 md:p-6 text-white shadow-xl">
+                    <div className="flex flex-col gap-3 sm:gap-4 xl:flex-row xl:items-end xl:justify-between">
                       <div className="max-w-3xl">
-                        <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.26em] text-white/80 backdrop-blur">
+                        <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.26em] text-white/80 backdrop-blur">
                           {currentLesson ? `Chapter ${currentLesson.topicIndex + 1}` : "Lesson overview"}
                         </span>
-                        <h1 className="mt-3 break-words text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold leading-tight">{selected}</h1>
-                        <p className="mt-2 md:mt-3 text-xs sm:text-sm leading-6 text-white/75">
+                        <h1 className="mt-2 sm:mt-3 break-words text-base sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-semibold leading-tight">{selected}</h1>
+                        <p className="mt-1.5 sm:mt-2 md:mt-3 text-xs sm:text-sm leading-5 sm:leading-6 text-white/75">
                           {currentTopicTitle && `Inside ${currentTopicTitle}. `}{currentLesson ? `Lesson ${currentLessonIndex + 1} of ${orderedLessons.length}. ` : ""}Continue through the roadmap below or jump directly from the side menu.
                         </p>
                       </div>
-                      <div className="grid grid-cols-2 gap-2 sm:gap-2 xl:w-auto xl:min-w-[320px]">
-                        <div className="rounded-xl border border-white/12 bg-white/10 px-3 py-2 md:px-4 md:py-3 backdrop-blur">
-                          <div className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">Current Chapter</div>
-                          <div className="mt-1.5 text-sm sm:text-base md:text-lg font-semibold leading-tight">{currentTopic ? `${currentLesson?.topicIndex + 1}. ${currentTopic.title}` : "Course lesson"}</div>
-                          <div className="mt-1 text-[10px] sm:text-xs text-white/65">{currentTopicCompletedCount}/{currentTopic?.subtopics?.length || 0} lessons done</div>
+                      <div className="grid grid-cols-2 gap-1.5 sm:gap-2 xl:w-auto xl:min-w-[320px]">
+                        <div className="rounded-lg sm:rounded-xl border border-white/12 bg-white/10 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 backdrop-blur">
+                          <div className="text-[8px] sm:text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">Current Chapter</div>
+                          <div className="mt-1 text-xs sm:text-sm md:text-base lg:text-lg font-semibold leading-tight">{currentTopic ? `${currentLesson?.topicIndex + 1}. ${currentTopic.title}` : "Course lesson"}</div>
+                          <div className="mt-0.5 sm:mt-1 text-[8px] sm:text-[10px] md:text-xs text-white/65">{currentTopicCompletedCount}/{currentTopic?.subtopics?.length || 0} lessons done</div>
                         </div>
-                        <div className="rounded-xl border border-white/12 bg-white/10 px-3 py-2 md:px-4 md:py-3 backdrop-blur">
-                          <div className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">Up Next</div>
-                          <div className="mt-1.5 text-xs sm:text-sm font-semibold leading-5">{nextLesson ? nextLesson.subtopicTitle : "Final quiz after completion"}</div>
-                          <div className="mt-1 text-[10px] sm:text-xs text-white/65">{nextLesson ? nextLesson.topicTitle : `${mainTopic} quiz`}</div>
+                        <div className="rounded-lg sm:rounded-xl border border-white/12 bg-white/10 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 backdrop-blur">
+                          <div className="text-[8px] sm:text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">Up Next</div>
+                          <div className="mt-1 text-[10px] sm:text-xs md:text-sm font-semibold leading-4 sm:leading-5">{nextLesson ? nextLesson.subtopicTitle : "Final quiz after completion"}</div>
+                          <div className="mt-0.5 sm:mt-1 text-[8px] sm:text-[10px] md:text-xs text-white/65">{nextLesson ? nextLesson.topicTitle : `${mainTopic} quiz`}</div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Content profile badge */}
-                  <div className={`mb-4 md:mb-6 rounded-2xl border p-3 sm:p-4 ${contentProfileMeta.surfaceClass}`}>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${contentProfileMeta.badgeClass}`}>
-                            <ContentProfileIcon className="mr-1.5 h-3.5 w-3.5" />{contentProfileMeta.label}
+                  {/* Content profile badge - Responsive */}
+                  <div className={`mb-3 sm:mb-4 md:mb-6 rounded-xl sm:rounded-2xl border p-2 sm:p-3 md:p-4 ${contentProfileMeta.surfaceClass}`}>
+                    <div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                          <span className={`inline-flex items-center rounded-full px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold ${contentProfileMeta.badgeClass}`}>
+                            <ContentProfileIcon className="mr-1 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />{contentProfileMeta.label}
                           </span>
-                          <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">{type === "video & text course" ? "Video + Text" : "Text + Images"}</span>
-                          <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">{lang}</span>
+                          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">{type === "video & text course" ? "Video + Text" : "Text + Images"}</span>
+                          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">{lang}</span>
                         </div>
-                        <p className="text-sm text-muted-foreground">{contentProfileMeta.summary}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">{contentProfileMeta.summary}</p>
                       </div>
                     </div>
                   </div>
@@ -1723,68 +1718,68 @@ Requirements:
                   {!isMobile && examRulesSection}
                   {!isMobile && roadmapSection}
 
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {/* Theory text */}
                     {theory && (
-                      <div className="rounded-[20px] md:rounded-[28px] border border-border/60 bg-background p-3 sm:p-5 md:p-7 shadow-sm">
+                      <div className="rounded-2xl sm:rounded-[20px] md:rounded-[28px] border border-border/60 bg-background p-3 sm:p-4 md:p-5 lg:p-7 shadow-sm">
                         <StyledText text={theory} />
                       </div>
                     )}
 
-                    {/* Learning note */}
-                    <div className="rounded-[20px] border border-primary/20 bg-primary/5 p-3 sm:p-4 text-primary shadow-sm">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80">Learning Note</p>
-                      <p className="mt-2 text-sm leading-6">{lessonAlertMessage}</p>
+                    {/* Learning note - Responsive */}
+                    <div className="rounded-xl sm:rounded-[20px] border border-primary/20 bg-primary/5 p-2.5 sm:p-3 md:p-4 text-primary shadow-sm">
+                      <p className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80">Learning Note</p>
+                      <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm leading-5 sm:leading-6">{lessonAlertMessage}</p>
                     </div>
 
                     {isMobile && examRulesSection}
                     {isMobile && roadmapSection}
 
-                    {/* Lesson actions — students */}
+                    {/* Lesson actions - Responsive */}
                     {!isOrgAdmin && (
-                      <div className="mt-6 md:mt-8 rounded-[20px] md:rounded-[24px] border border-border/60 bg-background p-3 sm:p-4 shadow-sm">
-                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div className="mt-4 sm:mt-6 md:mt-8 rounded-xl sm:rounded-[20px] md:rounded-[24px] border border-border/60 bg-background p-2.5 sm:p-3 md:p-4 shadow-sm">
+                        <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
                           <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Lesson Actions</p>
-                            <p className="mt-2 text-sm text-muted-foreground">
+                            <p className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Lesson Actions</p>
+                            <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-muted-foreground">
                               {currentLessonCompleted ? nextLesson ? "This lesson is complete. You can move to the next lesson now." : "All lessons are complete. The final quiz is now available." : "Mark this lesson as complete to unlock the next part of the course."}
                             </p>
                           </div>
-                          <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-row sm:gap-2 sm:flex-shrink-0">
-                            <Button variant="outline" onClick={handlePreviousLesson} disabled={!previousLesson} className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3">
-                              <ArrowLeft className="h-4 w-4 flex-shrink-0" /><span>Prev</span>
+                          <div className="grid grid-cols-3 gap-1.5 sm:gap-2 sm:flex sm:flex-row sm:gap-2 sm:flex-shrink-0">
+                            <Button variant="outline" onClick={handlePreviousLesson} disabled={!previousLesson} className="gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">
+                              <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" /><span>Prev</span>
                             </Button>
-                            <Button variant={currentLessonCompleted ? "secondary" : "default"} onClick={handleMarkAsComplete} disabled={currentLessonCompleted} className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3">
-                              <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                            <Button variant={currentLessonCompleted ? "secondary" : "default"} onClick={handleMarkAsComplete} disabled={currentLessonCompleted} className="gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">
+                              <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                               <span className="hidden xs:inline">{currentLessonCompleted ? "Completed" : "Complete"}</span>
                               <span className="xs:hidden">{currentLessonCompleted ? "✓" : "Done"}</span>
                             </Button>
-                            <Button onClick={handleNextLesson} disabled={(!!nextLesson && !currentLessonCompleted) || isQuizLoading} className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3">
+                            <Button onClick={handleNextLesson} disabled={(!!nextLesson && !currentLessonCompleted) || isQuizLoading} className="gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">
                               {isQuizLoading ? "Loading..." : nextLesson ? "Next" : "Quiz"}
-                              {isQuizLoading ? <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" /> : <ArrowRight className="h-4 w-4 flex-shrink-0" />}
+                              {isQuizLoading ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin flex-shrink-0" /> : <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />}
                             </Button>
                           </div>
                         </div>
                       </div>
                     )}
 
-                    {/* Lesson actions — org admin */}
+                    {/* Lesson actions - org admin */}
                     {isOrgAdmin && (
-                      <div className="mt-8 rounded-[24px] border border-border/60 bg-background p-4 shadow-sm">
-                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div className="mt-4 sm:mt-6 md:mt-8 rounded-xl sm:rounded-[20px] md:rounded-[24px] border border-border/60 bg-background p-2.5 sm:p-3 md:p-4 shadow-sm">
+                        <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
                           <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Review Actions</p>
-                            <p className="mt-2 text-sm text-muted-foreground">
+                            <p className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Review Actions</p>
+                            <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-muted-foreground">
                               {nextLesson ? "You are reviewing this course. Continue to the next lesson to complete the review." : "You have reached the end of the lessons. Complete the final quiz to send this course for approval."}
                             </p>
                           </div>
-                          <div className="flex flex-col gap-3 sm:flex-row">
-                            <Button variant="outline" onClick={handlePreviousLesson} disabled={!previousLesson} className="gap-2">
-                              <ArrowLeft className="h-4 w-4" />Previous
+                          <div className="flex flex-col gap-2 sm:flex-row">
+                            <Button variant="outline" onClick={handlePreviousLesson} disabled={!previousLesson} className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2">
+                              <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />Previous
                             </Button>
-                            <Button onClick={handleNextLessonWithDelay} disabled={isQuizLoading || isButtonDisabled} className="gap-2">
+                            <Button onClick={handleNextLessonWithDelay} disabled={isQuizLoading || isButtonDisabled} className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2">
                               {isQuizLoading ? 'Preparing Quiz...' : isButtonDisabled ? `Wait ${formatTime(remainingSeconds)}` : nextLesson ? 'Continue Review' : 'Take Review Quiz'}
-                              {isQuizLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                              {isQuizLoading ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />}
                             </Button>
                           </div>
                         </div>
@@ -1798,104 +1793,104 @@ Requirements:
         </div>
       </div>
 
-      {/* ── MOBILE BOTTOM NAV ── */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-2 flex justify-around items-center z-40 safe-area-pb">
-        <Button variant="ghost" size="sm" asChild><Link to="/dashboard"><Home className="h-5 w-5" /></Link></Button>
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-1.5 sm:p-2 flex justify-around items-center z-40 safe-area-pb">
+        <Button variant="ghost" size="sm" asChild className="h-8 w-8 sm:h-9 sm:w-9 p-0"><Link to="/dashboard"><Home className="h-4 w-4 sm:h-5 sm:w-5" /></Link></Button>
         {(plan !== "free" || isOrgAdmin || userRole === "student") && isQuizPassed && (
-          <Button onClick={certificateCheck} variant="ghost" size="sm" className={cn("font-bold", userRole === "student" || !!sessionStorage.getItem("orgId") ? "text-yellow-600" : "text-primary")}>
-            <Award className="h-5 w-5" />
+          <Button onClick={certificateCheck} variant="ghost" size="sm" className={cn("h-8 w-8 sm:h-9 sm:w-9 p-0 font-bold", userRole === "student" || !!sessionStorage.getItem("orgId") ? "text-yellow-600" : "text-primary")}>
+            <Award className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
         )}
-        <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm"><Download className="h-5 w-5" /></Button>
+        <Button onClick={htmlDownload} disabled={exporting} variant="ghost" size="sm" className="h-8 w-8 sm:h-9 sm:w-9 p-0"><Download className="h-4 w-4 sm:h-5 sm:w-5" /></Button>
         <ShareOnSocial textToShare={sessionStorage.getItem("mName") + " shared you course on " + mainTopic} link={websiteURL + "/shareable?id=" + courseId} linkTitle={sessionStorage.getItem("mName") + " shared you course on " + mainTopic} linkMetaDesc={sessionStorage.getItem("mName") + " shared you course on " + mainTopic} linkFavicon={appLogo} noReferer>
-          <Button variant="ghost" size="sm"><Share className="h-5 w-5" /></Button>
+          <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-9 sm:w-9 p-0"><Share className="h-4 w-4 sm:h-5 sm:w-5" /></Button>
         </ShareOnSocial>
       </div>
 
-      {/* ── FLOATING ACTION BUTTONS ── */}
-      <div className="fixed bottom-20 right-3 z-40 flex flex-col gap-2 md:bottom-6 md:right-6">
-        <Button size="icon" className="rounded-full bg-primary shadow-lg hover:shadow-xl h-10 w-10 md:h-11 md:w-11" onClick={() => setIsChatOpen(true)}>
-          <MessageCircle className="h-4 w-4 md:h-5 md:w-5" />
+      {/* Floating Action Buttons - Responsive */}
+      <div className="fixed bottom-16 sm:bottom-20 right-2 sm:right-3 z-40 flex flex-col gap-2 md:bottom-6 md:right-6">
+        <Button size="icon" className="rounded-full bg-primary shadow-lg hover:shadow-xl h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-11 lg:w-11" onClick={() => setIsChatOpen(true)}>
+          <MessageCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
         </Button>
-        <Button size="icon" className="rounded-full bg-primary shadow-lg hover:shadow-xl h-10 w-10 md:h-11 md:w-11" onClick={() => setIsNotesOpen(true)}>
-          <ClipboardCheck className="h-4 w-4 md:h-5 md:w-5" />
+        <Button size="icon" className="rounded-full bg-primary shadow-lg hover:shadow-xl h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-11 lg:w-11" onClick={() => setIsNotesOpen(true)}>
+          <ClipboardCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
         </Button>
       </div>
 
-      {/* ── CHAT ── */}
+      {/* Chat Dialog - Responsive */}
       {isMobile ? (
         <Sheet open={isChatOpen} onOpenChange={setIsChatOpen}>
-          <SheetContent side="bottom" className="h-[90dvh] max-w-full p-0">
+          <SheetContent side="bottom" className="h-[85dvh] sm:h-[90dvh] max-w-full p-0 rounded-t-2xl">
             <div className="flex flex-col h-full">
-              <div className="flex items-center justify-between p-4 border-b border-border">
-                <h2 className="text-base font-semibold">Course Assistant</h2>
-                <Button variant="ghost" size="icon" onClick={() => setIsChatOpen(false)} className="h-8 w-8"><X className="h-4 w-4" /></Button>
+              <div className="flex items-center justify-between p-3 sm:p-4 border-b border-border">
+                <h2 className="text-sm sm:text-base font-semibold">Course Assistant</h2>
+                <Button variant="ghost" size="icon" onClick={() => setIsChatOpen(false)} className="h-7 w-7 sm:h-8 sm:w-8"><X className="h-3.5 w-3.5 sm:h-4 sm:w-4" /></Button>
               </div>
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4 pb-2">
+              <ScrollArea className="flex-1 p-3 sm:p-4">
+                <div className="space-y-3 sm:space-y-4 pb-2">
                   {messages.map((message) => (
-                    <div key={message.id} className={cn("flex flex-col gap-2 rounded-2xl px-3 py-2 text-sm break-words", message.sender === "user" ? "ml-auto bg-primary text-primary-foreground max-w-[85%]" : "bg-muted max-w-[85%]")}>
+                    <div key={message.id} className={cn("flex flex-col gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm break-words", message.sender === "user" ? "ml-auto bg-primary text-primary-foreground max-w-[85%]" : "bg-muted max-w-[85%]")}>
                       <StyledText text={message.text} />
                     </div>
                   ))}
                 </div>
               </ScrollArea>
-              <div className="flex items-center gap-2 p-4 border-t border-border">
-                <Input placeholder={isChatLoading ? "Assistant is thinking..." : "Type your message..."} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} disabled={isChatLoading} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} className="flex-1 text-sm" />
-                <Button onClick={sendMessage} disabled={isChatLoading} size="sm">{isChatLoading ? "..." : "Send"}</Button>
+              <div className="flex items-center gap-2 p-3 sm:p-4 border-t border-border">
+                <Input placeholder={isChatLoading ? "Assistant is thinking..." : "Type your message..."} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} disabled={isChatLoading} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} className="flex-1 text-xs sm:text-sm h-9 sm:h-10" />
+                <Button onClick={sendMessage} disabled={isChatLoading} size="sm" className="h-9 sm:h-10 text-xs sm:text-sm">{isChatLoading ? "..." : "Send"}</Button>
               </div>
             </div>
           </SheetContent>
         </Sheet>
       ) : (
         <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
-          <DialogContent className="sm:max-w-md w-[calc(100vw-2rem)] max-h-[80vh]">
-            <DialogTitle>Course Assistant</DialogTitle>
+          <DialogContent className="sm:max-w-md w-[calc(100vw-2rem)] max-h-[80vh] rounded-2xl">
+            <DialogTitle className="text-base sm:text-lg">Course Assistant</DialogTitle>
             <div className="flex flex-col h-[50vh] sm:h-[60vh]">
               <ScrollArea className="flex-1 pr-4 mb-4">
-                <div className="space-y-4 pt-2">
+                <div className="space-y-3 sm:space-y-4 pt-2">
                   {messages.map((message) => (
-                    <div key={message.id} className={cn("flex flex-col gap-2 rounded-lg px-3 py-2 text-sm break-words", message.sender === "user" ? "ml-auto bg-primary text-primary-foreground max-w-[80%]" : "bg-muted max-w-[80%]")}>
+                    <div key={message.id} className={cn("flex flex-col gap-1.5 sm:gap-2 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm break-words", message.sender === "user" ? "ml-auto bg-primary text-primary-foreground max-w-[80%]" : "bg-muted max-w-[80%]")}>
                       <StyledText text={message.text} />
                     </div>
                   ))}
                 </div>
               </ScrollArea>
               <div className="flex items-center gap-2">
-                <Input placeholder={isChatLoading ? "Assistant is thinking..." : "Type your message..."} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} disabled={isChatLoading} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} className="flex-1" />
-                <Button onClick={sendMessage} disabled={isChatLoading}>{isChatLoading ? "..." : "Send"}</Button>
+                <Input placeholder={isChatLoading ? "Assistant is thinking..." : "Type your message..."} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} disabled={isChatLoading} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} className="flex-1 text-sm" />
+                <Button onClick={sendMessage} disabled={isChatLoading} size="sm">{isChatLoading ? "..." : "Send"}</Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
       )}
 
-      {/* ── NOTES ── */}
+      {/* Notes Dialog - Responsive */}
       {isMobile ? (
         <Sheet open={isNotesOpen} onOpenChange={setIsNotesOpen}>
-          <SheetContent side="bottom" className="h-[90dvh] sm:max-w-full p-0">
+          <SheetContent side="bottom" className="h-[85dvh] sm:h-[90dvh] sm:max-w-full p-0 rounded-t-2xl">
             <div className="flex flex-col h-full">
-              <div className="py-3 px-4 border-b border-border"><h2 className="text-base font-semibold">Course Notes</h2></div>
-              <ScrollArea className="flex-1 px-4">
-                <div className="pt-3 pb-2">
-                  <MinimalTiptapEditor value={value} onChange={setValue} className="w-full" editorContentClassName="p-4" output="html" placeholder="No notes yet. Start taking notes for this course." autofocus={true} editable={true} editorClassName="focus:outline-none min-h-[200px]" />
+              <div className="py-2.5 sm:py-3 px-3 sm:px-4 border-b border-border"><h2 className="text-sm sm:text-base font-semibold">Course Notes</h2></div>
+              <ScrollArea className="flex-1 px-3 sm:px-4">
+                <div className="pt-2 sm:pt-3 pb-2">
+                  <MinimalTiptapEditor value={value} onChange={setValue} className="w-full" editorContentClassName="p-3 sm:p-4" output="html" placeholder="No notes yet. Start taking notes for this course." autofocus={true} editable={true} editorClassName="focus:outline-none min-h-[180px] sm:min-h-[200px] text-sm" />
                 </div>
               </ScrollArea>
-              <div className="p-3 border-t border-border"><div className="flex justify-end"><Button disabled={saving} onClick={handleSaveNote} size="sm">{saving ? "Saving..." : "Save Note"}</Button></div></div>
+              <div className="p-2.5 sm:p-3 border-t border-border"><div className="flex justify-end"><Button disabled={saving} onClick={handleSaveNote} size="sm" className="text-xs sm:text-sm">{saving ? "Saving..." : "Save Note"}</Button></div></div>
             </div>
           </SheetContent>
         </Sheet>
       ) : (
         <Dialog open={isNotesOpen} onOpenChange={setIsNotesOpen}>
-          <DialogContent className="sm:max-w-lg w-[calc(100vw-2rem)]">
-            <DialogTitle>Course Notes</DialogTitle>
-            <div className="flex flex-col h-[60vh]">
+          <DialogContent className="sm:max-w-lg w-[calc(100vw-2rem)] rounded-2xl">
+            <DialogTitle className="text-base sm:text-lg">Course Notes</DialogTitle>
+            <div className="flex flex-col h-[55vh] sm:h-[60vh]">
               <ScrollArea className="flex-1 pr-4 mb-4">
                 <div className="space-y-4 pt-2">
-                  <MinimalTiptapEditor value={value} onChange={setValue} className="w-full" editorContentClassName="p-5" output="html" placeholder="No notes yet. Start taking notes for this course." autofocus={true} editable={true} editorClassName="focus:outline-none" />
+                  <MinimalTiptapEditor value={value} onChange={setValue} className="w-full" editorContentClassName="p-4 sm:p-5" output="html" placeholder="No notes yet. Start taking notes for this course." autofocus={true} editable={true} editorClassName="focus:outline-none text-sm" />
                 </div>
               </ScrollArea>
-              <div className="flex justify-end"><Button disabled={saving} onClick={handleSaveNote}>{saving ? "Saving..." : "Save Note"}</Button></div>
+              <div className="flex justify-end"><Button disabled={saving} onClick={handleSaveNote} size="sm" className="text-xs sm:text-sm">{saving ? "Saving..." : "Save Note"}</Button></div>
             </div>
           </DialogContent>
         </Dialog>

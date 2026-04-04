@@ -78,13 +78,15 @@ const CareerMetricCard = ({
     value,
     hint,
     icon: Icon,
-    tone = 'default'
+    tone = 'default',
+    progress // Add this prop
 }: {
     label: string;
     value: string;
     hint: string;
     icon: React.ElementType;
     tone?: 'default' | 'success' | 'primary' | 'warning';
+    progress?: number; // 0-100 percentage
 }) => {
     const toneStyles = {
         default: 'border-border/60 bg-background',
@@ -93,10 +95,17 @@ const CareerMetricCard = ({
         warning: 'border-amber-200 bg-amber-50/70 dark:border-amber-900/60 dark:bg-amber-950/20'
     };
 
+    const progressColor = {
+        default: 'bg-muted',
+        success: 'bg-emerald-500',
+        primary: 'bg-primary',
+        warning: 'bg-amber-500'
+    };
+
     return (
         <div className={`rounded-2xl border p-4 text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${toneStyles[tone]}`}>
             <div className="flex items-start justify-between gap-3">
-                <div>
+                <div className="flex-1">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                         {label}
                     </p>
@@ -106,10 +115,27 @@ const CareerMetricCard = ({
                     <Icon className="h-5 w-5 text-primary" />
                 </div>
             </div>
+            
+            {/* Progress Bar */}
+            {progress !== undefined && (
+                <div className="mt-3">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                        <div 
+                            className={`h-full rounded-full transition-all duration-500 ${progressColor[tone]}`}
+                            style={{ width: `${progress}%` }}
+                        />
+                    </div>
+                    <p className="mt-1 text-right text-[10px] font-medium text-muted-foreground">
+                        {progress}% Complete
+                    </p>
+                </div>
+            )}
+            
             <p className="mt-2 text-xs text-muted-foreground">{hint}</p>
         </div>
     );
 };
+
 
 const heroPrimaryButtonClass = 'rounded-full border border-slate-900 bg-slate-950 text-white shadow-lg shadow-slate-300/40 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-800 dark:border-white dark:bg-white dark:text-slate-950 dark:shadow-slate-950/25 dark:hover:bg-slate-100';
 const heroSecondaryButtonClass = 'rounded-full border border-slate-300 bg-white/92 text-slate-950 shadow-lg shadow-slate-300/30 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white dark:border-white/25 dark:bg-white/10 dark:text-white dark:shadow-slate-950/20 dark:hover:bg-white/16';
@@ -522,29 +548,52 @@ const StudentCareer = () => {
         { label: 'LinkedIn Linked', done: !!profileForm.linkedinUrl, pts: 10 }
     ];
 
+    // const quickWins = [
+    //     {
+    //         label: 'Resume Signal',
+    //         value: hasResume ? 'Complete' : 'Missing',
+    //         hint: hasResume ? 'Resume proof is already present in your profile.' : 'Build this first for the biggest readiness gain.',
+    //         icon: FileText,
+    //         tone: (hasResume ? 'success' : 'warning') as const
+    //     },
+    //     {
+    //         label: 'Project Depth',
+    //         value: `${projects.length}/3`,
+    //         hint: projects.length >= 2 ? 'You already have solid proof-of-work depth.' : 'Aim for at least 2 projects with strong explanations.',
+    //         icon: FolderOpen,
+    //         tone: (projects.length >= 2 ? 'success' : 'primary') as const
+    //     },
+    //     {
+    //         label: 'Brand Presence',
+    //         value: `${linkedSignals}/5`,
+    //         hint: linkedSignals >= 4 ? 'Your external identity looks strong.' : 'Links, preferences, and skills still need work.',
+    //         icon: Globe,
+    //         tone: (linkedSignals >= 4 ? 'success' : 'default') as const
+    //     }
+    // ];
     const quickWins = [
-        {
-            label: 'Resume Signal',
-            value: hasResume ? 'Complete' : 'Missing',
-            hint: hasResume ? 'Resume proof is already present in your profile.' : 'Build this first for the biggest readiness gain.',
-            icon: FileText,
-            tone: (hasResume ? 'success' : 'warning') as const
-        },
-        {
-            label: 'Project Depth',
-            value: `${projects.length}/3`,
-            hint: projects.length >= 2 ? 'You already have solid proof-of-work depth.' : 'Aim for at least 2 projects with strong explanations.',
-            icon: FolderOpen,
-            tone: (projects.length >= 2 ? 'success' : 'primary') as const
-        },
-        {
-            label: 'Brand Presence',
-            value: `${linkedSignals}/5`,
-            hint: linkedSignals >= 4 ? 'Your external identity looks strong.' : 'Links, preferences, and skills still need work.',
-            icon: Globe,
-            tone: (linkedSignals >= 4 ? 'success' : 'default') as const
-        }
-    ];
+    {
+        label: 'Resume Signal',
+        value: hasResume ? 'Complete' : 'Missing',
+        hint: hasResume ? 'Resume proof is already present in your profile.' : 'Build this first for the biggest readiness gain.',
+        icon: FileText,
+        tone: hasResume ? 'success' : 'warning'  // Remove 'as const'
+    },
+    {
+        label: 'Project Depth',
+        value: `${projects.length}/3`,
+        hint: projects.length >= 2 ? 'You already have solid proof-of-work depth.' : 'Aim for at least 2 projects with strong explanations.',
+        icon: FolderOpen,
+        tone: projects.length >= 2 ? 'success' : 'primary'  // Remove 'as const'
+    },
+    {
+        label: 'Brand Presence',
+        value: `${linkedSignals}/5`,
+        hint: linkedSignals >= 4 ? 'Your external identity looks strong.' : 'Links, preferences, and skills still need work.',
+        icon: Globe,
+        tone: linkedSignals >= 4 ? 'success' : 'default'  // Remove 'as const'
+    }
+] as const;  // Keep this if you want the whole array readonly
 
     const actionQueue = [
         {
@@ -607,138 +656,260 @@ const StudentCareer = () => {
     };
 
     return (
-        <div className="space-y-5 animate-fade-in">
+       <div className="space-y-5 animate-fade-in pt-0 lg:pt-[70px]">
             <SEO
                 title="Career Hub | Student Portal"
                 description="Manage your career profile, showcase projects, and track your placement readiness."
             />
 
-            <section className="overflow-hidden rounded-[32px] border border-slate-200/80 bg-gradient-to-br from-white via-blue-50 to-indigo-100 text-slate-950 shadow-2xl dark:border-slate-800/30 dark:from-slate-950 dark:via-blue-950 dark:to-indigo-900 dark:text-white">
-                <div className="grid gap-5 px-5 py-6 lg:grid-cols-[1.3fr_0.82fr] lg:px-7">
-                    <div className="space-y-4">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Badge className="border-slate-300/70 bg-white/90 text-slate-800 shadow-sm hover:bg-white dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/10">
-                                <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Student Career Hub
-                            </Badge>
-                            <Badge className={`shadow-sm ${selectedCareerTheme.badgeClass}`}>
-                                <Layers3 className="mr-1.5 h-3.5 w-3.5" /> {selectedCareerTrack.title}
-                            </Badge>
-                            <Badge className="border-slate-300/70 bg-white/90 text-slate-800 shadow-sm hover:bg-white dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/10">
-                                <Target className="mr-1.5 h-3.5 w-3.5" /> {stageMeta.label}
-                            </Badge>
-                            {profileForm.isAvailableForPlacement && (
-                                <Badge className="border-emerald-300/70 bg-emerald-100 text-emerald-700 shadow-sm hover:bg-emerald-100 dark:border-emerald-300/20 dark:bg-emerald-400/15 dark:text-emerald-100 dark:hover:bg-emerald-400/15">
-                                    Open for opportunities
-                                </Badge>
-                            )}
-                        </div>
+          <section className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-blue-50/30 to-indigo-100/30 shadow-lg dark:border-slate-800/30 dark:from-slate-950 dark:via-blue-950/20 dark:to-indigo-900/20" >
+  {/* Decorative background elements - subtle */}
+  <div className="absolute inset-0 [background-image:linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] [background-size:24px_24px] dark:[background-image:linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] opacity-30" />
+  <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-400/5 blur-2xl" />
+  <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-indigo-400/5 blur-2xl" />
+  
+  <div className="relative px-5 py-5 md:px-6 lg:px-7">
+    {/* Header section with badges - compact */}
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-2.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
+          <Sparkles className="h-3 w-3" />
+          Student Hub
+        </div>
+        <div className="flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-0.5 text-[11px] font-medium text-slate-700 shadow-sm backdrop-blur-sm dark:bg-slate-800/80 dark:text-slate-200">
+          <Target className="h-3 w-3" />
+          {stageMeta.label}
+        </div>
+        {profileForm.isAvailableForPlacement && (
+          <div className="flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 shadow-sm dark:bg-emerald-500/20 dark:text-emerald-300">
+            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Open
+          </div>
+        )}
+      </div>
+      
+      <button
+        onClick={fetchCareerData}
+        className="flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 transition-all hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+      >
+        <RefreshCw className="h-3 w-3" />
+        Refresh
+      </button>
+    </div>
 
-                        <div className="space-y-3">
-                            <h1 className="max-w-3xl text-[1.85rem] font-bold leading-tight tracking-tight md:text-[2.45rem]">
-                                {studentName}, build career proof that moves you toward internships and placements.
-                            </h1>
-                            <p className="max-w-2xl text-sm leading-6 text-slate-700 dark:text-blue-100/85">
-                                This workspace is your student-side growth board. Use it to strengthen your profile, show real work, improve visibility, and close the gap between learning and career outcomes.
-                            </p>
-                        </div>
+    {/* Main content - 2 column layout with smaller spacing */}
+    <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
+      {/* Left column - Hero content */}
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <h1 className="text-xl font-bold leading-tight tracking-tight text-slate-900 md:text-2xl lg:text-2.5xl dark:text-white">
+            Hey {studentName}, build your{" "}
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              career proof
+            </span>
+          </h1>
+          <p className="text-xs leading-relaxed text-slate-600 md:text-sm dark:text-slate-300">
+            Strengthen your profile, showcase real work, and close the gap between learning and career success.
+          </p>
+        </div>
 
-                        <div className="grid gap-3 sm:grid-cols-3">
-                            <CareerMetricCard
-                                label="Readiness Score"
-                                value={`${score}/100`}
-                                hint={scoreGap > 0 ? `${scoreGap} points away from placement-ready range` : 'You are already in the placement-ready zone'}
-                                icon={TrendingUp}
-                                tone="primary"
-                            />
-                            <CareerMetricCard
-                                label="Profile Strength"
-                                value={`${profileStrength}%`}
-                                hint={`${linkedSignals} of 5 student profile signals completed`}
-                                icon={Layers3}
-                                tone={profileStrength >= 80 ? 'success' : 'default'}
-                            />
-                            <CareerMetricCard
-                                label="Portfolio Assets"
-                                value={`${projects.length + certifications.length}`}
-                                hint={`${projects.length} projects and ${certifications.length} certificates available`}
-                                icon={FolderOpen}
-                                tone={projects.length + certifications.length >= 3 ? 'success' : 'warning'}
-                            />
-                        </div>
+        {/* Metrics - Responsive grid with compact design and animations */}
+ <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+  
+  {/* Readiness Score Card */}
+  <div className="group rounded-xl border border-slate-200 bg-white/80 p-3 transition-all duration-300 hover:scale-105 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/50">
+    <div className="mb-2 flex items-center justify-between">
+      <div className="rounded-lg bg-blue-100 p-1.5 dark:bg-blue-500/20">
+        <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+      </div>
 
-                        <div className="flex flex-wrap gap-3">
-                            <Button
-                                variant="ghost"
-                                className={heroPrimaryButtonClass}
-                                onClick={fetchCareerData}
-                            >
-                                <RefreshCw className="mr-2 h-4 w-4" /> Refresh Career Signals
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                className={heroSecondaryButtonClass}
-                                onClick={() => window.open(`/portfolio/${studentId}`, '_blank')}
-                            >
-                                <Share2 className="mr-2 h-4 w-4" /> Open My Portfolio
-                            </Button>
-                        </div>
-                    </div>
+      <div className="relative">
+        <span className="text-xl font-bold text-slate-900 dark:text-white">
+          {score}/100
+        </span>
 
-                    <div className="grid gap-4">
-                        <div className={interactivePanelClass}>
-                            <div className="flex items-start justify-between gap-4">
-                                <div>
-                                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-blue-100/70">
-                                        Career Momentum
-                                    </p>
-                                    <p className={`mt-2 text-lg font-semibold ${stageMeta.tone}`}>{stageMeta.label}</p>
-                                    <p className="mt-2 text-sm text-slate-600 dark:text-blue-100/85">{stageMeta.subtitle}</p>
-                                </div>
-                                <Rocket className="h-5 w-5 text-slate-500 dark:text-blue-100/80" />
-                            </div>
-                            <div className="mt-4 space-y-2">
-                                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-blue-100/75">
-                                    <span>Career momentum</span>
-                                    <span>{score}%</span>
-                                </div>
-                                <Progress value={score} className="h-2 bg-slate-200 dark:bg-white/10" />
-                            </div>
-                        </div>
+        {/* Animated ring */}
+        <svg className="absolute -inset-1 h-full w-full">
+          <circle
+            cx="50%"
+            cy="50%"
+            r="20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="text-blue-500 opacity-20"
+          />
+        </svg>
+      </div>
+    </div>
 
-                        <div className={interactivePanelClass}>
-                            <div className="flex items-center justify-between gap-4">
-                                <div>
-                                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-blue-100/70">
-                                        Placement Visibility
-                                    </p>
-                                    <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
-                                        {profileForm.isAvailableForPlacement ? 'Visible for placement consideration' : 'Not yet marked open'}
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={handleAvailabilityToggle}
-                                    className={`relative h-7 w-12 rounded-full border transition-colors ${profileForm.isAvailableForPlacement ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300 bg-slate-200 dark:border-white/15 dark:bg-white/15'}`}
-                                >
-                                    <span className={`absolute top-1 left-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${profileForm.isAvailableForPlacement ? 'translate-x-5' : ''}`} />
-                                </button>
-                            </div>
-                            <p className="mt-3 text-xs leading-5 text-slate-600 dark:text-blue-100/75">
-                                Turn this on when your profile, resume, and projects are ready for review by your institution or placement team.
-                            </p>
-                            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                                <div className="rounded-2xl border border-slate-200/80 bg-white/80 px-3 py-2 dark:border-white/10 dark:bg-white/5">
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-blue-100/65">Track focus</p>
-                                    <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{selectedCareerTrack.title}</p>
-                                </div>
-                                <div className="rounded-2xl border border-slate-200/80 bg-white/80 px-3 py-2 dark:border-white/10 dark:bg-white/5">
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-blue-100/65">Skill gaps</p>
-                                    <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{missingSuggestedSkills.length} skills to close</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+    <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
+      Readiness Score
+    </p>
+
+    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+      <div
+        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-1000 ease-out animate-pulse"
+        style={{ width: `${score}%` }}
+      />
+    </div>
+
+    <p className="mt-1.5 text-[10px] text-slate-500 dark:text-slate-400 animate-pulse">
+      {scoreGap > 0 ? `${scoreGap} points to go` : 'Ready for placement! 🎉'}
+    </p>
+  </div>
+
+  {/* Profile Strength Card */}
+  <div className="group rounded-xl border border-slate-200 bg-white/80 p-3 transition-all duration-300 hover:scale-105 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/50">
+    <div className="mb-2 flex items-center justify-between">
+      <div className="rounded-lg bg-indigo-100 p-1.5 dark:bg-indigo-500/20">
+        <Layers3 className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+      </div>
+
+      <span className="text-xl font-bold text-slate-900 dark:text-white">
+        {profileStrength}%
+      </span>
+    </div>
+
+    <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
+      Profile Strength
+    </p>
+
+    <div className="mt-1.5 flex gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div
+          key={i}
+          className={`h-1 w-4 rounded-full transition-all duration-500 ${
+            i < linkedSignals
+              ? 'bg-indigo-500 scale-110'
+              : 'bg-slate-200 dark:bg-slate-700'
+          }`}
+          style={{ transitionDelay: `${i * 100}ms` }}
+        />
+      ))}
+    </div>
+
+    <p className="mt-1.5 text-[10px] text-slate-500 dark:text-slate-400">
+      {linkedSignals}/5 done
+    </p>
+  </div>
+
+  {/* Portfolio Assets Card */}
+  <div className="group rounded-xl border border-slate-200 bg-white/80 p-3 transition-all duration-300 hover:scale-105 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/50">
+    <div className="mb-2 flex items-center justify-between">
+      <div className="rounded-lg bg-emerald-100 p-1.5 dark:bg-emerald-500/20">
+        <FolderOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+      </div>
+
+      <span className="text-xl font-bold text-slate-900 dark:text-white">
+        {projects.length + certifications.length}
+      </span>
+    </div>
+
+    <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
+      Portfolio Assets
+    </p>
+
+    <div className="mt-1.5 flex gap-1 text-[10px]">
+      <span className="text-blue-600 dark:text-blue-400">
+        {projects.length} proj
+      </span>
+      <span className="text-slate-300">•</span>
+      <span className="text-purple-600 dark:text-purple-400">
+        {certifications.length} cert
+      </span>
+    </div>
+
+    <p className="mt-1.5 text-[10px] text-slate-500 dark:text-slate-400">
+      {projects.length + certifications.length >= 3
+        ? 'Great portfolio! 🚀'
+        : 'Add more assets'}
+    </p>
+  </div>
+
+</div>
+
+        {/* Action buttons - compact */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => window.open(`/portfolio/${studentId}`, '_blank')}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-3.5 py-1.5 text-xs font-medium text-white shadow-md shadow-blue-500/20 transition-all hover:shadow-lg hover:shadow-blue-500/25"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            View Portfolio
+          </button>
+        </div>
+      </div>
+
+      {/* Right column - Placement card with increased font size */}
+      <div className="relative">
+        <div className="h-auto rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/50 p-5 shadow-md dark:border-slate-700 dark:from-slate-900/50 dark:to-slate-900/30">
+          {/* Decorative circle - smaller */}
+          <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-gradient-to-br from-blue-400/15 to-indigo-400/15 blur-xl" />
+          
+          <div className="relative">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Placement Visibility
+                </p>
+                <p className="mt-1 text-base font-bold text-slate-900 dark:text-white">
+                  {profileForm.isAvailableForPlacement ? '🎯 Visible to recruiters' : '⚡ Not yet visible'}
+                </p>
+              </div>
+              <button
+                onClick={handleAvailabilityToggle}
+                className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 transition-all duration-300 ease-in-out focus:outline-none hover:scale-105 ${
+                  profileForm.isAvailableForPlacement
+                    ? 'border-emerald-500 bg-emerald-500'
+                    : 'border-slate-300 bg-slate-200 dark:border-slate-600 dark:bg-slate-700'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition-all duration-300 ease-in-out ${
+                    profileForm.isAvailableForPlacement ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
+            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+              Activate when your profile, resume, and projects are ready for review by your institution or placement team.
+            </p>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-slate-200 bg-white/50 p-2.5 dark:border-slate-700 dark:bg-white/5">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Track Focus
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white line-clamp-1">
+                  {selectedCareerTrack.title}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-white/50 p-2.5 dark:border-slate-700 dark:bg-white/5">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Skill Gaps
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+                  {missingSuggestedSkills.length} skills to close
+                </p>
+              </div>
+            </div>
+
+            {/* Compact tip with animation */}
+            {missingSuggestedSkills.length > 0 && (
+              <div className="mt-4 rounded-md bg-amber-50 px-3 py-2 dark:bg-amber-500/10 animate-pulse">
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  💡 Focus on closing these skill gaps to improve your placement chances
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
             <section className={`rounded-[28px] border p-4 md:p-5 ${selectedCareerTheme.shellClass}`}>
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

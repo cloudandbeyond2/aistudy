@@ -65,7 +65,7 @@ const StudentMaterials = () => {
                     <Card 
                         key={m._id} 
                         className="hover:bg-muted/50 transition-all group cursor-pointer border-l-4 border-l-secondary hover:shadow-md active:scale-[0.98] transition-transform"
-                        onClick={() => window.open(m.fileUrl, '_blank')}
+                        onClick={() => window.open(`${serverURL}${m.fileUrl}`, '_blank')}
                     >
                         <CardHeader className="flex flex-row items-center gap-3 sm:gap-4 space-y-0 pb-2 px-3 sm:px-4 pt-3 sm:pt-4">
                             <div className="h-10 w-10 sm:h-12 sm:w-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
@@ -82,15 +82,17 @@ const StudentMaterials = () => {
                         </CardHeader>
                         <CardContent className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0">
                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-2">
-                                <Button 
-                                    variant="ghost" 
-                                    size={isMobile ? "sm" : "default"}
-                                    className="w-full text-xs text-muted-foreground group-hover:text-primary justify-center sm:justify-start px-2 sm:px-3"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        window.open(m.fileUrl, '_blank');
-                                    }}
-                                >
+                               <Button 
+  onClick={(e) => {
+    e.stopPropagation();
+
+    const fileUrl = m.fileUrl.startsWith('/')
+      ? `${serverURL}${m.fileUrl}`
+      : `${serverURL}/${m.fileUrl}`;
+
+    window.open(fileUrl, '_blank');
+  }}
+>
                                     <span className="truncate">Access Material</span>
                                     <ExternalLink className="w-3 h-3 ml-1 sm:ml-2 shrink-0" />
                                 </Button>

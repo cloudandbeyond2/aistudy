@@ -404,7 +404,7 @@ const Header = () => {
             ) : (
               <div className="flex items-center gap-2 lg:gap-3">
                 <Link to="/login">
-                  <Button
+                  {/* <Button
                     variant="ghost"
                     className={cn(
                       "rounded-full px-5 lg:px-6 h-9 lg:h-10 text-sm font-medium",
@@ -413,8 +413,21 @@ const Header = () => {
                         : "text-white hover:text-white hover:bg-white/10"
                     )}
                   >
+        
                     Login
-                  </Button>
+                  </Button> */}
+                  <Button
+  variant="ghost"
+  className={cn(
+    "rounded-full px-5 lg:px-6 h-9 lg:h-10 text-sm font-medium",
+    isScrolled
+      ? "text-slate-600 hover:text-white dark:text-slate-300"
+      : "text-white hover:text-white hover:bg-white/10"
+  )}
+>
+  Login
+</Button>
+                  
                 </Link>
                 <Link to="/signup">
                   <Button className="bg-primary text-white rounded-full px-5 lg:px-6 h-9 lg:h-10 text-sm font-medium shadow-md hover:shadow-lg transition">
