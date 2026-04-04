@@ -26,8 +26,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import Swal from 'sweetalert2';
 import SEO from '@/components/SEO';
-
-const serverURL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
+import { serverURL } from '@/constants';
 
 const StudentInternship = () => {
     const [internship, setInternship] = useState<any>(null);
@@ -43,9 +42,27 @@ const StudentInternship = () => {
 
     const fetchInternship = async () => {
         try {
-            const res = await axios.get(`${serverURL}/api/internship/student/${studentId}`);
+            const params = orgId ? { organizationId: orgId } : {};
+            const res = await axios.get(`${serverURL}/api/internship/student/${studentId}`, { params });
             if (res.data.success && res.data.internship) {
                 setInternship(res.data.internship);
+                return;
+            }
+
+            const fallbackRes = await axios.get(`${serverURL}/api/internship`, {
+                params: {
+                    studentId,
+                    ...params
+                }
+            });
+
+            if (fallbackRes.data.success && Array.isArray(fallbackRes.data.internships)) {
+                const preferredInternship =
+                    fallbackRes.data.internships.find((item: any) => item.status === 'active')
+                    || fallbackRes.data.internships.find((item: any) => item.status === 'requested')
+                    || null;
+
+                setInternship(preferredInternship);
             }
         } catch (e) {
             console.error("Failed to fetch internship", e);

@@ -2,6 +2,16 @@ import Internship from '../models/Internship.js';
 import User from '../models/User.js';
 import { generateAIText } from '../config/aiProvider.js';
 
+const pickPreferredInternship = (internships = []) => {
+    if (!internships.length) {
+        return null;
+    }
+
+    return internships.find((internship) => internship.status === 'active')
+        || internships.find((internship) => internship.status === 'requested')
+        || internships[0];
+};
+
 export const createInternship = async (req, res) => {
     try {
         const { studentId, organizationId, title, description, domain, internshipType, startDate, endDate, status, tasks, studyPlan, exerciseTopics, resources } = req.body;
@@ -53,15 +63,17 @@ export const getInternships = async (req, res) => {
 
 export const getStudentInternship = async (req, res) => {
     try {
-        const { studentId } = req.params;
+        const studentId = String(req.params.studentId || '').trim();
         const { organizationId } = req.query;
         let query = { studentId };
         if (organizationId) query.organizationId = organizationId;
 
-        const internship = await Internship.findOne(query)
+        const internships = await Internship.find(query)
             .populate('studentId', 'mName email studentDetails')
             .populate('organizationId', 'institutionName')
             .sort({ createdAt: -1 });
+
+        const internship = pickPreferredInternship(internships);
 
         res.status(200).json({ success: true, internship });
     } catch (error) {
