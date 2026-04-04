@@ -971,7 +971,7 @@ const DashboardLayoutContent = () => {
       <main className="thin-scrollbar flex-1 h-screen overflow-y-auto p-4 md:p-6 lg:p-8 relative ">
         {/* Mobile & Tablet Header */}
      {(isMobile || isTablet) && (
-   <div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm border border-border/40">
+<div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm border border-border/40 relative z-50 isolate">
     <SidebarTrigger className="mr-2">
       <Menu className="h-6 w-6" />
     </SidebarTrigger>
@@ -987,11 +987,11 @@ const DashboardLayoutContent = () => {
         </Avatar>
         
         {/* Dropdown menu - increased z-index to ensure it's on top */}
-        <div className="absolute right-0 top-full mt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999]">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden min-w-[280px] border border-gray-200 dark:border-gray-700">
+       <div className="fixed right-4 top-16 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[99999]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-visible min-w-[280px] border border-gray-200 dark:border-gray-700">
             
             {/* User Info Card - with explicit z-10 relative positioning */}
-            <div className="relative z-10 bg-gradient-to-br from-primary/5 via-transparent to-transparent">
+            <div className="relative z-50 isolate bg-gradient-to-br from-primary/5 via-transparent to-transparent">
               <div className="px-4 pt-4 pb-3">
                 <div className="flex items-center gap-3">
                   {/* Avatar with online status */}
