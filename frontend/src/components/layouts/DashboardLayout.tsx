@@ -541,7 +541,7 @@ const DashboardLayoutContent = () => {
                     <MenuItem icon={Calendar} label="Calendar Scheduler" to="/dashboard/calendar" isActive={isActive('/dashboard/calendar')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Briefcase} label="Projects" to="/dashboard/student/projects" isActive={isActive('/dashboard/student/projects')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={BookOpen} label="Materials" to="/dashboard/student/materials" isActive={isActive('/dashboard/student/materials')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
-                    <MenuItem icon={Activity} label="Internship" to="/dashboard/student/internship" isActive={isActive('/dashboard/student/internship')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                   
 <SectionHeader title="Learning Tools" icon={Zap} isExpanded={isExpanded} />
                     {/* {!isOrganizationStudent && (
                       <MenuItem
@@ -559,7 +559,7 @@ const DashboardLayoutContent = () => {
                    
                     {careerEnabled.student && <MenuItem icon={Award} label="Career Hub" to="/dashboard/student/career" isActive={isActive('/dashboard/student/career')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
                     {interviewEnabled.student && <MenuItem icon={Brain} label="Mock Training" to="/dashboard/interview-training" isActive={isActive('/dashboard/interview-training')} badge="READY" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
-
+ <MenuItem icon={Activity} label="Internship" to="/dashboard/student/internship" isActive={isActive('/dashboard/student/internship')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <SectionHeader title="Community" icon={Users} isExpanded={isExpanded} />
                     <MenuItem icon={Menu} label="Meetings" to="/dashboard/student/meetings" isActive={isActive('/dashboard/student/meetings')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Megaphone} label="Global News" to="/dashboard/student/news" isActive={isActive('/dashboard/student/news')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
