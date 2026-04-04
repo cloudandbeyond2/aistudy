@@ -531,7 +531,7 @@ const DashboardLayoutContent = () => {
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
-                    <MenuItem icon={User} label="My Profile" to="/dashboard/student/profile" isActive={isActive('/dashboard/student/profile')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    {/* <MenuItem icon={User} label="My Profile" to="/dashboard/student/profile" isActive={isActive('/dashboard/student/profile')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} /> */}
 
                     
                     <SectionHeader title="Academics" icon={BookOpen} isExpanded={isExpanded} />
@@ -541,7 +541,7 @@ const DashboardLayoutContent = () => {
                     <MenuItem icon={Calendar} label="Calendar Scheduler" to="/dashboard/calendar" isActive={isActive('/dashboard/calendar')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Briefcase} label="Projects" to="/dashboard/student/projects" isActive={isActive('/dashboard/student/projects')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={BookOpen} label="Materials" to="/dashboard/student/materials" isActive={isActive('/dashboard/student/materials')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
-                    <MenuItem icon={Activity} label="Internship" to="/dashboard/student/internship" isActive={isActive('/dashboard/student/internship')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                   
 <SectionHeader title="Learning Tools" icon={Zap} isExpanded={isExpanded} />
                     {/* {!isOrganizationStudent && (
                       <MenuItem
@@ -559,7 +559,7 @@ const DashboardLayoutContent = () => {
                    
                     {careerEnabled.student && <MenuItem icon={Award} label="Career Hub" to="/dashboard/student/career" isActive={isActive('/dashboard/student/career')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
                     {interviewEnabled.student && <MenuItem icon={Brain} label="Mock Training" to="/dashboard/interview-training" isActive={isActive('/dashboard/interview-training')} badge="READY" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
-
+ <MenuItem icon={Activity} label="Internship" to="/dashboard/student/internship" isActive={isActive('/dashboard/student/internship')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <SectionHeader title="Community" icon={Users} isExpanded={isExpanded} />
                     <MenuItem icon={Menu} label="Meetings" to="/dashboard/student/meetings" isActive={isActive('/dashboard/student/meetings')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Megaphone} label="Global News" to="/dashboard/student/news" isActive={isActive('/dashboard/student/news')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
@@ -877,7 +877,7 @@ const DashboardLayoutContent = () => {
         {/* Footer */}
         <SidebarFooter className="border-t border-white/5 bg-transparent p-0">
           {/* User Profile Card */}
-          <div className={cn(
+          {/* <div className={cn(
             "group relative flex items-center gap-3 overflow-hidden transition-all duration-300 ease-in-out",
             "bg-white/[0.03] border border-white/10 hover:border-white/20",
             isExpanded ? "m-2 mb-0 rounded-2xl p-2" : "m-1 rounded-xl p-2 justify-center"
@@ -922,7 +922,7 @@ const DashboardLayoutContent = () => {
                 <Settings2 className="h-4 w-4" />
               </Link>
             )}
-          </div>
+          </div> */}
 
           {/* Action Buttons */}
           <div className="mt-2 space-y-1 px-2">
@@ -971,7 +971,7 @@ const DashboardLayoutContent = () => {
       <main className="thin-scrollbar flex-1 h-screen overflow-y-auto p-4 md:p-6 lg:p-8 relative ">
         {/* Mobile & Tablet Header */}
      {(isMobile || isTablet) && (
-   <div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm border border-border/40">
+<div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm border border-border/40 relative z-50 isolate">
     <SidebarTrigger className="mr-2">
       <Menu className="h-6 w-6" />
     </SidebarTrigger>
@@ -987,11 +987,11 @@ const DashboardLayoutContent = () => {
         </Avatar>
         
         {/* Dropdown menu - increased z-index to ensure it's on top */}
-        <div className="absolute right-0 top-full mt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999]">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden min-w-[280px] border border-gray-200 dark:border-gray-700">
+       <div className="fixed right-4 top-16 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[99999]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-visible min-w-[280px] border border-gray-200 dark:border-gray-700">
             
             {/* User Info Card - with explicit z-10 relative positioning */}
-            <div className="relative z-10 bg-gradient-to-br from-primary/5 via-transparent to-transparent">
+            <div className="relative z-50 isolate bg-gradient-to-br from-primary/5 via-transparent to-transparent">
               <div className="px-4 pt-4 pb-3">
                 <div className="flex items-center gap-3">
                   {/* Avatar with online status */}
