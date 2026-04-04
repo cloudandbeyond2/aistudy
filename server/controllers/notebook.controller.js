@@ -1,5 +1,6 @@
 import { chatWithAI, generateAIText } from '../config/aiProvider.js';
 import { createRequire } from 'module';
+import Notebook from '../models/Notebook.js';
 const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
 
@@ -47,6 +48,77 @@ export const uploadSource = async (req, res) => {
   } catch (error) {
     console.error('Upload source error:', error);
     res.status(500).json({ success: false, message: 'Failed to process source' });
+  }
+};
+// ✅ SAVE NOTEBOOK
+export const saveNotebook = async (req, res) => {
+  try {
+ const userId = req.user?.id || req.body.userId;
+
+if (!userId) {
+  return res.status(400).json({
+    success: false,
+    message: "userId is required"
+  });
+}
+ const { notebookId, generatedContent, sources, chatHistory, title } = req.body;
+
+    let notebook;
+
+   if (notebookId) {
+  notebook = await Notebook.findByIdAndUpdate(
+    notebookId,
+    {
+      title, // ✅ ADD THIS
+      generatedContent,
+      sources,
+      chatHistory
+    },
+    { returnDocument: 'after' }
+  );
+} else {
+  notebook = await Notebook.create({
+    userId,
+    title: title || "Untitled Notebook",
+    generatedContent,
+    sources,
+    chatHistory
+  });
+}
+    res.json({
+      success: true,
+      notebookId: notebook._id
+    });
+
+  } catch (error) {
+    console.error("Save Notebook Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+// ✅ LOAD NOTEBOOK
+export const loadNotebook = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.query.userId;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "userId is required"
+      });
+    }
+
+    const notebooks = await Notebook.find({ userId }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      notebooks // ✅ send ALL notebooks
+    });
+
+  } catch (error) {
+    console.error("Load Notebook Error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
