@@ -15,14 +15,6 @@ import {
   ArrowUpRight, FileSymlink, GraduationCap, Library
 } from 'lucide-react';
 import Swal from 'sweetalert2';
-// Gradient color style
-const gradientBg = {
-  background: 'linear-gradient(90deg, #1b253f 0%, #2d3a8c 30%, #4b3bb0 65%, #6b2cc1 100%)'
-};
-
-const gradientBgVertical = {
-  background: 'linear-gradient(135deg, #1b253f 0%, #2d3a8c 30%, #4b3bb0 65%, #6b2cc1 100%)'
-};
 
 const MaterialsTab = () => {
   const [openMaterialDialog, setOpenMaterialDialog] = useState(false);
@@ -130,8 +122,6 @@ const handleDeleteMaterial = async (id: string) => {
     showCancelButton: true,
     confirmButtonText: 'Yes, delete',
     cancelButtonText: 'No',
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#6b7280',
   });
 
   if (!result.isConfirmed) return;
@@ -161,11 +151,11 @@ const handleDeleteMaterial = async (id: string) => {
   // Get type badge color
   const getTypeBadgeStyle = (type: string) => {
     switch(type) {
-      case 'PDF': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
-      case 'Link': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
-      case 'Slide': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300';
-      case 'Video': return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'PDF': return 'bg-primary/12 text-primary';
+      case 'Link': return 'bg-accent/15 text-accent-foreground dark:text-foreground';
+      case 'Slide': return 'bg-secondary/15 text-secondary-foreground';
+      case 'Video': return 'bg-primary/18 text-primary';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -189,7 +179,7 @@ const handleDeleteMaterial = async (id: string) => {
 return (
     <div className="space-y-4 md:space-y-5 lg:space-y-6 p-3 md:p-5 lg:p-6 ">
       {/* Hero Section with Gradient */}
-      <div className="relative rounded-xl md:rounded-2xl overflow-hidden" style={gradientBg}>
+      <div className="relative rounded-xl md:rounded-2xl overflow-hidden bg-brand-gradient">
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="relative px-4 md:px-6 lg:px-8 py-5 md:py-7 lg:py-10">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-5">
@@ -208,7 +198,7 @@ return (
             
             <Dialog open={openMaterialDialog} onOpenChange={setOpenMaterialDialog}>
               <DialogTrigger asChild>
-                <Button className="bg-white text-[#1b253f] hover:bg-white/90 shadow-lg text-sm md:text-base px-4 md:px-5 lg:px-6 py-2 md:py-2.5 whitespace-nowrap w-full md:w-auto">
+                <Button className="bg-background text-foreground hover:bg-background/90 shadow-lg text-sm md:text-base px-4 md:px-5 lg:px-6 py-2 md:py-2.5 whitespace-nowrap w-full md:w-auto">
                   <Plus className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                   Add Resource
                 </Button>
@@ -216,7 +206,7 @@ return (
               <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto p-4 md:p-6">
                 <DialogHeader>
                   <DialogTitle className="text-xl md:text-2xl font-bold">
-                    <span className="bg-gradient-to-r from-[#1b253f] to-[#6b2cc1] bg-clip-text text-transparent">
+                    <span className="text-brand-gradient">
                       Add Study Material
                     </span>
                   </DialogTitle>
@@ -247,8 +237,8 @@ return (
                           onClick={() => setNewMaterial({ ...newMaterial, type })}
                           className={`flex items-center justify-center gap-2 p-2 md:p-3 rounded-lg border-2 transition-all ${
                             newMaterial.type === type 
-                              ? 'border-[#6b2cc1] bg-[#6b2cc1]/10' 
-                              : 'border-gray-200 dark:border-gray-700 hover:border-[#6b2cc1]/50'
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border hover:border-primary/50'
                           }`}
                         >
                           {type === 'PDF' && <FileText className="w-4 h-4 md:w-5 md:h-5" />}
@@ -267,7 +257,7 @@ return (
                       {newMaterial.type === 'PDF' ? 'Upload PDF File' : 'Resource Link / URL'}
                     </Label>
                     {newMaterial.type === 'PDF' ? (
-                      <div className="border-2 border-dashed rounded-lg p-4 md:p-6 text-center hover:border-[#6b2cc1] transition-all">
+                      <div className="border-2 border-dashed border-border rounded-lg p-4 md:p-6 text-center hover:border-primary transition-all">
                         <Input
                           type="file"
                           accept="application/pdf"
@@ -315,8 +305,7 @@ return (
                   
                   <Button 
                     onClick={handleCreateMaterial} 
-                    className="w-full h-10 md:h-11 text-sm md:text-base font-semibold"
-                    style={gradientBg}
+                    className="w-full h-10 md:h-11 text-sm md:text-base font-semibold bg-brand-gradient text-primary-foreground hover:opacity-95"
                   >
                     <Plus className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                     Publish Resource
@@ -337,12 +326,12 @@ return (
               <div>
                 <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">Total Resources</p>
                 <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">
-                  <span className="bg-gradient-to-r from-[#1b253f] to-[#6b2cc1] bg-clip-text text-transparent">
-                    {totalMaterials}
-                  </span>
-                </p>
-              </div>
-              <div className="bg-gradient-to-br from-[#1b253f] to-[#2d3a8c] p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg md:rounded-xl text-white shadow-lg">
+                    <span className="text-brand-gradient">
+                      {totalMaterials}
+                    </span>
+                  </p>
+                </div>
+              <div className="bg-brand-gradient p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg md:rounded-xl text-primary-foreground shadow-lg">
                 <Library className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4.5 md:h-4.5 lg:w-5 lg:h-5" />
               </div>
             </div>
@@ -356,12 +345,12 @@ return (
               <div>
                 <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">PDF Documents</p>
                 <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">
-                  <span className="bg-gradient-to-r from-[#2d3a8c] to-[#4b3bb0] bg-clip-text text-transparent">
-                    {pdfCount}
-                  </span>
-                </p>
-              </div>
-              <div className="bg-gradient-to-br from-[#2d3a8c] to-[#4b3bb0] p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg md:rounded-xl text-white shadow-lg">
+                    <span className="text-brand-gradient">
+                      {pdfCount}
+                    </span>
+                  </p>
+                </div>
+              <div className="bg-brand-gradient p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg md:rounded-xl text-primary-foreground shadow-lg">
                 <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4.5 md:h-4.5 lg:w-5 lg:h-5" />
               </div>
             </div>
@@ -375,12 +364,12 @@ return (
               <div>
                 <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">External Links</p>
                 <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">
-                  <span className="bg-gradient-to-r from-[#4b3bb0] to-[#6b2cc1] bg-clip-text text-transparent">
-                    {linkCount}
-                  </span>
-                </p>
-              </div>
-              <div className="bg-gradient-to-br from-[#4b3bb0] to-[#6b2cc1] p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg md:rounded-xl text-white shadow-lg">
+                    <span className="text-brand-gradient">
+                      {linkCount}
+                    </span>
+                  </p>
+                </div>
+              <div className="bg-brand-gradient p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg md:rounded-xl text-primary-foreground shadow-lg">
                 <Link className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4.5 md:h-4.5 lg:w-5 lg:h-5" />
               </div>
             </div>
@@ -394,12 +383,12 @@ return (
               <div>
                 <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">New This Week</p>
                 <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">
-                  <span className="bg-gradient-to-r from-[#6b2cc1] to-[#4b3bb0] bg-clip-text text-transparent">
-                    {recentCount}
-                  </span>
-                </p>
-              </div>
-              <div className="bg-gradient-to-br from-[#6b2cc1] to-[#4b3bb0] p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg md:rounded-xl text-white shadow-lg">
+                    <span className="text-brand-gradient">
+                      {recentCount}
+                    </span>
+                  </p>
+                </div>
+              <div className="bg-brand-gradient p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg md:rounded-xl text-primary-foreground shadow-lg">
                 <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4.5 md:h-4.5 lg:w-5 lg:h-5" />
               </div>
             </div>
@@ -414,7 +403,7 @@ return (
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
             <div>
               <CardTitle className="text-sm md:text-base lg:text-lg xl:text-xl flex items-center gap-1.5 md:gap-2">
-                <FolderOpen className="w-4 h-4 md:w-5 md:h-5 text-[#6b2cc1]" />
+                <FolderOpen className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                 Resource Library
               </CardTitle>
               <CardDescription className="text-[10px] md:text-xs lg:text-sm">
@@ -428,7 +417,7 @@ return (
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`p-1 md:p-1.5 rounded-md transition-all ${
-                    viewMode === 'grid' ? 'bg-white dark:bg-gray-800 shadow-sm' : ''
+                    viewMode === 'grid' ? 'bg-background shadow-sm' : ''
                   }`}
                 >
                   <Grid3x3 className="w-3.5 h-3.5 md:w-4 md:h-4" />
@@ -436,7 +425,7 @@ return (
                 <button
                   onClick={() => setViewMode('list')}
                   className={`p-1 md:p-1.5 rounded-md transition-all ${
-                    viewMode === 'list' ? 'bg-white dark:bg-gray-800 shadow-sm' : ''
+                    viewMode === 'list' ? 'bg-background shadow-sm' : ''
                   }`}
                 >
                   <List className="w-3.5 h-3.5 md:w-4 md:h-4" />
@@ -478,17 +467,17 @@ return (
                 {filteredMaterials.map((m: any) => (
                   <div 
                     key={m._id} 
-                    className="group relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
+                    className="group relative bg-card rounded-xl overflow-hidden border border-border hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
                   >
                     {/* Gradient Top Border */}
-                    <div className="absolute top-0 left-0 right-0 h-0.5 md:h-1" style={gradientBg}></div>
+                    <div className="absolute top-0 left-0 right-0 h-0.5 md:h-1 bg-brand-gradient"></div>
                     
                     <div className="p-3 md:p-4 lg:p-5">
                       {/* Header with Icon and Type */}
                       <div className="flex items-start justify-between mb-2 md:mb-3">
                         <div className="relative">
-                          <div className="absolute inset-0 bg-gradient-to-br from-[#1b253f] to-[#6b2cc1] rounded-lg opacity-10 group-hover:opacity-20 transition-opacity"></div>
-                          <div className="relative p-1.5 md:p-2 lg:p-2.5 bg-gradient-to-br from-[#1b253f]/10 to-[#6b2cc1]/10 rounded-lg">
+                          <div className="absolute inset-0 bg-brand-gradient rounded-lg opacity-10 group-hover:opacity-20 transition-opacity"></div>
+                          <div className="relative p-1.5 md:p-2 lg:p-2.5 bg-brand-gradient-soft rounded-lg text-primary">
                             {getMaterialIcon(m.type)}
                           </div>
                         </div>
@@ -521,7 +510,7 @@ return (
                           href={m.fileUrl} 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          className="inline-flex items-center gap-0.5 md:gap-1 text-[9px] md:text-[10px] lg:text-xs text-[#6b2cc1] hover:text-[#4b3bb0] transition-colors font-medium"
+                          className="inline-flex items-center gap-0.5 md:gap-1 text-[9px] md:text-[10px] lg:text-xs text-primary hover:text-accent transition-colors font-medium"
                         >
                           {m.type === 'PDF' ? 'View PDF' : 'Open'}
                           <ArrowUpRight className="w-2.5 h-2.5 md:w-3 md:h-3 lg:w-3.5 lg:h-3.5" />
@@ -545,10 +534,10 @@ return (
                 {filteredMaterials.map((m: any) => (
                   <div 
                     key={m._id} 
-                    className="group flex flex-col sm:flex-row sm:items-center justify-between p-2.5 md:p-3 lg:p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-[#6b2cc1]/30 transition-all"
+                    className="group flex flex-col sm:flex-row sm:items-center justify-between p-2.5 md:p-3 lg:p-4 rounded-lg border border-border hover:shadow-md hover:border-primary/30 transition-all"
                   >
                     <div className="flex items-center gap-2 md:gap-3 lg:gap-4 flex-1 min-w-0">
-                      <div className="bg-gradient-to-br from-[#1b253f]/10 to-[#6b2cc1]/10 p-1.5 md:p-2 rounded-lg">
+                      <div className="bg-brand-gradient-soft p-1.5 md:p-2 rounded-lg text-primary">
                         {getMaterialIcon(m.type)}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -572,7 +561,7 @@ return (
                         href={m.fileUrl} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="p-1.5 md:p-2 hover:text-[#6b2cc1] transition-colors"
+                        className="p-1.5 md:p-2 hover:text-primary transition-colors"
                       >
                         <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
                       </a>
@@ -593,8 +582,8 @@ return (
             /* Empty State */
             <div className="py-8 md:py-10 lg:py-12 xl:py-16 text-center border-2 border-dashed rounded-xl bg-muted/10">
               <div className="flex flex-col items-center gap-2 md:gap-3 lg:gap-4">
-                <div className="bg-gradient-to-br from-[#1b253f] to-[#6b2cc1] p-2.5 md:p-3 lg:p-4 rounded-full shadow-lg">
-                  <Library className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8 text-white" />
+                <div className="bg-brand-gradient p-2.5 md:p-3 lg:p-4 rounded-full shadow-lg">
+                  <Library className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8 text-primary-foreground" />
                 </div>
                 <h3 className="text-sm md:text-base lg:text-xl font-semibold">No Resources Found</h3>
                 <p className="text-xs md:text-sm lg:text-base text-muted-foreground max-w-md px-3 md:px-4">
@@ -605,8 +594,7 @@ return (
                 {!searchQuery && filterType === 'all' && (
                   <Button 
                     onClick={() => setOpenMaterialDialog(true)}
-                    style={gradientBg}
-                    className="text-white text-xs md:text-sm lg:text-base mt-1 md:mt-2"
+                    className="bg-brand-gradient text-primary-foreground hover:opacity-95 text-xs md:text-sm lg:text-base mt-1 md:mt-2"
                   >
                     <Plus className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1.5 md:mr-2" />
                     Add Your First Resource
