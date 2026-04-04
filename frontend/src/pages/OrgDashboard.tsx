@@ -1362,6 +1362,9 @@ const handleDeleteDeptAdmin = async (id: string) => {
             const res = await axios.patch(`${serverURL}/api/internship/${internshipId}/task/${taskId}`, updates);
             if (res.data.success) {
                 toast({ title: "Success", description: "Task updated" });
+                if (selectedInternship && selectedInternship._id === internshipId) {
+                    setSelectedInternship(res.data.internship);
+                }
                 fetchInternships();
             }
         } catch (e: any) {
@@ -1374,6 +1377,9 @@ const handleDeleteDeptAdmin = async (id: string) => {
             const res = await axios.patch(`${serverURL}/api/internship/${internshipId}/followup/${followupId}`, updates);
             if (res.data.success) {
                 toast({ title: "Success", description: "Followup updated" });
+                if (selectedInternship && selectedInternship._id === internshipId) {
+                    setSelectedInternship(res.data.internship);
+                }
                 fetchInternships();
             }
         } catch (e: any) {

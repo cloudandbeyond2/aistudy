@@ -101,8 +101,8 @@ const OrgInternshipDetails = () => {
     try {
       const res = await axios.patch(`${serverURL}/api/internship/${internship._id}/task/${taskId}`, updates);
       if (res.data.success) {
+        setInternship(res.data.internship);
         toast({ title: "Success", description: "Task updated" });
-        fetchInternship();
       }
     } catch {
       toast({ title: "Error", description: "Task update failed", variant: "destructive" });
@@ -115,8 +115,8 @@ const OrgInternshipDetails = () => {
     try {
       const res = await axios.patch(`${serverURL}/api/internship/${internship._id}/followup/${followupId}`, updates);
       if (res.data.success) {
+        setInternship(res.data.internship);
         toast({ title: "Success", description: "Daily log updated" });
-        fetchInternship();
       }
     } catch {
       toast({ title: "Error", description: "Daily log update failed", variant: "destructive" });
