@@ -111,11 +111,13 @@ const StudentInternship = () => {
     const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
     return (
-        <div className="container mx-auto py-8 px-4 space-y-8 animate-fade-in pb-20">
+        <div className="container mx-auto px-4 space-y-8 animate-fade-in pb-20 pt-0 lg:pt-[60px]">
             <SEO title={`${internship.title} | Internship`} description="Manage your internship tasks and track your progress." />
 
             {/* HEADER SECTION */}
-            <div className="relative overflow-hidden p-8 rounded-[2rem] bg-gradient-to-br from-indigo-600 to-violet-700 text-white shadow-2xl">
+            <div className="relative overflow-hidden p-8 rounded-[2rem] text-white shadow-2xl" style={{
+                    background: "linear-gradient(135deg, #0B2B5E 0%, #1A6B8A 50%, #2BA0B8 100%)"
+                }}>
                 <div className="absolute top-0 right-0 p-8 opacity-10">
                     <Activity size={180} />
                 </div>
@@ -142,9 +144,10 @@ const StudentInternship = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-8"> */}
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
                 {/* LEFT COLUMN: MAIN CONTENT */}
-                <div className="lg:col-span-2 space-y-8">
+               <div className="space-y-8 xl:col-span-2">
                     <Tabs defaultValue="tasks" className="w-full">
                         <TabsList className="bg-muted/50 p-1 rounded-2xl w-full grid grid-cols-3 mb-6">
                             <TabsTrigger value="tasks" className="rounded-xl py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm">
@@ -255,7 +258,9 @@ const StudentInternship = () => {
                                         value={dailyLog}
                                         onChange={(e) => setDailyLog(e.target.value)}
                                     />
-                                    <Button className="w-full rounded-full bg-indigo-600 py-6" onClick={handleAddFollowup}>
+                                    <Button className="w-full rounded-full  py-6" style={{
+                    background: "linear-gradient(135deg, #0B2B5E 0%, #1A6B8A 50%, #2BA0B8 100%)"
+                }} onClick={handleAddFollowup}>
                                         Save Daily Log
                                     </Button>
                                 </CardContent>
@@ -331,7 +336,7 @@ const StudentInternship = () => {
                 </div>
 
                 {/* RIGHT COLUMN: SIDEBAR STATS */}
-                <div className="space-y-8">
+              <div className="space-y-8 xl:col-span-1">
                     {/* PROGRESS CARD */}
                     <Card className="rounded-[2rem] border-none bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-xl">
                         <CardHeader className="pb-2">

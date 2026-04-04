@@ -82,61 +82,100 @@ const InterviewTrainingHub = () => {
     }
 
     return (
-        <div className="space-y-8 animate-fade-in pb-10">
+        <div className="space-y-8 animate-fade-in pb-10 pt-0 lg:pt-[60px]">
             <SEO title="AI Interview Training Hub" description="Practice your interview skills with our AI-powered mock interview system." />
 
             {/* Hero Section */}
-            <div className="relative p-8 rounded-3xl bg-slate-900 text-white border border-white/5 shadow-2xl overflow-hidden">
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] -z-0 translate-x-1/2 -translate-y-1/2" />
-                <div className="relative z-10 flex flex-col md:flex-row justify-between gap-8">
-                    <div className="max-w-2xl">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold mb-4 border border-primary/20">
-                            <Sparkles className="w-3 h-3" /> AI MOCK INTERVIEW
-                        </div>
-                        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight">
-                            Master Your Next Big <span className="text-primary italic">Interview</span>
-                        </h1>
-                        <p className="text-slate-400 text-lg mb-8 leading-relaxed">
-                            Practice with our specialized Gemini-powered interviewer. 
-                            Get real-time feedback, behavioral analysis, and a technical competency blueprint.
-                        </p>
-                        <div className="flex flex-wrap gap-4">
-                            <Button onClick={() => handleStartMock()} className="h-14 px-8 rounded-2xl text-lg font-bold shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95">
-                                <Play className="w-5 h-5 mr-3 fill-current" /> Start Practice Session
-                            </Button>
-                            <div className="flex flex-col justify-center">
-                                <p className="text-xs text-slate-500 uppercase font-bold tracking-widest">Today's Usage</p>
-                                <p className="text-xl font-black text-white">{stats.attemptsUsed} / {role === 'student' ? '∞' : stats.dailyLimit}</p>
-                            </div>
-                        </div>
-                    </div>
+         <div className="relative p-6 sm:p-8 rounded-3xl bg-slate-900 text-white border border-white/5 shadow-2xl overflow-hidden">
+    
+    {/* Background Glow */}
+    <div className="absolute top-0 right-0 w-[400px] sm:w-[500px] h-[400px] sm:h-[500px] bg-primary/20 rounded-full blur-[120px] -z-0 translate-x-1/2 -translate-y-1/2" />
 
-                    <div className="md:w-72 space-y-4">
-                        <Card className="bg-white/5 border-white/10 backdrop-blur-md">
-                            <CardContent className="p-4 flex items-center gap-4">
-                                <div className="bg-primary/20 p-2.5 rounded-xl">
-                                    <Target className="w-6 h-6 text-primary" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-slate-400 font-medium">Avg. Competency</p>
-                                    <p className="text-xl font-bold text-white">{stats.totalCompetency}%</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                         <Card className="bg-white/5 border-white/10 backdrop-blur-md">
-                            <CardContent className="p-4 flex items-center gap-4">
-                                <div className="bg-emerald-500/20 p-2.5 rounded-xl">
-                                    <CheckCircle className="w-6 h-6 text-emerald-500" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-slate-400 font-medium">Sessions Hosted</p>
-                                    <p className="text-xl font-bold text-white">24,502+</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
+    {/* Main Container */}
+    <div className="relative z-10 flex flex-col lg:flex-row justify-between gap-8">
+
+        {/* Left Content */}
+        <div className="max-w-2xl mx-auto lg:mx-0 text-center lg:text-left">
+
+            {/* Badge */}
+            <div className="inline-flex items-center justify-center lg:justify-start gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold mb-4 border border-primary/20">
+                <Sparkles className="w-3 h-3" /> AI MOCK INTERVIEW
             </div>
+
+            {/* Heading */}
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight mb-4 leading-tight">
+                Master Your Next Big <span className="text-primary italic">Interview</span>
+            </h1>
+
+            {/* Description */}
+            <p className="text-slate-400 text-base sm:text-lg mb-8 leading-relaxed">
+                Practice with our specialized Gemini-powered interviewer. 
+                Get real-time feedback, behavioral analysis, and a technical competency blueprint.
+            </p>
+
+            {/* Actions */}
+            <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+
+                <Button 
+                    onClick={() => handleStartMock()} 
+                    className="h-12 sm:h-14 px-6 sm:px-8 rounded-2xl text-base sm:text-lg font-bold shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+                >
+                    <Play className="w-5 h-5 mr-3 fill-current" /> 
+                    Start Practice Session
+                </Button>
+
+                <div className="flex flex-col justify-center text-center lg:text-left">
+                    <p className="text-xs text-slate-500 uppercase font-bold tracking-widest">
+                        Today's Usage
+                    </p>
+                    <p className="text-lg sm:text-xl font-black text-white">
+                        {stats.attemptsUsed} / {role === 'student' ? '∞' : stats.dailyLimit}
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+        {/* Right Cards */}
+        <div className="w-full max-w-sm mx-auto lg:mx-0 lg:w-72 space-y-4">
+
+            {/* Competency Card */}
+            <Card className="bg-white/5 border-white/10 backdrop-blur-md">
+                <CardContent className="p-4 flex items-center gap-4">
+                    <div className="bg-primary/20 p-2.5 rounded-xl">
+                        <Target className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                        <p className="text-xs text-slate-400 font-medium">
+                            Avg. Competency
+                        </p>
+                        <p className="text-xl font-bold text-white">
+                            {stats.totalCompetency}%
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Sessions Card */}
+            <Card className="bg-white/5 border-white/10 backdrop-blur-md">
+                <CardContent className="p-4 flex items-center gap-4">
+                    <div className="bg-emerald-500/20 p-2.5 rounded-xl">
+                        <CheckCircle className="w-6 h-6 text-emerald-500" />
+                    </div>
+                    <div>
+                        <p className="text-xs text-slate-400 font-medium">
+                            Sessions Hosted
+                        </p>
+                        <p className="text-xl font-bold text-white">
+                            24,502+
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+
+        </div>
+    </div>
+</div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column - Assigned Drives */}
