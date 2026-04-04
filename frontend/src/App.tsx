@@ -44,6 +44,7 @@ import StudentPortal from "./pages/StudentPortal";
 import StudentAssignments from "./pages/StudentAssignments";
 import OrgAssignmentCertificate from "./pages/OrgAssignmentCertificate";
 import OrgCareerPlacement from "./pages/OrgCareerPlacement";
+import OrgInternshipDetails from "./pages/OrgInternshipDetails";
 import OrgKpiReports from "./pages/OrgKpiReports";
 import StudentCareer from "./pages/StudentCareer";
 import StudentPublicPortfolio from "./pages/StudentPublicPortfolio";
@@ -195,6 +196,7 @@ const App = () => (
                     <Route path="profile" element={<Profile />} />
                       <Route path="analytics" element={<Analytics />} />
                     <Route path="org" element={<OrgDashboard />} />
+                    <Route path="org/internship/:id" element={<OrgInternshipDetails />} />
                     <Route path="org/quiz-retake-requests" element={<AdminQuizRetakeRequests />} />
                     <Route path="org/career" element={<OrgCareerPlacement />} />
                     <Route path="org/mock-interview" element={<OrgMockInterview />} />

@@ -4,7 +4,7 @@ const taskSchema = new mongoose.Schema({
     title: { type: String, required: true },
     description: { type: String, default: '' },
     dueDate: { type: Date },
-    status: { type: String, enum: ['pending', 'in-progress', 'completed', 'review'], default: 'pending' },
+    status: { type: String, enum: ['pending', 'submitted', 'revision', 'in-progress', 'completed', 'review'], default: 'pending' },
     submissionUrl: { type: String, default: '' },
     feedback: { type: String, default: '' },
     mentorNote: { type: String, default: '' }

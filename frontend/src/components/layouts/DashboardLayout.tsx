@@ -487,7 +487,9 @@ const DashboardLayoutContent = () => {
                 {sessionStorage.getItem('role') !== 'student' && sessionStorage.getItem('role') !== 'dept_admin' && (
                   <>
                     <MenuItem icon={Home} label="Home" to="/dashboard" isActive={isActive('/dashboard')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
-                    <MenuItem icon={User} label="My Profile" to="/dashboard/profile" isActive={isActive('/dashboard/profile')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    {role !== 'org_admin' && (
+                      <MenuItem icon={User} label="My Profile" to="/dashboard/profile" isActive={isActive('/dashboard/profile')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    )}
 
                     {sessionStorage.getItem('isOrganization') !== 'true' && sessionStorage.getItem('role') !== 'dept_admin' && (
                       <MenuItem icon={DollarSign} label="Pricing" to="/dashboard/pricing" isActive={isActive('/dashboard/pricing')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />

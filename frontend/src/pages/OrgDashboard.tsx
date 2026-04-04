@@ -855,32 +855,32 @@ const OrgDashboard = () => {
     const INTERNSHIP_CATEGORIES = [
         {
             name: "Computer Science & IT",
-            icon: <Code className="w-5 h-5 text-blue-600" />,
+            icon: <Code className="w-5 h-5 text-primary" />,
             domains: ["Web Development", "AI / Machine Learning", "Data Science", "Mobile App Dev", "Cloud Computing", "Cyber Security", "Digital Marketing", "UI/UX Design"]
         },
         {
             name: "Mechanical & Automotive",
-            icon: <Wrench className="w-5 h-5 text-orange-600" />,
+            icon: <Wrench className="w-5 h-5 text-primary" />,
             domains: ["CAD / Mechanical Design", "Robotics & Automation", "Manufacturing Processes", "Thermal Engineering", "Automotive Design"]
         },
         {
             name: "Electrical & Electronics",
-            icon: <Zap className="w-5 h-5 text-yellow-600" />,
+            icon: <Zap className="w-5 h-5 text-primary" />,
             domains: ["Embedded Systems", "Power Electronics", "VLSI Design", "Renewable Energy", "Signal Processing"]
         },
         {
             name: "Civil & Structural",
-            icon: <Building2 className="w-5 h-5 text-emerald-600" />,
+            icon: <Building2 className="w-5 h-5 text-primary" />,
             domains: ["Structural Engineering", "Construction Management", "Surveying & Mapping", "Urban Planning", "Environmental Engineering"]
         },
         {
             name: "Medical & Healthcare",
-            icon: <Stethoscope className="w-5 h-5 text-rose-600" />,
+            icon: <Stethoscope className="w-5 h-5 text-primary" />,
             domains: ["Clinical Practice", "Medical Research", "Nursing & Patient Care", "Healthcare Administration", "Pharmacology"]
         },
         {
             name: "Business & Management",
-            icon: <Briefcase className="w-5 h-5 text-indigo-600" />,
+            icon: <Briefcase className="w-5 h-5 text-primary" />,
             domains: ["Operations Management", "Human Resources", "Finance & Accounting", "Market Research", "Project Management"]
         }
     ];
@@ -905,6 +905,36 @@ const OrgDashboard = () => {
     const [newTask, setNewTask] = useState({ title: '', description: '', dueDate: '' });
     const [isAddingResource, setIsAddingResource] = useState(false);
     const [newResource, setNewResource] = useState({ title: '', url: '' });
+
+    const getInternshipTaskStatusMeta = (status: string) => {
+        switch (status) {
+            case 'completed':
+                return {
+                    label: 'Completed',
+                    className: 'bg-primary/10 text-primary border-primary/20'
+                };
+            case 'submitted':
+                return {
+                    label: 'Submitted',
+                    className: 'bg-muted text-primary border-border'
+                };
+            case 'revision':
+                return {
+                    label: 'Revision Needed',
+                    className: 'bg-secondary text-secondary-foreground border-border'
+                };
+            case 'in-progress':
+                return {
+                    label: 'In Progress',
+                    className: 'bg-accent text-accent-foreground border-border'
+                };
+            default:
+                return {
+                    label: 'Pending',
+                    className: 'bg-muted text-muted-foreground border-border'
+                };
+        }
+    };
 
 
 
@@ -1332,6 +1362,9 @@ const handleDeleteDeptAdmin = async (id: string) => {
             const res = await axios.patch(`${serverURL}/api/internship/${internshipId}/task/${taskId}`, updates);
             if (res.data.success) {
                 toast({ title: "Success", description: "Task updated" });
+                if (selectedInternship && selectedInternship._id === internshipId) {
+                    setSelectedInternship(res.data.internship);
+                }
                 fetchInternships();
             }
         } catch (e: any) {
@@ -1344,6 +1377,9 @@ const handleDeleteDeptAdmin = async (id: string) => {
             const res = await axios.patch(`${serverURL}/api/internship/${internshipId}/followup/${followupId}`, updates);
             if (res.data.success) {
                 toast({ title: "Success", description: "Followup updated" });
+                if (selectedInternship && selectedInternship._id === internshipId) {
+                    setSelectedInternship(res.data.internship);
+                }
                 fetchInternships();
             }
         } catch (e: any) {
@@ -3076,8 +3112,8 @@ const handleUpdateDeptAdmin = async () => {
                 metricLabel: 'Active',
                 metricValue: internships.length || 0,
                 icon: Activity,
-                accent: 'from-blue-600/15 to-indigo-600/5',
-                border: 'border-blue-300/80',
+                accent: 'from-primary/15 to-primary/5',
+                border: 'border-primary/20',
                 onClick: () => setSearchParams({ tab: 'internships' })
             },
             {
@@ -6142,22 +6178,22 @@ Login:
                 <TabsContent value="internships" className="space-y-6">
                     <Tabs defaultValue="management" className="w-full">
                         <div className="flex items-center justify-between mb-6">
-                            <TabsList className="bg-white/50 border border-indigo-100 p-1">
-                                <TabsTrigger value="management" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Active Management</TabsTrigger>
-                                <TabsTrigger value="catalog" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Available Tracks (Catalog)</TabsTrigger>
+                            <TabsList className="border border-border bg-card/80 p-1">
+                                <TabsTrigger value="management" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Active Management</TabsTrigger>
+                                <TabsTrigger value="catalog" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Available Tracks (Catalog)</TabsTrigger>
                             </TabsList>
-                            <div className="hidden md:flex items-center gap-2 text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+                            <div className="hidden md:flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-primary">
                                 <Sparkles className="w-4 h-4" />
                                 <span className="text-[10px] font-bold uppercase tracking-wider">AI Powered Catalog</span>
                             </div>
                         </div>
 
                         <TabsContent value="management" className="space-y-6">
-                            <Card className="border-l-4 border-l-indigo-600">
+                            <Card className="border-l-4 border-l-primary">
                                 <CardHeader className="flex flex-row items-center justify-between">
                                     <div>
                                         <CardTitle className="flex items-center gap-2">
-                                            <Activity className="w-5 h-5 text-indigo-600" />
+                                            <Activity className="w-5 h-5 text-primary" />
                                             Internship Management
                                         </CardTitle>
                                         <CardDescription>
@@ -6166,14 +6202,14 @@ Login:
                                     </div>
                                     <Dialog open={openInternshipDialog} onOpenChange={setOpenInternshipDialog}>
                                         <DialogTrigger asChild>
-                                            <Button className="bg-indigo-600 hover:bg-indigo-700">
+                                            <Button>
                                                 <Plus className="w-4 h-4 mr-2" /> Assign Internship
                                             </Button>
                                         </DialogTrigger>
                                         <DialogContent className="max-w-2xl overflow-y-auto max-h-[90vh]">
                                             <DialogHeader>
                                                 <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                                                    <Sparkles className="w-6 h-6 text-indigo-600" />
+                                                    <Sparkles className="w-6 h-6 text-primary" />
                                                     Professional Internship Setup
                                                 </DialogTitle>
                                                 <DialogDescription className="text-xs">
@@ -6266,14 +6302,14 @@ Login:
                                                     )}
                                                 </div>
 
-                                                <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl flex items-center justify-between">
+                                                <div className="flex items-center justify-between rounded-xl border border-border bg-muted p-4">
                                                     <div className="space-y-1">
-                                                        <p className="text-sm font-semibold text-indigo-900">MNC-Style Training</p>
-                                                        <p className="text-xs text-indigo-700">Auto-generate a 4-week practical roadmap based on the domain.</p>
+                                                        <p className="text-sm font-semibold text-foreground">MNC-Style Training</p>
+                                                        <p className="text-xs text-muted-foreground">Auto-generate a 4-week practical roadmap based on the domain.</p>
                                                     </div>
                                                     <Button 
                                                         variant="outline" 
-                                                        className="bg-white border-indigo-200 hover:bg-indigo-100 text-indigo-600"
+                                                        className="border-border bg-background text-primary hover:bg-muted"
                                                         onClick={handleGenerateRoadmap}
                                                         disabled={loadingRoadmap}
                                                     >
@@ -6294,7 +6330,7 @@ Login:
 
                                                 {newInternship.tasks.length > 0 && (
                                                     <div className="space-y-3">
-                                                        <Label className="text-indigo-600 font-bold">Planned Roadmap Tasks ({newInternship.tasks.length})</Label>
+                                                        <Label className="font-bold text-primary">Planned Roadmap Tasks ({newInternship.tasks.length})</Label>
                                                         <div className="max-h-[200px] overflow-y-auto space-y-2 pr-2">
                                                             {newInternship.tasks.map((task, idx) => (
                                                                 <div key={idx} className="p-3 bg-muted/30 border rounded-lg text-xs">
@@ -6334,7 +6370,7 @@ Login:
                                                         </select>
                                                     </div>
                                                 </div>
-                                                <Button onClick={handleCreateInternship} size="lg" className="h-12 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200">
+                                                <Button onClick={handleCreateInternship} size="lg" className="h-12 shadow-lg shadow-primary/20">
                                                     Launch Internship Program
                                                 </Button>
                                             </div>
@@ -6346,15 +6382,15 @@ Login:
                                         {/* REQUESTS SECTION */}
                                         {internships.filter(i => i.status === 'requested').length > 0 && (
                                             <div className="space-y-4">
-                                                <h3 className="text-lg font-bold flex items-center gap-2 text-indigo-600">
+                                                <h3 className="text-lg font-bold flex items-center gap-2 text-primary">
                                                     <Sparkles className="w-5 h-5" /> Internship Requests
                                                 </h3>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                                     {internships.filter(i => i.status === 'requested').map((internship: any) => (
-                                                        <Card key={internship._id} className="border-indigo-100 bg-indigo-50/30 overflow-hidden group">
+                                                        <Card key={internship._id} className="overflow-hidden border-border bg-card/70 group">
                                                             <CardHeader className="pb-2">
                                                                 <div className="flex justify-between items-start">
-                                                                    <Badge className="bg-indigo-100 text-indigo-700">Requested</Badge>
+                                                                    <Badge className="border-border bg-muted text-primary">Requested</Badge>
                                                                     <span className="text-[10px] text-muted-foreground">{new Date(internship.createdAt).toLocaleDateString()}</span>
                                                                 </div>
                                                                 <CardTitle className="text-lg mt-2">{internship.title}</CardTitle>
@@ -6363,12 +6399,12 @@ Login:
                                                                 </CardDescription>
                                                             </CardHeader>
                                                             <CardContent className="space-y-4">
-                                                                <div className="text-xs text-muted-foreground bg-white/50 p-3 rounded-lg border border-indigo-50 italic">
+                                                                <div className="rounded-lg border border-border bg-background/70 p-3 text-xs italic text-muted-foreground">
                                                                     "{internship.description || 'No additional details provided.'}"
                                                                 </div>
                                                                 <div className="flex gap-2">
                                                                     <Button 
-                                                                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 h-8 text-xs"
+                                                                        className="h-8 flex-1 text-xs"
                                                                         onClick={() => {
                                                                             setNewInternship({
                                                                                 studentId: internship.studentId?._id || '',
@@ -6425,7 +6461,7 @@ Login:
                                                         <Card key={internship._id} className="border-border/60 hover:shadow-lg transition-all group relative">
                                                             <CardHeader className="pb-3">
                                                                 <div className="flex justify-between items-start">
-                                                                    <Badge className="bg-green-100 text-green-700">
+                                                                    <Badge className="border-border bg-primary/10 text-primary">
                                                                         Active Training
                                                                     </Badge>
                                                                     <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => window.open(`/dashboard/org/internship/${internship._id}`, '_blank')}>
@@ -6445,7 +6481,7 @@ Login:
                                                                     </div>
                                                                     <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden">
                                                                         <div 
-                                                                            className="bg-indigo-600 h-full" 
+                                                                            className="bg-primary h-full" 
                                                                             style={{ width: `${(internship.tasks?.filter((t:any) => t.status === 'completed').length / (internship.tasks?.length || 1)) * 100}%` }}
                                                                         />
                                                                     </div>
@@ -6477,24 +6513,24 @@ Login:
                         <TabsContent value="catalog" className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {INTERNSHIP_CATEGORIES.map((category, idx) => (
-                                    <Card key={idx} className="overflow-hidden border-indigo-100 hover:shadow-xl transition-all group">
-                                        <CardHeader className="bg-indigo-50/30 pb-4">
+                                    <Card key={idx} className="overflow-hidden border-border hover:shadow-xl transition-all group">
+                                        <CardHeader className="bg-muted/40 pb-4">
                                             <div className="flex items-center justify-between">
-                                                <div className="p-2 bg-white rounded-lg shadow-sm">
+                                                <div className="rounded-lg bg-background p-2 shadow-sm">
                                                     {category.icon}
                                                 </div>
-                                                <Badge variant="outline" className="bg-white border-indigo-100 text-indigo-600">
+                                                <Badge variant="outline" className="border-border bg-background text-primary">
                                                     {category.domains.length} Tracks
                                                 </Badge>
                                             </div>
-                                            <CardTitle className="text-lg mt-4 group-hover:text-indigo-600 transition-colors">
+                                            <CardTitle className="mt-4 text-lg transition-colors group-hover:text-primary">
                                                 {category.name}
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="pt-4">
                                             <div className="flex flex-wrap gap-2">
                                                 {category.domains.map((domain, dIdx) => (
-                                                    <Badge key={dIdx} variant="secondary" className="bg-muted/50 hover:bg-indigo-100 hover:text-indigo-700 transition-colors cursor-default text-[10px]">
+                                                    <Badge key={dIdx} variant="secondary" className="cursor-default border border-border bg-muted text-[10px] text-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
                                                         {domain}
                                                     </Badge>
                                                 ))}
@@ -6502,7 +6538,7 @@ Login:
                                             <Button 
                                                 variant="ghost" 
                                                 size="sm" 
-                                                className="w-full mt-6 text-indigo-600 hover:bg-indigo-50 group-hover:bg-indigo-600 group-hover:text-white transition-all"
+                                                className="mt-6 w-full text-primary transition-all hover:bg-muted group-hover:bg-primary group-hover:text-primary-foreground"
                                                 onClick={() => {
                                                     setNewInternship({
                                                         ...newInternship,
@@ -6518,18 +6554,18 @@ Login:
                                 ))}
                             </div>
 
-                            <Card className="bg-gradient-to-br from-indigo-600 to-violet-700 text-white overflow-hidden border-none shadow-2xl">
+                            <Card className="overflow-hidden border-none bg-brand-gradient text-primary-foreground shadow-2xl">
                                 <CardContent className="p-8 relative">
                                     <div className="relative z-10 space-y-4 max-w-2xl">
                                         <h3 className="text-2xl font-bold">Don't see your department?</h3>
-                                        <p className="text-indigo-100 opacity-90">
+                                        <p className="opacity-90 text-primary-foreground/80">
                                             Our AI infrastructure can generate professional roadmaps for any niche, from Nuclear Engineering to specialized Medical research. 
                                             Simply select "Other" in the setup and type your domain.
                                         </p>
                                         <Button 
                                             variant="secondary" 
                                             size="lg" 
-                                            className="bg-white text-indigo-600 hover:bg-indigo-50 font-bold"
+                                            className="bg-background font-bold text-primary hover:bg-muted"
                                             onClick={() => {
                                                 setNewInternship({ ...newInternship, domain: 'Other' });
                                                 setOpenInternshipDialog(true);
@@ -6572,7 +6608,7 @@ Login:
                                             </div>
 
                                             {isAddingTask && (
-                                                <Card className="p-4 border-indigo-200 bg-indigo-50/20 animate-in fade-in slide-in-from-top-2">
+                                                <Card className="animate-in slide-in-from-top-2 fade-in border-border bg-muted/30 p-4">
                                                     <div className="space-y-4">
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                             <div className="space-y-2">
@@ -6602,7 +6638,7 @@ Login:
                                                         </div>
                                                         <div className="flex justify-end gap-2">
                                                             <Button variant="outline" size="sm" onClick={() => setIsAddingTask(false)}>Cancel</Button>
-                                                            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={async () => {
+                                                            <Button size="sm" onClick={async () => {
                                                                 if (!newTask.title || !newTask.dueDate) {
                                                                     toast({ title: 'Required', description: 'Please enter title and due date' });
                                                                     return;
@@ -6625,7 +6661,10 @@ Login:
                                                 </Card>
                                             )}
                                             <div className="grid gap-3">
-                                                {selectedInternship.tasks?.map((task: any) => (
+                                                {selectedInternship.tasks?.map((task: any) => {
+                                                    const statusMeta = getInternshipTaskStatusMeta(task.status);
+
+                                                    return (
                                                     <div key={task._id} className="p-4 border rounded-lg flex justify-between items-center bg-muted/20">
                                                         <div>
                                                             <p className="font-bold">{task.title}</p>
@@ -6634,9 +6673,9 @@ Login:
                                                                 <span className={new Date(task.dueDate) < new Date() ? 'text-red-500 font-bold' : ''}>
                                                                     Due: {new Date(task.dueDate).toLocaleDateString()}
                                                                 </span>
-                                                                <Badge variant="outline">{task.status}</Badge>
+                                                                <Badge variant="outline" className={statusMeta.className}>{statusMeta.label}</Badge>
                                                                 {task.submissionUrl && (
-                                                                    <a href={task.submissionUrl} target="_blank" rel="noopener" className="text-blue-600 flex items-center gap-1">
+                                                                    <a href={task.submissionUrl} target="_blank" rel="noopener" className="flex items-center gap-1 text-primary">
                                                                         <ExternalLink className="h-3 w-3" /> View Submission
                                                                     </a>
                                                                 )}
@@ -6668,7 +6707,7 @@ Login:
                                                             </div>
                                                         </div>
                                                     </div>
-                                                ))}
+                                                )})}
                                             </div>
                                         </TabsContent>
 
@@ -6707,7 +6746,7 @@ Login:
                                             </div>
 
                                             {isAddingResource && (
-                                                <Card className="p-4 border-indigo-200 bg-indigo-50/20 animate-in fade-in slide-in-from-top-2">
+                                                <Card className="animate-in slide-in-from-top-2 fade-in border-border bg-muted/30 p-4">
                                                     <div className="space-y-4">
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                             <div className="space-y-2">
@@ -6729,7 +6768,7 @@ Login:
                                                         </div>
                                                         <div className="flex justify-end gap-2">
                                                             <Button variant="outline" size="sm" onClick={() => setIsAddingResource(false)}>Cancel</Button>
-                                                            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={async () => {
+                                                            <Button size="sm" onClick={async () => {
                                                                 if (!newResource.title || !newResource.url) {
                                                                     toast({ title: 'Required', description: 'Please enter title and URL' });
                                                                     return;
@@ -6745,9 +6784,9 @@ Login:
                                             )}
                                             <div className="grid gap-2">
                                                 {selectedInternship.studyPlan?.resources?.map((res: any, i: number) => (
-                                                    <div key={i} className="flex justify-between items-center p-3 border rounded-lg bg-indigo-50/50">
+                                                    <div key={i} className="flex items-center justify-between rounded-lg border bg-muted/40 p-3">
                                                         <div className="flex items-center gap-2">
-                                                            <BookOpen className="h-4 w-4 text-indigo-600" />
+                                                            <BookOpen className="h-4 w-4 text-primary" />
                                                             <span className="font-medium text-sm">{res.title}</span>
                                                         </div>
                                                         <a href={res.link} target="_blank" rel="noopener" className="text-secondary hover:underline text-sm">

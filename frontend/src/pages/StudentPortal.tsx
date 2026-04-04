@@ -142,9 +142,29 @@ const StudentPortal = () => {
 
     const fetchInternshipStatus = async () => {
         try {
-            const res = await axios.get(`${serverURL}/api/internship/student/${studentId}`);
+            const params = orgId ? { organizationId: orgId } : {};
+            const res = await axios.get(`${serverURL}/api/internship/student/${studentId}`, { params });
             if (res.data.success) {
-                setExistingInternship(res.data.internship);
+                if (res.data.internship) {
+                    setExistingInternship(res.data.internship);
+                    return;
+                }
+
+                const fallbackRes = await axios.get(`${serverURL}/api/internship`, {
+                    params: {
+                        studentId,
+                        ...params
+                    }
+                });
+
+                if (fallbackRes.data.success && Array.isArray(fallbackRes.data.internships)) {
+                    const preferredInternship =
+                        fallbackRes.data.internships.find((item: any) => item.status === 'active')
+                        || fallbackRes.data.internships.find((item: any) => item.status === 'requested')
+                        || null;
+
+                    setExistingInternship(preferredInternship);
+                }
             }
         } catch (e) {
             console.error('Failed to fetch internship status:', e);
