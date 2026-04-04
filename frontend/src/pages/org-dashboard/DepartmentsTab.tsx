@@ -68,7 +68,8 @@ const DepartmentsTab = () => {
         name: '',
         email: '',
         password: '',
-        departmentId: ''
+        departmentId: '',
+        courseLimit: ''
     });
     const [isUpdatingDeptAdmin, setIsUpdatingDeptAdmin] = useState(false);
     const [editDeptAdmin, setEditDeptAdmin] = useState({ 
@@ -81,6 +82,8 @@ const DepartmentsTab = () => {
         courseLimit: 0 
     });
     const [editDeptAdminPasswordError, setEditDeptAdminPasswordError] = useState('');
+    const [editDeptAdminCourseLimitError, setEditDeptAdminCourseLimitError] = useState('');
+    const [remainingOrgCourseBalance, setRemainingOrgCourseBalance] = useState<number | null>(null);
 
     // Predefined gradient colors for avatars based on new theme
     const avatarGradients = [
@@ -164,6 +167,7 @@ const DepartmentsTab = () => {
         fetchAssignments();
         fetchOrgDepartments();
         fetchOrgDeptAdmins();
+        fetchOrgCourseBalance();
     }, [orgId]);
 
     useEffect(() => {
@@ -201,6 +205,38 @@ const DepartmentsTab = () => {
         } catch (e) {
             console.error("Failed to fetch dept admins", e);
         }
+    };
+
+    const fetchOrgCourseBalance = async () => {
+        try {
+            const [statsRes, planRes] = await Promise.all([
+                axios.get(`${serverURL}/api/org/dashboard/stats?organizationId=${orgId}`),
+                axios.get(`${serverURL}/api/admin/org-plan?organizationId=${orgId}`)
+            ]);
+
+            if (statsRes.data.success && planRes.data.success && planRes.data.plan) {
+                const totalCoursesCount = Number(statsRes.data.totalCoursesCount || 0);
+                const aiCourseSlots = Number(planRes.data.plan.aiCourseSlots || 0);
+                setRemainingOrgCourseBalance(Math.max(0, aiCourseSlots - totalCoursesCount));
+            } else {
+                setRemainingOrgCourseBalance(null);
+            }
+        } catch (e) {
+            console.error("Failed to fetch organization course balance", e);
+            setRemainingOrgCourseBalance(null);
+        }
+    };
+
+    const getCourseLimitErrorMessage = (courseLimit: number) => {
+        if (courseLimit < 0) {
+            return 'Course creation limit cannot be negative.';
+        }
+
+        if (remainingOrgCourseBalance !== null && courseLimit > remainingOrgCourseBalance) {
+            return `Course creation limit cannot exceed the organization's remaining balance of ${remainingOrgCourseBalance} course${remainingOrgCourseBalance === 1 ? '' : 's'}.`;
+        }
+
+        return '';
     };
 
     const handleCreateDepartment = async () => {
@@ -319,7 +355,8 @@ const DepartmentsTab = () => {
                     ? 'Enter a valid email address.'
                     : '',
             password: trimmedPassword ? '' : 'Password is required.',
-            departmentId: newDeptAdmin.departmentId ? '' : 'Department is required.'
+            departmentId: newDeptAdmin.departmentId ? '' : 'Department is required.',
+            courseLimit: getCourseLimitErrorMessage(newDeptAdmin.courseLimit)
         };
 
         setCreateDeptAdminErrors(validationErrors);
@@ -349,10 +386,12 @@ const DepartmentsTab = () => {
                     name: '',
                     email: '',
                     password: '',
-                    departmentId: ''
+                    departmentId: '',
+                    courseLimit: ''
                 });
                 setOpenDeptAdminDialog(false);
                 fetchOrgDeptAdmins();
+                fetchOrgCourseBalance();
             } else {
                 toast({ title: "Error", description: res.data.message || "Failed to add dept admin", variant: "destructive" });
             }
@@ -373,7 +412,14 @@ const DepartmentsTab = () => {
                 return;
             }
 
+            const courseLimitError = getCourseLimitErrorMessage(editDeptAdmin.courseLimit);
+            if (courseLimitError) {
+                setEditDeptAdminCourseLimitError(courseLimitError);
+                return;
+            }
+
             setEditDeptAdminPasswordError('');
+            setEditDeptAdminCourseLimitError('');
             setIsUpdatingDeptAdmin(true);
             const res = await axios.put(`${serverURL}/api/org/dept-admin/${editDeptAdmin.id}`, {
                 name: editDeptAdmin.name,
@@ -397,6 +443,7 @@ const DepartmentsTab = () => {
                     courseLimit: 0 
                 });
                 fetchOrgDeptAdmins();
+                fetchOrgCourseBalance();
             } else {
                 toast({ title: "Error", description: res.data.message || "Failed to update department admin", variant: "destructive" });
             }
@@ -621,7 +668,8 @@ const DepartmentsTab = () => {
                                             name: '',
                                             email: '',
                                             password: '',
-                                            departmentId: ''
+                                            departmentId: '',
+                                            courseLimit: ''
                                         });
                                     }
                                 }}
@@ -731,16 +779,32 @@ const DepartmentsTab = () => {
                                                 <Label className="text-sm font-semibold">Course Creation Limit</Label>
                                                 <Input
                                                     type="number"
+                                                    min={0}
+                                                    max={remainingOrgCourseBalance ?? undefined}
                                                     value={newDeptAdmin.courseLimit}
-                                                    onChange={(e) =>
+                                                    onChange={(e) => {
                                                         setNewDeptAdmin({
                                                             ...newDeptAdmin,
                                                             courseLimit: parseInt(e.target.value) || 0
-                                                        })
-                                                    }
+                                                        });
+                                                        if (createDeptAdminErrors.courseLimit) {
+                                                            setCreateDeptAdminErrors({
+                                                                ...createDeptAdminErrors,
+                                                                courseLimit: ''
+                                                            });
+                                                        }
+                                                    }}
                                                     placeholder="Max courses this admin can create"
                                                     className="students-theme-input"
                                                 />
+                                                <p className="text-xs text-slate-600">
+                                                    {remainingOrgCourseBalance !== null
+                                                        ? `Remaining organization balance: ${remainingOrgCourseBalance} course${remainingOrgCourseBalance === 1 ? '' : 's'}`
+                                                        : 'Organization course balance unavailable right now.'}
+                                                </p>
+                                                {createDeptAdminErrors.courseLimit ? (
+                                                    <p className="text-sm text-red-600">{createDeptAdminErrors.courseLimit}</p>
+                                                ) : null}
                                             </div>
                                             <Button 
                                                 onClick={handleAddDeptAdmin} 
@@ -1140,6 +1204,7 @@ const DepartmentsTab = () => {
                 onOpenChange={(open) => {
                     setOpenEditAdminDialog(open);
                     setEditDeptAdminPasswordError('');
+                    setEditDeptAdminCourseLimitError('');
                     if (open) setIsUpdatingDeptAdmin(false);
                 }}
             >
@@ -1228,16 +1293,29 @@ const DepartmentsTab = () => {
                                 <Label className="text-sm font-semibold">Course Creation Limit</Label>
                                 <Input
                                     type="number"
+                                    min={0}
+                                    max={remainingOrgCourseBalance ?? undefined}
                                     value={editDeptAdmin.courseLimit}
-                                    onChange={(e) =>
+                                    onChange={(e) => {
                                         setEditDeptAdmin({
                                             ...editDeptAdmin,
                                             courseLimit: parseInt(e.target.value) || 0
-                                        })
-                                    }
+                                        });
+                                        if (editDeptAdminCourseLimitError) {
+                                            setEditDeptAdminCourseLimitError('');
+                                        }
+                                    }}
                                     placeholder="Max courses this admin can create"
                                     className="students-theme-input"
                                 />
+                                <p className="text-xs text-slate-600">
+                                    {remainingOrgCourseBalance !== null
+                                        ? `Remaining organization balance: ${remainingOrgCourseBalance} course${remainingOrgCourseBalance === 1 ? '' : 's'}`
+                                        : 'Organization course balance unavailable right now.'}
+                                </p>
+                                {editDeptAdminCourseLimitError ? (
+                                    <p className="text-sm text-red-600">{editDeptAdminCourseLimitError}</p>
+                                ) : null}
                             </div>
                             <div className="flex gap-3 mt-2">
                                 <Button 
