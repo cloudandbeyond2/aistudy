@@ -906,6 +906,36 @@ const OrgDashboard = () => {
     const [isAddingResource, setIsAddingResource] = useState(false);
     const [newResource, setNewResource] = useState({ title: '', url: '' });
 
+    const getInternshipTaskStatusMeta = (status: string) => {
+        switch (status) {
+            case 'completed':
+                return {
+                    label: 'Completed',
+                    className: 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                };
+            case 'submitted':
+                return {
+                    label: 'Submitted',
+                    className: 'bg-blue-100 text-blue-700 border-blue-200'
+                };
+            case 'revision':
+                return {
+                    label: 'Revision Needed',
+                    className: 'bg-amber-100 text-amber-700 border-amber-200'
+                };
+            case 'in-progress':
+                return {
+                    label: 'In Progress',
+                    className: 'bg-indigo-100 text-indigo-700 border-indigo-200'
+                };
+            default:
+                return {
+                    label: 'Pending',
+                    className: 'bg-slate-100 text-slate-700 border-slate-200'
+                };
+        }
+    };
+
 
 
     const [newMeeting, setNewMeeting] = useState({ title: '', link: '', platform: 'google-meet', date: '', time: '', department: getDeptScopedDepartment() });
@@ -6625,7 +6655,10 @@ Login:
                                                 </Card>
                                             )}
                                             <div className="grid gap-3">
-                                                {selectedInternship.tasks?.map((task: any) => (
+                                                {selectedInternship.tasks?.map((task: any) => {
+                                                    const statusMeta = getInternshipTaskStatusMeta(task.status);
+
+                                                    return (
                                                     <div key={task._id} className="p-4 border rounded-lg flex justify-between items-center bg-muted/20">
                                                         <div>
                                                             <p className="font-bold">{task.title}</p>
@@ -6634,7 +6667,7 @@ Login:
                                                                 <span className={new Date(task.dueDate) < new Date() ? 'text-red-500 font-bold' : ''}>
                                                                     Due: {new Date(task.dueDate).toLocaleDateString()}
                                                                 </span>
-                                                                <Badge variant="outline">{task.status}</Badge>
+                                                                <Badge variant="outline" className={statusMeta.className}>{statusMeta.label}</Badge>
                                                                 {task.submissionUrl && (
                                                                     <a href={task.submissionUrl} target="_blank" rel="noopener" className="text-blue-600 flex items-center gap-1">
                                                                         <ExternalLink className="h-3 w-3" /> View Submission
@@ -6668,7 +6701,7 @@ Login:
                                                             </div>
                                                         </div>
                                                     </div>
-                                                ))}
+                                                )})}
                                             </div>
                                         </TabsContent>
 
