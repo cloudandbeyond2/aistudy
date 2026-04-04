@@ -531,7 +531,7 @@ const DashboardLayoutContent = () => {
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
-                    <MenuItem icon={User} label="My Profile" to="/dashboard/student/profile" isActive={isActive('/dashboard/student/profile')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    {/* <MenuItem icon={User} label="My Profile" to="/dashboard/student/profile" isActive={isActive('/dashboard/student/profile')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} /> */}
 
                     
                     <SectionHeader title="Academics" icon={BookOpen} isExpanded={isExpanded} />
@@ -877,7 +877,7 @@ const DashboardLayoutContent = () => {
         {/* Footer */}
         <SidebarFooter className="border-t border-white/5 bg-transparent p-0">
           {/* User Profile Card */}
-          <div className={cn(
+          {/* <div className={cn(
             "group relative flex items-center gap-3 overflow-hidden transition-all duration-300 ease-in-out",
             "bg-white/[0.03] border border-white/10 hover:border-white/20",
             isExpanded ? "m-2 mb-0 rounded-2xl p-2" : "m-1 rounded-xl p-2 justify-center"
@@ -922,7 +922,7 @@ const DashboardLayoutContent = () => {
                 <Settings2 className="h-4 w-4" />
               </Link>
             )}
-          </div>
+          </div> */}
 
           {/* Action Buttons */}
           <div className="mt-2 space-y-1 px-2">
