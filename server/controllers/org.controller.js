@@ -200,22 +200,6 @@ const getOrgStudentLimit = async (organizationId) => {
     return slotLimits[org.studentSlot] || 50;
 };
 
-const getOrganizationRemainingCourseBalance = async (organizationId) => {
-    const orgPlan = await OrganizationPlan.findOne({ organization: organizationId, isActive: true }).select('aiCourseSlots');
-    if (!orgPlan) return null;
-
-    const orgCoursesCount = await OrgCourse.countDocuments({ organizationId });
-    const aiCoursesCount = await Course.countDocuments({ organizationId });
-    const totalCoursesCreated = orgCoursesCount + aiCoursesCount;
-    const remainingCourses = Math.max(0, (orgPlan.aiCourseSlots || 0) - totalCoursesCreated);
-
-    return {
-        remainingCourses,
-        totalCoursesCreated,
-        totalAllowedCourses: orgPlan.aiCourseSlots || 0
-    };
-};
-
 /**
  * ADD STUDENT (Single)
  */
@@ -1637,25 +1621,38 @@ export const createMaterial = async (req, res) => {
 
 export const getMaterials = async (req, res) => {
     const { organizationId, studentId } = req.query;
+
     try {
         let query = { organizationId };
-        if (studentId) {
+
+        if (studentId && mongoose.Types.ObjectId.isValid(studentId)) {
             const student = await User.findById(studentId);
+
             if (student) {
-                const department = student.studentDetails?.department;
-                query.$or = [
-                    { department: department },
-                    { department: { $exists: false } },
-                    { department: null },
-                    { department: '' },
-                    { department: 'all' }
-                ];
+                const department = student.department;
+
+                if (department) {
+                    query.$or = [
+                        { department: department },   // ✅ ObjectId match
+                        { department: { $exists: false } },
+                        { department: null }
+                    ];
+                } else {
+                    query.$or = [
+                        { department: { $exists: false } },
+                        { department: null }
+                    ];
+                }
             }
         }
+
         const materials = await MaterialModel.find(query).sort({ createdAt: -1 });
+
         res.json({ success: true, materials });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error("🔥 MATERIAL ERROR:", error);
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -1727,22 +1724,6 @@ export const addDeptAdmin = async (req, res) => {
             return res.json({ success: false, message: 'User with this email already exists' });
         }
 
-        const parsedCourseLimit = Number(courseLimit);
-        if (!Number.isFinite(parsedCourseLimit) || parsedCourseLimit < 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Course creation limit must be a valid non-negative number.'
-            });
-        }
-
-        const courseBalance = await getOrganizationRemainingCourseBalance(organizationId);
-        if (courseBalance && parsedCourseLimit > courseBalance.remainingCourses) {
-            return res.status(400).json({
-                success: false,
-                message: `Course creation limit cannot exceed the organization's remaining balance of ${courseBalance.remainingCourses} course${courseBalance.remainingCourses === 1 ? '' : 's'}.`
-            });
-        }
-
         const organization = await Organization.findById(organizationId).select('plan');
         const orgPlan = await OrganizationPlan.findOne({ organization: organizationId, isActive: true }).select('planName startDate endDate');
         const effectivePlan = orgPlan?.planName || organization?.plan || 'free';
@@ -1757,7 +1738,7 @@ export const addDeptAdmin = async (req, res) => {
             role: 'dept_admin',
             organization: organizationId,
             department: departmentId,
-            courseLimit: parsedCourseLimit,
+            courseLimit: courseLimit || 0,
             isEmailVerified: true,
             isOrganization: false,
             type: userAccess.type,
@@ -1787,29 +1768,11 @@ export const updateDeptAdmin = async (req, res) => {
         if (admin.role !== 'dept_admin') {
             return res.status(400).json({ success: false, message: 'User is not a department admin' });
         }
-
-        if (courseLimit !== undefined) {
-            const parsedCourseLimit = Number(courseLimit);
-            if (!Number.isFinite(parsedCourseLimit) || parsedCourseLimit < 0) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Course creation limit must be a valid non-negative number.'
-                });
-            }
-
-            const courseBalance = await getOrganizationRemainingCourseBalance(admin.organization);
-            if (courseBalance && parsedCourseLimit > courseBalance.remainingCourses) {
-                return res.status(400).json({
-                    success: false,
-                    message: `Course creation limit cannot exceed the organization's remaining balance of ${courseBalance.remainingCourses} course${courseBalance.remainingCourses === 1 ? '' : 's'}.`
-                });
-            }
-        }
         
         // Update fields
         if (name) admin.mName = name;
         if (departmentId) admin.department = departmentId;
-        if (courseLimit !== undefined) admin.courseLimit = Number(courseLimit);
+        if (courseLimit !== undefined) admin.courseLimit = courseLimit;
         if (phone !== undefined) admin.phone = phone;
         
         // Update password if provided
