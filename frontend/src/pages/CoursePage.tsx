@@ -327,6 +327,98 @@ const CoursePage = () => {
     });
   }, []);
 
+// Add this new function to regenerate only the current lesson
+const handleRegenerateCurrentLesson = async () => {
+  if (!jsonData || !mainTopic || !userId || !currentLesson) {
+    toast({ title: "Error", description: "Cannot regenerate lesson at this time." });
+    return;
+  }
+
+  const { topicTitle, subtopicTitle } = currentLesson;
+  
+  const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+  const targetTopic = topicsList?.find(t => t.title === topicTitle);
+  const targetSub = targetTopic?.subtopics?.find(s => s.title === subtopicTitle);
+  
+  if (!targetSub) {
+    toast({ title: "Error", description: "Lesson not found." });
+    return;
+  }
+
+  // Show loading state for this specific lesson
+  setShowLoadingPopup(true);
+  setLoadingSubtopic(subtopicTitle);
+  setLoadingStage('theory');
+  setLoadingProgress(0);
+
+  try {
+    // Regenerate theory
+    const theoryRes = await axios.post(serverURL + '/api/generate-batch', {
+      mainTopic,
+      topicsList: [{ topicTitle, subtopics: [subtopicTitle] }],
+      lang,
+      userId,
+      contentProfile: contentProfileId,
+    });
+
+    if (theoryRes.data?.success && theoryRes.data.topics?.[0]) {
+      const newTheory = theoryRes.data.topics[0].subtopics[0].theory;
+      const cleanedTheory = cleanGeneratedHtml(newTheory);
+      targetSub.theory = cleanedTheory;
+      
+      // Update UI if this is the currently selected lesson
+      if (selected === subtopicTitle) {
+        setTheory(cleanedTheory);
+      }
+    }
+
+    // Regenerate media based on course type
+    if (type === 'video & text course') {
+      const query = `${subtopicTitle} ${mainTopic} in english`;
+      const ytRes = await axios.post(serverURL + '/api/yt', { prompt: query });
+      if (ytRes.data?.url) {
+        targetSub.youtube = ytRes.data.url;
+        if (selected === subtopicTitle) {
+          setMedia(ytRes.data.url);
+        }
+      }
+    } else {
+      const imageRes = await axios.post(
+        serverURL + '/api/image',
+        { prompt: `${subtopicTitle} in ${mainTopic}` },
+        { timeout: 12000 }
+      );
+      const imageUrl = imageRes.data?.url || getFallbackImage(topicTitle, subtopicTitle);
+      targetSub.image = imageUrl;
+      if (selected === subtopicTitle) {
+        setMedia(imageUrl);
+        preloadImageWithCache(imageUrl, subtopicTitle, topicTitle);
+      }
+    }
+
+    // Keep done status as false so user can mark as complete again
+    targetSub.done = false;
+    
+    // Update state and storage
+    setJsonData({ ...jsonData });
+    sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+    await updateCourse();
+
+    toast({
+      title: "Lesson Regenerated ✓",
+      description: `"${subtopicTitle}" has been refreshed with new content.`,
+    });
+  } catch (err) {
+    console.error("Lesson regeneration failed:", err);
+    toast({
+      title: "Regeneration Failed",
+      description: "Something went wrong. Please try again.",
+    });
+  } finally {
+    setShowLoadingPopup(false);
+    if (window.progressInterval) clearInterval(window.progressInterval);
+  }
+};
   const simulateProgress = useCallback((stage) => {
     setLoadingStage(stage);
     setLoadingProgress(0);
@@ -1177,7 +1269,7 @@ Requirements:
                 <div className="space-y-1.5 sm:space-y-2">
 
                   {/* Regenerate Chapter Button */}
-                  <button
+                  {/* <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1218,40 +1310,58 @@ Requirements:
                         </span>
                       </div>
                     )}
-                  </button>
+                  </button> */}
 
                   {/* Subtopics List */}
                   {topicSubtopics.map((subtopic, subtopicIndex) => {
                     const isUnlocked = isSubtopicUnlocked(topic.title, subtopic.title);
                     const isActive = selected === subtopic.title;
                     const isCompleted = completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title);
+                    
                     return (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (isUnlocked) handleSelect(topic.title, subtopic.title);
-                          else toast({ title: "Locked", description: "Complete previous lessons to unlock this one." });
-                        }}
-                        key={subtopic.title}
-                        className={cn(
-                          "group flex w-full items-start gap-2 sm:gap-3 rounded-lg sm:rounded-xl border px-2 sm:px-3 py-2 sm:py-3 text-left transition-all",
-                          isUnlocked ? "cursor-pointer hover:border-primary/30 hover:bg-primary/[0.05]" : "cursor-not-allowed opacity-60",
-                          isActive ? "border-primary/35 bg-primary/[0.08] shadow-sm" : "border-transparent bg-muted/50"
-                        )}
-                      >
-                        <span className={cn("mt-0.5 flex h-5 w-5 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-full text-[9px] sm:text-[11px] font-semibold",
-                          isCompleted ? "bg-emerald-500 text-white" : isActive ? "bg-primary text-primary-foreground" : isUnlocked ? "border border-border bg-background text-muted-foreground" : "bg-muted-foreground/15 text-muted-foreground"
-                        )}>
-                          {isCompleted ? "✓" : subtopicIndex + 1}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-xs sm:text-sm font-medium leading-4 sm:leading-5 text-foreground">{subtopic.title}</span>
-                          <span className="mt-0.5 sm:mt-1 flex items-center gap-1 sm:gap-2 text-[9px] sm:text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                            <span>{isCompleted ? "Completed" : isActive ? "Current lesson" : isUnlocked ? "Open lesson" : "Locked"}</span>
-                            {!isCompleted && !isUnlocked && <Lock className="h-2 w-2 sm:h-3 sm:w-3" />}
+                      <div key={subtopic.title} className="relative group">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isUnlocked) handleSelect(topic.title, subtopic.title);
+                            else toast({ title: "Locked", description: "Complete previous lessons to unlock this one." });
+                          }}
+                          className={cn(
+                            "group flex w-full items-start gap-2 sm:gap-3 rounded-lg sm:rounded-xl border px-2 sm:px-3 py-2 sm:py-3 text-left transition-all",
+                            isUnlocked ? "cursor-pointer hover:border-primary/30 hover:bg-primary/[0.05]" : "cursor-not-allowed opacity-60",
+                            isActive ? "border-primary/35 bg-primary/[0.08] shadow-sm" : "border-transparent bg-muted/50",
+                            isActive ? "pr-8 sm:pr-10" : ""
+                          )}
+                        >
+                          <span className={cn("mt-0.5 flex h-5 w-5 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-full text-[9px] sm:text-[11px] font-semibold",
+                            isCompleted ? "bg-emerald-500 text-white" : isActive ? "bg-primary text-primary-foreground" : isUnlocked ? "border border-border bg-background text-muted-foreground" : "bg-muted-foreground/15 text-muted-foreground"
+                          )}>
+                            {isCompleted ? "✓" : subtopicIndex + 1}
                           </span>
-                        </span>
-                      </button>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-xs sm:text-sm font-medium leading-4 sm:leading-5 text-foreground">{subtopic.title}</span>
+                            <span className="mt-0.5 sm:mt-1 flex items-center gap-1 sm:gap-2 text-[9px] sm:text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                              <span>{isCompleted ? "Completed" : isActive ? "Current lesson" : isUnlocked ? "Open lesson" : "Locked"}</span>
+                              {!isCompleted && !isUnlocked && <Lock className="h-2 w-2 sm:h-3 sm:w-3" />}
+                            </span>
+                          </span>
+                        </button>
+                        
+                        {/* Regenerate button for current lesson only */}
+                        {isActive && !regeneratingChapter && (
+                          <button
+                            type="button"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await handleRegenerateCurrentLesson();
+                            }}
+                            className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-lg hover:bg-primary/10 transition-colors group/regenerate"
+                            title="Regenerate this lesson only"
+                          >
+                            <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground hover:text-primary transition-colors" />
+                          </button>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -1283,7 +1393,7 @@ Requirements:
   async function sendEmail(formattedDate) {
     const userName = sessionStorage.getItem('mName');
     const email = sessionStorage.getItem('email');
-    const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><meta http-equiv="Content-Type" content="text/html charset=UTF-8" /><html lang="en"><head></head><body style="padding:20px; margin-left:auto;margin-right:auto;margin-top:auto;margin-bottom:auto;background-color:#f6f9fc;font-family:ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;"><table align="center" role="presentation" cellSpacing="0" cellPadding="0" border="0" height="80%" width="100%" style="max-width:37.5em;max-height:80%; margin-left:auto;margin-right:auto;margin-top:80px;margin-bottom:80px;width:465px;border-radius:0.25rem;border-width:1px;background-color:#fff;padding:20px"><tr style="width:100%"><td><table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%" style="margin-top:32px"><tbody><tr><td><img alt="Logo" src="${appLogo}" width="40" height="37" style="display:block;outline:none;border:none;text-decoration:none;margin-left:auto;margin-right:auto;margin-top:0px;margin-bottom:0px" /><tr></tr></tbody></table><h1 style="margin-left:0px;margin-right:0px;margin-top:30px;margin-bottom:30px;padding:0px;text-align:center;font-size:24px;font-weight:400;color:rgb(0,0,0)">Completion Certificate </h1><p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Hello <strong>${userName}</strong>,</p><p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">We are pleased to inform you that you have successfully completed the ${mainTopic} and are now eligible for your course completion certificate.</p><table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%" style="margin-bottom:32px;margin-top:32px;text-align:center"><tbody><tr><td><a href="${websiteURL}" target="_blank" style="p-x:20px;p-y:12px;line-height:100%;text-decoration:none;display:inline-block;max-width:100%;padding:12px 20px;border-radius:0.25rem;background-color: #007BFF;text-align:center;font-size:12px;font-weight:600;color:rgb(255,255,255)"><span>Get Certificate</span></a></td></tr></tbody></table><p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Best,<p target="_blank" style="color:rgb(0,0,0);text-decoration:none;text-decoration-line:none">The <strong>${companyName}</strong> Team</p></p></td></tr></body></html>`;
+    const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><meta http-equiv="Content-Type" content="text/html charset=UTF-8" /><html lang="en"><head></head><body style="padding:20px; margin-left:auto;margin-right:auto;margin-top:auto;margin-bottom:auto;background-color:#f6f9fc;font-family:ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;"><table align="center" role="presentation" cellSpacing="0" cellPadding="0" border="0" height="80%" width="100%" style="max-width:37.5em;max-height:80%; margin-left:auto;margin-right:auto;margin-top:80px;margin-bottom:80px;width:465px;border-radius:0.25rem;border-width:1px;background-color:#fff;padding:20px"><tr style="width:100%"><td><table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%" style="margin-top:32px"><tbody><tr><td><img alt="Logo" src="${appLogo}" width="40" height="37" style="display:block;outline:none;border:none;text-decoration:none;margin-left:auto;margin-right:auto;margin-top:0px;margin-bottom:0px" /></td></tr></tbody></table><h1 style="margin-left:0px;margin-right:0px;margin-top:30px;margin-bottom:30px;padding:0px;text-align:center;font-size:24px;font-weight:400;color:rgb(0,0,0)">Completion Certificate </h1><p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Hello <strong>${userName}</strong>,</p><p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">We are pleased to inform you that you have successfully completed the ${mainTopic} and are now eligible for your course completion certificate.</p><table align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%" style="margin-bottom:32px;margin-top:32px;text-align:center"><tbody><tr><td><a href="${websiteURL}" target="_blank" style="p-x:20px;p-y:12px;line-height:100%;text-decoration:none;display:inline-block;max-width:100%;padding:12px 20px;border-radius:0.25rem;background-color: #007BFF;text-align:center;font-size:12px;font-weight:600;color:rgb(255,255,255)"><span>Get Certificate</span></a><tr></tr></tbody></table><p style="font-size:14px;line-height:24px;margin:16px 0;color:rgb(0,0,0)">Best,<p target="_blank" style="color:rgb(0,0,0);text-decoration:none;text-decoration-line:none">The <strong>${companyName}</strong> Team</p></p></td></tr></body></html>`;
     try {
       await axios.post(serverURL + '/api/sendcertificate', { html, email }).then(res => {
         navigate('/course/' + courseId + '/certificate', { state: { courseTitle: mainTopic, end: formattedDate } });
@@ -1384,11 +1494,33 @@ Requirements:
           <div className="mt-1 text-muted-foreground">{completedLessonCount}/{orderedLessons.length} lessons completed</div>
         </div>
       </div>
-      <div className="mt-3 sm:mt-4 grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3"><div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Attempts</div><div className="mt-1 text-xs sm:text-sm font-semibold">{manualQuizSettings.attemptLimit} total attempts</div><div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">{quizAttemptSummary?.attemptCount || 0} used, {quizAttemptSummary?.remainingAttempts ?? manualQuizSettings.attemptLimit} left</div></div>
-        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3"><div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Passing</div><div className="mt-1 text-xs sm:text-sm font-semibold">{manualQuizSettings.passPercentage}% required</div><div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">{manualQuizSettings.questionCount} questions per attempt</div></div>
-        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3"><div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Cooldown</div><div className="mt-1 text-xs sm:text-sm font-semibold">{manualQuizSettings.cooldownMinutes} minutes after a failed attempt</div><div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">Difficulty mode: {manualQuizSettings.difficultyMode}</div></div>
-        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3"><div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Monitoring</div><div className="mt-1 text-xs sm:text-sm font-semibold">{[manualQuizSettings.proctoring.detectTabSwitch && 'tab switch', manualQuizSettings.proctoring.detectFullscreenExit && 'fullscreen', manualQuizSettings.proctoring.detectCopyPaste && 'clipboard', manualQuizSettings.proctoring.detectNoise && 'noise'].filter(Boolean).join(', ') || 'standard'}</div><div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">{manualQuizSettings.proctoring.requireCamera || manualQuizSettings.proctoring.requireMicrophone ? 'Camera/mic permissions may be requested' : 'No device access required'}</div></div>
+      
+      {/* Responsive Grid for Exam Rules */}
+      <div className="mt-3 sm:mt-4 grid gap-2 sm:gap-3 
+        grid-cols-1 
+        sm:grid-cols-2 
+        md:grid-cols-2 
+        lg:grid-cols-4">
+        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3">
+          <div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Attempts</div>
+          <div className="mt-1 text-xs sm:text-sm font-semibold">{manualQuizSettings.attemptLimit} total attempts</div>
+          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">{quizAttemptSummary?.attemptCount || 0} used, {quizAttemptSummary?.remainingAttempts ?? manualQuizSettings.attemptLimit} left</div>
+        </div>
+        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3">
+          <div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Passing</div>
+          <div className="mt-1 text-xs sm:text-sm font-semibold">{manualQuizSettings.passPercentage}% required</div>
+          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">{manualQuizSettings.questionCount} questions per attempt</div>
+        </div>
+        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3">
+          <div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Cooldown</div>
+          <div className="mt-1 text-xs sm:text-sm font-semibold">{manualQuizSettings.cooldownMinutes} minutes after a failed attempt</div>
+          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">Difficulty mode: {manualQuizSettings.difficultyMode}</div>
+        </div>
+        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3">
+          <div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Monitoring</div>
+          <div className="mt-1 text-xs sm:text-sm font-semibold">{[manualQuizSettings.proctoring.detectTabSwitch && 'tab switch', manualQuizSettings.proctoring.detectFullscreenExit && 'fullscreen', manualQuizSettings.proctoring.detectCopyPaste && 'clipboard', manualQuizSettings.proctoring.detectNoise && 'noise'].filter(Boolean).join(', ') || 'standard'}</div>
+          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">{manualQuizSettings.proctoring.requireCamera || manualQuizSettings.proctoring.requireMicrophone ? 'Camera/mic permissions may be requested' : 'No device access required'}</div>
+        </div>
       </div>
     </section>
   ) : null;
@@ -1412,6 +1544,7 @@ Requirements:
           <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-primary">{completedLessonCount} completed</span>
         </div>
       </div>
+      
       <div className="mt-4 sm:mt-5 rounded-2xl sm:rounded-3xl border border-border/60 bg-background/80 p-3 sm:p-4 md:p-5 shadow-sm">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
@@ -1423,7 +1556,12 @@ Requirements:
             {currentTopicTitle && (<Button variant="outline" onClick={() => openLessonFlow(currentTopicTitle)} className="rounded-xl sm:rounded-2xl text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2"><ChevronDown className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />Current chapter</Button>)}
           </div>
         </div>
-        <div className="mt-4 sm:mt-5 grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2">
+        
+        {/* Responsive Grid for Roadmap Chapters */}
+        <div className="mt-4 sm:mt-5 grid gap-2 sm:gap-3 
+          grid-cols-1 
+          sm:grid-cols-2 
+          lg:grid-cols-2">
           {courseTopics.slice(0, 4).map((topic, topicIndex) => {
             const topicSubtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
             const topicCompletedCount = topicSubtopics.filter(subtopic => completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title)).length;
@@ -1444,6 +1582,7 @@ Requirements:
         </div>
         {courseTopics.length > 4 && (<div className="mt-3 sm:mt-4 flex justify-center"><Button variant="ghost" className="rounded-xl sm:rounded-2xl text-xs sm:text-sm" onClick={() => openLessonFlow()}>View all chapters</Button></div>)}
       </div>
+      
       <Dialog open={isLessonFlowOpen} onOpenChange={setIsLessonFlowOpen}>
         <DialogContent className="w-[95vw] max-w-4xl overflow-hidden p-0 rounded-2xl sm:rounded-3xl">
           <DialogHeader className="border-b border-border/60 bg-gradient-to-r from-primary/10 via-background to-indigo-500/10 p-4 sm:p-5 md:p-6">
@@ -1480,7 +1619,11 @@ Requirements:
                         {filteredSubtopics.length === 0 ? (
                           <div className="rounded-xl sm:rounded-2xl border border-dashed bg-muted/20 p-4 sm:p-5 text-center text-xs sm:text-sm text-muted-foreground">No lessons match your search.</div>
                         ) : (
-                          <div className="grid gap-1.5 sm:gap-2 grid-cols-1 sm:grid-cols-2">
+                          /* Responsive Grid for Lesson Flow Subtopics */
+                          <div className="grid gap-1.5 sm:gap-2 
+                            grid-cols-1 
+                            sm:grid-cols-2 
+                            lg:grid-cols-2">
                             {filteredSubtopics.map((subtopic: any, subtopicIndex: number) => {
                               const isUnlocked = isSubtopicUnlocked(topic.title, subtopic.title);
                               const isActive = selected === subtopic.title;
@@ -1684,7 +1827,12 @@ Requirements:
                           {currentTopicTitle && `Inside ${currentTopicTitle}. `}{currentLesson ? `Lesson ${currentLessonIndex + 1} of ${orderedLessons.length}. ` : ""}Continue through the roadmap below or jump directly from the side menu.
                         </p>
                       </div>
-                      <div className="grid grid-cols-2 gap-1.5 sm:gap-2 xl:w-auto xl:min-w-[320px]">
+                      
+                      {/* Responsive Grid for Hero Banner Stats */}
+                      <div className="grid grid-cols-2 gap-1.5 sm:gap-2 
+                        sm:grid-cols-2 
+                        lg:grid-cols-2 
+                        xl:w-auto xl:min-w-[320px]">
                         <div className="rounded-lg sm:rounded-xl border border-white/12 bg-white/10 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 backdrop-blur">
                           <div className="text-[8px] sm:text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">Current Chapter</div>
                           <div className="mt-1 text-xs sm:text-sm md:text-base lg:text-lg font-semibold leading-tight">{currentTopic ? `${currentLesson?.topicIndex + 1}. ${currentTopic.title}` : "Course lesson"}</div>
@@ -1701,8 +1849,10 @@ Requirements:
 
                   {/* Content profile badge - Responsive */}
                   <div className={`mb-3 sm:mb-4 md:mb-6 rounded-xl sm:rounded-2xl border p-2 sm:p-3 md:p-4 ${contentProfileMeta.surfaceClass}`}>
-                    <div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="space-y-1.5 sm:space-y-2">
+                    <div className="flex flex-col gap-2 sm:gap-3 
+                      sm:flex-row sm:items-start sm:justify-between
+                      lg:flex-row lg:items-center">
+                      <div className="space-y-1.5 sm:space-y-2 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                           <span className={`inline-flex items-center rounded-full px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold ${contentProfileMeta.badgeClass}`}>
                             <ContentProfileIcon className="mr-1 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />{contentProfileMeta.label}
@@ -1710,7 +1860,7 @@ Requirements:
                           <span className="inline-flex items-center rounded-full border border-border bg-background px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">{type === "video & text course" ? "Video + Text" : "Text + Images"}</span>
                           <span className="inline-flex items-center rounded-full border border-border bg-background px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">{lang}</span>
                         </div>
-                        <p className="text-xs sm:text-sm text-muted-foreground">{contentProfileMeta.summary}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 sm:line-clamp-none">{contentProfileMeta.summary}</p>
                       </div>
                     </div>
                   </div>
@@ -1745,7 +1895,10 @@ Requirements:
                               {currentLessonCompleted ? nextLesson ? "This lesson is complete. You can move to the next lesson now." : "All lessons are complete. The final quiz is now available." : "Mark this lesson as complete to unlock the next part of the course."}
                             </p>
                           </div>
-                          <div className="grid grid-cols-3 gap-1.5 sm:gap-2 sm:flex sm:flex-row sm:gap-2 sm:flex-shrink-0">
+                          
+                          {/* Responsive Grid for Lesson Action Buttons */}
+                          <div className="grid grid-cols-3 gap-1.5 sm:gap-2 
+                            sm:flex sm:flex-row sm:gap-2 sm:flex-shrink-0">
                             <Button variant="outline" onClick={handlePreviousLesson} disabled={!previousLesson} className="gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">
                               <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" /><span>Prev</span>
                             </Button>
