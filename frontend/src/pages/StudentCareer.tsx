@@ -656,7 +656,7 @@ const StudentCareer = () => {
     };
 
     return (
-        <div className="space-y-5 animate-fade-in" style={{paddingTop:"70px"}}>
+       <div className="space-y-5 animate-fade-in pt-0 lg:pt-[70px]">
             <SEO
                 title="Career Hub | Student Portal"
                 description="Manage your career profile, showcase projects, and track your placement readiness."
