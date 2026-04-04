@@ -60,10 +60,8 @@ const createEmptyCourse = () => ({
     quizSettings: { ...defaultQuizSettings, proctoring: { ...defaultQuizSettings.proctoring } }
 });
 
-// Gradient background style
-const gradientBg = {
-  background: 'linear-gradient(90deg, #1b253f 0%, #2d3a8c 30%, #4b3bb0 65%, #6b2cc1 100%)'
-};
+const pageGradientClass = "bg-brand-gradient";
+const pageGradientTextClass = "bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent";
 
 const ProjectTab = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -397,14 +395,14 @@ const ProjectTab = () => {
                         <span>Topic:</span>
                         <span class="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs sm:text-sm break-all">${projectAiTopic.substring(0, 40)}${projectAiTopic.length > 40 ? '...' : ''}</span>
                     </div>
-                    <div class="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700">
-                        <div id="progress-bar" class="h-3 rounded-full transition-all duration-300" style="width: 0%; background: linear-gradient(90deg, #1b253f, #2d3a8c, #4b3bb0, #6b2cc1)"></div>
+                    <div class="w-full bg-muted rounded-full h-3">
+                        <div id="progress-bar" class="h-3 rounded-full transition-all duration-300 bg-brand-gradient" style="width: 0%;"></div>
                     </div>
                     <div id="progress-status" class="flex items-center justify-center gap-2 text-sm mt-2">
                         <span id="progress-icon">⏳</span>
                         <span id="progress-message">Initializing...</span>
                     </div>
-                    <div id="progress-percentage" class="text-2xl font-bold text-center" style="background: linear-gradient(90deg, #1b253f, #2d3a8c, #4b3bb0, #6b2cc1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0%</div>
+                    <div id="progress-percentage" class="text-2xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent">0%</div>
                 </div>
             `,
             showConfirmButton: false,
@@ -486,7 +484,7 @@ const ProjectTab = () => {
                 icon: 'error',
                 title: 'Generation Failed',
                 text: e.response?.data?.message || 'Failed to generate content',
-                confirmButtonColor: '#6b2cc1'
+                confirmButtonColor: 'hsl(var(--primary))'
             });
         } finally {
             setIsGeneratingProject(false);
@@ -509,28 +507,28 @@ const ProjectTab = () => {
                     html += `</${listType}>`;
                     inList = false;
                 }
-                html += `<h3 class="text-base sm:text-lg font-bold mt-4 sm:mt-6 mb-2 sm:mb-3" style="background: linear-gradient(90deg, #1b253f, #2d3a8c, #4b3bb0, #6b2cc1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${line.substring(4)}</h3>`;
+                html += `<h3 class="text-base sm:text-lg font-bold mt-4 sm:mt-6 mb-2 sm:mb-3 text-primary">${line.substring(4)}</h3>`;
             }
             else if (line.startsWith('## ')) {
                 if (inList) {
                     html += `</${listType}>`;
                     inList = false;
                 }
-                html += `<h2 class="text-lg sm:text-xl font-bold mt-4 sm:mt-5 mb-2 sm:mb-3" style="background: linear-gradient(90deg, #1b253f, #2d3a8c, #4b3bb0, #6b2cc1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${line.substring(3)}</h2>`;
+                html += `<h2 class="text-lg sm:text-xl font-bold mt-4 sm:mt-5 mb-2 sm:mb-3 text-primary">${line.substring(3)}</h2>`;
             }
             else if (line.startsWith('# ')) {
                 if (inList) {
                     html += `</${listType}>`;
                     inList = false;
                 }
-                html += `<h1 class="text-xl sm:text-2xl font-bold mt-5 sm:mt-6 mb-3 sm:mb-4" style="background: linear-gradient(90deg, #1b253f, #2d3a8c, #4b3bb0, #6b2cc1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${line.substring(2)}</h1>`;
+                html += `<h1 class="text-xl sm:text-2xl font-bold mt-5 sm:mt-6 mb-3 sm:mb-4 text-primary">${line.substring(2)}</h1>`;
             }
             else if (line.match(/^(Phase|Step|Part)\s+\d+[:.]/i)) {
                 if (inList) {
                     html += `</${listType}>`;
                     inList = false;
                 }
-                html += `<h3 class="text-base sm:text-lg font-bold mt-4 sm:mt-6 mb-2 sm:mb-3" style="background: linear-gradient(90deg, #1b253f, #2d3a8c, #4b3bb0, #6b2cc1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${line}</h3>`;
+                html += `<h3 class="text-base sm:text-lg font-bold mt-4 sm:mt-6 mb-2 sm:mb-3 text-primary">${line}</h3>`;
             }
             else if (line.match(/^[A-Z][a-z]+(\s+[A-Z][a-z]+)*:$/) || (line.length < 60 && line.endsWith(':'))) {
                 if (inList) {
@@ -587,8 +585,8 @@ const ProjectTab = () => {
             text: "This action cannot be undone!",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#6b2cc1',
-            cancelButtonColor: '#3085d6',
+            confirmButtonColor: 'hsl(var(--primary))',
+            cancelButtonColor: 'hsl(var(--muted-foreground))',
             confirmButtonText: 'Yes, delete it!',
             cancelButtonText: 'Cancel'
         });
@@ -611,7 +609,7 @@ const ProjectTab = () => {
                     title: 'Error!',
                     text: 'Failed to delete project',
                     icon: 'error',
-                    confirmButtonColor: '#6b2cc1'
+                    confirmButtonColor: 'hsl(var(--primary))'
                 });
             }
         }
@@ -784,24 +782,24 @@ const ProjectTab = () => {
   return (
     <div className="space-y-6 lg:space-y-8 p-6 lg:p-8 xl:p-10">
         {/* Hero Section - Desktop Optimized */}
-        <div className="relative rounded-2xl overflow-hidden mb-6 lg:mb-8" style={gradientBg}>
+        <div className={`relative rounded-2xl overflow-hidden mb-6 lg:mb-8 ${pageGradientClass}`}>
             <div className="absolute inset-0 bg-black/20"></div>
-            <div className="relative px-8 lg:px-12 xl:px-16 py-12 lg:py-16 xl:py-20 text-white">
+            <div className="relative px-8 lg:px-12 xl:px-16 py-12 lg:py-16 xl:py-20 text-primary-foreground">
                 <div className="max-w-3xl xl:max-w-4xl">
                     <div className="flex items-center gap-3 lg:gap-4 mb-4 lg:mb-5">
-                        <div className="bg-white/20 p-2.5 lg:p-3 rounded-xl backdrop-blur-sm">
+                        <div className="bg-primary-foreground/20 p-2.5 lg:p-3 rounded-xl backdrop-blur-sm">
                             <Briefcase className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8" />
                         </div>
                         <h1 className="text-2xl lg:text-3xl xl:text-4xl font-bold">Projects & Labs Desk</h1>
                     </div>
-                    <p className="text-white/90 text-base lg:text-lg xl:text-xl mb-6 lg:mb-8">
+                    <p className="text-primary-foreground/90 text-base lg:text-lg xl:text-xl mb-6 lg:mb-8">
                         Manage practical work, guided research, and applied skill-building projects for your students.
                         Create structured assignments with AI assistance and track progress seamlessly.
                     </p>
                     <div className="flex flex-wrap gap-3 lg:gap-4">
                         <Button 
                             onClick={() => setOpenProjectDialog(true)}
-                            className="bg-white text-[#1b253f] hover:bg-white/90 shadow-lg text-base lg:text-lg px-6 lg:px-8 py-2.5 lg:py-3"
+                            className="bg-background text-primary hover:bg-muted shadow-lg text-base lg:text-lg px-6 lg:px-8 py-2.5 lg:py-3"
                         >
                             <Plus className="w-5 h-5 lg:w-6 lg:h-6 mr-2" />
                             Create New Project
@@ -818,11 +816,11 @@ const ProjectTab = () => {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm lg:text-base text-muted-foreground mb-1">Total Projects</p>
-                            <p className="text-2xl lg:text-3xl xl:text-4xl font-bold bg-gradient-to-r from-[#1b253f] to-[#6b2cc1] bg-clip-text text-transparent">
+                            <p className={`text-2xl lg:text-3xl xl:text-4xl font-bold ${pageGradientTextClass}`}>
                                 {projects.length}
                             </p>
                         </div>
-                        <div className="bg-gradient-to-br from-[#1b253f] to-[#6b2cc1] p-3 lg:p-4 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform">
+                        <div className="bg-brand-gradient p-3 lg:p-4 rounded-xl text-primary-foreground shadow-lg group-hover:scale-110 transition-transform">
                             <Briefcase className="w-5 h-5 lg:w-6 lg:h-6" />
                         </div>
                     </div>
@@ -834,11 +832,11 @@ const ProjectTab = () => {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm lg:text-base text-muted-foreground mb-1">AI Generated</p>
-                            <p className="text-2xl lg:text-3xl xl:text-4xl font-bold bg-gradient-to-r from-[#2d3a8c] to-[#4b3bb0] bg-clip-text text-transparent">
+                            <p className="text-2xl lg:text-3xl xl:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
                                 {aiProjectCount}
                             </p>
                         </div>
-                        <div className="bg-gradient-to-br from-[#2d3a8c] to-[#4b3bb0] p-3 lg:p-4 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform">
+                        <div className="bg-primary/10 p-3 lg:p-4 rounded-xl text-primary shadow-lg group-hover:scale-110 transition-transform">
                             <Sparkles className="w-5 h-5 lg:w-6 lg:h-6" />
                         </div>
                     </div>
@@ -850,11 +848,11 @@ const ProjectTab = () => {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm lg:text-base text-muted-foreground mb-1">Due This Week</p>
-                            <p className="text-2xl lg:text-3xl xl:text-4xl font-bold bg-gradient-to-r from-[#4b3bb0] to-[#6b2cc1] bg-clip-text text-transparent">
+                            <p className="text-2xl lg:text-3xl xl:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-secondary to-accent">
                                 {dueSoonProjectsCount}
                             </p>
                         </div>
-                        <div className="bg-gradient-to-br from-[#4b3bb0] to-[#6b2cc1] p-3 lg:p-4 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform">
+                        <div className="bg-secondary/10 p-3 lg:p-4 rounded-xl text-secondary shadow-lg group-hover:scale-110 transition-transform">
                             <Clock className="w-5 h-5 lg:w-6 lg:h-6" />
                         </div>
                     </div>
@@ -866,11 +864,11 @@ const ProjectTab = () => {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm lg:text-base text-muted-foreground mb-1">Active Projects</p>
-                            <p className="text-2xl lg:text-3xl xl:text-4xl font-bold bg-gradient-to-r from-[#6b2cc1] to-[#4b3bb0] bg-clip-text text-transparent">
+                            <p className="text-2xl lg:text-3xl xl:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-accent to-secondary">
                                 {projects.filter(p => !p.dueDate || new Date(p.dueDate) >= now).length}
                             </p>
                         </div>
-                        <div className="bg-gradient-to-br from-[#6b2cc1] to-[#4b3bb0] p-3 lg:p-4 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform">
+                        <div className="bg-accent/10 p-3 lg:p-4 rounded-xl text-accent shadow-lg group-hover:scale-110 transition-transform">
                             <Zap className="w-5 h-5 lg:w-6 lg:h-6" />
                         </div>
                     </div>
@@ -883,7 +881,7 @@ const ProjectTab = () => {
             <CardHeader className="border-b bg-muted/30 p-5 lg:p-6 xl:p-7">
                 <div>
                     <CardTitle className="text-lg lg:text-xl xl:text-2xl flex items-center gap-2">
-                        <FolderOpen className="w-5 h-5 lg:w-6 lg:h-6 text-[#6b2cc1]" />
+                        <FolderOpen className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
                         All Projects
                     </CardTitle>
                     <CardDescription className="text-sm lg:text-base">
@@ -898,20 +896,20 @@ const ProjectTab = () => {
                         {projects.map((project) => (
                             <div 
                                 key={project._id} 
-                                className="group relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col"
+                                className="group relative bg-card rounded-xl overflow-hidden border border-border hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col"
                             >
                                 {/* Gradient Top Border */}
-                                <div className="absolute top-0 left-0 right-0 h-1" style={gradientBg}></div>
+                                <div className={`absolute top-0 left-0 right-0 h-1 ${pageGradientClass}`}></div>
                                 
                                 {/* Action Buttons */}
                                 <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                     <Button 
                                         size="icon" 
                                         variant="outline" 
-                                        className="h-8 w-8 bg-white/90 backdrop-blur-sm hover:bg-white shadow-md rounded-full"
+                                        className="h-8 w-8 bg-background/90 backdrop-blur-sm hover:bg-background shadow-md rounded-full"
                                         onClick={() => setPreviewProject(project)}
                                     >
-                                        <Eye className="h-4 w-4 text-[#6b2cc1]" />
+                                        <Eye className="h-4 w-4 text-primary" />
                                     </Button>
                                     <Button 
                                         size="icon" 
@@ -925,11 +923,11 @@ const ProjectTab = () => {
 
                                 {/* Type Badge */}
                                 <div className="absolute top-3 left-3 flex flex-wrap gap-1">
-                                    <Badge className="bg-gradient-to-r from-[#1b253f] to-[#2d3a8c] text-white border-0 text-xs">
+                                    <Badge className="bg-primary text-primary-foreground border-0 text-xs">
                                         {project.type || 'Project'}
                                     </Badge>
                                     {project.isAiGenerated && (
-                                        <Badge variant="outline" className="bg-purple-50 text-purple-600 border-purple-200 text-xs">
+                                        <Badge variant="outline" className="bg-secondary/10 text-secondary-foreground border-border text-xs">
                                             <Sparkles className="w-3 h-3 mr-1" /> AI
                                         </Badge>
                                     )}
@@ -1003,7 +1001,7 @@ const ProjectTab = () => {
                                             <Button 
                                                 variant="ghost" 
                                                 size="sm" 
-                                                className="text-[#6b2cc1] hover:text-[#4b3bb0] p-0 h-auto text-sm"
+                                                className="text-primary hover:text-primary/80 p-0 h-auto text-sm"
                                                 onClick={() => setPreviewProject(project)}
                                             >
                                                 View Details
@@ -1018,8 +1016,8 @@ const ProjectTab = () => {
                 ) : (
                     <div className="py-16 lg:py-20 text-center border-2 border-dashed rounded-xl bg-muted/10">
                         <div className="flex flex-col items-center gap-4">
-                            <div className="bg-gradient-to-br from-[#1b253f] to-[#6b2cc1] p-4 lg:p-5 rounded-full shadow-lg">
-                                <Briefcase className="w-8 h-8 lg:w-10 lg:h-10 text-white" />
+                            <div className="bg-brand-gradient p-4 lg:p-5 rounded-full shadow-lg">
+                                <Briefcase className="w-8 h-8 lg:w-10 lg:h-10 text-primary-foreground" />
                             </div>
                             <h3 className="text-lg lg:text-xl font-semibold">No Projects Yet</h3>
                             <p className="text-sm lg:text-base text-muted-foreground max-w-md">
@@ -1027,8 +1025,7 @@ const ProjectTab = () => {
                             </p>
                             <Button 
                                 onClick={() => setOpenProjectDialog(true)}
-                                style={gradientBg}
-                                className="text-white text-sm lg:text-base"
+                                className="bg-brand-gradient text-primary-foreground text-sm lg:text-base"
                             >
                                 <Plus className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
                                 Create Your First Project
@@ -1049,9 +1046,9 @@ const ProjectTab = () => {
             </DialogTrigger>
             <DialogContent className="w-[90vw] max-w-5xl max-h-[90vh] overflow-y-auto p-6 lg:p-8">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl lg:text-3xl font-bold" style={{ background: 'linear-gradient(90deg, #1b253f, #2d3a8c, #4b3bb0, #6b2cc1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                        Create New Project / Practical
-                    </DialogTitle>
+            <DialogTitle className={`text-2xl lg:text-3xl font-bold ${pageGradientTextClass}`}>
+                Create New Project / Practical
+            </DialogTitle>
                     <DialogDescription className="text-base lg:text-lg">
                         Build structured assignments with AI assistance and detailed guidance
                     </DialogDescription>
@@ -1059,10 +1056,10 @@ const ProjectTab = () => {
                 
                 <div className="grid gap-6 lg:gap-8 py-4">
                     {/* AI Generation Section */}
-                    <div className="bg-gradient-to-r from-[#1b253f]/5 to-[#6b2cc1]/5 rounded-xl p-5 lg:p-6 border border-[#6b2cc1]/20">
+                    <div className="bg-muted/30 rounded-xl p-5 lg:p-6 border border-border">
                         <div className="flex flex-col lg:flex-row items-start gap-5">
-                            <div className="bg-gradient-to-br from-[#1b253f] to-[#6b2cc1] p-3 lg:p-4 rounded-xl shadow-lg">
-                                <Sparkles className="w-6 h-6 lg:w-7 lg:h-7 text-white" />
+                            <div className="bg-brand-gradient p-3 lg:p-4 rounded-xl shadow-lg">
+                                <Sparkles className="w-6 h-6 lg:w-7 lg:h-7 text-primary-foreground" />
                             </div>
                             <div className="flex-1 w-full">
                                 <h3 className="text-lg lg:text-xl font-semibold mb-2">AI Content Generator</h3>
@@ -1074,14 +1071,13 @@ const ProjectTab = () => {
                                         placeholder="e.g., IoT based Smart Waste Management System" 
                                         value={projectAiTopic} 
                                         onChange={(e) => setProjectAiTopic(e.target.value)}
-                                        className="bg-white dark:bg-gray-900 flex-1 text-base"
+                                        className="bg-background flex-1 text-base"
                                     />
                                     <Button 
                                         type="button" 
                                         onClick={handleGenerateProjectContent}
                                         disabled={isGeneratingProject}
-                                        style={gradientBg}
-                                        className="text-white whitespace-nowrap text-base"
+                                        className="bg-brand-gradient text-primary-foreground whitespace-nowrap text-base"
                                     >
                                         {isGeneratingProject ? "Generating..." : "Generate with AI"}
                                     </Button>
@@ -1093,7 +1089,7 @@ const ProjectTab = () => {
                     {/* Basic Information */}
                     <div>
                         <h3 className="text-lg lg:text-xl font-semibold mb-4 flex items-center gap-2">
-                            <FileText className="w-5 h-5 lg:w-6 lg:h-6 text-[#6b2cc1]" />
+                            <FileText className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
                             Basic Information
                         </h3>
                         <div className="grid gap-4">
@@ -1136,7 +1132,7 @@ const ProjectTab = () => {
                     {/* Project Overview */}
                     <div>
                         <h3 className="text-lg lg:text-xl font-semibold mb-4 flex items-center gap-2">
-                            <Eye className="w-5 h-5 lg:w-6 lg:h-6 text-[#6b2cc1]" />
+                            <Eye className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
                             Project Overview
                         </h3>
                         <RichTextEditor
@@ -1150,7 +1146,7 @@ const ProjectTab = () => {
                     {/* Project Guidance */}
                     <div>
                         <h3 className="text-lg lg:text-xl font-semibold mb-4 flex items-center gap-2">
-                            <Briefcase className="w-5 h-5 lg:w-6 lg:h-6 text-[#6b2cc1]" />
+                            <Briefcase className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
                             Project Guidance & Implementation Steps
                         </h3>
                         <div className="border-2 rounded-xl overflow-hidden">
@@ -1166,7 +1162,7 @@ const ProjectTab = () => {
                     {/* Tags */}
                     <div>
                         <h3 className="text-lg lg:text-xl font-semibold mb-4 flex items-center gap-2">
-                            <Tag className="w-5 h-5 lg:w-6 lg:h-6 text-[#6b2cc1]" />
+                            <Tag className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
                             Tags & Topics
                         </h3>
                         <div className="flex flex-col lg:flex-row gap-3">
@@ -1231,7 +1227,7 @@ const ProjectTab = () => {
                     <Button 
                         onClick={handleCreateProject} 
                         className="w-full h-12 lg:h-14 text-base lg:text-lg font-bold"
-                        style={gradientBg}
+                        className="bg-brand-gradient text-primary-foreground"
                     >
                         <Sparkles className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
                         Publish Project
@@ -1244,18 +1240,18 @@ const ProjectTab = () => {
         <Dialog open={!!previewProject} onOpenChange={(open) => !open && setPreviewProject(null)}>
             <DialogContent className="w-[90vw] max-w-4xl max-h-[90vh] overflow-y-auto p-6 lg:p-8">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl lg:text-3xl font-bold" style={{ background: 'linear-gradient(90deg, #1b253f, #2d3a8c, #4b3bb0, #6b2cc1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                        {previewProject?.title}
-                    </DialogTitle>
-                    <DialogDescription className="flex flex-wrap items-center gap-3 text-base">
-                        <Badge style={gradientBg} className="text-white border-0 text-sm">
-                            {previewProject?.type || 'Project'}
-                        </Badge>
-                        {previewProject?.isAiGenerated && (
-                            <Badge variant="outline" className="bg-purple-50 text-purple-600 border-purple-200 text-sm">
-                                <Sparkles className="w-3 h-3 mr-1" /> AI Generated
-                            </Badge>
-                        )}
+            <DialogTitle className={`text-2xl lg:text-3xl font-bold ${pageGradientTextClass}`}>
+                {previewProject?.title}
+            </DialogTitle>
+            <DialogDescription className="flex flex-wrap items-center gap-3 text-base">
+                <Badge className="bg-brand-gradient text-primary-foreground border-0 text-sm">
+                    {previewProject?.type || 'Project'}
+                </Badge>
+                {previewProject?.isAiGenerated && (
+                    <Badge variant="outline" className="bg-secondary/10 text-secondary-foreground border-border text-sm">
+                        <Sparkles className="w-3 h-3 mr-1" /> AI Generated
+                    </Badge>
+                )}
                         <span>•</span>
                         <span>Dept: {getDepartmentLabel(previewProject?.department) || 'All'}</span>
                         {previewProject?.dueDate && (
@@ -1275,7 +1271,7 @@ const ProjectTab = () => {
                         {previewProject?.description && (
                             <div>
                                 <h3 className="text-lg lg:text-xl font-semibold mb-3 flex items-center gap-2">
-                                    <Eye className="w-5 h-5 lg:w-6 lg:h-6 text-[#6b2cc1]" />
+                                    <Eye className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
                                     Project Overview
                                 </h3>
                                 <div className="prose prose-base lg:prose-lg dark:prose-invert max-w-none p-5 lg:p-6 bg-muted/20 rounded-xl border"
@@ -1286,7 +1282,7 @@ const ProjectTab = () => {
                         {previewProject?.guidance && (
                             <div>
                                 <h3 className="text-lg lg:text-xl font-semibold mb-3 flex items-center gap-2">
-                                    <Briefcase className="w-5 h-5 lg:w-6 lg:h-6 text-[#6b2cc1]" />
+                                    <Briefcase className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
                                     Implementation Steps
                                 </h3>
                                 <div className="prose prose-base lg:prose-lg dark:prose-invert max-w-none p-5 lg:p-6 bg-muted/20 rounded-xl border"
@@ -1297,7 +1293,7 @@ const ProjectTab = () => {
                         {previewProject?.subtopics?.length > 0 && (
                             <div>
                                 <h3 className="text-lg lg:text-xl font-semibold mb-3 flex items-center gap-2">
-                                    <Tag className="w-5 h-5 lg:w-6 lg:h-6 text-[#6b2cc1]" />
+                                    <Tag className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
                                     Tags
                                 </h3>
                                 <div className="flex flex-wrap gap-2 p-4 lg:p-5 bg-muted/20 rounded-xl border">
