@@ -114,26 +114,26 @@ const InterviewTrainingHub = () => {
             </p>
 
             {/* Actions */}
-            <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+      <div className="flex flex-wrap justify-center lg:justify-start gap-4">
 
-                <Button 
-                    onClick={() => handleStartMock()} 
-                    className="h-12 sm:h-14 px-6 sm:px-8 rounded-2xl text-base sm:text-lg font-bold shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
-                >
-                    <Play className="w-5 h-5 mr-3 fill-current" /> 
-                    Start Practice Session
-                </Button>
+  <Button 
+    onClick={() => handleStartMock()} 
+    className="h-9 px-4 rounded-xl text-sm font-semibold shadow-md shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+  >
+    <Play className="w-4 h-4 mr-2 fill-current" /> 
+    Start Practice Session
+  </Button>
 
-                <div className="flex flex-col justify-center text-center lg:text-left">
-                    <p className="text-xs text-slate-500 uppercase font-bold tracking-widest">
-                        Today's Usage
-                    </p>
-                    <p className="text-lg sm:text-xl font-black text-white">
-                        {stats.attemptsUsed} / {role === 'student' ? '∞' : stats.dailyLimit}
-                    </p>
-                </div>
+  <div className="flex flex-col justify-center text-center lg:text-left">
+    <p className="text-xs text-slate-500 uppercase font-bold tracking-widest">
+      Today's Usage
+    </p>
+    <p className="text-lg sm:text-xl font-black text-white">
+      {stats.attemptsUsed} / {role === 'student' ? '∞' : stats.dailyLimit}
+    </p>
+  </div>
 
-            </div>
+</div>
         </div>
 
         {/* Right Cards */}
