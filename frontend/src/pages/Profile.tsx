@@ -1376,6 +1376,7 @@ const normalizePlanType = (value?: string | null): "free" | "monthly" | "yearly"
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("account");
+  const isOrgAdmin = sessionStorage.getItem("role") === "org_admin";
   const [stats, setStats] = useState({
     courses: 0,
     certifications: 0,
@@ -1732,7 +1733,7 @@ if (matched) {
   let newErrors: Record<string, string> = {};
 
   if (!formData.mName.trim()) {
-    newErrors.mName = "Full name is required";
+    newErrors.mName = isOrgAdmin ? "Organization name is required" : "Full name is required";
   }
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -1964,6 +1965,14 @@ const getPasswordStrength = (password) => {
     return "from-purple-500 to-blue-500";
   };
 
+  const profileTabs = [
+    { value: "account", icon: User, label: "Account" },
+    { value: "settings", icon: Settings, label: "Settings" },
+    ...(!isOrgAdmin ? [{ value: "billing", icon: CreditCard, label: "Billing" }] : []),
+    { value: "social", icon: Globe, label: "Social" },
+    { value: "testimonial", icon: MessageSquare, label: "Feedback" },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -1977,10 +1986,12 @@ const getPasswordStrength = (password) => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                My Profile
+                {isOrgAdmin ? "Organization Profile" : "My Profile"}
               </h1>
               <p className="text-muted-foreground mt-1">
-                Manage your account, preferences, and learning journey
+                {isOrgAdmin
+                  ? "Manage your organization account details and preferences"
+                  : "Manage your account, preferences, and learning journey"}
               </p>
             </div>
             <div className="flex gap-2">
@@ -2050,31 +2061,31 @@ const getPasswordStrength = (password) => {
           </div>
         </motion.div>
 
-        {/* Stats Grid */}
-        <motion.div
-          variants={staggerContainer}
-          initial="initial"
-          animate="animate"
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
-        >
-          {[
-            { icon: BookOpen, label: "Courses", value: stats.courses, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
-            { icon: Award, label: "Certificates", value: stats.certifications, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-900/20" },
-            { icon: Target, label: "Completed", value: stats.completed || 0, color: "text-indigo-500", bg: "bg-indigo-50 dark:bg-indigo-900/20" },
-            // { icon: TrendingUp, label: "Streak", value: stats.streak || 0, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/20" },
-            { icon: Ticket, label: "Tickets", value: stats.tickets, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
-          ].map((stat, idx) => (
-            <motion.div
-              key={idx}
-              variants={fadeInUp}
-              className={`${stat.bg} rounded-xl p-4 text-center transition-all hover:scale-105 cursor-pointer`}
-            >
-              <stat.icon className={`h-6 w-6 ${stat.color} mx-auto mb-2`} />
-              <p className="text-2xl font-bold">{stat.value}</p>
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
-            </motion.div>
-          ))}
-        </motion.div>
+        {!isOrgAdmin && (
+          <motion.div
+            variants={staggerContainer}
+            initial="initial"
+            animate="animate"
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+          >
+            {[
+              { icon: BookOpen, label: "Courses", value: stats.courses, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
+              { icon: Award, label: "Certificates", value: stats.certifications, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-900/20" },
+              { icon: Target, label: "Completed", value: stats.completed || 0, color: "text-indigo-500", bg: "bg-indigo-50 dark:bg-indigo-900/20" },
+              { icon: Ticket, label: "Tickets", value: stats.tickets, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
+            ].map((stat, idx) => (
+              <motion.div
+                key={idx}
+                variants={fadeInUp}
+                className={`${stat.bg} rounded-xl p-4 text-center transition-all hover:scale-105 cursor-pointer`}
+              >
+                <stat.icon className={`h-6 w-6 ${stat.color} mx-auto mb-2`} />
+                <p className="text-2xl font-bold">{stat.value}</p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
 
         {/* Main Content Tabs */}
         <motion.div
@@ -2083,14 +2094,8 @@ const getPasswordStrength = (password) => {
           transition={{ duration: 0.5, delay: 0.3 }}
         >
           <Tabs defaultValue="account" className="w-full" onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5 mb-8 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
-              {[
-                { value: "account", icon: User, label: "Account" },
-                { value: "settings", icon: Settings, label: "Settings" },
-                { value: "billing", icon: CreditCard, label: "Billing" },
-                { value: "social", icon: Globe, label: "Social" },
-                { value: "testimonial", icon: MessageSquare, label: "Feedback" },
-              ].map((tab) => (
+            <TabsList className={`grid w-full mb-8 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl ${isOrgAdmin ? "grid-cols-4" : "grid-cols-5"}`}>
+              {profileTabs.map((tab) => (
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
@@ -2109,9 +2114,13 @@ const getPasswordStrength = (password) => {
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <User className="h-5 w-5 text-blue-500" />
-                      Personal Information
+                      {isOrgAdmin ? "Organization Information" : "Personal Information"}
                     </CardTitle>
-                    <CardDescription>Manage your personal details and preferences</CardDescription>
+                    <CardDescription>
+                      {isOrgAdmin
+                        ? "Manage your organization details and preferences"
+                        : "Manage your personal details and preferences"}
+                    </CardDescription>
                   </div>
                   {!isEditing && (
                     <Button variant="outline" onClick={() => { setOriginalData(formData); setIsEditing(true); }}>
@@ -2129,7 +2138,7 @@ const getPasswordStrength = (password) => {
                         <div className="space-y-2">
                           <Label className="flex items-center gap-2">
     <CircleUser className="h-4 w-4" />
-    Full Name <span className="text-red-500 ml-1">*</span>
+    {isOrgAdmin ? "Organization Name" : "Full Name"} <span className="text-red-500 ml-1">*</span>
 </Label>
                           <Input
                             name="mName"
@@ -2546,7 +2555,7 @@ const getPasswordStrength = (password) => {
             </TabsContent>
 
             {/* Billing Tab */}
-            <TabsContent value="billing">
+            {!isOrgAdmin && <TabsContent value="billing">
               <Card className="rounded-xl shadow-lg border-0">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -2605,7 +2614,7 @@ const getPasswordStrength = (password) => {
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
+            </TabsContent>}
 
             {/* Social Tab */}
             <TabsContent value="social">

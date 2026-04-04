@@ -265,6 +265,28 @@ import Ticket from "../models/ticket.model.js";
 import mongoose from "mongoose";
 import Notification from "../models/Notification.js";
 import User from "../models/User.js";
+import Admin from "../models/Admin.js";
+
+const getSuperAdminNotificationRecipients = async () => {
+  const admins = await Admin.find({}).select("email").lean();
+  const adminEmails = admins.map((admin) => admin.email).filter(Boolean);
+
+  if (!adminEmails.length) {
+    return [];
+  }
+
+  return User.find({ email: { $in: adminEmails } }).select("_id email");
+};
+
+const isOrganizationSupportTicketOwner = async (ticketOwnerId) => {
+  const ticketOwner = await User.findById(ticketOwnerId).select("role isOrganization");
+
+  if (!ticketOwner) {
+    return false;
+  }
+
+  return ticketOwner.role === "org_admin" || ticketOwner.isOrganization === true;
+};
 
 /* ================= CREATE TICKET ================= */
 export const createTicket = async (req, res) => {
@@ -316,36 +338,36 @@ export const createTicket = async (req, res) => {
 
     await ticket.save();
 
+    const isOrgTicket = await isOrganizationSupportTicketOwner(userId);
+
     /* USER NOTIFICATION */
-    try {
-      await Notification.create({
-        user: userId,
-        message: `Your support ticket "${subject}" has been created successfully.`,
-        type: "info",
-        link: "/dashboard/support",
-      });
-    } catch (err) {
-      console.log("User notification failed:", err);
+    if (!isOrgTicket) {
+      try {
+        await Notification.create({
+          user: userId,
+          message: `Your support ticket "${subject}" has been created successfully.`,
+          type: "info",
+          link: "/dashboard/support",
+        });
+      } catch (err) {
+        console.log("User notification failed:", err);
+      }
     }
 
     /* ADMIN NOTIFICATION */
     try {
+      const admins = await getSuperAdminNotificationRecipients();
 
-      const admins = await User.find({
-        $or: [
-          { role: "org_admin" },
-          { role: "user", isOrganization: false }
-        ]
-      });
-
-      for (const admin of admins) {
-        await Notification.create({
-          user: admin._id,
-          message: `New support ticket "${subject}" created.`,
-          type: "info",
-          link: "/dashboard/tickets"
-        });
-      }
+      await Promise.all(
+        admins.map((admin) =>
+          Notification.create({
+            user: admin._id,
+            message: `New support ticket "${subject}" created.`,
+            type: "info",
+            link: "/dashboard/tickets"
+          })
+        )
+      );
 
     } catch (err) {
       console.log("Admin notification failed:", err);
@@ -533,21 +555,18 @@ export const addTicketReply = async (req, res) => {
         const ticketUser = await User.findById(ticket.userId);
         const username = ticketUser?.mName || ticketUser?.email || "User";
 
-        const admins = await User.find({
-          $or: [
-            { role: "org_admin" },
-            { role: "user", isOrganization: false }
-          ]
-        });
+        const admins = await getSuperAdminNotificationRecipients();
 
-        for (const admin of admins) {
-          await Notification.create({
-            user: admin._id,
-            message: `${username} replied to ticket "${ticket.subject}".`,
-            type: "info",
-            link: "/dashboard/tickets"
-          });
-        }
+        await Promise.all(
+          admins.map((admin) =>
+            Notification.create({
+              user: admin._id,
+              message: `${username} replied to ticket "${ticket.subject}".`,
+              type: "info",
+              link: "/dashboard/tickets"
+            })
+          )
+        );
 
       } catch (err) {
         console.log("Admin notification failed:", err);
