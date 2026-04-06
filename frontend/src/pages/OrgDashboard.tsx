@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Swal from 'sweetalert2';
 import OrgLandingSetup from "@/components/dashboard/OrgLandingSetup";
+import StudentsTab from "./org-dashboard/StudentsTab";
 
 import {
   DropdownMenu,
@@ -3168,107 +3169,6 @@ const handleUpdateDeptAdmin = async () => {
             <SEO title="Organization Dashboard" description="Manage your organization, students, and curriculum." />
 
 
-            <div className="p-8 rounded-3xl bg-gradient-to-br from-blue-600/10 via-indigo-600/5 to-transparent border border-blue-600/10 shadow-sm relative overflow-hidden group transition-all duration-500 hover:shadow-md hover:border-blue-600/20">
-                <div className="absolute -right-12 -top-12 w-48 h-48 bg-blue-600/5 rounded-full blur-3xl group-hover:bg-blue-600/10 transition-colors" />
-                <div className="relative z-10">
-                    <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-                        Welcome back, {sessionStorage.getItem('mName') || 'Admin'}! <Sparkles className="h-6 w-6 text-yellow-500 animate-pulse" />
-                    </h2>
-                    <p className="text-muted-foreground mt-2 text-lg">
-                        {role === 'dept_admin' && userDeptName ? `Managing the ${userDeptName} department's growth and student success.` : "Manage your organization's growth and student success with ease."}
-                    </p>
-                </div>
-            </div>
-
-            <div className="flex flex-col md:flex-row justify-between items-center">
-                <div>
-                    <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-                        {role === 'dept_admin' && userDeptName ? `${userDeptName} Department Dashboard` : 'Organization Dashboard'}
-                    </h1>
-                    <p className="text-muted-foreground mt-2">Manage students, assignments, and announcements</p>
-                </div>
-                <div className="flex gap-2 mt-4 md:mt-0">
-                    <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline"><Upload className="w-4 h-4 mr-2" /> Bulk Upload</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Bulk Student Upload</DialogTitle>
-                                <DialogDescription>
-                                   Columns: Name, Email, Password, Department, Section, Roll No, Class (e.g. BSc CS, BA History), Academic Year
-                                </DialogDescription>
-                                <div className="mt-2 p-3 bg-muted rounded-lg flex justify-between items-center text-sm">
-                                    <span className="font-medium">Remaining Capacity:</span>
-                                    <Badge variant={stats.studentLimit - stats.studentCount > 0 ? "secondary" : "destructive"}>
-                                        {Math.max(0, stats.studentLimit - stats.studentCount)} Students
-                                    </Badge>
-                                </div>
-                            </DialogHeader>
-                            <div className="grid gap-6 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="excel-file">Choose Excel File</Label>
-                                    <Input
-                                        id="excel-file"
-                                        type="file"
-                                        accept=".xlsx, .xls"
-                                        onChange={handleFileUpload}
-                                        disabled={isUploading}
-                                    />
-                                    {isUploading && <p className="text-sm text-primary animate-pulse">Processing upload...</p>}
-                                </div>
-                                <div className="p-4 bg-muted rounded-lg text-xs space-y-2">
-                                    <p className="font-semibold">Instructions:</p>
-                                    <ul className="list-disc pl-4 space-y-1">
-                                        <li>Download the template to see the correct format.</li>
-                                        <li>Email must be unique for each student.</li>
-                                        <li>If password is blank, "Student@123" will be used.</li>
-                                    </ul>
-                                </div>
-                                <Button variant="outline" size="sm" onClick={downloadTemplate} className="w-full">
-                                    Download Template
-                                </Button>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
-                    {/* <Button>Settings</Button> */}
-                </div>
-            </div>
-
-  {/* Stats Overview */}
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-  <AdminStatCard
-                    title="Total Students"
-                    value={role === 'dept_admin' ? students.length : stats.studentCount}
-                    icon={Users}
-                    // description="+20% from last month"
-                    className="border-l-4 border-l-emerald-500"
-                />
-                <AdminStatCard
-                    title="Active Assignments"
-                    value={role === 'dept_admin' ? assignments.length : stats.assignmentCount}
-                    icon={FileText}
-                    // description="5 due this week"
-                    className="border-l-4 border-l-blue-500"
-                />
-                <AdminStatCard
-                    title="Students Placed"
-                    value={role === 'dept_admin' ? students.filter((s: any) => s.studentDetails?.isPlacementClosed).length : (stats.placedCount || 0)}
-                    icon={Briefcase}
-                    // description="Career success"
-                    className="border-l-4 border-l-indigo-500"
-                />
-                {role !== 'dept_admin' && (
-                    <AdminStatCard
-                        title="Submissions"
-                        value={stats.submissionCount}
-                        icon={BarChart}
-                        // description="Pending grading"
-                        className="border-l-4 border-l-amber-500"
-                    />
-                )}
-</div>
-
             <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })} className="w-full">
                 {role === 'org_admin' ? (
                     activeTab === 'landing' ? (
@@ -3325,25 +3225,7 @@ const handleUpdateDeptAdmin = async () => {
                             </CardContent>
                         </Card>
                     ) : null
-                ) : (
-                    <TabsList className="mb-6 flex h-auto w-full flex-wrap gap-1 rounded-xl bg-muted p-1">
-                        {role !== 'dept_admin' && <TabsTrigger value="departments" className="flex-1 min-w-[120px]">Departments</TabsTrigger>}
-                        {role === 'org_admin' && (
-                            <>
-                                <TabsTrigger value="staff" className="flex-1 min-w-[120px]">Staff</TabsTrigger>
-                                <TabsTrigger value="students" className="flex-1 min-w-[120px]">Students</TabsTrigger>
-                            </>
-                        )}
-                        <TabsTrigger value="courses" className="flex-1 min-w-[120px]">Courses</TabsTrigger>
-                        <TabsTrigger value="assignments" className="flex-1 min-w-[120px]">Assignments</TabsTrigger>
-                        <TabsTrigger value="meetings" className="flex-1 min-w-[120px]">Meetings</TabsTrigger>
-                        <TabsTrigger value="projects" className="flex-1 min-w-[120px]">Projects/Research</TabsTrigger>
-                        <TabsTrigger value="materials" className="flex-1 min-w-[120px]">Materials</TabsTrigger>
-                        <TabsTrigger value="notices" className="flex-1 min-w-[120px]">Noticeboard</TabsTrigger>
-                        <TabsTrigger value="career" className="flex-1 min-w-[120px]"><Briefcase className="mr-1 h-3.5 w-3.5" />Career & Placement</TabsTrigger>
-                        <TabsTrigger value="internships" className="flex-1 min-w-[120px]"><Activity className="mr-1 h-3.5 w-3.5" />Internships</TabsTrigger>
-                    </TabsList>
-                )}
+                ) : null}
 
                 {/* DEPARTMENTS TAB */}
                <TabsContent value="departments" className="space-y-6">
@@ -3622,11 +3504,59 @@ const handleUpdateDeptAdmin = async () => {
 
                  {/* STUDENTS TAB */}
                  <TabsContent value="students" className="space-y-4">
+                    <StudentsTab />
+                    {false && (
     <Card>
         <CardHeader>
             <CardTitle className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <span>Manage Students</span>
-                {role !== 'dept_admin' && (
+                {role === 'dept_admin' ? (
+                    <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                                <Upload className="w-4 h-4 mr-2" /> Bulk Upload
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Bulk Student Upload</DialogTitle>
+                                <DialogDescription>
+                                   Columns: Name, Email, Password, Department, Section, Roll No, Class (e.g. BSc CS, BA History), Academic Year
+                                </DialogDescription>
+                                <div className="mt-2 p-3 bg-muted rounded-lg flex justify-between items-center text-sm">
+                                    <span className="font-medium">Remaining Capacity:</span>
+                                    <Badge variant={stats.studentLimit - stats.studentCount > 0 ? "secondary" : "destructive"}>
+                                        {Math.max(0, stats.studentLimit - stats.studentCount)} Students
+                                    </Badge>
+                                </div>
+                            </DialogHeader>
+                            <div className="grid gap-6 py-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="excel-file">Choose Excel File</Label>
+                                    <Input
+                                        id="excel-file"
+                                        type="file"
+                                        accept=".xlsx, .xls"
+                                        onChange={handleFileUpload}
+                                        disabled={isUploading}
+                                    />
+                                    {isUploading && <p className="text-sm text-primary animate-pulse">Processing upload...</p>}
+                                </div>
+                                <div className="p-4 bg-muted rounded-lg text-xs space-y-2">
+                                    <p className="font-semibold">Instructions:</p>
+                                    <ul className="list-disc pl-4 space-y-1">
+                                        <li>Download the template to see the correct format.</li>
+                                        <li>Email must be unique for each student.</li>
+                                        <li>If password is blank, "Student@123" will be used.</li>
+                                    </ul>
+                                </div>
+                                <Button variant="outline" size="sm" onClick={downloadTemplate} className="w-full">
+                                    Download Template
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                ) : (
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
                         <Badge variant="secondary" className="font-semibold w-full sm:w-auto justify-center">
                             {stats.studentCount} / {stats.studentLimit} Students Used
@@ -3874,6 +3804,7 @@ const handleUpdateDeptAdmin = async () => {
             </div>
         </CardContent>
     </Card>
+                    )}
                 </TabsContent>
 
                 {/* COURSES TAB */}

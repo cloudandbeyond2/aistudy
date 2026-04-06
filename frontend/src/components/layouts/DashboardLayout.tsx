@@ -836,6 +836,8 @@ const DashboardLayoutContent = () => {
                     <MenuItem icon={Briefcase} label="Projects & Labs" to="/dashboard/org?tab=projects" isActive={location.search === '?tab=projects'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Download} label="Resource Library" to="/dashboard/org?tab=materials" isActive={location.search === '?tab=materials'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Bell} label="Announcements" to="/dashboard/org?tab=notices" isActive={location.search === '?tab=notices'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    <MenuItem icon={Award} label="Career & Placement" to="/dashboard/org?tab=career" isActive={location.search === '?tab=career'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    <MenuItem icon={Activity} label="Internships" to="/dashboard/org?tab=internships" isActive={location.search === '?tab=internships'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={RotateCcw} label="Retake Queue" to="/dashboard/org/quiz-retake-requests" isActive={isActive('/dashboard/org/quiz-retake-requests')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     {interviewEnabled.org_admin && (
                       <MenuItem 

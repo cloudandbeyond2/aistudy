@@ -458,9 +458,17 @@ const StudentsTab = () => {
         return Math.abs(page - currentPage) <= 1 || page === 1 || page === totalPages;
     });
 
-    // Calculate stats
+    const isDeptAdmin = role === 'dept_admin';
+
+    // Calculate stats for the current department/org cohort
+    const visibleStudentCount = isDeptAdmin ? students.length : stats.studentCount;
+    const visibleStudentLimit = stats.studentLimit || 0;
     const placedCount = students.filter((s: any) => s.studentDetails?.isPlacementClosed).length;
-    const placementRate = students.length > 0 ? ((placedCount / students.length) * 100).toFixed(1) : 0;
+    const placementRate = visibleStudentCount > 0 ? ((placedCount / visibleStudentCount) * 100).toFixed(1) : 0;
+    const utilizationRate = visibleStudentLimit > 0 ? (visibleStudentCount / visibleStudentLimit) * 100 : 0;
+    const remainingSlots = Math.max(0, visibleStudentLimit - visibleStudentCount);
+    const totalPlacedCount = isDeptAdmin ? placedCount : (stats.placedCount || placedCount);
+    const totalPlacementRate = visibleStudentCount > 0 ? ((totalPlacedCount / visibleStudentCount) * 100).toFixed(1) : 0;
 
     useEffect(() => {
         setCurrentPage(1);
@@ -518,7 +526,7 @@ const StudentsTab = () => {
                         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                             <Badge variant="outline" className="students-theme-hero-badge px-3 py-2 text-sm">
                                 <UsersRound className="w-4 h-4 mr-2" />
-                                {stats.studentCount} Active
+                                {visibleStudentCount} Active
                             </Badge>
                             <Badge variant="outline" className="students-theme-hero-badge px-3 py-2 text-sm">
                                 <PieChart className="w-4 h-4 mr-2" />
@@ -534,7 +542,7 @@ const StudentsTab = () => {
     variants={containerVariants}
     initial="hidden"
     animate="visible"
-    className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-5 lg:gap-6 mb-6 md:mb-8"
+    className={`grid grid-cols-1 sm:grid-cols-2 ${isDeptAdmin ? 'xl:grid-cols-3' : 'xl:grid-cols-4'} gap-4 md:gap-5 lg:gap-6 mb-6 md:mb-8`}
 >
     {/* Total Students Card */}
     <motion.div variants={itemVariants} className="h-full">
@@ -544,8 +552,8 @@ const StudentsTab = () => {
                     <div className="flex items-start justify-between mb-3 md:mb-4">
                         <div className="flex-1">
                             <p className="text-cyan-100 text-xs sm:text-sm font-medium uppercase tracking-wide">Total Students</p>
-                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold mt-1 lg:mt-2">{stats.studentCount}</p>
-                            <p className="text-[10px] sm:text-xs text-cyan-100 mt-1 lg:mt-2">Capacity: {stats.studentLimit} students</p>
+                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold mt-1 lg:mt-2">{visibleStudentCount}</p>
+                            <p className="text-[10px] sm:text-xs text-cyan-100 mt-1 lg:mt-2">Capacity: {visibleStudentLimit} students</p>
                         </div>
                         <div className="bg-white/15 rounded-xl p-2 md:p-2.5 lg:p-3 backdrop-blur-sm">
                             <Users className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-white" />
@@ -556,7 +564,7 @@ const StudentsTab = () => {
                     <div className="flex justify-between items-baseline mb-3">
                         <span className="text-cyan-100 text-[10px] sm:text-xs">Utilization</span>
                         <span className="text-white text-sm sm:text-base font-semibold">
-                            {((stats.studentCount / (stats.studentLimit || 1)) * 100).toFixed(1)}%
+                            {utilizationRate.toFixed(1)}%
                         </span>
                     </div>
                 </div>
@@ -566,7 +574,7 @@ const StudentsTab = () => {
                     <div className="bg-white/20 rounded-full h-2">
                         <div 
                             className="bg-white rounded-full h-2 transition-all duration-500"
-                            style={{ width: `${Math.min(((stats.studentCount / (stats.studentLimit || 1)) * 100), 100)}%` }}
+                            style={{ width: `${Math.min(utilizationRate, 100)}%` }}
                         />
                     </div>
                 </div>
@@ -583,8 +591,8 @@ const StudentsTab = () => {
                     <div className="flex items-start justify-between mb-3 md:mb-4">
                         <div className="flex-1">
                             <p className="text-cyan-100 text-xs sm:text-sm font-medium uppercase tracking-wide">Placed Students</p>
-                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold mt-1 lg:mt-2">{placedCount}</p>
-                            <p className="text-[10px] sm:text-xs text-cyan-100 mt-1 lg:mt-2">Placement Rate: {placementRate}%</p>
+                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold mt-1 lg:mt-2">{totalPlacedCount}</p>
+                            <p className="text-[10px] sm:text-xs text-cyan-100 mt-1 lg:mt-2">Placement Rate: {totalPlacementRate}%</p>
                         </div>
                         <div className="bg-white/15 rounded-xl p-2 md:p-2.5 lg:p-3 backdrop-blur-sm">
                             <Award className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-white" />
@@ -594,7 +602,7 @@ const StudentsTab = () => {
                     {/* Stats Row */}
                     <div className="flex justify-between items-baseline mb-3">
                         <span className="text-cyan-100 text-[10px] sm:text-xs">Success Rate</span>
-                        <span className="text-white text-sm sm:text-base font-semibold">{placementRate}%</span>
+                        <span className="text-white text-sm sm:text-base font-semibold">{totalPlacementRate}%</span>
                     </div>
                 </div>
                 
@@ -603,7 +611,7 @@ const StudentsTab = () => {
                     <div className="bg-white/20 rounded-full h-2">
                         <div 
                             className="bg-white rounded-full h-2 transition-all duration-500"
-                            style={{ width: `${Math.min(Number(placementRate) || 0, 100)}%` }}
+                            style={{ width: `${Math.min(Number(totalPlacementRate) || 0, 100)}%` }}
                         />
                     </div>
                 </div>
@@ -611,7 +619,8 @@ const StudentsTab = () => {
         </Card>
     </motion.div>
 
-    {/* Departments Card */}
+    {!isDeptAdmin && (
+    <>
     <motion.div variants={itemVariants} className="h-full">
         <Card className={`bg-gradient-to-br ${accentGradient} text-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-full`}>
             <CardContent className="p-4 md:p-5 lg:p-6 flex flex-col justify-between h-full">
@@ -627,14 +636,12 @@ const StudentsTab = () => {
                         </div>
                     </div>
                     
-                    {/* Department Stats */}
                     <div className="flex justify-between items-baseline mb-3">
                         <span className="text-cyan-100 text-[10px] sm:text-xs">Distribution</span>
                         <span className="text-white text-sm sm:text-base font-semibold">{departmentsList.length} Total</span>
                     </div>
                 </div>
                 
-                {/* Department Distribution Bars */}
                 <div className="flex gap-1">
                     {departmentsList.slice(0, 5).map((_, idx) => (
                         <div key={idx} className="flex-1 bg-white/20 rounded-full h-2">
@@ -653,6 +660,8 @@ const StudentsTab = () => {
             </CardContent>
         </Card>
     </motion.div>
+    </>
+    )}
 
     {/* Capacity Used Card */}
     <motion.div variants={itemVariants} className="h-full">
@@ -663,10 +672,10 @@ const StudentsTab = () => {
                         <div className="flex-1">
                             <p className="text-cyan-100 text-xs sm:text-sm font-medium uppercase tracking-wide">Capacity Used</p>
                             <p className="text-2xl sm:text-3xl lg:text-4xl font-bold mt-1 lg:mt-2">
-                                {stats.studentLimit > 0 ? ((stats.studentCount / stats.studentLimit) * 100).toFixed(1) : 0}%
+                                {visibleStudentLimit > 0 ? utilizationRate.toFixed(1) : 0}%
                             </p>
                             <p className="text-[10px] sm:text-xs text-cyan-100 mt-1 lg:mt-2">
-                                {stats.studentCount} of {stats.studentLimit} students
+                                {visibleStudentCount} of {visibleStudentLimit} students
                             </p>
                         </div>
                         <div className="bg-white/15 rounded-xl p-2 md:p-2.5 lg:p-3 backdrop-blur-sm">
@@ -677,9 +686,7 @@ const StudentsTab = () => {
                     {/* Stats Row */}
                     <div className="flex justify-between items-baseline mb-3">
                         <span className="text-cyan-100 text-[10px] sm:text-xs">Available Slots</span>
-                        <span className="text-white text-sm sm:text-base font-semibold">
-                            {stats.studentLimit - stats.studentCount} left
-                        </span>
+                        <span className="text-white text-sm sm:text-base font-semibold">{remainingSlots} left</span>
                     </div>
                 </div>
                 
@@ -688,7 +695,7 @@ const StudentsTab = () => {
                     <div className="bg-white/20 rounded-full h-2">
                         <div 
                             className="bg-white rounded-full h-2 transition-all duration-500"
-                            style={{ width: `${stats.studentLimit > 0 ? ((stats.studentCount / stats.studentLimit) * 100) : 0}%` }}
+                            style={{ width: `${Math.min(utilizationRate, 100)}%` }}
                         />
                     </div>
                 </div>
