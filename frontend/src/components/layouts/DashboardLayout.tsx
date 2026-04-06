@@ -200,6 +200,10 @@ const DashboardLayoutContent = () => {
   const hasOrganizationAccess = isOrganizationUser || (role === 'student' && Boolean(sessionStorage.getItem('orgId')));
   const isPaidUser = ["monthly", "yearly"].includes(plan) || admin;
   const isOrganizationStudent = role === 'student' && isOrganizationUser;
+  const assessmentDeskPath = role === 'dept_admin' ? '/dashboard/org-assignments' : '/dashboard/org?tab=assignments';
+  const isAssessmentDeskActive = role === 'dept_admin'
+    ? location.pathname === '/dashboard/org-assignments'
+    : location.search.includes('tab=assignments');
 
   const [installPrompt, setInstallPrompt] = useState(null);
   const { toast } = useToast();
@@ -831,7 +835,7 @@ const DashboardLayoutContent = () => {
                     <SectionHeader title="Teaching Ops" icon={Settings2} isExpanded={isExpanded} />
                     <MenuItem icon={BookOpen} label="Course Workspace" to="/dashboard/org?tab=courses" isActive={location.search === '?tab=courses'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Users} label="Learner Directory" to="/dashboard/org?tab=students" isActive={location.search === '?tab=students'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
-                    <MenuItem icon={FileText} label="Assessment Desk" to="/dashboard/org?tab=assignments" isActive={location.search === '?tab=assignments'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    <MenuItem icon={FileText} label="Assessment Desk" to={assessmentDeskPath} isActive={isAssessmentDeskActive} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Video} label="Sessions" to="/dashboard/org?tab=meetings" isActive={location.search === '?tab=meetings'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Briefcase} label="Projects & Labs" to="/dashboard/org?tab=projects" isActive={location.search === '?tab=projects'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Download} label="Resource Library" to="/dashboard/org?tab=materials" isActive={location.search === '?tab=materials'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
@@ -1122,7 +1126,7 @@ const DashboardLayoutContent = () => {
                   </Link>
                   
                   <Link
-                    to="/dashboard/org?tab=assignments"
+                    to={assessmentDeskPath}
                     onClick={handleMobileMenuClick}
                     className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
                   >
@@ -1130,7 +1134,7 @@ const DashboardLayoutContent = () => {
                       <FileText className="h-4 w-4" />
                     </div>
                     <span>Assignments</span>
-                    {location.search.includes('tab=assignments') && (
+                    {isAssessmentDeskActive && (
                       <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                     )}
                   </Link>
@@ -1392,7 +1396,7 @@ const DashboardLayoutContent = () => {
                 </Link>
                 
                 <Link
-                  to="/dashboard/org?tab=assignments"
+                  to={assessmentDeskPath}
                   onClick={handleMobileMenuClick}
                   className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
                 >
@@ -1400,7 +1404,7 @@ const DashboardLayoutContent = () => {
                     <FileText className="h-4 w-4" />
                   </div>
                   <span>Assignments</span>
-                  {location.search.includes('tab=assignments') && (
+                  {isAssessmentDeskActive && (
                     <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                   )}
                 </Link>

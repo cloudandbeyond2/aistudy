@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle, BookOpen, FileQuestion, Calendar, CheckCircle2, ArrowUpCircle, GraduationCap, FolderOpen, MessageSquare, Star, Zap, Menu, XCircle, Filter } from 'lucide-react';
+import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle, BookOpen, FileQuestion, Calendar, CheckCircle2, ArrowUpCircle, GraduationCap, FolderOpen, MessageSquare, Star, Zap, Menu, XCircle, Filter, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -92,7 +92,7 @@ const AssignmentsTab = () => {
     const navigate = useNavigate();
     const role = sessionStorage.getItem('role');
     const deptId = sessionStorage.getItem('deptId');
-    const activeTab = searchParams.get('tab') || (role === 'dept_admin' ? 'courses' : 'students');
+    const activeTab = searchParams.get('tab') || 'assignments';
     const { toast } = useToast();
     const [stats, setStats] = useState<{ studentCount: number; studentLimit: number; assignmentCount: number; submissionCount: number; placedCount: number }>({ studentCount: 0, studentLimit: 50, assignmentCount: 0, submissionCount: 0, placedCount: 0 });
     const [students, setStudents] = useState([]);
@@ -103,8 +103,8 @@ const AssignmentsTab = () => {
     const [notices, setNotices] = useState([]);
     const [courses, setCourses] = useState([]);
     const [previewProject, setPreviewProject] = useState<any>(null);
-    const [userDeptName, setUserDeptName] = useState('');
-    const [userDeptId, setUserDeptId] = useState(deptId || '');
+    const [userDeptName, setUserDeptName] = useState(sessionStorage.getItem('deptName') || '');
+    const [userDeptId, setUserDeptId] = useState(deptId || sessionStorage.getItem('deptId') || '');
     const getDeptScopedDepartment = () => (role === 'dept_admin' ? (userDeptId || deptId || '') : '');
     const orgId = sessionStorage.getItem('orgId') || sessionStorage.getItem('uid');
     
@@ -165,6 +165,12 @@ const AssignmentsTab = () => {
         type: 'PDF',
         department: ''
     });
+    const [showBootstrapLoader, setShowBootstrapLoader] = useState(true);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => setShowBootstrapLoader(false), 2000);
+        return () => window.clearTimeout(timer);
+    }, []);
 
     const resetProjectForm = () => {
         setNewProject({
@@ -873,6 +879,20 @@ const handleDeleteAssignment = async (id: string) => {
             </Button>
         </div>
     );
+
+    if (showBootstrapLoader) {
+        return (
+            <div className="flex min-h-[60vh] items-center justify-center px-4 py-12">
+                <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed bg-card/70 px-8 py-10 text-center shadow-sm">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <div>
+                        <p className="text-sm font-semibold text-foreground">Loading Assessment Desk</p>
+                        <p className="text-sm text-muted-foreground">Preparing department assignments...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>
