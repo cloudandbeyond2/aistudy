@@ -23,6 +23,7 @@ import {
   Globe,
   ChevronRight,
   Menu,
+  Pencil,
   X as CloseIcon
 } from 'lucide-react';
 
@@ -131,6 +132,7 @@ const MeetingTab = () => {
     const [deptLimitRequests, setDeptLimitRequests] = useState<any[]>([]);
 
     const [meetings, setMeetings] = useState<any[]>([]);
+ const [editMeeting, setEditMeeting] = useState(null);
     const [projects, setProjects] = useState<any[]>([]);
     const [materials, setMaterials] = useState<any[]>([]);
     const [openMeetingDialog, setOpenMeetingDialog] = useState(false);
@@ -317,26 +319,66 @@ const MeetingTab = () => {
         }
     };
 
-    const handleCreateMeeting = async () => {
-        try {
-            const res = await axios.post(`${serverURL}/api/org/meeting/create`, { ...newMeeting, organizationId: orgId });
-            if (res.data.success) {
-                toast({ title: "Success", description: "Meeting scheduled successfully" });
-                setNewMeeting({
-                    title: '',
-                    link: '',
-                    platform: 'google-meet',
-                    date: '',
-                    time: '',
-                    department: ''
-                });
-                setOpenMeetingDialog(false);
-                fetchMeetings();
-            }
-        } catch (e: any) {
-            toast({ title: "Error", description: e.response?.data?.message || "Failed to schedule meeting" });
-        }
-    };
+  const handleCreateMeeting = async () => {
+  try {
+
+    if (editMeeting) {
+      // ✅ UPDATE EXISTING (NO DUPLICATE)
+      const res = await axios.put(
+        `${serverURL}/api/org/meeting/${editMeeting._id}`,
+        { ...newMeeting, organizationId: orgId }
+      );
+
+      if (res.data.success) {
+        toast({ title: "Updated", description: "Meeting updated successfully" });
+      }
+
+    } else {
+      // ✅ CREATE NEW
+      const res = await axios.post(
+        `${serverURL}/api/org/meeting/create`,
+        { ...newMeeting, organizationId: orgId }
+      );
+
+      if (res.data.success) {
+        toast({ title: "Created", description: "Meeting scheduled successfully" });
+      }
+    }
+
+    // 🔥 RESET AFTER SAVE
+    setEditMeeting(null);
+
+    setNewMeeting({
+      title: '',
+      link: '',
+      platform: 'google-meet',
+      date: '',
+      time: '',
+      department: ''
+    });
+
+    setOpenMeetingDialog(false);
+    fetchMeetings();
+
+  } catch (e) {
+    toast({ title: "Error", description: "Operation failed" });
+  }
+};
+
+const handleEditMeeting = (meeting) => {
+  setEditMeeting(meeting);
+
+  setNewMeeting({
+    title: meeting.title,
+    link: meeting.link,
+    platform: meeting.platform,
+    date: meeting.date,
+    time: meeting.time,
+    department: meeting.department || ''
+  });
+
+  setOpenMeetingDialog(true);
+};
 
     const handleDeleteMeeting = async (id: string) => {
         const result = await Swal.fire({
@@ -667,7 +709,12 @@ const MeetingTab = () => {
                                             ))}
                                         </select>
                                     </div>
-                                    <Button onClick={handleCreateMeeting} className={themeStyles.primaryButton}>Schedule Meeting</Button>
+                         <Button
+  onClick={handleCreateMeeting}
+  className={`${themeStyles.primaryButton} w-full`}
+>
+  {editMeeting ? "Update Meeting" : "Schedule Meeting"}
+</Button>
                                 </div>
                             </DialogContent>
                         </Dialog>
@@ -764,14 +811,30 @@ const MeetingTab = () => {
                                                 </a>
                                             </div>
                                         </div>
-                                        <Button 
-                                            size="icon" 
-                                            variant="ghost" 
-                                            className="text-destructive hover:bg-destructive/10 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" 
-                                            onClick={() => handleDeleteMeeting(m._id)}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
+                                       
+                                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+
+  {/* ✏️ EDIT */}
+  <Button
+    size="icon"
+    variant="ghost"
+    className="h-8 w-8 rounded-lg bg-brand-gradient-soft text-primary hover:bg-brand-gradient hover:text-primary-foreground shadow-sm"
+    onClick={() => handleEditMeeting(m)}
+  >
+    <Pencil className="w-4 h-4" />
+  </Button>
+
+  {/* 🗑️ DELETE */}
+  <Button 
+    size="icon" 
+    variant="ghost" 
+    className="h-8 w-8 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white"
+    onClick={() => handleDeleteMeeting(m._id)}
+  >
+    <Trash2 className="w-4 h-4" />
+  </Button>
+
+</div>
                                     </div>
                                 </div>
                             )) : (

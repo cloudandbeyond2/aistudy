@@ -811,8 +811,8 @@ const OrgDashboard = () => {
     const [notices, setNotices] = useState([]);
     const [courses, setCourses] = useState([]);
     const [previewProject, setPreviewProject] = useState<any>(null);
-    const [userDeptName, setUserDeptName] = useState('');
-    const [userDeptId, setUserDeptId] = useState(deptId || '');
+    const [userDeptName, setUserDeptName] = useState(sessionStorage.getItem('deptName') || '');
+    const [userDeptId, setUserDeptId] = useState(deptId || sessionStorage.getItem('deptId') || '');
     const getDeptScopedDepartment = () => (role === 'dept_admin' ? (userDeptId || deptId || '') : '');
     const orgId = sessionStorage.getItem('orgId') || sessionStorage.getItem('uid');
 
@@ -900,7 +900,7 @@ const OrgDashboard = () => {
         resources: [] as any[]
     });
 
-    const [internshipDeptFilter, setInternshipDeptFilter] = useState('');
+    const [internshipDeptFilter, setInternshipDeptFilter] = useState(role === 'dept_admin' ? (deptId || sessionStorage.getItem('deptId') || '') : '');
     const [customDomainValue, setCustomDomainValue] = useState('');
     const [isAddingTask, setIsAddingTask] = useState(false);
     const [newTask, setNewTask] = useState({ title: '', description: '', dueDate: '' });
@@ -999,6 +999,12 @@ const resetProjectForm = () => {
         if (!normalizedValue || normalizedValue === 'all') return '';
         return departmentsList.find((d: any) => d._id === normalizedValue || d.name === normalizedValue)?.name || normalizedValue;
     };
+
+    const visibleInternshipStudents = role === 'dept_admin'
+        ? students.filter((student: any) =>
+            matchesCurrentDepartment(student.department, student.departmentId)
+          )
+        : students;
 
     useEffect(() => {
         if (!orgId) {
@@ -1229,7 +1235,16 @@ const handleDeleteDeptAdmin = async (id: string) => {
             setLoadingInternships(true);
             const res = await axios.get(`${serverURL}/api/internship?organizationId=${orgId}`);
             if (res.data.success) {
-                setInternships(res.data.internships);
+                let internshipsData = Array.isArray(res.data.internships) ? res.data.internships : [];
+                if (role === 'dept_admin') {
+                    internshipsData = internshipsData.filter((internship: any) =>
+                        matchesCurrentDepartment(
+                            internship.studentId?.studentDetails?.department || internship.studentId?.department,
+                            internship.studentId?.studentDetails?.departmentId || internship.studentId?.departmentId
+                        )
+                    );
+                }
+                setInternships(internshipsData);
             }
         } catch (e) {
             console.error("Failed to fetch internships", e);
@@ -6185,7 +6200,7 @@ Login:
                                                         }}
                                                     >
                                                         <option value="">Select Student</option>
-                                                        {students
+                                                        {visibleInternshipStudents
                                                             .filter((s: any) => !internships.some(i => i.studentId?._id === s._id && i.status === 'active'))
                                                             .filter((s: any) => !internshipDeptFilter || s.department === internshipDeptFilter || s.departmentId === internshipDeptFilter)
                                                             .map((s: any) => (

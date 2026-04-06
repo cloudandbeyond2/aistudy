@@ -12,13 +12,14 @@ import {
   Plus, FileText, Download, ExternalLink, Trash2, BookOpen, 
   Link, Presentation, Video, Users, Sparkles, Clock, Eye,
   FolderOpen, Grid3x3, List, Search, Filter, X, CheckCircle,
-  ArrowUpRight, FileSymlink, GraduationCap, Library
+  ArrowUpRight, FileSymlink, GraduationCap, Library, Pencil,
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 const MaterialsTab = () => {
   const [openMaterialDialog, setOpenMaterialDialog] = useState(false);
   const [materials, setMaterials] = useState<any[]>([]);
+  const [editMaterial, setEditMaterial] = useState(null);
   const [departmentsList, setDepartmentsList] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
@@ -72,10 +73,23 @@ const MaterialsTab = () => {
       fetchDepartments();
     }
   }, [orgId]);
+const handleCreateMaterial = async () => {
+  try {
+    let res;
 
-  const handleCreateMaterial = async () => {
-    try {
-      let res;
+    if (editMaterial) {
+      // ✏️ UPDATE
+      res = await axios.put(
+        `${serverURL}/api/org/material/${editMaterial._id}`,
+        { ...newMaterial, organizationId: orgId }
+      );
+
+      if (res.data.success) {
+        toast({ title: "Updated", description: "Material updated successfully" });
+      }
+
+    } else {
+      // ➕ CREATE
       if (newMaterial.type === 'PDF' && newMaterial.file) {
         const formData = new FormData();
         formData.append('title', newMaterial.title);
@@ -84,6 +98,7 @@ const MaterialsTab = () => {
         formData.append('department', newMaterial.department);
         formData.append('organizationId', orgId);
         formData.append('file', newMaterial.file);
+
         res = await axios.post(`${serverURL}/api/org/material/create`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
@@ -95,24 +110,29 @@ const MaterialsTab = () => {
       }
 
       if (res.data.success) {
-        toast({ title: "Success", description: "Material added successfully" });
-        setNewMaterial({
-          title: '',
-          description: '',
-          fileUrl: '',
-          file: null,
-          type: 'PDF',
-          department: ''
-        });
-        setOpenMaterialDialog(false);
-        fetchMaterials();
+        toast({ title: "Created", description: "Material added successfully" });
       }
-    } catch (e) {
-      toast({ title: "Error", description: "Failed to add material" });
     }
-  };
 
+    // 🔥 RESET
+    setEditMaterial(null);
 
+    setNewMaterial({
+      title: '',
+      description: '',
+      fileUrl: '',
+      file: null,
+      type: 'PDF',
+      department: ''
+    });
+
+    setOpenMaterialDialog(false);
+    fetchMaterials();
+
+  } catch (e) {
+    toast({ title: "Error", description: "Operation failed" });
+  }
+};
 
 const handleDeleteMaterial = async (id: string) => {
   const result = await Swal.fire({
@@ -137,6 +157,20 @@ const handleDeleteMaterial = async (id: string) => {
   }
 };
 
+const handleEditMaterial = (material) => {
+  setEditMaterial(material);
+
+  setNewMaterial({
+    title: material.title,
+    description: material.description,
+    fileUrl: material.fileUrl || '',
+    file: null, // don’t prefill file
+    type: material.type,
+    department: material.department || ''
+  });
+
+  setOpenMaterialDialog(true);
+};
   // Get icon based on material type
   const getMaterialIcon = (type: string) => {
     switch(type) {
@@ -308,7 +342,7 @@ return (
                     className="w-full h-10 md:h-11 text-sm md:text-base font-semibold bg-brand-gradient text-primary-foreground hover:opacity-95"
                   >
                     <Plus className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-                    Publish Resource
+                 {editMaterial ? "Update Resource" : "Publish Resource"}
                   </Button>
                 </div>
               </DialogContent>
@@ -503,28 +537,49 @@ return (
                         <Users className="w-2 h-2 md:w-2.5 md:h-2.5 lg:w-3 lg:h-3" />
                         {m.department ? (departmentsList.find(d => d._id === m.department || d.name === m.department)?.name || m.department) : 'All Students'}
                       </p>
-                      
-                      {/* Action Buttons */}
-                      <div className="flex items-center justify-between pt-2 md:pt-3 border-t">
-                        <a 
-                          href={m.fileUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="inline-flex items-center gap-0.5 md:gap-1 text-[9px] md:text-[10px] lg:text-xs text-primary hover:text-accent transition-colors font-medium"
-                        >
-                          {m.type === 'PDF' ? 'View PDF' : 'Open'}
-                          <ArrowUpRight className="w-2.5 h-2.5 md:w-3 md:h-3 lg:w-3.5 lg:h-3.5" />
-                        </a>
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10"
-                          onClick={() => handleDeleteMaterial(m._id)}
-                        >
-                          <Trash2 className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
-                        </Button>
-                      </div>
-                    </div>
+                 
+ {/* Action Buttons */}
+<div className="flex items-center justify-between pt-2 md:pt-3 border-t">
+  
+  {/* LEFT: VIEW */}
+  <a 
+    href={m.fileUrl} 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    className="inline-flex items-center gap-0.5 md:gap-1 text-[9px] md:text-[10px] lg:text-xs text-primary hover:text-accent transition-colors font-medium"
+  >
+    {m.type === 'PDF' ? 'View PDF' : 'Open'}
+    <ArrowUpRight className="w-2.5 h-2.5 md:w-3 md:h-3 lg:w-3.5 lg:h-3.5" />
+  </a>
+
+  {/* RIGHT: GROUPED BUTTONS */}
+  <div className="flex items-center gap-2">
+
+    {/* ✏️ EDIT */}
+    <Button
+      size="icon"
+      variant="ghost"
+      className="h-8 w-8 rounded-lg bg-brand-gradient-soft text-primary hover:bg-brand-gradient hover:text-primary-foreground shadow-sm"
+      onClick={() => handleEditMaterial(m)}
+    >
+      <Pencil className="w-4 h-4" />
+    </Button>
+
+    {/* 🗑️ DELETE */}
+    <Button 
+      size="icon" 
+      variant="ghost" 
+      className="h-8 w-8 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white"
+      onClick={() => handleDeleteMaterial(m._id)}
+    >
+      <Trash2 className="w-4 h-4" />
+    </Button>
+
+  </div>
+
+
+</div>
+                  </div>
                   </div>
                 ))}
               </div>
@@ -556,24 +611,39 @@ return (
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 mt-2 sm:mt-0 sm:ml-4">
-                      <a 
-                        href={m.fileUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="p-1.5 md:p-2 hover:text-primary transition-colors"
-                      >
-                        <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
-                      </a>
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 text-destructive hover:text-destructive/80"
-                        onClick={() => handleDeleteMaterial(m._id)}
-                      >
-                        <Trash2 className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
-                      </Button>
-                    </div>
+                   <div className="flex items-center gap-2 mt-2 sm:mt-0 sm:ml-4">
+
+  {/* OPEN */}
+  <a 
+    href={m.fileUrl} 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    className="p-1.5 md:p-2 hover:text-primary transition-colors"
+  >
+    <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
+  </a>
+
+  {/* ✏️ EDIT */}
+  <Button
+    size="icon"
+    variant="ghost"
+    className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 text-primary hover:text-primary/80"
+    onClick={() => handleEditMaterial(m)}
+  >
+    <Pencil className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
+  </Button>
+
+  {/* 🗑️ DELETE */}
+  <Button 
+    size="icon" 
+    variant="ghost" 
+    className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 text-destructive hover:text-destructive/80"
+    onClick={() => handleDeleteMaterial(m._id)}
+  >
+    <Trash2 className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
+  </Button>
+
+</div>
                   </div>
                 ))}
               </div>

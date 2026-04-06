@@ -15,6 +15,7 @@ import {
     getSubmissions,
     createNotice,
     getNotices,
+    updateNotice,
     getAllOrganizations,
     createCourse,
     getCourses,
@@ -29,12 +30,14 @@ import {
     getAssignmentCertificate,
     createMeeting,
     getMeetings,
+    updateMeeting,  
     deleteMeeting,
     createProject,
     getProjects,
     deleteProject,
     createMaterial,
     getMaterials,
+    updateMaterial,
     deleteMaterial,
     uploadImage,
     createDepartment,
@@ -98,6 +101,7 @@ router.post('/student/assignment/submit', uploadAssignment.single('file'), submi
 router.post('/org/notice/create', createNotice);
 router.get('/org/notices', getNotices);
 router.delete('/org/notice/:id', deleteNotice);
+router.put('/org/notice/:id', updateNotice);
 router.get('/org/details/:orgId', async (req, res) => {
     try {
         const org = await Organization.findById(req.params.orgId);
@@ -124,6 +128,7 @@ router.get('/org/staff/activity', getOrgStaffLoginActivity);
 // Meetings
 router.post('/org/meeting/create', createMeeting);
 router.get('/org/meetings', getMeetings);
+router.put('/org/meeting/:id', updateMeeting);
 router.delete('/org/meeting/:id', deleteMeeting);
 
 // Projects
@@ -139,6 +144,7 @@ router.post(
     createMaterial
 );
 router.get('/org/materials', getMaterials);
+router.put('/org/material/:id', updateMaterial);
 router.delete('/org/material/:id', deleteMaterial);
 
 // File Uploads

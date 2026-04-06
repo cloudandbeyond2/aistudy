@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import { serverURL } from '@/constants';
 import RichTextEditor from '@/components/RichTextEditor';
-import { Bell, TrendingUp, Users, Trash2, Calendar, Eye, Sparkles, Send, Clock, MessageSquare, Pin, Star, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Bell, TrendingUp, Users, Trash2, Calendar, Eye, Sparkles, Send, Clock, MessageSquare, Pin, Star, AlertCircle, CheckCircle2, Pencil } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Swal from 'sweetalert2';
 
@@ -137,6 +137,21 @@ const NoticesTab = () => {
       console.error("Failed to fetch departments", e);
     }
   };
+
+const [editNotice, setEditNotice] = useState(null);
+
+const handleEditNotice = (notice) => {
+  setEditNotice(notice);
+
+  setNewNotice({
+    title: notice.title,
+    content: notice.content,
+    audience: notice.audience || 'all',
+    department: notice.department || '',
+    isImportant: notice.isImportant || false,
+    isPinned: notice.isPinned || false
+  });
+};
 
   const handleCreateNotice = async () => {
     if (!newNotice.title.trim() || !newNotice.content.trim()) {
@@ -580,19 +595,30 @@ const NoticesTab = () => {
                             )}
                           </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-all duration-300 flex-shrink-0 hover:bg-destructive/10 hover:text-destructive"
-                          onClick={() => handleDeleteNotice(notice._id, notice.title)}
-                          disabled={deletingId === notice._id}
-                        >
-                          {deletingId === notice._id ? (
-                            <div className="h-4 w-4 border-2 border-destructive border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
+                       <div className="flex items-center gap-2">
+
+  {/* ✏️ EDIT */}
+  <Button
+    size="icon"
+    variant="ghost"
+    className="h-8 w-8 rounded-lg bg-brand-gradient-soft text-primary hover:bg-brand-gradient hover:text-primary-foreground shadow-sm"
+    onClick={() => handleEditNotice(notice)}
+  >
+    <Pencil className="w-4 h-4" />
+  </Button>
+
+  {/* 🗑️ DELETE */}
+  <Button
+    size="icon"
+    variant="ghost"
+    className="h-8 w-8 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white"
+    onClick={() => handleDeleteNotice(notice._id, notice.title)}
+  >
+    <Trash2 className="w-4 h-4" />
+  </Button>
+
+</div>
+                          
                       </div>
                     </CardHeader>
                     

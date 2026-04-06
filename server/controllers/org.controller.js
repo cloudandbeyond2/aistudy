@@ -821,6 +821,41 @@ export const deleteNotice = async (req, res) => {
     }
 };
 
+export const updateNotice = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const updatedNotice = await Notice.findByIdAndUpdate(
+      id,
+      {
+        ...req.body,
+        updatedAt: new Date()
+      },
+      { new: true }
+    );
+
+    if (!updatedNotice) {
+      return res.status(404).json({
+        success: false,
+        message: "Notice not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Notice updated successfully",
+      notice: updatedNotice
+    });
+
+  } catch (error) {
+    console.error("Update Notice Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
+  }
+};
+
 /**
  * GET ALL ORGANIZATIONS (Super Admin)
  */
@@ -1394,6 +1429,26 @@ export const getMeetings = async (req, res) => {
     }
 };
 
+export const updateMeeting = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const updated = await Meeting.findByIdAndUpdate(
+      id,
+      req.body,
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: "Meeting not found" });
+    }
+
+    res.json({ success: true, meeting: updated });
+
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
 export const deleteMeeting = async (req, res) => {
     try {
         await Meeting.findByIdAndDelete(req.params.id);
@@ -1619,6 +1674,26 @@ export const createMaterial = async (req, res) => {
     }
 };
 
+export const updateMaterial = async (req, res) => {
+  try {
+    const updated = await MaterialModel.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: "Material not found" });
+    }
+
+    res.json({ success: true, material: updated });
+
+  } catch (err) {
+    console.error("Update Material Error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 export const getMaterials = async (req, res) => {
     const { organizationId, studentId } = req.query;
 
@@ -1655,6 +1730,8 @@ export const getMaterials = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+
 
 export const deleteMaterial = async (req, res) => {
     try {
