@@ -28,6 +28,8 @@ const toTitleCase = (str: string) =>
   );
 
 const StudentPortal = () => {
+   
+
     const [courses, setCourses] = useState<any[]>([]);
     const [studentInfo, setStudentInfo] = useState<any>(null);
     const [notifications, setNotifications] = useState<any[]>([]);
@@ -111,25 +113,30 @@ const StudentPortal = () => {
         }
     }, [canAccessStudentPortal, navigate, orgId, studentId]);
 
-    const fetchNotifications = async () => {
-        try {
-            const res = await axios.post(`${serverURL}/api/notifications/get`, { userId: studentId });
-            const unread = res.data.filter((n: any) => !n.isRead);
-            setNotifications(unread);
-        } catch (error) {
-            console.error('Failed to fetch notifications:', error);
-        }
-    };
+   const fetchNotifications = async () => {
+    try {
+    
+        const res = await axios.post(`${serverURL}/api/notifications/get`, { userId: studentId });
+        const unread = res.data.data.filter((n: any) => !n.isRead);
 
-    const dismissNotification = async (id: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-        try {
-            await axios.post(`${serverURL}/api/notifications/read`, { id });
-            setNotifications(prev => prev.filter(n => n._id !== id));
-        } catch (error) {
-            console.error('Failed to dismiss notification:', error);
-        }
-    };
+        setNotifications(unread);
+    } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+    }
+};
+
+  const dismissNotification = async (id: string, e: React.MouseEvent) => {
+  e.stopPropagation();
+
+  // ✅ instant UI update
+  setNotifications(prev => prev.filter(n => n._id !== id));
+
+  try {
+    await axios.post(`${serverURL}/api/notifications/read`, { id });
+  } catch (error) {
+    console.error('Failed to dismiss notification:', error);
+  }
+};
 
     const fetchStudentInfo = async () => {
         try {
@@ -253,7 +260,7 @@ const StudentPortal = () => {
     if (!canAccessStudentPortal) return null;
 
     return (
-        <div className="min-h-screen bg-white">
+     <div className="min-h-screen bg-white animate-[fadeIn_0.5s_ease]">
             <SEO title="Student Portal" description="Access your courses and learning materials." />
             
             <div className="container mx-auto py-4 sm:py-6 md:py-8 px-3 sm:px-4 md:px-6 lg:px-8 space-y-4 sm:space-y-6 md:space-y-8">
@@ -274,7 +281,7 @@ const StudentPortal = () => {
                                 </Badge>
                             </div>
                             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight">
-                                Welcome, {studentInfo?.mName || "Scholar"}! 👋
+                         Welcome, {studentInfo?.mName || "Scholar"}! 👋
                             </h1>
                             <p className="text-indigo-100 text-sm sm:text-base md:text-lg">Continue your journey to excellence</p>
                         </div>
@@ -355,7 +362,7 @@ const StudentPortal = () => {
                             {/* Left Column - Takes full width on mobile, 2 cols on desktop */}
                             <div className="lg:col-span-2 space-y-4 sm:space-y-6">
                                 {/* Student Profile Card */}
-                                <Card className="border-0 shadow-lg bg-white">
+                            <Card className="border-0 shadow-lg bg-white hover:shadow-xl transition-all duration-300 hover:scale-[1.01]">
                                     <CardHeader className="p-4 sm:p-6">
                                         <CardTitle className="flex items-center gap-2 text-gray-800 text-base sm:text-lg md:text-xl">
                                             <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
@@ -420,29 +427,57 @@ const StudentPortal = () => {
                                                 Notifications
                                             </span>
                                             {notifications.length > 0 && (
-                                                <Badge variant="destructive" className="rounded-full text-xs">New</Badge>
+                                         <Badge className="rounded-full text-xs animate-pulse bg-red-500 text-white">
+  {notifications.length}
+</Badge>
                                             )}
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
-                                        {notifications.length > 0 ? (
-                                            <div className="space-y-2 sm:space-y-3">
-                                                {notifications.slice(0, 3).map((notif) => (
-                                                    <div key={notif._id} className="p-2 sm:p-3 bg-white rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-all" onClick={() => notif.link && navigate(notif.link)}>
-                                                        <p className="text-xs sm:text-sm font-medium text-gray-800 line-clamp-2">{notif.message}</p>
-                                                        <p className="text-[10px] sm:text-xs text-gray-500 mt-1">Just now</p>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="text-center py-6 sm:py-8">
-                                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
-                                                    <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
-                                                </div>
-                                                <p className="text-gray-500 text-xs sm:text-sm">No new notifications</p>
-                                            </div>
-                                        )}
-                                    </CardContent>
+  {notifications.length > 0 ? (
+    <div className="space-y-2 sm:space-y-3">
+      {notifications.slice(0, 3).map((notif) => (
+       <div
+  key={notif._id}
+  className="p-2 sm:p-3 bg-white rounded-xl shadow-sm flex justify-between items-start hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
+>
+          {/* LEFT CONTENT */}
+          <div
+            className="flex-1 cursor-pointer"
+            onClick={() => notif.link && navigate(notif.link)}
+          >
+            <p className="text-xs sm:text-sm font-medium text-gray-800 line-clamp-2">
+              {notif.message}
+            </p>
+
+            {/* ✅ REAL TIME */}
+            <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
+              {new Date(notif.date).toLocaleString()}
+            </p>
+          </div>
+
+          {/* 🔥 DELETE BUTTON (THEME MATCHED) */}
+          <button
+            onClick={(e) => dismissNotification(notif._id, e)}
+            className="ml-2 flex items-center justify-center w-6 h-6 rounded-full bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-600 transition"
+            title="Remove"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="text-center py-6 sm:py-8">
+      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
+        <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
+      </div>
+      <p className="text-gray-500 text-xs sm:text-sm">
+        No new notifications
+      </p>
+    </div>
+  )}
+</CardContent>
                                 </Card>
                             </div>
                         </div>
@@ -473,7 +508,7 @@ const StudentPortal = () => {
                                                     style={{ animationDelay: `${index * 100}ms` }}
                                                     onClick={() => navigate(`/course/${course._id}`)}
                                                 >
-                                                    <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-0 shadow-lg bg-white h-full flex flex-col">
+                                                 <Card className="overflow-hidden border-0 shadow-lg bg-white h-full flex flex-col hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
                                                         <div className="relative h-36 sm:h-40 md:h-48 overflow-hidden">
                                                             <img 
                                                                 src={thumbnail} 

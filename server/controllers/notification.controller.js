@@ -1,14 +1,23 @@
-
 import Notification from '../models/Notification.js';
 
 /* GET NOTIFICATIONS */
+import mongoose from 'mongoose';
+
 export const getNotifications = async (req, res) => {
     try {
-        const { userId } = req.body; // or req.user.id
-        const notifications = await Notification.find({ user: userId }).sort({ date: -1 });
-        res.json(notifications);
+        const { userId } = req.body;
+
+        const notifications = await Notification.find({
+            user: new mongoose.Types.ObjectId(userId) // ✅ FIX HERE
+        }).sort({ date: -1 });
+
+        res.json({
+            success: true,
+            data: notifications
+        });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error("Get notification error:", error);
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -27,7 +36,7 @@ export const markAsRead = async (req, res) => {
 export const clearNotifications = async (req, res) => {
     try {
 
-        const { userId } = req.body;
+    const { userId } = req.query;
 
         await Notification.deleteMany({ user: userId });
 
@@ -55,6 +64,7 @@ export const createNotification = async ({ user, message, type, link }) => {
 export const sendIndividualNotification = async (req, res) => {
     try {
         const { userId, message, type, link } = req.body;
+          console.log("Sending to user:", userId);
         
         if (!userId || !message) {
             return res.status(400).json({ success: false, message: 'User ID and message are required' });
@@ -63,7 +73,7 @@ export const sendIndividualNotification = async (req, res) => {
         const notification = await Notification.create({
             user: userId,
             message,
-            type: type || 'admin_message',
+          type: type || 'info',
             link: link || ''
         });
 
