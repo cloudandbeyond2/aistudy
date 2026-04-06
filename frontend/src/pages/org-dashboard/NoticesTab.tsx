@@ -399,7 +399,8 @@ const handleEditNotice = (notice) => {
                 <Bell className="h-6 w-6" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Announcement Desk</h1>
+                {/* <h1 className="text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white">Resource Library</h1> */}
+                <h1 className="text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white">Announcement Desk</h1>
                 <p className="text-primary-foreground/80">Good {getTimeOfDay()}! Share updates with your learners</p>
               </div>
             </div>

@@ -790,7 +790,7 @@ const ProjectTab = () => {
                         <div className="bg-primary-foreground/20 p-2.5 lg:p-3 rounded-xl backdrop-blur-sm">
                             <Briefcase className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8" />
                         </div>
-                        <h1 className="text-2xl lg:text-3xl xl:text-4xl font-bold">Projects & Labs Desk</h1>
+                        <h1 className="text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white">Projects & Labs Desk</h1>
                     </div>
                     <p className="text-primary-foreground/90 text-base lg:text-lg xl:text-xl mb-6 lg:mb-8">
                         Manage practical work, guided research, and applied skill-building projects for your students.
