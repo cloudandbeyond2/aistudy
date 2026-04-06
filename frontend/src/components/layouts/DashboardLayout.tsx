@@ -204,6 +204,7 @@ const DashboardLayoutContent = () => {
   const isOrganizationStudent = role === 'student' && isOrganizationUser;
   const assessmentDeskPath = role === 'dept_admin' ? '/dashboard/org-assignments' : '/dashboard/org?tab=assignments';
   const projectsLabsPath = role === 'dept_admin' ? '/dashboard/org-projects' : '/dashboard/org?tab=projects';
+  const materialsPath = role === 'dept_admin' ? '/dashboard/org-materials' : '/dashboard/org?tab=materials';
   const noticesPath = role === 'dept_admin' ? '/dashboard/org-notices' : '/dashboard/org?tab=notices';
   const isAssessmentDeskActive = role === 'dept_admin'
     ? location.pathname === '/dashboard/org-assignments'
@@ -211,6 +212,9 @@ const DashboardLayoutContent = () => {
   const isProjectsLabsActive = role === 'dept_admin'
     ? location.pathname === '/dashboard/org-projects'
     : location.search.includes('tab=projects');
+  const isMaterialsActive = role === 'dept_admin'
+    ? location.pathname === '/dashboard/org-materials'
+    : location.search.includes('tab=materials');
   const isNoticesActive = role === 'dept_admin'
     ? location.pathname === '/dashboard/org-notices'
     : location.search.includes('tab=notices');
@@ -848,7 +852,7 @@ const DashboardLayoutContent = () => {
                     <MenuItem icon={FileText} label="Assessment Desk" to={assessmentDeskPath} isActive={isAssessmentDeskActive} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Video} label="Sessions" to="/dashboard/org-meetings" isActive={isActive('/dashboard/org-meetings')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Briefcase} label="Projects & Labs" to={projectsLabsPath} isActive={isProjectsLabsActive} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
-                    <MenuItem icon={Download} label="Resource Library" to="/dashboard/org?tab=materials" isActive={location.search === '?tab=materials'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    <MenuItem icon={Download} label="Resource Library" to={materialsPath} isActive={isMaterialsActive} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Bell} label="Announcements" to={noticesPath} isActive={isNoticesActive} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Award} label="Career & Placement" to="/dashboard/org?tab=career" isActive={location.search === '?tab=career'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Activity} label="Internships" to="/dashboard/org?tab=internships" isActive={location.search === '?tab=internships'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
