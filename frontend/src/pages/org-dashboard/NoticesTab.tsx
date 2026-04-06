@@ -55,6 +55,7 @@ const NoticesTab = () => {
   const navigate = useNavigate();
   const role = sessionStorage.getItem('role');
   const deptId = sessionStorage.getItem('deptId');
+  const deptName = sessionStorage.getItem('deptName') || '';
   const orgId = sessionStorage.getItem('orgId') || sessionStorage.getItem('uid');
   const { toast } = useToast();
 
@@ -88,6 +89,10 @@ const NoticesTab = () => {
 
   const getDeptScopedDepartment = () => {
     return role === 'dept_admin' ? (deptId || '') : '';
+  };
+
+  const getDeptScopedLabel = () => {
+    return deptName || getDepartmentLabel(deptId || '') || 'Current Department';
   };
 
   // Fetch data
@@ -450,18 +455,23 @@ const handleEditNotice = (notice) => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="department">Target Department</Label>
-              <select
-                id="department"
-                className={themeStyles.select}
-                value={newNotice.department || ''}
-                onChange={(e) => setNewNotice({ ...newNotice, department: e.target.value })}
-                disabled={role === 'dept_admin'}
-              >
-                {role !== 'dept_admin' && <option value="">All Departments</option>}
-                {departmentsList.map((d) => (
-                  <option key={d._id} value={d._id}>{d.name}</option>
-                ))}
-              </select>
+              {role === 'dept_admin' ? (
+                <div className="flex h-10 items-center rounded-md border-2 border-input bg-muted/30 px-3 text-sm font-medium text-foreground">
+                  {getDeptScopedLabel()}
+                </div>
+              ) : (
+                <select
+                  id="department"
+                  className={themeStyles.select}
+                  value={newNotice.department || ''}
+                  onChange={(e) => setNewNotice({ ...newNotice, department: e.target.value })}
+                >
+                  <option value="">All Departments</option>
+                  {departmentsList.map((d) => (
+                    <option key={d._id} value={d._id}>{d.name}</option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
           
