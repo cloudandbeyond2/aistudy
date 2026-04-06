@@ -6135,12 +6135,12 @@ Login:
                 </TabsContent>
 
                 {/* INTERNSHIPS TAB */}
-                <TabsContent value="internships" className="space-y-6">
+                <TabsContent value="internships" className="space-y-6 pb-20">
                     <Tabs defaultValue="management" className="w-full">
                         <div className="flex flex-col gap-3 mb-6 lg:flex-row lg:items-center lg:justify-between">
-                            <TabsList className="border border-border bg-card/80 p-1 w-full lg:w-auto h-auto overflow-x-auto flex">
-                                <TabsTrigger value="management" className="min-w-[160px] lg:min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Active Management</TabsTrigger>
-                                <TabsTrigger value="catalog" className="min-w-[180px] lg:min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Available Tracks (Catalog)</TabsTrigger>
+                            <TabsList className="border border-border bg-card/80 p-1 w-full lg:w-auto h-auto flex flex-col sm:flex-row gap-1 sm:gap-0">
+                                <TabsTrigger value="management" className="w-full sm:w-auto min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Active Management</TabsTrigger>
+                                <TabsTrigger value="catalog" className="w-full sm:w-auto min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Available Tracks (Catalog)</TabsTrigger>
                             </TabsList>
                             <div className="hidden md:flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-primary">
                                 <Sparkles className="w-4 h-4" />
@@ -6152,7 +6152,7 @@ Login:
                             <Card className="border-l-4 border-l-primary">
                                 <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                                     <div className="min-w-0">
-                                        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                                        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl break-words">
                                             <Activity className="w-5 h-5 text-primary" />
                                             Internship Management
                                         </CardTitle>
@@ -6515,8 +6515,8 @@ Login:
                             </div>
 
                             <Card className="overflow-hidden border-none bg-brand-gradient text-primary-foreground shadow-2xl">
-                                <CardContent className="p-5 sm:p-8 relative">
-                                    <div className="relative z-10 space-y-4 max-w-2xl">
+                                <CardContent className="relative w-full p-5 sm:p-8">
+                                    <div className="relative z-10 space-y-4 w-full max-w-2xl">
                                         <h3 className="text-xl sm:text-2xl font-bold">Don't see your department?</h3>
                                         <p className="opacity-90 text-primary-foreground/80">
                                             Our AI infrastructure can generate professional roadmaps for any niche, from Nuclear Engineering to specialized Medical research. 
@@ -6525,13 +6525,14 @@ Login:
                                         <Button 
                                             variant="secondary" 
                                             size="lg" 
-                                            className="bg-background font-bold text-primary hover:bg-muted"
+                                            className="w-full sm:w-auto whitespace-normal text-center leading-tight bg-background font-bold text-primary hover:bg-muted"
                                             onClick={() => {
                                                 setNewInternship({ ...newInternship, domain: 'Other' });
                                                 setOpenInternshipDialog(true);
                                             }}
                                         >
-                                            Launch Custom Program <Sparkles className="ml-2 w-4 h-4" />
+                                            <span>Launch Custom Program</span>
+                                            <Sparkles className="ml-2 w-4 h-4 shrink-0" />
                                         </Button>
                                     </div>
                                     <Activity className="absolute -right-8 -bottom-8 w-64 h-64 text-white/10 rotate-12" />
@@ -6553,7 +6554,7 @@ Login:
                                 
                                 <div className="space-y-6 py-4">
                                     <Tabs defaultValue="tasks">
-                                        <TabsList className="grid grid-cols-1 sm:grid-cols-3 w-full h-auto">
+                                                <TabsList className="grid grid-cols-1 sm:grid-cols-3 w-full h-auto">
                                             <TabsTrigger value="tasks">Tasks ({selectedInternship.tasks?.length || 0})</TabsTrigger>
                                             <TabsTrigger value="followups">Daily Logs ({selectedInternship.dailyFollowups?.length || 0})</TabsTrigger>
                                             <TabsTrigger value="studyplan">Study Plan</TabsTrigger>

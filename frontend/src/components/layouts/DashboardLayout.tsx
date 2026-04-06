@@ -454,7 +454,7 @@ const DashboardLayoutContent = () => {
   const isExpanded = (isMobile || isTablet) ? true : (!isCollapsed || hovered);
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="flex min-h-[100dvh] w-full overflow-visible bg-gradient-to-br from-background via-background to-muted/20 md:h-screen md:overflow-hidden">
       <Sidebar
         collapsible={(isMobile || isTablet) ? "offcanvas" : "none"}
         style={(!isMobile && !isTablet) ? {
@@ -986,7 +986,7 @@ const DashboardLayoutContent = () => {
       </Sidebar>
 
       {/* Main Content */}
-      <main className="thin-scrollbar flex-1 h-screen overflow-y-auto p-4 md:p-6 lg:p-8 relative ">
+      <main className="thin-scrollbar flex-1 min-h-[100dvh] overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8 relative md:h-screen">
         {/* Mobile & Tablet Header */}
      {(isMobile || isTablet) && (
 <div className="flex items-center mb-6 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm border border-border/40 relative z-50 isolate">
