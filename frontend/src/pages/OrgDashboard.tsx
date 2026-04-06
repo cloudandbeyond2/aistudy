@@ -6137,10 +6137,10 @@ Login:
                 {/* INTERNSHIPS TAB */}
                 <TabsContent value="internships" className="space-y-6">
                     <Tabs defaultValue="management" className="w-full">
-                        <div className="flex items-center justify-between mb-6">
-                            <TabsList className="border border-border bg-card/80 p-1">
-                                <TabsTrigger value="management" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Active Management</TabsTrigger>
-                                <TabsTrigger value="catalog" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Available Tracks (Catalog)</TabsTrigger>
+                        <div className="flex flex-col gap-3 mb-6 lg:flex-row lg:items-center lg:justify-between">
+                            <TabsList className="border border-border bg-card/80 p-1 w-full lg:w-auto h-auto overflow-x-auto flex">
+                                <TabsTrigger value="management" className="min-w-[160px] lg:min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Active Management</TabsTrigger>
+                                <TabsTrigger value="catalog" className="min-w-[180px] lg:min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Available Tracks (Catalog)</TabsTrigger>
                             </TabsList>
                             <div className="hidden md:flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-primary">
                                 <Sparkles className="w-4 h-4" />
@@ -6150,26 +6150,26 @@ Login:
 
                         <TabsContent value="management" className="space-y-6">
                             <Card className="border-l-4 border-l-primary">
-                                <CardHeader className="flex flex-row items-center justify-between">
-                                    <div>
-                                        <CardTitle className="flex items-center gap-2">
+                                <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                                    <div className="min-w-0">
+                                        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                                             <Activity className="w-5 h-5 text-primary" />
                                             Internship Management
                                         </CardTitle>
-                                        <CardDescription>
+                                        <CardDescription className="max-w-2xl">
                                             Manage professional-grade internship programs for all departments.
                                         </CardDescription>
                                     </div>
                                     <Dialog open={openInternshipDialog} onOpenChange={setOpenInternshipDialog}>
                                         <DialogTrigger asChild>
-                                            <Button>
+                                            <Button className="w-full sm:w-auto">
                                                 <Plus className="w-4 h-4 mr-2" /> Assign Internship
                                             </Button>
                                         </DialogTrigger>
-                                        <DialogContent className="max-w-2xl overflow-y-auto max-h-[90vh]">
+                                        <DialogContent className="w-[95vw] max-w-2xl overflow-y-auto max-h-[90vh] rounded-2xl">
                                             <DialogHeader>
-                                                <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                                                    <Sparkles className="w-6 h-6 text-primary" />
+                                                <DialogTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+                                                    <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                                                     Professional Internship Setup
                                                 </DialogTitle>
                                                 <DialogDescription className="text-xs">
@@ -6262,8 +6262,8 @@ Login:
                                                     )}
                                                 </div>
 
-                                                <div className="flex items-center justify-between rounded-xl border border-border bg-muted p-4">
-                                                    <div className="space-y-1">
+                                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-border bg-muted p-4">
+                                                    <div className="space-y-1 min-w-0">
                                                         <p className="text-sm font-semibold text-foreground">MNC-Style Training</p>
                                                         <p className="text-xs text-muted-foreground">Auto-generate a 4-week practical roadmap based on the domain.</p>
                                                     </div>
@@ -6312,7 +6312,7 @@ Login:
                                                     />
                                                 </div>
 
-                                                <div className="grid grid-cols-2 gap-4">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                     <div className="grid gap-2">
                                                         <Label>Start Date</Label>
                                                         <Input type="date" value={newInternship.startDate} onChange={(e) => setNewInternship({ ...newInternship, startDate: e.target.value })} className="h-11" />
@@ -6330,7 +6330,7 @@ Login:
                                                         </select>
                                                     </div>
                                                 </div>
-                                                <Button onClick={handleCreateInternship} size="lg" className="h-12 shadow-lg shadow-primary/20">
+                                                <Button onClick={handleCreateInternship} size="lg" className="h-12 w-full shadow-lg shadow-primary/20">
                                                     Launch Internship Program
                                                 </Button>
                                             </div>
@@ -6345,7 +6345,7 @@ Login:
                                                 <h3 className="text-lg font-bold flex items-center gap-2 text-primary">
                                                     <Sparkles className="w-5 h-5" /> Internship Requests
                                                 </h3>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
                                                     {internships.filter(i => i.status === 'requested').map((internship: any) => (
                                                         <Card key={internship._id} className="overflow-hidden border-border bg-card/70 group">
                                                             <CardHeader className="pb-2">
@@ -6362,7 +6362,7 @@ Login:
                                                                 <div className="rounded-lg border border-border bg-background/70 p-3 text-xs italic text-muted-foreground">
                                                                     "{internship.description || 'No additional details provided.'}"
                                                                 </div>
-                                                                <div className="flex gap-2">
+                                                                <div className="flex flex-col sm:flex-row gap-2">
                                                                     <Button 
                                                                         className="h-8 flex-1 text-xs"
                                                                         onClick={() => {
@@ -6415,10 +6415,10 @@ Login:
                                             <h3 className="text-lg font-bold flex items-center gap-2">
                                                 <Activity className="w-5 h-5 text-green-600" /> Active Internships
                                             </h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                                {internships.filter(i => i.status === 'active').length > 0 ? (
-                                                    internships.filter(i => i.status === 'active').map((internship: any) => (
-                                                        <Card key={internship._id} className="border-border/60 hover:shadow-lg transition-all group relative">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
+                                                    {internships.filter(i => i.status === 'active').length > 0 ? (
+                                                        internships.filter(i => i.status === 'active').map((internship: any) => (
+                                                            <Card key={internship._id} className="border-border/60 hover:shadow-lg transition-all group relative">
                                                             <CardHeader className="pb-3">
                                                                 <div className="flex justify-between items-start">
                                                                     <Badge className="border-border bg-primary/10 text-primary">
@@ -6471,7 +6471,7 @@ Login:
                         </TabsContent>
 
                         <TabsContent value="catalog" className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
                                 {INTERNSHIP_CATEGORIES.map((category, idx) => (
                                     <Card key={idx} className="overflow-hidden border-border hover:shadow-xl transition-all group">
                                         <CardHeader className="bg-muted/40 pb-4">
@@ -6515,9 +6515,9 @@ Login:
                             </div>
 
                             <Card className="overflow-hidden border-none bg-brand-gradient text-primary-foreground shadow-2xl">
-                                <CardContent className="p-8 relative">
+                                <CardContent className="p-5 sm:p-8 relative">
                                     <div className="relative z-10 space-y-4 max-w-2xl">
-                                        <h3 className="text-2xl font-bold">Don't see your department?</h3>
+                                        <h3 className="text-xl sm:text-2xl font-bold">Don't see your department?</h3>
                                         <p className="opacity-90 text-primary-foreground/80">
                                             Our AI infrastructure can generate professional roadmaps for any niche, from Nuclear Engineering to specialized Medical research. 
                                             Simply select "Other" in the setup and type your domain.
@@ -6543,9 +6543,9 @@ Login:
                     {/* INTERNSHIP DETAILS DIALOG */}
                     {selectedInternship && (
                         <Dialog open={!!selectedInternship} onOpenChange={(o) => !o && setSelectedInternship(null)}>
-                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                            <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl">
                                 <DialogHeader>
-                                    <DialogTitle className="text-2xl">{selectedInternship.title}</DialogTitle>
+                                    <DialogTitle className="text-xl sm:text-2xl break-words">{selectedInternship.title}</DialogTitle>
                                     <DialogDescription>
                                         Student: {selectedInternship.studentId?.mName} ({selectedInternship.studentId?.email})
                                     </DialogDescription>
@@ -6553,16 +6553,16 @@ Login:
                                 
                                 <div className="space-y-6 py-4">
                                     <Tabs defaultValue="tasks">
-                                        <TabsList className="grid grid-cols-3 w-full">
+                                        <TabsList className="grid grid-cols-1 sm:grid-cols-3 w-full h-auto">
                                             <TabsTrigger value="tasks">Tasks ({selectedInternship.tasks?.length || 0})</TabsTrigger>
                                             <TabsTrigger value="followups">Daily Logs ({selectedInternship.dailyFollowups?.length || 0})</TabsTrigger>
                                             <TabsTrigger value="studyplan">Study Plan</TabsTrigger>
                                         </TabsList>
 
                                         <TabsContent value="tasks" className="space-y-4 pt-4">
-                                            <div className="flex justify-between items-center">
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
                                                 <h4 className="font-bold">Internship Tasks</h4>
-                                                <Button size="sm" onClick={() => setIsAddingTask(true)} disabled={isAddingTask}>
+                                                <Button size="sm" className="w-full sm:w-auto" onClick={() => setIsAddingTask(true)} disabled={isAddingTask}>
                                                     <Plus className="w-4 h-4 mr-2" /> Add Task
                                                 </Button>
                                             </div>
@@ -6570,7 +6570,7 @@ Login:
                                             {isAddingTask && (
                                                 <Card className="animate-in slide-in-from-top-2 fade-in border-border bg-muted/30 p-4">
                                                     <div className="space-y-4">
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                             <div className="space-y-2">
                                                                 <Label>Task Title</Label>
                                                                 <Input 
@@ -6625,11 +6625,11 @@ Login:
                                                     const statusMeta = getInternshipTaskStatusMeta(task.status);
 
                                                     return (
-                                                    <div key={task._id} className="p-4 border rounded-lg flex justify-between items-center bg-muted/20">
-                                                        <div>
-                                                            <p className="font-bold">{task.title}</p>
-                                                            <p className="text-sm text-muted-foreground">{task.description}</p>
-                                                            <div className="flex gap-4 mt-2 text-xs">
+                                                    <div key={task._id} className="p-4 border rounded-lg flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center bg-muted/20">
+                                                        <div className="min-w-0">
+                                                            <p className="font-bold break-words">{task.title}</p>
+                                                            <p className="text-sm text-muted-foreground break-words">{task.description}</p>
+                                                            <div className="flex flex-wrap gap-3 mt-2 text-xs">
                                                                 <span className={new Date(task.dueDate) < new Date() ? 'text-red-500 font-bold' : ''}>
                                                                     Due: {new Date(task.dueDate).toLocaleDateString()}
                                                                 </span>
@@ -6641,9 +6641,9 @@ Login:
                                                                 )}
                                                             </div>
                                                         </div>
-                                                        <div className="flex flex-col gap-2">
+                                                        <div className="flex flex-col gap-2 lg:min-w-[180px]">
                                                             <select 
-                                                                className="text-xs border p-1 rounded"
+                                                                className="text-xs border p-2 rounded w-full"
                                                                 value={task.status}
                                                                 onChange={(e) => handleUpdateInternshipTask(selectedInternship._id, task._id, { status: e.target.value })}
                                                             >
@@ -6656,7 +6656,7 @@ Login:
                                                                 <MessageSquare className="h-3 w-3 text-muted-foreground" />
                                                                 <Input 
                                                                     placeholder="Feedback..." 
-                                                                    className="h-7 text-[10px] w-24"
+                                                                    className="h-8 text-[10px] w-full lg:w-24"
                                                                     defaultValue={task.feedback || ''}
                                                                     onBlur={(e) => {
                                                                         if (e.target.value !== task.feedback) {
@@ -6675,20 +6675,20 @@ Login:
                                             <h4 className="font-bold">Student Progress Logs</h4>
                                             <div className="grid gap-3">
                                                 {selectedInternship.dailyFollowups?.map((log: any) => (
-                                                    <div key={log._id} className="p-4 border rounded-lg bg-muted/10">
-                                                        <div className="flex justify-between">
+                                                    <div key={log._id} className="p-4 border rounded-lg bg-muted/10 space-y-3">
+                                                        <div className="flex flex-col sm:flex-row sm:justify-between gap-2">
                                                             <span className="font-bold text-sm">Date: {new Date(log.date).toLocaleDateString()}</span>
                                                             {log.reviewedBy && <Badge variant="secondary">Reviewed</Badge>}
                                                         </div>
                                                         <p className="text-sm mt-1 bg-white p-3 rounded-lg border italic">"{log.log}"</p>
-                                                        <div className="mt-3 flex gap-2">
+                                                        <div className="mt-3 flex flex-col sm:flex-row gap-2">
                                                             <Input 
                                                                 placeholder="Add mentor notes..." 
-                                                                className="text-sm h-8"
+                                                                className="text-sm h-9"
                                                                 defaultValue={log.mentorNote}
                                                                 onBlur={(e) => handleUpdateInternshipFollowup(selectedInternship._id, log._id, { mentorNote: e.target.value, reviewedBy: sessionStorage.getItem('uid') })}
                                                             />
-                                                            <Button size="sm" variant="secondary" onClick={() => handleUpdateInternshipFollowup(selectedInternship._id, log._id, { reviewedBy: sessionStorage.getItem('uid') })}>
+                                                            <Button size="sm" variant="secondary" className="w-full sm:w-auto" onClick={() => handleUpdateInternshipFollowup(selectedInternship._id, log._id, { reviewedBy: sessionStorage.getItem('uid') })}>
                                                                 Approve
                                                             </Button>
                                                         </div>
@@ -6698,9 +6698,9 @@ Login:
                                         </TabsContent>
 
                                         <TabsContent value="studyplan" className="space-y-4 pt-4">
-                                            <div className="flex justify-between items-center">
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
                                                 <h4 className="font-bold">Personalized Study Plan</h4>
-                                                <Button size="sm" onClick={() => setIsAddingResource(true)} disabled={isAddingResource}>
+                                                <Button size="sm" className="w-full sm:w-auto" onClick={() => setIsAddingResource(true)} disabled={isAddingResource}>
                                                     <Plus className="w-4 h-4 mr-2" /> Add Resource
                                                 </Button>
                                             </div>
@@ -6708,7 +6708,7 @@ Login:
                                             {isAddingResource && (
                                                 <Card className="animate-in slide-in-from-top-2 fade-in border-border bg-muted/30 p-4">
                                                     <div className="space-y-4">
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                             <div className="space-y-2">
                                                                 <Label>Resource Title</Label>
                                                                 <Input 
@@ -6744,12 +6744,12 @@ Login:
                                             )}
                                             <div className="grid gap-2">
                                                 {selectedInternship.studyPlan?.resources?.map((res: any, i: number) => (
-                                                    <div key={i} className="flex items-center justify-between rounded-lg border bg-muted/40 p-3">
+                                                    <div key={i} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border bg-muted/40 p-3">
                                                         <div className="flex items-center gap-2">
                                                             <BookOpen className="h-4 w-4 text-primary" />
-                                                            <span className="font-medium text-sm">{res.title}</span>
+                                                            <span className="font-medium text-sm break-words">{res.title}</span>
                                                         </div>
-                                                        <a href={res.link} target="_blank" rel="noopener" className="text-secondary hover:underline text-sm">
+                                                        <a href={res.link} target="_blank" rel="noopener" className="text-secondary hover:underline text-sm break-all">
                                                             View Resource <ExternalLink className="h-3 w-3 inline" />
                                                         </a>
                                                     </div>
