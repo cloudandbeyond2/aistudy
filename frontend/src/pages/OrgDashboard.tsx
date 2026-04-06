@@ -989,6 +989,8 @@ const resetProjectForm = () => {
         const normalizedValue = getDepartmentValue(value);
         const normalizedDepartmentId = getDepartmentValue(departmentId);
         return Boolean(
+            !normalizedValue ||
+            normalizedValue === 'all' ||
             (userDeptName && normalizedValue === userDeptName) ||
             (deptId && normalizedValue === deptId) ||
             (deptId && normalizedDepartmentId === deptId)

@@ -24,7 +24,8 @@ import {
   ChevronRight,
   Menu,
   Pencil,
-  X as CloseIcon
+  X as CloseIcon,
+  Loader2
 } from 'lucide-react';
 
 const themeStyles = {
@@ -100,8 +101,8 @@ const MeetingTab = () => {
     const [notices, setNotices] = useState([]);
     const [courses, setCourses] = useState([]);
     const [previewProject, setPreviewProject] = useState<any>(null);
-    const [userDeptName, setUserDeptName] = useState('');
-    const [userDeptId, setUserDeptId] = useState(deptId || '');
+    const [userDeptName, setUserDeptName] = useState(sessionStorage.getItem('deptName') || '');
+    const [userDeptId, setUserDeptId] = useState(deptId || sessionStorage.getItem('deptId') || '');
     const getDeptScopedDepartment = () => (role === 'dept_admin' ? (userDeptId || deptId || '') : '');
     const orgId = sessionStorage.getItem('orgId') || sessionStorage.getItem('uid');
 
@@ -158,6 +159,12 @@ const MeetingTab = () => {
         type: 'PDF',
         department: ''
     });
+    const [showBootstrapLoader, setShowBootstrapLoader] = useState(true);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => setShowBootstrapLoader(false), 2000);
+        return () => window.clearTimeout(timer);
+    }, []);
 
     // Responsive hooks
     const isMobile = useMediaQuery('(max-width: 640px)');
@@ -175,6 +182,8 @@ const MeetingTab = () => {
         const normalizedValue = getDepartmentValue(value);
         const normalizedDepartmentId = getDepartmentValue(departmentId);
         return Boolean(
+            !normalizedValue ||
+            normalizedValue === 'all' ||
             (userDeptName && normalizedValue === userDeptName) ||
             (deptId && normalizedValue === deptId) ||
             (deptId && normalizedDepartmentId === deptId)
@@ -588,6 +597,8 @@ const handleEditMeeting = (meeting) => {
     }
 
     const now = new Date();
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
     const todayKey = now.toISOString().slice(0, 10);
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const meetingsTodayCount = meetings.filter((meeting: any) => {
@@ -641,7 +652,19 @@ const handleEditMeeting = (meeting) => {
             ? overdueAssignments
             : assignmentInsights;
 
-    return (
+    const bootstrapLoader = (
+        <div className="flex min-h-[60vh] items-center justify-center px-4 py-12">
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed bg-card/70 px-8 py-10 text-center shadow-sm">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <div>
+                    <p className="text-sm font-semibold text-foreground">Loading Sessions</p>
+                    <p className="text-sm text-muted-foreground">Preparing department meetings...</p>
+                </div>
+            </div>
+        </div>
+    );
+
+    return showBootstrapLoader ? bootstrapLoader : (
         <>
             <div className="space-y-4 py-4 sm:py-6 md:py-8 lg:py-10 px-3 sm:px-4 md:px-6">
                 {/* Hero Section */}
@@ -778,6 +801,11 @@ const handleEditMeeting = (meeting) => {
                     <CardContent className="p-4 sm:p-6 pt-0">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                             {meetings.length > 0 ? meetings.map((m: any) => (
+                                (() => {
+                                    const meetingDate = m?.date ? new Date(m.date) : null;
+                                    const isExpired = Boolean(meetingDate && meetingDate < todayStart);
+
+                                    return (
                                 <div key={m._id} className="p-3 sm:p-4 rounded-xl border bg-card hover:shadow-xl transition-all duration-300 group">
                                     <div className="flex justify-between items-start gap-2">
                                         <div className="flex gap-3 sm:gap-4 flex-1 min-w-0">
@@ -794,6 +822,11 @@ const handleEditMeeting = (meeting) => {
                                                     <span className="capitalize px-1.5 sm:px-2 py-0.5 rounded-full bg-muted text-xs">
                                                         {m.platform.replace('-', ' ')}
                                                     </span>
+                                                    {isExpired && (
+                                                        <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-xs font-semibold dark:bg-rose-950/40 dark:text-rose-300">
+                                                            Expired
+                                                        </span>
+                                                    )}
                                                     {getDepartmentLabel(m.department) && (
                                                         <span className="text-primary font-medium px-1.5 sm:px-2 py-0.5 rounded-full bg-primary/10 text-xs">
                                                             {getDepartmentLabel(m.department)}
@@ -834,9 +867,11 @@ const handleEditMeeting = (meeting) => {
     <Trash2 className="w-4 h-4" />
   </Button>
 
-</div>
+                                        </div>
                                     </div>
                                 </div>
+                                    );
+                                })()
                             )) : (
                                 <div className="col-span-full py-8 sm:py-12 text-center border-2 border-dashed rounded-xl">
                                     <Video className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 text-muted-foreground" />
