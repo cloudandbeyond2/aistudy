@@ -122,7 +122,7 @@ const LoadingPopup = ({
                 <div className="mt-4 p-3 sm:p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <Clock className="w-4 h-4 text-yellow-500 flex-shrink-0" />
-                    <p className="text-xs sm:text-sm font-medium text-yellow-600 dark:text-yellow-400">Please wait 20 minutes before continuing</p>
+                    <p className="text-xs sm:text-sm font-medium text-yellow-600 dark:text-yellow-400">Please wait 20 sec before continuing</p>
                   </div>
                   <p className="text-xs text-muted-foreground text-center">This pause helps with knowledge retention. Take a short break!</p>
                 </div>
@@ -351,8 +351,44 @@ const handleRegenerateCurrentLesson = async () => {
   setLoadingStage('theory');
   setLoadingProgress(0);
 
+  // Clear any existing interval
+  if (window.progressInterval) clearInterval(window.progressInterval);
+
+  // Progress simulation variables
+  let currentProgress = 0;
+  const isVideoCourse = type === 'video & text course';
+  const totalPhases = isVideoCourse ? 3 : 3; // theory + (video or image) + finalize
+  let currentPhase = 1; // 1=theory, 2=media, 3=finalize
+
+  // Progress simulation interval
+  window.progressInterval = setInterval(() => {
+    if (currentPhase === 1) {
+      // Theory phase: 0-33%
+      if (currentProgress < 33) {
+        currentProgress += Math.random() * 3;
+        setLoadingProgress(Math.min(currentProgress, 33));
+      }
+    } else if (currentPhase === 2) {
+      // Media phase: 33-66%
+      if (currentProgress < 66) {
+        currentProgress += Math.random() * 2.5;
+        setLoadingProgress(Math.min(currentProgress, 66));
+      }
+    } else if (currentPhase === 3) {
+      // Finalize phase: 66-100%
+      if (currentProgress < 99) {
+        currentProgress += Math.random() * 2;
+        setLoadingProgress(Math.min(currentProgress, 99));
+      }
+    }
+  }, 200);
+
   try {
-    // Regenerate theory
+    // PHASE 1: Regenerate theory (0-33%)
+    setLoadingStage('theory');
+    setLoadingProgress(10);
+    currentProgress = 10;
+    
     const theoryRes = await axios.post(serverURL + '/api/generate-batch', {
       mainTopic,
       topicsList: [{ topicTitle, subtopics: [subtopicTitle] }],
@@ -371,9 +407,16 @@ const handleRegenerateCurrentLesson = async () => {
         setTheory(cleanedTheory);
       }
     }
+    
+    // Phase 1 complete
+    setLoadingProgress(33);
+    currentProgress = 33;
 
-    // Regenerate media based on course type
-    if (type === 'video & text course') {
+    // PHASE 2: Regenerate media based on course type (33-66%)
+    if (isVideoCourse) {
+      setLoadingStage('video');
+      setLoadingProgress(40);
+      
       const query = `${subtopicTitle} ${mainTopic} in english`;
       const ytRes = await axios.post(serverURL + '/api/yt', { prompt: query });
       if (ytRes.data?.url) {
@@ -383,6 +426,9 @@ const handleRegenerateCurrentLesson = async () => {
         }
       }
     } else {
+      setLoadingStage('image');
+      setLoadingProgress(40);
+      
       const imageRes = await axios.post(
         serverURL + '/api/image',
         { prompt: `${subtopicTitle} in ${mainTopic}` },
@@ -395,7 +441,18 @@ const handleRegenerateCurrentLesson = async () => {
         preloadImageWithCache(imageUrl, subtopicTitle, topicTitle);
       }
     }
+    
+    // Phase 2 complete
+    setLoadingProgress(66);
+    currentProgress = 66;
 
+    // PHASE 3: Finalizing and cleanup (66-100%)
+    setLoadingStage('complete');
+    setLoadingProgress(75);
+    
+    // Small delay to show finalizing stage
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     // Keep done status as false so user can mark as complete again
     targetSub.done = false;
     
@@ -404,19 +461,33 @@ const handleRegenerateCurrentLesson = async () => {
     sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
     await updateCourse();
 
+    // Complete!
+    setLoadingProgress(100);
+    currentProgress = 100;
+    
+    // Show completion briefly before closing
+    await new Promise(resolve => setTimeout(resolve, 800));
+
     toast({
       title: "Lesson Regenerated ✓",
       description: `"${subtopicTitle}" has been refreshed with new content.`,
     });
+    
+    // Close popup after completion
+    setShowLoadingPopup(false);
+    
   } catch (err) {
     console.error("Lesson regeneration failed:", err);
+    setShowLoadingPopup(false);
     toast({
       title: "Regeneration Failed",
       description: "Something went wrong. Please try again.",
     });
   } finally {
-    setShowLoadingPopup(false);
-    if (window.progressInterval) clearInterval(window.progressInterval);
+    if (window.progressInterval) {
+      clearInterval(window.progressInterval);
+      window.progressInterval = null;
+    }
   }
 };
   const simulateProgress = useCallback((stage) => {
