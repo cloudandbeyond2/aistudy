@@ -1373,10 +1373,20 @@ const normalizePlanType = (value?: string | null): "free" | "monthly" | "yearly"
   return 'free';
 };
 
+const resolvePrivilegedPlanType = (value?: string | null) => {
+  const normalized = normalizePlanType(value);
+  if (normalized !== 'free') return normalized;
+  const email = sessionStorage.getItem('email');
+  const adminEmail = sessionStorage.getItem('adminEmail');
+  if (email && adminEmail && adminEmail === email) return 'yearly';
+  return normalized;
+};
+
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("account");
-  const isOrgAdmin = sessionStorage.getItem("role") === "org_admin";
+  const isAdminAccount = sessionStorage.getItem("adminEmail") === sessionStorage.getItem("email");
+  const isOrgAdmin = sessionStorage.getItem("role") === "org_admin" || isAdminAccount;
   const [stats, setStats] = useState({
     courses: 0,
     certifications: 0,
@@ -1428,7 +1438,7 @@ const Profile = () => {
   const [errors, setErrors] = useState({});
   const [plans, setPlans] = useState<any[]>([]);
   const [activeType, setActiveType] = useState<"free" | "monthly" | "yearly">(
-    normalizePlanType(sessionStorage.getItem('type'))
+    resolvePrivilegedPlanType(sessionStorage.getItem('type'))
   );
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
@@ -1570,13 +1580,17 @@ const Profile = () => {
         const user = res.data?.user;
         if (!user) return;
 
+        const adminEmail = sessionStorage.getItem('adminEmail');
+        const currentEmail = sessionStorage.getItem('email');
+        const privilegedAccount = Boolean(adminEmail && currentEmail && adminEmail === currentEmail);
         const nextType = normalizePlanType(user.type);
-        sessionStorage.setItem('type', nextType);
+        const effectiveType = privilegedAccount && nextType === 'free' ? 'yearly' : nextType;
+        sessionStorage.setItem('type', effectiveType);
         if (user.subscriptionEnd) {
           const expiryDate = new Date(user.subscriptionEnd);
           const today = new Date();
-          if (expiryDate > today) {
-            setActiveType(nextType);
+          if (privilegedAccount || expiryDate > today) {
+            setActiveType(effectiveType);
             setSubscriptionEnd(user.subscriptionEnd);
             setIsExpired(false);
           } else {
@@ -1585,11 +1599,11 @@ const Profile = () => {
             setIsExpired(true);
           }
         } else {
-          setActiveType(nextType);
+          setActiveType(effectiveType);
           setIsExpired(false);
         }
       })
-      .catch(() => setActiveType("free"))
+      .catch(() => setActiveType(resolvePrivilegedPlanType(sessionStorage.getItem('type'))))
       .finally(() => setLoadingUser(false));
   }, []);
 
@@ -1874,6 +1888,10 @@ const handleSubmit = async (e) => {
   }
 
   async function cancelSubscription() {
+    if (sessionStorage.getItem('adminEmail') === sessionStorage.getItem('email')) {
+      toast({ title: "Admin Access", description: "Admin accounts keep premium access." });
+      return;
+    }
     setProcessingCancel(true);
     const dataToSend = { id: jsonData.id, email: sessionStorage.getItem('email') };
     try {

@@ -196,9 +196,11 @@ const DashboardLayoutContent = () => {
 
   const plan = sessionStorage.getItem("type")?.toLowerCase()?.trim();
   const role = sessionStorage.getItem("role");
+  const isPrivilegedAdmin = admin || sessionStorage.getItem('adminEmail') === sessionStorage.getItem('email');
+  const sidebarPlanKey = isPrivilegedAdmin ? 'forever' : (role === 'org_admin' ? 'org_admin' : plan);
   const isOrganizationUser = sessionStorage.getItem('isOrganization') === 'true';
   const hasOrganizationAccess = isOrganizationUser || (role === 'student' && Boolean(sessionStorage.getItem('orgId')));
-  const isPaidUser = ["monthly", "yearly"].includes(plan) || admin;
+  const isPaidUser = ["monthly", "yearly", "forever"].includes(plan) || isPrivilegedAdmin;
   const isOrganizationStudent = role === 'student' && isOrganizationUser;
   const assessmentDeskPath = role === 'dept_admin' ? '/dashboard/org-assignments' : '/dashboard/org?tab=assignments';
   const isAssessmentDeskActive = role === 'dept_admin'
@@ -499,19 +501,19 @@ const DashboardLayoutContent = () => {
                       <MenuItem icon={DollarSign} label="Pricing" to="/dashboard/pricing" isActive={isActive('/dashboard/pricing')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     )}
 
-                    {resumeEnabled[sessionStorage.getItem('role') === 'org_admin' ? 'org_admin' : (sessionStorage.getItem('type') as keyof typeof resumeEnabled)] && (
+                    {resumeEnabled[sidebarPlanKey as keyof typeof resumeEnabled] && (
                       <MenuItem icon={FileText} label="Resume Builder" to="/dashboard/resume-builder" isActive={isActive('/dashboard/resume-builder')} badge={isPaidUser ? "PRO" : undefined} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     )}
 
-                    {notebookEnabled[sessionStorage.getItem('role') === 'org_admin' ? 'org_admin' : (sessionStorage.getItem('type') as keyof typeof notebookEnabled)] && (
+                    {notebookEnabled[sidebarPlanKey as keyof typeof notebookEnabled] && (
                       <MenuItem icon={BrainCircuit} label="AI Notebook" to="/dashboard/notebook" isActive={isActive('/dashboard/notebook')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     )}
 
                     <MenuItem icon={Briefcase} label="Interview Prep" to="/dashboard/interview-prep" isActive={isActive('/dashboard/interview-prep')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
-                    {interviewEnabled[sessionStorage.getItem('role') === 'org_admin' ? 'org_admin' : (sessionStorage.getItem('type') as keyof typeof interviewEnabled)] && (
+                    {interviewEnabled[sidebarPlanKey as keyof typeof interviewEnabled] && (
                       <MenuItem icon={Brain} label="Mock Training" to="/dashboard/interview-training" isActive={isActive('/dashboard/interview-training')} badge={isPaidUser ? "PRO" : "READY"} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     )}
-                    {skillBoosterEnabled[sessionStorage.getItem('role') === 'org_admin' ? 'org_admin' : (sessionStorage.getItem('type') as keyof typeof skillBoosterEnabled)] && (
+                    {skillBoosterEnabled[sidebarPlanKey as keyof typeof skillBoosterEnabled] && (
                       <MenuItem icon={Zap} label="Skill Booster" to="/dashboard/skill-booster" isActive={isActive('/dashboard/skill-booster')} badge="PRO" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     )}
                     <MenuItem icon={Calendar} label="Calendar Scheduler" to="/dashboard/calendar" isActive={isActive('/dashboard/calendar')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
