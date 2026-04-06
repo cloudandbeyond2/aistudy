@@ -24,6 +24,9 @@ const OrgMockInterview = () => {
     const navigate = useNavigate();
     const { toast } = useToast();
     const orgId = sessionStorage.getItem('orgId') || sessionStorage.getItem('uid');
+    const role = sessionStorage.getItem('role') || '';
+    const deptId = sessionStorage.getItem('deptId') || '';
+    const deptName = sessionStorage.getItem('deptName') || '';
 
     const [students, setStudents] = useState<any[]>([]);
     const [drives, setDrives] = useState<any[]>([]);
@@ -49,6 +52,30 @@ const OrgMockInterview = () => {
         experienceLevel: 'Entry'
     });
 
+    const getDepartmentValue = (value: any) => {
+        if (!value) return '';
+        if (typeof value === 'string') return value;
+        if (typeof value === 'object') return value._id || value.name || '';
+        return '';
+    };
+
+    const matchesCurrentDepartment = (student: any) => {
+        if (role !== 'dept_admin') return true;
+
+        const studentDept = getDepartmentValue(
+            student?.department?._id ||
+            student?.department?.name ||
+            student?.department ||
+            student?.studentDetails?.departmentId ||
+            student?.studentDetails?.department
+        );
+
+        return Boolean(
+            (deptId && studentDept === deptId) ||
+            (deptName && studentDept === deptName)
+        );
+    };
+
     useEffect(() => {
         fetchAll();
     }, [orgId]);
@@ -72,8 +99,11 @@ const OrgMockInterview = () => {
                 headers: { 'user-id': orgId }
             });
             if (res.data.success) {
-                setApplications(res.data.data);
-                const completed = res.data.data.filter((a: any) => a.status === 'Finalized').length;
+                const nextApplications = Array.isArray(res.data.data)
+                    ? res.data.data.filter((app: any) => matchesCurrentDepartment(app.userId || app.user || app.student))
+                    : [];
+                setApplications(nextApplications);
+                const completed = nextApplications.filter((a: any) => a.status === 'Finalized').length;
                 setStats(prev => ({ ...prev, completedMocks: completed }));
             }
         } catch (e) { console.error(e); }
@@ -84,9 +114,12 @@ const OrgMockInterview = () => {
         try {
             const res = await axios.get(`${serverURL}/api/org/placement-stats?organizationId=${orgId}`);
             if (res.data.success) {
-                setStudents(res.data.students);
-                const ready = res.data.students.filter((s: any) => s.studentDetails?.isPlacementReady).length;
-                setStats(prev => ({ ...prev, totalStudents: res.data.students.length, readyCount: ready }));
+                const nextStudents = Array.isArray(res.data.students)
+                    ? res.data.students.filter(matchesCurrentDepartment)
+                    : [];
+                setStudents(nextStudents);
+                const ready = nextStudents.filter((s: any) => s.studentDetails?.isPlacementReady).length;
+                setStats(prev => ({ ...prev, totalStudents: nextStudents.length, readyCount: ready }));
             }
         } catch (e) { console.error(e); }
     };
