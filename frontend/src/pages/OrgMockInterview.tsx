@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { 
     Brain, Target, Users, CheckCircle, Plus, 
     Settings, Search, ArrowLeft, MoreVertical, 
@@ -51,6 +52,9 @@ const OrgMockInterview = () => {
         personaMood: 'Professional',
         experienceLevel: 'Entry'
     });
+    const isMobile = useMediaQuery('(max-width: 640px)');
+    const isTablet = useMediaQuery('(min-width: 641px) and (max-width: 1024px)');
+    const isCompactScreen = isMobile || isTablet;
 
     const getDepartmentValue = (value: any) => {
         if (!value) return '';
@@ -218,16 +222,16 @@ const OrgMockInterview = () => {
             <SEO title="Mock Interview Management | Admin" description="Manage student readiness and AI mock interview assignments." />
 
             {/* Premium Header */}
-            <div className="relative p-8 rounded-3xl bg-gradient-to-br from-indigo-600/10 via-purple-500/5 to-transparent border border-white/10 shadow-sm overflow-hidden mb-8">
+            <div className="relative rounded-3xl bg-gradient-to-br from-indigo-600/10 via-purple-500/5 to-transparent border border-white/10 shadow-sm overflow-hidden mb-8 p-5 sm:p-6 lg:p-8">
                 <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] -z-10" />
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-primary/10 p-3 rounded-2xl">
-                            <Brain className="w-8 h-8 text-primary" />
+                <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between relative z-10">
+                    <div className="flex items-start sm:items-center gap-4">
+                        <div className="bg-primary/10 p-3 rounded-2xl shrink-0">
+                            <Brain className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
                         </div>
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Mock Interview Training Hub</h1>
-                            <p className="text-muted-foreground text-sm mt-1 max-w-md">
+                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">Mock Interview Training Hub</h1>
+                            <p className="text-muted-foreground text-sm mt-1 max-w-xl">
                                 Prepare your students for the real world. Manage AI screening modules and track mock readiness.
                             </p>
                         </div>
@@ -239,7 +243,7 @@ const OrgMockInterview = () => {
                                 <Plus className="w-5 h-5 mr-2" /> Create Training Drive
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
+                        <DialogContent className="w-[95vw] max-w-[425px] sm:w-full">
                             <DialogHeader>
                                 <DialogTitle>New Training Drive</DialogTitle>
                             </DialogHeader>
@@ -302,7 +306,7 @@ const OrgMockInterview = () => {
             </div>
 
             {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
                 {[
                     { label: 'Total Students', value: stats.totalStudents, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
                     { label: 'Placement Ready', value: stats.readyCount, icon: UserCheck, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
@@ -326,14 +330,14 @@ const OrgMockInterview = () => {
 
             {/* Main Tabs System */}
             <Tabs defaultValue="readiness" className="w-full">
-                <TabsList className="bg-muted/50 p-1 mb-6 rounded-2xl w-full sm:w-auto h-auto">
-                    <TabsTrigger value="readiness" className="rounded-xl px-6 py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <TabsList className="bg-muted/50 p-1 mb-6 rounded-2xl w-full h-auto flex overflow-x-auto overflow-y-hidden gap-1">
+                    <TabsTrigger value="readiness" className="rounded-xl px-4 sm:px-6 py-3 min-w-[150px] sm:min-w-0 sm:flex-1 data-[state=active]:bg-background data-[state=active]:shadow-sm">
                         <Users className="w-4 h-4 mr-2" /> Student Readiness
                     </TabsTrigger>
-                    <TabsTrigger value="modules" className="rounded-xl px-6 py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                    <TabsTrigger value="modules" className="rounded-xl px-4 sm:px-6 py-3 min-w-[150px] sm:min-w-0 sm:flex-1 data-[state=active]:bg-background data-[state=active]:shadow-sm">
                         <Zap className="w-4 h-4 mr-2" /> Training Modules
                     </TabsTrigger>
-                    <TabsTrigger value="pipeline" className="rounded-xl px-6 py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                    <TabsTrigger value="pipeline" className="rounded-xl px-4 sm:px-6 py-3 min-w-[150px] sm:min-w-0 sm:flex-1 data-[state=active]:bg-background data-[state=active]:shadow-sm">
                         <Star className="w-4 h-4 mr-2" /> Mock Pipeline
                     </TabsTrigger>
                 </TabsList>
@@ -341,18 +345,18 @@ const OrgMockInterview = () => {
                 {/* 1. Readiness Toggle Tab */}
                 <TabsContent value="readiness">
                     <Card className="border-border/40 shadow-xl shadow-black/5">
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
+                        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                            <div className="min-w-0">
                                 <CardTitle className="text-xl font-bold">Placement Readiness List</CardTitle>
                                 <CardDescription>Toggle students who are ready to begin their Mock Interview training rounds.</CardDescription>
                             </div>
-                            <div className="relative w-72 h-10 hidden md:block">
+                            <div className="relative w-full md:w-72 h-10">
                                 <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                                 <Input className="pl-9 h-10 bg-muted/20" placeholder="Filter by student name..." value={search} onChange={e => setSearch(e.target.value)} />
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="overflow-x-auto rounded-xl border border-border/40">
+                            <div className="hidden md:block overflow-x-auto rounded-xl border border-border/40">
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="bg-muted/30 text-left border-b border-border/40">
@@ -406,13 +410,55 @@ const OrgMockInterview = () => {
                                     </tbody>
                                 </table>
                             </div>
+                            <div className="grid gap-3 md:hidden">
+                                {filteredStudents.length > 0 ? filteredStudents.map((student) => {
+                                    const isReady = student.studentDetails?.isPlacementReady;
+                                    return (
+                                        <Card key={student.studentId} className="border-border/40 shadow-sm">
+                                            <CardContent className="p-4 space-y-3">
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center font-bold text-primary shrink-0">
+                                                            {student.name?.[0]}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="font-semibold truncate">{student.name}</p>
+                                                            <p className="text-xs text-muted-foreground truncate">{student.email}</p>
+                                                        </div>
+                                                    </div>
+                                                    <Badge variant={isReady ? "default" : "secondary"} className="rounded-lg shrink-0">
+                                                        {isReady ? "Ready" : "Not Started"}
+                                                    </Badge>
+                                                </div>
+                                                <div className="flex items-center justify-between text-sm">
+                                                    <span className="text-muted-foreground">Department</span>
+                                                    <span className="font-medium text-right truncate max-w-[60%]">{student.department || "No Dept"}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <span className="text-sm text-muted-foreground">Placement Ready</span>
+                                                    <div 
+                                                        onClick={() => handleToggleReadiness(student.studentId, isReady)}
+                                                        className={`w-14 h-7 rounded-full p-1 cursor-pointer transition-all duration-300 ${isReady ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+                                                    >
+                                                        <div className={`w-5 h-5 bg-white rounded-full transition-all duration-300 transform ${isReady ? 'translate-x-7 shadow-md' : 'translate-x-0'}`} />
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    );
+                                }) : (
+                                    <div className="py-10 text-center text-muted-foreground">
+                                        No students match your search.
+                                    </div>
+                                )}
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
 
                 {/* 2. Training Modules (Drives) */}
                 <TabsContent value="modules">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
                         {drives.length === 0 ? (
                             <div className="col-span-full py-20 bg-muted/10 rounded-3xl border-2 border-dashed border-border/40 flex flex-col items-center justify-center text-center">
                                 <Sparkles className="w-12 h-12 text-primary/30 mb-4" />
@@ -453,14 +499,14 @@ const OrgMockInterview = () => {
                 {/* 3. Pipeline Simulation (Status Tracker) */}
                 <TabsContent value="pipeline">
                     <Card className="border-border/40 shadow-xl overflow-hidden">
-                        <CardHeader className="bg-muted/30 border-b border-border/40 py-6">
+                        <CardHeader className="bg-muted/30 border-b border-border/40 py-5 sm:py-6">
                             <CardTitle className="text-xl font-bold flex items-center gap-2">
                                 <LayoutDashboard className="w-5 h-5 text-primary" /> Active Mock Pipeline
                             </CardTitle>
                             <CardDescription>Track students through AI Screening and TMR Mock rounds.</CardDescription>
                         </CardHeader>
                         <CardContent className="p-0">
-                            <div className="overflow-x-auto">
+                            <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="bg-muted/10 text-left border-b border-border/40">
@@ -521,13 +567,64 @@ const OrgMockInterview = () => {
                                     </tbody>
                                 </table>
                             </div>
+                            <div className="grid gap-3 p-4 md:hidden">
+                                {applications.length > 0 ? applications.map((app) => (
+                                    <Card key={app._id} className="border-border/40 shadow-sm">
+                                        <CardContent className="p-4 space-y-3">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold shrink-0">
+                                                        {app.userId?.mName?.[0]}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-semibold truncate">{app.userId?.mName || "User"}</p>
+                                                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest truncate">{app.userId?.email}</p>
+                                                    </div>
+                                                </div>
+                                                <Badge variant="outline" className={`rounded-lg shrink-0 ${app.currentRound === 'Completed' ? 'border-emerald-500 text-emerald-600' : 'border-primary text-primary'}`}>
+                                                    {app.currentRound === 'TMR_Mock' ? 'TMR Waiting' : app.currentRound}
+                                                </Badge>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm gap-3">
+                                                <span className="text-muted-foreground">Module</span>
+                                                <span className="font-medium text-right truncate max-w-[60%]">{app.driveId?.title || "General Practice"}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm gap-3">
+                                                <span className="text-muted-foreground">AI Score</span>
+                                                <span className="font-medium">
+                                                    {app.genAiFeedback?.score ? `${app.genAiFeedback.score}` : 'Pending'}
+                                                </span>
+                                            </div>
+                                            <div className="pt-1">
+                                                {app.currentRound === 'TMR_Mock' ? (
+                                                    <Button 
+                                                        size="sm" 
+                                                        className="w-full rounded-xl bg-slate-900 border-0 text-white font-bold h-10 px-4"
+                                                        onClick={() => { setSelectedApp(app); setIsTmrOpen(true); }}
+                                                    >
+                                                        Take TMR Mock
+                                                    </Button>
+                                                ) : (
+                                                    <Button variant="ghost" size="sm" className="w-full" onClick={() => window.open(`/dashboard/mock-report/${app._id}`, '_blank')}>
+                                                        <FileText className="w-4 h-4 mr-2" /> View Report
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                )) : (
+                                    <div className="py-12 text-center text-muted-foreground">
+                                        No applications yet.
+                                    </div>
+                                )}
+                            </div>
                         </CardContent>
                     </Card>
 
                     {/* TMR Feedback Modal */}
                     <Dialog open={isTmrOpen} onOpenChange={setIsTmrOpen}>
-                        <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden rounded-[2rem] border-0 shadow-2xl">
-                            <div className="bg-slate-900 px-8 py-10 text-white relative">
+                        <DialogContent className="w-[95vw] max-w-[500px] p-0 overflow-hidden rounded-[2rem] border-0 shadow-2xl">
+                            <div className="bg-slate-900 px-5 sm:px-8 py-8 sm:py-10 text-white relative">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[60px] -translate-x-1/2 -translate-y-1/2" />
                                 <Badge className="bg-white/10 text-white border-white/20 mb-3 px-3 py-1 rounded-full uppercase tracking-tighter text-[10px] font-black">
                                     Technical Interviewer Panel
@@ -538,8 +635,8 @@ const OrgMockInterview = () => {
                                 </DialogHeader>
                             </div>
                             
-                            <div className="p-8 space-y-8 bg-white">
-                                <div className="grid grid-cols-2 gap-6">
+                            <div className="p-5 sm:p-8 space-y-6 sm:space-y-8 bg-white">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                                     <div className="space-y-2">
                                         <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Communication (1-10)</Label>
                                         <Input type="number" min="1" max="10" value={tmrFeedback.communication} onChange={e => setTmrFeedback({...tmrFeedback, communication: parseInt(e.target.value)})} className="h-12 rounded-xl" />
@@ -558,9 +655,9 @@ const OrgMockInterview = () => {
                                         onChange={e => setTmrFeedback({...tmrFeedback, notes: e.target.value})}
                                     />
                                 </div>
-                                <div className="flex gap-4 pt-4">
+                                <div className="flex flex-col sm:flex-row gap-3 pt-2 sm:pt-4">
                                     <Button variant="outline" className="flex-1 h-12 rounded-xl font-bold" onClick={() => setIsTmrOpen(false)}>Discard</Button>
-                                    <Button className="flex-1 h-12 rounded-xl h-14 shadow-lg shadow-primary/20 font-black uppercase tracking-widest" onClick={handleSubmitTmr}>Finalize Review</Button>
+                                    <Button className="flex-1 h-12 rounded-xl shadow-lg shadow-primary/20 font-black uppercase tracking-widest" onClick={handleSubmitTmr}>Finalize Review</Button>
                                 </div>
                             </div>
                         </DialogContent>
