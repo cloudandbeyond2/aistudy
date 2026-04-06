@@ -944,6 +944,14 @@ const OrgDashboard = () => {
     const [projectAiTopic, setProjectAiTopic] = useState('');
     const [isGeneratingProject, setIsGeneratingProject] = useState(false);
 
+    const normalizeExternalLink = (value: string) => {
+        const trimmed = String(value || '').trim();
+        if (!trimmed) return '';
+        if (/^https?:\/\//i.test(trimmed)) return trimmed;
+        if (/^\/\//.test(trimmed)) return `https:${trimmed}`;
+        return `https://${trimmed.replace(/^\/+/, '')}`;
+    };
+
     // Departments & Dept Admins
     const [departmentsList, setDepartmentsList] = useState<any[]>([]);
     const [deptAdmins, setDeptAdmins] = useState<any[]>([]);
@@ -1430,7 +1438,11 @@ const handleDeleteDeptAdmin = async (id: string) => {
 
     const handleCreateMeeting = async () => {
         try {
-            const res = await axios.post(`${serverURL}/api/org/meeting/create`, { ...newMeeting, organizationId: orgId });
+            const res = await axios.post(`${serverURL}/api/org/meeting/create`, {
+                ...newMeeting,
+                link: normalizeExternalLink(newMeeting.link),
+                organizationId: orgId
+            });
             if (res.data.success) {
                 toast({ title: "Success", description: "Meeting scheduled successfully" });
 
@@ -5215,7 +5227,7 @@ const handleUpdateDeptAdmin = async () => {
               </div>
               
               <a 
-                href={m.link} 
+                href={normalizeExternalLink(m.link)} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="text-xs text-blue-600 hover:underline mt-3 flex items-center gap-1"
