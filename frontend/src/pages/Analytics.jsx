@@ -137,7 +137,7 @@ const activityData = [
 const currentStreak = 3;
 const longestStreak = 7;
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pt-0 lg:pt-[60px]">
 
         {/* 🔷 Page Heading */}
 <div className="flex items-center gap-4 p-4 rounded-2xl border bg-white shadow-sm">
@@ -157,11 +157,11 @@ const longestStreak = 7;
 </div>
 
       {/* 🔥 Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatsCard title="Total Courses" value={stats.total} icon={BookOpen} />
-        <StatsCard title="Completed" value={stats.completed} icon={CheckCircle} />
-        <StatsCard title="In Progress" value={stats.inProgress} icon={Clock} />
-      </div>
+ <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+  <StatsCard title="Total Courses" value={stats.total} icon={BookOpen} />
+  <StatsCard title="Completed" value={stats.completed} icon={CheckCircle} />
+  <StatsCard title="In Progress" value={stats.inProgress} icon={Clock} />
+</div>
 
      {/* 🔵 Progress + Extra Section */}
 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
