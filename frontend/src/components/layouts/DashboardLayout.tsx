@@ -522,12 +522,6 @@ const DashboardLayoutContent = () => {
                     )}
 
                     <MenuItem icon={Briefcase} label="Interview Prep" to="/dashboard/interview-prep" isActive={isActive('/dashboard/interview-prep')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
-                    {interviewEnabled[sidebarPlanKey as keyof typeof interviewEnabled] && (
-                      <MenuItem icon={Brain} label="Mock Training" to="/dashboard/interview-training" isActive={isActive('/dashboard/interview-training')} badge={isPaidUser ? "PRO" : "READY"} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
-                    )}
-                    {skillBoosterEnabled[sidebarPlanKey as keyof typeof skillBoosterEnabled] && (
-                      <MenuItem icon={Zap} label="Skill Booster" to="/dashboard/skill-booster" isActive={isActive('/dashboard/skill-booster')} badge="PRO" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
-                    )}
                     <MenuItem icon={Calendar} label="Calendar Scheduler" to="/dashboard/calendar" isActive={isActive('/dashboard/calendar')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={ListTodo} label="Todo Center" to="/dashboard/todo" isActive={isActive('/dashboard/todo')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
 
@@ -755,6 +749,17 @@ const DashboardLayoutContent = () => {
                         badge="AI"
                       />
                     )}
+                    {skillBoosterEnabled.org_admin && (
+                      <MenuItem
+                        icon={Zap}
+                        label="Skill Booster"
+                        to="/dashboard/skill-booster"
+                        isActive={isActive('/dashboard/skill-booster')}
+                        isExpanded={isExpanded}
+                        onMobileClick={handleMobileMenuClick}
+                        badge="PRO"
+                      />
+                    )}
                     <MenuItem 
                       icon={MessageSquare} 
                       label="Student Tickets" 
@@ -813,6 +818,28 @@ const DashboardLayoutContent = () => {
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
+                    {interviewEnabled[sidebarPlanKey as keyof typeof interviewEnabled] && (
+                      <MenuItem
+                        icon={Brain}
+                        label="Recruitment Hub"
+                        to="/dashboard/interview-training"
+                        isActive={isActive('/dashboard/interview-training')}
+                        badge="AI"
+                        isExpanded={isExpanded}
+                        onMobileClick={handleMobileMenuClick}
+                      />
+                    )}
+                    {skillBoosterEnabled[sidebarPlanKey as keyof typeof skillBoosterEnabled] && (
+                      <MenuItem
+                        icon={Zap}
+                        label="Skill Booster"
+                        to="/dashboard/skill-booster"
+                        isActive={isActive('/dashboard/skill-booster')}
+                        badge="PRO"
+                        isExpanded={isExpanded}
+                        onMobileClick={handleMobileMenuClick}
+                      />
+                    )}
                     <MenuItem 
                       icon={Calendar} 
                       label="Calendar Scheduler" 
@@ -1390,6 +1417,34 @@ const DashboardLayoutContent = () => {
                     <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                   )}
                 </Link>
+
+                <Link
+                  to="/dashboard/skill-booster"
+                  onClick={handleMobileMenuClick}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <Zap className="h-4 w-4" />
+                  </div>
+                  <span>Skill Booster</span>
+                  {location.pathname.includes('/skill-booster') && (
+                    <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  )}
+                </Link>
+
+                <Link
+                  to="/dashboard/interview-training"
+                  onClick={handleMobileMenuClick}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <Brain className="h-4 w-4" />
+                  </div>
+                  <span>Recruitment Hub</span>
+                  {location.pathname.includes('/interview-training') && (
+                    <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  )}
+                </Link>
               </>
             )}
             
@@ -1419,6 +1474,34 @@ const DashboardLayoutContent = () => {
                   </div>
                   <span>Assignments</span>
                   {isAssessmentDeskActive && (
+                    <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  )}
+                </Link>
+
+                <Link
+                  to="/dashboard/skill-booster"
+                  onClick={handleMobileMenuClick}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <Zap className="h-4 w-4" />
+                  </div>
+                  <span>Skill Booster</span>
+                  {location.pathname.includes('/skill-booster') && (
+                    <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  )}
+                </Link>
+
+                <Link
+                  to="/dashboard/interview-training"
+                  onClick={handleMobileMenuClick}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <Brain className="h-4 w-4" />
+                  </div>
+                  <span>Recruitment Hub</span>
+                  {location.pathname.includes('/interview-training') && (
                     <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                   )}
                 </Link>
