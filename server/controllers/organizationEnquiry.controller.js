@@ -2,51 +2,34 @@ import OrganizationEnquiry from "../models/OrganizationEnquiry.js";
 import Notification from "../models/Notification.js";
 import User from "../models/User.js";
 import Admin from "../models/Admin.js";
-import nodemailer from "nodemailer"; // 1. Add this import
+import { sendMail } from "../services/mail.service.js";
+import { buildSupportMailTemplate } from "./ticket.controller.js";
+
 /* CREATE */
 export const createOrganizationEnquiry = async (req, res) => {
   try {
-    // 1. First, save to Database
     const enquiry = await OrganizationEnquiry.create(req.body);
 
-    // 2. Define mailOptions BEFORE trying to send it
-    const mailOptions = {
-      from: `"AI Study Enquiry" <${process.env.EMAIL}>`,
-      to: "colossusiq@gmail.com", 
-      subject: `New Organization Enquiry: ${enquiry.organizationName}`,
-      html: `
-        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-          <h2 style="color: #081323;">New Request Received</h2>
-          <p><strong>Organization:</strong> ${enquiry.organizationName}</p>
-          <p><strong>Contact Person:</strong> ${enquiry.contactPerson}</p>
-          <p><strong>Work Email:</strong> ${enquiry.email}</p>
-          <p><strong>Phone:</strong> ${enquiry.phone}</p>
-          <p><strong>Team Size:</strong> ${enquiry.teamSize}</p>
-          <hr />
-          <p><strong>Message:</strong></p>
-          <p>${enquiry.message}</p>
-        </div>
-      `,
-    };
-
-    // 3. Setup the Transporter
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true, 
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.PASSWORD, 
-      },
-    });
-
-    // 4. Now send the email
     try {
-      console.log("Attempting to send email...");
-      const info = await transporter.sendMail(mailOptions);
-      console.log("✅ Email sent successfully:", info.messageId);
+      await sendMail({
+        to: "colossusiq@gmail.com",
+        subject: `New Organization Enquiry: ${enquiry.organizationName}`,
+        html: buildSupportMailTemplate({
+          heading: "New Organization Enquiry",
+          title: "New Request Received",
+          fields: [
+            { label: "Organization", value: enquiry.organizationName },
+            { label: "Contact Person", value: enquiry.contactPerson },
+            { label: "Work Email", value: enquiry.email },
+            { label: "Phone", value: enquiry.phone },
+            { label: "Team Size", value: enquiry.teamSize },
+          ],
+          messageLabel: "Message",
+          message: enquiry.message,
+        }),
+      });
     } catch (mailErr) {
-      console.error("❌ NODEMAILER ERROR:", mailErr.message);
+      console.error("NODEMAILER ERROR:", mailErr.message);
     }
 
     /* ADMIN NOTIFICATION LOGIC */

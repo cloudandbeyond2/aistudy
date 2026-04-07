@@ -288,6 +288,47 @@ const isOrganizationSupportTicketOwner = async (ticketOwnerId) => {
   return ticketOwner.role === "org_admin" || ticketOwner.isOrganization === true;
 };
 
+export const buildSupportMailTemplate = ({
+  heading = "New Support Request",
+  title,
+  fields = [],
+  messageLabel = "Message",
+  message,
+}) => {
+  const rows = fields
+    .map(
+      ({ label, value }) => `
+        <tr>
+          <td style="padding:10px 0;color:#64748b;font-size:14px;font-weight:600;white-space:nowrap;">${label}</td>
+          <td style="padding:10px 0;color:#0f172a;font-size:14px;font-weight:700;padding-left:18px;">${value || "-"}</td>
+        </tr>
+      `
+    )
+    .join("");
+
+  return `
+    <div style="margin:0;padding:0;background:#f8fafc;font-family:Arial,Helvetica,sans-serif;">
+      <div style="max-width:720px;margin:0 auto;padding:32px 16px;">
+        <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px -35px rgba(15,23,42,0.35);">
+          <div style="background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 100%);padding:24px 28px;color:#fff;">
+            <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;opacity:0.8;">${heading}</div>
+            <h2 style="margin:10px 0 0;font-size:24px;line-height:1.3;">${title}</h2>
+          </div>
+          <div style="padding:28px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+              ${rows}
+            </table>
+            <div style="margin-top:24px;padding-top:20px;border-top:1px solid #e2e8f0;">
+              <div style="color:#64748b;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">${messageLabel}</div>
+              <div style="color:#0f172a;font-size:14px;line-height:1.8;white-space:pre-wrap;">${message || "-"}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+};
+
 /* ================= CREATE TICKET ================= */
 export const createTicket = async (req, res) => {
   try {
