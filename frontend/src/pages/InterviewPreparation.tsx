@@ -521,6 +521,9 @@ const AiQuizViewer = ({ questions, category }: { questions: any[], category: str
 };
 
 const InterviewPreparation = () => {
+
+  const userPlan = sessionStorage.getItem('type') || 'free';
+const isYearlyOnly = userPlan !== 'yearly';
   const [isPaidUser, setIsPaidUser] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(true);
 
