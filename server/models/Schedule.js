@@ -59,6 +59,10 @@ const scheduleSchema = new mongoose.Schema({
     type: String,
     enum: ["planned", "in-progress", "done"],
     default: "planned"
+  },
+  isGoogleEvent: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 

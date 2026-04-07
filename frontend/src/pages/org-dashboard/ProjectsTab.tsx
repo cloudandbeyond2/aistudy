@@ -927,7 +927,7 @@ const ProjectTab = () => {
                                         {project.type || 'Project'}
                                     </Badge>
                                     {project.isAiGenerated && (
-                                        <Badge variant="outline" className="bg-secondary/10 text-secondary-foreground border-border text-xs">
+                                        <Badge className="bg-primary text-primary-foreground border-0 text-xs">
                                             <Sparkles className="w-3 h-3 mr-1" /> AI
                                         </Badge>
                                     )}
@@ -1001,7 +1001,7 @@ const ProjectTab = () => {
                                             <Button 
                                                 variant="ghost" 
                                                 size="sm" 
-                                                className="text-primary hover:text-primary/80 p-0 h-auto text-sm"
+                                                className="text-primary hover:text-white p-0 h-auto text-sm"
                                                 onClick={() => setPreviewProject(project)}
                                             >
                                                 View Details

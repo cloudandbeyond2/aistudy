@@ -598,11 +598,11 @@ const isYearlyOnly = userPlan !== 'yearly';
   const fetchTopHeadlines = async (uid: string, showLoading = false) => {
     if (showLoading) setLoadingNews(true);
     try {
-      console.log("Fetching worldwide top headlines for:", uid);
-      const resp = await axios.get(`${serverURL}/api/global-news`, {
+      console.log("Fetching today's current affairs for:", uid);
+      const resp = await axios.get(`${serverURL}/api/interview-prep/current-affairs`, {
         headers: { 'user-id': uid }
       });
-      console.log("Top headlines response:", resp.data);
+      console.log("Current affairs response:", resp.data);
       const newsData = Array.isArray(resp.data)
         ? resp.data
         : Array.isArray(resp.data?.news)
@@ -611,13 +611,13 @@ const isYearlyOnly = userPlan !== 'yearly';
             ? resp.data.data
             : [];
 
-      const sortedNews = newsData.sort((a: any, b: any) =>
-        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+      const sortedNews = [...newsData].sort((a: any, b: any) =>
+        new Date(b.date || b.createdAt || 0).getTime() - new Date(a.date || a.createdAt || 0).getTime()
       );
 
       setTopHeadlines(sortedNews);
     } catch (e) {
-      console.error("Fetch worldwide top headlines error:", e);
+      console.error("Fetch current affairs error:", e);
     } finally {
       if (showLoading) setLoadingNews(false);
     }
@@ -747,7 +747,7 @@ const isYearlyOnly = userPlan !== 'yearly';
           <TabsContent value="news" className="space-y-4 outline-none">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
               <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
-                <Newspaper className="h-4 w-4 md:h-5 md:w-5 text-primary" /> Worldwide Top Headlines
+                <Newspaper className="h-4 w-4 md:h-5 md:w-5 text-primary" /> Today's Top Headlines
               </h2>
               <div className="flex items-center gap-2">
                 <Button
@@ -775,7 +775,7 @@ const isYearlyOnly = userPlan !== 'yearly';
             {topHeadlines.length === 0 ? (
               <div className="text-center py-8 md:py-12 text-muted-foreground bg-card/50 rounded-xl md:rounded-2xl border border-dashed">
                 <Newspaper className="h-8 w-8 md:h-10 md:w-10 mx-auto text-muted-foreground/50 mb-3 md:mb-4" />
-                <p className="text-sm md:text-base">No worldwide headlines available right now. Check back later!</p>
+                <p className="text-sm md:text-base">No headlines available right now. Check back later!</p>
               </div>
             ) : (
               <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -810,7 +810,9 @@ const isYearlyOnly = userPlan !== 'yearly';
                 <div className="mt-3 md:mt-4">
                   <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground mb-4 md:mb-6 pb-3 md:pb-4 border-b">
                     <Newspaper className="h-3 w-3 md:h-4 md:w-4" />
-                    {selectedNewsItem?.createdAt && <span>{new Date(selectedNewsItem.createdAt).toLocaleDateString()}</span>}
+                    {(selectedNewsItem?.date || selectedNewsItem?.createdAt) && (
+                      <span>{new Date(selectedNewsItem.date || selectedNewsItem.createdAt).toLocaleDateString()}</span>
+                    )}
                   </div>
                   <div
                     className="text-sm md:text-base text-foreground/90 leading-relaxed whitespace-pre-wrap"

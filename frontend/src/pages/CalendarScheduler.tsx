@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { addDays, format, isSameDay, startOfWeek } from 'date-fns';
 import { type DayContentProps } from 'react-day-picker';
@@ -24,17 +24,24 @@ import {
   CheckCircle2,
   Clock,
   Layers3,
-  MapPin,
   Plus,
   RotateCcw,
   Search,
   Sparkles,
   Trash2,
   Edit3,
+  User,
+  Building2,
+  RefreshCw,
+  Link2,
+  Link2Off,
+  Lock,
+  ExternalLink,
 } from 'lucide-react';
 
 type ScheduleVisibility = 'organization' | 'personal' | 'public';
 type ScheduleCategory = 'Lecture' | 'Lab' | 'Meeting' | 'Workshop' | 'Deadline' | 'Study';
+type ActiveTab = 'personal' | 'organization';
 
 interface ScheduleItem {
   _id?: string;
@@ -71,6 +78,13 @@ interface FormState {
   visibility: ScheduleVisibility;
   color: string;
   status: 'planned' | 'in-progress' | 'done';
+}
+
+interface GoogleCalStatus {
+  isPremium: boolean;
+  connected: boolean;
+  lastSyncAt: string | null;
+  configured: boolean;
 }
 
 const WEEK_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -148,15 +162,26 @@ export default function CalendarScheduler() {
   const uid = sessionStorage.getItem('uid') || '';
   const role = sessionStorage.getItem('role') || 'user';
   const orgId = sessionStorage.getItem('orgId') || '';
+  const plan = sessionStorage.getItem('type') || 'free';
+  const isPremium = ['monthly', 'yearly', 'forever'].includes(plan)
+    || sessionStorage.getItem('isOrganization') === 'true'
+    || !!orgId;
+  const hasOrg = !!orgId || sessionStorage.getItem('isOrganization') === 'true';
+
+  const [activeTab, setActiveTab] = useState<ActiveTab>(hasOrg ? 'organization' : 'personal');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState<ScheduleItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<'all' | ScheduleCategory>('all');
-  const [visibilityFilter, setVisibilityFilter] = useState<'all' | ScheduleVisibility>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Google Calendar state
+  const [googleStatus, setGoogleStatus] = useState<GoogleCalStatus | null>(null);
+  const [googleSyncing, setGoogleSyncing] = useState(false);
+
   const [form, setForm] = useState<FormState>({
     date: dateInput(new Date()),
     day: dayName(new Date()),
@@ -174,6 +199,7 @@ export default function CalendarScheduler() {
 
   useEffect(() => {
     fetchSchedules();
+    fetchGoogleStatus();
   }, [uid]);
 
   useEffect(() => {
@@ -195,6 +221,60 @@ export default function CalendarScheduler() {
     }
   };
 
+  const fetchGoogleStatus = async () => {
+    if (!uid) return;
+    try {
+      const res = await axios.get(`${serverURL}/api/google-calendar/status`, { params: { userId: uid } });
+      if (res.data.success) setGoogleStatus(res.data.data);
+    } catch (_) {
+      // ignore — Google Calendar status is non-critical
+    }
+  };
+
+  const handleGoogleConnect = async () => {
+    try {
+      const res = await axios.get(`${serverURL}/api/google-calendar/auth-url`, { params: { userId: uid } });
+      if (res.data.success && res.data.url) {
+        window.open(res.data.url, '_blank', 'width=600,height=700');
+        toast({ title: 'Google Calendar', description: 'Complete the sign-in in the popup window, then click "Sync Now".' });
+      } else {
+        toast({ title: res.data.message || 'Could not get auth URL', variant: 'destructive' });
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Failed to connect Google Calendar';
+      toast({ title: msg, variant: 'destructive' });
+    }
+  };
+
+  const handleGoogleSync = async () => {
+    setGoogleSyncing(true);
+    try {
+      const res = await axios.post(`${serverURL}/api/google-calendar/sync`, { userId: uid });
+      if (res.data.success) {
+        toast({ title: 'Sync Complete', description: res.data.message });
+        await fetchSchedules();
+        await fetchGoogleStatus();
+      } else {
+        toast({ title: res.data.message, variant: 'destructive' });
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Sync failed';
+      toast({ title: msg, variant: 'destructive' });
+    } finally {
+      setGoogleSyncing(false);
+    }
+  };
+
+  const handleGoogleDisconnect = async () => {
+    try {
+      await axios.delete(`${serverURL}/api/google-calendar/disconnect`, { params: { userId: uid } });
+      toast({ title: 'Disconnected', description: 'Google Calendar has been disconnected.' });
+      await fetchGoogleStatus();
+    } catch (_) {
+      toast({ title: 'Disconnect failed', variant: 'destructive' });
+    }
+  };
+
   const resetForm = (keepOpen = false) => {
     setEditingId(null);
     setForm({
@@ -206,8 +286,8 @@ export default function CalendarScheduler() {
       endTime: '10:00',
       room: '',
       location: '',
-      type: 'Lecture',
-      visibility: defaultVisibility(),
+      type: activeTab === 'organization' ? 'Meeting' : 'Lecture',
+      visibility: activeTab === 'organization' ? 'organization' : 'personal',
       color: '#2563eb',
       status: 'planned',
     });
@@ -225,8 +305,8 @@ export default function CalendarScheduler() {
       endTime: '10:00',
       room: '',
       location: '',
-      type: 'Lecture',
-      visibility: defaultVisibility(),
+      type: activeTab === 'organization' ? 'Meeting' : 'Lecture',
+      visibility: activeTab === 'organization' ? 'organization' : 'personal',
       color: '#2563eb',
       status: 'planned',
     });
@@ -321,7 +401,13 @@ export default function CalendarScheduler() {
     }
   };
 
-  const filteredEvents = events.filter((item) => {
+  // Tab-aware event filter
+  const tabFilteredEvents = events.filter((item) => {
+    if (activeTab === 'personal') return item.visibility === 'personal';
+    return item.visibility === 'organization' || item.visibility === 'public' || item.sourceType === 'meeting';
+  });
+
+  const filteredEvents = tabFilteredEvents.filter((item) => {
     const matchesSearch =
       !searchTerm ||
       item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -329,8 +415,7 @@ export default function CalendarScheduler() {
       item.room?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.location?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || item.type === categoryFilter;
-    const matchesVisibility = visibilityFilter === 'all' || item.visibility === visibilityFilter;
-    return matchesSearch && matchesCategory && matchesVisibility;
+    return matchesSearch && matchesCategory;
   });
 
   const getEventCountForDate = (date: Date) => filteredEvents.filter((item) => sameDay(item, date)).length;
@@ -338,7 +423,6 @@ export default function CalendarScheduler() {
   const CalendarDayContent = ({ date }: DayContentProps) => {
     const count = getEventCountForDate(date);
     const displayCount = count > 9 ? '9+' : String(count);
-
     return (
       <div className="relative flex h-full w-full items-center justify-center">
         <span>{format(date, 'd')}</span>
@@ -368,9 +452,10 @@ export default function CalendarScheduler() {
       const end = addDays(weekStart, 6);
       return resolved >= weekStart && resolved <= end;
     }).length,
-    org: filteredEvents.filter((item) => item.visibility !== 'personal').length,
-    personal: filteredEvents.filter((item) => item.visibility === 'personal').length,
+    org: events.filter((item) => item.visibility !== 'personal').length,
+    personal: events.filter((item) => item.visibility === 'personal').length,
   };
+
   const heroStats = [
     { label: 'Today', value: `${counts.today} items` },
     { label: 'Week load', value: `${counts.week} items` },
@@ -385,6 +470,7 @@ export default function CalendarScheduler() {
       </div>
       <SEO title="Calendar Scheduler" description="Plan calendar events and daily schedules across all panels." />
 
+      {/* Hero banner */}
       <section className="relative overflow-hidden rounded-[32px] border border-slate-200/70 bg-slate-950 px-6 py-7 text-white shadow-[0_32px_90px_-55px_rgba(15,23,42,0.9)] md:px-8">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.18),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,0.16),transparent_30%)]" />
         <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
@@ -404,7 +490,6 @@ export default function CalendarScheduler() {
                 Every event stays scoped to the logged-in account and the calendar stays compact, fast, and readable.
               </p>
             </div>
-
             <div className="flex flex-wrap gap-3">
               <Button variant="secondary" onClick={openNewEvent} className="bg-white text-slate-950 hover:bg-slate-100">
                 <Plus className="mr-2 h-4 w-4" />
@@ -443,6 +528,7 @@ export default function CalendarScheduler() {
         </div>
       </section>
 
+      {/* ── STAT CARDS ── */}
       <div className="grid gap-4 md:grid-cols-4">
         {[
           { label: 'Today', value: counts.today, icon: CalendarDays, tone: 'text-primary' },
@@ -464,12 +550,50 @@ export default function CalendarScheduler() {
         ))}
       </div>
 
+      {/* ── TAB SWITCHER ── */}
+      <div className="flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-white/80 p-1.5 shadow-sm w-fit">
+        <button
+          onClick={() => setActiveTab('personal')}
+          className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 ${
+            activeTab === 'personal'
+              ? 'bg-gradient-to-r from-slate-950 to-primary text-white shadow-md'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <User className="h-4 w-4" />
+          Personal
+          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${activeTab === 'personal' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+            {counts.personal}
+          </span>
+        </button>
+        {hasOrg && (
+          <button
+            onClick={() => setActiveTab('organization')}
+            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 ${
+              activeTab === 'organization'
+                ? 'bg-gradient-to-r from-indigo-600 to-cyan-500 text-white shadow-md'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <Building2 className="h-4 w-4" />
+            Organization
+            <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${activeTab === 'organization' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+              {counts.org}
+            </span>
+          </button>
+        )}
+      </div>
+
+      {/* ── CALENDAR + QUICK ACTIONS ── */}
       <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
         <Card className="overflow-hidden border-slate-200/80 bg-white/90 shadow-[0_28px_90px_-55px_rgba(15,23,42,0.38)]">
           <CardHeader className="space-y-1 border-b border-slate-200/70 bg-slate-50/80">
             <CardTitle className="flex items-center gap-2 text-xl">
               <CalendarDays className="h-5 w-5 text-primary" />
               Calendar View
+              <Badge variant="outline" className={`ml-auto text-[10px] font-semibold ${activeTab === 'personal' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
+                {activeTab === 'personal' ? 'Personal' : 'Organization'}
+              </Badge>
             </CardTitle>
             <CardDescription className="text-sm text-muted-foreground">
               Pick a date to view or edit the day&apos;s plan.
@@ -513,6 +637,9 @@ export default function CalendarScheduler() {
                         {item.sourceType === 'meeting' && (
                           <Badge className={`border ${sourceTone(item.sourceType)}`}>Meeting Sync</Badge>
                         )}
+                        {item.color === '#4285F4' && (
+                          <Badge className="border bg-blue-50 text-blue-700 border-blue-200 text-[10px]">Google</Badge>
+                        )}
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {item.startTime} - {item.endTime}
@@ -542,6 +669,7 @@ export default function CalendarScheduler() {
           </CardContent>
         </Card>
 
+        {/* QUICK ACTIONS */}
         <Card className="overflow-hidden border-slate-200/80 bg-white/90 shadow-[0_28px_90px_-55px_rgba(15,23,42,0.38)]">
           <CardHeader className="space-y-1 border-b border-slate-200/70 bg-slate-50/80">
             <CardTitle className="flex items-center gap-2 text-xl">
@@ -563,13 +691,105 @@ export default function CalendarScheduler() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-3xl border border-slate-200/80 bg-slate-50/80 p-4">
-                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Default Mode</p>
-                <p className="mt-2 text-sm font-semibold text-slate-950">{defaultVisibility() === 'personal' ? 'Personal' : 'Organization'}</p>
+                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Current View</p>
+                <p className="mt-2 text-sm font-semibold text-slate-950 capitalize">{activeTab}</p>
               </div>
               <div className="rounded-3xl border border-slate-200/80 bg-slate-50/80 p-4">
                 <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Selected Day</p>
                 <p className="mt-2 text-sm font-semibold text-slate-950">{format(selectedDate, 'EEE, MMM d')}</p>
               </div>
+            </div>
+
+            {/* Google Calendar Sync Section */}
+            <div className="rounded-3xl border border-slate-200/80 overflow-hidden">
+              <div className="flex items-center gap-2 border-b border-slate-200/70 bg-slate-50/80 px-4 py-3">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                <p className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Google Calendar Sync</p>
+                {isPremium && googleStatus?.connected && (
+                  <Badge className="ml-auto border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px]">Connected</Badge>
+                )}
+                {isPremium && !googleStatus?.connected && googleStatus !== null && (
+                  <Badge className="ml-auto border-slate-200 bg-slate-50 text-slate-500 text-[10px]">Not Connected</Badge>
+                )}
+              </div>
+
+              {!isPremium ? (
+                /* FREE USER — upgrade prompt */
+                <div className="p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                      <Lock className="h-4 w-4 text-amber-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">Premium Feature</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">Sync your Google Calendar events directly into this scheduler. Available on monthly, yearly &amp; forever plans.</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-orange-500 hover:to-amber-500"
+                    onClick={() => window.location.href = '/dashboard/pricing'}
+                  >
+                    Upgrade to Premium
+                  </Button>
+                </div>
+              ) : googleStatus?.connected ? (
+                /* CONNECTED */
+                <div className="p-4 space-y-3">
+                  {googleStatus.lastSyncAt && (
+                    <p className="text-xs text-muted-foreground">
+                      Last synced: {new Date(googleStatus.lastSyncAt).toLocaleString()}
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1 rounded-xl bg-[#4285F4] text-white hover:bg-[#3574e0]"
+                      onClick={handleGoogleSync}
+                      disabled={googleSyncing}
+                    >
+                      <RefreshCw className={`mr-2 h-3.5 w-3.5 ${googleSyncing ? 'animate-spin' : ''}`} />
+                      {googleSyncing ? 'Syncing...' : 'Sync Now'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl text-rose-600 border-rose-200 hover:bg-rose-50"
+                      onClick={handleGoogleDisconnect}
+                    >
+                      <Link2Off className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">Imports upcoming 30-day events from your primary Google Calendar.</p>
+                </div>
+              ) : !googleStatus?.configured ? (
+                /* SERVER NOT CONFIGURED */
+                <div className="p-4 space-y-2">
+                  <p className="text-xs text-muted-foreground">Google Calendar API is not yet configured on this server. Add <code className="bg-slate-100 px-1 rounded text-[10px]">GOOGLE_CLIENT_ID</code> and <code className="bg-slate-100 px-1 rounded text-[10px]">GOOGLE_CLIENT_SECRET</code> to your server <code className="bg-slate-100 px-1 rounded text-[10px]">.env</code> file to enable this feature.</p>
+                  <a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                    <ExternalLink className="h-3 w-3" />
+                    Google Cloud Console
+                  </a>
+                </div>
+              ) : (
+                /* NOT CONNECTED — connect button */
+                <div className="p-4 space-y-3">
+                  <p className="text-xs text-muted-foreground">Connect your Google account to import your Google Calendar events automatically.</p>
+                  <Button
+                    size="sm"
+                    className="w-full rounded-xl bg-[#4285F4] text-white hover:bg-[#3574e0]"
+                    onClick={handleGoogleConnect}
+                  >
+                    <Link2 className="mr-2 h-3.5 w-3.5" />
+                    Connect Google Calendar
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -585,18 +805,14 @@ export default function CalendarScheduler() {
                     key={item._id}
                     onClick={() => {
                       setSelectedDate(resolveDate(item, selectedDate) || selectedDate);
-                      if (!item.readOnly) {
-                        editSchedule(item);
-                      }
+                      if (!item.readOnly) editSchedule(item);
                     }}
                     className="w-full rounded-3xl border border-slate-200/80 bg-white p-3 text-left transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-slate-950">{item.name}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          {item.startTime} - {item.endTime}
-                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">{item.startTime} - {item.endTime}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         {item.sourceType === 'meeting' && (
@@ -620,13 +836,12 @@ export default function CalendarScheduler() {
         </Card>
       </div>
 
+      {/* Dialog */}
       <Dialog
         open={isFormOpen}
         onOpenChange={(open) => {
           setIsFormOpen(open);
-          if (!open) {
-            resetForm(false);
-          }
+          if (!open) resetForm(false);
         }}
       >
         <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
@@ -726,9 +941,11 @@ export default function CalendarScheduler() {
             </div>
 
             <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-4 text-xs text-muted-foreground">
-              {role === 'student' || role === 'user'
-                ? 'Default visibility is personal for private planning.'
-                : 'Default visibility is organization for shared scheduling.'}
+              {form.visibility === 'personal'
+                ? '🔒 This event will only be visible to you (Personal).'
+                : form.visibility === 'organization'
+                  ? '🏢 This event will be shared with your organization.'
+                  : '🌐 This event is publicly visible.'}
             </div>
 
             <DialogFooter className="gap-2">
@@ -755,12 +972,16 @@ export default function CalendarScheduler() {
         </DialogContent>
       </Dialog>
 
+      {/* ── WEEK OVERVIEW ── */}
       <Card className="overflow-hidden border-slate-200/80 bg-white/90 shadow-[0_28px_90px_-55px_rgba(15,23,42,0.38)]">
         <CardHeader className="flex flex-col gap-4 border-b border-slate-200/70 bg-slate-50/80 md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
               <Layers3 className="h-5 w-5 text-primary" />
               Week Overview
+              <Badge variant="outline" className={`ml-2 text-[10px] ${activeTab === 'personal' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
+                {activeTab === 'personal' ? 'Personal' : 'Organization'}
+              </Badge>
             </CardTitle>
             <CardDescription>Interactive seven-day snapshot anchored to the selected date.</CardDescription>
           </div>
@@ -770,11 +991,7 @@ export default function CalendarScheduler() {
               <option value="all">All categories</option>
               {CATEGORY_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
-            <select value={visibilityFilter} onChange={(e) => setVisibilityFilter(e.target.value as 'all' | ScheduleVisibility)} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
-              <option value="all">All visibility</option>
-              {VISIBILITY_OPTIONS.map((option) => <option key={option} value={option}>{option.charAt(0).toUpperCase() + option.slice(1)}</option>)}
-            </select>
-            <Button variant="outline" onClick={() => { setSearchTerm(''); setCategoryFilter('all'); setVisibilityFilter('all'); }}>
+            <Button variant="outline" onClick={() => { setSearchTerm(''); setCategoryFilter('all'); }}>
               <Search className="mr-2 h-4 w-4" />
               Clear
             </Button>
@@ -802,9 +1019,7 @@ export default function CalendarScheduler() {
                           key={item._id}
                           onClick={() => {
                             setSelectedDate(day);
-                            if (!item.readOnly) {
-                              editSchedule(item);
-                            }
+                            if (!item.readOnly) editSchedule(item);
                           }}
                           className="w-full rounded-2xl border border-slate-200/80 bg-white p-2 text-left transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
                         >

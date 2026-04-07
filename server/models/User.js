@@ -87,6 +87,11 @@ const userSchema = new mongoose.Schema({
     payments: { type: Boolean, default: true },
     chat: { type: Boolean, default: true }
   },
+  googleCalendar: {
+    connected: { type: Boolean, default: false },
+    refreshToken: { type: String, default: null },
+    lastSyncAt: { type: Date, default: null }
+  },
   date: { type: Date, default: Date.now }
 });
 

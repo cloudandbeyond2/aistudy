@@ -47,7 +47,16 @@ export const getSchedules = async (req, res) => {
       });
     }
 
-    const schedules = await Schedule.find({ ownerId }).sort({ date: 1, startTime: 1, createdAt: -1 }).lean();
+    let schedules = await Schedule.find({ ownerId }).sort({ date: 1, startTime: 1, createdAt: -1 }).lean();
+
+    // Strict privacy enforcement for Google Sync events
+    schedules = schedules.filter(s => {
+      if (s.isGoogleEvent) {
+        return String(s.ownerId) === String(ownerId);
+      }
+      return true;
+    });
+
     const user = await User.findById(ownerId).select('role organization organizationId department studentDetails.department').lean();
 
     let meetingSchedules = [];
