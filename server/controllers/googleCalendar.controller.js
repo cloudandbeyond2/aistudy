@@ -222,6 +222,7 @@ export const syncEvents = async (req, res) => {
           ownerId: userId,
           color: '#4285F4',
           status: 'planned',
+          isGoogleEvent: true,
         });
         created++;
       }
