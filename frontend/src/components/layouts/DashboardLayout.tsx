@@ -1299,7 +1299,7 @@ const DashboardLayoutContent = () => {
               
               {/* Settings */}
               <Link
-                to="https://aistudy-infilabs.vercel.app"
+                to="https://colossusiq.ai"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={handleMobileMenuClick}
@@ -1674,7 +1674,7 @@ const DashboardLayoutContent = () => {
             
             {/* Settings */}
            <Link
-  to="https://aistudy-infilabs.vercel.app"
+  to="http://colossusiq.ai"
   target="_blank"
   rel="noopener noreferrer"
   onClick={handleMobileMenuClick}

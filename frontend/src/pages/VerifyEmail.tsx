@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { CheckCircle2, XCircle, Loader2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,9 @@ import { motion } from 'framer-motion';
 import InnerPageTopBar from '@/components/InnerPageTopBar';
 
 const VerifyEmail = () => {
-    const { token } = useParams();
+    const { token: routeToken } = useParams();
+    const location = useLocation();
+    const token = routeToken || location.pathname.split('/').filter(Boolean).pop();
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [message, setMessage] = useState('');
 

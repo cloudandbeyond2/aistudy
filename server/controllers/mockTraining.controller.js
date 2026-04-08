@@ -222,6 +222,7 @@ export const startMockSession = async (req, res) => {
     const { driveId } = req.body;
     const userId = req.headers['user-id'];
     const user = await User.findById(userId);
+    const userOrgId = user?.organization || user?.organizationId || null;
 
     const { isOverLimit } = await checkDailyLimit(user);
     if (isOverLimit && user.role === 'user') {
@@ -238,7 +239,7 @@ export const startMockSession = async (req, res) => {
       userId,
       driveId: drive?._id || null,
       type: driveId ? 'Assigned' : 'Self',
-      organizationId: user.organizationId || null,
+      organizationId: userOrgId,
       status: 'Started'
     });
 
@@ -584,6 +585,7 @@ export const getAssignedDrives = async (req, res) => {
     const userId = req.headers['user-id'];
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    const userOrgId = user.organization || user.organizationId || null;
 
     // Students only see assigned drives if they are "Placement Ready" or if the drive is public to their org
     if (user.role === 'student' && !user.studentDetails?.isPlacementReady) {
@@ -591,7 +593,7 @@ export const getAssignedDrives = async (req, res) => {
     }
 
     const drives = await MockInterviewDrive.find({ 
-      organizationId: user.organizationId,
+      organizationId: userOrgId,
       isActive: true
     }).sort({ createdAt: -1 });
 

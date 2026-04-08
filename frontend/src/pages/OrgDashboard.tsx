@@ -2039,10 +2039,8 @@ const handleDeleteMaterial = async (id: string) => {
     }
 
     const fetchStudents = async () => {
-        console.log('Fetching students for orgId:', orgId);
         try {
             const res = await axios.get(`${serverURL}/api/org/students?organizationId=${orgId}`);
-            console.log('Students response:', res.data);
             if (res.data.success) {
                 setStudents(res.data.students);
             } else {
@@ -2351,9 +2349,6 @@ const handleDeleteAssignment = async (id: string) => {
 
     const handleUpdateAICourse = async () => {
         if (!editAICourse) return;
-        console.log("Attempting to update AI course:", editAICourse);
-        console.log("Course ID:", editAICourse._id);
-        console.log("Update URL:", `${serverURL}/api/org/course/${editAICourse._id}`);
 
         try {
             const res = await axios.put(`${serverURL}/api/org/course/${editAICourse._id}`, {
@@ -2361,7 +2356,6 @@ const handleDeleteAssignment = async (id: string) => {
                 department: editAICourse.department,
                 updatedBy: sessionStorage.getItem('uid')
             });
-            console.log("Update response:", res.data);
             if (res.data.success) {
                 toast({ title: "Success", description: "AI Course updated successfully" });
                 setEditAICourse(null);
@@ -2913,8 +2907,6 @@ const handleUpdateDeptAdmin = async () => {
             updateData.phone = newDeptAdmin.phone;
         }
         
-        console.log('Updating department admin:', editingDeptAdmin._id, updateData);
-        
         const res = await axios.put(
             `${serverURL}/api/org/dept-admin/${editingDeptAdmin._id}`, 
             updateData,
@@ -3201,39 +3193,50 @@ const handleUpdateDeptAdmin = async () => {
             <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })} className="w-full">
                 {role === 'org_admin' ? (
                     activeTab === 'landing' ? (
-                        <div className="mb-8 rounded-[28px] border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-sky-50 p-6 shadow-sm">
-                            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                                <div className="max-w-2xl">
-                                    <Badge className="mb-3 rounded-full bg-sky-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700 hover:bg-sky-100">
-                                        Org Admin Flow
-                                    </Badge>
-                                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                                        Open one workspace at a time.
-                                    </h2>
-                                    <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
-                                        Each card takes you into a focused management page, so the overview stays clean while every module can grow independently.
-                                    </p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                                    <div className="rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm">
-                                        <p className="text-[11px] uppercase tracking-wide text-slate-500">Students</p>
-                                        <p className="mt-1 text-2xl font-semibold text-slate-900">{stats.studentCount || 0}</p>
-                                    </div>
-                                    <div className="rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm">
-                                        <p className="text-[11px] uppercase tracking-wide text-slate-500">Courses</p>
-                                        <p className="mt-1 text-2xl font-semibold text-slate-900">{courses.length || 0}</p>
-                                    </div>
-                                    <div className="rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm">
-                                        <p className="text-[11px] uppercase tracking-wide text-slate-500">Assignments</p>
-                                        <p className="mt-1 text-2xl font-semibold text-slate-900">{assignments.length || 0}</p>
-                                    </div>
-                                    <div className="rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm">
-                                        <p className="text-[11px] uppercase tracking-wide text-slate-500">Placed</p>
-                                        <p className="mt-1 text-2xl font-semibold text-slate-900">{stats.placedCount || 0}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                       <div className="mb-8 rounded-[28px] border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-sky-50 p-4 shadow-sm sm:p-6">
+    <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        
+        {/* Left side - Text content */}
+        <div className="max-w-2xl flex-1">
+            <Badge className="mb-3 rounded-full bg-sky-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700 hover:bg-sky-100">
+                Org Admin Flow
+            </Badge>
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl md:text-3xl">
+                Open one workspace at a time.
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+                Each card takes you into a focused management page, so the overview stays clean while every module can grow independently.
+            </p>
+        </div>
+        
+        {/* Right side - Stats cards */}
+        <div className="grid gap-3 
+            grid-cols-2              /* Mobile (<640px) - 2 columns */
+            sm:grid-cols-2           /* Tablet (640px-768px) - 2 columns */
+            md:grid-cols-2           /* Tablet (768px-1024px) - 2 columns */
+            lg:grid-cols-2           /* Laptop (1024px-1280px) - 2 columns */
+            xl:grid-cols-4           /* Desktop (>1280px) - 4 columns */
+            min-w-[200px]
+        ">
+            <div className="rounded-2xl border border-white/70 bg-white/80 px-3 py-2 shadow-sm transition-all hover:shadow-md sm:px-4 sm:py-3">
+                <p className="text-[10px] uppercase tracking-wide text-slate-500 sm:text-[11px]">Students</p>
+                <p className="mt-1 text-xl font-semibold text-slate-900 sm:text-2xl">{stats.studentCount || 0}</p>
+            </div>
+            <div className="rounded-2xl border border-white/70 bg-white/80 px-3 py-2 shadow-sm transition-all hover:shadow-md sm:px-4 sm:py-3">
+                <p className="text-[10px] uppercase tracking-wide text-slate-500 sm:text-[11px]">Courses</p>
+                <p className="mt-1 text-xl font-semibold text-slate-900 sm:text-2xl">{courses.length || 0}</p>
+            </div>
+            <div className="rounded-2xl border border-white/70 bg-white/80 px-3 py-2 shadow-sm transition-all hover:shadow-md sm:px-4 sm:py-3">
+                <p className="text-[10px] uppercase tracking-wide text-slate-500 sm:text-[11px]">Assignments</p>
+                <p className="mt-1 text-xl font-semibold text-slate-900 sm:text-2xl">{assignments.length || 0}</p>
+            </div>
+            <div className="rounded-2xl border border-white/70 bg-white/80 px-3 py-2 shadow-sm transition-all hover:shadow-md sm:px-4 sm:py-3">
+                <p className="text-[10px] uppercase tracking-wide text-slate-500 sm:text-[11px]">Placed</p>
+                <p className="mt-1 text-xl font-semibold text-slate-900 sm:text-2xl">{stats.placedCount || 0}</p>
+            </div>
+        </div>
+    </div>
+</div>
                     ) : currentOrgSection ? (
                         <Card className="mb-6 overflow-hidden border-slate-200 bg-gradient-to-r from-slate-50 via-white to-sky-50 shadow-sm">
                             <CardContent className="flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">
