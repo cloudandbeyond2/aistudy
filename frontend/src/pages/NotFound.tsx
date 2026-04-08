@@ -1,9 +1,17 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import SEO from '@/components/SEO';
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import VerifyEmail from "@/pages/VerifyEmail";
 
 const NotFound = () => {
+  const location = useLocation();
+  const isVerifyEmailRoute = location.pathname.startsWith("/verify-email/");
+
+  if (isVerifyEmailRoute) {
+    return <VerifyEmail />;
+  }
+
   return (
     <>
       <SEO
