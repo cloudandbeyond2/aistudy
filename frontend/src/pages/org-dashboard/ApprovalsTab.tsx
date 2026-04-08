@@ -1857,7 +1857,11 @@ const ApprovalsTab = () => {
                                                                     variant="outline" 
                                                                     size="sm" 
                                                                     className="students-theme-outline-btn flex-1 md:flex-none h-10 px-4 rounded-xl transition-colors"
-                                                                    onClick={() => setPreviewCourse({ ...course })}
+                                                              onClick={(e) => {
+  e.stopPropagation();
+  console.log("Preview:", course); // debug
+  setPreviewCourse(course);
+}}
                                                                 >
                                                                     <Eye className="w-4 h-4 mr-2" /> Preview
                                                                 </Button>
@@ -2369,7 +2373,10 @@ const ApprovalsTab = () => {
                                                                                         variant="outline" 
                                                                                         size="sm" 
                                                                                         className="students-theme-outline-btn gap-2 text-sm w-full transition-colors"
-                                                                                        onClick={() => setPreviewCourse({ ...course })}
+                                                                                     onClick={(e) => {
+  e.stopPropagation();
+  setPreviewCourse(course);
+}}
                                                                                     >
                                                                                         <EyeIcon className="w-4 h-4" />
                                                                                         Preview
@@ -2434,7 +2441,11 @@ const ApprovalsTab = () => {
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-                                onClick={() => setPreviewCourse(null)}
+                            onClick={(e) => {
+  if (e.target === e.currentTarget) {
+    setPreviewCourse(null);
+  }
+}}
                             >
                                 <motion.div
                                     initial={{ scale: 0.8, opacity: 0, y: 50 }}
@@ -2488,17 +2499,19 @@ const ApprovalsTab = () => {
                                             </div>
                                         </motion.div>
                                         
-                                        {previewCourse.description && (
-                                            <motion.div
-                                                initial={{ y: 20, opacity: 0 }}
-                                                animate={{ y: 0, opacity: 1 }}
-                                                transition={{ delay: 0.4 }}
-                                            >
-                                                <h4 className="font-semibold mb-2 text-base sm:text-lg">Description</h4>
-                                                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{previewCourse.description}</p>
-                                            </motion.div>
-                                        )}
-                                        
+                                     <motion.div
+  initial={{ y: 20, opacity: 0 }}
+  animate={{ y: 0, opacity: 1 }}
+  transition={{ delay: 0.4 }}
+>
+  <h4 className="font-semibold mb-2 text-base sm:text-lg">
+    Description
+  </h4>
+
+  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+    {previewCourse?.description || "No description available"}
+  </p>
+</motion.div>
                                         {previewCourse.topics?.length > 0 && (
                                             <motion.div
                                                 initial={{ y: 20, opacity: 0 }}
@@ -2507,18 +2520,20 @@ const ApprovalsTab = () => {
                                             >
                                                 <h4 className="font-semibold mb-3 text-base sm:text-lg">Topics Covered</h4>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                                    {previewCourse.topics.map((topic, idx) => (
-                                                        <motion.div 
-                                                            key={idx} 
-                                                            initial={{ x: -20, opacity: 0 }}
-                                                            animate={{ x: 0, opacity: 1 }}
-                                                            transition={{ delay: 0.5 + idx * 0.05 }}
-                                                            className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-lg"
-                                                        >
-                                                            <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                                                            <span className="text-xs sm:text-sm">{topic}</span>
-                                                        </motion.div>
-                                                    ))}
+                                                   {previewCourse.topics.map((topic, idx) => (
+  <motion.div 
+    key={idx}
+    className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-lg"
+  >
+    <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+
+    <span className="text-xs sm:text-sm">
+      {typeof topic === "string"
+        ? topic
+        : topic?.title || "Untitled Topic"}
+    </span>
+  </motion.div>
+))}
                                                 </div>
                                             </motion.div>
                                         )}
