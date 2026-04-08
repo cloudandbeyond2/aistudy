@@ -10,7 +10,7 @@ import { useWebRTC } from '../../hooks/useWebRTC';
 
 interface Session {
   _id: string;
-  student: { _id: string; name: string; email: string };
+  student: { _id: string; name?: string; mName?: string; email?: string; role?: string };
   status: string;
 }
 
@@ -146,12 +146,16 @@ const LiveSupportTab = () => {
                 onClick={() => setSelectedSession(s)}
                 className={`p-3 border rounded-xl cursor-pointer transition-all ${selectedSession?._id === s._id ? 'bg-primary/10 border-primary' : 'hover:bg-muted'}`}
               >
-                <div className="flex items-center gap-2 font-medium">
-                  <User className="w-4 h-4 text-primary" />
-                  {s.student?.name || 'Unknown Student'}
-                </div>
-                <div className="text-sm text-muted-foreground mt-1 px-6">
-                  {s.student?.email}
+                <div className="flex items-start gap-2">
+                  <User className="w-4 h-4 text-primary mt-0.5" />
+                  <div className="min-w-0">
+                    <div className="font-medium leading-5 truncate">
+                      {s.student?.mName || s.student?.name || 'Unknown Student'}
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1 truncate">
+                      {s.student?.email || 'No email available'}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))
@@ -165,7 +169,12 @@ const LiveSupportTab = () => {
           <>
             <div className="p-4 border-b bg-muted/30 flex justify-between items-center">
               <div>
-                <h3 className="font-semibold text-lg flex items-center gap-2">{selectedSession.student?.name}</h3>
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  {selectedSession.student?.mName || selectedSession.student?.name || 'Student'}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {selectedSession.student?.email || 'No email available'}
+                </p>
                 <p className="text-sm text-emerald-600 flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Active Session
                 </p>

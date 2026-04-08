@@ -22,7 +22,7 @@ export const getOrCreateSession = async (req, res) => {
 export const getSessionMessages = async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const messages = await LiveSupportMessage.find({ session: sessionId }).populate('sender', 'name email').sort('createdAt');
+    const messages = await LiveSupportMessage.find({ session: sessionId }).populate('sender', 'mName email role').sort('createdAt');
     res.status(200).json({ success: true, messages });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -38,7 +38,7 @@ export const getActiveSessions = async (req, res) => {
     if (organizationId && organizationId !== 'undefined' && organizationId !== 'null') {
       query.organization = organizationId;
     }
-    const sessions = await LiveSupportSession.find(query).populate('student', 'name email').sort('-updatedAt');
+    const sessions = await LiveSupportSession.find(query).populate('student', 'mName email role').sort('-updatedAt');
     res.status(200).json({ success: true, sessions });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
