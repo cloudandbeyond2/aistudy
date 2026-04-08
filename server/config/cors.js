@@ -1,10 +1,11 @@
 const allowedOrigins = [
   process.env.WEBSITE_URL || 'http://Colossus IQ.in/server',
-  'http://colossusiq.ai',
+  'https://colossusiq.ai',
   'https://app.valoteam.com',
   'http://localhost:5173',
   'http://localhost:4173',
   'http://localhost:3000',
+  'https://darkturquoise-quail-773641.hostingersite.com',
   'http://localhost:5001',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:4173',

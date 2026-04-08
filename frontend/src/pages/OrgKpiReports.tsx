@@ -159,7 +159,7 @@ export default function OrgKpiReports() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pt-0 md:pt-0 lg:pt-[60px]">
       <SEO title="KPI Reports" description="Organization KPI Reports" />
 
       {/* Header */}

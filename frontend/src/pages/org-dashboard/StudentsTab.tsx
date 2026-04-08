@@ -467,7 +467,7 @@ const StudentsTab = () => {
     const placementRate = visibleStudentCount > 0 ? ((placedCount / visibleStudentCount) * 100).toFixed(1) : 0;
     const utilizationRate = visibleStudentLimit > 0 ? (visibleStudentCount / visibleStudentLimit) * 100 : 0;
     const remainingSlots = Math.max(0, visibleStudentLimit - visibleStudentCount);
-    const totalPlacedCount = isDeptAdmin ? placedCount : (stats.placedCount || placedCount);
+    const totalPlacedCount = isDeptAdmin ? placedCount : (placedCount || placedCount);
     const totalPlacementRate = visibleStudentCount > 0 ? ((totalPlacedCount / visibleStudentCount) * 100).toFixed(1) : 0;
 
     useEffect(() => {
@@ -502,7 +502,7 @@ const StudentsTab = () => {
         <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="students-theme min-h-screen"
+            className="min-h-screen "
         >
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
                 {/* Page Header */}
@@ -524,14 +524,14 @@ const StudentsTab = () => {
                             </div>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                            <Badge variant="outline" className="students-theme-hero-badge px-3 py-2 text-sm">
-                                <UsersRound className="w-4 h-4 mr-2" />
-                                {visibleStudentCount} Active
-                            </Badge>
-                            <Badge variant="outline" className="students-theme-hero-badge px-3 py-2 text-sm">
-                                <PieChart className="w-4 h-4 mr-2" />
-                                {placementRate}% Placed
-                            </Badge>
+                     <Badge variant="outline" className="students-theme-hero-badge px-3 py-2 text-sm text-white">
+    <UsersRound className="w-4 h-4 mr-2" />
+    {visibleStudentCount} Active
+</Badge>
+<Badge variant="outline" className="students-theme-hero-badge px-3 py-2 text-sm text-white">
+    <PieChart className="w-4 h-4 mr-2" />
+    {placementRate}% Placed
+</Badge>
                         </div>
                     </div>
                 </div>

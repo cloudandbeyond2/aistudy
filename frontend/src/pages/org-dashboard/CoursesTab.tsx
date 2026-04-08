@@ -3498,7 +3498,7 @@ const CoursesTab = () => {
         
                <>
                    {/* COURSES TAB */}
-                               <div className="space-y-4">
+                              <div className="space-y-4 pt-0 md:pt-0 lg:pt-[60px]">
                                    <Card>
                                        <CardHeader>
                                            <CardTitle>Manage Courses</CardTitle>
