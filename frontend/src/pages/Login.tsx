@@ -97,13 +97,14 @@ const Login = () => {
   }, []);
 
   const redirectHome = () => {
-    navigate('/dashboard');
+    const role = sessionStorage.getItem('role') || '';
+    navigate(getDashboardPath(role));
   };
 
   const getDashboardPath = (role: string) => {
     if (role === 'org_admin') return '/dashboard/org';
     if (role === 'student') return '/dashboard/student';
-    if (role === 'dept_admin') return '/dashboard/staff';
+    if (role === 'dept_admin') return '/dashboard/dept';
     return '/dashboard';
   };
 

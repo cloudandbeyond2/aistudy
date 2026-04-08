@@ -3841,17 +3841,39 @@ const handleUpdateDeptAdmin = async () => {
 
                 {/* COURSES TAB */}
                 <TabsContent value="courses" className="space-y-4">
-    <Card>
-        <CardHeader>
-            <CardTitle className="text-xl sm:text-2xl">Manage Courses</CardTitle>
-            <CardDescription>Create and assign courses to your students.</CardDescription>
+    <Card className="border-border/60">
+        <CardHeader className="space-y-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <CardTitle className="text-xl sm:text-2xl">Manage Courses</CardTitle>
+                    <CardDescription>Create, review, and publish learning modules.</CardDescription>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline">Total: {courses?.length || 0}</Badge>
+                    <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800">
+                        Pending: {courses?.filter((c: any) => (c.approvalStatus || (c.isPublished === false ? 'pending' : 'approved')) === 'pending').length || 0}
+                    </Badge>
+                    <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-800">
+                        Published: {courses?.filter((c: any) => c?.isPublished === true).length || 0}
+                    </Badge>
+                </div>
+            </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5">
             <Alert className="border-primary/20 bg-primary/5">
-                <AlertTitle>Recommended organization flow</AlertTitle>
-                <AlertDescription>
-                    Draft the course, assign a department, review it internally, then publish it to the student portal.
-                    Department admins stay locked to their own department, while organization admins can publish across departments.
+                <AlertTitle className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    Recommended flow
+                </AlertTitle>
+                <AlertDescription className="mt-2">
+                    <ol className="list-decimal pl-5 space-y-1">
+                        <li>Draft the course and assign a department (optional).</li>
+                        <li>Review it internally and add quizzes/settings.</li>
+                        <li>Publish to the student portal when ready.</li>
+                    </ol>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                        Department admins stay locked to their own department; organization admins can publish across departments.
+                    </div>
                 </AlertDescription>
             </Alert>
             
@@ -3959,7 +3981,10 @@ const handleUpdateDeptAdmin = async () => {
                         }
 
                         return (
-                            <div key={course._id} className="p-4 border rounded-lg bg-card relative">
+                            <div
+                                key={course._id}
+                                className="p-4 border rounded-2xl bg-card/70 backdrop-blur relative transition-all hover:shadow-sm hover:border-primary/20"
+                            >
                                 {/* Three-dot menu - Top Right Corner */}
                                 <div className="absolute top-4 right-4 lg:hidden">
                                     <DropdownMenu>
@@ -4132,7 +4157,9 @@ const handleUpdateDeptAdmin = async () => {
                                             <span className="whitespace-nowrap">{topicCount} Topics</span>
                                             {quizCount > 0 && <span className="whitespace-nowrap">{quizCount} Quizzes</span>}
                                             <span className="bg-primary/10 text-primary px-2 py-0.5 rounded whitespace-nowrap">
-                                                {course.department ? `Dept: ${departmentsList.find(d => d._id === course.department || d.name === course.department)?.name || course.department}` : (course.content ? 'AI Generated' : 'All students')}
+                                                {getDepartmentLabel(course.department)
+                                                    ? `Dept: ${getDepartmentLabel(course.department)}`
+                                                    : (course.content ? 'AI Generated' : 'All students')}
                                             </span>
                                         </div>
                                         

@@ -1,4 +1,7 @@
 import LiveSupportMessage from './models/LiveSupportMessage.js';
+import LiveSupportSession from './models/LiveSupportSession.js';
+import Notification from './models/Notification.js';
+import User from './models/User.js';
 
 export default function setupSocket(io) {
   io.on('connection', (socket) => {
@@ -21,6 +24,51 @@ export default function setupSocket(io) {
           senderModel,
           message
         });
+
+        try {
+          const session = await LiveSupportSession.findById(sessionId).select('student organization').lean();
+
+          if (session) {
+            if (senderModel === 'Organization') {
+              await Notification.create({
+                user: session.student,
+                message: 'Your organization replied to your live support message.',
+                type: 'info',
+                link: '/dashboard/student/support-tickets'
+              });
+            }
+
+            if (senderModel === 'User' && session.organization) {
+              const orgAdmins = await User.find({
+                role: 'org_admin',
+                $or: [
+                  { organization: session.organization },
+                  { organizationId: session.organization },
+                  { orgId: session.organization }
+                ]
+              }).select('_id').lean();
+
+              await Promise.all(
+                orgAdmins.map((admin) =>
+                  Notification.create({
+                    user: admin._id,
+                    message: 'A student replied to a live support conversation.',
+                    type: 'info',
+                    link: '/dashboard/org-live-support'
+                  })
+                )
+              );
+
+              io.emit('live-support-notification', {
+                sessionId,
+                organizationId: session.organization,
+                message: newMessage.message
+              });
+            }
+          }
+        } catch (notificationErr) {
+          console.error('Live support notification error:', notificationErr);
+        }
         
         io.to(sessionId).emit('receive-support-message', {
           _id: newMessage._id,

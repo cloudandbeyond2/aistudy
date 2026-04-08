@@ -107,6 +107,7 @@ import AdminQuizRetakeRequests from "./pages/admin/AdminQuizRetakeRequests";
 import OrgMockInterview from "./pages/OrgMockInterview";
 import InterviewTrainingHub from "./pages/InterviewTrainingHub";
 import AiMockRoom from "@/pages/AiMockRoom";
+import AIChatBot from "./pages/AIChatBot";
 import MockReport from "./pages/MockReport";
 
 
@@ -204,6 +205,7 @@ const App = () => (
                     <Route path="org/career" element={<OrgCareerPlacement />} />
                     <Route path="org/mock-interview" element={<OrgMockInterview />} />
                     <Route path="interview-training" element={<InterviewTrainingHub />} />
+                    <Route path="ai-chat-bot" element={<AIChatBot />} />
                     <Route path="ai-mock-room" element={<AiMockRoom />} />
                     <Route path="mock-report/:applicationId" element={<MockReport />} />
                     <Route path="org/reports" element={<OrgKpiReports />} />

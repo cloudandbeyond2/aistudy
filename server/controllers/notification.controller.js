@@ -32,6 +32,31 @@ export const markAsRead = async (req, res) => {
     }
 };
 
+/* MARK READ BY LINK */
+export const markByLinkAsRead = async (req, res) => {
+    try {
+        const { userId, link } = req.body;
+
+        if (!userId || !link) {
+            return res.status(400).json({ success: false, message: 'userId and link are required' });
+        }
+
+        await Notification.updateMany(
+            {
+                user: userId,
+                link,
+                isRead: false
+            },
+            { $set: { isRead: true } }
+        );
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Mark notifications by link error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
 /* CLEAR ALL NOTIFICATIONS */
 export const clearNotifications = async (req, res) => {
     try {

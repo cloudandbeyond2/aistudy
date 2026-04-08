@@ -43,16 +43,22 @@ const LiveSupportWidget = () => {
     }
   }, [remoteStream]);
 
+  useEffect(() => {
+    const handleOpen = () => setIsOpen(true);
+    window.addEventListener("open-live-support", handleOpen as EventListener);
+    return () => window.removeEventListener("open-live-support", handleOpen as EventListener);
+  }, []);
+
   const currentUserId = sessionStorage.getItem('uid') || sessionStorage.getItem('userId');
   const role = sessionStorage.getItem('role');
   const token = sessionStorage.getItem('token');
   const orgId = sessionStorage.getItem('orgId');
 
   useEffect(() => {
-    // Create/fetch a session when the widget opens (student/user).
+    // Create/fetch a session as soon as the student is available in the app.
+    // This lets live support calls ring even if the widget is still closed.
     if (!currentUserId) return;
     if (!['student', 'user'].includes(role || '')) return;
-    if (!isOpen) return;
 
     const initSession = async () => {
       try {
@@ -81,7 +87,7 @@ const LiveSupportWidget = () => {
     if (!sessionId) {
       initSession();
     }
-  }, [currentUserId, role, isOpen, sessionId, orgId, token]);
+  }, [currentUserId, role, sessionId, orgId, token]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -89,9 +95,15 @@ const LiveSupportWidget = () => {
   }, [isOpen]);
 
   useEffect(() => {
-    if (!socket || !sessionId || !isOpen) return;
+    if (!socket || !sessionId) return;
     socket.emit('join-support-ticket', sessionId);
-  }, [socket, sessionId, isOpen]);
+  }, [socket, sessionId]);
+
+  useEffect(() => {
+    if (incomingCall && !isOpen) {
+      setIsOpen(true);
+    }
+  }, [incomingCall, isOpen]);
 
   useEffect(() => {
     if (!socket || !sessionId) return;
@@ -125,7 +137,7 @@ const LiveSupportWidget = () => {
     setInputVal('');
   };
 
-  if (role !== 'student' && role !== 'user') return null; // Admins won't see the floating student widget
+  if (role !== 'student' && role !== 'user' && role !== 'org_admin') return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
@@ -182,7 +194,7 @@ const LiveSupportWidget = () => {
           <audio ref={audioRef} autoPlay className="hidden" />
 
           {/* Messages Body */}
-          <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-3 bg-gray-50 dark:bg-gray-900">
+          <div className="flex-1 min-h-0 p-4 overflow-y-auto flex flex-col gap-3 bg-gray-50 dark:bg-gray-900 thin-scrollbar overscroll-contain">
             {messages.map((msg) => {
               const isMe =
                 msg.senderModel === 'User' &&
