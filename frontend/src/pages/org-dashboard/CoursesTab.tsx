@@ -2947,6 +2947,11 @@ const CoursesTab = () => {
         if (typeof value === 'object') return value._id || value.name || '';
         return '';
     };
+    const getDepartmentLabel = (value: any) => {
+        const normalizedValue = getDepartmentValue(value);
+        if (!normalizedValue || normalizedValue === 'all') return '';
+        return departmentsList.find((d: any) => d._id === normalizedValue || d.name === normalizedValue)?.name || normalizedValue;
+    };
     const matchesCurrentDepartment = (value: any, departmentId?: any) => {
         const normalizedValue = getDepartmentValue(value);
         const normalizedDepartmentId = getDepartmentValue(departmentId);
@@ -4053,7 +4058,7 @@ const CoursesTab = () => {
                                    <DialogHeader>
                                        <DialogTitle>{previewCourse?.title || previewCourse?.mainTopic || 'Course Preview'}</DialogTitle>
                                        <DialogDescription>
-                                           {previewCourse?.department ? `Assigned to: ${previewCourse.department}` : 'Assigned to all students'}
+                                           {getDepartmentLabel(previewCourse?.department) ? `Assigned to: ${getDepartmentLabel(previewCourse?.department)}` : 'Assigned to all students'}
                                        </DialogDescription>
                                    </DialogHeader>
                                    {previewCourse && (() => {

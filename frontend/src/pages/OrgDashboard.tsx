@@ -6830,12 +6830,12 @@ Login:
             {/* Course Preview Dialog */}
             <Dialog open={!!previewCourse} onOpenChange={(open) => !open && setPreviewCourse(null)}>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>{previewCourse?.title || previewCourse?.mainTopic || 'Course Preview'}</DialogTitle>
-                        <DialogDescription>
-                            {previewCourse?.department ? `Assigned to: ${previewCourse.department}` : 'Assigned to all students'}
-                        </DialogDescription>
-                    </DialogHeader>
+                        <DialogHeader>
+                            <DialogTitle>{previewCourse?.title || previewCourse?.mainTopic || 'Course Preview'}</DialogTitle>
+                            <DialogDescription>
+                            {getDepartmentLabel(previewCourse?.department) ? `Assigned to: ${getDepartmentLabel(previewCourse?.department)}` : 'Assigned to all students'}
+                            </DialogDescription>
+                        </DialogHeader>
                     {previewCourse && (() => {
                         let parsedContent = null;
                         if (previewCourse.content) {
