@@ -165,7 +165,7 @@ export const subscribe = async (req, res) => {
             <p>You’ll now receive updates about new courses, learning resources, and platform announcements.</p>
 
             <p style="margin:20px 0;">
-              <a href="https://aistudy-infilabs.vercel.app/" 
+              <a href="http://colossusiq.ai/" 
                  target="_blank"
                  style="background:#4f46e5;
                         color:#ffffff;
