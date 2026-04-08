@@ -39,20 +39,27 @@ const AiMockRoom = () => {
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [isThinking, setIsThinking] = useState(false);
     const [inputValue, setInputValue] = useState('');
-    const [isMuted, setIsMuted] = useState(false);
+    // Start muted to avoid browser autoplay / permission issues.
+    const [isMuted, setIsMuted] = useState(true);
     const [ttsSupported, setTtsSupported] = useState(true);
     const [sttSupported, setSttSupported] = useState(true);
     const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
+    const [voiceEnabled, setVoiceEnabled] = useState(false);
     
     const scrollRef = useRef<HTMLDivElement>(null);
     const recognitionRef = useRef<any>(null);
+    const isAliveRef = useRef(true);
+    const hasShownAudioErrorRef = useRef(false);
 
     useEffect(() => {
+        isAliveRef.current = true;
         startSession();
         setupSpeech();
         return () => {
+            isAliveRef.current = false;
             if (recognitionRef.current) recognitionRef.current.stop();
             window.speechSynthesis.cancel();
+            window.speechSynthesis.onvoiceschanged = null;
         };
     }, []);
 
@@ -145,9 +152,11 @@ const AiMockRoom = () => {
     };
 
     const speak = (text: string) => {
-        if (isMuted) return;
+        if (!voiceEnabled || isMuted) return;
         if (!ttsSupported || !('speechSynthesis' in window)) {
-            toast({ title: "Audio Not Supported", description: "Text-to-speech is not supported in this browser." });
+            if (isAliveRef.current) {
+                toast({ title: "Audio Not Supported", description: "Text-to-speech is not supported in this browser." });
+            }
             return;
         }
         window.speechSynthesis.cancel();
@@ -160,7 +169,16 @@ const AiMockRoom = () => {
         utterance.onend = () => setIsSpeaking(false);
         utterance.onerror = () => {
             setIsSpeaking(false);
-            toast({ title: "Audio Error", description: "Unable to play AI voice. Check browser audio permissions.", variant: "destructive" });
+            if (!isAliveRef.current) return;
+            setIsMuted(true);
+            if (!hasShownAudioErrorRef.current) {
+                hasShownAudioErrorRef.current = true;
+                toast({
+                    title: "Audio Disabled",
+                    description: "Browser blocked autoplay audio. Click the speaker icon to enable voice.",
+                    variant: "destructive"
+                });
+            }
         };
         window.speechSynthesis.speak(utterance);
     };
@@ -181,6 +199,8 @@ const AiMockRoom = () => {
                 message: messageToSend,
                 isArrival
             });
+
+            if (!isAliveRef.current) return;
 
             if (res.data.success) {
                 const aiMsg = res.data.aiResponse;
@@ -235,7 +255,19 @@ const AiMockRoom = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white" onClick={() => setIsMuted(!isMuted)}>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-slate-400 hover:text-white"
+                        onClick={() => {
+                            const next = !isMuted;
+                            setIsMuted(next);
+                            if (!next) {
+                                setVoiceEnabled(true);
+                                hasShownAudioErrorRef.current = false;
+                            }
+                        }}
+                    >
                         {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                     </Button>
                     <Button variant="ghost" size="icon" className="text-slate-400 hover:bg-red-500/10 hover:text-red-500 rounded-full" onClick={() => navigate('/dashboard/interview-training')}>

@@ -38,7 +38,8 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  ChevronDown
+  ChevronDown,
+  Bot
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -51,6 +52,7 @@ const StudentSupportTickets = () => {
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [reply, setReply] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -168,12 +170,41 @@ const StudentSupportTickets = () => {
       setReply("");
       await fetchTickets();
 
-      setTimeout(() => {
-        setSelectedTicket(null);
-      }, 300);
-
     } catch (err) {
       console.error("Reply error", err);
+    }
+  };
+
+  const askAI = async () => {
+    if (!selectedTicket?._id || aiLoading) return;
+
+    const messageToAsk = reply.trim();
+
+    try {
+      setAiLoading(true);
+
+      // If user typed something, save it into the ticket thread first.
+      if (messageToAsk) {
+        await axios.post(`${serverURL}/api/student-tickets/${selectedTicket._id}/reply`, {
+          sender: "student",
+          message: messageToAsk,
+        });
+        setReply("");
+      }
+
+      await axios.post(`${serverURL}/api/student-tickets/${selectedTicket._id}/ai-reply`, {
+        message: messageToAsk || undefined,
+      });
+
+      const updatedTickets = await axios.get(`${serverURL}/api/student-tickets/student/${studentId}`);
+      setTickets(updatedTickets.data.tickets || []);
+      const newSelected = (updatedTickets.data.tickets || []).find((t: any) => t._id === selectedTicket._id);
+      setSelectedTicket(newSelected || null);
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || "Failed to get AI response";
+      toast({ title: "AI Assistant", description: msg, variant: "destructive" });
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -686,11 +717,13 @@ const StudentSupportTickets = () => {
                   <div className={`max-w-[85%] sm:max-w-[80%] px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-[13px] sm:text-[14px] shadow-sm ${
                     msg.sender === "student"
                       ? "bg-blue-600 text-white rounded-tr-none"
+                      : msg.sender === "ai"
+                      ? "bg-violet-600/10 text-violet-900 dark:text-violet-200 border border-violet-500/20 rounded-tl-none"
                       : "bg-background border text-foreground rounded-tl-none"
                   }`}>
                     <p className="break-words">{msg.message}</p>
                     <div className={`text-[9px] sm:text-[10px] mt-1 ${
-                      msg.sender === "student" ? "text-blue-100" : "text-gray-500"
+                      msg.sender === "student" ? "text-blue-100" : msg.sender === "ai" ? "text-violet-500" : "text-gray-500"
                     }`}>
                       {new Date(msg.createdAt).toLocaleString()}
                     </div>
@@ -713,6 +746,10 @@ const StudentSupportTickets = () => {
                   }}
                   className="text-sm"
                 />
+                <Button onClick={askAI} variant="outline" disabled={aiLoading} className="shrink-0">
+                  <Bot className="w-4 h-4 mr-2" />
+                  {aiLoading ? "Thinking..." : "Ask AI"}
+                </Button>
                 <Button onClick={sendReply} className="bg-blue-600 hover:bg-blue-700 shrink-0">
                   Send
                 </Button>

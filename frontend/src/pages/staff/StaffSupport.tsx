@@ -13,6 +13,7 @@ import {
   ChevronRight,
   X,
   Bell,
+  Bot,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import axios from "axios";
@@ -39,6 +40,7 @@ export default function StaffSupport() {
   const [tickets, setTickets] = useState<any[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [reply, setReply] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
@@ -100,6 +102,39 @@ export default function StaffSupport() {
     } catch (err) {
       console.error("Reply error", err);
       Swal.fire({ icon: "error", title: "Failed to send reply" });
+    }
+  };
+
+  const askAI = async () => {
+    if (!selectedTicket?._id || aiLoading) return;
+
+    const messageToAsk = reply.trim();
+
+    try {
+      setAiLoading(true);
+
+      if (messageToAsk) {
+        await axios.post(`${serverURL}/api/student-tickets/${selectedTicket._id}/reply`, {
+          sender: "student",
+          message: messageToAsk,
+        });
+        setReply("");
+      }
+
+      await axios.post(`${serverURL}/api/student-tickets/${selectedTicket._id}/ai-reply`, {
+        message: messageToAsk || undefined,
+      });
+
+      const updatedTickets = await axios.get(`${serverURL}/api/student-tickets/student/${uid}`);
+      setTickets(updatedTickets.data.tickets || []);
+      const newSelected = (updatedTickets.data.tickets || []).find((t: any) => t._id === selectedTicket._id);
+      setSelectedTicket(newSelected || null);
+    } catch (err: any) {
+      console.error("AI reply error", err);
+      const msg = err?.response?.data?.message || "Failed to get AI response";
+      Swal.fire({ icon: "error", title: "AI Assistant", text: msg });
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -446,10 +481,12 @@ export default function StaffSupport() {
                   <div className={`group relative max-w-[85%] px-4 py-2.5 rounded-2xl text-sm shadow-sm transition-all ${
                     msg.sender === "student" 
                     ? "bg-blue-600 text-white rounded-tr-none" 
+                    : msg.sender === "ai"
+                    ? "bg-violet-600/10 text-violet-900 dark:text-violet-200 border border-violet-500/20 rounded-tl-none"
                     : "bg-white dark:bg-slate-900 border dark:border-slate-800 text-slate-900 dark:text-white rounded-tl-none"
                   }`}>
                     {msg.message}
-                    <div className={`text-[9px] mt-1.5 font-medium opacity-70 ${msg.sender === "student" ? "text-blue-100" : "text-slate-500"}`}>
+                    <div className={`text-[9px] mt-1.5 font-medium opacity-70 ${msg.sender === "student" ? "text-blue-100" : msg.sender === "ai" ? "text-violet-500" : "text-slate-500"}`}>
                       {new Date(msg.createdAt).toLocaleString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' })}
                     </div>
                   </div>
@@ -467,6 +504,10 @@ export default function StaffSupport() {
                     className="flex-1 bg-slate-50 dark:bg-slate-900 border-none focus-visible:ring-1 focus-visible:ring-blue-500 h-11"
                     onKeyDown={(e) => { if (e.key === "Enter") sendReply(); }}
                   />
+                  <Button onClick={askAI} variant="outline" disabled={aiLoading} className="h-11 px-4 rounded-lg">
+                    <Bot size={18} className="mr-2" />
+                    {aiLoading ? "Thinking..." : "Ask AI"}
+                  </Button>
                   <Button onClick={sendReply} className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20 h-11 px-5 rounded-lg transition-transform active:scale-95">
                     <Send size={18} />
                   </Button>

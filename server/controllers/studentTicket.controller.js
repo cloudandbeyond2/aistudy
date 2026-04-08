@@ -236,6 +236,7 @@ import StudentTicket from "../models/StudentTicket.js";
 import mongoose from "mongoose";
 import Notification from "../models/Notification.js";
 import User from "../models/User.js";
+import { chatWithAI } from "../config/aiProvider.js";
 
 /* ================= CREATE STUDENT TICKET ================= */
 export const createStudentTicket = async (req, res) => {
@@ -504,6 +505,74 @@ export const addStudentTicketReply = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Server error",
+    });
+  }
+};
+
+
+/* ================= AI REPLY ================= */
+export const addStudentTicketAiReply = async (req, res) => {
+  try {
+    const { ticketId } = req.params;
+    const { message } = req.body || {};
+
+    if (!mongoose.Types.ObjectId.isValid(ticketId)) {
+      return res.status(400).json({ success: false, message: "Invalid ticket ID" });
+    }
+
+    const ticket = await StudentTicket.findById(ticketId);
+    if (!ticket) {
+      return res.status(404).json({ success: false, message: "Ticket not found" });
+    }
+
+    const lastStudentMessage = [...(ticket.messages || [])]
+      .reverse()
+      .find((m) => m?.sender === "student" && typeof m?.message === "string" && m.message.trim());
+
+    const promptMessage =
+      (typeof message === "string" && message.trim()) ? message.trim() : lastStudentMessage?.message?.trim();
+
+    if (!promptMessage) {
+      return res.status(400).json({ success: false, message: "Message is required" });
+    }
+
+    const recentContextLines = (ticket.messages || [])
+      .slice(-12)
+      .map((m) => {
+        const sender = m?.sender || "unknown";
+        const text = String(m?.message || "").replace(/\s+/g, " ").trim();
+        return `${sender.toUpperCase()}: ${text}`;
+      })
+      .filter(Boolean)
+      .join("\n");
+
+    const systemInstruction =
+      "You are a helpful support assistant for an education/training web app. " +
+      "Provide practical, step-by-step troubleshooting and ask 1-2 clarifying questions if needed. " +
+      "Be concise. Do not claim you performed actions. If code changes are needed, describe what to change.";
+
+    const aiText = await chatWithAI({
+      systemInstruction,
+      context: `Ticket subject: ${ticket.subject}\n\nRecent conversation:\n${recentContextLines}`,
+      messages: [{ role: "user", content: promptMessage }],
+      maxOutputTokens: 600
+    });
+
+    ticket.messages.push({
+      sender: "ai",
+      message: aiText,
+      readByOrg: false,
+      readByStudent: true
+    });
+
+    await ticket.save();
+
+    return res.json({ success: true, aiMessage: aiText, ticket });
+  } catch (error) {
+    console.error("AI REPLY ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Server error"
     });
   }
 };

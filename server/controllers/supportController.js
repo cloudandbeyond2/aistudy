@@ -18,7 +18,11 @@ const ticket = new SupportTicket({
 await ticket.save();
 
 /* SEND EMAIL */
-await sendSupportEmail(ticket);
+try {
+  await sendSupportEmail(ticket);
+} catch (error) {
+  console.warn("Support email send failed (ignored):", error?.message || error);
+}
 
 res.status(201).json({
     success: true,

@@ -40,6 +40,7 @@ import {
   Download,
   Brain,
   BrainCircuit,
+  Bot,
   MessageSquare,
   Calendar,
   Megaphone,
@@ -521,6 +522,7 @@ const DashboardLayoutContent = () => {
                       <MenuItem icon={BrainCircuit} label="AI Notebook" to="/dashboard/notebook" isActive={isActive('/dashboard/notebook')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     )}
 
+                    <MenuItem icon={Bot} label="Chat Bot" to="/dashboard/ai-mock-room" isActive={isActive('/dashboard/ai-mock-room')} badge="AI" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Briefcase} label="Interview Prep" to="/dashboard/interview-prep" isActive={isActive('/dashboard/interview-prep')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Calendar} label="Calendar Scheduler" to="/dashboard/calendar" isActive={isActive('/dashboard/calendar')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={ListTodo} label="Todo Center" to="/dashboard/todo" isActive={isActive('/dashboard/todo')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
@@ -573,7 +575,8 @@ const DashboardLayoutContent = () => {
                    
                     {careerEnabled.student && <MenuItem icon={Award} label="Career Hub" to="/dashboard/student/career" isActive={isActive('/dashboard/student/career')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
                     {interviewEnabled.student && <MenuItem icon={Brain} label="Mock Training" to="/dashboard/interview-training" isActive={isActive('/dashboard/interview-training')} badge="READY" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
- <MenuItem icon={Activity} label="Internship" to="/dashboard/student/internship" isActive={isActive('/dashboard/student/internship')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    <MenuItem icon={Bot} label="Chat Bot" to="/dashboard/ai-mock-room" isActive={isActive('/dashboard/ai-mock-room')} badge="AI" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    <MenuItem icon={Activity} label="Internship" to="/dashboard/student/internship" isActive={isActive('/dashboard/student/internship')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <SectionHeader title="Community" icon={Users} isExpanded={isExpanded} />
                     <MenuItem icon={Menu} label="Meetings" to="/dashboard/student/meetings" isActive={isActive('/dashboard/student/meetings')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Megaphone} label="Global News" to="/dashboard/student/news" isActive={isActive('/dashboard/student/news')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
@@ -647,6 +650,14 @@ const DashboardLayoutContent = () => {
                       label="Students" 
                       to="/dashboard/org-students" 
                       isActive={isOrgTabActive('students')}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
+                    <MenuItem 
+                      icon={MessageSquare} 
+                      label="Live Support" 
+                      to="/dashboard/org-live-support" 
+                      isActive={isActive('/dashboard/org-live-support')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
@@ -829,6 +840,15 @@ const DashboardLayoutContent = () => {
                         onMobileClick={handleMobileMenuClick}
                       />
                     )}
+                    <MenuItem
+                      icon={Bot}
+                      label="Chat Bot"
+                      to="/dashboard/ai-mock-room"
+                      isActive={isActive('/dashboard/ai-mock-room')}
+                      badge="AI"
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
                     {skillBoosterEnabled[sidebarPlanKey as keyof typeof skillBoosterEnabled] && (
                       <MenuItem
                         icon={Zap}
@@ -1117,6 +1137,55 @@ const DashboardLayoutContent = () => {
                 )}
               </Link>
               
+              <Link
+                to="/dashboard/ai-mock-room"
+                onClick={handleMobileMenuClick}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+              >
+                <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <span>Chat Bot</span>
+                {location.pathname.includes('/ai-mock-room') && (
+                  <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                )}
+              </Link>
+
+              {!admin && (
+                <Link
+                  to={
+                    sessionStorage.getItem('role') === 'org_admin'
+                      ? "/dashboard/org-live-support"
+                      : sessionStorage.getItem('role') === 'dept_admin'
+                      ? "/dashboard/staff/support"
+                      : sessionStorage.getItem('role') === 'student'
+                      ? "/dashboard/student/support-tickets"
+                      : "/dashboard/support"
+                  }
+                  onClick={handleMobileMenuClick}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <LifeBuoy className="h-4 w-4" />
+                  </div>
+                  <span>
+                    {sessionStorage.getItem('role') === 'org_admin'
+                      ? "Live Support"
+                      : sessionStorage.getItem('role') === 'dept_admin'
+                      ? "Support Desk"
+                      : sessionStorage.getItem('role') === 'student'
+                      ? "Support Tickets"
+                      : "Support"}
+                  </span>
+                  {(location.pathname.includes('/org-live-support') ||
+                    location.pathname.includes('/staff/support') ||
+                    location.pathname.includes('/student/support-tickets') ||
+                    location.pathname === '/dashboard/support') && (
+                    <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  )}
+                </Link>
+              )}
+
               {/* Role-specific menu items */}
               {sessionStorage.getItem('role') === 'org_admin' && (
                 <>
@@ -1387,6 +1456,55 @@ const DashboardLayoutContent = () => {
               )}
             </Link>
             
+            <Link
+              to="/dashboard/ai-mock-room"
+              onClick={handleMobileMenuClick}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+            >
+              <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                <Bot className="h-4 w-4" />
+              </div>
+              <span>Chat Bot</span>
+              {location.pathname.includes('/ai-mock-room') && (
+                <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+              )}
+            </Link>
+
+            {!admin && (
+              <Link
+                to={
+                  sessionStorage.getItem('role') === 'org_admin'
+                    ? "/dashboard/org-live-support"
+                    : sessionStorage.getItem('role') === 'dept_admin'
+                    ? "/dashboard/staff/support"
+                    : sessionStorage.getItem('role') === 'student'
+                    ? "/dashboard/student/support-tickets"
+                    : "/dashboard/support"
+                }
+                onClick={handleMobileMenuClick}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+              >
+                <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                  <LifeBuoy className="h-4 w-4" />
+                </div>
+                <span>
+                  {sessionStorage.getItem('role') === 'org_admin'
+                    ? "Live Support"
+                    : sessionStorage.getItem('role') === 'dept_admin'
+                    ? "Support Desk"
+                    : sessionStorage.getItem('role') === 'student'
+                    ? "Support Tickets"
+                    : "Support"}
+                </span>
+                {(location.pathname.includes('/org-live-support') ||
+                  location.pathname.includes('/staff/support') ||
+                  location.pathname.includes('/student/support-tickets') ||
+                  location.pathname === '/dashboard/support') && (
+                  <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                )}
+              </Link>
+            )}
+
             {/* Role-specific menu items */}
             {sessionStorage.getItem('role') === 'org_admin' && (
               <>

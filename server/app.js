@@ -67,6 +67,7 @@ import mockTrainingRoutes from "./routes/mockTraining.routes.js";
 import internshipRoutes from './routes/internship.routes.js';
 import skillBoosterRoutes from './routes/skillBooster.routes.js';
 import googleCalendarRoutes from './routes/googleCalendar.routes.js';
+import liveSupportRoutes from './routes/liveSupportRoutes.js';
 
 
 // -------------------- INIT --------------------
@@ -167,6 +168,7 @@ app.use("/api", mockTrainingRoutes);
 app.use("/api", internshipRoutes);
 app.use("/api", skillBoosterRoutes);
 app.use("/api/google-calendar", googleCalendarRoutes);
+app.use("/api/live-support", liveSupportRoutes);
 
 // -------------------- ERROR HANDLER --------------------
 app.use((err, req, res, next) => {

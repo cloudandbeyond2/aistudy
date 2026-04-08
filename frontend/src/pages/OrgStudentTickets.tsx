@@ -359,7 +359,11 @@ const OrgStudentTickets = () => {
               {selectedTicket?.messages?.map((msg: any, i: number) => (
                 <div key={i} className={`flex ${msg.sender === "org_admin" ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-[14px] shadow-sm ${
-                    msg.sender === "org_admin" ? "bg-blue-600 text-white rounded-tr-none" : "bg-background border text-foreground rounded-tl-none"
+                    msg.sender === "org_admin"
+                      ? "bg-blue-600 text-white rounded-tr-none"
+                      : msg.sender === "ai"
+                      ? "bg-violet-600/10 text-violet-900 dark:text-violet-200 border border-violet-500/20 rounded-tl-none"
+                      : "bg-background border text-foreground rounded-tl-none"
                   }`}>
                     {msg.message}
                   </div>

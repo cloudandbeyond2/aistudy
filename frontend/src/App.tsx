@@ -142,6 +142,9 @@ import MaterialsTab from "./pages/org-dashboard/MaterialsTab";
 import NoticesTab from "./pages/org-dashboard/NoticesTab";
 import CareerTab from "./pages/org-dashboard/CareerTab";
 import SkillBooster from "./pages/SkillBooster";
+import LiveSupportWidget from "./components/support/LiveSupportWidget";
+import ChatBotFloatingIcon from "./components/support/ChatBotFloatingIcon";
+import LiveSupportTab from "./pages/org-dashboard/LiveSupportTab";
 
 const PublicThemeGuard = () => {
   const location = useLocation();
@@ -216,6 +219,7 @@ const App = () => (
                      <Route path="org-materials" element={<MaterialsTab />} />
                      <Route path="org-notices" element={<NoticesTab />} />
                      <Route path="org-career" element={<CareerTab />} />
+                     <Route path="org-live-support" element={<LiveSupportTab />} />
 
                     <Route path="org/assignment/:assignmentId/submissions" element={<OrgAssignmentSubmissions />} />
                     <Route path="student" element={<OrganizationStudentGuard />}>
@@ -336,6 +340,8 @@ const App = () => (
                     <Route path="*" element={<StaffDashboard />} /> {/* Fallback for demo */}
                   </Route>
                 </Routes>
+                <LiveSupportWidget />
+                <ChatBotFloatingIcon />
                 <CookiePopup />
                 <Toaster />
                 <Sonner />

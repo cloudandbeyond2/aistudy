@@ -6,6 +6,7 @@ import {
   getStudentTickets,
   updateStudentTicketStatus,
   addStudentTicketReply,
+  addStudentTicketAiReply,
   markStudentTicketAsRead,
 } from "../controllers/studentTicket.controller.js";
 const router = express.Router();
@@ -29,6 +30,12 @@ router.put(
 router.post(
   "/student-tickets/:ticketId/reply",
   addStudentTicketReply
+);
+
+/* ================= AI REPLY (Student/Staff) ================= */
+router.post(
+  "/student-tickets/:ticketId/ai-reply",
+  addStudentTicketAiReply
 );
 
 /* ================= MARK AS READ ================= */
