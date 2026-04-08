@@ -149,7 +149,7 @@ const logoTileClass =
 const getDashboardPath = () => {
   const role = sessionStorage.getItem('role') || '';
   if (role === 'student') return '/dashboard/student';
-  if (role === 'dept_admin') return '/dashboard/staff';
+  if (role === 'dept_admin') return '/dashboard/dept';
   if (role === 'org_admin') return '/dashboard/org';
   return '/dashboard';
 };

@@ -856,9 +856,9 @@ const DashboardLayoutContent = () => {
                     
                     <MenuItem 
                       icon={Gauge} 
-                      label="Dashboard" 
-                      to="/dashboard" 
-                      isActive={isActive('/dashboard')}
+                      label="Department Portal" 
+                      to="/dashboard/dept" 
+                      isActive={isActive('/dashboard/dept')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
@@ -871,6 +871,8 @@ const DashboardLayoutContent = () => {
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
+
+                    <SectionHeader title="Tools" icon={Sparkles} isExpanded={isExpanded} />
                     <MenuItem 
                       icon={Briefcase} 
                       label="Interview Prep" 

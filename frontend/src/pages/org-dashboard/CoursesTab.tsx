@@ -2947,6 +2947,11 @@ const CoursesTab = () => {
         if (typeof value === 'object') return value._id || value.name || '';
         return '';
     };
+    const getDepartmentLabel = (value: any) => {
+        const normalizedValue = getDepartmentValue(value);
+        if (!normalizedValue || normalizedValue === 'all') return '';
+        return departmentsList.find((d: any) => d._id === normalizedValue || d.name === normalizedValue)?.name || normalizedValue;
+    };
     const matchesCurrentDepartment = (value: any, departmentId?: any) => {
         const normalizedValue = getDepartmentValue(value);
         const normalizedDepartmentId = getDepartmentValue(departmentId);
@@ -3494,17 +3499,39 @@ const CoursesTab = () => {
                <>
                    {/* COURSES TAB */}
                                <div className="space-y-4">
-                                   <Card>
-                                       <CardHeader>
-                                           <CardTitle>Manage Courses</CardTitle>
-                                           <CardDescription>Create and assign courses to your students.</CardDescription>
+                                   <Card className="border-border/60">
+                                       <CardHeader className="space-y-3">
+                                           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                                               <div>
+                                                   <CardTitle className="text-xl sm:text-2xl">Manage Courses</CardTitle>
+                                                   <CardDescription>Create, review, and publish learning modules.</CardDescription>
+                                               </div>
+                                               <div className="flex flex-wrap gap-2">
+                                                   <Badge variant="outline">Total: {visibleCourses?.length || 0}</Badge>
+                                                   <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800">
+                                                       Pending: {visibleCourses?.filter((c: any) => (c.approvalStatus || (c.isPublished === false ? 'pending' : 'approved')) === 'pending').length || 0}
+                                                   </Badge>
+                                                   <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-800">
+                                                       Published: {visibleCourses?.filter((c: any) => c?.isPublished === true).length || 0}
+                                                   </Badge>
+                                               </div>
+                                           </div>
                                        </CardHeader>
-                                       <CardContent className="space-y-4">
+                                       <CardContent className="space-y-5">
                                            <Alert className="border-primary/20 bg-primary/5">
-                                               <AlertTitle>Recommended organization flow</AlertTitle>
-                                               <AlertDescription>
-                                                   Draft the course, assign a department, review it internally, then publish it to the student portal.
-                                                   Department admins stay locked to their own department, while organization admins can publish across departments.
+                                               <AlertTitle className="flex items-center gap-2">
+                                                   <Sparkles className="h-4 w-4 text-primary" />
+                                                   Recommended flow
+                                               </AlertTitle>
+                                               <AlertDescription className="mt-2">
+                                                   <ol className="list-decimal pl-5 space-y-1">
+                                                       <li>Draft the course and assign a department (optional).</li>
+                                                       <li>Review it internally and add quizzes/settings.</li>
+                                                       <li>Publish to the student portal when ready.</li>
+                                                   </ol>
+                                                   <div className="mt-2 text-xs text-muted-foreground">
+                                                       Department admins stay locked to their own department; organization admins can publish across departments.
+                                                   </div>
                                                </AlertDescription>
                                            </Alert>
                                            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -4053,7 +4080,7 @@ const CoursesTab = () => {
                                    <DialogHeader>
                                        <DialogTitle>{previewCourse?.title || previewCourse?.mainTopic || 'Course Preview'}</DialogTitle>
                                        <DialogDescription>
-                                           {previewCourse?.department ? `Assigned to: ${previewCourse.department}` : 'Assigned to all students'}
+                                           {getDepartmentLabel(previewCourse?.department) ? `Assigned to: ${getDepartmentLabel(previewCourse?.department)}` : 'Assigned to all students'}
                                        </DialogDescription>
                                    </DialogHeader>
                                    {previewCourse && (() => {
