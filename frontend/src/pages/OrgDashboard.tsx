@@ -2039,10 +2039,8 @@ const handleDeleteMaterial = async (id: string) => {
     }
 
     const fetchStudents = async () => {
-        console.log('Fetching students for orgId:', orgId);
         try {
             const res = await axios.get(`${serverURL}/api/org/students?organizationId=${orgId}`);
-            console.log('Students response:', res.data);
             if (res.data.success) {
                 setStudents(res.data.students);
             } else {
@@ -2351,9 +2349,6 @@ const handleDeleteAssignment = async (id: string) => {
 
     const handleUpdateAICourse = async () => {
         if (!editAICourse) return;
-        console.log("Attempting to update AI course:", editAICourse);
-        console.log("Course ID:", editAICourse._id);
-        console.log("Update URL:", `${serverURL}/api/org/course/${editAICourse._id}`);
 
         try {
             const res = await axios.put(`${serverURL}/api/org/course/${editAICourse._id}`, {
@@ -2361,7 +2356,6 @@ const handleDeleteAssignment = async (id: string) => {
                 department: editAICourse.department,
                 updatedBy: sessionStorage.getItem('uid')
             });
-            console.log("Update response:", res.data);
             if (res.data.success) {
                 toast({ title: "Success", description: "AI Course updated successfully" });
                 setEditAICourse(null);
@@ -2912,8 +2906,6 @@ const handleUpdateDeptAdmin = async () => {
         if (newDeptAdmin.phone) {
             updateData.phone = newDeptAdmin.phone;
         }
-        
-        console.log('Updating department admin:', editingDeptAdmin._id, updateData);
         
         const res = await axios.put(
             `${serverURL}/api/org/dept-admin/${editingDeptAdmin._id}`, 
