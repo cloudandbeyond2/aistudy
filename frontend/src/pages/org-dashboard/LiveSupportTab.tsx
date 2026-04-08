@@ -31,7 +31,7 @@ const LiveSupportTab = () => {
   
   const orgId = sessionStorage.getItem('orgId');
   const token = sessionStorage.getItem('token');
-  const userId = sessionStorage.getItem('userId');
+  const userId = sessionStorage.getItem('uid') || sessionStorage.getItem('userId');
   
   const { socket, isConnected } = useSocket();
   const { startCall, answerCall, endCall, isCalling, incomingCall, remoteStream, localStream } = useWebRTC(selectedSession?._id || null);
@@ -43,6 +43,24 @@ const LiveSupportTab = () => {
       audioRef.current.srcObject = remoteStream;
     }
   }, [remoteStream]);
+
+  useEffect(() => {
+    if (sessionStorage.getItem('role') !== 'org_admin' || !userId) return undefined;
+
+    const markLiveSupportRead = async () => {
+      try {
+        await axios.post(`${serverURL}/api/notifications/read-by-link`, {
+          userId,
+          link: '/dashboard/org-live-support'
+        });
+        window.dispatchEvent(new CustomEvent('live-support-read'));
+      } catch (error) {
+        console.error('Failed to mark live support notifications as read:', error);
+      }
+    };
+
+    void markLiveSupportRead();
+  }, [userId]);
 
   useEffect(() => {
     const fetchSessions = async () => {
@@ -97,7 +115,7 @@ const LiveSupportTab = () => {
 
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputVal.trim() || !socket || !selectedSession) return;
+    if (!inputVal.trim() || !socket || !selectedSession || !userId) return;
 
     socket.emit('send-support-message', {
       sessionId: selectedSession._id,

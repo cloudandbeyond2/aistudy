@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.post('/get', notificationController.getNotifications);
 router.post('/read', notificationController.markAsRead);
+router.post('/read-by-link', notificationController.markByLinkAsRead);
 router.post('/clear', notificationController.clearNotifications);
 router.post('/send-individual', notificationController.sendIndividualNotification);
 

@@ -37,7 +37,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationsChan
             if (!userId) return;
 
             const response = await axios.post(`${serverURL}/api/notifications/get`, { userId });
-            const notificationsData = Array.isArray(response.data) ? response.data : [];
+            const notificationsData = Array.isArray(response.data?.data) ? response.data.data : [];
             setNotifications(notificationsData);
             setUnreadCount(notificationsData.filter(n => !n.isRead).length);
             onNotificationsChange?.(notificationsData);
