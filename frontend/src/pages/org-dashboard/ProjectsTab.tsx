@@ -1226,8 +1226,8 @@ const ProjectTab = () => {
 
                     <Button 
                         onClick={handleCreateProject} 
-                        className="w-full h-12 lg:h-14 text-base lg:text-lg font-bold"
-                        className="bg-brand-gradient text-primary-foreground"
+                        className="w-full h-12 lg:h-14 text-base lg:text-lg font-bold bg-brand-gradient text-primary-foreground"
+                        // className="bg-brand-gradient text-primary-foreground"
                     >
                         <Sparkles className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
                         Publish Project

@@ -1,9 +1,9 @@
 //BRAND
 export const appName = 'Colossus IQ';
 export const companyName = 'Infilabs Pvt Ltd';
-export const websiteURL = 'https://aistudy-infilabs.vercel.app';
+export const websiteURL = 'http://colossusiq.ai';
 export const serverURL = import.meta.env.PROD
-  ? 'https://aistudy-backend1.vercel.app'
+  ? 'http://darkturquoise-quail-773641.hostingersite.com'
   : 'http://localhost:5001';
 export const appLogo = '/colossus-icon.png';
 export const appWordmarkDark = '/logo-colossus-dark.png';
@@ -69,9 +69,9 @@ export const flutterwavePlanIdTwo = "67961";
 export const flutterwavePublicKey = "FLWPUBK_TEST-6ee1faf6460ea587f510a024ac4c2b23-Xrr";
 
 //SOCIAL SIGNIN
-export const googleClientId = "723153373855-5e2f879afn1e5knuhacpfc729t60vvho.apps.googleusercontent.com";
+export const googleClientId = "528994585968-n6ub7jqe2flado9f8i6i2usf0pmt9stp.apps.googleusercontent.com";
 export const facebookClientId = "8065327730213158";
-export const recaptchaSiteKey = "6LfdFl4sAAAAAKvCQBt8Fiu4CXc-D52ly_tpX_fB";
+export const recaptchaSiteKey = "6LdfXassAAAAAJzrpySqzFYzFnBYt8uC-j_CfKLw";
 //SOCIAL MEDIA
 export const facebookSocialLink = "https://www.youtube.com/";
 export const twitterSocialLink = "https://www.youtube.com/";

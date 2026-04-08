@@ -1,6 +1,6 @@
 const allowedOrigins = [
   process.env.WEBSITE_URL || 'http://Colossus IQ.in/server',
-  'https://aistudy-infilabs.vercel.app',
+  'http://colossusiq.ai',
   'https://app.valoteam.com',
   'http://localhost:5173',
   'http://localhost:4173',

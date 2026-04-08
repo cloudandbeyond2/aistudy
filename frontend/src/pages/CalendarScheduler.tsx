@@ -528,27 +528,27 @@ export default function CalendarScheduler() {
         </div>
       </section>
 
-      {/* ── STAT CARDS ── */}
-      <div className="grid gap-4 md:grid-cols-4">
-        {[
-          { label: 'Today', value: counts.today, icon: CalendarDays, tone: 'text-primary' },
-          { label: 'This Week', value: counts.week, icon: Clock, tone: 'text-amber-500' },
-          { label: 'Organization', value: counts.org, icon: Layers3, tone: 'text-indigo-600' },
-          { label: 'Personal', value: counts.personal, icon: CheckCircle2, tone: 'text-emerald-600' },
-        ].map((item) => (
-          <Card key={item.label} className="overflow-hidden border-slate-200/80 bg-white/90 shadow-[0_18px_60px_-45px_rgba(15,23,42,0.45)]">
-            <CardContent className="p-4">
-              <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">{item.label}</p>
-              <div className="mt-3 flex items-center justify-between">
-                <span className="text-2xl font-semibold text-slate-950">{item.value}</span>
-                <span className="rounded-2xl bg-slate-950/5 p-2">
-                  <item.icon className={`h-5 w-5 ${item.tone}`} />
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+  {/* ── STAT CARDS ── */}
+<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
+  {[
+    { label: 'Today', value: counts.today, icon: CalendarDays, tone: 'text-primary' },
+    { label: 'This Week', value: counts.week, icon: Clock, tone: 'text-amber-500' },
+    { label: 'Organization', value: counts.org, icon: Layers3, tone: 'text-indigo-600' },
+    { label: 'Personal', value: counts.personal, icon: CheckCircle2, tone: 'text-emerald-600' },
+  ].map((item) => (
+    <Card key={item.label} className="overflow-hidden border-slate-200/80 bg-white/90 shadow-[0_18px_60px_-45px_rgba(15,23,42,0.45)]">
+      <CardContent className="p-4">
+        <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">{item.label}</p>
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-2xl font-semibold text-slate-950">{item.value}</span>
+          <span className="rounded-2xl bg-slate-950/5 p-2">
+            <item.icon className={`h-5 w-5 ${item.tone}`} />
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  ))}
+</div>
 
       {/* ── TAB SWITCHER ── */}
       <div className="flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-white/80 p-1.5 shadow-sm w-fit">
