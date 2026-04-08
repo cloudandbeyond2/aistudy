@@ -11,6 +11,10 @@ import {
   MessageSquare,
   Target,
   Video,
+   Zap,        
+  Briefcase,  
+  Calendar,      
+  CheckSquare 
 } from 'lucide-react';
 
 export const PRICING_FEATURES = [
@@ -20,6 +24,8 @@ export const PRICING_FEATURES = [
   'Create Courses',
   'AI Teacher Chat',
   'Course in 23+ Languages',
+   'Calendar Scheduler',
+  'Todo Center',
   'Video & Theory Course',
   'Resume Builder',
   'AI Notebook',
@@ -27,9 +33,12 @@ export const PRICING_FEATURES = [
   'Certification',
   'Priority Support',
   'Advanced Analytics',
+  
+   'Skill Booster',
 ] as const;
+import { LucideIcon } from 'lucide-react';
 
-export const PRICING_FEATURE_ICONS: Record<string, any> = {
+export const PRICING_FEATURE_ICONS: Record<string, LucideIcon> = {
   'Sub-Topic Limit': Layers,
   'Access Duration': Clock,
   'Theory & Image Course': BookOpen,
@@ -37,12 +46,15 @@ export const PRICING_FEATURE_ICONS: Record<string, any> = {
   'AI Teacher Chat': MessageSquare,
   'Course in 23+ Languages': Globe,
   'Video & Theory Course': Video,
+  'Calendar Scheduler': Calendar,
+  'Todo Center': CheckSquare,
   'Resume Builder': FileText,
   'AI Notebook': Brain,
   'Interview Preparation': Target,
   'Certification': Award,
   'Priority Support': Headphones,
   'Advanced Analytics': BarChart,
+  'Skill Booster': Zap,
 };
 
 export const PRICING_PLAN_FEATURES: Record<string, Record<string, boolean | string>> = {
@@ -54,12 +66,15 @@ export const PRICING_PLAN_FEATURES: Record<string, Record<string, boolean | stri
     'AI Teacher Chat': true,
     'Course in 23+ Languages': false,
     'Video & Theory Course': false,
+    'Calendar Scheduler': true,
+    'Todo Center': true,
     'Resume Builder': false,
     'AI Notebook': false,
     'Interview Preparation': false,
     'Certification': false,
-    'Priority Support': false,
+    'Priority Support': true,
     'Advanced Analytics': false,
+     'Skill Booster': false,
   },
   monthly: {
     'Sub-Topic Limit': '10 per course',
@@ -69,12 +84,15 @@ export const PRICING_PLAN_FEATURES: Record<string, Record<string, boolean | stri
     'AI Teacher Chat': true,
     'Course in 23+ Languages': false,
     'Video & Theory Course': true,
+    'Calendar Scheduler': true,
+    'Todo Center': true,
     'Resume Builder': true,
     'AI Notebook': true,
     'Interview Preparation': true,
     'Certification': true,
     'Priority Support': true,
     'Advanced Analytics': true,
+    'Skill Booster': false,
   },
   yearly: {
     'Sub-Topic Limit': '10 per course',
@@ -84,12 +102,15 @@ export const PRICING_PLAN_FEATURES: Record<string, Record<string, boolean | stri
     'AI Teacher Chat': true,
     'Course in 23+ Languages': true,
     'Video & Theory Course': true,
+    'Calendar Scheduler': true,
+'Todo Center': true,
     'Resume Builder': true,
     'AI Notebook': true,
     'Interview Preparation': true,
     'Certification': true,
     'Priority Support': true,
     'Advanced Analytics': true,
+     'Skill Booster': true,
   },
 };
 

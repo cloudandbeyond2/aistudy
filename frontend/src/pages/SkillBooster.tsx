@@ -41,12 +41,12 @@ export default function SkillBooster() {
   const userId = sessionStorage.getItem('uid');
   const plan = sessionStorage.getItem('type') || 'free';
   const role = sessionStorage.getItem('role') || 'user';
-  const isPaid = ['monthly', 'yearly', 'forever'].includes(plan);
+const isYearly = ['yearly', 'forever'].includes(plan);
   const isOrg = !!sessionStorage.getItem('orgId') || sessionStorage.getItem('isOrganization') === 'true';
 
   useEffect(() => {
     if (!userId) return;
-    if (!isPaid && !isOrg && role !== 'org_admin') {
+if (!isYearly && !isOrg && role !== 'org_admin') {
       setIsLoading(false);
       return; 
     }
@@ -179,30 +179,39 @@ export default function SkillBooster() {
 
 
   // If user doesn't have access
-  if (!isPaid && !isOrg && role !== 'org_admin') {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Card className="max-w-md w-full border-primary/20 shadow-xl bg-gradient-to-br from-background to-primary/5">
-          <CardHeader className="text-center">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <Zap className="h-8 w-8 text-primary" />
-            </div>
-            <CardTitle className="text-2xl">Unlock Skill Booster</CardTitle>
-            <CardDescription className="text-base mt-2">
-              Accelerate your personal growth with AI-generated roadmaps, daily practice plans, and a gamified leveling system.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4 pb-8 text-center">
-            <Button size="lg" className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-blue-600 hover:to-cyan-500 shadow-lg text-white font-semibold rounded-xl" onClick={() => window.location.href='/dashboard/pricing'}>
-              Upgrade to Premium
-            </Button>
-            <p className="text-xs text-muted-foreground mt-2">Included in all monthly and yearly plans.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+ if (!isYearly && !isOrg && role !== 'org_admin') {
+   return (
+  <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-2xl mx-auto text-center px-4 py-8">
+    
+    {/* ICON */}
+    <div className="bg-primary/10 p-6 rounded-full mb-6">
+      <Zap className="h-16 w-16 text-primary" />
+    </div>
 
+    {/* TITLE */}
+    <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-indigo-500 bg-clip-text text-transparent mb-4">
+      Unlock Skill Booster
+    </h1>
+
+    {/* DESCRIPTION */}
+    <p className="text-base md:text-lg text-muted-foreground mb-8">
+      Boost your growth with AI-powered roadmaps, daily insights, and smart practice tracking. 
+      Upgrade to the Yearly plan to unlock your full potential.
+    </p>
+
+    {/* BUTTON */}
+    <Button
+      size="lg"
+      onClick={() => window.location.href = '/dashboard/pricing'}
+      className="px-8 shadow-lg"
+    >
+      <Zap className="h-4 w-4 mr-2" />
+      Upgrade Now
+    </Button>
+
+  </div>
+);
+}
   if (isLoading) {
     return (
       <div className="flex h-[400px] items-center justify-center">

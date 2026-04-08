@@ -7,8 +7,8 @@ const NotFound = () => {
   return (
     <>
       <SEO
-        title="Page Not Found"
-        description="The page you're looking for doesn't exist or has been moved."
+        title="This Page Does Not Exist"
+        description="Sorry, the page you are looking for could not be found. It's just an accident that was not intentional."
         keywords="404, not found, error, page not found"
       />
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted/30 p-4">
@@ -23,9 +23,9 @@ const NotFound = () => {
           </div>
           
           <div className="space-y-3">
-            <h1 className="text-3xl font-bold">Page Not Found</h1>
+            <h1 className="text-3xl font-bold">This Page Does Not Exist</h1>
             <p className="text-muted-foreground">
-              The page you're looking for doesn't exist or has been moved.
+              Sorry, the page you are looking for could not be found. It's just an accident that was not intentional.
             </p>
           </div>
           

@@ -1897,6 +1897,8 @@
 // };
 
 // export default ProfilePricing;
+
+
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -2733,8 +2735,17 @@ const ProfilePricing = () => {
           className="mt-16 text-center"
         >
           <p className="text-sm text-muted-foreground">
-            Have questions? <button className="text-purple-600 hover:text-purple-700 font-medium">Contact our support team</button> for personalized assistance.
-          </p>
+  Have questions?{" "}
+  <a 
+    href="https://aistudy-infilabs.vercel.app/contact"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="text-purple-600 hover:text-purple-700 font-medium"
+  >
+    Contact our support team
+  </a>{" "}
+  for personalized assistance.
+</p>
         </motion.div>
       </div>
     </div>

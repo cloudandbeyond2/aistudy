@@ -36,6 +36,7 @@ import {
   serverURL,
 } from '@/constants';
 import { PRICING_FEATURES, PRICING_PLAN_FEATURES } from '@/lib/pricingFeatures';
+import { PRICING_FEATURE_ICONS } from '@/lib/pricingFeatures';
 
 type PlanType = 'free' | 'monthly' | 'yearly';
 
@@ -340,11 +341,10 @@ const IndividualPricing = () => {
             {plans.map((plan, index) => {
               const meta = PLAN_META[plan.planType];
               const features = PRICING_PLAN_FEATURES[plan.planType];
-              const featureItems = PRICING_FEATURES.filter((feature) => {
-                const value = features[feature];
-                return value === true || typeof value === 'string';
-              }).slice(0, plan.planType === 'free' ? 5 : 8);
-
+         const featureItems = PRICING_FEATURES.filter((feature) => {
+  const value = features[feature];
+  return value === true || typeof value === 'string';
+});
               return (
                 <motion.div
                   key={plan.planType}
@@ -356,7 +356,7 @@ const IndividualPricing = () => {
                 >
                   <Card
                     className={cn(
-                      'relative flex h-full flex-col overflow-hidden rounded-[30px] border bg-[#0a1220]/95 shadow-[0_20px_60px_-45px_rgba(2,6,23,0.85)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_90px_-48px_rgba(34,211,238,0.18)]',
+                 'relative flex h-full min-h-[650px] flex-col overflow-hidden rounded-[30px] border bg-[#0a1220]/95 shadow-[0_20px_60px_-45px_rgba(2,6,23,0.85)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_90px_-48px_rgba(34,211,238,0.18)]',
                       plan.planType === 'monthly'
                         ? 'border-cyan-300/30 ring-1 ring-cyan-300/10'
                         : 'border-white/10'
@@ -417,26 +417,34 @@ const IndividualPricing = () => {
                         <p className="mt-1 text-sm leading-6 text-slate-300">{meta.description}</p>
                       </div>
 
-                      <ul className="space-y-3">
-                        {featureItems.map((feature) => {
-                          const value = features[feature];
-                          return (
-                            <li key={feature} className="flex items-start gap-3">
-                              <div className="mt-0.5 rounded-full bg-cyan-400/10 p-1 text-cyan-300">
-                                <Check className="h-3.5 w-3.5" />
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium text-white">{feature}</p>
-                                {typeof value === 'string' && (
-                                  <p className="mt-0.5 text-xs leading-5 text-slate-400">{value}</p>
-                                )}
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
+                    <ul className="space-y-3 flex-1">
+                       {featureItems.map((feature) => {
+  const value = features[feature];
+  const Icon = PRICING_FEATURE_ICONS?.[feature];
 
-                      <div className="mt-6">
+  return (
+    <li key={feature} className="flex items-start gap-3">
+
+      <div className="mt-0.5 rounded-full bg-cyan-400/10 p-1 text-cyan-300">
+        {Icon ? (
+          <Icon className="h-3.5 w-3.5" />
+        ) : (
+          <Check className="h-3.5 w-3.5" />
+        )}
+      </div>
+
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-white">{feature}</p>
+
+        {typeof value === 'string' && (
+          <p className="mt-0.5 text-xs text-slate-400">{value}</p>
+        )}
+      </div>
+    </li>
+  );
+})} </ul>
+
+                  <div className="mt-auto pt-6">
                         <Button
                           onClick={() => handlePlanAction(plan.planType, plan.planName, plan.price, plan.currency)}
                           className={cn(
