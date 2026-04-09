@@ -18,6 +18,7 @@ const LiveSupportWidget = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputVal, setInputVal] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [resolvedDeptId, setResolvedDeptId] = useState<string>(sessionStorage.getItem('deptId') || '');
   
   const { socket, isConnected } = useSocket();
   const { startCall, answerCall, endCall, isCalling, incomingCall, remoteStream, localStream } = useWebRTC(sessionId);
@@ -53,6 +54,38 @@ const LiveSupportWidget = () => {
   const role = sessionStorage.getItem('role');
   const token = sessionStorage.getItem('token');
   const orgId = sessionStorage.getItem('orgId');
+  const deptId = resolvedDeptId;
+
+  useEffect(() => {
+    if (resolvedDeptId || !currentUserId || !['student', 'user'].includes(role || '')) return;
+
+    let cancelled = false;
+    const resolveStudentDepartment = async () => {
+      try {
+        const res = await axios.get(`${serverURL}/api/getuser/${currentUserId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (cancelled || !res.data?.success) return;
+
+        const departmentValue =
+          res.data.user?.department?._id ||
+          res.data.user?.department ||
+          '';
+
+        if (departmentValue) {
+          setResolvedDeptId(String(departmentValue));
+        }
+      } catch (error) {
+        console.error('Failed to resolve student department for live support:', error);
+      }
+    };
+
+    void resolveStudentDepartment();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUserId, role, resolvedDeptId, token]);
 
   useEffect(() => {
     // Create/fetch a session as soon as the student is available in the app.
@@ -64,7 +97,8 @@ const LiveSupportWidget = () => {
       try {
         const res = await axios.post(`${serverURL}/api/live-support/session`, {
           studentId: currentUserId,
-          organizationId: orgId
+          organizationId: orgId,
+          departmentId: deptId
         }, { headers: { Authorization: `Bearer ${token}` }});
         
         if (res.data.success) {
@@ -87,7 +121,7 @@ const LiveSupportWidget = () => {
     if (!sessionId) {
       initSession();
     }
-  }, [currentUserId, role, sessionId, orgId, token]);
+  }, [currentUserId, role, sessionId, orgId, deptId, token]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -137,7 +171,7 @@ const LiveSupportWidget = () => {
     setInputVal('');
   };
 
-  if (role !== 'student' && role !== 'user' && role !== 'org_admin') return null;
+  if (role !== 'student' && role !== 'user') return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">

@@ -30,8 +30,10 @@ const LiveSupportTab = () => {
   const [inputVal, setInputVal] = useState('');
   
   const orgId = sessionStorage.getItem('orgId');
+  const deptId = sessionStorage.getItem('deptId');
   const token = sessionStorage.getItem('token');
   const userId = sessionStorage.getItem('uid') || sessionStorage.getItem('userId');
+  const role = sessionStorage.getItem('role');
   
   const { socket, isConnected } = useSocket();
   const { startCall, answerCall, endCall, isCalling, incomingCall, remoteStream, localStream } = useWebRTC(selectedSession?._id || null);
@@ -45,13 +47,13 @@ const LiveSupportTab = () => {
   }, [remoteStream]);
 
   useEffect(() => {
-    if (sessionStorage.getItem('role') !== 'org_admin' || !userId) return undefined;
+    if (role !== 'dept_admin' || !userId) return undefined;
 
     const markLiveSupportRead = async () => {
       try {
         await axios.post(`${serverURL}/api/notifications/read-by-link`, {
           userId,
-          link: '/dashboard/org-live-support'
+          link: '/dashboard/dept-live-support'
         });
         window.dispatchEvent(new CustomEvent('live-support-read'));
       } catch (error) {
@@ -60,12 +62,16 @@ const LiveSupportTab = () => {
     };
 
     void markLiveSupportRead();
-  }, [userId]);
+  }, [role, userId]);
 
   useEffect(() => {
     const fetchSessions = async () => {
       try {
-        const url = orgId ? `/api/live-support/sessions/active/${orgId}` : `/api/live-support/sessions/active`;
+        const url = deptId
+          ? `/api/live-support/sessions/active/department/${deptId}`
+          : orgId
+            ? `/api/live-support/sessions/active/${orgId}`
+            : `/api/live-support/sessions/active`;
         const res = await axios.get(`${serverURL}${url}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -80,7 +86,7 @@ const LiveSupportTab = () => {
     fetchSessions(); // initially
     const interval = setInterval(fetchSessions, 10000); // refresh active sessions
     return () => clearInterval(interval);
-  }, [orgId, token]);
+  }, [deptId, orgId, token]);
 
   useEffect(() => {
     if (!selectedSession || !socket) return;
@@ -120,12 +126,20 @@ const LiveSupportTab = () => {
     socket.emit('send-support-message', {
       sessionId: selectedSession._id,
       senderId: userId,
-      senderModel: 'Organization',
+      senderModel: 'User',
       message: inputVal
     });
 
     setInputVal('');
   };
+
+  if (role !== 'dept_admin') {
+    return (
+      <div className="p-6 text-muted-foreground">
+        Live Support is available to department admins only.
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 h-[calc(100vh-80px)] flex gap-6">
@@ -226,7 +240,8 @@ const LiveSupportTab = () => {
                 </div>
               )}
               {messages.map(msg => {
-                const isAdmin = msg.senderModel === 'Organization';
+                const senderId = typeof msg.sender === 'object' ? msg.sender?._id : msg.sender;
+                const isAdmin = String(senderId) === String(userId);
                 return (
                   <div key={msg._id} className={`flex flex-col ${isAdmin ? 'items-end' : 'items-start'}`}>
                     {/* Timestamp and Sender name can be added here if needed */}

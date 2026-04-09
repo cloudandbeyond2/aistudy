@@ -6,6 +6,11 @@ const liveSupportSessionSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  department: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Department',
+    default: null
+  },
   organization: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Organization'
