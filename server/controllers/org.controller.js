@@ -416,7 +416,16 @@ export const bulkUploadStudents = async (req, res) => {
         const errors = [];
  
         for (const student of studentsToProcess) {
-            const { email, name, password, department, section, rollNo, studentClass, academicYear } = student;
+        const { 
+  email, 
+  name, 
+  password, 
+  department, 
+  section, 
+  rollNo, 
+  studentClass = "",   // ✅ SAFE DEFAULT
+  academicYear 
+} = student;
  
             if (!email) {
                 errors.push(`Missing email for ${name || 'unknown'}`);
@@ -433,9 +442,11 @@ export const bulkUploadStudents = async (req, res) => {
             // Excel has "CS", "IT" etc. — find matching dept by name (case-insensitive)
             let resolvedDepartmentId = null;
             if (department) {
-                const matchedDept = allDepartments.find(
-                    d => d.name.toLowerCase() === String(department).toLowerCase()
-                );
+               const matchedDept = allDepartments.find(
+  d =>
+    d._id.toString() === String(department) ||   // ✅ match ObjectId
+    d.name.toLowerCase() === String(department).toLowerCase() // ✅ match name
+);
                 if (matchedDept) {
                     resolvedDepartmentId = matchedDept._id;
                 } else {
@@ -445,29 +456,32 @@ export const bulkUploadStudents = async (req, res) => {
                 }
             }
  
-            const hashedPassword = await bcrypt.hash(password || 'Student@123', 10);
+     const safePassword = String(password || 'Student@123'); // ✅ FORCE STRING
+
+const hashedPassword = await bcrypt.hash(safePassword, 10);
  
-            await new User({
-                email,
-                mName: name || "Student",
-                password: hashedPassword,
-                role: 'student',
-                organization: organizationId,
-                department: resolvedDepartmentId,  // ✅ ObjectId or null — never raw string
-                studentDetails: {
-                    section,
-                    rollNo,
-                    studentClass: studentClass || "",
-                    academicYear
-                },
-                isVerified: true
-            }).save();
+          await new User({
+  email,
+  mName: name || "Student",
+  password: hashedPassword,
+  role: 'student',
+  organization: organizationId,
+  department: resolvedDepartmentId || null,
+  studentDetails: {
+    section: section || "",
+    rollNo: rollNo || "",
+    studentClass: studentClass || "",
+    academicYear: academicYear || ""
+  },
+  isVerified: true
+}).save();
  
             addedCount++;
         }
  
         res.json({
             success: true,
+            addedCount, 
             message: `Successfully added ${addedCount} student${addedCount !== 1 ? 's' : ''}${errors.length > 0 ? ` (${errors.length} warning${errors.length !== 1 ? 's' : ''})` : ''}`,
             errors
         });

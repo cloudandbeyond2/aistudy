@@ -276,7 +276,8 @@ const StudentsTab = () => {
                             department: departmentId,
                             section: row.Section || row.section || '',
                             rollNo: row.RollNo || row['Roll No'] || row.rollno || '',
-                            academicYear: row['Academic Year'] || row.AcademicYear || row.academicYear || ''
+                            academicYear: row['Academic Year'] || row.AcademicYear || row.academicYear || '',
+                             studentClass: row.Class || row.class || ''   // ✅ ADD THIS
                         };
                     })
                     .filter(student => student.name.trim() !== '' && student.email.trim() !== '');
@@ -421,11 +422,11 @@ const StudentsTab = () => {
 
     // Download Excel template
     const downloadTemplate = () => {
-        const template = [
-            ['Name', 'Email', 'Password', 'Department', 'Section', 'Roll No', 'Academic Year'],
-            ['John Doe', 'john@example.com', 'Student@123', 'Computer Science', 'A', '001', '2023-2024'],
-            ['Jane Smith', 'jane@example.com', 'Student@123', 'Computer Science', 'A', '002', '2023-2024']
-        ];
+      const template = [
+  ['Name', 'Email', 'Password', 'Department', 'Section', 'Class', 'Roll No', 'Academic Year'],
+  ['John Doe', 'john@example.com', 'Student@123', 'Computer Science', 'A', 'BSc CS', '001', '2023-2024'],
+  ['Jane Smith', 'jane@example.com', 'Student@123', 'Computer Science', 'A', 'BSc CS', '002', '2023-2024']
+];
         
         const ws = XLSX.utils.aoa_to_sheet(template);
         const wb = XLSX.utils.book_new();
@@ -829,13 +830,16 @@ const StudentsTab = () => {
                             )}
 
                             {/* Action Buttons */}
-                            <div className="flex gap-2">
+                       <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                                 <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
                                     <DialogTrigger asChild>
-                                        <Button variant="outline" className="students-theme-outline-btn gap-1 sm:gap-2 text-xs sm:text-sm">
-                                            <FileSpreadsheet className="w-3 h-3 sm:w-4 sm:h-4" />
-                                            <span className="hidden xs:inline">Bulk Upload</span>
-                                        </Button>
+                                       <Button
+  variant="outline"
+  className="w-full sm:w-auto justify-center gap-2 text-sm font-medium border-[#11a5e4] text-[#11405f] hover:bg-[#11a5e4] hover:text-white transition-all"
+>
+  <FileSpreadsheet className="w-4 h-4" />
+  Bulk Upload
+</Button>
                                     </DialogTrigger>
                                     <DialogContent className="students-theme-dialog max-w-md mx-4">
                                         <DialogHeader>
@@ -892,10 +896,12 @@ const StudentsTab = () => {
                                     }}
                                 >
                                     <DialogTrigger asChild>
-                                        <Button className={`gap-1 sm:gap-2 bg-gradient-to-r ${primaryGradient} hover:opacity-90 text-xs sm:text-sm`}>
-                                            <UserPlus className="w-3 h-3 sm:w-4 sm:h-4" />
-                                            <span className="hidden xs:inline">Add Student</span>
-                                        </Button>
+                                      <Button
+  className="w-full sm:w-auto justify-center gap-2 text-sm font-medium bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90 transition-all"
+>
+  <UserPlus className="w-4 h-4" />
+  Add Student
+</Button>
                                     </DialogTrigger>
                                     <DialogContent className="students-theme-dialog max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
                                         <DialogHeader>
