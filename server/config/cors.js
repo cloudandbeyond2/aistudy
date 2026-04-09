@@ -5,7 +5,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:4173',
   'http://localhost:3000',
-  'https://darkturquoise-quail-773641.hostingersite.com',
+  'https://api.colossusiq.ai',
   'http://localhost:5001',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:4173',
