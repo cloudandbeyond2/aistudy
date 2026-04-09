@@ -664,6 +664,14 @@ const DepartmentsTab = () => {
                                     setOpenDeptAdminDialog(open);
                                     if (open) {
                                         setIsCreatingDeptAdmin(false);
+                                        setNewDeptAdmin({
+                                            name: '',
+                                            email: '',
+                                            password: '',
+                                            phone: '',
+                                            departmentId: '',
+                                            courseLimit: 0
+                                        });
                                         setCreateDeptAdminErrors({
                                             name: '',
                                             email: '',
@@ -693,6 +701,10 @@ const DepartmentsTab = () => {
                                             <div className="grid gap-2">
                                                 <Label className="text-sm font-semibold">Full Name</Label>
                                                 <Input
+                                                    name="dept-admin-name"
+                                                    autoComplete="off"
+                                                    autoCorrect="off"
+                                                    spellCheck={false}
                                                     placeholder="John Doe"
                                                     value={newDeptAdmin.name}
                                                     onChange={(e) => {
@@ -710,7 +722,11 @@ const DepartmentsTab = () => {
                                             <div className="grid gap-2">
                                                 <Label className="text-sm font-semibold">Email</Label>
                                                 <Input
+                                                    name="dept-admin-email"
                                                     type="email"
+                                                    autoComplete="off"
+                                                    autoCorrect="off"
+                                                    spellCheck={false}
                                                     placeholder="john@example.com"
                                                     value={newDeptAdmin.email}
                                                     onChange={(e) => {
@@ -729,6 +745,10 @@ const DepartmentsTab = () => {
                                                 <Label className="text-sm font-semibold">Password</Label>
                                                 <Input
                                                     type="password"
+                                                    name="dept-admin-password"
+                                                    autoComplete="new-password"
+                                                    autoCorrect="off"
+                                                    spellCheck={false}
                                                     placeholder="••••••••"
                                                     value={newDeptAdmin.password}
                                                     onChange={(e) => {
@@ -746,6 +766,8 @@ const DepartmentsTab = () => {
                                             <div className="grid gap-2">
                                                 <Label className="text-sm font-semibold">Phone (Optional)</Label>
                                                 <Input
+                                                    name="dept-admin-phone"
+                                                    autoComplete="off"
                                                     placeholder="+1 234 567 8900"
                                                     value={newDeptAdmin.phone}
                                                     onChange={(e) => setNewDeptAdmin({ ...newDeptAdmin, phone: e.target.value })}
@@ -1219,6 +1241,10 @@ const DepartmentsTab = () => {
                             <div className="grid gap-2">
                                 <Label className="text-sm font-semibold">Full Name</Label>
                                 <Input
+                                    name="dept-admin-edit-name"
+                                    autoComplete="off"
+                                    autoCorrect="off"
+                                    spellCheck={false}
                                     placeholder="John Doe"
                                     value={editDeptAdmin.name}
                                     onChange={(e) => setEditDeptAdmin({ ...editDeptAdmin, name: e.target.value })}
@@ -1228,7 +1254,11 @@ const DepartmentsTab = () => {
                             <div className="grid gap-2">
                                 <Label className="text-sm font-semibold">Email</Label>
                                 <Input
+                                    name="dept-admin-edit-email"
                                     type="email"
+                                    autoComplete="off"
+                                    autoCorrect="off"
+                                    spellCheck={false}
                                     placeholder="john@example.com"
                                     value={editDeptAdmin.email}
                                     onChange={(e) => setEditDeptAdmin({ ...editDeptAdmin, email: e.target.value })}
@@ -1238,6 +1268,8 @@ const DepartmentsTab = () => {
                             <div className="grid gap-2">
                                 <Label className="text-sm font-semibold">Phone (Optional)</Label>
                                 <Input
+                                    name="dept-admin-edit-phone"
+                                    autoComplete="off"
                                     placeholder="+1 234 567 8900"
                                     value={editDeptAdmin.phone}
                                     onChange={(e) => setEditDeptAdmin({ ...editDeptAdmin, phone: e.target.value })}
@@ -1251,6 +1283,10 @@ const DepartmentsTab = () => {
                                 </Label>
                                 <Input
                                     type="password"
+                                    name="dept-admin-edit-password"
+                                    autoComplete="new-password"
+                                    autoCorrect="off"
+                                    spellCheck={false}
                                     placeholder="Leave blank to keep current password"
                                     value={editDeptAdmin.password}
                                     onChange={(e) => {
