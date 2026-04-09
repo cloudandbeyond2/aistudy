@@ -75,9 +75,9 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
 
         /* Headings */
         .styled-content h1 {
-          font-size: 1.75rem;
+          font-size: 1rem;
           font-weight: 800;
-          margin-top: 2rem;
+        
           margin-bottom: 1.25rem;
           background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--primary) / 0.6));
           -webkit-background-clip: text;
@@ -89,8 +89,8 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
 
         @media (min-width: 768px) {
           .styled-content h1 {
-            font-size: 2.25rem;
-            margin-top: 3rem;
+            font-size: 1.5rem;
+        
             margin-bottom: 1.5rem;
             padding-bottom: 0.75rem;
             border-bottom: 3px solid hsl(var(--primary) / 0.2);
@@ -98,7 +98,7 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
         }
 
         .styled-content h2 {
-          font-size: 1.5rem;
+          font-size: 1rem;
           font-weight: 700;
           margin-top: 1.5rem;
           margin-bottom: 1rem;
@@ -113,7 +113,7 @@ const StyledText: React.FC<StyledTextProps> = ({ text }) => {
 
         @media (min-width: 768px) {
           .styled-content h2 {
-            font-size: 1.875rem;
+            font-size: 1.5rem;
             margin-top: 2.5rem;
             margin-bottom: 1.25rem;
             padding: 1rem 1.25rem;
