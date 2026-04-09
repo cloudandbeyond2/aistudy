@@ -343,7 +343,7 @@ const App = () => (
                   </Route>
                 </Routes>
                 <LiveSupportWidget />
-                <ChatBotFloatingIcon />
+                {/* <ChatBotFloatingIcon /> */}
                 <CookiePopup />
                 <Toaster />
                 <Sonner />
