@@ -144,21 +144,22 @@ const AIChatBot = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.18),_transparent_35%),radial-gradient(circle_at_top_right,_rgba(59,130,246,0.18),_transparent_30%),linear-gradient(135deg,_#030712_0%,_#0f172a_50%,_#020617_100%)] text-white">
+    <div className="min-h-[100dvh] bg-gradient-to-br via-white to-gray-50 pt-0 md:pt-0 lg:pt-[60px]">
       <div className="mx-auto flex min-h-[100dvh] max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8">
-        <header className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-white/10 bg-white/5 px-5 py-4 shadow-2xl shadow-cyan-950/20 backdrop-blur-xl">
+        <header className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white/80 px-5 py-4 shadow-lg shadow-gray-200/50 backdrop-blur-sm">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400/10 text-cyan-300 ring-1 ring-cyan-300/20">
-              <Bot className="h-6 w-6" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-md">
+              <Bot className="h-6 w-6 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-semibold tracking-tight sm:text-2xl">Chat Bot AI</h1>
-                <Badge className="border border-emerald-400/30 bg-emerald-400/10 text-emerald-200 hover:bg-emerald-400/10">
+                <h1 className="text-xl font-bold tracking-tight text-gray-800 sm:text-2xl">Chat Bot AI</h1>
+                <Badge className="border border-green-200 bg-green-50 text-green-700">
+                  <span className="mr-1 h-1.5 w-1.5 rounded-full bg-green-500"></span>
                   Online
                 </Badge>
               </div>
-              <p className="text-sm text-slate-300">
+              <p className="text-sm text-gray-600">
                 Ask questions, get instant answers, and keep the conversation going.
               </p>
             </div>
@@ -168,7 +169,7 @@ const AIChatBot = () => {
             <Button
               variant="ghost"
               onClick={() => navigate('/dashboard')}
-              className="rounded-2xl text-slate-200 hover:bg-white/10 hover:text-white"
+              className="rounded-xl text-gray-600 hover:bg-gray-100 hover:text-gray-900"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
@@ -176,7 +177,7 @@ const AIChatBot = () => {
             <Button
               variant="outline"
               onClick={clearChat}
-              className="rounded-2xl border-white/10 bg-white/5 text-slate-100 hover:bg-white/10 hover:text-white"
+              className="rounded-xl border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900"
             >
               <RotateCcw className="mr-2 h-4 w-4" />
               Clear chat
@@ -185,57 +186,57 @@ const AIChatBot = () => {
         </header>
 
         <div className="grid flex-1 gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <Card className="border-white/10 bg-white/5 text-white shadow-2xl shadow-cyan-950/20 backdrop-blur-xl">
-            <CardHeader className="space-y-4 border-b border-white/10 p-5">
+          <Card className="border border-gray-200 bg-white shadow-lg">
+            <CardHeader className="space-y-4 border-b border-gray-100 p-5">
               <div className="flex items-center gap-3">
-                <div className="rounded-2xl bg-cyan-400/10 p-3 text-cyan-300 ring-1 ring-cyan-300/20">
-                  <Sparkles className="h-5 w-5" />
+                <div className="rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 p-2.5 shadow-sm">
+                  <Sparkles className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium uppercase tracking-[0.2em] text-cyan-200/80">Assistant Guide</p>
-                  <h2 className="text-xl font-semibold">What you can ask</h2>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Assistant Guide</p>
+                  <h2 className="text-lg font-bold text-gray-800">What you can ask</h2>
                 </div>
               </div>
 
-              <p className="text-sm leading-6 text-slate-300">
+              <p className="text-sm leading-relaxed text-gray-600">
                 Use this page for platform questions, course help, student guidance, or general productivity advice.
               </p>
             </CardHeader>
 
             <CardContent className="space-y-4 p-5">
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {suggestedPrompts.map((prompt) => (
                   <button
                     key={prompt}
                     onClick={() => void sendMessage(prompt)}
-                    className="w-full rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-left text-sm text-slate-200 transition hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-white"
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left text-sm text-gray-700 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
                   >
                     {prompt}
                   </button>
                 ))}
               </div>
 
-              <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
-                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-emerald-200">
+              <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-blue-800">
                   <ShieldCheck className="h-4 w-4" />
                   Private by default
                 </div>
-                <p className="text-sm leading-6 text-emerald-50/80">
+                <p className="text-sm leading-relaxed text-blue-700">
                   Your conversation stays inside the dashboard experience, so you can ask freely and keep going from any page.
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="flex min-h-[70vh] flex-col overflow-hidden border-white/10 bg-white/5 text-white shadow-2xl shadow-cyan-950/20 backdrop-blur-xl">
-            <CardHeader className="border-b border-white/10 p-5">
+          <Card className="flex min-h-[70vh] flex-col overflow-hidden border border-gray-200 bg-white shadow-lg">
+            <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium uppercase tracking-[0.2em] text-cyan-200/80">Conversation</p>
-                  <h2 className="text-xl font-semibold">Ask anything</h2>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Conversation</p>
+                  <h2 className="text-lg font-bold text-gray-800">Ask anything</h2>
                 </div>
-                <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
-                  <WandSparkles className="h-3.5 w-3.5 text-cyan-300" />
+                <div className="flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1.5 text-xs text-gray-600">
+                  <WandSparkles className="h-3.5 w-3.5 text-blue-500" />
                   Powered by AI
                 </div>
               </div>
@@ -255,26 +256,26 @@ const AIChatBot = () => {
                       >
                         <div
                           className={cn(
-                            'max-w-[92%] rounded-3xl px-4 py-3 text-sm leading-6 shadow-lg sm:max-w-[80%]',
+                            'max-w-[92%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm sm:max-w-[80%]',
                             message.role === 'user'
-                              ? 'rounded-br-md border border-cyan-400/30 bg-cyan-500 text-white'
-                              : 'rounded-bl-md border border-white/10 bg-slate-950/50 text-slate-100'
+                              ? 'rounded-br-md bg-gradient-to-br from-blue-500 to-cyan-500 text-white'
+                              : 'rounded-bl-md border border-gray-200 bg-gray-50 text-gray-800'
                           )}
                         >
-                          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] opacity-80">
+                          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider opacity-80">
                             {message.role === 'user' ? (
                               <>
-                                <MessageSquare className="h-3.5 w-3.5" />
+                                <MessageSquare className="h-3 w-3" />
                                 You
                               </>
                             ) : (
                               <>
-                                <Bot className="h-3.5 w-3.5" />
+                                <Bot className="h-3 w-3" />
                                 AI Assistant
                               </>
                             )}
                           </div>
-                          <p className="whitespace-pre-wrap">{message.content}</p>
+                          <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
                         </div>
                       </motion.div>
                     ))}
@@ -286,15 +287,15 @@ const AIChatBot = () => {
                       animate={{ opacity: 1 }}
                       className="flex justify-start"
                     >
-                      <div className="rounded-3xl rounded-bl-md border border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-slate-200 shadow-lg">
-                        <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] opacity-80">
-                          <Bot className="h-3.5 w-3.5" />
+                      <div className="rounded-2xl rounded-bl-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 shadow-sm">
+                        <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider opacity-80">
+                          <Bot className="h-3 w-3" />
                           Thinking
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className="h-2 w-2 animate-bounce rounded-full bg-cyan-300 [animation-delay:-0.2s]" />
-                          <span className="h-2 w-2 animate-bounce rounded-full bg-cyan-300 [animation-delay:-0.1s]" />
-                          <span className="h-2 w-2 animate-bounce rounded-full bg-cyan-300" />
+                          <span className="h-2 w-2 animate-bounce rounded-full bg-blue-400 [animation-delay:-0.2s]" />
+                          <span className="h-2 w-2 animate-bounce rounded-full bg-blue-400 [animation-delay:-0.1s]" />
+                          <span className="h-2 w-2 animate-bounce rounded-full bg-blue-400" />
                         </div>
                       </div>
                     </motion.div>
@@ -303,26 +304,26 @@ const AIChatBot = () => {
               </ScrollArea>
             </CardContent>
 
-            <div className="border-t border-white/10 p-4 sm:p-5">
-              <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-3 shadow-inner shadow-black/20">
+            <div className="border-t border-gray-100 bg-gray-50 p-4 sm:p-5">
+              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
                 <Textarea
                   ref={inputRef}
                   value={inputValue}
                   onChange={(event) => setInputValue(event.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Type your question here..."
-                  className="min-h-[120px] resize-none border-0 bg-transparent text-base text-white placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="min-h-[100px] resize-none border-0 bg-transparent text-base text-gray-900 placeholder:text-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0"
                   disabled={isThinking}
                 />
 
                 <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-[0.2em] text-slate-400">
-                    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                      <Lightbulb className="h-3.5 w-3.5 text-amber-300" />
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-3 py-1">
+                      <Lightbulb className="h-3 w-3 text-amber-500" />
                       Ask anything
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                      <MessageSquare className="h-3.5 w-3.5 text-cyan-300" />
+                    <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-3 py-1">
+                      <MessageSquare className="h-3 w-3 text-blue-500" />
                       Multi-turn chat
                     </span>
                   </div>
@@ -330,7 +331,7 @@ const AIChatBot = () => {
                   <Button
                     onClick={() => void sendMessage()}
                     disabled={isThinking || !inputValue.trim()}
-                    className="h-12 rounded-2xl bg-cyan-500 px-5 text-white shadow-lg shadow-cyan-500/20 transition hover:bg-cyan-400"
+                    className="h-11 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 px-6 text-white shadow-md transition-all hover:shadow-lg"
                   >
                     <Send className="mr-2 h-4 w-4" />
                     Send

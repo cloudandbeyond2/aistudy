@@ -154,7 +154,7 @@ export default function TodoCenter() {
     <>
       <SEO title="Todo Center" description="Track tasks." />
 
-      <div className="min-h-screen bg-slate-50" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
+      <div className="min-h-screen container pt-0 md:pt-0 lg:pt-[60px]" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
         <div className="px-4 py-5 sm:px-6">
 
           {/* Top bar */}
@@ -171,52 +171,51 @@ export default function TodoCenter() {
           </div>
 
           {/* Compact Stats Row */}
-          <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+        <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 sm:gap-3">
+  {/* Total */}
+  <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+      <LayoutList className="h-4 w-4" />
+    </div>
+    <div>
+      <p className="text-lg font-bold leading-none text-slate-700">{stats.total}</p>
+      <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Total</p>
+    </div>
+  </div>
 
-            {/* Total */}
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
-                <LayoutList className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-lg font-bold leading-none text-slate-700">{stats.total}</p>
-                <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Total</p>
-              </div>
-            </div>
+  {/* High */}
+  <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-500">
+      <AlertTriangle className="h-4 w-4" />
+    </div>
+    <div>
+      <p className="text-lg font-bold leading-none text-rose-500">{stats.high}</p>
+      <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">High</p>
+    </div>
+  </div>
 
-            {/* High */}
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-500">
-                <AlertTriangle className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-lg font-bold leading-none text-rose-500">{stats.high}</p>
-                <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">High</p>
-              </div>
-            </div>
+  {/* Medium */}
+  <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-500">
+      <Clock className="h-4 w-4" />
+    </div>
+    <div>
+      <p className="text-lg font-bold leading-none text-amber-600">{stats.medium}</p>
+      <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Med</p>
+    </div>
+  </div>
 
-            {/* Medium */}
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-500">
-                <Clock className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-lg font-bold leading-none text-amber-600">{stats.medium}</p>
-                <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Med</p>
-              </div>
-            </div>
-
-            {/* Low */}
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-500">
-                <CheckCheck className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-lg font-bold leading-none text-emerald-600">{stats.low}</p>
-                <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Low</p>
-              </div>
-            </div>
-          </div>
+  {/* Low */}
+  <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-500">
+      <CheckCheck className="h-4 w-4" />
+    </div>
+    <div>
+      <p className="text-lg font-bold leading-none text-emerald-600">{stats.low}</p>
+      <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Low</p>
+    </div>
+  </div>
+</div>
 
           {/* Main grid — proportional columns on large screens */}
           <div className="grid gap-5 lg:grid-cols-[minmax(320px,380px)_1fr]">

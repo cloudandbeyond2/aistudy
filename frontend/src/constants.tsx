@@ -3,7 +3,7 @@ export const appName = 'Colossus IQ';
 export const companyName = 'Infilabs Pvt Ltd';
 export const websiteURL = 'http://colossusiq.ai';
 export const serverURL = import.meta.env.PROD
-  ? 'http://darkturquoise-quail-773641.hostingersite.com'
+  ? 'https://api.colossusiq.ai'
   : 'http://localhost:5001';
 export const appLogo = '/colossus-icon.png';
 export const appWordmarkDark = '/logo-colossus-dark.png';
