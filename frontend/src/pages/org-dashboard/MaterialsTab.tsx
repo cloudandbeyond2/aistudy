@@ -27,6 +27,7 @@ const MaterialsTab = () => {
   
   const role = sessionStorage.getItem('role');
   const deptId = sessionStorage.getItem('deptId');
+  const deptName = sessionStorage.getItem('deptName') || '';
   const orgId = sessionStorage.getItem('orgId') || sessionStorage.getItem('uid');
   const { toast } = useToast();
 
@@ -36,8 +37,22 @@ const MaterialsTab = () => {
     fileUrl: '',
     file: null,
     type: 'PDF',
-    department: ''
+    department: role === 'dept_admin' ? deptId || '' : ''
   });
+
+  const matchesDepartmentScope = (materialDepartment: any, materialDepartmentId?: any) => {
+    const normalizedDepartment = typeof materialDepartment === 'string'
+      ? materialDepartment
+      : materialDepartment?._id || materialDepartment?.name || '';
+    const normalizedDepartmentId = typeof materialDepartmentId === 'string'
+      ? materialDepartmentId
+      : materialDepartmentId?._id || materialDepartmentId?.name || '';
+
+    return Boolean(
+      (deptId && (normalizedDepartment === deptId || normalizedDepartmentId === deptId)) ||
+      (deptName && (normalizedDepartment === deptName || normalizedDepartmentId === deptName))
+    );
+  };
 
   // Fetch materials
   const fetchMaterials = async () => {
@@ -47,7 +62,7 @@ const MaterialsTab = () => {
         let materialsData = res.data.materials;
         if (role === 'dept_admin') {
           materialsData = materialsData.filter((m: any) => 
-            m.department === deptId || m.departmentId === deptId
+            matchesDepartmentScope(m.department, m.departmentId)
           );
         }
         setMaterials(materialsData);
@@ -73,15 +88,43 @@ const MaterialsTab = () => {
       fetchDepartments();
     }
   }, [orgId]);
+
+  useEffect(() => {
+    if (role === 'dept_admin' && deptId) {
+      setNewMaterial((prev) => ({
+        ...prev,
+        department: deptId
+      }));
+    }
+  }, [role, deptId]);
+
+  useEffect(() => {
+    if (role !== 'dept_admin' || !departmentsList.length) return;
+
+    const resolvedDepartment = departmentsList.find((department: any) =>
+      department._id === deptId ||
+      department.name === deptId ||
+      department.name === deptName
+    );
+
+    if (resolvedDepartment?._id) {
+      setNewMaterial((prev) => ({
+        ...prev,
+        department: resolvedDepartment._id
+      }));
+    }
+  }, [role, deptId, deptName, departmentsList]);
+
 const handleCreateMaterial = async () => {
   try {
     let res;
+    const scopedDepartment = role === 'dept_admin' ? deptId || newMaterial.department : newMaterial.department;
 
     if (editMaterial) {
       // ✏️ UPDATE
       res = await axios.put(
         `${serverURL}/api/org/material/${editMaterial._id}`,
-        { ...newMaterial, organizationId: orgId }
+        { ...newMaterial, department: scopedDepartment, organizationId: orgId }
       );
 
       if (res.data.success) {
@@ -95,7 +138,7 @@ const handleCreateMaterial = async () => {
         formData.append('title', newMaterial.title);
         formData.append('description', newMaterial.description);
         formData.append('type', newMaterial.type);
-        formData.append('department', newMaterial.department);
+        formData.append('department', scopedDepartment);
         formData.append('organizationId', orgId);
         formData.append('file', newMaterial.file);
 
@@ -105,6 +148,7 @@ const handleCreateMaterial = async () => {
       } else {
         res = await axios.post(`${serverURL}/api/org/material/create`, {
           ...newMaterial,
+          department: scopedDepartment,
           organizationId: orgId,
         });
       }
@@ -123,7 +167,7 @@ const handleCreateMaterial = async () => {
       fileUrl: '',
       file: null,
       type: 'PDF',
-      department: ''
+      department: role === 'dept_admin' ? deptId || '' : ''
     });
 
     setOpenMaterialDialog(false);
@@ -166,7 +210,7 @@ const handleEditMaterial = (material) => {
     fileUrl: material.fileUrl || '',
     file: null, // don’t prefill file
     type: material.type,
-    department: material.department || ''
+    department: role === 'dept_admin' ? deptId || material.department || '' : material.department || ''
   });
 
   setOpenMaterialDialog(true);
