@@ -125,61 +125,72 @@ const ProfilePricing = () => {
     fetchPricing();
   }, []);
 
-  const fetchUserCurrentPlan = async () => {
-    try {
-      const userIdFromSession = sessionStorage.getItem('uid');
-      const userStr = localStorage.getItem('user');
+const fetchUserCurrentPlan = async () => {
+  try {
+    const userIdFromSession = sessionStorage.getItem('uid');
+    const userStr = localStorage.getItem('user');
 
-      if (userStr && userIdFromSession) {
-        try {
-          const userData = JSON.parse(userStr);
-          const userIdFromLocal = userData._id || userData.id;
-
-          if (userIdFromLocal === userIdFromSession && userData.type) {
-            const userPlan = userData.type.toLowerCase();
-            setCurrentUserPlan(userPlan);
-            setSubscriptionEnd(userData.subscriptionEnd || null);
-            sessionStorage.setItem('type', userPlan);
-            console.log('✅ User plan set from validated localStorage:', userPlan);
-            return;
-          } else {
-            localStorage.removeItem('user');
-            localStorage.removeItem('token');
-          }
-        } catch (e) {
-          console.error('Error parsing user data:', e);
-        }
-      }
-
-      const sessionPlan = sessionStorage.getItem('type');
-      if (sessionPlan) {
-        const userPlan = sessionPlan.toLowerCase();
-        setCurrentUserPlan(userPlan);
-        console.log('✅ User plan set from sessionStorage:', userPlan);
-      }
-
-      if (!userIdFromSession) return;
-
+    if (userStr && userIdFromSession) {
       try {
-        const response = await axios.get(`${serverURL}/api/user/${userIdFromSession}`);
-        if (response.data && response.data.user) {
-          const user = response.data.user;
-          if (user.type) {
-            const userPlan = user.type.toLowerCase();
-            setCurrentUserPlan(userPlan);
-            setSubscriptionEnd(user.subscriptionEnd || null);
-            sessionStorage.setItem('type', userPlan);
-            localStorage.setItem('user', JSON.stringify(user));
-            console.log('✅ User plan synced from API:', userPlan);
-          }
+        const userData = JSON.parse(userStr);
+        const userIdFromLocal =
+          userData._id?.$oid ||     // ✅ handles MongoDB ObjectId format: { _id: { $oid: "..." } }
+          userData._id ||            // ✅ handles plain string _id
+          userData.id;               // ✅ handles id field fallback
+
+        if (String(userIdFromLocal) === String(userIdFromSession) && userData.type) {
+          const userPlan = userData.type.toLowerCase();
+          setCurrentUserPlan(userPlan);
+          setSubscriptionEnd(userData.subscriptionEnd || null);
+          sessionStorage.setItem('type', userPlan); // ✅ overwrite stale session value immediately
+          // console.log('✅ User plan set from validated localStorage:', userPlan);
+          return;
+        } else {
+          // ✅ IDs didn't match — wipe everything stale
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+          sessionStorage.removeItem('type'); // ✅ critical: clear stale 'monthly' before API call
+          // console.warn('⚠️ ID mismatch — clearing stale local data');
         }
-      } catch (apiError) {
-        console.error('❌ API fetch failed:', apiError);
+      } catch (e) {
+        // console.error('Error parsing user data:', e);
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('type'); // ✅ clear stale on parse error too
       }
-    } catch (error) {
-      console.error('❌ Error in fetchUserCurrentPlan:', error);
     }
-  };
+
+    // Fallback: sessionStorage (only if localStorage check didn't run or had no uid)
+    // NOTE: we no longer use this as a fallback if localStorage cleared it above
+    const sessionPlan = sessionStorage.getItem('type');
+    if (sessionPlan && userIdFromSession) {
+      const userPlan = sessionPlan.toLowerCase();
+      setCurrentUserPlan(userPlan);
+      // console.log('✅ User plan set from sessionStorage:', userPlan);
+    }
+
+    if (!userIdFromSession) return;
+
+    // Always sync from API on hosting to get the authoritative plan
+    try {
+      const response = await axios.get(`${serverURL}/api/user/${userIdFromSession}`);
+      if (response.data && response.data.user) {
+        const user = response.data.user;
+        if (user.type) {
+          const userPlan = user.type.toLowerCase();
+          setCurrentUserPlan(userPlan);
+          setSubscriptionEnd(user.subscriptionEnd || null);
+          sessionStorage.setItem('type', userPlan);     // ✅ authoritative value
+          localStorage.setItem('user', JSON.stringify(user)); // ✅ refresh local cache
+          // console.log('✅ User plan synced from API:', userPlan);
+        }
+      }
+    } catch (apiError) {
+      console.error('❌ API fetch failed:', apiError);
+    }
+  } catch (error) {
+    console.error('❌ Error in fetchUserCurrentPlan:', error);
+  }
+};
 
   const fetchPricing = async () => {
     try {

@@ -115,14 +115,14 @@ const PaymentSuccess = () => {
           mName: name
         });
 
-        console.log('Verification response:', response.data);
+        // console.log('Verification response:', response.data);
 
         // 🔥 CRITICAL: Refresh user state in storage so UI updates without logout
         if (response.data?.success && response.data?.data?.user) {
           const updatedUser = response.data.data.user;
           localStorage.setItem('user', JSON.stringify(updatedUser));
           sessionStorage.setItem('type', updatedUser.type);
-          console.log('✅ User state refreshed after Razorpay payment:', updatedUser.type);
+          // console.log('✅ User state refreshed after Razorpay payment:', updatedUser.type);
         }
 
         toast({
@@ -157,14 +157,14 @@ const PaymentSuccess = () => {
             plan: planType
           });
 
-          console.log('Verification response:', response.data);
+          // console.log('Verification response:', response.data);
 
           // 🔥 CRITICAL: Refresh user state in storage so UI updates without logout
           const updatedUser = response.data?.user || response.data?.details?.user || response.data?.data?.user;
           if (updatedUser) {
             localStorage.setItem('user', JSON.stringify(updatedUser));
             sessionStorage.setItem('type', updatedUser.type);
-            console.log(`✅ User state refreshed after ${method} payment:`, updatedUser.type);
+            // console.log(`✅ User state refreshed after ${method} payment:`, updatedUser.type);
           }
         }
       }
@@ -216,7 +216,7 @@ const PaymentSuccess = () => {
         method
       });
 
-      console.log('Receipt email sent');
+      // console.log('Receipt email sent');
     } catch (error) {
       console.error('Email sending error:', error);
     }

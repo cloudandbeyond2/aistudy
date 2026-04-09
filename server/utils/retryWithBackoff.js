@@ -18,22 +18,30 @@ const retryWithBackoff = async (fn, maxRetries = 5, baseDelay = 1000) => {
         (d) => d['@type'] === 'type.googleapis.com/google.rpc.QuotaFailure'
       );
 
-      const isRateLimitError =
-        error?.status === 429 &&
-        !isQuotaExceeded;
+      const status = error?.status || (error?.response && error.response.status);
+
+      const isRateLimitError = status === 429 && !isQuotaExceeded;
+
+      // Treat 5xx server errors as transient and retryable (e.g., 503 Service Unavailable)
+      const isServerError = status >= 500 && status < 600;
 
       if (isQuotaExceeded) {
-        throw new Error('Daily Gemini quota exhausted');
+        throw new Error('Daily API quota exhausted');
       }
 
-      if (attempt === maxRetries || !isRateLimitError) {
+      const shouldRetry = isRateLimitError || isServerError;
+
+      if (attempt === maxRetries || !shouldRetry) {
         throw error;
       }
 
-      const delay = baseDelay * Math.pow(2, attempt);
+      // exponential backoff with jitter
+      const expDelay = baseDelay * Math.pow(2, attempt);
+      const jitter = Math.floor(Math.random() * baseDelay);
+      const delay = expDelay + jitter;
 
       console.log(
-        `⏳ Rate limit hit. Retrying in ${delay}ms... (${attempt + 1}/${maxRetries})`
+        `⏳ Transient error (status=${status}). Retrying in ${delay}ms... (${attempt + 1}/${maxRetries})`
       );
 
       await new Promise((resolve) => setTimeout(resolve, delay));

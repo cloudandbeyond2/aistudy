@@ -54,8 +54,8 @@ const OrgLandingSetup = ({ organizationId }: { organizationId: string }) => {
     }, [organizationId]);
 
     const handleSave = async () => {
-        console.log('Saving config for org:', organizationId);
-        console.log('Config data:', config);
+        // console.log('Saving config for org:', organizationId);
+        // console.log('Config data:', config);
 
         if (!organizationId) {
             toast({ title: 'Error', description: 'Organization ID is missing. Please refresh and try again.', variant: 'destructive' });
@@ -76,7 +76,7 @@ const OrgLandingSetup = ({ organizationId }: { organizationId: string }) => {
                 withCredentials: true
             });
             
-            console.log('Save response:', response.data);
+            // console.log('Save response:', response.data);
             
             if (response.data.success) {
                 toast({ title: 'Landing page updated!', description: 'Your public portal is now live with the new changes.' });

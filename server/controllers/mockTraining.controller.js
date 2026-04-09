@@ -434,8 +434,8 @@ export const finalizeMockRound = async (req, res) => {
       "overallAnalysis": "A constructive 3-4 sentence paragraph for the trainee."
     }`;
 
-    const result = await model.generateContent(analysisPrompt);
-    let analysisText = result.response.text()
+    const result = await retryWithBackoff(() => model.generateContent(analysisPrompt));
+    let analysisText = (await result.response.text())
       .replace(/```json/g, '')
       .replace(/```/g, '')
       .trim();
@@ -470,8 +470,8 @@ score (1-100 number), strengths (string[]), weaknesses (string[]), technicalGaps
 Response:
 ${analysisText}`;
 
-      const repairResult = await model.generateContent(repairPrompt);
-      analysis = parseAnalysis(repairResult.response.text());
+      const repairResult = await retryWithBackoff(() => model.generateContent(repairPrompt));
+      analysis = parseAnalysis(await repairResult.response.text());
     }
 
     if (!analysis) {

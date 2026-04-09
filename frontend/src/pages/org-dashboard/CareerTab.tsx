@@ -1455,10 +1455,10 @@ const formatGuidanceText = (text: string) => {
     }
 
     const fetchStudents = async () => {
-        console.log('Fetching students for orgId:', orgId);
+        // console.log('Fetching students for orgId:', orgId);
         try {
             const res = await axios.get(`${serverURL}/api/org/students?organizationId=${orgId}`);
-            console.log('Students response:', res.data);
+            // console.log('Students response:', res.data);
             if (res.data.success) {
                 let studentsData = res.data.students;
                 if (role === 'dept_admin') {
@@ -1760,9 +1760,9 @@ const formatGuidanceText = (text: string) => {
 
     const handleUpdateAICourse = async () => {
         if (!editAICourse) return;
-        console.log("Attempting to update AI course:", editAICourse);
-        console.log("Course ID:", editAICourse._id);
-        console.log("Update URL:", `${serverURL}/api/org/course/${editAICourse._id}`);
+        // console.log("Attempting to update AI course:", editAICourse);
+        // console.log("Course ID:", editAICourse._id);
+        // console.log("Update URL:", `${serverURL}/api/org/course/${editAICourse._id}`);
 
         try {
             const res = await axios.put(`${serverURL}/api/org/course/${editAICourse._id}`, {
@@ -1770,7 +1770,7 @@ const formatGuidanceText = (text: string) => {
                 department: editAICourse.department,
                 updatedBy: sessionStorage.getItem('uid')
             });
-            console.log("Update response:", res.data);
+            // console.log("Update response:", res.data);
             if (res.data.success) {
                 toast({ title: "Success", description: "AI Course updated successfully" });
                 setEditAICourse(null);
