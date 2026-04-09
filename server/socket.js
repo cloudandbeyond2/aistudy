@@ -26,42 +26,49 @@ export default function setupSocket(io) {
         });
 
         try {
-          const session = await LiveSupportSession.findById(sessionId).select('student organization').lean();
+          const session = await LiveSupportSession.findById(sessionId).select('student organization department').lean();
+          const sender = await User.findById(senderId).select('role department').lean();
 
           if (session) {
-            if (senderModel === 'Organization') {
-              await Notification.create({
-                user: session.student,
-                message: 'Your organization replied to your live support message.',
-                type: 'info',
-                link: '/dashboard/student/support-tickets'
+            const resolvedDepartmentId = session.department || sender?.department || null;
+
+            if (!session.department && resolvedDepartmentId) {
+              await LiveSupportSession.findByIdAndUpdate(sessionId, {
+                department: resolvedDepartmentId
               });
             }
 
-            if (senderModel === 'User' && session.organization) {
-              const orgAdmins = await User.find({
-                role: 'org_admin',
-                $or: [
-                  { organization: session.organization },
-                  { organizationId: session.organization },
-                  { orgId: session.organization }
-                ]
-              }).select('_id').lean();
+            if (sender?.role === 'dept_admin') {
+              await Notification.create({
+                user: session.student,
+                message: 'Your department replied to your live support message.',
+                type: 'info',
+                link: '/dashboard/student'
+              });
+            }
+
+            if (sender?.role === 'student') {
+              const deptAdmins = resolvedDepartmentId
+                ? await User.find({
+                    role: 'dept_admin',
+                    department: resolvedDepartmentId
+                  }).select('_id').lean()
+                : [];
 
               await Promise.all(
-                orgAdmins.map((admin) =>
+                deptAdmins.map((admin) =>
                   Notification.create({
                     user: admin._id,
-                    message: 'A student replied to a live support conversation.',
+                    message: 'A student replied to a department support conversation.',
                     type: 'info',
-                    link: '/dashboard/org-live-support'
+                    link: '/dashboard/dept-live-support'
                   })
                 )
               );
 
               io.emit('live-support-notification', {
                 sessionId,
-                organizationId: session.organization,
+                departmentId: resolvedDepartmentId,
                 message: newMessage.message
               });
             }

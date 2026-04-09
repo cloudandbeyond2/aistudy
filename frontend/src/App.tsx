@@ -221,6 +221,7 @@ const App = () => (
                      <Route path="org-materials" element={<MaterialsTab />} />
                      <Route path="org-notices" element={<NoticesTab />} />
                      <Route path="org-career" element={<CareerTab />} />
+                     <Route path="dept-live-support" element={<LiveSupportTab />} />
                      <Route path="org-live-support" element={<LiveSupportTab />} />
 
                     <Route path="org/assignment/:assignmentId/submissions" element={<OrgAssignmentSubmissions />} />

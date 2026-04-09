@@ -232,7 +232,7 @@ const DashboardLayoutContent = () => {
   const isActive = (path: string) => location.pathname === path;
 
   const handleNotificationsChange = (notifications: any[]) => {
-    if (sessionStorage.getItem('role') !== 'org_admin') {
+    if (sessionStorage.getItem('role') !== 'dept_admin') {
       setLiveSupportUnreadCount(0);
       return;
     }
@@ -241,7 +241,7 @@ const DashboardLayoutContent = () => {
       (notification) =>
         !notification.isRead &&
         typeof notification.link === 'string' &&
-        notification.link.includes('/dashboard/org-live-support')
+        notification.link.includes('/dashboard/dept-live-support')
     ).length;
 
     setLiveSupportUnreadCount(liveSupportUnread);
@@ -251,7 +251,7 @@ const DashboardLayoutContent = () => {
     if (!socket) return undefined;
 
     const handleLiveSupportNotification = () => {
-      if (sessionStorage.getItem('role') !== 'org_admin') return;
+      if (sessionStorage.getItem('role') !== 'dept_admin') return;
       setLiveSupportUnreadCount((prev) => prev + 1);
     };
 
@@ -688,15 +688,6 @@ const DashboardLayoutContent = () => {
                       onMobileClick={handleMobileMenuClick}
                     />
                     <MenuItem 
-                      icon={MessageSquare} 
-                      label="Live Support" 
-                      to="/dashboard/org-live-support" 
-                      isActive={isActive('/dashboard/org-live-support')}
-                      badge={liveSupportUnreadCount > 0 ? liveSupportUnreadCount : undefined}
-                      isExpanded={isExpanded}
-                      onMobileClick={handleMobileMenuClick}
-                    />
-                    <MenuItem 
                       icon={BookOpen} 
                       label="Courses" 
                       to="/dashboard/org-courses" 
@@ -887,6 +878,15 @@ const DashboardLayoutContent = () => {
                     )}
 
                     <SectionHeader title="Tools" icon={Sparkles} isExpanded={isExpanded} />
+                    <MenuItem
+                      icon={MessageSquare}
+                      label="Live Support"
+                      to="/dashboard/dept-live-support"
+                      isActive={isActive('/dashboard/dept-live-support')}
+                      badge={liveSupportUnreadCount > 0 ? liveSupportUnreadCount : undefined}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
                     <MenuItem 
                       icon={Briefcase} 
                       label="Interview Prep" 
@@ -1213,10 +1213,8 @@ const DashboardLayoutContent = () => {
               {!admin && (
                 <Link
                   to={
-                    sessionStorage.getItem('role') === 'org_admin'
-                      ? "/dashboard/org-live-support"
-                      : sessionStorage.getItem('role') === 'dept_admin'
-                      ? "/dashboard/staff/support"
+                    sessionStorage.getItem('role') === 'dept_admin'
+                      ? "/dashboard/dept-live-support"
                       : sessionStorage.getItem('role') === 'student'
                       ? "/dashboard/student/support-tickets"
                       : "/dashboard/support"
@@ -1228,15 +1226,13 @@ const DashboardLayoutContent = () => {
                     <LifeBuoy className="h-4 w-4" />
                   </div>
                   <span>
-                    {sessionStorage.getItem('role') === 'org_admin'
+                    {sessionStorage.getItem('role') === 'dept_admin'
                       ? "Live Support"
-                      : sessionStorage.getItem('role') === 'dept_admin'
-                      ? "Support Desk"
                       : sessionStorage.getItem('role') === 'student'
                       ? "Support Tickets"
                       : "Support"}
                   </span>
-                  {(location.pathname.includes('/org-live-support') ||
+                  {(location.pathname.includes('/dept-live-support') ||
                     location.pathname.includes('/staff/support') ||
                     location.pathname.includes('/student/support-tickets') ||
                     location.pathname === '/dashboard/support') && (
@@ -1534,10 +1530,8 @@ const DashboardLayoutContent = () => {
             {!admin && (
               <Link
                 to={
-                  sessionStorage.getItem('role') === 'org_admin'
-                    ? "/dashboard/org-live-support"
-                    : sessionStorage.getItem('role') === 'dept_admin'
-                    ? "/dashboard/staff/support"
+                  sessionStorage.getItem('role') === 'dept_admin'
+                    ? "/dashboard/dept-live-support"
                     : sessionStorage.getItem('role') === 'student'
                     ? "/dashboard/student/support-tickets"
                     : "/dashboard/support"
@@ -1549,15 +1543,13 @@ const DashboardLayoutContent = () => {
                   <LifeBuoy className="h-4 w-4" />
                 </div>
                 <span>
-                  {sessionStorage.getItem('role') === 'org_admin'
+                  {sessionStorage.getItem('role') === 'dept_admin'
                     ? "Live Support"
-                    : sessionStorage.getItem('role') === 'dept_admin'
-                    ? "Support Desk"
                     : sessionStorage.getItem('role') === 'student'
                     ? "Support Tickets"
                     : "Support"}
                 </span>
-                {(location.pathname.includes('/org-live-support') ||
+                {(location.pathname.includes('/dept-live-support') ||
                   location.pathname.includes('/staff/support') ||
                   location.pathname.includes('/student/support-tickets') ||
                   location.pathname === '/dashboard/support') && (
