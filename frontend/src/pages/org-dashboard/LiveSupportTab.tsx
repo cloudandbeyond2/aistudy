@@ -135,88 +135,91 @@ const LiveSupportTab = () => {
 
   if (role !== 'dept_admin') {
     return (
-      <div className="p-6 text-muted-foreground">
+      <div className="p-4 sm:p-6 text-muted-foreground">
         Live Support is available to department admins only.
       </div>
     );
   }
 
   return (
-    <div className="p-6 h-[calc(100vh-80px)] flex gap-6">
-      {/* Sessions List */}
-      <Card className="w-1/3 flex flex-col h-full bg-card shadow-lg border">
-        <CardHeader className="bg-primary/5 pb-4 border-b">
-          <CardTitle className="flex items-center gap-2">
-            <MessageCircle className="w-5 h-5 text-primary" /> Active Live Support
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto p-4 space-y-3">
-          {sessions.length === 0 ? (
-            <p className="text-center text-muted-foreground py-10">No active student support sessions.</p>
-          ) : (
-            sessions.map(s => (
-              <div 
-                key={s._id} 
-                onClick={() => setSelectedSession(s)}
-                className={`p-3 border rounded-xl cursor-pointer transition-all ${selectedSession?._id === s._id ? 'bg-primary/10 border-primary' : 'hover:bg-muted'}`}
-              >
-                <div className="flex items-start gap-2">
-                  <User className="w-4 h-4 text-primary mt-0.5" />
-                  <div className="min-w-0">
-                    <div className="font-medium leading-5 truncate">
-                      {s.student?.mName || s.student?.name || 'Unknown Student'}
-                    </div>
-                    <div className="text-sm text-muted-foreground mt-1 truncate">
-                      {s.student?.email || 'No email available'}
+    <div className="p-3 sm:p-4 lg:p-6 min-h-[calc(100vh-80px)]">
+      <div className="flex flex-col xl:flex-row gap-4 lg:gap-6 h-full">
+        {/* Sessions List */}
+        <Card className="w-full xl:w-[360px] xl:max-w-[360px] flex flex-col bg-card shadow-lg border overflow-hidden">
+          <CardHeader className="bg-primary/5 pb-4 border-b">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <MessageCircle className="w-5 h-5 text-primary" /> Active Live Support
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 max-h-[32vh] sm:max-h-[36vh] xl:max-h-none">
+            {sessions.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8 sm:py-10 text-sm sm:text-base">
+                No active student support sessions.
+              </p>
+            ) : (
+              sessions.map(s => (
+                <div
+                  key={s._id}
+                  onClick={() => setSelectedSession(s)}
+                  className={`p-3 border rounded-xl cursor-pointer transition-all ${selectedSession?._id === s._id ? 'bg-primary/10 border-primary' : 'hover:bg-muted'}`}
+                >
+                  <div className="flex items-start gap-2">
+                    <User className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium leading-5 truncate text-sm sm:text-base">
+                        {s.student?.mName || s.student?.name || 'Unknown Student'}
+                      </div>
+                      <div className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">
+                        {s.student?.email || 'No email available'}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Chat Area */}
-      <Card className="w-2/3 flex flex-col h-full bg-card border shadow-lg overflow-hidden relative">
-        {selectedSession ? (
+        {/* Chat Area */}
+        <Card className="w-full flex-1 min-h-[60vh] xl:min-h-0 flex flex-col bg-card border shadow-lg overflow-hidden relative">
+          {selectedSession ? (
           <>
-            <div className="p-4 border-b bg-muted/30 flex justify-between items-center">
-              <div>
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  {selectedSession.student?.mName || selectedSession.student?.name || 'Student'}
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {selectedSession.student?.email || 'No email available'}
-                </p>
-                <p className="text-sm text-emerald-600 flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Active Session
-                </p>
+              <div className="p-3 sm:p-4 border-b bg-muted/30 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-base sm:text-lg flex items-center gap-2">
+                    {selectedSession.student?.mName || selectedSession.student?.name || 'Student'}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">
+                    {selectedSession.student?.email || 'No email available'}
+                  </p>
+                  <p className="text-xs sm:text-sm text-emerald-600 flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block shrink-0"></span> Active Session
+                  </p>
+                </div>
+                <div className="flex items-center justify-start sm:justify-end">
+                  {!isCalling && (
+                    <Button variant="outline" size="sm" onClick={startCall} className="w-full sm:w-auto">
+                      <PhoneCall className="w-4 h-4 mr-2"/> Call
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div>
-                {!isCalling && (
-                  <Button variant="outline" size="sm" onClick={startCall}>
-                    <PhoneCall className="w-4 h-4 mr-2"/> Call
-                  </Button>
-                )}
-              </div>
-            </div>
 
             {/* Call Action Bar */}
             {incomingCall && !isCalling && (
-              <div className="bg-amber-500 text-white p-3 flex justify-between items-center text-sm shadow-inner relative z-10">
+              <div className="bg-amber-500 text-white p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 text-sm shadow-inner relative z-10">
                 <span className="flex items-center gap-2"><Phone className="animate-pulse w-4 h-4"/> Incoming Call...</span>
-                <div className="flex gap-2">
-                  <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 h-8" onClick={answerCall}>Answer</Button>
-                  <Button size="sm" className="bg-red-500 hover:bg-red-600 h-8" onClick={() => endCall(true)}>Decline</Button>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 h-8 w-full sm:w-auto" onClick={answerCall}>Answer</Button>
+                  <Button size="sm" className="bg-red-500 hover:bg-red-600 h-8 w-full sm:w-auto" onClick={() => endCall(true)}>Decline</Button>
                 </div>
               </div>
             )}
 
             {isCalling && !incomingCall && (
-              <div className="bg-emerald-600 text-white p-3 flex justify-between items-center text-sm shadow-inner relative z-10">
+              <div className="bg-emerald-600 text-white p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 text-sm shadow-inner relative z-10">
                 <span className="flex items-center gap-2"><Phone className="w-4 h-4"/> Call Active with {selectedSession.student?.name}</span>
-                <div className="flex gap-2">
+                <div className="flex gap-2 self-start sm:self-auto">
                   <Button size="icon" variant="secondary" className="h-8 w-8 bg-white/20 hover:bg-white/30 text-white" onClick={() => {
                     if (localStream) {
                       localStream.getAudioTracks()[0].enabled = !localStream.getAudioTracks()[0].enabled;
@@ -233,10 +236,12 @@ const LiveSupportTab = () => {
 
             <audio ref={audioRef} autoPlay className="hidden" />
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-muted/10 relative z-0">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 space-y-4 bg-muted/10 relative z-0">
               {messages.length === 0 && (
-                <div className="flex h-full items-center justify-center">
-                  <p className="text-muted-foreground text-sm">No messages yet. Send a response to the student.</p>
+                <div className="flex h-full min-h-[220px] items-center justify-center">
+                  <p className="text-muted-foreground text-sm text-center px-6">
+                    No messages yet. Send a response to the student.
+                  </p>
                 </div>
               )}
               {messages.map(msg => {
@@ -245,7 +250,7 @@ const LiveSupportTab = () => {
                 return (
                   <div key={msg._id} className={`flex flex-col ${isAdmin ? 'items-end' : 'items-start'}`}>
                     {/* Timestamp and Sender name can be added here if needed */}
-                    <div className={`max-w-[70%] px-4 py-3 rounded-2xl shadow-sm text-[15px] ${isAdmin ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-background border text-foreground rounded-bl-sm'}`}>
+                    <div className={`max-w-[86%] sm:max-w-[75%] px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl shadow-sm text-sm sm:text-[15px] break-words ${isAdmin ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-background border text-foreground rounded-bl-sm'}`}>
                       {msg.message}
                     </div>
                   </div>
@@ -254,26 +259,27 @@ const LiveSupportTab = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            <form onSubmit={sendMessage} className="p-4 border-t bg-background flex gap-3">
+            <form onSubmit={sendMessage} className="p-3 sm:p-4 border-t bg-background flex flex-col sm:flex-row gap-3">
               <Input
                 value={inputVal}
                 onChange={e => setInputVal(e.target.value)}
                 placeholder={isConnected ? "Reply to student..." : "Socket connecting..."}
                 disabled={!isConnected}
-                className="flex-1 border-muted-foreground/30 focus-visible:ring-primary h-12 rounded-xl px-4"
+                className="flex-1 border-muted-foreground/30 focus-visible:ring-primary h-11 sm:h-12 rounded-xl px-4"
               />
-              <Button type="submit" disabled={!isConnected || !inputVal.trim()} className="h-12 w-12 rounded-xl shrink-0 p-0 shadow-md">
+              <Button type="submit" disabled={!isConnected || !inputVal.trim()} className="h-11 sm:h-12 w-full sm:w-12 rounded-xl shrink-0 p-0 shadow-md">
                 <Send className="w-5 h-5 mx-auto" />
               </Button>
             </form>
           </>
         ) : (
-          <div className="flex flex-col h-full items-center justify-center text-muted-foreground space-y-4">
-            <MessageCircle className="w-16 h-16 opacity-20" />
-            <p className="text-lg">Select a student session to start chatting.</p>
+          <div className="flex flex-col h-full min-h-[320px] items-center justify-center text-muted-foreground space-y-4 p-6 text-center">
+            <MessageCircle className="w-14 h-14 sm:w-16 sm:h-16 opacity-20" />
+            <p className="text-base sm:text-lg">Select a student session to start chatting.</p>
           </div>
         )}
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };
