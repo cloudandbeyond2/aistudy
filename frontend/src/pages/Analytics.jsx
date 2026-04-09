@@ -137,7 +137,7 @@ const activityData = [
 const currentStreak = 3;
 const longestStreak = 7;
   return (
-    <div className="space-y-8 pt-0 lg:pt-[60px]">
+    <div className="container space-y-8 pt-0 lg:pt-[60px]">
 
         {/* 🔷 Page Heading */}
 <div className="flex items-center gap-4 p-4 rounded-2xl border bg-white shadow-sm">
