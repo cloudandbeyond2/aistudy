@@ -689,7 +689,7 @@ const isYearlyOnly = userPlan !== 'yearly';
     return (
       <>
         <SEO title="Interview Preparation" description="Premium interview preparation tools" />
-        <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-2xl mx-auto text-center px-4 py-8">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-2xl mx-auto text-center px-4 py-8 ">
           <div className="bg-primary/10 p-4 md:p-6 rounded-full mb-4 md:mb-6">
             <Lock className="h-12 w-12 md:h-16 md:w-16 text-primary" />
           </div>
@@ -710,7 +710,7 @@ const isYearlyOnly = userPlan !== 'yearly';
   return (
     <>
       <SEO title="Interview Preparation" description="Master your interviews with daily tests and AI quizzes" />
-      <div className="space-y-6 md:space-y-8 animate-fade-in max-w-6xl mx-auto pb-6 md:pb-10 px-4 md:px-6 lg:px-8">
+      <div className="space-y-6 md:space-y-8 animate-fade-in max-w-6xl mx-auto pb-6 md:pb-10 px-4 md:px-6 lg:px-8 pt-0 lg:pt-[60px]">
 
         {/* Banner Section */}
         <div className="p-4 md:p-6 lg:p-8 rounded-2xl md:rounded-3xl bg-gradient-to-br from-indigo-500/10 via-primary/5 to-transparent border border-primary/20 shadow-sm relative overflow-hidden">

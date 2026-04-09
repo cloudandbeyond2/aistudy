@@ -679,7 +679,7 @@ const handleEditMeeting = (meeting) => {
 
     return showBootstrapLoader ? bootstrapLoader : (
         <>
-            <div className="space-y-4 py-4 sm:py-6 md:py-8 lg:py-10 px-3 sm:px-4 md:px-6">
+            <div className="container space-y-4 py-4 sm:py-6 md:py-8 lg:py-10 px-3 sm:px-4 md:px-6">
                 {/* Hero Section */}
                 <div className={`rounded-xl p-4 sm:p-5 md:p-6 ${themeStyles.hero}`}>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

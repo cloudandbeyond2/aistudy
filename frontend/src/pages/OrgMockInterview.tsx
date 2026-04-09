@@ -218,7 +218,7 @@ const OrgMockInterview = () => {
     }
 
     return (
-        <div className="space-y-6 animate-fade-in pb-10 pt-0 md:pt-0 lg:pt-[60px]">
+        <div className="container space-y-6 animate-fade-in pb-10 pt-0 md:pt-0 lg:pt-[60px]">
             <SEO title="Mock Interview Management | Admin" description="Manage student readiness and AI mock interview assignments." />
 
             {/* Premium Header */}

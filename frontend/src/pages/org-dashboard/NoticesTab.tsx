@@ -387,7 +387,7 @@ const handleEditNotice = (notice) => {
   ];
 
   return (
-    <div className="space-y-8 py-10">
+    <div className="container space-y-8 py-10">
       {/* Gradient Header with Time Greeting */}
       <div className={`relative overflow-hidden rounded-2xl p-6 shadow-lg ${themeStyles.hero}`}>
         <div className="absolute right-0 top-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-background/10 blur-3xl" />

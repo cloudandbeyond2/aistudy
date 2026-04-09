@@ -780,7 +780,7 @@ const ProjectTab = () => {
             : assignmentInsights;
 
   return (
-    <div className="space-y-6 lg:space-y-8 p-6 lg:p-8 xl:p-10">
+    <div className="container space-y-6 lg:space-y-8 p-6 lg:p-8 xl:p-10">
         {/* Hero Section - Desktop Optimized */}
         <div className={`relative rounded-2xl overflow-hidden mb-6 lg:mb-8 ${pageGradientClass}`}>
             <div className="absolute inset-0 bg-black/20"></div>

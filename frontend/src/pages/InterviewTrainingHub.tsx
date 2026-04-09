@@ -82,7 +82,7 @@ const InterviewTrainingHub = () => {
     }
 
     return (
-        <div className="space-y-8 animate-fade-in pb-10 pt-0 lg:pt-[60px]">
+        <div className="container space-y-8 animate-fade-in pb-10 pt-0 lg:pt-[60px]">
             <SEO title="AI Interview Training Hub" description="Practice your interview skills with our AI-powered mock interview system." />
 
             {/* Hero Section */}

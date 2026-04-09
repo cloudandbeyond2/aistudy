@@ -255,7 +255,7 @@ const handleEditMaterial = (material) => {
   }).length;
 
 return (
-    <div className="space-y-4 md:space-y-5 lg:space-y-6 p-3 md:p-5 lg:p-6 ">
+    <div className="container space-y-4 md:space-y-5 lg:space-y-6 p-3 md:p-5 lg:p-6 ">
       {/* Hero Section with Gradient */}
       <div className="relative rounded-xl md:rounded-2xl overflow-hidden bg-brand-gradient">
         <div className="absolute inset-0 bg-black/20"></div>
