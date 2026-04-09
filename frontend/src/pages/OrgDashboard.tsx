@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -841,6 +841,7 @@ const OrgDashboard = () => {
     const [openDeptCourseLimitDialog, setOpenDeptCourseLimitDialog] = useState(false);
     const [deptCourseLimitData, setDeptCourseLimitData] = useState({ requestedCourseLimit: 5 });
     const [deptLimitRequests, setDeptLimitRequests] = useState<any[]>([]);
+    const initialOrgLoadDoneRef = useRef(false);
 
     // New features state
     const [meetings, setMeetings] = useState<any[]>([]);
@@ -1017,39 +1018,40 @@ const resetProjectForm = () => {
         : students;
 
     useEffect(() => {
+        initialOrgLoadDoneRef.current = false;
+    }, [orgId, role]);
+
+    useEffect(() => {
         if (!orgId) {
             console.warn('No organization ID found. Please log out and log back in.');
             return;
         }
-        fetchStats();
-        fetchStudents();
-        fetchCourses();
-        fetchAssignments();
-        // fetchOrgSettings();
-        fetchMeetings();
-        fetchProjects();
-        fetchMaterials();
-        fetchOrgDepartments();
-        fetchOrgDeptAdmins();
-        fetchNotices();
-        fetchDeptLimitRequests();
-        fetchInternships();
-    }, [orgId]);
 
-    useEffect(() => {
-        if (role === 'dept_admin' && (userDeptName || deptId)) {
-            fetchStats();
-            fetchStudents();
-            fetchCourses();
-            fetchAssignments();
-            fetchMeetings();
-            fetchProjects();
-            fetchMaterials();
-            fetchNotices();
-            fetchDeptLimitRequests();
-            fetchInternships();
+        const isDeptScoped = role === 'dept_admin';
+        const hasDeptScope = !isDeptScoped || Boolean(userDeptName || userDeptId || deptId);
+
+        if (!hasDeptScope || initialOrgLoadDoneRef.current) {
+            return;
         }
-    }, [userDeptName, deptId, role]);
+
+        initialOrgLoadDoneRef.current = true;
+
+        void Promise.all([
+            fetchStats(),
+            fetchStudents(),
+            fetchCourses(),
+            fetchAssignments(),
+            // fetchOrgSettings(),
+            fetchMeetings(),
+            fetchProjects(),
+            fetchMaterials(),
+            fetchOrgDepartments(),
+            fetchOrgDeptAdmins(),
+            fetchNotices(),
+            fetchDeptLimitRequests(),
+            fetchInternships(),
+        ]);
+    }, [orgId, role, userDeptName, userDeptId, deptId]);
 
     useEffect(() => {
         // Find department name if missing but ID exists
