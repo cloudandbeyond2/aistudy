@@ -247,6 +247,15 @@ const DepartmentsTab = () => {
         return '';
     };
 
+    const clampCourseLimit = (value: number) => {
+        const normalizedValue = Math.max(0, value || 0);
+        if (remainingOrgCourseBalance === null) {
+            return normalizedValue;
+        }
+
+        return Math.min(normalizedValue, remainingOrgCourseBalance);
+    };
+
     const handleCreateDepartment = async () => {
         if (isCreatingDepartment) return;
         if (!newDept.name.trim()) {
@@ -831,26 +840,25 @@ const DepartmentsTab = () => {
                                             </div>
                                             <div className="grid gap-2">
                                                 <Label className="text-sm font-semibold">Course Creation Limit</Label>
-                                                <Input
-                                                    type="number"
-                                                    min={0}
-                                                    max={remainingOrgCourseBalance ?? undefined}
-                                                    value={newDeptAdmin.courseLimit}
-                                                    onChange={(e) => {
-                                                        setNewDeptAdmin({
-                                                            ...newDeptAdmin,
-                                                            courseLimit: parseInt(e.target.value) || 0
-                                                        });
-                                                        if (createDeptAdminErrors.courseLimit) {
-                                                            setCreateDeptAdminErrors({
-                                                                ...createDeptAdminErrors,
-                                                                courseLimit: ''
-                                                            });
-                                                        }
-                                                    }}
-                                                    placeholder="Max courses this admin can create"
-                                                    className="students-theme-input"
-                                                />
+            <Input
+                type="number"
+                min={0}
+                max={remainingOrgCourseBalance ?? undefined}
+                value={newDeptAdmin.courseLimit}
+                onChange={(e) => {
+                    const nextValue = clampCourseLimit(parseInt(e.target.value) || 0);
+                    setNewDeptAdmin({
+                        ...newDeptAdmin,
+                        courseLimit: nextValue
+                    });
+                    setCreateDeptAdminErrors({
+                        ...createDeptAdminErrors,
+                        courseLimit: getCourseLimitErrorMessage(nextValue)
+                    });
+                }}
+                placeholder="Max courses this admin can create"
+                className="students-theme-input"
+            />
                                                 <p className="text-xs text-slate-600">
                                                     {remainingOrgCourseBalance !== null
                                                         ? `Remaining organization balance: ${remainingOrgCourseBalance} course${remainingOrgCourseBalance === 1 ? '' : 's'}`
@@ -1375,23 +1383,22 @@ const DepartmentsTab = () => {
                             </div>
                             <div className="grid gap-2">
                                 <Label className="text-sm font-semibold">Course Creation Limit</Label>
-                                <Input
-                                    type="number"
-                                    min={0}
-                                    max={remainingOrgCourseBalance ?? undefined}
-                                    value={editDeptAdmin.courseLimit}
-                                    onChange={(e) => {
-                                        setEditDeptAdmin({
-                                            ...editDeptAdmin,
-                                            courseLimit: parseInt(e.target.value) || 0
-                                        });
-                                        if (editDeptAdminCourseLimitError) {
-                                            setEditDeptAdminCourseLimitError('');
-                                        }
-                                    }}
-                                    placeholder="Max courses this admin can create"
-                                    className="students-theme-input"
-                                />
+                            <Input
+                                type="number"
+                                min={0}
+                                max={remainingOrgCourseBalance ?? undefined}
+                                value={editDeptAdmin.courseLimit}
+                                onChange={(e) => {
+                                    const nextValue = clampCourseLimit(parseInt(e.target.value) || 0);
+                                    setEditDeptAdmin({
+                                        ...editDeptAdmin,
+                                        courseLimit: nextValue
+                                    });
+                                    setEditDeptAdminCourseLimitError(getCourseLimitErrorMessage(nextValue));
+                                }}
+                                placeholder="Max courses this admin can create"
+                                className="students-theme-input"
+                            />
                                 <p className="text-xs text-slate-600">
                                     {remainingOrgCourseBalance !== null
                                         ? `Remaining organization balance: ${remainingOrgCourseBalance} course${remainingOrgCourseBalance === 1 ? '' : 's'}`
