@@ -854,6 +854,15 @@ const DashboardLayoutContent = () => {
                     <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     <SectionHeader title="My Work" icon={Gauge} isExpanded={isExpanded} />
                     
+                    <MenuItem
+                      icon={Home}
+                      label="Home"
+                      to="/dashboard"
+                      isActive={isActive('/dashboard')}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
+                    
                     <MenuItem 
                       icon={Gauge} 
                       label="Department Portal" 
@@ -1611,6 +1620,20 @@ const DashboardLayoutContent = () => {
             
             {sessionStorage.getItem('role') === 'dept_admin' && (
               <>
+                <Link
+                  to="/dashboard"
+                  onClick={handleMobileMenuClick}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <Home className="h-4 w-4" />
+                  </div>
+                  <span>Home</span>
+                  {location.pathname === '/dashboard' && (
+                    <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  )}
+                </Link>
+                
                 <Link
                   to="/dashboard/staff"
                   onClick={handleMobileMenuClick}
