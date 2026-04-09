@@ -575,16 +575,6 @@ const DashboardLayoutContent = () => {
                   </>
                 )}
 
-                <MenuItem
-                  icon={Bot}
-                  label="Chat Bot AI"
-                  to="/dashboard/ai-chat-bot"
-                  isActive={isActive('/dashboard/ai-chat-bot')}
-                  badge="AI"
-                  isExpanded={isExpanded}
-                  onMobileClick={handleMobileMenuClick}
-                />
-
                 {/* Student Menu */}
                 {sessionStorage.getItem('role') === 'student' && (
                   <>
@@ -640,11 +630,6 @@ const DashboardLayoutContent = () => {
                     <SectionHeader title="Administration" icon={Settings2} isExpanded={isExpanded} />
                     <MenuItem icon={Settings2} label="Admin Panel" to="/admin" isActive={isActive('/admin')} badge="ADMIN" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                   </>
-                )}
-
-                {/* Analytics */}
-                {isPaidUser && (
-                  <MenuItem icon={BarChart3} label="Analytics" to="/dashboard/analytics" isActive={isActive('/dashboard/analytics')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                 )}
 
                 {/* Organization Portal */}
@@ -854,6 +839,15 @@ const DashboardLayoutContent = () => {
                     <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     <SectionHeader title="My Work" icon={Gauge} isExpanded={isExpanded} />
                     
+                    <MenuItem
+                      icon={Home}
+                      label="Home"
+                      to="/dashboard"
+                      isActive={isActive('/dashboard')}
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
+                    
                     <MenuItem 
                       icon={Gauge} 
                       label="Department Portal" 
@@ -871,6 +865,26 @@ const DashboardLayoutContent = () => {
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
+
+                    <MenuItem
+                      icon={Bot}
+                      label="Chat Bot AI"
+                      to="/dashboard/ai-chat-bot"
+                      isActive={isActive('/dashboard/ai-chat-bot')}
+                      badge="AI"
+                      isExpanded={isExpanded}
+                      onMobileClick={handleMobileMenuClick}
+                    />
+                    {isPaidUser && (
+                      <MenuItem
+                        icon={BarChart3}
+                        label="Analytics"
+                        to="/dashboard/analytics"
+                        isActive={isActive('/dashboard/analytics')}
+                        isExpanded={isExpanded}
+                        onMobileClick={handleMobileMenuClick}
+                      />
+                    )}
 
                     <SectionHeader title="Tools" icon={Sparkles} isExpanded={isExpanded} />
                     <MenuItem 
@@ -1180,19 +1194,21 @@ const DashboardLayoutContent = () => {
                 )}
               </Link>
               
-              <Link
-                to="/dashboard/ai-chat-bot"
-                onClick={handleMobileMenuClick}
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
-              >
-                <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                  <Bot className="h-4 w-4" />
-                </div>
-                <span>Chat Bot AI</span>
-                {location.pathname.includes('/ai-chat-bot') && (
-                  <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
-                )}
-              </Link>
+              {sessionStorage.getItem('role') !== 'dept_admin' && (
+                <Link
+                  to="/dashboard/ai-chat-bot"
+                  onClick={handleMobileMenuClick}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <Bot className="h-4 w-4" />
+                  </div>
+                  <span>Chat Bot AI</span>
+                  {location.pathname.includes('/ai-chat-bot') && (
+                    <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  )}
+                </Link>
+              )}
 
               {!admin && (
                 <Link
@@ -1499,19 +1515,21 @@ const DashboardLayoutContent = () => {
               )}
             </Link>
             
-            <Link
-              to="/dashboard/ai-chat-bot"
-              onClick={handleMobileMenuClick}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
-            >
-              <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                <Bot className="h-4 w-4" />
-              </div>
-              <span>Chat Bot AI</span>
-              {location.pathname.includes('/ai-chat-bot') && (
-                <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
-              )}
-            </Link>
+            {sessionStorage.getItem('role') !== 'dept_admin' && (
+              <Link
+                to="/dashboard/ai-chat-bot"
+                onClick={handleMobileMenuClick}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+              >
+                <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <span>Chat Bot AI</span>
+                {location.pathname.includes('/ai-chat-bot') && (
+                  <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                )}
+              </Link>
+            )}
 
             {!admin && (
               <Link
@@ -1612,6 +1630,20 @@ const DashboardLayoutContent = () => {
             {sessionStorage.getItem('role') === 'dept_admin' && (
               <>
                 <Link
+                  to="/dashboard"
+                  onClick={handleMobileMenuClick}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <Home className="h-4 w-4" />
+                  </div>
+                  <span>Home</span>
+                  {location.pathname === '/dashboard' && (
+                    <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  )}
+                </Link>
+                
+                <Link
                   to="/dashboard/staff"
                   onClick={handleMobileMenuClick}
                   className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
@@ -1624,6 +1656,35 @@ const DashboardLayoutContent = () => {
                     <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                   )}
                 </Link>
+
+                <Link
+                  to="/dashboard/ai-chat-bot"
+                  onClick={handleMobileMenuClick}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <Bot className="h-4 w-4" />
+                  </div>
+                  <span>Chat Bot AI</span>
+                  {location.pathname.includes('/ai-chat-bot') && (
+                    <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  )}
+                </Link>
+                {isPaidUser && (
+                  <Link
+                    to="/dashboard/analytics"
+                    onClick={handleMobileMenuClick}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group relative"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                      <BarChart3 className="h-4 w-4" />
+                    </div>
+                    <span>Analytics</span>
+                    {location.pathname === '/dashboard/analytics' && (
+                      <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                    )}
+                  </Link>
+                )}
                 
                 <Link
                   to={assessmentDeskPath}

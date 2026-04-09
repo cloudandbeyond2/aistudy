@@ -720,7 +720,7 @@ Your organization account is ready. Access your dashboard now.
 <div style="padding:40px 36px;">
 
 <h2 style="margin:0 0 10px;font-size:22px;color:#111827;">
-?? Your Organization is Ready
+Your Organization Account is Ready
 </h2>
 
 <p style="margin:0 0 25px;color:#6b7280;font-size:14px;">
@@ -774,7 +774,7 @@ Use the credentials below to get started.
      text-decoration:none;
      border-radius:8px;
      display:inline-block;">
-     Login to Dashboard ?
+     Login to Dashboard
   </a>
 </div>
 
