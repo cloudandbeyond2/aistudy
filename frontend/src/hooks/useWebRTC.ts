@@ -14,13 +14,13 @@ export const useWebRTC = (sessionId: string | null) => {
     if (!socket || !sessionId) return;
 
     const handleIncomingCall = (data: { signal: any, from: string }) => {
-      console.log('Incoming call...', data);
+      // console.log('Incoming call...', data);
       setIsCalling(true);
       setIncomingCall({ signal: data.signal, from: data.from });
     };
 
     const handleCallAnswered = async (data: { signal: any, from: string }) => {
-      console.log('Call answered...', data);
+      // console.log('Call answered...', data);
       if (peerConnection.current) {
         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(data.signal));
       }

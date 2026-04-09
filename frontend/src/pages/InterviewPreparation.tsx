@@ -598,11 +598,11 @@ const isYearlyOnly = userPlan !== 'yearly';
   const fetchTopHeadlines = async (uid: string, showLoading = false) => {
     if (showLoading) setLoadingNews(true);
     try {
-      console.log("Fetching today's current affairs for:", uid);
+      // console.log("Fetching today's current affairs for:", uid);
       const resp = await axios.get(`${serverURL}/api/interview-prep/current-affairs`, {
         headers: { 'user-id': uid }
       });
-      console.log("Current affairs response:", resp.data);
+      // console.log("Current affairs response:", resp.data);
       const newsData = Array.isArray(resp.data)
         ? resp.data
         : Array.isArray(resp.data?.news)
@@ -626,11 +626,11 @@ const isYearlyOnly = userPlan !== 'yearly';
   const fetchDailyAptitude = async (uid: string) => {
     setLoadingAptitude(true);
     try {
-      console.log("Fetching daily aptitude for:", uid);
+      // console.log("Fetching daily aptitude for:", uid);
       const resp = await axios.get(`${serverURL}/api/interview-prep/daily-aptitude`, {
         headers: { 'user-id': uid }
       });
-      console.log("Daily aptitude response:", resp.data);
+      // console.log("Daily aptitude response:", resp.data);
       if (resp.data.success) {
         setDailyAptitudes(resp.data.data);
       }
@@ -651,14 +651,14 @@ const isYearlyOnly = userPlan !== 'yearly';
     setAiQuizData([]);
     try {
       const uid = sessionStorage.getItem('uid');
-      console.log("Generating quiz for:", uid, "category:", aiCategory);
+      // console.log("Generating quiz for:", uid, "category:", aiCategory);
 
       const resp = await axios.post(`${serverURL}/api/interview-prep/generate-category-quiz`,
         { userId: uid, category: aiCategory },
         { headers: { 'user-id': uid } }
       );
 
-      console.log("Generate quiz response:", resp.data);
+      // console.log("Generate quiz response:", resp.data);
       if (resp.data.success) {
         setAiQuizData(resp.data.data);
         toast({ title: "Success", description: "Quiz generated successfully!" });

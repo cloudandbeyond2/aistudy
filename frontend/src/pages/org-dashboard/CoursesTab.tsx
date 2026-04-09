@@ -3151,10 +3151,10 @@ const CoursesTab = () => {
     }
 
     const fetchStudents = async () => {
-        console.log('Fetching students for orgId:', orgId);
+        // console.log('Fetching students for orgId:', orgId);
         try {
             const res = await axios.get(`${serverURL}/api/org/students?organizationId=${orgId}`);
-            console.log('Students response:', res.data);
+            // console.log('Students response:', res.data);
             if (res.data.success) {
                 let studentsData = res.data.students;
                 if (role === 'dept_admin') {
