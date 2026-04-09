@@ -227,7 +227,7 @@ export default function StaffSupport() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 p-4 md:p-6 lg:p-8 bg-slate-50 dark:bg-slate-950 min-h-screen">
+    <div className="max-w-7xl mx-auto space-y-8 p-4 md:p-6 lg:p-8 dark:bg-slate-950 min-h-screen">
       <div className="text-center max-w-2xl mx-auto mb-10">
         <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 tracking-tight">
           Support Center
