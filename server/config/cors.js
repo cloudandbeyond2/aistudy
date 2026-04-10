@@ -1,15 +1,9 @@
 const allowedOrigins = [
-  process.env.WEBSITE_URL || 'http://Colossus IQ.in/server',
+  process.env.WEBSITE_URL ||
   'https://colossusiq.ai',
-  'https://app.valoteam.com',
-  'http://localhost:5173',
   'http://localhost:4173',
-  'http://localhost:3000',
   'https://api.colossusiq.ai',
   'http://localhost:5001',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:4173',
-  'http://127.0.0.1:3000',
   'https://accounts.google.com',
   'https://www.facebook.com'
 ];
