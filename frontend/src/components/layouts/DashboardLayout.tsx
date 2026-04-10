@@ -827,7 +827,6 @@ const DashboardLayoutContent = () => {
                 {/* Staff/Department Admin Menu */}
                 {sessionStorage.getItem('role') === 'dept_admin' && (
                   <>
-                    <div className="my-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     <SectionHeader title="My Work" icon={Gauge} isExpanded={isExpanded} />
                     
                     <MenuItem
