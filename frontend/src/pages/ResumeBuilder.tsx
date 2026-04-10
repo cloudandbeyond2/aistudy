@@ -12,7 +12,9 @@ import {
     Plus, Trash2, Download, Share2, ChevronRight, ChevronLeft,
     FileText, Briefcase, GraduationCap, Award, Eye, CheckCircle, Loader2, User, Link2, Sparkles, Search, Target, AlertCircle,
     X, Building, Calendar, Mail, Phone, MapPin, Linkedin, Github, Globe, BookOpen, Zap, TrendingUp, Shield, Star, Heart, Code,
-    Brain, Lock
+    Brain, Lock, Stethoscope, HeartPulse, Microscope, Users, ChartBar, Palette, FlaskConical, Music, Cog, HardHat, Factory,
+    School, Library, Apple, Cpu, Database, Network, ChartPie, Sigma, ChartLine, Tractor, Leaf, Sprout, Scale, Gavel, FileCheck,
+    Camera, Video, Newspaper, Mic, Utensils, Plane, Bed, Map, Truck, Package, Box
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import jsPDF from 'jspdf';
@@ -44,21 +46,205 @@ interface ResumeData {
     selectedCertificateIds: string[];
 }
 
-// ─── Profession options with enhanced metadata ───────────────────────────────
-const PROFESSIONS = [
-    { label: 'Software Developer', icon: Code, color: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50 dark:bg-blue-950/20', suggestedSkills: ['JavaScript', 'React', 'Node.js', 'TypeScript', 'MongoDB', 'Git', 'CSS', 'HTML', 'REST API'] },
-    { label: 'Data Scientist', icon: TrendingUp, color: 'from-green-500 to-emerald-500', bg: 'bg-green-50 dark:bg-green-950/20', suggestedSkills: ['Python', 'R', 'SQL', 'Machine Learning', 'Statistics', 'Data Visualization', 'Pandas', 'NumPy'] },
-    { label: 'Product Manager', icon: Target, color: 'from-purple-500 to-pink-500', bg: 'bg-purple-50 dark:bg-purple-950/20', suggestedSkills: ['Agile', 'Scrum', 'Product Roadmap', 'User Research', 'Data Analysis', 'Stakeholder Management'] },
-    { label: 'UI/UX Designer', icon: Zap, color: 'from-rose-500 to-orange-500', bg: 'bg-rose-50 dark:bg-rose-950/20', suggestedSkills: ['Figma', 'Adobe XD', 'Sketch', 'User Interface Design', 'User Experience', 'Prototyping', 'Wireframing'] },
-    { label: 'DevOps Engineer', icon: Shield, color: 'from-indigo-500 to-purple-500', bg: 'bg-indigo-50 dark:bg-indigo-950/20', suggestedSkills: ['Docker', 'Kubernetes', 'AWS', 'CI/CD', 'Jenkins', 'Terraform', 'Linux', 'Ansible'] },
-    { label: 'Business Analyst', icon: Briefcase, color: 'from-amber-500 to-yellow-500', bg: 'bg-amber-50 dark:bg-amber-950/20', suggestedSkills: ['Business Analysis', 'Requirement Gathering', 'Process Mapping', 'SQL', 'Excel', 'Problem Solving'] },
-    { label: 'Digital Marketer', icon: Share2, color: 'from-red-500 to-pink-500', bg: 'bg-red-50 dark:bg-red-950/20', suggestedSkills: ['SEO', 'SEM', 'Content Marketing', 'Social Media', 'Google Analytics', 'Email Marketing', 'Copywriting'] },
-    { label: 'Cybersecurity Analyst', icon: Shield, color: 'from-slate-500 to-gray-500', bg: 'bg-slate-50 dark:bg-slate-950/20', suggestedSkills: ['Network Security', 'Penetration Testing', 'Incident Response', 'Cryptography', 'SIEM', 'Compliance'] },
-    { label: 'Cloud Architect', icon: Globe, color: 'from-sky-500 to-blue-500', bg: 'bg-sky-50 dark:bg-sky-950/20', suggestedSkills: ['Cloud Infrastructure', 'AWS/Azure/GCP', 'Virtualization', 'Networking', 'Security', 'Disaster Recovery'] },
-   { label: 'AI/ML Engineer', icon: Zap, color: 'from-violet-500 to-purple-500', bg: 'bg-violet-50 dark:bg-violet-950/20', suggestedSkills: ['Natural Language Processing', 'Computer Vision', 'Deep Learning', 'PyTorch', 'TensorFlow', 'Neural Networks'] },
-    { label: 'Full Stack Developer', icon: Code, color: 'from-teal-500 to-cyan-500', bg: 'bg-teal-50 dark:bg-teal-950/20', suggestedSkills: ['React', 'Node.js', 'Express', 'SQL/NoSQL', 'Frontend', 'Backend', 'DevOps', 'Mobile Apps'] },
-    { label: 'Other', icon: User, color: 'from-gray-500 to-gray-600', bg: 'bg-gray-50 dark:bg-gray-800', suggestedSkills: [] },
+const INDUSTRY_CATEGORIES = [
+    {
+        id: 'medical',
+        label: 'Nursing & Medical',
+        icon: Stethoscope,
+        color: 'from-rose-500 to-pink-500',
+        bg: 'bg-rose-50 dark:bg-rose-950/20',
+        description: 'Healthcare, Nursing, and Medical specialists',
+        divisions: [
+            { label: 'Registered Nurse', suggestedSkills: ['Patient Care', 'CPR', 'Vital Signs', 'Medical Records', 'Triage'] },
+            { label: 'Medical Doctor', suggestedSkills: ['Diagnosis', 'Treatment Planning', 'Patient Counseling', 'Internal Medicine'] },
+            { label: 'Pharmacist', suggestedSkills: ['Pharmacology', 'Prescription Verification', 'Drug Safety', 'Patient Education'] },
+            { label: 'Lab Technician', suggestedSkills: ['Lab Testing', 'Specimen Collection', 'Microscopy', 'Quality Control'] },
+            { label: 'Healthcare Admin', suggestedSkills: ['Hospital Management', 'Medical Billing', 'Compliance', 'Scheduling'] },
+        ]
+    },
+    {
+        id: 'management',
+        label: 'Management Studies',
+        icon: Users,
+        color: 'from-blue-600 to-indigo-600',
+        bg: 'bg-blue-50 dark:bg-blue-950/20',
+        description: 'Business, Admin, and Leadership roles',
+        divisions: [
+            { label: 'Marketing Manager', suggestedSkills: ['Brand Strategy', 'Market Research', 'Digital Marketing', 'Campaign Management'] },
+            { label: 'Financial Analyst', suggestedSkills: ['Financial Modeling', 'Data Analysis', 'Reporting', 'Forecasting'] },
+            { label: 'HR Manager', suggestedSkills: ['Recruitment', 'Employee Relations', 'Payroll', 'Performance Management'] },
+            { label: 'Project Manager', suggestedSkills: ['Agile', 'Scrum', 'Stakeholder Management', 'Planning'] },
+            { label: 'Operations Lead', suggestedSkills: ['Process Optimization', 'Supply Chain', 'Vendor Management', 'Budgeting'] },
+        ]
+    },
+    {
+        id: 'arts-science',
+        label: 'Arts & Science',
+        icon: Palette,
+        color: 'from-purple-500 to-violet-500',
+        bg: 'bg-purple-50 dark:bg-purple-950/20',
+        description: 'Creative arts and scientific research',
+        divisions: [
+            { label: 'Graphic Designer', suggestedSkills: ['UI Design', 'Photoshop', 'Illustrator', 'Branding', 'Layout'] },
+            { label: 'Microbiologist', suggestedSkills: ['Cell Culture', 'Lab Research', 'Microscopy', 'Data Analysis'] },
+            { label: 'Psychologist', suggestedSkills: ['Counseling', 'Mental Health', 'Patient Assessment', 'Behavioral Therapy'] },
+            { label: 'Content Writer', suggestedSkills: ['Copywriting', 'SEO', 'Creative Writing', 'Editing'] },
+            { label: 'Fine Artist', suggestedSkills: ['Painting', 'Sculpting', 'Theory', 'Exhibition Planning'] },
+        ]
+    },
+    {
+        id: 'engineering',
+        label: 'Engineering',
+        icon: Cog,
+        color: 'from-orange-500 to-amber-500',
+        bg: 'bg-orange-50 dark:bg-orange-950/20',
+        description: 'Technical and structural engineering',
+        divisions: [
+            { label: 'Civil Engineer', suggestedSkills: ['AutoCAD', 'Structural Analysis', 'Project Management', 'Surveying'] },
+            { label: 'Mechanical Engineer', suggestedSkills: ['SolidWorks', 'Thermodynamics', 'Manufacturing', 'CAD'] },
+            { label: 'Electrical Engineer', suggestedSkills: ['Circuit Design', 'Power Systems', 'PLC', 'Troubleshooting'] },
+            { label: 'Aerospace Engineer', suggestedSkills: ['Aerodynamics', 'Avionics', 'Simulations', 'Materials Science'] },
+            { label: 'Structural Engineer', suggestedSkills: ['BIM', 'Seismic Design', 'Project Coordination', 'Specifications'] },
+        ]
+    },
+    {
+        id: 'schools',
+        label: 'Schools & Education',
+        icon: School,
+        color: 'from-emerald-500 to-green-500',
+        bg: 'bg-emerald-50 dark:bg-emerald-950/20',
+        description: 'Teaching, Admin, and Counseling',
+        divisions: [
+            { label: 'High School Teacher', suggestedSkills: ['Lesson Planning', 'Curriculum Development', 'Student Assessment', 'Classroom Management'] },
+            { label: 'Primary School Teacher', suggestedSkills: ['Child Development', 'Activity Planning', 'Teaching Aids', 'Parent Interaction'] },
+            { label: 'School Principal', suggestedSkills: ['Educational Leadership', 'Team Management', 'Budgeting', 'Policy Implementation'] },
+            { label: 'Librarian', suggestedSkills: ['Information Management', 'Cataloging', 'Research Support', 'Literacy Programs'] },
+            { label: 'Counselor', suggestedSkills: ['Student Counseling', 'Career Guidance', 'Crisis Intervention', 'Workshops'] },
+        ]
+    },
+    {
+        id: 'it',
+        label: 'IT Company',
+        icon: Cpu,
+        color: 'from-cyan-500 to-blue-500',
+        bg: 'bg-cyan-50 dark:bg-cyan-950/20',
+        description: 'Software, Cloud, and Tech infrastructure',
+        divisions: [
+            { label: 'Frontend Developer', suggestedSkills: ['React', 'TypeScript', 'CSS/Tailwind', 'Responsive Design', 'Next.js'] },
+            { label: 'Backend Developer', suggestedSkills: ['Node.js', 'PostgreSQL', 'APIs', 'System Design', 'Docker'] },
+            { label: 'Full Stack Engineer', suggestedSkills: ['MERN Stack', 'Architecture', 'Deployment', 'Testing'] },
+            { label: 'Cloud Architect', suggestedSkills: ['AWS', 'Azure', 'Serverless', 'Microservices'] },
+            { label: 'Cybersecurity Specialist', suggestedSkills: ['Ethical Hacking', 'Network Security', 'Firewalls', 'Incident Response'] },
+        ]
+    },
+    {
+        id: 'analytics',
+        label: 'Research & Analytics',
+        icon: ChartLine,
+        color: 'from-fuchsia-500 to-purple-600',
+        bg: 'bg-fuchsia-50 dark:bg-fuchsia-950/20',
+        description: 'Data science and market research',
+        divisions: [
+            { label: 'Data Analyst', suggestedSkills: ['SQL', 'Python', 'Power BI', 'Statistical Modeling', 'Excel'] },
+            { label: 'Market Researcher', suggestedSkills: ['Consumer Insights', 'Surveys', 'Trend Analysis', 'Reporting'] },
+            { label: 'BI Analyst', suggestedSkills: ['Data Visualization', 'ETL', 'Dashboards', 'Business Strategy'] },
+            { label: 'Statistician', suggestedSkills: ['Probability', 'R Programming', 'Hypothesis Testing', 'Data Cleaning'] },
+            { label: 'Ops Research Analyst', suggestedSkills: ['Optimization', 'Simulation', 'Decision Analysis', 'Mathematics'] },
+        ]
+    },
+    {
+        id: 'agriculture',
+        label: 'Agri & Environment',
+        icon: Tractor,
+        color: 'from-lime-600 to-green-600',
+        bg: 'bg-lime-50 dark:bg-lime-950/20',
+        description: 'Farming, Sustainability, and Food Science',
+        divisions: [
+            { label: 'Agronomist', suggestedSkills: ['Crop Science', 'Soil Analysis', 'Irrigation', 'Pest Management'] },
+            { label: 'Food Scientist', suggestedSkills: ['Food Safety', 'R&D', 'Quality Assurance', 'Lab Testing'] },
+            { label: 'Sustainability Specialist', suggestedSkills: ['Environmental Auditing', 'Waste Management', 'Carbon Credits', 'ESG'] },
+            { label: 'Environmental Engineer', suggestedSkills: ['Water Treatment', 'Environmental Compliance', 'Permitting', 'Risk Assessment'] },
+        ]
+    },
+    {
+        id: 'legal',
+        label: 'Legal & Law',
+        icon: Scale,
+        color: 'from-slate-700 to-gray-800',
+        bg: 'bg-slate-50 dark:bg-slate-950/20',
+        description: 'Law firms and corporate compliance',
+        divisions: [
+            { label: 'Corporate Lawyer', suggestedSkills: ['Contract Law', 'Legal Writing', 'Negotiation', 'Intellectual Property'] },
+            { label: 'Paralegal', suggestedSkills: ['Legal Research', 'Case Management', 'Documentation', 'Administrative Support'] },
+            { label: 'Compliance Officer', suggestedSkills: ['Risk Management', 'Regulatory Audits', 'Policy Drafting', 'AML'] },
+            { label: 'Legal Consultant', suggestedSkills: ['Legal Strategy', 'Arbitration', 'Dispute Resolution', 'Advisory'] },
+        ]
+    },
+    {
+        id: 'media',
+        label: 'Media & Entertainment',
+        icon: Camera,
+        color: 'from-pink-500 to-rose-500',
+        bg: 'bg-pink-50 dark:bg-pink-950/20',
+        description: 'Journalism, Film, and Content Creation',
+        divisions: [
+            { label: 'Journalist', suggestedSkills: ['Reporting', 'News Writing', 'Interviewing', 'Digital Media'] },
+            { label: 'Video Editor', suggestedSkills: ['Premiere Pro', 'After Effects', 'Storyboarding', 'Color Grading'] },
+            { label: 'Filmmaker', suggestedSkills: ['Direction', 'Cinematography', 'Scriptwriting', 'Production'] },
+            { label: 'Digital Content Creator', suggestedSkills: ['Social Media', 'Content Strategy', 'Video Production', 'SEO'] },
+        ]
+    },
+    {
+        id: 'hospitality',
+        label: 'Hospitality & Tourism',
+        icon: Utensils,
+        color: 'from-yellow-600 to-orange-600',
+        bg: 'bg-yellow-50 dark:bg-yellow-950/20',
+        description: 'Hotels, Travel, and Culinary arts',
+        divisions: [
+            { label: 'Hotel Manager', suggestedSkills: ['Hospitality Management', 'Guest Services', 'Staff Leadership', 'Budgeting'] },
+            { label: 'Executive Chef', suggestedSkills: ['Menu Planning', 'Culinary Arts', 'Kitchen Prep', 'Food Safety'] },
+            { label: 'Flight Attendant', suggestedSkills: ['Safety Procedures', 'Customer Service', 'Emergency Management', 'Communication'] },
+            { label: 'Travel Consultant', suggestedSkills: ['Tour Planning', 'CRM', 'Ticketing', 'Destination Knowledge'] },
+        ]
+    },
+    {
+        id: 'logistics',
+        label: 'Logistics & Supply Chain',
+        icon: Truck,
+        color: 'from-sky-700 to-blue-800',
+        bg: 'bg-sky-50 dark:bg-sky-950/20',
+        description: 'Shipping, Inventory, and Procurement',
+        divisions: [
+            { label: 'Logistics Manager', suggestedSkills: ['Freight Management', 'Route Optimization', 'Inventory Control', 'SAP'] },
+            { label: 'Supply Chain Analyst', suggestedSkills: ['Demand Planning', 'Forecasting', 'Vendor Analysis', 'Data Analytics'] },
+            { label: 'Warehouse Lead', suggestedSkills: ['Storage Layout', 'Workplace Safety', 'WMS', 'Team Supervision'] },
+            { label: 'Procurement Specialist', suggestedSkills: ['Strategic Sourcing', 'Price Negotiation', 'Purchase Orders', 'Contract Management'] },
+        ]
+    },
+    {
+        id: 'other',
+        label: 'Other Profession',
+        icon: User,
+        color: 'from-gray-500 to-gray-600',
+        bg: 'bg-gray-50 dark:bg-gray-800',
+        description: 'Manual entry for specialized roles',
+        divisions: [
+            { label: 'Other', suggestedSkills: [] }
+        ]
+    }
 ];
+
+const PROFESSIONS = INDUSTRY_CATEGORIES.flatMap(cat => 
+    cat.divisions.map(div => ({
+        label: div.label,
+        icon: cat.icon,
+        color: cat.color,
+        bg: cat.bg,
+        suggestedSkills: div.suggestedSkills,
+        category: cat.label
+    }))
+);
 
 const STEPS = [
     { id: 1, label: 'Profession', icon: Briefcase, description: 'Choose your career path' },
@@ -106,8 +292,8 @@ const ResumePrint = React.forwardRef<HTMLDivElement, { resume: ResumeData; userN
                 }}
             >
                 {/* Header */}
-                <div style={{ borderBottom: '3px solid #8b5cf6', paddingBottom: '20px', marginBottom: '24px' }}>
-                    <h1 style={{ fontSize: '32px', fontWeight: 'bold', margin: 0, color: '#8b5cf6', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                <div style={{ borderBottom: '3px solid #0d9488', paddingBottom: '20px', marginBottom: '24px' }}>
+                    <h1 style={{ fontSize: '32px', fontWeight: 'bold', margin: 0, color: '#0d9488', letterSpacing: '1px', textTransform: 'uppercase' }}>
                         {userName}
                     </h1>
                     <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0 12px', fontWeight: 500 }}>
@@ -139,7 +325,7 @@ const ResumePrint = React.forwardRef<HTMLDivElement, { resume: ResumeData; userN
                                     <strong style={{ fontSize: '14px', color: '#1f2937' }}>{exp.title}</strong>
                                     <span style={{ fontSize: '11px', color: '#9ca3af' }}>{exp.startDate} – {exp.endDate || 'Present'}</span>
                                 </div>
-                                <p style={{ fontSize: '13px', color: '#8b5cf6', margin: '2px 0' }}>{exp.company}{exp.location ? `, ${exp.location}` : ''}</p>
+                                <p style={{ fontSize: '13px', color: '#0d9488', margin: '2px 0' }}>{exp.company}{exp.location ? `, ${exp.location}` : ''}</p>
                                 {exp.description && <p style={{ fontSize: '12px', color: '#4b5563', marginTop: '4px', lineHeight: '1.6' }}>{exp.description}</p>}
                             </div>
                         ))}
@@ -155,7 +341,7 @@ const ResumePrint = React.forwardRef<HTMLDivElement, { resume: ResumeData; userN
                                     <strong style={{ fontSize: '14px', color: '#1f2937' }}>{edu.degree}</strong>
                                     <span style={{ fontSize: '11px', color: '#9ca3af' }}>{edu.year}</span>
                                 </div>
-                                <p style={{ fontSize: '13px', color: '#8b5cf6', margin: '2px 0' }}>{edu.institution}</p>
+                                <p style={{ fontSize: '13px', color: '#0d9488', margin: '2px 0' }}>{edu.institution}</p>
                                 {edu.grade && <p style={{ fontSize: '11px', color: '#6b7280' }}>Grade: {edu.grade}</p>}
                             </div>
                         ))}
@@ -167,7 +353,7 @@ const ResumePrint = React.forwardRef<HTMLDivElement, { resume: ResumeData; userN
                     <Section title="Skills">
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                             {resume.skills.map((s, i) => (
-                                <span key={i} style={{ background: '#f3f4f6', color: '#8b5cf6', fontSize: '11px', padding: '4px 12px', borderRadius: '20px', fontWeight: 500 }}>{s}</span>
+                                <span key={i} style={{ background: '#f0fdfa', color: '#0d9488', fontSize: '11px', padding: '4px 12px', borderRadius: '20px', fontWeight: 500, border: '1px solid #99f6e4' }}>{s}</span>
                             ))}
                         </div>
                     </Section>
@@ -193,7 +379,7 @@ const ResumePrint = React.forwardRef<HTMLDivElement, { resume: ResumeData; userN
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
     <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: '#8b5cf6', marginBottom: '12px', borderBottom: '1px solid #e5e7eb', paddingBottom: '6px' }}>
+        <h2 style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: '#0d9488', marginBottom: '12px', borderBottom: '1px solid #ccfbf1', paddingBottom: '6px' }}>
             {title}
         </h2>
         {children}
@@ -217,7 +403,8 @@ const ResumeBuilder = () => {
     const [customProfession, setCustomProfession] = useState('');
     const [generatingSummary, setGeneratingSummary] = useState(false);
     const [skillInput, setSkillInput] = useState('');
-    const [selectedProfession, setSelectedProfession] = useState(null);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [selectedDivision, setSelectedDivision] = useState(null);
     const printRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
 
@@ -229,6 +416,21 @@ const ResumeBuilder = () => {
         matchLevel: string,
         suggestions: string[]
     } | null>(null);
+
+    // ── ATS Daily Rate Limit (3 scans/day) ─────────────────────────────────────
+    const ATS_LIMIT = 3;
+    const ATS_LS_KEY = `ats_scans_${uid}`;
+    const getATSUsage = () => {
+        try {
+            const raw = localStorage.getItem(ATS_LS_KEY);
+            if (!raw) return { count: 0, date: '' };
+            return JSON.parse(raw) as { count: number; date: string };
+        } catch { return { count: 0, date: '' }; }
+    };
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const atsUsage = getATSUsage();
+    const atsToday = atsUsage.date === todayStr ? atsUsage.count : 0;
+    const [atsScansLeft, setAtsScansLeft] = useState(Math.max(0, ATS_LIMIT - atsToday));
 
     const [resume, setResume] = useState<ResumeData>({
         profession: sessionStorage.getItem('profession') || '',
@@ -390,6 +592,11 @@ const ResumeBuilder = () => {
             toast({ title: 'Input Required', description: 'Please paste a Job Description to scan against.', variant: 'destructive' });
             return;
         }
+        // Rate limit check
+        if (atsScansLeft <= 0) {
+            toast({ title: '🚫 Daily Limit Reached', description: 'You can only run 3 ATS scans per day. Try again tomorrow!', variant: 'destructive' });
+            return;
+        }
         setIsScanning(true);
         try {
             const resumeText = [
@@ -444,7 +651,11 @@ ${jobDescription}`,
                         matchLevel: parsed.matchLevel || 'Low',
                         suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
                     });
-                    toast({ title: 'Scan Complete', description: 'Your resume has been analyzed.' });
+                    // Deduct a scan from daily quota
+                    const newCount = atsToday + 1;
+                    localStorage.setItem(ATS_LS_KEY, JSON.stringify({ count: newCount, date: todayStr }));
+                    setAtsScansLeft(Math.max(0, ATS_LIMIT - newCount));
+                    toast({ title: '✅ Scan Complete', description: `Your resume has been analyzed. ${Math.max(0, ATS_LIMIT - newCount)} scan(s) remaining today.` });
                 } catch (parseErr) {
                     console.error('ATS JSON Parse Error:', parseErr);
                     let jsonStr = rawText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
@@ -457,7 +668,10 @@ ${jobDescription}`,
                             matchLevel: extractedParsed.matchLevel || 'Low',
                             suggestions: extractedParsed.suggestions || [],
                         });
-                        toast({ title: 'Scan Complete', description: 'Your resume has been analyzed (recovered).' });
+                        const newCount = atsToday + 1;
+                        localStorage.setItem(ATS_LS_KEY, JSON.stringify({ count: newCount, date: todayStr }));
+                        setAtsScansLeft(Math.max(0, ATS_LIMIT - newCount));
+                        toast({ title: '✅ Scan Complete', description: `Resume analyzed. ${Math.max(0, ATS_LIMIT - newCount)} scan(s) remaining today.` });
                     } else {
                         throw new Error('Failed to parse AI response');
                     }
@@ -554,8 +768,11 @@ ${jobDescription}`,
     const selectedCerts = allCerts.filter(c => resume.selectedCertificateIds.includes(c.certificateId));
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-            <div className="container max-w-6xl mx-auto py-8 px-4">
+        <div className="min-h-screen bg-gradient-to-br from-teal-50/40 via-white to-cyan-50/30 dark:from-slate-950 dark:via-teal-950/10 dark:to-cyan-950/10">
+            <div className="container max-w-6xl mx-auto py-8 px-4 relative">
+                {/* Background Blobs */}
+                <div className="absolute top-0 right-0 -z-10 w-[500px] h-[500px] bg-teal-500/5 blur-[120px] rounded-full"></div>
+                <div className="absolute bottom-0 left-0 -z-10 w-[500px] h-[500px] bg-cyan-400/5 blur-[120px] rounded-full"></div>
                 {/* Hidden print element */}
                 <ResumePrint ref={printRef} resume={resume} userName={userName} certs={allCerts} />
 
@@ -567,7 +784,7 @@ ${jobDescription}`,
                 >
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
-                            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
                                 Resume Builder
                             </h1>
                             <p className="text-muted-foreground mt-1">
@@ -579,13 +796,67 @@ ${jobDescription}`,
                                 <Button variant="outline" className="gap-2 rounded-full" onClick={handleShare}>
                                     <Share2 className="h-4 w-4" /> Share
                                 </Button>
-                                <Button className="gap-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700" onClick={handleDownload} disabled={downloading}>
+                                <Button className="gap-2 rounded-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700" onClick={handleDownload} disabled={downloading}>
                                     {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                                     Download PDF
                                 </Button>
                             </div>
                         )}
                     </div>
+                </motion.div>
+
+                {/* ── How-to-Use Guide ─────────────────────────────────── */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="mb-6"
+                >
+                    <details className="group bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-2xl shadow-md overflow-hidden">
+                        <summary className="flex items-center justify-between px-6 py-4 cursor-pointer select-none list-none">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center shadow">
+                                    <BookOpen className="h-5 w-5 text-white" />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-teal-700 dark:text-teal-300 text-sm">📋 How to Use the Resume Builder</p>
+                                    <p className="text-xs text-muted-foreground">Click to read step-by-step instructions</p>
+                                </div>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-teal-500 group-open:rotate-90 transition-transform" />
+                        </summary>
+                        <div className="px-6 pb-6 pt-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                                {[
+                                    { step: '1', icon: Briefcase, title: 'Choose Profession', desc: 'Select your industry and specific role. This personalises your AI suggestions throughout.' },
+                                    { step: '2', icon: User, title: 'Fill Your Profile', desc: 'Add your contact info, professional summary (use AI Generate!), and skills.' },
+                                    { step: '3', icon: Building, title: 'Add Experience', desc: 'List your work history with job titles, companies, dates and key responsibilities.' },
+                                    { step: '4', icon: GraduationCap, title: 'Education', desc: 'Enter your degrees, institutions, year, and grades.' },
+                                    { step: '5', icon: Award, title: 'Certifications', desc: 'Select courses you have completed on the platform to auto-attach certificates.' },
+                                    { step: '6', icon: Search, title: 'ATS Scanner', desc: 'Paste a job description to check how well your resume matches it. 3 free scans/day.' },
+                                    { step: '7', icon: Eye, title: 'Preview & Download', desc: 'Review your resume, download as a professional PDF, or share a live link.' },
+                                ].map(item => (
+                                    <div key={item.step} className="flex gap-3 p-3 rounded-xl bg-teal-50/60 dark:bg-teal-950/20 border border-teal-100 dark:border-teal-900">
+                                        <div className="w-7 h-7 rounded-full bg-teal-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{item.step}</div>
+                                        <div>
+                                            <p className="text-xs font-bold text-teal-700 dark:text-teal-300">{item.title}</p>
+                                            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{item.desc}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {[
+                                    '✅ Your progress saves automatically',
+                                    '✅ Use AI Generate for a smart professional summary',
+                                    '✅ Download as PDF in one click',
+                                    '✅ Share your resume link on LinkedIn or WhatsApp',
+                                ].map(tip => (
+                                    <span key={tip} className="text-xs bg-cyan-50 dark:bg-cyan-950/20 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 px-3 py-1 rounded-full">{tip}</span>
+                                ))}
+                            </div>
+                        </div>
+                    </details>
                 </motion.div>
 
                 {/* Step Progress */}
@@ -603,7 +874,7 @@ ${jobDescription}`,
                             >
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                                     step >= s.id 
-                                        ? `bg-gradient-to-r ${professionColor} text-white shadow-lg` 
+                                        ? `bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg` 
                                         : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
                                 }`}>
                                     {step > s.id ? <CheckCircle className="h-5 w-5" /> : <s.icon className="h-5 w-5" />}
@@ -625,51 +896,137 @@ ${jobDescription}`,
                 >
                     {/* Step 1: Profession */}
                     {step === 1 && (
-                        <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Briefcase className="h-5 w-5 text-purple-500" />
-                                    Choose Your Profession
-                                </CardTitle>
-                                <CardDescription>Select your career path to get personalized suggestions</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {PROFESSIONS.map(p => {
-                                        const Icon = p.icon;
-                                        const isSelected = resume.profession === p.label;
-                                        return (
-                                            <motion.button
-                                                key={p.label}
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                                onClick={() => setField('profession', p.label)}
-                                                className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all ${isSelected
-                                                    ? `border-purple-500 bg-gradient-to-br ${p.bg} shadow-lg`
-                                                    : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
-                                                }`}
+                        <div className="space-y-6">
+                            <AnimatePresence mode="wait">
+                                {!selectedCategory ? (
+                                    <motion.div
+                                        key="categories"
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                                    >
+                                        {INDUSTRY_CATEGORIES.map((cat) => (
+                                            <Card 
+                                                key={cat.id}
+                                                className="group cursor-pointer border-0 shadow-lg hover:shadow-2xl transition-all hover:-translate-y-1 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md overflow-hidden"
+                                                onClick={() => setSelectedCategory(cat)}
                                             >
-                                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${p.color} flex items-center justify-center shadow-md`}>
-                                                    <Icon className="h-6 w-6 text-white" />
+                                                <div className={`h-2 w-full bg-gradient-to-r ${cat.color}`}></div>
+                                                <CardHeader className="pb-2">
+                                                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${cat.color} flex items-center justify-center p-2.5 shadow-md mb-2 group-hover:scale-110 transition-transform`}>
+                                                        <cat.icon className="text-white h-7 w-7" />
+                                                    </div>
+                                                    <CardTitle className="text-xl">{cat.label}</CardTitle>
+                                                    <CardDescription className="line-clamp-2">{cat.description}</CardDescription>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    <div className="flex items-center text-sm font-medium text-teal-600 dark:text-teal-400 group-hover:translate-x-1 transition-transform">
+                                                        View roles <ChevronRight className="h-4 w-4 ml-1" />
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="divisions"
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        className="space-y-6"
+                                    >
+                                        <div className="flex items-center gap-4 mb-2">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                onClick={() => setSelectedCategory(null)}
+                                                className="rounded-full gap-1"
+                                            >
+                                                <ChevronLeft className="h-4 w-4" /> Back to Industries
+                                            </Button>
+                                            <Separator orientation="vertical" className="h-6" />
+                                            <div className="flex items-center gap-2">
+                                                <selectedCategory.icon className={`h-5 w-5 bg-gradient-to-r ${selectedCategory.color} bg-clip-text text-transparent`} />
+                                                <span className="font-semibold text-lg">{selectedCategory.label}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                            {selectedCategory.divisions.map((div) => {
+                                                const isSelected = resume.profession === div.label;
+                                                return (
+                                                    <motion.button
+                                                        key={div.label}
+                                                        whileHover={{ scale: 1.03 }}
+                                                        whileTap={{ scale: 0.97 }}
+                                                        onClick={() => {
+                                                            setField('profession', div.label);
+                                                            if (div.label !== 'Other') {
+                                                                toast({
+                                                                    title: "Profession Selected",
+                                                                    description: `Great! We'll tailor your resume for ${div.label}.`,
+                                                                });
+                                                            }
+                                                        }}
+                                                        className={`flex flex-col items-center gap-3 p-5 rounded-2xl border-2 transition-all relative overflow-hidden ${isSelected
+                                                            ? `border-teal-500 bg-gradient-to-br ${selectedCategory.bg} shadow-lg ring-2 ring-teal-500/20`
+                                                            : 'border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-teal-300 dark:hover:border-teal-800'
+                                                        }`}
+                                                    >
+                                                        {isSelected && (
+                                                            <div className="absolute top-2 right-2">
+                                                                <CheckCircle className="h-4 w-4 text-teal-600" />
+                                                            </div>
+                                                        )}
+                                                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${selectedCategory.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+                                                            <selectedCategory.icon className="h-7 w-7 text-white" />
+                                                        </div>
+                                                        <span className="text-sm font-bold text-center tracking-tight">{div.label}</span>
+                                                    </motion.button>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {resume.profession === 'Other' && (
+                                            <motion.div 
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className="bg-white/50 dark:bg-slate-900/50 p-6 rounded-3xl border border-dashed border-teal-300 dark:border-teal-800 max-w-xl mx-auto"
+                                            >
+                                                <Label className="text-base font-semibold mb-3 block">Specify your specialized role</Label>
+                                                <div className="flex gap-3">
+                                                    <Input 
+                                                        value={customProfession} 
+                                                        onChange={e => setCustomProfession(e.target.value)} 
+                                                        placeholder="e.g. Technical Writer, AI Architect, Research Fellow..."
+                                                        className="rounded-2xl h-12 text-lg border-2 focus:ring-teal-500"
+                                                    />
+                                                    <Button 
+                                                        onClick={() => setField('profession', customProfession)}
+                                                        className="h-12 px-6 rounded-2xl bg-teal-600 hover:bg-teal-700"
+                                                    >
+                                                        Set Role
+                                                    </Button>
                                                 </div>
-                                                <span className="text-sm font-medium text-center">{p.label}</span>
-                                            </motion.button>
-                                        );
-                                    })}
-                                </div>
-                                {resume.profession === 'Other' && (
-                                    <div className="mt-6 space-y-2">
-                                        <Label>Specify your profession</Label>
-                                        <Input 
-                                            value={customProfession} 
-                                            onChange={e => setCustomProfession(e.target.value)} 
-                                            placeholder="e.g. Technical Writer, Blockchain Developer..."
-                                            className="rounded-xl"
-                                        />
-                                    </div>
+                                            </motion.div>
+                                        )}
+                                        
+                                        {resume.profession && resume.profession !== 'Other' && (
+                                            <div className="flex justify-center mt-8">
+                                                <Button 
+                                                    onClick={() => setStep(2)}
+                                                    size="lg"
+                                                    className="rounded-full px-12 h-14 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 shadow-xl hover:shadow-2xl transition-all gap-2 text-lg font-bold"
+                                                >
+                                                    Continue to Profile <ChevronRight className="h-5 w-5" />
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </motion.div>
                                 )}
-                            </CardContent>
-                        </Card>
+                            </AnimatePresence>
+                        </div>
                     )}
 
                     {/* Step 2: Profile */}
@@ -677,7 +1034,7 @@ ${jobDescription}`,
                         <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <User className="h-5 w-5 text-purple-500" />
+                                    <User className="h-5 w-5 text-teal-500" />
                                     Profile Information
                                 </CardTitle>
                                 <CardDescription>Tell us about yourself</CardDescription>
@@ -718,13 +1075,13 @@ ${jobDescription}`,
 
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <Label className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-purple-500" /> Professional Summary</Label>
+                                        <Label className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-teal-500" /> Professional Summary</Label>
                                         <Button
                                             onClick={handleAISummary}
                                             disabled={generatingSummary}
                                             variant="ghost"
                                             size="sm"
-                                            className="gap-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-full"
+                                            className="gap-2 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-full"
                                         >
                                             {generatingSummary ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
                                             AI Generate
@@ -742,7 +1099,7 @@ ${jobDescription}`,
                                 <Separator />
 
                                 <div className="space-y-4">
-                                    <Label className="flex items-center gap-2"><Zap className="h-4 w-4 text-purple-500" /> Skills</Label>
+                                    <Label className="flex items-center gap-2"><Zap className="h-4 w-4 text-teal-500" /> Skills</Label>
                                     <div className="flex gap-2">
                                         <Input
                                             value={skillInput}
@@ -757,7 +1114,7 @@ ${jobDescription}`,
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         {resume.skills.map(s => (
-                                            <span key={s} className="flex items-center gap-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm px-3 py-1.5 rounded-full border border-purple-200 dark:border-purple-800">
+                                            <span key={s} className="flex items-center gap-1 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 text-sm px-3 py-1.5 rounded-full border border-teal-200 dark:border-teal-800">
                                                 {s}
                                                 <button onClick={() => removeSkill(s)} className="hover:text-red-500 transition-colors">
                                                     <X className="h-3 w-3" />
@@ -773,16 +1130,16 @@ ${jobDescription}`,
                                         const uniqueSuggested = Array.from(new Set(suggested)).filter(s => !resume.skills.includes(s));
                                         if (uniqueSuggested.length === 0) return null;
                                         return (
-                                            <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800">
+                                            <div className="bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-950/20 dark:to-cyan-950/20 p-4 rounded-xl border border-teal-100 dark:border-teal-800">
                                                 <p className="text-xs font-semibold text-muted-foreground mb-3 flex items-center gap-2">
-                                                    <Sparkles className="h-3 w-3 text-purple-500" /> Suggested skills for {resume.profession}:
+                                                    <Sparkles className="h-3 w-3 text-teal-500" /> Suggested skills for {resume.profession}:
                                                 </p>
                                                 <div className="flex flex-wrap gap-2">
                                                     {uniqueSuggested.slice(0, 8).map(s => (
                                                         <button
                                                             key={s}
                                                             onClick={() => setField('skills', [...resume.skills, s])}
-                                                            className="text-xs bg-white dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md"
+                                                            className="text-xs bg-white dark:bg-gray-800 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-all px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md"
                                                         >
                                                             + {s}
                                                         </button>
@@ -802,12 +1159,12 @@ ${jobDescription}`,
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <div>
                                     <CardTitle className="flex items-center gap-2">
-                                        <Briefcase className="h-5 w-5 text-purple-500" />
+                                        <Briefcase className="h-5 w-5 text-teal-500" />
                                         Work Experience
                                     </CardTitle>
                                     <CardDescription>Showcase your professional journey</CardDescription>
                                 </div>
-                                <Button onClick={addExp} variant="outline" className="gap-2 rounded-full">
+                                <Button onClick={addExp} variant="outline" className="gap-2 rounded-full border-teal-300 text-teal-700 hover:bg-teal-50">
                                     <Plus className="h-4 w-4" /> Add Experience
                                 </Button>
                             </CardHeader>
@@ -878,12 +1235,12 @@ ${jobDescription}`,
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <div>
                                     <CardTitle className="flex items-center gap-2">
-                                        <GraduationCap className="h-5 w-5 text-purple-500" />
+                                        <GraduationCap className="h-5 w-5 text-teal-500" />
                                         Education
                                     </CardTitle>
                                     <CardDescription>Your academic background</CardDescription>
                                 </div>
-                                <Button onClick={addEdu} variant="outline" className="gap-2 rounded-full">
+                                <Button onClick={addEdu} variant="outline" className="gap-2 rounded-full border-teal-300 text-teal-700 hover:bg-teal-50">
                                     <Plus className="h-4 w-4" /> Add Education
                                 </Button>
                             </CardHeader>
@@ -939,7 +1296,7 @@ ${jobDescription}`,
                         <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <Award className="h-5 w-5 text-purple-500" />
+                                    <Award className="h-5 w-5 text-teal-500" />
                                     Certifications
                                 </CardTitle>
                                 <CardDescription>Select the certificates to showcase your expertise</CardDescription>
@@ -960,8 +1317,8 @@ ${jobDescription}`,
                                                 key={c.certificateId}
                                                 whileHover={{ scale: 1.02 }}
                                                 className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${resume.selectedCertificateIds.includes(c.certificateId)
-                                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/20'
-                                                    : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
+                                                    ? 'border-teal-500 bg-teal-50 dark:bg-teal-950/20'
+                                                    : 'border-gray-200 dark:border-gray-700 hover:border-teal-300'
                                                 }`}
                                                 onClick={() => toggleCert(c.certificateId)}
                                             >
@@ -990,27 +1347,126 @@ ${jobDescription}`,
                         <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <Search className="h-5 w-5 text-purple-500" />
+                                    <Search className="h-5 w-5 text-teal-500" />
                                     ATS Compatibility Scanner
                                 </CardTitle>
                                 <CardDescription>Optimize your resume for Applicant Tracking Systems</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
+
+                                {/* ── Org Student Restriction ──────────────────────────────── */}
+                                {isOrgUser && userRole === 'student' ? (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.97 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="flex flex-col items-center text-center py-10 px-6 gap-5"
+                                    >
+                                        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-xl">
+                                            <Lock className="h-10 w-10 text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-1">ATS Scanner — Restricted</h3>
+                                            <p className="text-muted-foreground text-sm max-w-md">
+                                                The ATS Compatibility Scanner is not available for organisation students. This feature is managed by your organisation administrator.
+                                            </p>
+                                        </div>
+                                        <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-2xl px-6 py-4 max-w-sm w-full">
+                                            <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 mb-2 flex items-center gap-2 justify-center">
+                                                <AlertCircle className="h-4 w-4" /> Contact Your Organisation Admin
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                To get access to the ATS Scanner, please reach out to your organisation administrator or institution IT support team to enable this feature for your account.
+                                            </p>
+                                        </div>
+                                        <Badge variant="secondary" className="text-xs px-4 py-1 rounded-full">
+                                            🏫 Organisation Account Restriction
+                                        </Badge>
+                                    </motion.div>
+                                ) : (
+                                <>
+                                {/* ── ATS How-to Instructions ──────────────────────────────── */}
+                                <details className="group bg-teal-50/50 dark:bg-teal-950/10 border border-teal-200 dark:border-teal-800 rounded-2xl overflow-hidden">
+                                    <summary className="flex items-center justify-between px-4 py-3 cursor-pointer select-none list-none">
+                                        <div className="flex items-center gap-2">
+                                            <Target className="h-4 w-4 text-teal-500" />
+                                            <span className="text-sm font-semibold text-teal-700 dark:text-teal-300">How does the ATS Scanner work?</span>
+                                        </div>
+                                        <ChevronRight className="h-4 w-4 text-teal-400 group-open:rotate-90 transition-transform" />
+                                    </summary>
+                                    <div className="px-5 pb-5 pt-1 space-y-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            {[
+                                                { icon: '📋', title: 'Paste Job Description', desc: 'Copy a full job posting from LinkedIn, Naukri, or any job portal and paste it into the box below.' },
+                                                { icon: '🤖', title: 'AI Analysis', desc: 'Our AI compares your resume content — skills, experience, keywords — against the job description.' },
+                                                { icon: '📊', title: 'Get Your Score', desc: 'Receive an ATS score (0–100), missing keywords, a match level (High / Medium / Low), and improvement tips.' },
+                                            ].map(tip => (
+                                                <div key={tip.title} className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-teal-100 dark:border-teal-900">
+                                                    <p className="text-lg mb-1">{tip.icon}</p>
+                                                    <p className="text-xs font-bold text-teal-700 dark:text-teal-300">{tip.title}</p>
+                                                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{tip.desc}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            {[
+                                                '⚡ 3 free scans per day — resets at midnight',
+                                                '🎯 Score ≥ 70 = High Match',
+                                                '📝 Add missing keywords to boost your score',
+                                                '🔁 Re-run after editing your resume for best results',
+                                            ].map(t => (
+                                                <span key={t} className="text-xs bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 px-3 py-1 rounded-full">{t}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </details>
+
+                                {/* Daily limit banner */}
+                                <div className={`flex items-center justify-between px-4 py-3 rounded-2xl border ${
+                                    atsScansLeft === 0
+                                        ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
+                                        : atsScansLeft === 1
+                                            ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800'
+                                            : 'bg-teal-50 dark:bg-teal-950/20 border-teal-200 dark:border-teal-800'
+                                }`}>
+                                    <div className="flex items-center gap-2">
+                                        <Target className={`h-4 w-4 ${
+                                            atsScansLeft === 0 ? 'text-red-500' : atsScansLeft === 1 ? 'text-amber-500' : 'text-teal-500'
+                                        }`} />
+                                        <span className={`text-sm font-semibold ${
+                                            atsScansLeft === 0 ? 'text-red-700 dark:text-red-300' : atsScansLeft === 1 ? 'text-amber-700 dark:text-amber-300' : 'text-teal-700 dark:text-teal-300'
+                                        }`}>
+                                            {atsScansLeft === 0 ? 'Daily limit reached — resets tomorrow' : `${atsScansLeft} of ${ATS_LIMIT} scans remaining today`}
+                                        </span>
+                                    </div>
+                                    <div className="flex gap-1">
+                                        {[...Array(ATS_LIMIT)].map((_, i) => (
+                                            <div key={i} className={`h-2.5 w-2.5 rounded-full ${
+                                                i < (ATS_LIMIT - atsScansLeft) ? 'bg-red-400' : 'bg-teal-400'
+                                            }`} />
+                                        ))}
+                                    </div>
+                                </div>
+
                                 <div className="space-y-3">
                                     <Label>Job Description</Label>
                                     <Textarea 
                                         value={jobDescription} 
                                         onChange={(e) => setJobDescription(e.target.value)}
                                         placeholder="Paste the job description here to analyze how well your resume matches..."
-                                        className="min-h-[200px] rounded-2xl resize-none border-2 focus:border-purple-500"
+                                        className="min-h-[200px] rounded-2xl resize-none border-2 focus:border-teal-500"
+                                        disabled={atsScansLeft === 0}
                                     />
                                     <Button 
                                         onClick={handleATSScan} 
-                                        disabled={isScanning || !jobDescription}
-                                        className="w-full rounded-2xl h-12 text-lg font-bold gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                                        disabled={isScanning || !jobDescription || atsScansLeft === 0}
+                                        className={`w-full rounded-2xl h-12 text-lg font-bold gap-2 ${
+                                            atsScansLeft === 0
+                                                ? 'bg-gray-400 cursor-not-allowed'
+                                                : 'bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700'
+                                        }`}
                                     >
                                         {isScanning ? <Loader2 className="h-5 w-5 animate-spin" /> : <Target className="h-5 w-5" />}
-                                        {isScanning ? 'Analyzing Resume...' : 'Analyze Match Score'}
+                                        {isScanning ? 'Analyzing Resume...' : atsScansLeft === 0 ? 'Daily Limit Reached' : 'Analyze Match Score'}
                                     </Button>
                                 </div>
 
@@ -1032,7 +1488,7 @@ ${jobDescription}`,
                                                     </Badge>
                                                 </div>
 
-                                                <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl p-6">
+                                                <div className="bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-950/20 dark:to-cyan-950/20 rounded-2xl p-6">
                                                     <div className="flex items-center gap-2 mb-3">
                                                         <AlertCircle className="h-5 w-5 text-amber-500" />
                                                         <h3 className="font-semibold">Missing Keywords</h3>
@@ -1052,7 +1508,7 @@ ${jobDescription}`,
 
                                             <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-2xl p-6">
                                                 <div className="flex items-center gap-2 mb-4">
-                                                    <Sparkles className="h-5 w-5 text-purple-500" />
+                                                    <Sparkles className="h-5 w-5 text-teal-500" />
                                                     <h3 className="font-semibold">Improvement Suggestions</h3>
                                                 </div>
                                                 <ul className="space-y-3">
@@ -1064,7 +1520,7 @@ ${jobDescription}`,
                                                             transition={{ delay: i * 0.1 }}
                                                             className="flex gap-2 text-sm text-muted-foreground"
                                                         >
-                                                            <span className="text-purple-500 font-bold">•</span>
+                                                            <span className="text-teal-500 font-bold">•</span>
                                                             {s}
                                                         </motion.li>
                                                     ))}
@@ -1073,6 +1529,8 @@ ${jobDescription}`,
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
+                                </>
+                                )}
                             </CardContent>
                         </Card>
                     )}
@@ -1082,7 +1540,7 @@ ${jobDescription}`,
                         <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <Eye className="h-5 w-5 text-purple-500" />
+                                    <Eye className="h-5 w-5 text-teal-500" />
                                     Resume Preview
                                 </CardTitle>
                                 <CardDescription>Review your professional resume</CardDescription>
@@ -1091,8 +1549,8 @@ ${jobDescription}`,
                                 {/* Preview Card */}
                                 <div className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden bg-white dark:bg-gray-900 shadow-inner max-h-[70vh] overflow-y-auto">
                                     <div className="p-8">
-                                        <div className={`border-b-2 border-purple-500 pb-4 mb-5`}>
-                                            <h1 className="text-2xl font-bold text-purple-600 dark:text-purple-400 tracking-widest uppercase">{userName}</h1>
+                                        <div className={`border-b-2 border-teal-500 pb-4 mb-5`}>
+                                            <h1 className="text-2xl font-bold text-teal-600 dark:text-teal-400 tracking-widest uppercase">{userName}</h1>
                                             <p className="text-sm text-muted-foreground mt-1 font-medium">{resume.profession === 'Other' ? customProfession : resume.profession}</p>
                                             <div className="flex flex-wrap gap-4 mt-3 text-xs text-muted-foreground">
                                                 {resume.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {resume.email}</span>}
@@ -1117,7 +1575,7 @@ ${jobDescription}`,
                                                             <span className="font-semibold text-sm">{e.title}</span>
                                                             <span className="text-xs text-muted-foreground">{e.startDate} – {e.endDate || 'Present'}</span>
                                                         </div>
-                                                        <p className="text-purple-600 dark:text-purple-400 text-sm">{e.company}{e.location ? `, ${e.location}` : ''}</p>
+                                                        <p className="text-teal-600 dark:text-teal-400 text-sm">{e.company}{e.location ? `, ${e.location}` : ''}</p>
                                                         {e.description && <p className="text-xs text-muted-foreground mt-1">{e.description}</p>}
                                                     </div>
                                                 ))}
@@ -1132,7 +1590,7 @@ ${jobDescription}`,
                                                             <span className="font-semibold text-sm">{e.degree}</span>
                                                             <span className="text-xs text-muted-foreground">{e.year}</span>
                                                         </div>
-                                                        <p className="text-purple-600 dark:text-purple-400 text-sm">{e.institution}</p>
+                                                        <p className="text-teal-600 dark:text-teal-400 text-sm">{e.institution}</p>
                                                         {e.grade && <p className="text-xs text-muted-foreground mt-1">Grade: {e.grade}</p>}
                                                     </div>
                                                 ))}
@@ -1143,7 +1601,7 @@ ${jobDescription}`,
                                             <PreviewSection title="Skills">
                                                 <div className="flex flex-wrap gap-2">
                                                     {resume.skills.map((s, i) => (
-                                                        <span key={i} className="bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 text-xs px-3 py-1.5 rounded-full border border-purple-200 dark:border-purple-800">
+                                                        <span key={i} className="bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 text-xs px-3 py-1.5 rounded-full border border-teal-200 dark:border-teal-800">
                                                             {s}
                                                         </span>
                                                     ))}
@@ -1170,7 +1628,7 @@ ${jobDescription}`,
                                         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
                                         {saving ? 'Saving...' : 'Save Resume'}
                                     </Button>
-                                    <Button onClick={handleDownload} disabled={downloading} className="gap-2 rounded-full px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                                    <Button onClick={handleDownload} disabled={downloading} className="gap-2 rounded-full px-6 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700">
                                         {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                                         {downloading ? 'Generating PDF...' : 'Download PDF'}
                                     </Button>
@@ -1182,7 +1640,7 @@ ${jobDescription}`,
                                 {/* Share info */}
                                 <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/30 p-3 rounded-xl">
                                     <Link2 className="h-3 w-3" />
-                                    <span>Share link: <span className="font-mono text-purple-600">{websiteURL}/resume/{uid}</span></span>
+                                    <span>Share link: <span className="font-mono text-teal-600">{websiteURL}/resume/{uid}</span></span>
                                 </div>
                             </CardContent>
                         </Card>
@@ -1208,17 +1666,17 @@ ${jobDescription}`,
                         {STEPS.map(s => (
                             <div
                                 key={s.id}
-                                className={`h-2 w-2 rounded-full transition-all ${step >= s.id ? 'bg-purple-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                                className={`h-2 w-2 rounded-full transition-all ${step >= s.id ? 'bg-teal-500' : 'bg-gray-300 dark:bg-gray-600'}`}
                             />
                         ))}
                     </div>
 
                     {step < STEPS.length ? (
-                        <Button className="gap-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700" onClick={() => setStep(step + 1)}>
+                        <Button className="gap-2 rounded-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700" onClick={() => setStep(step + 1)}>
                             Next <ChevronRight className="h-4 w-4" />
                         </Button>
                     ) : (
-                        <Button className="gap-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700" onClick={handleSave} disabled={saving}>
+                        <Button className="gap-2 rounded-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700" onClick={handleSave} disabled={saving}>
                             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
                             {saving ? 'Saving...' : 'Save & Finish'}
                         </Button>
@@ -1232,7 +1690,7 @@ ${jobDescription}`,
 // ─── Preview Section ──────────────────────────────────────────────────────────
 const PreviewSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
     <div className="mb-6">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 border-b border-purple-200 dark:border-purple-800 pb-2 mb-3">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400 border-b border-teal-200 dark:border-teal-800 pb-2 mb-3">
             {title}
         </h3>
         {children}
