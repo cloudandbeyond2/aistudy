@@ -486,6 +486,7 @@ export const updateOrganization = async (id, data) => {
   // Update new limit fields if provided
   if (data.studentSlot !== undefined) user.organizationDetails.studentSlot = data.studentSlot;
   if (data.customStudentLimit !== undefined) user.organizationDetails.customStudentLimit = data.customStudentLimit;
+  if (data.allowATS !== undefined) user.organizationDetails.allowATS = data.allowATS;
 
   await user.save();
 
@@ -494,7 +495,8 @@ export const updateOrganization = async (id, data) => {
       studentSlot: data.studentSlot,
       customStudentLimit: data.customStudentLimit,
       name: data.institutionName || undefined,
-      address: data.address || undefined
+      address: data.address || undefined,
+      allowATS: data.allowATS
   };
 
   if (data.planDuration) {

@@ -416,6 +416,7 @@ const ResumeBuilder = () => {
         matchLevel: string,
         suggestions: string[]
     } | null>(null);
+    const [orgSettings, setOrgSettings] = useState<any>(null);
 
     // ── ATS Daily Rate Limit (3 scans/day) ─────────────────────────────────────
     const ATS_LIMIT = 3;
@@ -498,6 +499,18 @@ const ResumeBuilder = () => {
                         });
                         navigate('/dashboard');
                         return;
+                    }
+                }
+
+                // Fetch Org Details if applicable
+                if (orgId) {
+                    try {
+                        const orgRes = await axios.get(`${serverURL}/api/org/details/${orgId}`);
+                        if (orgRes.data && orgRes.data.success) {
+                            setOrgSettings(orgRes.data.organization);
+                        }
+                    } catch (err) {
+                        console.error("Failed to fetch organisation settings:", err);
                     }
                 }
 
@@ -1354,8 +1367,8 @@ ${jobDescription}`,
                             </CardHeader>
                             <CardContent className="space-y-6">
 
-                                {/* ── Org Student Restriction ──────────────────────────────── */}
-                                {isOrgUser && userRole === 'student' ? (
+                                {/* ── Org / Admin Restriction ──────────────────────────────── */}
+                                {isOrgUser && (userRole === 'student' || orgSettings?.allowATS === false) ? (
                                     <motion.div
                                         initial={{ opacity: 0, scale: 0.97 }}
                                         animate={{ opacity: 1, scale: 1 }}
@@ -1365,21 +1378,25 @@ ${jobDescription}`,
                                             <Lock className="h-10 w-10 text-white" />
                                         </div>
                                         <div>
-                                            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-1">ATS Scanner — Restricted</h3>
+                                            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-1">ATS Scanner — {orgSettings?.allowATS === false ? 'Disabled' : 'Restricted'}</h3>
                                             <p className="text-muted-foreground text-sm max-w-md">
-                                                The ATS Compatibility Scanner is not available for organisation students. This feature is managed by your organisation administrator.
+                                                {userRole === 'student' 
+                                                    ? "The ATS Compatibility Scanner is not available for organisation students. This feature is managed by your organisation administrator."
+                                                    : "The ATS Compatibility Scanner has been disabled for your organisation by the system administrator."}
                                             </p>
                                         </div>
                                         <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-2xl px-6 py-4 max-w-sm w-full">
                                             <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 mb-2 flex items-center gap-2 justify-center">
-                                                <AlertCircle className="h-4 w-4" /> Contact Your Organisation Admin
+                                                <AlertCircle className="h-4 w-4" /> Contact {userRole === 'student' ? 'Organisation Admin' : 'Support'}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                To get access to the ATS Scanner, please reach out to your organisation administrator or institution IT support team to enable this feature for your account.
+                                                {userRole === 'student'
+                                                    ? "To get access to the ATS Scanner, please reach out to your organisation administrator or institution IT support team to enable this feature for your account."
+                                                    : "This feature has been globally disabled for your organisation. Please contact the platform administrator to re-enable access."}
                                             </p>
                                         </div>
                                         <Badge variant="secondary" className="text-xs px-4 py-1 rounded-full">
-                                            🏫 Organisation Account Restriction
+                                            🏫 Organisation {orgSettings?.allowATS === false ? 'Policy' : 'Account'} Restriction
                                         </Badge>
                                     </motion.div>
                                 ) : (
