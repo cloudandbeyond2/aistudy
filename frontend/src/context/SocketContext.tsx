@@ -52,7 +52,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   setSocket(socketInstance);
 
   socketInstance.on('connect', () => {
-    console.log("Connected:", socketInstance.id);
+    // console.log("Connected:", socketInstance.id);
     setIsConnected(true);
   });
 
