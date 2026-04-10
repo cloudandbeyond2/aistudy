@@ -18,12 +18,15 @@ import Swal from 'sweetalert2';
 
 const MaterialsTab = () => {
   const [openMaterialDialog, setOpenMaterialDialog] = useState(false);
+  const [openViewDialog, setOpenViewDialog] = useState(false);
+  const [viewingMaterial, setViewingMaterial] = useState<any>(null);
   const [materials, setMaterials] = useState<any[]>([]);
   const [editMaterial, setEditMaterial] = useState(null);
   const [departmentsList, setDepartmentsList] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [existingPdfFile, setExistingPdfFile] = useState<string | null>(null);
   
   const role = sessionStorage.getItem('role');
   const deptId = sessionStorage.getItem('deptId');
@@ -39,6 +42,15 @@ const MaterialsTab = () => {
     type: 'PDF',
     department: role === 'dept_admin' ? deptId || '' : ''
   });
+
+  // Helper function to resolve material URL
+  const resolveMaterialUrl = (fileUrl) => {
+    const trimmed = String(fileUrl || '').trim();
+    if (!trimmed) return '';
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    if (trimmed.startsWith('/')) return `${serverURL}${trimmed}`;
+    return `${serverURL}/${trimmed}`;
+  };
 
   const matchesDepartmentScope = (materialDepartment: any, materialDepartmentId?: any) => {
     const normalizedDepartment = typeof materialDepartment === 'string'
@@ -115,106 +127,121 @@ const MaterialsTab = () => {
     }
   }, [role, deptId, deptName, departmentsList]);
 
-const handleCreateMaterial = async () => {
-  try {
-    let res;
-    const scopedDepartment = role === 'dept_admin' ? deptId || newMaterial.department : newMaterial.department;
+  const handleCreateMaterial = async () => {
+    try {
+      let res;
+      const scopedDepartment = role === 'dept_admin' ? deptId || newMaterial.department : newMaterial.department;
 
-    if (editMaterial) {
-      // ✏️ UPDATE
-      res = await axios.put(
-        `${serverURL}/api/org/material/${editMaterial._id}`,
-        { ...newMaterial, department: scopedDepartment, organizationId: orgId }
-      );
+      if (editMaterial) {
+        // ✏️ UPDATE
+        res = await axios.put(
+          `${serverURL}/api/org/material/${editMaterial._id}`,
+          { ...newMaterial, department: scopedDepartment, organizationId: orgId }
+        );
 
-      if (res.data.success) {
-        toast({ title: "Updated", description: "Material updated successfully" });
-      }
+        if (res.data.success) {
+          toast({ title: "Updated", description: "Material updated successfully" });
+        }
 
-    } else {
-      // ➕ CREATE
-      if (newMaterial.type === 'PDF' && newMaterial.file) {
-        const formData = new FormData();
-        formData.append('title', newMaterial.title);
-        formData.append('description', newMaterial.description);
-        formData.append('type', newMaterial.type);
-        formData.append('department', scopedDepartment);
-        formData.append('organizationId', orgId);
-        formData.append('file', newMaterial.file);
-
-        res = await axios.post(`${serverURL}/api/org/material/create`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
       } else {
-        res = await axios.post(`${serverURL}/api/org/material/create`, {
-          ...newMaterial,
-          department: scopedDepartment,
-          organizationId: orgId,
-        });
+        // ➕ CREATE
+        if (newMaterial.type === 'PDF' && newMaterial.file) {
+          const formData = new FormData();
+          formData.append('title', newMaterial.title);
+          formData.append('description', newMaterial.description);
+          formData.append('type', newMaterial.type);
+          formData.append('department', scopedDepartment);
+          formData.append('organizationId', orgId);
+          formData.append('file', newMaterial.file);
+
+          res = await axios.post(`${serverURL}/api/org/material/create`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+        } else {
+          res = await axios.post(`${serverURL}/api/org/material/create`, {
+            ...newMaterial,
+            department: scopedDepartment,
+            organizationId: orgId,
+          });
+        }
+
+        if (res.data.success) {
+          toast({ title: "Created", description: "Material added successfully" });
+        }
       }
 
-      if (res.data.success) {
-        toast({ title: "Created", description: "Material added successfully" });
-      }
+      // 🔥 RESET
+      setEditMaterial(null);
+      setExistingPdfFile(null);
+
+      setNewMaterial({
+        title: '',
+        description: '',
+        fileUrl: '',
+        file: null,
+        type: 'PDF',
+        department: role === 'dept_admin' ? deptId || '' : ''
+      });
+
+      setOpenMaterialDialog(false);
+      fetchMaterials();
+
+    } catch (e) {
+      toast({ title: "Error", description: "Operation failed" });
     }
+  };
 
-    // 🔥 RESET
-    setEditMaterial(null);
-
-    setNewMaterial({
-      title: '',
-      description: '',
-      fileUrl: '',
-      file: null,
-      type: 'PDF',
-      department: role === 'dept_admin' ? deptId || '' : ''
+  const handleDeleteMaterial = async (id: string) => {
+    const result = await Swal.fire({
+      title: 'Delete this material?',
+      text: "This action cannot be undone",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete',
+      cancelButtonText: 'No',
     });
 
-    setOpenMaterialDialog(false);
-    fetchMaterials();
+    if (!result.isConfirmed) return;
 
-  } catch (e) {
-    toast({ title: "Error", description: "Operation failed" });
-  }
-};
-
-const handleDeleteMaterial = async (id: string) => {
-  const result = await Swal.fire({
-    title: 'Delete this material?',
-    text: "This action cannot be undone",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Yes, delete',
-    cancelButtonText: 'No',
-  });
-
-  if (!result.isConfirmed) return;
-
-  try {
-    const res = await axios.delete(`${serverURL}/api/org/material/${id}`);
-    if (res.data.success) {
-      Swal.fire('Deleted!', 'Material deleted successfully.', 'success');
-      fetchMaterials();
+    try {
+      const res = await axios.delete(`${serverURL}/api/org/material/${id}`);
+      if (res.data.success) {
+        Swal.fire('Deleted!', 'Material deleted successfully.', 'success');
+        fetchMaterials();
+      }
+    } catch (e) {
+      Swal.fire('Error!', 'Failed to delete material.', 'error');
     }
-  } catch (e) {
-    Swal.fire('Error!', 'Failed to delete material.', 'error');
-  }
-};
+  };
 
-const handleEditMaterial = (material) => {
-  setEditMaterial(material);
+  const handleEditMaterial = (material) => {
+    setEditMaterial(material);
+    
+    // Store the existing PDF URL for display - ensure it has the server URL prefix
+    if (material.type === 'PDF' && material.fileUrl) {
+      const pdfUrl = resolveMaterialUrl(material.fileUrl);
+      setExistingPdfFile(pdfUrl);
+    } else {
+      setExistingPdfFile(null);
+    }
 
-  setNewMaterial({
-    title: material.title,
-    description: material.description,
-    fileUrl: material.fileUrl || '',
-    file: null, // don’t prefill file
-    type: material.type,
-    department: role === 'dept_admin' ? deptId || material.department || '' : material.department || ''
-  });
+    setNewMaterial({
+      title: material.title,
+      description: material.description || '',
+      fileUrl: material.fileUrl || '',
+      file: null, // don't prefill file
+      type: material.type,
+      department: role === 'dept_admin' ? deptId || material.department || '' : material.department || ''
+    });
 
-  setOpenMaterialDialog(true);
-};
+    setOpenMaterialDialog(true);
+  };
+
+  const handleViewMaterial = (material) => {
+    setViewingMaterial(material);
+    setOpenViewDialog(true);
+  };
+
   // Get icon based on material type
   const getMaterialIcon = (type: string) => {
     switch(type) {
@@ -254,7 +281,7 @@ const handleEditMaterial = (material) => {
     return new Date(m.createdAt) >= weekAgo;
   }).length;
 
-return (
+  return (
     <div className="container space-y-4 md:space-y-5 lg:space-y-6 p-3 md:p-5 lg:p-6 ">
       {/* Hero Section with Gradient */}
       <div className="relative rounded-xl md:rounded-2xl overflow-hidden bg-brand-gradient">
@@ -285,11 +312,11 @@ return (
                 <DialogHeader>
                   <DialogTitle className="text-xl md:text-2xl font-bold">
                     <span className="text-brand-gradient">
-                      Add Study Material
+                      {editMaterial ? "Edit Study Material" : "Add Study Material"}
                     </span>
                   </DialogTitle>
                   <DialogDescription className="text-sm md:text-base">
-                    Share educational resources with your students
+                    {editMaterial ? "Update your educational resource" : "Share educational resources with your students"}
                   </DialogDescription>
                 </DialogHeader>
                 
@@ -336,13 +363,35 @@ return (
                     </Label>
                     {newMaterial.type === 'PDF' ? (
                       <div className="border-2 border-dashed border-border rounded-lg p-4 md:p-6 text-center hover:border-primary transition-all">
+                        {editMaterial && existingPdfFile && !newMaterial.file && (
+                          <div className="mb-3 p-2 bg-muted rounded-lg">
+                            <p className="text-xs text-muted-foreground">Current PDF:</p>
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const fileUrl = resolveMaterialUrl(existingPdfFile);
+                                if (fileUrl) window.open(fileUrl, '_blank', 'noopener,noreferrer');
+                              }}
+                              className="text-sm text-primary hover:underline flex items-center gap-1 justify-center w-full"
+                            >
+                              <FileText className="w-3 h-3" />
+                              View existing PDF
+                            </button>
+                          </div>
+                        )}
                         <Input
                           type="file"
                           accept="application/pdf"
-                          onChange={(e: any) => setNewMaterial({ ...newMaterial, file: e.target.files[0] })}
+                          onChange={(e: any) => {
+                            setNewMaterial({ ...newMaterial, file: e.target.files[0] });
+                            if (editMaterial) setExistingPdfFile(null);
+                          }}
                           className="cursor-pointer text-sm"
                         />
-                        <p className="text-xs text-muted-foreground mt-2">Supported: PDF (Max 10MB)</p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {editMaterial ? "Leave empty to keep existing PDF, or upload a new one" : "Supported: PDF (Max 10MB)"}
+                        </p>
                       </div>
                     ) : (
                       <Input
@@ -381,13 +430,34 @@ return (
                     </select>
                   </div>
                   
-                  <Button 
-                    onClick={handleCreateMaterial} 
-                    className="w-full h-10 md:h-11 text-sm md:text-base font-semibold bg-brand-gradient text-primary-foreground hover:opacity-95"
-                  >
-                    <Plus className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-                 {editMaterial ? "Update Resource" : "Publish Resource"}
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button 
+                      onClick={() => {
+                        setEditMaterial(null);
+                        setExistingPdfFile(null);
+                        setNewMaterial({
+                          title: '',
+                          description: '',
+                          fileUrl: '',
+                          file: null,
+                          type: 'PDF',
+                          department: role === 'dept_admin' ? deptId || '' : ''
+                        });
+                        setOpenMaterialDialog(false);
+                      }} 
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleCreateMaterial} 
+                      className="flex-1 bg-brand-gradient text-primary-foreground hover:opacity-95"
+                    >
+                      <Plus className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+                      {editMaterial ? "Update Resource" : "Publish Resource"}
+                    </Button>
+                  </div>
                 </div>
               </DialogContent>
             </Dialog>
@@ -395,84 +465,221 @@ return (
         </div>
       </div>
 
+      {/* View Material Dialog */}
+      <Dialog open={openViewDialog} onOpenChange={setOpenViewDialog}>
+        <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto p-4 md:p-6">
+          <DialogHeader>
+            <DialogTitle className="text-xl md:text-2xl font-bold flex items-center gap-2">
+              <span className="text-brand-gradient">Resource Details</span>
+            </DialogTitle>
+            <DialogDescription>
+              View complete information about this study material
+            </DialogDescription>
+          </DialogHeader>
+          
+          {viewingMaterial && (
+            <div className="space-y-4 md:space-y-5">
+              {/* Type Badge */}
+              <div className="flex justify-center">
+                <Badge className={`${getTypeBadgeStyle(viewingMaterial.type)} border-0 text-sm px-3 py-1`}>
+                  {getMaterialIcon(viewingMaterial.type)}
+                  <span className="ml-2">{viewingMaterial.type}</span>
+                </Badge>
+              </div>
+              
+              {/* Title */}
+              <div className="text-center">
+                <h2 className="text-xl md:text-2xl font-bold mb-2">{viewingMaterial.title}</h2>
+                {viewingMaterial.department && (
+                  <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">
+                    <Users className="w-4 h-4" />
+                    {departmentsList.find(d => d._id === viewingMaterial.department || d.name === viewingMaterial.department)?.name || viewingMaterial.department}
+                  </p>
+                )}
+              </div>
+              
+              {/* Description */}
+              {viewingMaterial.description && (
+                <div className="bg-muted/30 rounded-lg p-4">
+                  <h3 className="font-semibold mb-2 flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    Description
+                  </h3>
+                  <p className="text-sm leading-relaxed">{viewingMaterial.description}</p>
+                </div>
+              )}
+              
+              {/* Resource Preview/Content */}
+              <div className="border rounded-lg overflow-hidden">
+                <div className="bg-muted/20 px-4 py-3 border-b">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Resource Content
+                  </h3>
+                </div>
+                <div className="p-4">
+                  {viewingMaterial.type === 'PDF' ? (
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">PDF Document - Click below to view or download</p>
+                      <div className="flex gap-3 justify-center">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const fileUrl = resolveMaterialUrl(viewingMaterial.fileUrl);
+                            if (fileUrl) window.open(fileUrl, '_blank', 'noopener,noreferrer');
+                          }}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                          View PDF
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const fileUrl = resolveMaterialUrl(viewingMaterial.fileUrl);
+                            if (fileUrl) {
+                              const link = document.createElement('a');
+                              link.href = fileUrl;
+                              link.download = viewingMaterial.title || 'document.pdf';
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }
+                          }}
+                          className="inline-flex items-center gap-2 px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/10 transition-colors"
+                        >
+                          <Download className="w-4 h-4" />
+                          Download PDF
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-sm break-all">
+                        <span className="font-semibold">URL: </span>
+                        <a 
+                          href={viewingMaterial.fileUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          {viewingMaterial.fileUrl}
+                        </a>
+                      </p>
+                      <div className="flex justify-center">
+                        <a 
+                          href={viewingMaterial.fileUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Open Resource
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Metadata */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {viewingMaterial.createdAt && (
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <p className="text-muted-foreground text-xs mb-1">Created</p>
+                    <p className="font-medium">{new Date(viewingMaterial.createdAt).toLocaleDateString()}</p>
+                  </div>
+                )}
+                {viewingMaterial.updatedAt && viewingMaterial.updatedAt !== viewingMaterial.createdAt && (
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <p className="text-muted-foreground text-xs mb-1">Last Updated</p>
+                    <p className="font-medium">{new Date(viewingMaterial.updatedAt).toLocaleDateString()}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Stats Cards - Column Based Responsive Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        {/* Card 1 - Total Resources */}
-        <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardContent className="p-3 md:p-4 lg:p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">Total Resources</p>
-                <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">
-                    <span className="text-brand-gradient">
-                      {totalMaterials}
-                    </span>
-                  </p>
-                </div>
-              <div className="bg-brand-gradient p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg md:rounded-xl text-primary-foreground shadow-lg">
-                <Library className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4.5 md:h-4.5 lg:w-5 lg:h-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Card 2 - PDF Documents */}
-        <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardContent className="p-3 md:p-4 lg:p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">PDF Documents</p>
-                <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">
-                    <span className="text-brand-gradient">
-                      {pdfCount}
-                    </span>
-                  </p>
-                </div>
-              <div className="bg-brand-gradient p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg md:rounded-xl text-primary-foreground shadow-lg">
-                <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4.5 md:h-4.5 lg:w-5 lg:h-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Card 3 - External Links */}
-        <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardContent className="p-3 md:p-4 lg:p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">External Links</p>
-                <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">
-                    <span className="text-brand-gradient">
-                      {linkCount}
-                    </span>
-                  </p>
-                </div>
-              <div className="bg-brand-gradient p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg md:rounded-xl text-primary-foreground shadow-lg">
-                <Link className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4.5 md:h-4.5 lg:w-5 lg:h-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Card 4 - New This Week */}
-        <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardContent className="p-3 md:p-4 lg:p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">New This Week</p>
-                <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">
-                    <span className="text-brand-gradient">
-                      {recentCount}
-                    </span>
-                  </p>
-                </div>
-              <div className="bg-brand-gradient p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg md:rounded-xl text-primary-foreground shadow-lg">
-                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4.5 md:h-4.5 lg:w-5 lg:h-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+     <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+  {/* Card 1 - Total Resources */}
+  <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+    <CardContent className="p-3 md:p-4 lg:p-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">Total Resources</p>
+          <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">
+            <span className="text-brand-gradient">
+              {totalMaterials}
+            </span>
+          </p>
+        </div>
+        <div className="bg-brand-gradient p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg md:rounded-xl text-primary-foreground shadow-lg">
+          <Library className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4.5 md:h-4.5 lg:w-5 lg:h-5" />
+        </div>
       </div>
+    </CardContent>
+  </Card>
+
+  {/* Card 2 - PDF Documents */}
+  <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+    <CardContent className="p-3 md:p-4 lg:p-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">PDF Documents</p>
+          <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">
+            <span className="text-brand-gradient">
+              {pdfCount}
+            </span>
+          </p>
+        </div>
+        <div className="bg-brand-gradient p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg md:rounded-xl text-primary-foreground shadow-lg">
+          <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4.5 md:h-4.5 lg:w-5 lg:h-5" />
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+
+  {/* Card 3 - External Links */}
+  <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+    <CardContent className="p-3 md:p-4 lg:p-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">External Links</p>
+          <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">
+            <span className="text-brand-gradient">
+              {linkCount}
+            </span>
+          </p>
+        </div>
+        <div className="bg-brand-gradient p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg md:rounded-xl text-primary-foreground shadow-lg">
+          <Link className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4.5 md:h-4.5 lg:w-5 lg:h-5" />
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+
+  {/* Card 4 - New This Week */}
+  <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+    <CardContent className="p-3 md:p-4 lg:p-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">New This Week</p>
+          <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">
+            <span className="text-brand-gradient">
+              {recentCount}
+            </span>
+          </p>
+        </div>
+        <div className="bg-brand-gradient p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg md:rounded-xl text-primary-foreground shadow-lg">
+          <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4.5 md:h-4.5 lg:w-5 lg:h-5" />
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+</div>
 
       {/* Main Content Card */}
       <Card className="border-0 shadow-xl overflow-hidden">
@@ -582,48 +789,57 @@ return (
                         {m.department ? (departmentsList.find(d => d._id === m.department || d.name === m.department)?.name || m.department) : 'All Students'}
                       </p>
                  
- {/* Action Buttons */}
-<div className="flex items-center justify-between pt-2 md:pt-3 border-t">
-  
-  {/* LEFT: VIEW */}
-  <a 
-    href={m.fileUrl} 
-    target="_blank" 
-    rel="noopener noreferrer" 
-    className="inline-flex items-center gap-0.5 md:gap-1 text-[9px] md:text-[10px] lg:text-xs text-primary hover:text-accent transition-colors font-medium"
-  >
-    {m.type === 'PDF' ? 'View PDF' : 'Open'}
-    <ArrowUpRight className="w-2.5 h-2.5 md:w-3 md:h-3 lg:w-3.5 lg:h-3.5" />
-  </a>
+                      {/* Action Buttons */}
+                      <div className="flex items-center justify-between pt-2 md:pt-3 border-t">
+                        {/* LEFT: VIEW */}
+                        {/* <Button
+                          variant="ghost"
+                          size="sm"
+                          className="inline-flex items-center gap-0.5 md:gap-1 text-[9px] md:text-[10px] lg:text-xs text-primary hover:text-accent transition-colors font-medium p-0 h-auto"
+                          onClick={() => handleViewMaterial(m)}
+                        >
+                          <Eye className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
+                          View Details
+                        </Button> */}
 
-  {/* RIGHT: GROUPED BUTTONS */}
-  <div className="flex items-center gap-2">
+                        {/* RIGHT: GROUPED BUTTONS */}
+                        <div className="flex items-center gap-2">
+                          {/* OPEN PDF (for quick access) */}
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-brand-gradient-soft text-primary hover:bg-brand-gradient hover:text-primary-foreground shadow-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const fileUrl = resolveMaterialUrl(m.fileUrl);
+                              if (fileUrl) window.open(fileUrl, '_blank', 'noopener,noreferrer');
+                            }}
+                          >
+                            <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
+                          </Button>
 
-    {/* ✏️ EDIT */}
-    <Button
-      size="icon"
-      variant="ghost"
-      className="h-8 w-8 rounded-lg bg-brand-gradient-soft text-primary hover:bg-brand-gradient hover:text-primary-foreground shadow-sm"
-      onClick={() => handleEditMaterial(m)}
-    >
-      <Pencil className="w-4 h-4" />
-    </Button>
+                          {/* ✏️ EDIT */}
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-brand-gradient-soft text-primary hover:bg-brand-gradient hover:text-primary-foreground shadow-sm"
+                            onClick={() => handleEditMaterial(m)}
+                          >
+                            <Pencil className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
+                          </Button>
 
-    {/* 🗑️ DELETE */}
-    <Button 
-      size="icon" 
-      variant="ghost" 
-      className="h-8 w-8 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white"
-      onClick={() => handleDeleteMaterial(m._id)}
-    >
-      <Trash2 className="w-4 h-4" />
-    </Button>
-
-  </div>
-
-
-</div>
-                  </div>
+                          {/* 🗑️ DELETE */}
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white"
+                            onClick={() => handleDeleteMaterial(m._id)}
+                          >
+                            <Trash2 className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -655,39 +871,51 @@ return (
                         </p>
                       </div>
                     </div>
-                   <div className="flex items-center gap-2 mt-2 sm:mt-0 sm:ml-4">
+                    <div className="flex items-center gap-2 mt-2 sm:mt-0 sm:ml-4">
+                      {/* 👁️ VIEW */}
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 text-primary hover:text-primary/80"
+                        onClick={() => handleViewMaterial(m)}
+                      >
+                        <Eye className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
+                      </Button>
 
-  {/* OPEN */}
-  <a 
-    href={m.fileUrl} 
-    target="_blank" 
-    rel="noopener noreferrer" 
-    className="p-1.5 md:p-2 hover:text-primary transition-colors"
-  >
-    <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
-  </a>
+                      {/* OPEN (for quick access) */}
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 text-primary hover:text-primary/80"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const fileUrl = resolveMaterialUrl(m.fileUrl);
+                          if (fileUrl) window.open(fileUrl, '_blank', 'noopener,noreferrer');
+                        }}
+                      >
+                        <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
+                      </Button>
 
-  {/* ✏️ EDIT */}
-  <Button
-    size="icon"
-    variant="ghost"
-    className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 text-primary hover:text-primary/80"
-    onClick={() => handleEditMaterial(m)}
-  >
-    <Pencil className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
-  </Button>
+                      {/* ✏️ EDIT */}
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 text-primary hover:text-primary/80"
+                        onClick={() => handleEditMaterial(m)}
+                      >
+                        <Pencil className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
+                      </Button>
 
-  {/* 🗑️ DELETE */}
-  <Button 
-    size="icon" 
-    variant="ghost" 
-    className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 text-destructive hover:text-destructive/80"
-    onClick={() => handleDeleteMaterial(m._id)}
-  >
-    <Trash2 className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
-  </Button>
-
-</div>
+                      {/* 🗑️ DELETE */}
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 text-destructive hover:text-destructive/80"
+                        onClick={() => handleDeleteMaterial(m._id)}
+                      >
+                        <Trash2 className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
