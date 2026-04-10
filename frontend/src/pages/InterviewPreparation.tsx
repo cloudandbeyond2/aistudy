@@ -647,10 +647,30 @@ const isYearlyOnly = userPlan !== 'yearly';
       return;
     }
 
+    const uid = sessionStorage.getItem('uid');
+    
+    // Check for daily limit (24-hour cooldown)
+    const lastGenKey = `last_ai_quiz_gen_${uid}`;
+    const lastGen = localStorage.getItem(lastGenKey);
+    const now = Date.now();
+    const cooldownMs = 24 * 60 * 60 * 1000;
+
+    if (lastGen) {
+      const timeSinceLast = now - parseInt(lastGen);
+      if (timeSinceLast < cooldownMs) {
+        const hoursRemaining = Math.ceil((cooldownMs - timeSinceLast) / (1000 * 60 * 60));
+        toast({ 
+          title: "Daily Limit Reached", 
+          description: `You can generate your next AI quiz in ${hoursRemaining} hours. Focus on mastering today's practice for now!`, 
+          variant: "destructive" 
+        });
+        return;
+      }
+    }
+
     setGeneratingQuiz(true);
     setAiQuizData([]);
     try {
-      const uid = sessionStorage.getItem('uid');
       // console.log("Generating quiz for:", uid, "category:", aiCategory);
 
       const resp = await axios.post(`${serverURL}/api/interview-prep/generate-category-quiz`,
@@ -660,8 +680,9 @@ const isYearlyOnly = userPlan !== 'yearly';
 
       // console.log("Generate quiz response:", resp.data);
       if (resp.data.success) {
+        localStorage.setItem(lastGenKey, now.toString());
         setAiQuizData(resp.data.data);
-        toast({ title: "Success", description: "Quiz generated successfully!" });
+        toast({ title: "Success", description: "Your daily AI quiz has been generated!" });
       } else {
         throw new Error(resp.data.message || "Failed to generate");
       }
@@ -712,15 +733,69 @@ const isYearlyOnly = userPlan !== 'yearly';
       <SEO title="Interview Preparation" description="Master your interviews with daily tests and AI quizzes" />
       <div className="space-y-6 md:space-y-8 animate-fade-in max-w-6xl mx-auto pb-6 md:pb-10 px-4 md:px-6 lg:px-8 pt-0 lg:pt-[60px]">
 
-        {/* Banner Section */}
-        <div className="p-4 md:p-6 lg:p-8 rounded-2xl md:rounded-3xl bg-gradient-to-br from-indigo-500/10 via-primary/5 to-transparent border border-primary/20 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-[200px] md:w-[300px] lg:w-[400px] h-[200px] md:h-[300px] lg:h-[400px] bg-primary/10 rounded-full blur-[60px] md:blur-[80px] -z-10" />
-          <div>
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-1 md:mb-2">Interview Preparation Hub</h1>
-            <p className="text-xs md:text-sm lg:text-base text-muted-foreground max-w-2xl">
-              Stay ahead with worldwide top headlines, sharpen your logic with daily aptitude tests, and generate infinite quizzes on any category with AI.
-            </p>
+        {/* Interview Success Blueprint Introduction */}
+        <div className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-black bg-gradient-to-r from-primary via-indigo-600 to-teal-500 bg-clip-text text-transparent mb-2">
+                Interview Preparation Hub
+              </h1>
+              <p className="text-sm md:text-base text-muted-foreground font-medium max-w-2xl">
+                Master the art of the interview with our 3-pillar daily blueprint. Awareness of the world, logic of the mind, and technical precision.
+              </p>
+            </div>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors">
+              <div className="h-10 w-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600">
+                <Newspaper className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm">Awareness</h3>
+                <p className="text-xs text-muted-foreground mt-1">Stay updated with global headlines to handle current affairs and behavioral questions with ease.</p>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors">
+              <div className="h-10 w-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
+                <Target className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm">Logic</h3>
+                <p className="text-xs text-muted-foreground mt-1">Sharpen your analytical thinking with daily aptitude challenges designed to keep your mind quick.</p>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors">
+              <div className="h-10 w-10 rounded-xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-teal-600">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm">Precision</h3>
+                <p className="text-xs text-muted-foreground mt-1">Use AI to generate focused practice quizzes for your specific industry or technology stack.</p>
+              </div>
+            </div>
+          </div>
+
+          <Card className="bg-primary/5 border-primary/20 overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <Sparkles className="h-20 w-20 text-primary" />
+            </div>
+            <CardContent className="p-4 md:p-6 flex items-start gap-4">
+              <div className="h-12 w-12 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shrink-0 shadow-sm">
+                <Brain className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge variant="secondary" className="bg-primary text-white text-[10px] uppercase tracking-wider">Pro-Tip of the Day</Badge>
+                </div>
+                <p className="text-sm md:text-base font-semibold italic text-slate-800 dark:text-slate-200">
+                  "Use the STAR method (Situation, Task, Action, Result) to structure your answers for behavioral questions. It ensures you provide context while highlighting your specific impact."
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Main Content Tabs */}
@@ -885,6 +960,90 @@ const isYearlyOnly = userPlan !== 'yearly';
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Master Class: Interview Essentials Section */}
+        <div className="pt-10 md:pt-16 border-t border-border/40">
+          <div className="flex flex-col md:flex-row items-start justify-between gap-6 mb-8 md:mb-12">
+            <div className="max-w-2xl">
+              <h2 className="text-2xl md:text-3xl font-bold mb-3 flex items-center gap-3">
+                <BookOpenCheck className="h-7 w-7 text-indigo-600" />
+                Interview Essentials
+              </h2>
+              <p className="text-muted-foreground leading-relaxed">
+                Beyond tests and news, successful candidates master these foundational strategies. Review these essentials before every major interview.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 w-full md:w-auto">
+              <div className="bg-slate-50 dark:bg-slate-900 border p-3 rounded-xl text-center">
+                <p className="text-lg font-bold text-primary">85%</p>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">Prep Impact</p>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-900 border p-3 rounded-xl text-center">
+                <p className="text-lg font-bold text-primary">24h</p>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">Mindset Focus</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Strategy Card 1 */}
+            <Card className="border-none bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 shadow-sm transition-transform hover:-translate-y-1">
+              <CardContent className="p-6 space-y-4">
+                <div className="h-12 w-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
+                  <CheckCircle2 className="h-6 w-6" />
+                </div>
+                <h3 className="font-bold text-lg">Behavioral Mastery</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Companies hire for culture as much as skill. Practice telling stories that emphasize empathy, problem-solving, and leadership using our STAR modules.
+                </p>
+                <ul className="space-y-2">
+                  <li className="text-xs flex items-center gap-2"><div className="h-1.5 w-1.5 rounded-full bg-indigo-500" /> Emphasize collaborative success</li>
+                  <li className="text-xs flex items-center gap-2"><div className="h-1.5 w-1.5 rounded-full bg-indigo-500" /> Own your failures with a lesson</li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Strategy Card 2 */}
+            <Card className="border-none bg-gradient-to-b from-emerald-50 to-white dark:from-emerald-900/10 dark:to-slate-950 shadow-sm transition-transform hover:-translate-y-1">
+              <CardContent className="p-6 space-y-4">
+                <div className="h-12 w-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
+                  <Brain className="h-6 w-6" />
+                </div>
+                <h3 className="font-bold text-lg">Technical Clarity</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  In technical rounds, the process is often more important than the final result. Communicate your thought process clearly and ask clarifying questions.
+                </p>
+                <ul className="space-y-2">
+                  <li className="text-xs flex items-center gap-2"><div className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Explain complexity trade-offs</li>
+                  <li className="text-xs flex items-center gap-2"><div className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Sketch or write logic before code</li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Strategy Card 3: Checklist */}
+            <Card className="border-none bg-slate-900 text-white shadow-xl lg:col-span-1">
+              <CardContent className="p-6 space-y-4">
+                <h3 className="font-bold text-lg text-teal-400">Pre-Interview Checklist</h3>
+                <div className="space-y-3">
+                  {[
+                    "Research the company's recent news",
+                    "Review the job description's keywords",
+                    "Prepare 3 questions for the interviewer",
+                    "Check your lighting and audio setup",
+                    "Have a glass of water nearby"
+                  ].map((item, id) => (
+                    <div key={id} className="flex items-center gap-3 p-2 bg-white/5 rounded-lg text-xs hover:bg-white/10 transition-colors">
+                      <div className="h-4 w-4 rounded-md border border-white/20 flex items-center justify-center bg-teal-500/10">
+                        <CheckCircle2 className="h-3 w-3 text-teal-400" />
+                      </div>
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </>
   );
