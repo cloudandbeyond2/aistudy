@@ -617,7 +617,7 @@ const DashboardLayoutContent = () => {
                     {interviewEnabled.student && <MenuItem icon={Brain} label="Mock Training" to="/dashboard/interview-training" isActive={isActive('/dashboard/interview-training')} badge="READY" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
                     <MenuItem icon={Activity} label="Internship" to="/dashboard/student/internship" isActive={isActive('/dashboard/student/internship')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <SectionHeader title="Community" icon={Users} isExpanded={isExpanded} />
-                    <MenuItem icon={Menu} label="Meetings" to="/dashboard/student/meetings" isActive={isActive('/dashboard/student/meetings')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    <MenuItem icon={Menu} label="Sessions" to="/dashboard/student/meetings" isActive={isActive('/dashboard/student/meetings')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Megaphone} label="Global News" to="/dashboard/student/news" isActive={isActive('/dashboard/student/news')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={MessageSquare} label="Support Tickets" to="/dashboard/student/support-tickets" isActive={isActive('/dashboard/student/support-tickets')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                   </>
