@@ -50,7 +50,7 @@ import StudentCareer from "./pages/StudentCareer";
 import StudentPublicPortfolio from "./pages/StudentPublicPortfolio";
 import StudentNotices from "./pages/StudentNotices";
 import StudentBlogs from "./pages/StudentBlogs";
-import StudentNews from "./pages/StudentNews";
+//import StudentNews from "./pages/StudentNews";
 import StudentMeetings from "./pages/StudentMeetings";
 import StudentProjects from "./pages/StudentProjects";
 import StudentMaterials from "./pages/StudentMaterials";
@@ -232,7 +232,7 @@ const App = () => (
                       <Route path="assignment/certificate/:submissionId" element={<OrgAssignmentCertificate />} />
                       <Route path="notices" element={<StudentNotices />} />
                       <Route path="blogs" element={<StudentBlogs />} />
-                      <Route path="news" element={<StudentNews />} />
+                <Route path="news" element={<GlobalNews />} />
                       <Route path="meetings" element={<StudentMeetings />} />
                       <Route path="projects" element={<StudentProjects />} />
                       <Route path="materials" element={<StudentMaterials />} />
