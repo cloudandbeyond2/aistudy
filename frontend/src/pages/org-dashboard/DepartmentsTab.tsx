@@ -28,6 +28,7 @@ const DepartmentsTab = () => {
     const [openEditAdminDialog, setOpenEditAdminDialog] = useState(false);
     const role = sessionStorage.getItem('role');
     const deptId = sessionStorage.getItem('deptId');
+   
     const { toast } = useToast();
     const [stats, setStats] = useState<{ studentCount: number; studentLimit: number; assignmentCount: number; submissionCount: number; placedCount: number }>({ 
         studentCount: 0, 
@@ -63,6 +64,19 @@ const DepartmentsTab = () => {
         departmentId: '', 
         courseLimit: 0 
     });
+
+     const validatePassword = (password: string) => {
+  const errors: string[] = [];
+
+  if (password.length < 8) errors.push("At least 8 characters");
+  if (!/[A-Z]/.test(password)) errors.push("One uppercase letter");
+  if (!/[a-z]/.test(password)) errors.push("One lowercase letter");
+  if (!/[0-9]/.test(password)) errors.push("One number");
+  if (!/[!@#$%^&*]/.test(password)) errors.push("One special character");
+
+  return errors;
+};
+    const passwordRules = validatePassword(newDeptAdmin.password);
     const [isCreatingDeptAdmin, setIsCreatingDeptAdmin] = useState(false);
     const [createDeptAdminErrors, setCreateDeptAdminErrors] = useState({
         name: '',
@@ -771,28 +785,27 @@ const DepartmentsTab = () => {
                                                     <p className="text-sm text-red-600">{createDeptAdminErrors.email}</p>
                                                 ) : null}
                                             </div>
-                                            <div className="grid gap-2">
-                                                <Label className="text-sm font-semibold">Password</Label>
-                                                <Input
-                                                    type="password"
-                                                    name="dept-admin-password"
-                                                    autoComplete="new-password"
-                                                    autoCorrect="off"
-                                                    spellCheck={false}
-                                                    placeholder="••••••••"
-                                                    value={newDeptAdmin.password}
-                                                    onChange={(e) => {
-                                                        setNewDeptAdmin({ ...newDeptAdmin, password: e.target.value });
-                                                        if (createDeptAdminErrors.password) {
-                                                            setCreateDeptAdminErrors({ ...createDeptAdminErrors, password: '' });
-                                                        }
-                                                    }}
-                                                    className="students-theme-input"
-                                                />
-                                                {createDeptAdminErrors.password ? (
-                                                    <p className="text-sm text-red-600">{createDeptAdminErrors.password}</p>
-                                                ) : null}
-                                            </div>
+                                          <div className="grid gap-2">
+  <Label className="text-sm font-semibold">Password</Label>
+
+  <Input
+    type="password"
+    name="dept-admin-password"
+    placeholder="••••••••"
+    value={newDeptAdmin.password}
+    onChange={(e) => {
+      const value = e.target.value;
+      setNewDeptAdmin({ ...newDeptAdmin, password: value });
+    }}
+    className="students-theme-input"
+  />
+
+  {/* Final error */}
+  {passwordRules.length > 0 && (
+    <p className="text-sm text-red-600">Password is not strong enough</p>
+  )}
+  
+</div>
                                             <div className="grid gap-2">
                                                 <Label className="text-sm font-semibold">Phone (Optional)</Label>
                                                 <Input

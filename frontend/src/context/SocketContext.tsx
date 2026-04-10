@@ -18,29 +18,52 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  useEffect(() => {
-    // Determine backend URL, fallback to window.location.origin
-    const backendUrl = serverURL.replace('/api', '');
+  // useEffect(() => {
+  //   // Determine backend URL, fallback to window.location.origin
+  //   const backendUrl = serverURL.replace('/api', '');
     
-    const socketInstance = io(backendUrl, {
-      transports: ['websocket', 'polling'],
-    });
+  //   const socketInstance = io(backendUrl, {
+  //     transports: ['websocket', 'polling'],
+  //   });
 
-    setSocket(socketInstance);
+  //   setSocket(socketInstance);
 
-    socketInstance.on('connect', () => {
-      setIsConnected(true);
-    });
+  //   socketInstance.on('connect', () => {
+  //     setIsConnected(true);
+  //   });
 
-    socketInstance.on('disconnect', () => {
-      setIsConnected(false);
-    });
+  //   socketInstance.on('disconnect', () => {
+  //     setIsConnected(false);
+  //   });
 
-    return () => {
-      socketInstance.disconnect();
-    };
-  }, []);
+  //   return () => {
+  //     socketInstance.disconnect();
+  //   };
+  // }, []);
 
+
+  useEffect(() => {
+  const backendUrl = new URL(serverURL).origin;
+
+  const socketInstance = io(backendUrl, {
+    transports: ['websocket'],
+  });
+
+  setSocket(socketInstance);
+
+  socketInstance.on('connect', () => {
+    // console.log("Connected:", socketInstance.id);
+    setIsConnected(true);
+  });
+
+  socketInstance.on('disconnect', () => {
+    setIsConnected(false);
+  });
+
+  return () => {
+    socketInstance.disconnect();
+  };
+}, []);
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>
       {children}

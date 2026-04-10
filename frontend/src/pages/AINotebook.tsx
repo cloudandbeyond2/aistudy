@@ -2628,8 +2628,26 @@ const AINotebook: React.FC = () => {
         if(fileInputRef.current)fileInputRef.current.value='';
     };
 
-    const toggleSrc=(id:string)=>setSources(p=>p.map(s=>s.id===id?{...s,selected:!s.selected}:s));
+const toggleSrc = (id: string) =>
+  setSources(prev =>
+    prev.map(s => {
+      if (s.id !== id) return s;
 
+      const isNowSelected = !s.selected;
+
+      return {
+        ...s,
+        selected: isNowSelected,
+        ...(isNowSelected
+          ? {} // keep data when selecting
+          : {
+              title: "",
+              words: 0,
+              // add any other fields you want to reset
+            }),
+      };
+    })
+  );
     const sendChat=async()=>{
         if(!currentInput.trim())return;
         if(sources.filter(s=>s.selected).length===0){
@@ -2740,8 +2758,8 @@ const AINotebook: React.FC = () => {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-1.5 w-full">
                                             <div className="shrink-0">{srcIcon(src.type)}</div>
-                                            <p className="text-xs font-semibold truncate text-slate-800" title={src.title}>
-                                                {src.title}
+                                            <p className="text-xs font-semibold text-slate-800 break-words whitespace-normal">
+                                              {src.title}
                                             </p>
                                         </div>
                                         <p className="text-[10px] mt-0.5 text-slate-500 truncate">

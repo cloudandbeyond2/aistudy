@@ -1051,7 +1051,7 @@ ${jobDescription}`,
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="flex items-center gap-2"><Phone className="h-3 w-3" /> Phone</Label>
-                                        <Input value={resume.phone} onChange={e => setField('phone', e.target.value)} placeholder="+91 XXXXX XXXXX" className="rounded-xl" />
+                                       <Input value={resume.phone} onChange={(e) => { let value = e.target.value.replace(/\D/g, ''); if (value.length > 10) { value = value.slice(0, 10);  } setField('phone', value); }} placeholder="Enter 10-digit number" className="rounded-xl" maxLength={10} inputMode="numeric"/>
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="flex items-center gap-2"><MapPin className="h-3 w-3" /> Location</Label>
