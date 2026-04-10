@@ -9,7 +9,7 @@ import { toast } from '@/hooks/use-toast';
 import axios from 'axios';
 import { serverURL, websiteURL } from '@/constants';
 import {
-    Plus, Trash2, Download, Share2, ChevronRight, ChevronLeft,
+    Plus, Trash2, Download, Share2, ChevronRight, ChevronLeft, Layout,
     FileText, Briefcase, GraduationCap, Award, Eye, CheckCircle, Loader2, User, Link2, Sparkles, Search, Target, AlertCircle,
     X, Building, Calendar, Mail, Phone, MapPin, Linkedin, Github, Globe, BookOpen, Zap, TrendingUp, Shield, Star, Heart, Code,
     Brain, Lock, Stethoscope, HeartPulse, Microscope, Users, ChartBar, Palette, FlaskConical, Music, Cog, HardHat, Factory,
@@ -44,6 +44,7 @@ interface ResumeData {
     location: string; linkedIn: string; github: string; website: string;
     skills: string[]; experience: Experience[]; education: Education[];
     selectedCertificateIds: string[];
+    template: 'modern' | 'classic';
 }
 
 const INDUSTRY_CATEGORIES = [
@@ -281,96 +282,221 @@ const emptyEdu = (): Education => ({ degree: '', institution: '', year: '', grad
 const ResumePrint = React.forwardRef<HTMLDivElement, { resume: ResumeData; userName: string; certs: Certificate[] }>(
     ({ resume, userName, certs }, ref) => {
         const selectedCerts = certs.filter(c => resume.selectedCertificateIds.includes(c.certificateId));
+        const isModern = resume.template === 'modern';
+
+        const sidebarStyles = {
+            width: '260px',
+            backgroundColor: '#1e293b',
+            padding: '40px 25px',
+            color: '#f8fafc',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column' as const,
+        };
+
+        const mainContentStyles = {
+            flex: 1,
+            padding: '40px 45px',
+            backgroundColor: '#fff',
+        };
+
+        const classicStyles = {
+            padding: '50px 70px',
+            width: '100%',
+            backgroundColor: '#fff',
+        };
+
+        const PrintableSection = ({ title, children, isModern }: { title: string; children: React.ReactNode; isModern: boolean }) => (
+            <div style={{ marginBottom: '28px' }}>
+                <h3 style={{ 
+                    fontSize: '11px', 
+                    fontWeight: 'bold', 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '1.5px', 
+                    color: isModern ? '#0d9488' : '#111', 
+                    borderBottom: `1.5px solid ${isModern ? '#ccfbf1' : '#111'}`, 
+                    paddingBottom: '5px', 
+                    marginBottom: '14px' 
+                }}>
+                    {title}
+                </h3>
+                {children}
+            </div>
+        );
+
         return (
             <div
                 ref={ref}
                 id="resume-print"
                 style={{
-                    width: '794px', background: '#fff', color: '#111',
-                    fontFamily: 'Inter, system-ui, sans-serif', padding: '60px 72px', boxSizing: 'border-box',
-                    position: 'absolute', top: '-9999px', left: '-9999px'
+                    width: '794px',
+                    minHeight: '1123px',
+                    background: '#fff',
+                    color: '#111',
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                    position: 'absolute',
+                    top: '-9999px',
+                    left: '-9999px',
+                    display: 'flex',
+                    flexDirection: isModern ? 'row' : 'column',
+                    boxSizing: 'border-box',
                 }}
             >
-                {/* Header */}
-                <div style={{ borderBottom: '3px solid #0d9488', paddingBottom: '20px', marginBottom: '24px' }}>
-                    <h1 style={{ fontSize: '32px', fontWeight: 'bold', margin: 0, color: '#0d9488', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                        {userName}
-                    </h1>
-                    <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0 12px', fontWeight: 500 }}>
-                        {resume.profession}
-                    </p>
-                    <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', fontSize: '12px', color: '#374151' }}>
-                        {resume.email && <span>📧 {resume.email}</span>}
-                        {resume.phone && <span>📱 {resume.phone}</span>}
-                        {resume.location && <span>📍 {resume.location}</span>}
-                        {resume.linkedIn && <span>🔗 {resume.linkedIn}</span>}
-                        {resume.github && <span>💻 {resume.github}</span>}
-                        {resume.website && <span>🌐 {resume.website}</span>}
-                    </div>
-                </div>
+                {isModern ? (
+                    <>
+                        {/* ── Modern Sidebar ───────────────────────────────────── */}
+                        <div style={sidebarStyles}>
+                            <h1 style={{ fontSize: '26px', fontWeight: '900', color: '#2dd4bf', margin: '0 0 8px', lineHeight: '1.1', letterSpacing: '-0.5px' }}>{userName}</h1>
+                            <p style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '40px' }}>{resume.profession}</p>
 
-                {/* Summary */}
-                {resume.summary && (
-                    <Section title="Professional Summary">
-                        <p style={{ fontSize: '13px', lineHeight: '1.7', color: '#1f2937' }}>{resume.summary}</p>
-                    </Section>
-                )}
-
-                {/* Experience */}
-                {resume.experience.length > 0 && (
-                    <Section title="Work Experience">
-                        {resume.experience.map((exp, i) => (
-                            <div key={i} style={{ marginBottom: '16px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                                    <strong style={{ fontSize: '14px', color: '#1f2937' }}>{exp.title}</strong>
-                                    <span style={{ fontSize: '11px', color: '#9ca3af' }}>{exp.startDate} – {exp.endDate || 'Present'}</span>
+                            <div style={{ marginBottom: '35px' }}>
+                                <h4 style={{ fontSize: '11px', fontWeight: '900', color: '#5eead4', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '15px' }}>Contact</h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '11px', color: '#cbd5e1' }}>
+                                    {resume.email && <div style={{ display: 'flex', gap: '8px' }}><span>📧</span> {resume.email}</div>}
+                                    {resume.phone && <div style={{ display: 'flex', gap: '8px' }}><span>📱</span> {resume.phone}</div>}
+                                    {resume.location && <div style={{ display: 'flex', gap: '8px' }}><span>📍</span> {resume.location}</div>}
+                                    {resume.linkedIn && <div style={{ display: 'flex', gap: '8px' }}><span>🔗</span> <span style={{ wordBreak: 'break-all' }}>{resume.linkedIn.replace('https://', '')}</span></div>}
                                 </div>
-                                <p style={{ fontSize: '13px', color: '#0d9488', margin: '2px 0' }}>{exp.company}{exp.location ? `, ${exp.location}` : ''}</p>
-                                {exp.description && <p style={{ fontSize: '12px', color: '#4b5563', marginTop: '4px', lineHeight: '1.6' }}>{exp.description}</p>}
                             </div>
-                        ))}
-                    </Section>
-                )}
 
-                {/* Education */}
-                {resume.education.length > 0 && (
-                    <Section title="Education">
-                        {resume.education.map((edu, i) => (
-                            <div key={i} style={{ marginBottom: '12px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <strong style={{ fontSize: '14px', color: '#1f2937' }}>{edu.degree}</strong>
-                                    <span style={{ fontSize: '11px', color: '#9ca3af' }}>{edu.year}</span>
+                            {resume.education.length > 0 && (
+                                <div style={{ marginBottom: '35px' }}>
+                                    <h4 style={{ fontSize: '11px', fontWeight: '900', color: '#5eead4', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '15px' }}>Education</h4>
+                                    {resume.education.map((edu, i) => (
+                                        <div key={i} style={{ marginBottom: '15px' }}>
+                                            <p style={{ fontSize: '11px', fontWeight: 'bold', color: '#fff', margin: '0' }}>{edu.degree}</p>
+                                            <p style={{ fontSize: '11px', color: '#2dd4bf', margin: '3px 0' }}>{edu.institution}</p>
+                                            <p style={{ fontSize: '10px', color: '#94a3b8' }}>{edu.year}</p>
+                                        </div>
+                                    ))}
                                 </div>
-                                <p style={{ fontSize: '13px', color: '#0d9488', margin: '2px 0' }}>{edu.institution}</p>
-                                {edu.grade && <p style={{ fontSize: '11px', color: '#6b7280' }}>Grade: {edu.grade}</p>}
-                            </div>
-                        ))}
-                    </Section>
-                )}
+                            )}
 
-                {/* Skills */}
-                {resume.skills.length > 0 && (
-                    <Section title="Skills">
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                            {resume.skills.map((s, i) => (
-                                <span key={i} style={{ background: '#f0fdfa', color: '#0d9488', fontSize: '11px', padding: '4px 12px', borderRadius: '20px', fontWeight: 500, border: '1px solid #99f6e4' }}>{s}</span>
-                            ))}
+                            {resume.skills.length > 0 && (
+                                <div>
+                                    <h4 style={{ fontSize: '11px', fontWeight: '900', color: '#5eead4', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '15px' }}>Skills</h4>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginLeft: '-2px' }}>
+                                        {resume.skills.map((s, i) => (
+                                            <span key={i} style={{ backgroundColor: '#334155', color: '#fff', fontSize: '10px', padding: '5px 12px', borderRadius: '4px', fontWeight: 600 }}>{s}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    </Section>
-                )}
 
-                {/* Certifications */}
-                {selectedCerts.length > 0 && (
-                    <Section title="Certifications">
-                        {selectedCerts.map((c, i) => (
-                            <div key={i} style={{ marginBottom: '10px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                                    <strong style={{ fontSize: '12px' }}>🏅 {c.courseName}</strong>
-                                    <span style={{ fontSize: '10px', color: '#9ca3af' }}>{c.date ? new Date(c.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' }) : ''}</span>
-                                </div>
+                        {/* ── Modern Main Content ──────────────────────────────── */}
+                        <div style={mainContentStyles}>
+                            {resume.summary && (
+                                <PrintableSection title="Profile Overview" isModern={true}>
+                                    <p style={{ fontSize: '12px', lineHeight: '1.7', color: '#334155', margin: 0 }}>{resume.summary}</p>
+                                </PrintableSection>
+                            )}
+
+                            {resume.experience.length > 0 && (
+                                <PrintableSection title="Work History" isModern={true}>
+                                    {resume.experience.map((exp, i) => (
+                                        <div key={i} style={{ marginBottom: '24px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '3px' }}>
+                                                <strong style={{ fontSize: '13.5px', color: '#0f172a' }}>{exp.title}</strong>
+                                                <span style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600 }}>{exp.startDate} – {exp.endDate || 'Present'}</span>
+                                            </div>
+                                            <p style={{ fontSize: '11.5px', color: '#0d9488', fontWeight: 700, margin: '0 0 8px' }}>{exp.company}{exp.location ? `, ${exp.location}` : ''}</p>
+                                            {exp.description && <p style={{ fontSize: '11.5px', color: '#475569', lineHeight: '1.6', margin: 0 }}>{exp.description}</p>}
+                                        </div>
+                                    ))}
+                                </PrintableSection>
+                            )}
+
+                            {selectedCerts.length > 0 && (
+                                <PrintableSection title="Certifications" isModern={true}>
+                                    {selectedCerts.map((c, i) => (
+                                        <div key={i} style={{ marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#1e293b' }}>🏅 {c.courseName}</span>
+                                            <span style={{ fontSize: '10.5px', color: '#64748b' }}>{c.date ? new Date(c.date).getFullYear() : ''}</span>
+                                        </div>
+                                    ))}
+                                </PrintableSection>
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    /* ── Classic Executive Layout ───────────────────────────────────────── */
+                    <div style={classicStyles}>
+                        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                            <h1 style={{ fontSize: '32px', fontWeight: 'bold', margin: '0 0 6px', color: '#111', textTransform: 'uppercase', letterSpacing: '2px' }}>{userName}</h1>
+                            <p style={{ fontSize: '14px', color: '#0d9488', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '15px' }}>{resume.profession}</p>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', fontSize: '11px', color: '#475569', fontWeight: 500 }}>
+                                {resume.email && <span>{resume.email}</span>}
+                                {resume.phone && <span>{resume.phone}</span>}
+                                {resume.location && <span>{resume.location}</span>}
                             </div>
-                        ))}
-                    </Section>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', fontSize: '11px', color: '#4b5563', marginTop: '6px' }}>
+                                {resume.linkedIn && <span>LinkedIn: {resume.linkedIn.replace('https://', '')}</span>}
+                                {resume.github && <span>GitHub: {resume.github.replace('https://', '')}</span>}
+                            </div>
+                        </div>
+
+                        {resume.summary && (
+                            <PrintableSection title="Professional Summary" isModern={false}>
+                                <p style={{ fontSize: '12px', lineHeight: '1.7', textAlign: 'justify', color: '#1e293b', margin: 0 }}>{resume.summary}</p>
+                            </PrintableSection>
+                        )}
+
+                        {resume.experience.length > 0 && (
+                            <PrintableSection title="Experience" isModern={false}>
+                                {resume.experience.map((exp, i) => (
+                                    <div key={i} style={{ marginBottom: '20px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2px' }}>
+                                            <strong style={{ fontSize: '13px', color: '#111' }}>{exp.title}</strong>
+                                            <span style={{ fontSize: '11px', fontWeight: 600 }}>{exp.startDate} – {exp.endDate || 'Present'}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, color: '#0d9488', margin: '0 0 8px' }}>
+                                            <span>{exp.company}</span>
+                                            <span style={{ fontStyle: 'italic', fontWeight: 500, color: '#64748b' }}>{exp.location}</span>
+                                        </div>
+                                        {exp.description && <p style={{ fontSize: '11.5px', lineHeight: '1.6', color: '#334155', margin: 0 }}>{exp.description}</p>}
+                                    </div>
+                                ))}
+                            </PrintableSection>
+                        )}
+
+                        {resume.education.length > 0 && (
+                            <PrintableSection title="Education" isModern={false}>
+                                {resume.education.map((edu, i) => (
+                                    <div key={i} style={{ marginBottom: '15px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2px' }}>
+                                            <strong style={{ fontSize: '13px' }}>{edu.degree}</strong>
+                                            <span style={{ fontSize: '11px' }}>{edu.year}</span>
+                                        </div>
+                                        <p style={{ fontSize: '12px', color: '#475569', margin: 0 }}>{edu.institution}{edu.grade ? ` | GPA: ${edu.grade}` : ''}</p>
+                                    </div>
+                                ))}
+                            </PrintableSection>
+                        )}
+
+                        {resume.skills.length > 0 && (
+                            <PrintableSection title="Core Competencies" isModern={false}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px 20px' }}>
+                                    {resume.skills.map((s, i) => (
+                                        <div key={i} style={{ fontSize: '11px', color: '#1e293b', fontWeight: 500, display: 'flex', itemsCenter: 'center', gap: '8px' }}>
+                                            <span style={{ color: '#0d9488' }}>•</span> {s}
+                                        </div>
+                                    ))}
+                                </div>
+                            </PrintableSection>
+                        )}
+                        
+                        {selectedCerts.length > 0 && (
+                            <PrintableSection title="Professional Certifications" isModern={false}>
+                                {selectedCerts.map((c, i) => (
+                                    <div key={i} style={{ fontSize: '11px', marginBottom: '6px', display: 'flex', justifyContent: 'space-between' }}>
+                                        <span>• {c.courseName}</span>
+                                        <span style={{ fontWeight: 600 }}>{c.date ? new Date(c.date).getFullYear() : ''}</span>
+                                    </div>
+                                ))}
+                            </PrintableSection>
+                        )}
+                    </div>
                 )}
             </div>
         );
@@ -446,6 +572,7 @@ const ResumeBuilder = () => {
         experience: [],
         education: [],
         selectedCertificateIds: [],
+        template: 'modern',
     });
 
     // Access guard
@@ -1556,88 +1683,207 @@ ${jobDescription}`,
                     {step === 7 && (
                         <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Eye className="h-5 w-5 text-teal-500" />
-                                    Resume Preview
-                                </CardTitle>
-                                <CardDescription>Review your professional resume</CardDescription>
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Eye className="h-5 w-5 text-teal-500" />
+                                            Resume Preview & Layout
+                                        </CardTitle>
+                                        <CardDescription>Choose a template and review your resume</CardDescription>
+                                    </div>
+                                    <div className="flex bg-muted p-1 rounded-xl w-fit">
+                                        <button
+                                            onClick={() => setField('template', 'modern')}
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                                                resume.template === 'modern' 
+                                                    ? 'bg-white dark:bg-slate-900 shadow-sm text-teal-600' 
+                                                    : 'text-muted-foreground hover:text-foreground'
+                                            }`}
+                                        >
+                                            <Layout className="h-4 w-4" /> Modern
+                                        </button>
+                                        <button
+                                            onClick={() => setField('template', 'classic')}
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                                                resume.template === 'classic' 
+                                                    ? 'bg-white dark:bg-slate-900 shadow-sm text-teal-600' 
+                                                    : 'text-muted-foreground hover:text-foreground'
+                                            }`}
+                                        >
+                                            <FileText className="h-4 w-4" /> Classic
+                                        </button>
+                                    </div>
+                                </div>
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 {/* Preview Card */}
                                 <div className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden bg-white dark:bg-gray-900 shadow-inner max-h-[70vh] overflow-y-auto">
-                                    <div className="p-8">
-                                        <div className={`border-b-2 border-teal-500 pb-4 mb-5`}>
-                                            <h1 className="text-2xl font-bold text-teal-600 dark:text-teal-400 tracking-widest uppercase">{userName}</h1>
-                                            <p className="text-sm text-muted-foreground mt-1 font-medium">{resume.profession === 'Other' ? customProfession : resume.profession}</p>
-                                            <div className="flex flex-wrap gap-4 mt-3 text-xs text-muted-foreground">
-                                                {resume.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {resume.email}</span>}
-                                                {resume.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {resume.phone}</span>}
-                                                {resume.location && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {resume.location}</span>}
-                                                {resume.linkedIn && <span className="flex items-center gap-1"><Linkedin className="h-3 w-3" /> {resume.linkedIn}</span>}
-                                                {resume.github && <span className="flex items-center gap-1"><Github className="h-3 w-3" /> {resume.github}</span>}
-                                            </div>
-                                        </div>
-
-                                        {resume.summary && (
-                                            <PreviewSection title="Professional Summary">
-                                                <p className="text-sm text-muted-foreground leading-relaxed">{resume.summary}</p>
-                                            </PreviewSection>
-                                        )}
-
-                                        {resume.experience.length > 0 && (
-                                            <PreviewSection title="Work Experience">
-                                                {resume.experience.map((e, i) => (
-                                                    <div key={i} className="mb-4">
-                                                        <div className="flex justify-between items-baseline flex-wrap gap-2">
-                                                            <span className="font-semibold text-sm">{e.title}</span>
-                                                            <span className="text-xs text-muted-foreground">{e.startDate} – {e.endDate || 'Present'}</span>
-                                                        </div>
-                                                        <p className="text-teal-600 dark:text-teal-400 text-sm">{e.company}{e.location ? `, ${e.location}` : ''}</p>
-                                                        {e.description && <p className="text-xs text-muted-foreground mt-1">{e.description}</p>}
+                                    <div className={`p-8 ${resume.template === 'modern' ? 'flex flex-col md:flex-row gap-8' : 'flex flex-col'}`}>
+                                        {resume.template === 'modern' ? (
+                                            /* ── Modern Preview ───────────────────────────────────── */
+                                            <>
+                                                <div className="w-full md:w-1/3 space-y-8 bg-slate-900 dark:bg-slate-950 p-8 text-white relative border-b md:border-b-0 md:border-r border-slate-800">
+                                                    <div>
+                                                        <h1 className="text-3xl font-black text-teal-400 leading-none uppercase tracking-tighter">{userName}</h1>
+                                                        <p className="text-[10px] font-bold text-teal-200 mt-3 uppercase tracking-[0.2em] opacity-80">{resume.profession === 'Other' ? customProfession : resume.profession}</p>
                                                     </div>
-                                                ))}
-                                            </PreviewSection>
-                                        )}
 
-                                        {resume.education.length > 0 && (
-                                            <PreviewSection title="Education">
-                                                {resume.education.map((e, i) => (
-                                                    <div key={i} className="mb-3">
-                                                        <div className="flex justify-between flex-wrap gap-2">
-                                                            <span className="font-semibold text-sm">{e.degree}</span>
-                                                            <span className="text-xs text-muted-foreground">{e.year}</span>
+                                                    <div className="space-y-4">
+                                                        <h4 className="text-[11px] font-black text-teal-500 uppercase tracking-[0.2em]">Contact</h4>
+                                                        <div className="space-y-3 text-[11px] text-slate-300">
+                                                            {resume.email && <div className="flex items-center gap-3 truncate"><Mail className="h-3 w-3 text-teal-400" /> {resume.email}</div>}
+                                                            {resume.phone && <div className="flex items-center gap-3"><Phone className="h-3 w-3 text-teal-400" /> {resume.phone}</div>}
+                                                            {resume.location && <div className="flex items-center gap-3"><MapPin className="h-3 w-3 text-teal-400" /> {resume.location}</div>}
+                                                            {resume.linkedIn && <div className="flex items-center gap-3 truncate"><Linkedin className="h-3 w-3 text-teal-400" /> {resume.linkedIn.replace('https://', '')}</div>}
                                                         </div>
-                                                        <p className="text-teal-600 dark:text-teal-400 text-sm">{e.institution}</p>
-                                                        {e.grade && <p className="text-xs text-muted-foreground mt-1">Grade: {e.grade}</p>}
                                                     </div>
-                                                ))}
-                                            </PreviewSection>
-                                        )}
 
-                                        {resume.skills.length > 0 && (
-                                            <PreviewSection title="Skills">
-                                                <div className="flex flex-wrap gap-2">
-                                                    {resume.skills.map((s, i) => (
-                                                        <span key={i} className="bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 text-xs px-3 py-1.5 rounded-full border border-teal-200 dark:border-teal-800">
-                                                            {s}
-                                                        </span>
-                                                    ))}
+                                                    {resume.education.length > 0 && (
+                                                        <div className="space-y-5">
+                                                            <h4 className="text-[11px] font-black text-teal-500 uppercase tracking-[0.2em]">Education</h4>
+                                                            {resume.education.map((e, i) => (
+                                                                <div key={i} className="space-y-1">
+                                                                    <p className="font-bold text-[11px] text-white">{e.degree}</p>
+                                                                    <p className="text-[11px] text-teal-400">{e.institution}</p>
+                                                                    <p className="text-[10px] text-slate-400">{e.year}</p>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {resume.skills.length > 0 && (
+                                                        <div className="space-y-5">
+                                                            <h4 className="text-[11px] font-black text-teal-500 uppercase tracking-[0.2em]">Skills</h4>
+                                                            <div className="flex flex-wrap gap-2 -ml-0.5">
+                                                                {resume.skills.map((s, i) => (
+                                                                    <span key={i} className="bg-slate-800 text-teal-300 px-3 py-1.5 rounded text-[11px] font-semibold border border-slate-700">{s}</span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </PreviewSection>
-                                        )}
 
-                                        {selectedCerts.length > 0 && (
-                                            <PreviewSection title="Certifications">
-                                                {selectedCerts.map((c, i) => (
-                                                    <div key={i} className="flex justify-between items-center text-sm mb-2">
-                                                        <span className="flex items-center gap-1"><Award className="h-3 w-3 text-yellow-500" /> {c.courseName}</span>
-                                                        <span className="text-xs text-muted-foreground">{c.date ? new Date(c.date).toLocaleDateString('en-IN') : ''}</span>
+                                                <div className="flex-1 p-8 space-y-10">
+                                                    {resume.summary && (
+                                                        <div className="space-y-3">
+                                                            <h3 className="text-[10px] font-black text-teal-700 dark:text-teal-400 uppercase tracking-[0.2em] border-b border-teal-100 dark:border-teal-900/50 pb-2">Profile Overview</h3>
+                                                            <p className="text-xs text-muted-foreground leading-relaxed">{resume.summary}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {resume.experience.length > 0 && (
+                                                        <div className="space-y-8">
+                                                            <h3 className="text-[10px] font-black text-teal-700 dark:text-teal-400 uppercase tracking-[0.2em] border-b border-teal-100 dark:border-teal-900/50 pb-2">Work History</h3>
+                                                            {resume.experience.map((e, i) => (
+                                                                <div key={i} className="space-y-2">
+                                                                    <div className="flex justify-between items-baseline">
+                                                                        <h4 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white">{e.title}</h4>
+                                                                        <span className="text-[10px] text-muted-foreground font-semibold">{e.startDate} – {e.endDate || 'Present'}</span>
+                                                                    </div>
+                                                                    <p className="text-[11px] font-bold text-teal-600 dark:text-teal-400">{e.company}{e.location ? `, ${e.location}` : ''}</p>
+                                                                    {e.description && <p className="text-xs text-muted-foreground leading-relaxed">{e.description}</p>}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {selectedCerts.length > 0 && (
+                                                        <div className="space-y-5">
+                                                            <h3 className="text-[10px] font-black text-teal-700 dark:text-teal-400 uppercase tracking-[0.2em] border-b border-teal-100 dark:border-teal-900/50 pb-2">Certifications</h3>
+                                                            {selectedCerts.map((c, i) => (
+                                                                <div key={i} className="flex justify-between items-center text-xs">
+                                                                    <span className="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-200">
+                                                                        <Award className="h-3 w-3 text-yellow-500" /> {c.courseName}
+                                                                    </span>
+                                                                    <span className="text-[10px] text-muted-foreground">{c.date ? new Date(c.date).getFullYear() : ''}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            /* ── Classic Preview ──────────────────────────────────── */
+                                            <div className="max-w-4xl mx-auto w-full space-y-12 py-4">
+                                                <div className="text-center space-y-4">
+                                                    <h1 className="text-4xl font-black tracking-[0.15em] text-slate-900 dark:text-white uppercase leading-none">{userName}</h1>
+                                                    <p className="text-sm font-black text-teal-600 dark:text-teal-400 uppercase tracking-widest">{resume.profession === 'Other' ? customProfession : resume.profession}</p>
+                                                    <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-6">
+                                                        {resume.email && <span className="flex items-center gap-1.5"><Mail className="h-3 w-3" /> {resume.email}</span>}
+                                                        {resume.phone && <span className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> {resume.phone}</span>}
+                                                        {resume.location && <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3" /> {resume.location}</span>}
                                                     </div>
-                                                ))}
-                                            </PreviewSection>
+                                                    <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-2">
+                                                        {resume.linkedIn && <span className="flex items-center gap-1.5"><Linkedin className="h-3 w-3" /> {resume.linkedIn.replace('https://', '')}</span>}
+                                                        {resume.github && <span className="flex items-center gap-1.5"><Github className="h-3 w-3" /> {resume.github.replace('https://', '')}</span>}
+                                                    </div>
+                                                </div>
+
+                                                {resume.summary && (
+                                                    <PreviewSection title="Professional Summary">
+                                                        <p className="text-[12px] text-slate-700 dark:text-slate-300 leading-relaxed text-justify">{resume.summary}</p>
+                                                    </PreviewSection>
+                                                )}
+
+                                                {resume.experience.length > 0 && (
+                                                    <PreviewSection title="Experience">
+                                                        {resume.experience.map((e, i) => (
+                                                            <div key={i} className="space-y-2 mb-8">
+                                                                <div className="flex justify-between items-baseline">
+                                                                    <span className="font-black text-[13px] uppercase tracking-tight text-slate-900 dark:text-white">{e.title}</span>
+                                                                    <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider">{e.startDate} – {e.endDate || 'Present'}</span>
+                                                                </div>
+                                                                <div className="flex justify-between text-[11px] font-black text-teal-600 dark:text-teal-400 uppercase">
+                                                                    <span>{e.company}</span>
+                                                                    <span className="italic opacity-80">{e.location}</span>
+                                                                </div>
+                                                                {e.description && <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">{e.description}</p>}
+                                                            </div>
+                                                        ))}
+                                                    </PreviewSection>
+                                                )}
+
+                                                {resume.education.length > 0 && (
+                                                    <PreviewSection title="Education">
+                                                        {resume.education.map((e, i) => (
+                                                            <div key={i} className="mb-6">
+                                                                <div className="flex justify-between items-baseline">
+                                                                    <span className="font-black text-[12px] uppercase text-slate-900 dark:text-white">{e.degree}</span>
+                                                                    <span className="text-[10px] text-slate-500 font-black tracking-widest">{e.year}</span>
+                                                                </div>
+                                                                <p className="text-[11px] font-bold text-teal-600 dark:text-teal-400 mt-1">{e.institution}{e.grade ? ` — GPA: ${e.grade}` : ''}</p>
+                                                            </div>
+                                                        ))}
+                                                    </PreviewSection>
+                                                )}
+
+                                                {resume.skills.length > 0 && (
+                                                    <PreviewSection title="Core Competencies">
+                                                        <div className="grid grid-cols-3 gap-y-3 gap-x-8">
+                                                            {resume.skills.map((s, i) => (
+                                                                <div key={i} className="text-[11px] text-slate-800 dark:text-slate-200 font-bold tracking-wide flex items-center gap-2">
+                                                                    <span className="text-teal-600">•</span> {s}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </PreviewSection>
+                                                )}
+
+                                                {selectedCerts.length > 0 && (
+                                                    <PreviewSection title="Professional Certifications">
+                                                        {selectedCerts.map((c, i) => (
+                                                            <div key={i} className="flex justify-between items-center text-[11px] font-black uppercase tracking-wider mb-3">
+                                                                <span className="flex items-center gap-2"><Award className="h-3 w-3 text-teal-500" /> {c.courseName}</span>
+                                                                <span className="text-slate-500">{c.date ? new Date(c.date).getFullYear() : ''}</span>
+                                                            </div>
+                                                        ))}
+                                                    </PreviewSection>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
                                 </div>
+
 
                                 {/* Action Buttons */}
                                 <div className="flex flex-wrap gap-4 justify-center">
