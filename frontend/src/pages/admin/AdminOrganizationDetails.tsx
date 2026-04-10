@@ -28,6 +28,7 @@ const AdminOrganizationDetails = () => {
         logo: '',
         documents: ['', ''], // 2 document slots
         allowCareerPlacement: true,
+        allowATS: true,
         studentSlot: 1,
         customStudentLimit: 0,
         planDuration: '1months'
@@ -56,6 +57,7 @@ const AdminOrganizationDetails = () => {
                         org.organizationDetails.documents?.[1] || ''
                     ],
                     allowCareerPlacement: org.allowCareerPlacement ?? true,
+                    allowATS: org.allowATS ?? true,
                     studentSlot: org.organizationDetails.studentSlot ?? 1,
                     customStudentLimit: org.organizationDetails.customStudentLimit ?? 0,
                     planDuration: org.planName || '1months'
@@ -297,6 +299,22 @@ const AdminOrganizationDetails = () => {
                                     onChange={(e) => handleChange('allowCareerPlacement', e.target.checked)}
                                 />
                                 <span className="text-sm font-medium">{formData.allowCareerPlacement ? 'Enabled' : 'Disabled'}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
+                            <div className="space-y-0.5">
+                                <Label className="text-base font-semibold">ATS Scanner Module</Label>
+                                <p className="text-sm text-muted-foreground">Enable or disable the AI-powered ATS resume scanner for this organization.</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    checked={formData.allowATS}
+                                    onChange={(e) => handleChange('allowATS', e.target.checked)}
+                                />
+                                <span className="text-sm font-medium">{formData.allowATS ? 'Enabled' : 'Disabled'}</span>
                             </div>
                         </div>
                     </CardContent>

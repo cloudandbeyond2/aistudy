@@ -217,6 +217,102 @@ const getTodayDateString = () => {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 };
 
+const buildFallbackDailyAptitudes = (concept) => {
+  const fallbackQuestions = [
+    {
+      question: `A train travels 60 km in 1.5 hours. What is its average speed?`,
+      options: ['30 km/h', '40 km/h', '50 km/h', '60 km/h'],
+      answer: '40 km/h'
+    },
+    {
+      question: `If the ratio of boys to girls is 3:5 and there are 40 students, how many girls are there?`,
+      options: ['20', '24', '25', '30'],
+      answer: '25'
+    },
+    {
+      question: `What is 15% of 200?`,
+      options: ['20', '25', '30', '35'],
+      answer: '30'
+    },
+    {
+      question: `If a product costs 800 and is sold at a 10% profit, what is the selling price?`,
+      options: ['840', '860', '880', '900'],
+      answer: '880'
+    },
+    {
+      question: `A number is increased by 20% and then decreased by 20%. What is the net change?`,
+      options: ['0%', '2% decrease', '4% decrease', '4% increase'],
+      answer: '4% decrease'
+    },
+    {
+      question: `What comes next in the sequence: 2, 6, 12, 20, ?`,
+      options: ['28', '30', '32', '36'],
+      answer: '30'
+    },
+    {
+      question: `If all roses are flowers and some flowers fade quickly, which statement is definitely true?`,
+      options: [
+        'All roses fade quickly',
+        'Some flowers fade quickly',
+        'No roses are flowers',
+        'All flowers are roses'
+      ],
+      answer: 'Some flowers fade quickly'
+    },
+    {
+      question: `Which word is most nearly opposite to "expand"?`,
+      options: ['Increase', 'Enlarge', 'Contract', 'Extend'],
+      answer: 'Contract'
+    },
+    {
+      question: `A shop offers 2 for 1 on items priced at 150 each. What is the effective price per item?`,
+      options: ['50', '75', '100', '125'],
+      answer: '75'
+    },
+    {
+      question: `If 8 workers complete a task in 12 days, how many days will 12 workers take, assuming equal efficiency?`,
+      options: ['6', '8', '10', '12'],
+      answer: '8'
+    },
+    {
+      question: `Which of the following is a prime number?`,
+      options: ['21', '27', '29', '35'],
+      answer: '29'
+    },
+    {
+      question: `A and B can do a work in 10 days together. If A alone does it in 15 days, how long will B take alone?`,
+      options: ['20 days', '24 days', '30 days', '45 days'],
+      answer: '30 days'
+    },
+    {
+      question: `What is the next letter in the pattern: A, C, F, J, ?`,
+      options: ['L', 'M', 'N', 'O'],
+      answer: 'N'
+    },
+    {
+      question: `If a triangle has sides 3, 4, and 5, what type of triangle is it?`,
+      options: ['Equilateral', 'Isosceles', 'Right-angled', 'Obtuse'],
+      answer: 'Right-angled'
+    },
+    {
+      question: `A sum doubles in 5 years at simple interest. What is the annual rate of interest?`,
+      options: ['10%', '15%', '20%', '25%'],
+      answer: '20%'
+    }
+  ];
+
+  return [{
+    _id: `apt-${getTodayDateString()}`,
+    title: `Daily ${concept}`,
+    description: `Today's 15 aptitude questions on ${concept}. Test your skills and sharpen your reasoning!`,
+    date: new Date(),
+    questions: fallbackQuestions.slice(0, 15).map((question, index) => ({
+      ...question,
+      id: index + 1
+    }))
+  }];
+};
+
 export const getDailyAptitudes = async (req, res) => {
   try {
     const todayStr = getTodayDateString();
@@ -250,7 +346,7 @@ export const getDailyAptitudes = async (req, res) => {
     ]
     IMPORTANT: Generate exactly 15 questions. "answer" must match exactly one of the strings in "options".`;
 
-    const result = await retryWithBackoff(() => model.generateContent(prompt));
+    const result = await retryWithBackoff(() => model.generateContent(prompt), 2, 600);
     let text = result.response.text()
       .replace(/```json/g, '')
       .replace(/```/g, '')
@@ -288,7 +384,8 @@ export const getDailyAptitudes = async (req, res) => {
 
     res.status(200).json({ success: true, data: dailyData });
   } catch (error) {
-    console.error('Daily Aptitude generation error:', error);
+    const status = error?.status || error?.response?.status;
+    console.warn(`Daily Aptitude generation fallback engaged (status=${status || 'unknown'})`);
     // Fallback to DB
     try {
       const tests = await DailyAptitude.find({ isActive: true }).sort({ date: -1 }).limit(1);
@@ -297,9 +394,17 @@ export const getDailyAptitudes = async (req, res) => {
         ...t.toObject(),
         questions: t.questions.slice(0, 15)
       }));
-      res.status(200).json({ success: true, data: limited });
+      if (limited.length > 0) {
+        aptitudeCache = { date: getTodayDateString(), data: limited };
+        return res.status(200).json({ success: true, data: limited });
+      }
+      const fallbackData = buildFallbackDailyAptitudes(getTodaysConcept());
+      aptitudeCache = { date: getTodayDateString(), data: fallbackData };
+      return res.status(200).json({ success: true, data: fallbackData });
     } catch (dbError) {
-      res.status(500).json({ success: false, message: error.message });
+      const fallbackData = buildFallbackDailyAptitudes(getTodaysConcept());
+      aptitudeCache = { date: getTodayDateString(), data: fallbackData };
+      return res.status(200).json({ success: true, data: fallbackData });
     }
   }
 };

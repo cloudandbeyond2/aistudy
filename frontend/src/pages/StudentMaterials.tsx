@@ -30,6 +30,14 @@ const StudentMaterials = () => {
         return () => window.removeEventListener('resize', checkMobile);
     }, [orgId, studentId]);
 
+    const resolveMaterialUrl = (fileUrl: string) => {
+        const trimmed = String(fileUrl || '').trim();
+        if (!trimmed) return '';
+        if (/^https?:\/\//i.test(trimmed)) return trimmed;
+        if (trimmed.startsWith('/')) return `${serverURL}${trimmed}`;
+        return `${serverURL}/${trimmed}`;
+    };
+
     const fetchMaterials = async () => {
         try {
             const res = await axios.get(`${serverURL}/api/org/materials?organizationId=${orgId}&studentId=${studentId}`);
@@ -65,7 +73,10 @@ const StudentMaterials = () => {
                     <Card 
                         key={m._id} 
                         className="hover:bg-muted/50 transition-all group cursor-pointer border-l-4 border-l-secondary hover:shadow-md active:scale-[0.98] transition-transform"
-                        onClick={() => window.open(`${serverURL}${m.fileUrl}`, '_blank')}
+                        onClick={() => {
+                            const materialUrl = resolveMaterialUrl(m.fileUrl);
+                            if (materialUrl) window.open(materialUrl, '_blank', 'noopener,noreferrer');
+                        }}
                     >
                         <CardHeader className="flex flex-row items-center gap-3 sm:gap-4 space-y-0 pb-2 px-3 sm:px-4 pt-3 sm:pt-4">
                             <div className="h-10 w-10 sm:h-12 sm:w-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
@@ -82,15 +93,12 @@ const StudentMaterials = () => {
                         </CardHeader>
                         <CardContent className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0">
                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-2">
-                               <Button 
+                                <Button 
   onClick={(e) => {
     e.stopPropagation();
 
-    const fileUrl = m.fileUrl.startsWith('/')
-      ? `${serverURL}${m.fileUrl}`
-      : `${serverURL}/${m.fileUrl}`;
-
-    window.open(fileUrl, '_blank');
+    const fileUrl = resolveMaterialUrl(m.fileUrl);
+    if (fileUrl) window.open(fileUrl, '_blank', 'noopener,noreferrer');
   }}
 >
                                     <span className="truncate">Access Material</span>
