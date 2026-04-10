@@ -681,7 +681,7 @@ const DashboardLayoutContent = () => {
                     />
                     <MenuItem 
                       icon={Users} 
-                      label="Students" 
+                      label="Learner Directory" 
                       to="/dashboard/org-students" 
                       isActive={isOrgTabActive('students')}
                       isExpanded={isExpanded}
@@ -727,7 +727,7 @@ const DashboardLayoutContent = () => {
                     )}
                     <MenuItem 
                       icon={FileText} 
-                      label="Assignments" 
+                      label="Assessment Desk" 
                       to="/dashboard/org-assignments" 
                       isActive={isOrgTabActive('assignments')}
                       isExpanded={isExpanded}
@@ -735,7 +735,7 @@ const DashboardLayoutContent = () => {
                     />
                     <MenuItem 
                       icon={Video} 
-                      label="Meetings" 
+                      label="Sessions" 
                       to="/dashboard/org-meetings" 
                       isActive={isOrgTabActive('meetings')}
                       isExpanded={isExpanded}
@@ -743,7 +743,7 @@ const DashboardLayoutContent = () => {
                     />
                     <MenuItem 
                       icon={Briefcase} 
-                      label="Projects" 
+                      label="Projects & Labs" 
                       to="/dashboard/org-projects" 
                       isActive={isOrgTabActive('projects')}
                       isExpanded={isExpanded}
@@ -751,7 +751,7 @@ const DashboardLayoutContent = () => {
                     />
                     <MenuItem 
                       icon={Download} 
-                      label="Materials" 
+                      label="Resource Library" 
                       to="/dashboard/org-materials" 
                       isActive={isOrgTabActive('materials')}
                       isExpanded={isExpanded}
@@ -759,7 +759,7 @@ const DashboardLayoutContent = () => {
                     />
                     <MenuItem 
                       icon={Bell} 
-                      label="Noticeboard" 
+                      label="Announcements" 
                       to="/dashboard/org-notices" 
                       isActive={isOrgTabActive('notices')}
                       isExpanded={isExpanded}
@@ -1251,7 +1251,7 @@ const DashboardLayoutContent = () => {
                     <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                       <Users className="h-4 w-4" />
                     </div>
-                    <span>Manage Students</span>
+                    <span>Learner Directory</span>
                     {location.search.includes('tab=students') && (
                       <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                     )}
@@ -1297,7 +1297,7 @@ const DashboardLayoutContent = () => {
                     <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                       <FileText className="h-4 w-4" />
                     </div>
-                    <span>Assignments</span>
+                    <span>Assessment Desk</span>
                     {isAssessmentDeskActive && (
                       <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                     )}
@@ -1568,7 +1568,7 @@ const DashboardLayoutContent = () => {
                   <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                     <Users className="h-4 w-4" />
                   </div>
-                  <span>Manage Students</span>
+                    <span>Learner Directory</span>
                   {location.search.includes('tab=students') && (
                     <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                   )}
