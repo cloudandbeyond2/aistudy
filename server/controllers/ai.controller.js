@@ -1,6 +1,5 @@
 import { getGenAI } from '../config/gemini.js';
 import { generateAIText } from '../config/aiProvider.js';
-import retryWithBackoff from '../utils/retryWithBackoff.js';
 import { getPlanLimits, isPlanActive } from '../config/planLimits.js';
 import {
   HarmCategory,
@@ -275,16 +274,66 @@ ONLY respond with a valid JSON object matching the requested schema.`;
       .replace(/^```\s*/i, '')
       .replace(/\s*```$/i, '');
 
-    const jsonStart = withoutCodeFence.indexOf('{');
-    const jsonEnd = withoutCodeFence.lastIndexOf('}');
+    const jsonStart = withoutCodeFence.search(/[\[{]/);
+    if (jsonStart < 0) {
+      throw new Error('No JSON object found in AI provider response.');
+    }
+
+    let jsonEnd = -1;
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    for (let i = jsonStart; i < withoutCodeFence.length; i += 1) {
+      const char = withoutCodeFence[i];
+
+      if (inString) {
+        if (escaped) {
+          escaped = false;
+        } else if (char === '\\') {
+          escaped = true;
+        } else if (char === '"') {
+          inString = false;
+        }
+        continue;
+      }
+
+      if (char === '"') {
+        inString = true;
+      } else if (char === '{' || char === '[') {
+        depth += 1;
+      } else if (char === '}' || char === ']') {
+        depth -= 1;
+        if (depth === 0) {
+          jsonEnd = i;
+          break;
+        }
+      }
+    }
+
     const jsonCandidate =
-      jsonStart >= 0 && jsonEnd >= jsonStart
+      jsonEnd >= jsonStart
         ? withoutCodeFence.slice(jsonStart, jsonEnd + 1)
-        : withoutCodeFence;
+        : withoutCodeFence.slice(jsonStart);
 
     try {
       return JSON.parse(jsonCandidate);
     } catch (parseError) {
+      const repairedCandidate = jsonCandidate
+        .replace(/,\s*([}\]])/g, '$1')
+        .replace(/\u0000/g, '')
+        .trim();
+
+      if (repairedCandidate !== jsonCandidate) {
+        try {
+          return JSON.parse(repairedCandidate);
+        } catch (repairError) {
+          const preview = repairedCandidate.slice(0, 500);
+          throw new Error(
+            `Invalid JSON returned from AI provider. ${repairError.message}. Preview: ${preview}`
+          );
+        }
+      }
+
       const preview = jsonCandidate.slice(0, 500);
       throw new Error(
         `Invalid JSON returned from AI provider. ${parseError.message}. Preview: ${preview}`
@@ -390,7 +439,8 @@ ${theory}`;
       prompt: buildLessonRepairPrompt({ topicTitle, subtopicTitle, theory }),
       systemInstruction: `Strictly in ${lang || 'English'}, you are a careful educational editor. Return only valid HTML. Every sentence must be complete, natural, and meaningful.`,
       maxOutputTokens: 3072,
-      safetySettings
+      safetySettings,
+      retryAttempts: 0
     });
 
     return repaired?.trim() || '';
@@ -535,7 +585,8 @@ Rules:
       responseMimeType: 'application/json',
       responseSchema,
       maxOutputTokens,
-      safetySettings
+      safetySettings,
+      retryAttempts: 0
     });
 
     const parsed = parseGeneratedJson(rawText);
@@ -557,7 +608,8 @@ Rules:
       prompt: buildFallbackTheoryPrompt(topicTitle, subtopicTitle),
       systemInstruction: `Strictly in ${lang || 'English'}, you are a specialized educational content writer. Return only valid HTML for one lesson.`,
       maxOutputTokens: 4096,
-      safetySettings
+      safetySettings,
+      retryAttempts: 0
     });
 
     const normalizedTheory = await finalizeLessonTheory({
@@ -575,19 +627,42 @@ Rules:
     };
   };
 
-  const buildEmergencyTheory = ({ topicTitle, subtopicTitle }) => ({
-    topicTitle,
-    subtopic: {
-      title: subtopicTitle,
-      theory: `<div class="prose max-w-none"><h2>${subtopicTitle}</h2><p>We could not fully generate this lesson right now, but this section is reserved for <strong>${subtopicTitle}</strong> under <strong>${topicTitle}</strong>.</p><p>Please reopen this lesson in a moment to retry the full content generation.</p></div>`
-    }
-  });
+  const buildDeterministicFallbackTheory = ({ topicTitle, subtopicTitle }) => {
+    const safeTopic = topicTitle || 'This topic';
+    const safeSubtopic = subtopicTitle || 'This lesson';
+
+    return {
+      topicTitle: safeTopic,
+      subtopic: {
+        title: safeSubtopic,
+        theory: `
+          <div class="prose max-w-none">
+            <h2>${safeSubtopic}</h2>
+            <p>This lesson belongs to <strong>${safeTopic}</strong> and focuses on <strong>${safeSubtopic}</strong>.</p>
+            <p>Even when the AI provider is unstable, the course should still show a usable lesson structure for each subtitle. Use this page to review the key idea, then refresh once the generator is healthy again for a richer version.</p>
+            <h3>What to look for</h3>
+            <ul>
+              <li>How ${safeSubtopic} connects to the larger topic.</li>
+              <li>Which concepts matter most for understanding and application.</li>
+              <li>How this lesson supports the next lesson in the chapter.</li>
+            </ul>
+            <h3>Practical angle</h3>
+            <p>For <strong>${safeTopic}</strong>, think about how <strong>${safeSubtopic}</strong> would be used in a real workflow, case study, or problem-solving scenario.</p>
+            <h3>Quick recap</h3>
+            <p>Review the title, connect it to the chapter, and come back once generation is stable for the full AI-written lesson.</p>
+          </div>
+        `
+      }
+    };
+  };
 
   const generateSubtopicWithFallback = async ({ topicTitle, subtopicTitle }) => {
+    let structuredError = null;
     try {
       return await generateStructuredSubtopic({ topicTitle, subtopicTitle });
     } catch (error) {
-      console.warn(`Structured lesson generation failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);
+      structuredError = error;
+      console.debug(`Structured lesson generation failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);
     }
 
     try {
@@ -598,14 +673,19 @@ Rules:
         maxOutputTokens: 4096
       });
     } catch (error) {
-      console.warn(`Compact structured retry failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);
+      structuredError = error;
+      console.debug(`Compact structured retry failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);
     }
 
     try {
       return await generateFallbackTheory({ topicTitle, subtopicTitle });
     } catch (error) {
-      console.warn(`HTML fallback failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);
-      return buildEmergencyTheory({ topicTitle, subtopicTitle });
+      console.warn(
+        `HTML fallback failed for "${topicTitle}" -> "${subtopicTitle}":`,
+        error.message,
+        structuredError ? `Previous structured error: ${structuredError.message}` : ''
+      );
+      return buildDeterministicFallbackTheory({ topicTitle, subtopicTitle });
     }
   };
 
@@ -707,9 +787,7 @@ export const generateHtml = async (req, res) => {
       systemInstruction: 'You are a helpful educational assistant. Provide thorough and interesting explanations with examples. Use markdown formatting.'
     });
 
-    const result = await retryWithBackoff(() =>
-      model.generateContent(prompt)
-    );
+    const result = await model.generateContent(prompt);
 
     const markdown = await result.response.text();
 

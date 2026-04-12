@@ -259,7 +259,8 @@ const generateWithGemini = async ({
   responseMimeType,
   responseSchema,
   maxOutputTokens = 8192,
-  safetySettings
+  safetySettings,
+  retryAttempts = 5
 }) => {
   const settings = await getAISettings();
   const genAI = await getGenAI();
@@ -288,7 +289,10 @@ const generateWithGemini = async ({
       ...modelOptions,
       model: modelName
     });
-    const result = await retryWithBackoff(() => model.generateContent(prompt));
+    const result =
+      retryAttempts > 0
+        ? await retryWithBackoff(() => model.generateContent(prompt), retryAttempts)
+        : await model.generateContent(prompt);
     return cleanText(await result.response.text());
   };
 

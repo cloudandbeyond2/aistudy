@@ -105,7 +105,11 @@ const transporter = nodemailer.createTransport({
         pass: process.env.PASSWORD,
     },
 });
-const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const geminiApiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+if (!geminiApiKey) {
+    throw new Error('Missing Gemini API key. Set GEMINI_API_KEY (preferred) or API_KEY in frontend/.env or your hosting environment.');
+}
+const genAI = new GoogleGenerativeAI(geminiApiKey);
 const unsplash = createApi({ accessKey: process.env.UNSPLASH_ACCESS_KEY });
 
 // Import all routes from the original server file

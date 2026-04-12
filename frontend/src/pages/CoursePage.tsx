@@ -12,7 +12,7 @@ import { Content } from '@tiptap/react'
 import { MinimalTiptapEditor } from '../minimal-tiptap'
 import YouTube from 'react-youtube';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2, Loader2, Sparkles, BookOpen, Image as ImageIcon, Brain, Video, FileText, ArrowLeft, ArrowRight, X, Clock, RefreshCw } from 'lucide-react';
+import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2, Loader2, Sparkles, BookOpen, Brain, Video, FileText, ArrowLeft, ArrowRight, X, Clock, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getCoursePresentationMeta } from '@/lib/coursePresentation';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -33,11 +33,6 @@ import ShareOnSocial from 'react-share-on-social';
 import StyledText from '@/components/styledText';
 import html2pdf from 'html2pdf.js';
 
-// Fallback image utility
-const getFallbackImage = (topic: string, subtopic: string) => {
-  return `https://placehold.co/800x600/4f46e5/ffffff?text=${encodeURIComponent(subtopic.substring(0, 40))}`;
-};
-
 // Loading Popup Component - Responsive
 const LoadingPopup = ({ 
   isOpen, 
@@ -46,13 +41,12 @@ const LoadingPopup = ({
   progress = 0, 
   onContinue,
   showContinueButton,
-  remainingSeconds
+  remainingSeconds,
+  requestNote = ''
 }) => {
   const getAdjustedProgress = () => {
     if (stage === 'theory' || stage === 'video' || stage === 'transcript') {
       return Math.min(progress * 0.5, 50);
-    } else if (stage === 'image') {
-      return 50 + (progress * 0.5);
     } else if (stage === 'complete') {
       return 100;
     }
@@ -76,8 +70,6 @@ const LoadingPopup = ({
         return { icon: <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500 animate-bounce" />, title: 'Extracting Knowledge', message: `Processing video transcript for "${subtopic}"`, color: 'orange' };
       case 'theory':
         return { icon: <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 animate-pulse" />, title: 'Generating Content', message: `AI is creating learning material for "${subtopic}"`, color: 'blue' };
-      case 'image':
-        return { icon: <ImageIcon className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 animate-bounce" />, title: 'Fetching Visuals', message: `Finding the perfect image for "${subtopic}"`, color: 'green' };
       case 'complete':
         return { icon: <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 animate-spin" />, title: 'Finalizing', message: 'Polishing the content for best experience', color: 'yellow' };
       default:
@@ -87,8 +79,8 @@ const LoadingPopup = ({
 
   const content = getStageContent();
   if (!isOpen) return null;
-  const isContentPhase = stage === 'theory' || stage === 'video' || stage === 'transcript' || (!stage && adjustedProgress <= 50);
-  const phaseProgress = isContentPhase ? adjustedProgress : adjustedProgress - 50;
+  const isContentPhase = stage === 'theory' || stage === 'video' || stage === 'transcript' || !stage;
+  const phaseProgress = adjustedProgress;
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
@@ -100,11 +92,17 @@ const LoadingPopup = ({
             <div className={`relative z-10 p-3 sm:p-4 rounded-full bg-${content.color}-500/10`}>{content.icon}</div>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            {isComplete ? 'Ready to Continue!' : (isContentPhase ? 'Generating Content' : 'Fetching Visuals')}
+            {isComplete ? 'Ready to Continue!' : 'Generating Content'}
           </h2>
           <p className="text-xs sm:text-sm text-center text-muted-foreground mb-1">
             {isComplete ? 'All content has been prepared for you' : `${content.title} • ${content.message}`}
           </p>
+          {!isComplete && (
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">
+              <RefreshCw className="h-3 w-3 text-primary" />
+              <span>{requestNote || 'Single active request in progress. The page is not auto-retrying.'}</span>
+            </div>
+          )}
           <div className="w-full mt-4 mb-2">
             <div className="w-full h-2 sm:h-3 bg-muted rounded-full overflow-hidden flex">
               <div className="h-full bg-blue-500 transition-all duration-300 rounded-l-full" style={{ width: `${Math.min(adjustedProgress, 50)}%` }} />
@@ -139,9 +137,7 @@ const LoadingPopup = ({
                 <div className="flex items-center gap-3">
                   <Loader2 className="w-4 h-4 animate-spin text-primary flex-shrink-0" />
                   <span className="text-xs sm:text-sm">
-                    {isContentPhase
-                      ? `Creating learning material... (${Math.round(phaseProgress)}% of content phase)`
-                      : `Finding and optimizing visuals... (${Math.round(phaseProgress)}% of visuals phase)`}
+                    {`Creating learning material... (${Math.round(phaseProgress)}% complete)`}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 mt-4">
@@ -151,7 +147,7 @@ const LoadingPopup = ({
                   <Skeleton className="h-10 sm:h-12 rounded-lg" />
                 </div>
                 <p className="text-xs text-muted-foreground/60 mt-6 italic">
-                  ✨ {isContentPhase ? 'AI is crafting personalized content just for you...' : 'Finding the perfect visuals to enhance your learning...'}
+                  ✨ AI is crafting personalized content just for you...
                 </p>
               </>
             )}
@@ -262,11 +258,6 @@ const CoursePage = () => {
   const [regeneratingChapter, setRegeneratingChapter] = useState<string | null>(null);
   const [regenerateProgress, setRegenerateProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
 
-  // Image cache
-  const imageCache = useRef(new Set());
-  const [preloadedImages, setPreloadedImages] = useState(new Map());
-  const [imageLoading, setImageLoading] = useState(new Map());
-
   const mainTopic = courseData?.mainTopic;
   const type = courseData?.type;
   const courseId = courseData?.courseId || activeCourseId;
@@ -294,7 +285,7 @@ const CoursePage = () => {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [saving, setSaving] = useState(false);
-  const defaultMessage = `<p>Hey there! I'm your AI teacher. If you have any questions about your ${mainTopic || 'current'} course, whether it's about videos, images, or theory, just ask me. I'm here to clear your doubts.</p>`;
+  const defaultMessage = `<p>Hey there! I'm your AI teacher. If you have any questions about your ${mainTopic || 'current'} course, whether it's about videos or theory, just ask me. I'm here to clear your doubts.</p>`;
   const defaultPrompt = `I have a doubt about this topic :- ${mainTopic}. Please clarify my doubt in very short :- `;
 
   const [isMenuOpen, setIsMenuOpen] = useState(true);
@@ -307,6 +298,7 @@ const CoursePage = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const mainContentRef = useRef<HTMLDivElement>(null);
+  const loadingRequestRef = useRef(false);
   const [value, setValue] = useState<Content>('')
   const [completedSubtopics, setCompletedSubtopics] = useState([]);
   const [progressLoading, setProgressLoading] = useState(true);
@@ -315,17 +307,26 @@ const CoursePage = () => {
   const isOrgAdmin = userRole === 'org_admin' || userRole === 'dept_admin' || sessionStorage.getItem('isOrganization') === 'true';
 
   const [preloadedNextContent, setPreloadedNextContent] = useState(null);
-  const apiCache = useRef(new Map());
+  const [loadingRequestNote, setLoadingRequestNote] = useState('');
 
-  const testImageUrl = useCallback((url: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve(true);
-      img.onerror = () => resolve(false);
-      img.src = url;
-      setTimeout(() => resolve(false), 3000);
-    });
-  }, []);
+  const beginLoadingRequest = (note: string) => {
+    if (loadingRequestRef.current) {
+      toast({
+        title: 'Generation already running',
+        description: 'The page is already processing a lesson, so it will not keep retrying in the background.'
+      });
+      return false;
+    }
+
+    loadingRequestRef.current = true;
+    setLoadingRequestNote(note);
+    return true;
+  };
+
+  const endLoadingRequest = () => {
+    loadingRequestRef.current = false;
+    setLoadingRequestNote('');
+  };
 
 // Add this new function to regenerate only the current lesson
 const handleRegenerateCurrentLesson = async () => {
@@ -345,6 +346,10 @@ const handleRegenerateCurrentLesson = async () => {
     return;
   }
 
+  if (!beginLoadingRequest(`Regenerating "${subtopicTitle}"`)) {
+    return;
+  }
+
   // Show loading state for this specific lesson
   setShowLoadingPopup(true);
   setLoadingSubtopic(subtopicTitle);
@@ -357,8 +362,8 @@ const handleRegenerateCurrentLesson = async () => {
   // Progress simulation variables
   let currentProgress = 0;
   const isVideoCourse = type === 'video & text course';
-  const totalPhases = isVideoCourse ? 3 : 3; // theory + (video or image) + finalize
-  let currentPhase = 1; // 1=theory, 2=media, 3=finalize
+  const totalPhases = 2;
+  let currentPhase = 1; // 1=theory, 2=finalize
 
   // Progress simulation interval
   window.progressInterval = setInterval(() => {
@@ -369,13 +374,7 @@ const handleRegenerateCurrentLesson = async () => {
         setLoadingProgress(Math.min(currentProgress, 33));
       }
     } else if (currentPhase === 2) {
-      // Media phase: 33-66%
-      if (currentProgress < 66) {
-        currentProgress += Math.random() * 2.5;
-        setLoadingProgress(Math.min(currentProgress, 66));
-      }
-    } else if (currentPhase === 3) {
-      // Finalize phase: 66-100%
+      // Finalize phase: 50-100%
       if (currentProgress < 99) {
         currentProgress += Math.random() * 2;
         setLoadingProgress(Math.min(currentProgress, 99));
@@ -408,14 +407,12 @@ const handleRegenerateCurrentLesson = async () => {
       }
     }
     
-    // Phase 1 complete
-    setLoadingProgress(33);
-    currentProgress = 33;
+    setLoadingProgress(50);
+    currentProgress = 50;
 
-    // PHASE 2: Regenerate media based on course type (33-66%)
     if (isVideoCourse) {
       setLoadingStage('video');
-      setLoadingProgress(40);
+      setLoadingProgress(60);
       
       const query = `${subtopicTitle} ${mainTopic} in english`;
       const ytRes = await axios.post(serverURL + '/api/yt', { prompt: query });
@@ -425,36 +422,17 @@ const handleRegenerateCurrentLesson = async () => {
           setMedia(ytRes.data.url);
         }
       }
-    } else {
-      setLoadingStage('image');
-      setLoadingProgress(40);
-      
-      const imageRes = await axios.post(
-        serverURL + '/api/image',
-        { prompt: `${subtopicTitle} in ${mainTopic}` },
-        { timeout: 12000 }
-      );
-      const imageUrl = imageRes.data?.url || getFallbackImage(topicTitle, subtopicTitle);
-      targetSub.image = imageUrl;
-      if (selected === subtopicTitle) {
-        setMedia(imageUrl);
-        preloadImageWithCache(imageUrl, subtopicTitle, topicTitle);
-      }
     }
-    
-    // Phase 2 complete
-    setLoadingProgress(66);
-    currentProgress = 66;
 
-    // PHASE 3: Finalizing and cleanup (66-100%)
+    // Finalizing and cleanup
     setLoadingStage('complete');
     setLoadingProgress(75);
     
     // Small delay to show finalizing stage
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Keep done status as false so user can mark as complete again
-    targetSub.done = false;
+    // Keep the regenerated lesson ready to revisit
+    targetSub.done = true;
     
     // Update state and storage
     setJsonData({ ...jsonData });
@@ -488,6 +466,7 @@ const handleRegenerateCurrentLesson = async () => {
       clearInterval(window.progressInterval);
       window.progressInterval = null;
     }
+    endLoadingRequest();
   }
 };
   const simulateProgress = useCallback((stage) => {
@@ -504,38 +483,8 @@ const handleRegenerateCurrentLesson = async () => {
     return () => { if (window.progressInterval) clearInterval(window.progressInterval); };
   }, []);
 
-  const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') => {
-    if (!url || imageCache.current.has(url)) return;
-    imageCache.current.add(url);
-    setImageLoading(prev => new Map(prev).set(subtopicTitle, true));
-    const img = new Image();
-    img.onload = () => {
-      setPreloadedImages(prev => new Map(prev).set(subtopicTitle, url));
-      setImageLoading(prev => { const m = new Map(prev); m.delete(subtopicTitle); return m; });
-    };
-    img.onerror = () => {
-      const fallbackUrl = getFallbackImage(topicTitle || '', subtopicTitle);
-      setPreloadedImages(prev => new Map(prev).set(subtopicTitle, fallbackUrl));
-      setImageLoading(prev => { const m = new Map(prev); m.delete(subtopicTitle); return m; });
-    };
-    img.src = url;
-  }, []);
-
-  const preloadAllImages = useCallback(() => {
-    if (!jsonData || !mainTopic || !selected) return;
-    const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
-    if (!topicsList) return;
-    const allSubtopics = [];
-    topicsList.forEach(t => t.subtopics.forEach(s => allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title, image: s.image })));
-    const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
-    for (let i = 1; i <= 3; i++) {
-      const nextIndex = currentIndex + i;
-      if (nextIndex < allSubtopics.length) {
-        const next = allSubtopics[nextIndex];
-        if (next.image && !imageCache.current.has(next.image)) preloadImageWithCache(next.image, next.subtopicTitle);
-      }
-    }
-  }, [jsonData, mainTopic, selected, preloadImageWithCache]);
+  const preloadImageWithCache = useCallback(() => {}, []);
+  const preloadAllImages = useCallback(() => {}, []);
 
   const preloadNextSubtopic = useCallback(async () => {
     if (!jsonData || !selected || !mainTopic || !lang || !userId) return;
@@ -564,12 +513,9 @@ const handleRegenerateCurrentLesson = async () => {
             });
             if (res.data.success && res.data.topics[0]) {
               setPreloadedNextContent({ topicTitle: next.topicTitle, subtopicTitle: next.subtopicTitle, theory: res.data.topics[0].subtopics[0].theory });
-              if (res.data.topics[0].subtopics[0].image) preloadImageWithCache(res.data.topics[0].subtopics[0].image, next.subtopicTitle);
             }
           } catch (error) { console.error("Preload failed:", error); }
         }
-      } else if (next.subtopic.image) {
-        preloadImageWithCache(next.subtopic.image, next.subtopicTitle);
       }
     }
   }, [contentProfileId, jsonData, selected, mainTopic, lang, userId, preloadImageWithCache]);
@@ -591,12 +537,8 @@ Requirements:
   }, [contentProfileMeta.label, contentProfileMeta.promptInstruction, lang, mainTopic]);
 
   useEffect(() => {
-    if (selected && jsonData) { preloadNextSubtopic(); preloadAllImages(); }
-  }, [selected, jsonData, preloadNextSubtopic, preloadAllImages]);
-
-  useEffect(() => {
-    if (media && !imageCache.current.has(media) && type !== 'video & text course') preloadImageWithCache(media, selected);
-  }, [media, selected, preloadImageWithCache, type]);
+    if (selected && jsonData) { preloadNextSubtopic(); }
+  }, [selected, jsonData, preloadNextSubtopic]);
 
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -631,7 +573,7 @@ Requirements:
                 setSelected(firstSubtopic.title);
                 setTheory(firstSubtopic.theory);
                 if (course.type === 'video & text course') { setMedia(firstSubtopic.youtube); }
-                else { setMedia(firstSubtopic.image); if (firstSubtopic.image) preloadImageWithCache(firstSubtopic.image, firstSubtopic.title); }
+                else { setMedia(''); }
               }
             }
           }
@@ -836,32 +778,35 @@ Requirements:
     const wordCount = plainText ? plainText.split(/\s+/).filter(Boolean).length : 0;
     if (plainText.length < 1200) return false;
     if (wordCount < 220) return false;
-    return type === 'video & text course' ? !!subtopic.youtube : !!subtopic.image;
+    return type === 'video & text course' ? !!subtopic.youtube : true;
   };
 
   const startSubtopicPreparation = (topicTitle, subtopicTitle, subtopicData) => {
-    if (subtopicData?.theory && subtopicData.theory.length > 500) {
-      setShowLoadingPopup(false);
-      setSelectedTopicTitle(topicTitle);
-      setSelected(subtopicTitle);
-      setTheory(cleanGeneratedHtml(subtopicData.theory));
-      setMedia(type === 'video & text course' ? subtopicData.youtube : subtopicData.image);
-      return;
-    }
-    setShowLoadingPopup(true);
-    setLoadingSubtopic(subtopicTitle);
-    setLoadingProgress(0);
+  if (subtopicData?.theory && subtopicData.theory.length > 500) {
+    setShowLoadingPopup(false);
+    setSelectedTopicTitle(topicTitle);
+    setSelected(subtopicTitle);
+    setTheory(cleanGeneratedHtml(subtopicData.theory));
+    setMedia(type === 'video & text course' ? subtopicData.youtube : '');
+    return;
+  }
+  if (!beginLoadingRequest(`Loading "${subtopicTitle}"`)) {
+    return;
+  }
+  setShowLoadingPopup(true);
+  setLoadingSubtopic(subtopicTitle);
+  setLoadingProgress(0);
     setSelectedTopicTitle(topicTitle);
     setSelected(subtopicTitle);
     if (subtopicData?.theory) {
       setTheory(cleanGeneratedHtml(subtopicData.theory));
-      setMedia(type === 'video & text course' ? subtopicData.youtube || '' : subtopicData.image || '');
+      setMedia(type === 'video & text course' ? subtopicData.youtube || '' : '');
     } else {
       setTheory(`<div class="prose dark:prose-invert max-w-none"><h2 class="text-xl sm:text-2xl">${subtopicTitle}</h2><p class="text-sm sm:text-base">AI is crafting personalized content for you...</p><div class="flex items-center justify-center p-6 sm:p-8"><div class="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div></div></div>`);
       setMedia(null);
     }
     if (type === 'video & text course') sendVideo(`${subtopicTitle} ${mainTopic}`, topicTitle, subtopicTitle, subtopicTitle);
-    else if (subtopicData?.theory) sendImageForBatch(`${subtopicTitle} in ${mainTopic}`, topicTitle, subtopicTitle, subtopicData.theory);
+    else if (subtopicData?.theory) sendTheoryForBatch(topicTitle, subtopicTitle, subtopicData.theory);
     else sendBulkCourseContent(topicTitle, subtopicTitle);
   };
 
@@ -886,73 +831,59 @@ Requirements:
         if (targetSub) { targetSub.theory = cleanedTheory; targetSub.done = true; setJsonData({ ...jsonData }); sessionStorage.setItem('jsonData', JSON.stringify(jsonData)); setTheory(cleanedTheory); }
       }
       if (clearTheoryProgress) clearTheoryProgress();
-      simulateProgress('image');
-      try {
-        const imageRes = await axios.post(serverURL + '/api/image', { prompt: `${clickedSub} in ${mainTopic}` }, { timeout: 10000 });
-        if (imageRes.data?.url) {
-          setMedia(imageRes.data.url);
-          const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
-          const targetTopic = topicsList?.find(t => t.title === clickedTopic);
-          const targetSub = targetTopic?.subtopics.find(s => s.title === clickedSub);
-          if (targetSub) { targetSub.image = imageRes.data.url; setJsonData({ ...jsonData }); sessionStorage.setItem('jsonData', JSON.stringify(jsonData)); }
-        }
-      } catch (imageErr) { console.error("Image fetch failed:", imageErr); }
+      setMedia('');
       await updateCourse();
       simulateProgress('complete');
       setLoadingProgress(100);
-      setTimeout(() => { setShowLoadingPopup(false); if (window.progressInterval) clearInterval(window.progressInterval); }, 1500);
+      setTimeout(() => {
+        setShowLoadingPopup(false);
+        if (window.progressInterval) clearInterval(window.progressInterval);
+        endLoadingRequest();
+      }, 1500);
     } catch (error) {
       console.error("Theory generation failed:", error);
       setTheory(`<div class="prose dark:prose-invert max-w-none"><h2 class="text-xl sm:text-2xl">${clickedSub}</h2><p class="text-sm sm:text-base">Sorry, we encountered an error loading the content. Please try again.</p><p class="text-xs sm:text-sm text-muted-foreground mt-2">Error: ${error.message}</p></div>`);
       setShowLoadingPopup(false);
       if (window.progressInterval) clearInterval(window.progressInterval);
+      endLoadingRequest();
     }
   }
 
-  async function sendImageForBatch(promptImage: string, topics: string, sub: string, theory: string) {
+  async function sendTheoryForBatch(topics: string, sub: string, theory: string) {
     try {
       setShowLoadingPopup(true);
       setLoadingSubtopic(sub);
       setLoadingProgress(0);
-      simulateProgress('image');
+      simulateProgress('theory');
       setSelectedTopicTitle(topics || currentTopicTitle || '');
       setSelected(sub);
       setTheory(cleanGeneratedHtml(theory));
-      setImageLoading(prev => new Map(prev).set(sub, true));
-      const topicContext = topics || mainTopic;
-      let imageUrl = '';
-      try {
-        const res = await axios.post(serverURL + '/api/image', { prompt: `${sub} in ${topicContext}` }, { timeout: 10000 }).catch(error => { console.error("Image API error:", error); return { data: { url: null } }; });
-        imageUrl = res.data?.url || '';
-      } catch (apiError) { console.error("Image generation failed:", apiError); imageUrl = ''; }
-      if (!imageUrl) imageUrl = getFallbackImage(topicContext, sub);
-      if (imageUrl) { preloadImageWithCache(imageUrl, sub, topicContext); setMedia(imageUrl); }
       const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
       if (topicsList) {
         const mTopic = topicsList.find((t: any) => t.title === topics);
         const mSubTopic = mTopic?.subtopics.find((s: any) => s.title === sub);
-        if (mSubTopic) { mSubTopic.image = imageUrl; mSubTopic.done = true; sessionStorage.setItem('jsonData', JSON.stringify(jsonData)); updateCourse(); }
+        if (mSubTopic) { mSubTopic.done = true; sessionStorage.setItem('jsonData', JSON.stringify(jsonData)); updateCourse(); }
       }
-      setImageLoading(prev => { const m = new Map(prev); m.delete(sub); return m; });
       simulateProgress('complete');
       setLoadingProgress(100);
-      setTimeout(() => { setShowLoadingPopup(false); if (window.progressInterval) clearInterval(window.progressInterval); }, 1500);
+      setTimeout(() => {
+        setShowLoadingPopup(false);
+        if (window.progressInterval) clearInterval(window.progressInterval);
+        endLoadingRequest();
+      }, 1500);
       setIsLoading(false);
     } catch (error) {
-      console.error("Image generation error:", error);
-      const topicContext = topics || mainTopic;
-      const fallbackUrl = getFallbackImage(topicContext, sub);
-      setMedia(fallbackUrl);
+      console.error("Theory generation error:", error);
       const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
       if (topicsList) {
         const mTopic = topicsList.find((t: any) => t.title === topics);
         const mSubTopic = mTopic?.subtopics.find((s: any) => s.title === sub);
-        if (mSubTopic) { mSubTopic.image = fallbackUrl; mSubTopic.done = true; sessionStorage.setItem('jsonData', JSON.stringify(jsonData)); }
+        if (mSubTopic) { mSubTopic.done = true; sessionStorage.setItem('jsonData', JSON.stringify(jsonData)); }
       }
-      setImageLoading(prev => { const m = new Map(prev); m.delete(sub); return m; });
       setShowLoadingPopup(false);
       if (window.progressInterval) clearInterval(window.progressInterval);
       setIsLoading(false);
+      endLoadingRequest();
     }
   }
 
@@ -966,13 +897,9 @@ Requirements:
     setSelectedTopicTitle(topicTitle);
     setSelected(subtopicTitle);
     const hasValidTheory = mSubTopic.theory && mSubTopic.theory.length > 500 && !mSubTopic.theory.includes("AI is crafting personalized content");
-    const hasValidMedia = type === 'video & text course' ? mSubTopic.youtube : mSubTopic.image;
-    if (hasValidTheory && hasValidMedia) {
+    if (hasValidTheory) {
       setTheory(cleanGeneratedHtml(mSubTopic.theory));
-      setMedia(type === 'video & text course' ? mSubTopic.youtube : mSubTopic.image);
-    } else if (hasValidTheory) {
-      setTheory(cleanGeneratedHtml(mSubTopic.theory));
-      startSubtopicPreparation(topicTitle, subtopicTitle, mSubTopic);
+      setMedia(type === 'video & text course' ? mSubTopic.youtube : '');
     } else {
       startSubtopicPreparation(topicTitle, subtopicTitle, mSubTopic);
     }
@@ -1037,25 +964,9 @@ Requirements:
             console.error(`Video search failed for ${sub.title}:`, ytErr);
           }
         } else {
-          try {
-            const imageRes = await axios.post(
-              serverURL + '/api/image',
-              { prompt: `${sub.title} in ${mainTopic}` },
-              { timeout: 12000 }
-            );
-            const imageUrl = imageRes.data?.url || getFallbackImage(topicTitle, sub.title);
-            sub.image = imageUrl;
-            sub.done = true;
-            if (selected === sub.title) {
-              setMedia(imageUrl);
-              preloadImageWithCache(imageUrl, sub.title, topicTitle);
-            }
-          } catch (imgErr) {
-            console.error(`Image fetch failed for ${sub.title}:`, imgErr);
-            const fallback = getFallbackImage(topicTitle, sub.title);
-            sub.image = fallback;
-            sub.done = true;
-            if (selected === sub.title) setMedia(fallback);
+          sub.done = true;
+          if (selected === sub.title) {
+            setMedia('');
           }
         }
 
@@ -1082,45 +993,6 @@ Requirements:
     }
   };
 
-  async function sendPrompt(prompt, promptImage, topics, sub) {
-    try {
-      const postURL = serverURL + '/api/generate';
-      const res = await axios.post(postURL, { prompt });
-      const generatedText = res.data.generatedText;
-      try { sendImage(generatedText, promptImage, topics, sub); }
-      catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
-    } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
-  }
-
-  async function sendImage(parsedJson, promptImage, topics, sub) {
-    try {
-      const postURL = serverURL + '/api/image';
-      const res = await axios.post(postURL, { prompt: promptImage });
-      try { sendData(res.data.url, parsedJson, topics, sub); }
-      catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
-    } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
-  }
-
-  async function sendData(image, theory, topics, sub) {
-    const topicsList = jsonData?.course_topics || jsonData?.[mainTopic?.toLowerCase()];
-    if (!topicsList) { setIsLoading(false); return; }
-    const mTopic = topicsList.find(topic => topic.title === topics);
-    if (!mTopic) { setIsLoading(false); return; }
-    const mSubTopic = mTopic.subtopics?.find(subtopic => subtopic.title === sub);
-    if (!mSubTopic) { setIsLoading(false); return; }
-    const cleanedTheory = cleanGeneratedHtml(theory);
-    mSubTopic.theory = cleanedTheory;
-    mSubTopic.image = image;
-    mSubTopic.done = true;
-    setSelectedTopicTitle(topics);
-    setSelected(mSubTopic.title);
-    setTheory(cleanedTheory);
-    setMedia(image);
-    setIsLoading(false);
-    sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
-    updateCourse();
-  }
-
   async function sendDataVideo(image, theory, topics, sub) {
     const topicsList = jsonData?.course_topics || jsonData?.[mainTopic?.toLowerCase()];
     if (!topicsList) { setIsLoading(false); return; }
@@ -1134,11 +1006,12 @@ Requirements:
     mSubTopic.done = true;
     setSelectedTopicTitle(topics);
     setSelected(mSubTopic.title);
-    setTheory(cleanedTheory);
-    setMedia(image);
-    setIsLoading(false);
-    updateCourse();
-  }
+  setTheory(cleanedTheory);
+  setMedia(image);
+  setIsLoading(false);
+  updateCourse();
+  endLoadingRequest();
+}
 
   async function updateCourse() {
     CountDoneTopics();
@@ -1177,11 +1050,11 @@ Requirements:
 
   async function sendVideo(query, mTopic, mSubTopic, subtop) {
     const stopSim = simulateProgress('video');
-    try {
+  try {
       const res = await axios.post(serverURL + '/api/yt', { prompt: query });
       try { stopSim(); sendTranscript(res.data.url, mTopic, mSubTopic, subtop); }
-      catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
-    } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
+      catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); endLoadingRequest(); }
+    } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); endLoadingRequest(); }
   }
 
   async function sendTranscript(url, mTopic, mSubTopic, subtop) {
@@ -1192,8 +1065,8 @@ Requirements:
         const concatenatedText = res.data.transcript.map(item => item.text).join(' ');
         const prompt = buildStyledTheoryPrompt(subtop, concatenatedText);
         stopSim(); sendSummery(prompt, url, mTopic, mSubTopic);
-      } catch (error) { const prompt = buildStyledTheoryPrompt(subtop); stopSim(); sendSummery(prompt, url, mTopic, mSubTopic); }
     } catch (error) { const prompt = buildStyledTheoryPrompt(subtop); stopSim(); sendSummery(prompt, url, mTopic, mSubTopic); }
+  } catch (error) { const prompt = buildStyledTheoryPrompt(subtop); stopSim(); sendSummery(prompt, url, mTopic, mSubTopic); }
   }
 
   async function sendSummery(prompt, url, mTopic, mSubTopic) {
@@ -1206,8 +1079,8 @@ Requirements:
         setTimeout(() => setShowLoadingPopup(false), 1500);
         const cleanedTheory = cleanGeneratedHtml(generatedText);
         sendDataVideo(url, cleanedTheory, mTopic, mSubTopic);
-      } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
-    } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
+    } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); endLoadingRequest(); }
+    } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); endLoadingRequest(); }
   }
 
   async function htmlDownload() {
@@ -1246,8 +1119,10 @@ Requirements:
     const topicsHtml = topics.map(topic => `<h3 style="font-size: 18pt; font-weight: bold; margin: 0; margin-top: 15px;">${topic.title}</h3>${topic.subtopics.map(subtopic => `<p style="font-size: 16pt; margin-top: 10px;">${subtopic.title}</p>`).join('')}`).join('');
     const theoryPromises = topics.map(async topic => {
       const subtopicPromises = topic.subtopics.map(async (subtopic) => {
-        const imageUrl = type === 'text & image course' ? await toDataUrl(subtopic.image) : ``;
-        return `<div><p style="font-size: 16pt; margin-top: 20px; font-weight: bold;">${subtopic.title}</p><div style="font-size: 12pt; margin-top: 15px;">${subtopic.done ? `${type === 'text & image course' ? (imageUrl ? `<img style="margin-top: 10px;" src="${imageUrl}" alt="${subtopic.title} image">` : `<a style="color: #0000FF;" href="${subtopic.image}" target="_blank">View example image</a>`) : `<a style="color: #0000FF;" href="https://www.youtube.com/watch?v=${subtopic.youtube}" target="_blank" rel="noopener noreferrer">Watch the YouTube video on ${subtopic.title}</a>`}<div style="margin-top: 10px;">${subtopic.theory}</div>` : `<div style="margin-top: 10px;">Please visit ${subtopic.title} topic to export as PDF.</div>`}</div></div>`;
+        const videoLink = type === 'video & text course'
+          ? `<a style="color: #0000FF;" href="https://www.youtube.com/watch?v=${subtopic.youtube}" target="_blank" rel="noopener noreferrer">Watch the YouTube video on ${subtopic.title}</a>`
+          : '';
+        return `<div><p style="font-size: 16pt; margin-top: 20px; font-weight: bold;">${subtopic.title}</p><div style="font-size: 12pt; margin-top: 15px;">${subtopic.done ? `${videoLink}<div style="margin-top: 10px;">${subtopic.theory}</div>` : `<div style="margin-top: 10px;">Please visit ${subtopic.title} topic to export as PDF.</div>`}</div></div>`;
       });
       const subtopicHtml = await Promise.all(subtopicPromises);
       return `<div style="margin-top: 30px;"><h3 style="font-size: 18pt; text-align: center; font-weight: bold; margin: 0;">${topic.title}</h3>${subtopicHtml.join('')}</div>`;
@@ -1500,7 +1375,7 @@ Requirements:
           setSelected(firstSubtopic.title);
           if (isSubtopicReadyForDisplay(firstSubtopic)) {
             setTheory(cleanGeneratedHtml(firstSubtopic.theory));
-            setMedia(type === 'video & text course' ? firstSubtopic.youtube : firstSubtopic.image);
+            setMedia(type === 'video & text course' ? firstSubtopic.youtube : '');
           } else {
             setTimeout(() => startSubtopicPreparation(mainTopicData.title, firstSubtopic.title, firstSubtopic), 100);
           }
@@ -1770,6 +1645,7 @@ Requirements:
         onContinue={() => { setShowContinueButton(false); setIsButtonDisabled(false); setShowLoadingPopup(false); }}
         showContinueButton={showContinueButton}
         remainingSeconds={remainingSeconds}
+        requestNote={loadingRequestNote}
       />
       <QuizLoadingPopup isOpen={isQuizLoading} topic={mainTopic} />
 
@@ -1928,7 +1804,7 @@ Requirements:
                           <span className={`inline-flex items-center rounded-full px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold ${contentProfileMeta.badgeClass}`}>
                             <ContentProfileIcon className="mr-1 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />{contentProfileMeta.label}
                           </span>
-                          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">{type === "video & text course" ? "Video + Text" : "Text + Images"}</span>
+                          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">{type === "video & text course" ? "Video + Text" : "Text + Theory"}</span>
                           <span className="inline-flex items-center rounded-full border border-border bg-background px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">{lang}</span>
                         </div>
                         <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 sm:line-clamp-none">{contentProfileMeta.summary}</p>

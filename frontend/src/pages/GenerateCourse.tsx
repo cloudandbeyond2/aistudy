@@ -344,6 +344,26 @@ const GenerateCourse = () => {
   const focusLabel =
     learnerType === 'student' ? 'Department or field of study' : 'Department, profession, or domain';
 
+  const buildCompactSubtopicList = (items: string[]) =>
+    [...new Set(items.map((item) => item.trim()).filter(Boolean))];
+
+  const buildCompactCourseOutline = (topics: any[]) =>
+    (Array.isArray(topics) ? topics : [])
+      .map((topic: any, index: number) => {
+        const title = String(topic?.title || `Chapter ${index + 1}`).trim();
+        const subtopics = Array.isArray(topic?.subtopics)
+          ? topic.subtopics
+              .map((subtopic: any) => String(subtopic?.title || subtopic || '').trim())
+              .filter(Boolean)
+              .slice(0, 5)
+          : [];
+
+        return subtopics.length
+          ? `${index + 1}. ${title} | ${subtopics.join(' | ')}`
+          : `${index + 1}. ${title}`;
+      })
+      .join('\n');
+
   const buildSuggestionPrompt = () => `You are helping a user choose a course topic.
 
 Learner type: ${learnerType}
@@ -508,17 +528,22 @@ Return only valid JSON that matches the schema.`;
       console.error('Error checking course existence:', error);
     }
 
-    const prompt = `Course: "${mainTopic}"
-    Language: ${language}
-    Presentation Style: ${contentProfileMeta.label}
-    Style Guidance: ${contentProfileMeta.promptInstruction}
-    Chapters: ${number}
-    Required Subtopics: ${subtopicsList.join(', ')}
-
-    Generate a detailed course structure in JSON with exactly ${number} chapters.
-    Each chapter must include 3 to 5 subtopics.
-    Use the required subtopics where relevant and expand them into a fuller lesson path.
-    Make the chapter flow and subtopic naming suitable for the chosen presentation style.`;
+    const requiredSubtopics = buildCompactSubtopicList(subtopicsList);
+    const prompt = [
+      `Create a course in JSON only.`,
+      `Topic: "${mainTopic}"`,
+      `Language: ${language}`,
+      `Presentation style: ${contentProfileMeta.label}`,
+      `Style guidance: ${contentProfileMeta.promptInstruction}`,
+      `Chapters: ${number}`,
+      `Required subtopics: ${requiredSubtopics.length ? requiredSubtopics.join(' | ') : 'None'}`,
+      `Rules:`,
+      `- Return only JSON with course_topics.`,
+      `- Create exactly ${number} chapters.`,
+      `- Each chapter needs 3 to 5 subtopics.`,
+      `- Use required subtopics where relevant.`,
+      `- Keep chapter and subtopic titles concise.`
+    ].join('\n');
 
     setGenerationProgress(30);
     setProgressMessage("Sending request to AI...");
@@ -604,17 +629,19 @@ Return only valid JSON that matches the schema.`;
         setProgressMessage("Generating quiz questions...");
 
         try {
-          const quizPrompt = `Course: "${courseOptions.topic}"
-Language: ${selectedLanguage}
-Chapters (overview): ${JSON.stringify(parsedJson?.course_topics || [])}
-
-Generate exactly 10 multiple-choice quiz questions that evaluate the learner's understanding across the course.
-Rules:
-- Provide 4 options per question.
-- "answer" must match exactly one of the option strings.
-- Include a 1-2 sentence explanation.
-- difficulty must be one of: easy, medium, difficult.
-Return only valid JSON.`;
+          const quizPrompt = [
+            `Create 10 multiple-choice quiz questions from this course.`,
+            `Course: "${courseOptions.topic}"`,
+            `Language: ${selectedLanguage}`,
+            `Course outline:`,
+            buildCompactCourseOutline(parsedJson?.course_topics || []),
+            `Rules:`,
+            `- Provide 4 options per question.`,
+            `- "answer" must match exactly one option string.`,
+            `- Include a 1-2 sentence explanation.`,
+            `- difficulty must be easy, medium, or difficult.`,
+            `Return only valid JSON.`
+          ].join('\n');
 
           const quizRes = await axios.post(postURL, {
             prompt: quizPrompt,
@@ -1322,8 +1349,8 @@ Return only valid JSON.`;
                                   >
                                     <div className="flex-1 flex items-center justify-between pointer-events-none">
                                       <div className="space-y-1">
-                                        <div className="font-semibold text-base text-foreground">Text & Images</div>
-                                        <p className="text-xs text-muted-foreground">Articles + Illustrations</p>
+                                        <div className="font-semibold text-base text-foreground">Text & Theory</div>
+                                        <p className="text-xs text-muted-foreground">Articles + Explanations</p>
                                       </div>
                                       <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${field.value === "image & text course" ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/30'}`}>
                                         {field.value === "image & text course" && <CheckCircle2 className="w-3.5 h-3.5" />}

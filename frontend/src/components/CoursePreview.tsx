@@ -1,4 +1,3 @@
-
 // // // import React, { useState } from 'react';
 // // // import { Card, CardContent } from '@/components/ui/card';
 // // // import { ScrollArea } from '@/components/ui/scroll-area';
@@ -1623,7 +1622,7 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
                   {presentationMeta.label}
                 </span>
                 <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {type === 'video & text course' ? 'Video + Text' : 'Text + Images'}
+                  {type === 'video & text course' ? 'Video + Text' : 'Text + Theory'}
                 </span>
                 <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
                   {lang}
