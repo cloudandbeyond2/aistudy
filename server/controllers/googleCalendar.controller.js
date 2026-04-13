@@ -35,6 +35,8 @@ export const getAuthUrl = async (req, res) => {
     }
 
     if (!google || !process.env.GOOGLE_CLIENT_ID) {
+      res.locals.statusOrigin = 'Calendar';
+      res.locals.statusOriginMessage = 'Google Calendar integration is not yet configured.';
       return res.status(503).json({
         success: false,
         message: 'Google Calendar integration is not yet configured. Please add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to your server .env file.'
@@ -76,6 +78,8 @@ export const handleCallback = async (req, res) => {
     }
 
     if (!google || !process.env.GOOGLE_CLIENT_ID) {
+      res.locals.statusOrigin = 'Calendar';
+      res.locals.statusOriginMessage = 'Google Calendar is not configured on the server.';
       return res.status(503).send('<h1>Config Error</h1><p>Google Calendar is not configured on the server.</p>');
     }
 
@@ -161,6 +165,8 @@ export const syncEvents = async (req, res) => {
     }
 
     if (!google || !process.env.GOOGLE_CLIENT_ID) {
+      res.locals.statusOrigin = 'Calendar';
+      res.locals.statusOriginMessage = 'Google Calendar not configured on server.';
       return res.status(503).json({ success: false, message: 'Google Calendar not configured on server' });
     }
 
