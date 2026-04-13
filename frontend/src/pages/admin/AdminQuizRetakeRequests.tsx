@@ -123,7 +123,7 @@ const AdminQuizRetakeRequests = () => {
     };
 
     return (
-        <div className="container space-y-6 animate-fade-in pt-0 lg:pt-[60px]">
+        <div className="space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-2 lg:px-4 max-w-[1400px] mx-auto relative pt-0 lg:pt-[65px]">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Quiz Retake Requests</h1>
                 <p className="text-muted-foreground mt-1">

@@ -462,9 +462,10 @@ export default function CalendarScheduler() {
   ];
 
   return (
-    <div className="relative mx-auto max-w-7xl space-y-8 px-4 py-6 md:px-6 lg:px-8">
+    <div className="relative space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-2 lg:px-4 max-w-[1400px] mx-auto relative pt-0 lg:pt-[55px]">
+
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -left-24 top-0 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -left-24 top-0 h-80 w-80 rounded-full" />
         <div className="absolute right-0 top-20 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       </div>

@@ -3188,7 +3188,8 @@ const handleUpdateDeptAdmin = async () => {
         : [];
 
     return (
-        <div className="container mx-auto py-10 space-y-8 animate-fade-in">
+        <div className="space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-2 lg:px-4 max-w-[1400px] mx-auto relative pt-0 lg:pt-[65px]">
+            
             <SEO title="Organization Dashboard" description="Manage your organization, students, and curriculum." />
 
 

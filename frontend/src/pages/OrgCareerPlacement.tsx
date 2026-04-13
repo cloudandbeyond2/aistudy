@@ -237,7 +237,7 @@ const OrgCareerPlacement = () => {
     }
 
   return (
-  <div className="space-y-6 animate-fade-in px-4 sm:px-0">
+  <div className="space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-2 lg:px-4 max-w-[1400px] mx-auto relative pt-0 lg:pt-[65px]">
     <SEO title="Career & Placement | Organization Dashboard" description="Track student placement readiness, projects, and certificates." />
 
     {/* Header - Stacks on mobile */}

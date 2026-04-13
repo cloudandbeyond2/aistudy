@@ -897,7 +897,7 @@ const handleDeleteAssignment = async (id: string) => {
     return (
         <>
             {/* ASSIGNMENTS TAB */}
-            <div className="container space-y-4 sm:space-y-6 px-2 sm:px-4 md:px-6 pb-8 py-10">
+            <div className="space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-2 lg:px-4 max-w-[1400px] mx-auto relative pt-0 lg:pt-[65px]">
                 {/* Header Section with Gradient - Responsive */}
                 <div className={`${themeStyles.hero} rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg`} >
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">

@@ -2887,9 +2887,9 @@ const toggleSrc = (id: string) =>
             </AnimatePresence>
 
             {/* White background — no blue gradient */}
-            <div className="min-h-screen" style={{background:'#f8fafc'}}>
+            <div className="min-h-screen">
                 {/* Added mt-2 top margin so the notebook doesn't touch the profile header above */}
-                <div className="relative flex flex-col lg:flex-row min-h-screen w-full gap-2 sm:gap-3 p-2 sm:p-3 lg:p-4 mt-2">
+                <div className="relative flex flex-col lg:flex-row min-h-screen w-full gap-2 sm:gap-3 p-2 sm:p-3 lg:p-4 mt-2 container pt-0 lg:pt-[65px] mx-auto">
 
                   {/* Desktop Sidebar - Always visible on large desktop (1441px+) */}
 {isDesktop && (

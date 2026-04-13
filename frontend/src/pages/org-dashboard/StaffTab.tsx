@@ -320,7 +320,7 @@ const StaffTab = () => {
     return (
         <>
             {role === 'org_admin' && (
-                <div className="min-h-screen bg-gradient-to-br from-[#11405f]/5 via-white to-[#11a5e4]/10 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+                <div className="min-h-screen bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
                     <div className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8 space-y-6 sm:space-y-8">
                         {/* Header Section */}
                         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">

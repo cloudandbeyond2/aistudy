@@ -731,7 +731,7 @@ const isYearlyOnly = userPlan !== 'yearly';
   return (
     <>
       <SEO title="Interview Preparation" description="Master your interviews with daily tests and AI quizzes" />
-      <div className="space-y-6 md:space-y-8 animate-fade-in max-w-6xl mx-auto pb-6 md:pb-10 px-4 md:px-6 lg:px-8 pt-0 lg:pt-[60px]">
+      <div className="space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-2 lg:px-4 max-w-[1400px] mx-auto relative pt-0 lg:pt-[65px]">
 
         {/* Interview Success Blueprint Introduction */}
         <div className="space-y-6">
