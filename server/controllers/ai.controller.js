@@ -13,6 +13,12 @@ import { getUnsplashApi } from '../config/unsplash.js';
 
 // Simple in-memory queue: one generation at a time per user/org key.
 const generationQueues = new Map();
+const promptCache = new Map();
+const promptInFlight = new Map();
+const PROMPT_CACHE_TTL_MS = 2 * 60 * 1000;
+const promptRateState = new Map();
+const PROMPT_RATE_WINDOW_MS = 60 * 1000;
+const PROMPT_RATE_MAX = 5;
 
 const runWithGenerationQueue = async (queueKey, task) => {
   const key = queueKey || 'anonymous';
@@ -30,6 +36,51 @@ const runWithGenerationQueue = async (queueKey, task) => {
       generationQueues.delete(key);
     }
   }
+};
+
+const getPromptRateKey = (req) => {
+  const userId = req.body?.userId;
+  return userId || req.headers['x-user-id'] || req.ip || 'anonymous';
+};
+
+const isPromptRateLimited = (key) => {
+  const now = Date.now();
+  const entry = promptRateState.get(key) || { count: 0, windowStart: now };
+  if (now - entry.windowStart > PROMPT_RATE_WINDOW_MS) {
+    entry.count = 0;
+    entry.windowStart = now;
+  }
+  entry.count += 1;
+  promptRateState.set(key, entry);
+  return entry.count > PROMPT_RATE_MAX;
+};
+
+const buildPromptCacheKey = (req) => {
+  const { prompt, systemInstruction, responseMimeType, responseSchema, userId } = req.body || {};
+  return JSON.stringify({
+    prompt: prompt || '',
+    systemInstruction: systemInstruction || '',
+    responseMimeType: responseMimeType || '',
+    responseSchema: responseSchema || null,
+    userId: userId || ''
+  });
+};
+
+const getCachedPrompt = (key) => {
+  const entry = promptCache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    promptCache.delete(key);
+    return null;
+  }
+  return entry.value;
+};
+
+const setCachedPrompt = (key, value) => {
+  promptCache.set(key, {
+    value,
+    expiresAt: Date.now() + PROMPT_CACHE_TTL_MS
+  });
 };
 
 
@@ -81,13 +132,47 @@ export const generatePrompt = async (req, res) => {
   const { prompt, systemInstruction, responseMimeType, responseSchema } = req.body;
 
   try {
-    const generatedText = await generateAIText({
-      prompt,
-      systemInstruction,
-      responseMimeType,
-      responseSchema,
-      maxOutputTokens: 8192
-    });
+    const rateKey = getPromptRateKey(req);
+    if (isPromptRateLimited(rateKey)) {
+      return res.status(429).json({
+        success: false,
+        message: 'Too many prompt requests. Please wait a moment and try again.'
+      });
+    }
+
+    const cacheKey = buildPromptCacheKey(req);
+    const cached = getCachedPrompt(cacheKey);
+    if (cached) {
+      return res.status(200).json({
+        success: true,
+        generatedText: cached,
+        cached: true
+      });
+    }
+
+    if (promptInFlight.has(cacheKey)) {
+      const inflight = await promptInFlight.get(cacheKey);
+      return res.status(200).json({
+        success: true,
+        generatedText: inflight,
+        cached: true
+      });
+    }
+
+    const requestPromise = runWithGenerationQueue(rateKey, async () =>
+      generateAIText({
+        prompt,
+        systemInstruction,
+        responseMimeType,
+        responseSchema,
+        maxOutputTokens: 8192
+      })
+    );
+
+    promptInFlight.set(cacheKey, requestPromise);
+    const generatedText = await requestPromise;
+    promptInFlight.delete(cacheKey);
+    setCachedPrompt(cacheKey, generatedText);
 
     console.log('--- AI RESPONSE SUCCESS ---');
     console.log('Generated Text length:', generatedText?.length || 0);
@@ -97,31 +182,51 @@ export const generatePrompt = async (req, res) => {
       generatedText
     });
   } catch (error) {
+    const cacheKey = buildPromptCacheKey(req);
+    if (promptInFlight.has(cacheKey)) {
+      promptInFlight.delete(cacheKey);
+    }
+    const rawMessage = error?.message || '';
+    const rawStatus = error?.status || error?.response?.status;
     const isRateLimit =
-      error.status === 429 ||
-      error.message?.includes('429') ||
-      error.message?.includes('quota') ||
-      error.message?.toLowerCase?.().includes('rate limit') ||
-      error.message?.toLowerCase?.().includes('too many requests') ||
-      error.message?.toLowerCase?.().includes('exceeded your current quota');
+      rawStatus === 429 ||
+      rawMessage.includes('429') ||
+      rawMessage.includes('quota') ||
+      rawMessage.toLowerCase?.().includes('rate limit') ||
+      rawMessage.toLowerCase?.().includes('too many requests') ||
+      rawMessage.toLowerCase?.().includes('exceeded your current quota');
 
-    const isMissingKey = error.status === 401;
-    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
+    const isServiceUnavailable =
+      rawStatus === 503 ||
+      rawMessage.toLowerCase?.().includes('unavailable') ||
+      rawMessage.toLowerCase?.().includes('high demand') ||
+      rawMessage.toLowerCase?.().includes('service unavailable');
 
-    let status = 500;
-    let message = 'Internal server error';
+    const isMissingKey = rawStatus === 401;
+    const isInvalidKey = rawMessage.includes('403') || rawMessage.includes('404') || rawMessage.includes('API key not valid') || rawMessage.includes('API key expired');
+
+    let statusCode = 500;
+    let responseMessage = 'Internal server error';
 
     if (isMissingKey || isInvalidKey) {
-      status = isMissingKey ? 401 : 403;
-      message = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
+      statusCode = isMissingKey ? 401 : 403;
+      responseMessage = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
+    } else if (isServiceUnavailable) {
+      statusCode = 503;
+      responseMessage = 'AI provider is temporarily unavailable. Please try again later.';
     } else if (isRateLimit) {
-      status = 429;
-      message = 'API rate limit or quota exceeded.';
+      statusCode = 429;
+      responseMessage = 'API rate limit or quota exceeded.';
     }
 
-    res.status(status).json({
+    if (statusCode === 503) {
+      res.locals.statusOrigin = 'AI';
+      res.locals.statusOriginMessage = responseMessage;
+    }
+
+    res.status(statusCode).json({
       success: false,
-      message
+      message: responseMessage
     });
   }
 };
@@ -750,24 +855,39 @@ Rules:
 
   } catch (error) {
     console.log('Batch generation error:', error);
-    const isRateLimitError = error.message?.includes('429') || error.message?.includes('quota');
-    const isMissingKey = error.status === 401;
-    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404');
+    const rawMessage = error?.message || '';
+    const rawStatus = error?.status || error?.response?.status;
+    const isRateLimitError = rawMessage.includes('429') || rawMessage.includes('quota');
+    const isServiceUnavailable =
+      rawStatus === 503 ||
+      rawMessage.toLowerCase?.().includes('unavailable') ||
+      rawMessage.toLowerCase?.().includes('high demand') ||
+      rawMessage.toLowerCase?.().includes('service unavailable');
+    const isMissingKey = rawStatus === 401;
+    const isInvalidKey = rawMessage.includes('403') || rawMessage.includes('404');
 
-    let status = 500;
-    let message = 'Internal server error';
+    let statusCode = 500;
+    let responseMessage = 'Internal server error';
 
     if (isMissingKey || isInvalidKey) {
-      status = isMissingKey ? 401 : 403;
-      message = 'Invalid AI provider configuration.';
+      statusCode = isMissingKey ? 401 : 403;
+      responseMessage = 'Invalid AI provider configuration.';
+    } else if (isServiceUnavailable) {
+      statusCode = 503;
+      responseMessage = 'AI provider is temporarily unavailable. Please try again later.';
     } else if (isRateLimitError) {
-      status = 429;
-      message = 'API rate limit or quota exceeded.';
+      statusCode = 429;
+      responseMessage = 'API rate limit or quota exceeded.';
     }
 
-    res.status(status).json({
+    if (statusCode === 503) {
+      res.locals.statusOrigin = 'AI';
+      res.locals.statusOriginMessage = responseMessage;
+    }
+
+    res.status(statusCode).json({
       success: false,
-      message,
+      message: responseMessage,
       error: error.message
     });
   }
@@ -829,31 +949,47 @@ export const generateHtml = async (req, res) => {
   } catch (error) {
     console.log('Generate HTML error:', error);
 
+    const rawMessage = error?.message || '';
+    const rawStatus = error?.status || error?.response?.status;
     const isRateLimitError =
-      error.status === 429 ||
-      error.message?.includes('429') ||
-      error.message?.includes('Too Many Requests') ||
-      error.message?.includes('quota') ||
-      error.message?.toLowerCase?.().includes('rate limit') ||
-      error.message?.toLowerCase?.().includes('exceeded your current quota');
+      rawStatus === 429 ||
+      rawMessage.includes('429') ||
+      rawMessage.includes('Too Many Requests') ||
+      rawMessage.includes('quota') ||
+      rawMessage.toLowerCase?.().includes('rate limit') ||
+      rawMessage.toLowerCase?.().includes('exceeded your current quota');
 
-    const isMissingKey = error.status === 401;
-    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
+    const isServiceUnavailable =
+      rawStatus === 503 ||
+      rawMessage.toLowerCase?.().includes('unavailable') ||
+      rawMessage.toLowerCase?.().includes('high demand') ||
+      rawMessage.toLowerCase?.().includes('service unavailable');
 
-    let status = 500;
-    let message = 'Internal server error';
+    const isMissingKey = rawStatus === 401;
+    const isInvalidKey = rawMessage.includes('403') || rawMessage.includes('404') || rawMessage.includes('API key not valid') || rawMessage.includes('API key expired');
+
+    let statusCode = 500;
+    let responseMessage = 'Internal server error';
 
     if (isMissingKey || isInvalidKey) {
-      status = isMissingKey ? 401 : 403;
-      message = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
+      statusCode = isMissingKey ? 401 : 403;
+      responseMessage = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
+    } else if (isServiceUnavailable) {
+      statusCode = 503;
+      responseMessage = 'AI provider is temporarily unavailable. Please try again later.';
     } else if (isRateLimitError) {
-      status = 429;
-      message = 'API rate limit or quota exceeded. Please try again later.';
+      statusCode = 429;
+      responseMessage = 'API rate limit or quota exceeded. Please try again later.';
     }
 
-    res.status(status).json({
+    if (statusCode === 503) {
+      res.locals.statusOrigin = 'AI';
+      res.locals.statusOriginMessage = responseMessage;
+    }
+
+    res.status(statusCode).json({
       success: false,
-      message,
+      message: responseMessage,
       error: error.message
     });
   }
@@ -1174,31 +1310,47 @@ Generate 10 MCQs in JSON format:
   } catch (error) {
     console.log('AI Exam Error:', error);
 
+    const rawMessage = error?.message || '';
+    const rawStatus = error?.status || error?.response?.status;
     const isRateLimitError =
-      error.status === 429 ||
-      error.message?.includes('429') ||
-      error.message?.includes('Too Many Requests') ||
-      error.message?.includes('quota') ||
-      error.message?.toLowerCase?.().includes('rate limit') ||
-      error.message?.toLowerCase?.().includes('exceeded your current quota');
+      rawStatus === 429 ||
+      rawMessage.includes('429') ||
+      rawMessage.includes('Too Many Requests') ||
+      rawMessage.includes('quota') ||
+      rawMessage.toLowerCase?.().includes('rate limit') ||
+      rawMessage.toLowerCase?.().includes('exceeded your current quota');
 
-    const isMissingKey = error.status === 401;
-    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
+    const isServiceUnavailable =
+      rawStatus === 503 ||
+      rawMessage.toLowerCase?.().includes('unavailable') ||
+      rawMessage.toLowerCase?.().includes('high demand') ||
+      rawMessage.toLowerCase?.().includes('service unavailable');
 
-    let status = 500;
-    let message = 'Failed to generate exam';
+    const isMissingKey = rawStatus === 401;
+    const isInvalidKey = rawMessage.includes('403') || rawMessage.includes('404') || rawMessage.includes('API key not valid') || rawMessage.includes('API key expired');
+
+    let statusCode = 500;
+    let responseMessage = 'Failed to generate exam';
 
     if (isMissingKey || isInvalidKey) {
-      status = isMissingKey ? 401 : 403;
-      message = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
+      statusCode = isMissingKey ? 401 : 403;
+      responseMessage = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
+    } else if (isServiceUnavailable) {
+      statusCode = 503;
+      responseMessage = 'AI provider is temporarily unavailable. Please try again later.';
     } else if (isRateLimitError) {
-      status = 429;
-      message = 'API rate limit or quota exceeded. Please try again later.';
+      statusCode = 429;
+      responseMessage = 'API rate limit or quota exceeded. Please try again later.';
     }
 
-    res.status(status).json({
+    if (statusCode === 503) {
+      res.locals.statusOrigin = 'AI';
+      res.locals.statusOriginMessage = responseMessage;
+    }
+
+    res.status(statusCode).json({
       success: false,
-      message,
+      message: responseMessage,
       error: error.message
     });
   }

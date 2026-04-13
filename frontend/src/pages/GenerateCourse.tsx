@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -439,6 +439,26 @@ Return only valid JSON that matches the schema.`;
     } finally {
       setIsGeneratingSuggestions(false);
     }
+  };
+
+  const suggestionDebounceRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (suggestionDebounceRef.current) {
+        window.clearTimeout(suggestionDebounceRef.current);
+      }
+    };
+  }, []);
+
+  const handleGenerateSuggestions = () => {
+    if (suggestionDebounceRef.current) {
+      window.clearTimeout(suggestionDebounceRef.current);
+    }
+    suggestionDebounceRef.current = window.setTimeout(() => {
+      suggestionDebounceRef.current = null;
+      void generateTopicSuggestions();
+    }, 600);
   };
 
   const applySuggestion = (suggestion: TopicSuggestion) => {
@@ -1095,7 +1115,7 @@ Return only valid JSON that matches the schema.`;
                       </div>
 
                       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                        <Button type="button" onClick={generateTopicSuggestions} disabled={isGeneratingSuggestions} className="w-full sm:w-auto">
+                        <Button type="button" onClick={handleGenerateSuggestions} disabled={isGeneratingSuggestions} className="w-full sm:w-auto">
                           {isGeneratingSuggestions ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1109,7 +1129,7 @@ Return only valid JSON that matches the schema.`;
                           )}
                         </Button>
                         {!!topicSuggestions.length && (
-                          <Button type="button" variant="outline" onClick={generateTopicSuggestions} disabled={isGeneratingSuggestions} className="w-full sm:w-auto">
+                          <Button type="button" variant="outline" onClick={handleGenerateSuggestions} disabled={isGeneratingSuggestions} className="w-full sm:w-auto">
                             Refresh Suggestions
                           </Button>
                         )}
