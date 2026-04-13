@@ -318,42 +318,6 @@ const NoticesTab = () => {
     setDeletingId(null);
   };
  
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} min ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
- 
-  const getTimeOfDay = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Morning';
-    if (hour < 17) return 'Afternoon';
-    return 'Evening';
-  };
- 
-  useEffect(() => {
-    if (!orgId) {
-      console.warn('No organization ID found');
-      return;
-    }
-    fetchNotices();
-    fetchDepartments();
-  }, [orgId]);
- 
-  useEffect(() => {
-    if (role === 'dept_admin' && deptId) {
-      fetchNotices();
-    }
-  }, [deptId, role]);
- 
   // Stats cards data
   const statCards = [
     {
@@ -378,29 +342,6 @@ const NoticesTab = () => {
     }
   ];
  
-  // Different card designs for variety
-  const cardDesigns = [
-    {
-      borderGradient: "bg-brand-gradient",
-      bgGradient: "bg-brand-gradient-soft",
-      iconBg: "bg-primary"
-    },
-    {
-      borderGradient: "bg-brand-gradient",
-      bgGradient: "bg-brand-gradient-soft",
-      iconBg: "bg-secondary"
-    },
-    {
-      borderGradient: "bg-brand-gradient",
-      bgGradient: "bg-brand-gradient-soft",
-      iconBg: "bg-accent"
-    },
-    {
-      borderGradient: "bg-brand-gradient",
-      bgGradient: "bg-brand-gradient-soft",
-      iconBg: "bg-primary"
-    }
-  ];
  
   return (
 <div className="container space-y-8 py-10">
