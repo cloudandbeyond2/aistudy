@@ -14,11 +14,11 @@ const NotFound = () => {
 
   return (
     <>
-      <SEO
+      {/* <SEO
         title="This Page Does Not Exist"
         description="Sorry, the page you are looking for could not be found. It's just an accident that was not intentional."
         keywords="404, not found, error, page not found"
-      />
+      /> */}
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted/30 p-4">
         <div className="w-full max-w-md text-center space-y-8 animate-fade-in">
           <div className="relative mx-auto">
