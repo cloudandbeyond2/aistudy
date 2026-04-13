@@ -11,6 +11,27 @@ import youtubesearchapi from 'youtube-search-api';
 import { YoutubeTranscript } from 'youtube-transcript';
 import { getUnsplashApi } from '../config/unsplash.js';
 
+// Simple in-memory queue: one generation at a time per user/org key.
+const generationQueues = new Map();
+
+const runWithGenerationQueue = async (queueKey, task) => {
+  const key = queueKey || 'anonymous';
+  const previous = generationQueues.get(key) || Promise.resolve();
+  let release;
+  const next = new Promise((resolve) => { release = resolve; });
+  generationQueues.set(key, previous.then(() => next));
+
+  try {
+    await previous;
+    return await task();
+  } finally {
+    release();
+    if (generationQueues.get(key) === next) {
+      generationQueues.delete(key);
+    }
+  }
+};
+
 
 
 // export const generatePrompt = async (req, res) => {
@@ -115,7 +136,8 @@ export const generateBatchSubtopics = async (req, res) => {
     topicsList,
     lang,
     userId,
-    contentProfile = 'learn_format'
+    contentProfile = 'learn_format',
+    organizationId
   } = req.body;
 
   if (!mainTopic || !topicsList || !Array.isArray(topicsList) || !topicsList.length) {
@@ -689,35 +711,41 @@ Rules:
     }
   };
 
+  const queueKey = organizationId || userId;
+
   try {
     const combinedTopics = [];
 
-    for (const topic of topicsList) {
-      const normalizedSubtopics = Array.isArray(topic?.subtopics)
-        ? topic.subtopics.filter(Boolean)
-        : [];
+    const result = await runWithGenerationQueue(queueKey, async () => {
+      for (const topic of topicsList) {
+        const normalizedSubtopics = Array.isArray(topic?.subtopics)
+          ? topic.subtopics.filter(Boolean)
+          : [];
 
-      const generatedTopic = {
-        topicTitle: topic?.topicTitle || 'Untitled Topic',
-        subtopics: []
-      };
+        const generatedTopic = {
+          topicTitle: topic?.topicTitle || 'Untitled Topic',
+          subtopics: []
+        };
 
-      for (const subtopicTitle of normalizedSubtopics) {
-        const generatedSubtopic = await generateSubtopicWithFallback({
-          topicTitle: generatedTopic.topicTitle,
-          subtopicTitle
-        });
+        for (const subtopicTitle of normalizedSubtopics) {
+          const generatedSubtopic = await generateSubtopicWithFallback({
+            topicTitle: generatedTopic.topicTitle,
+            subtopicTitle
+          });
 
-        generatedTopic.topicTitle = generatedSubtopic.topicTitle || generatedTopic.topicTitle;
-        generatedTopic.subtopics.push(generatedSubtopic.subtopic);
+          generatedTopic.topicTitle = generatedSubtopic.topicTitle || generatedTopic.topicTitle;
+          generatedTopic.subtopics.push(generatedSubtopic.subtopic);
+        }
+
+        combinedTopics.push(generatedTopic);
       }
 
-      combinedTopics.push(generatedTopic);
-    }
+      return combinedTopics;
+    });
 
     res.status(200).json({
       success: true,
-      topics: combinedTopics
+      topics: result
     });
 
   } catch (error) {
