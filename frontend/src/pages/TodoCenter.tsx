@@ -47,7 +47,7 @@ type TodoItem = {
   completedAt?: string;
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.colossusiq.ai/api';
 
 const PC = {
   High:   { dot: 'bg-rose-500',    badge: 'bg-rose-50 text-rose-700 border-rose-200',         bar: 'bg-gradient-to-b from-rose-400 to-rose-500', glow: 'shadow-rose-100' },
