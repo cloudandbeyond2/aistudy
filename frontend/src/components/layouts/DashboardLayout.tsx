@@ -76,6 +76,9 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import NotificationBell from '../NotificationBell';
 import mainlogo from "@/assets/images/logo-colossus-dark 1.png";
+import { useTodoCount } from '@/hooks/useTodoCount';
+// import { TodoProvider } from '@/context/TodoContext';
+import { TodoProvider, useTodo } from '@/context/TodoContext';
 const combineDateAndTime = (dateValue?: string, timeValue?: string) => {
   if (!dateValue || !timeValue) return null;
   const baseDate = new Date(dateValue);
@@ -196,6 +199,8 @@ const DashboardLayoutContent = () => {
   // Get sidebar context to control mobile/tablet sidebar
   const { setOpenMobile } = useSidebar();
 
+// Inside DashboardLayoutContent component, add:
+const { upcomingCount, loading } = useTodo();
   const plan = sessionStorage.getItem("type")?.toLowerCase()?.trim();
   const role = sessionStorage.getItem("role");
   const isPrivilegedAdmin = admin || sessionStorage.getItem('adminEmail') === sessionStorage.getItem('email');
@@ -565,8 +570,25 @@ const DashboardLayoutContent = () => {
                     )}
                     <MenuItem icon={Briefcase} label="Interview Prep" to="/dashboard/interview-prep" isActive={isActive('/dashboard/interview-prep')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Calendar} label="Calendar Scheduler" to="/dashboard/calendar" isActive={isActive('/dashboard/calendar')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
-                    <MenuItem icon={ListTodo} label="Todo Center" to="/dashboard/todo" isActive={isActive('/dashboard/todo')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
-
+                    {/* <MenuItem icon={ListTodo} label="Todo Center" to="/dashboard/todo" isActive={isActive('/dashboard/todo')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} /> */}
+  {/* <MenuItem 
+  icon={ListTodo} 
+  label="Todo Center" 
+  to="/dashboard/todo" 
+  isActive={isActive('/dashboard/todo')}
+  isExpanded={isExpanded}
+  onMobileClick={handleMobileMenuClick}
+  badge={pendingTodoCount > 0 ? pendingTodoCount : false}
+/> */}
+ <MenuItem 
+  icon={ListTodo} 
+  label="Todo Center" 
+  to="/dashboard/todo" 
+  isActive={isActive('/dashboard/todo')}
+  isExpanded={isExpanded}
+  onMobileClick={handleMobileMenuClick}
+  badge={!loading && upcomingCount > 0 ? upcomingCount : false}
+/>
                     {!admin && <MenuItem icon={MessageSquare} label="Support" to="/dashboard/support" isActive={isActive('/dashboard/support')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
                     {!admin && <MenuItem icon={Megaphone} label="Global News" to="/dashboard/news" isActive={isActive('/dashboard/news')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
                     {hasOrganizationAccess && !isOrganizationUser && (
@@ -591,7 +613,16 @@ const DashboardLayoutContent = () => {
 
                     
                     <SectionHeader title="Academics" icon={BookOpen} isExpanded={isExpanded} />
-                    <MenuItem icon={ListTodo} label="Todo Center" to="/dashboard/todo" isActive={isActive('/dashboard/todo')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+  <MenuItem 
+  icon={ListTodo} 
+  label="Todo Center" 
+  to="/dashboard/todo" 
+  isActive={isActive('/dashboard/todo')}
+  isExpanded={isExpanded}
+  onMobileClick={handleMobileMenuClick}
+  badge={!loading && upcomingCount > 0 ? upcomingCount : false}
+/>
+                    {/* <MenuItem icon={ListTodo} label="Todo Center" to="/dashboard/todo" isActive={isActive('/dashboard/todo')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} /> */}
                     <MenuItem icon={BookOpen} label="Assignments" to="/dashboard/student/assignments" isActive={isActive('/dashboard/student/assignments')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Bell} label="Noticeboard" to="/dashboard/student/notices" isActive={isActive('/dashboard/student/notices')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Calendar} label="Calendar Scheduler" to="/dashboard/calendar" isActive={isActive('/dashboard/calendar')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
@@ -924,14 +955,24 @@ const DashboardLayoutContent = () => {
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
-                    <MenuItem 
+                    {/* <MenuItem 
                       icon={ListTodo} 
                       label="Todo Center" 
                       to="/dashboard/todo" 
                       isActive={isActive('/dashboard/todo')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
-                    />
+                    /> */}
+         <MenuItem 
+  icon={ListTodo} 
+  label="Todo Center" 
+  to="/dashboard/todo" 
+  isActive={isActive('/dashboard/todo')}
+  isExpanded={isExpanded}
+  onMobileClick={handleMobileMenuClick}
+  badge={!loading && upcomingCount > 0 ? upcomingCount : false}
+/>
+                  
                     <MenuItem 
                       icon={Megaphone} 
                       label="Global News" 
@@ -1833,7 +1874,9 @@ const DashboardLayoutContent = () => {
 const DashboardLayout = () => {
   return (
     <SidebarProvider>
+      <TodoProvider>
       <DashboardLayoutContent />
+      </TodoProvider>
     </SidebarProvider>
   );
 };
