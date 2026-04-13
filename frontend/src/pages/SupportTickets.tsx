@@ -214,7 +214,7 @@ const SupportTickets = () => {
   );
 
   return (
-    <div className="space-y-6 p-3 sm:p-4 md:p-6">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-2 lg:px-4 max-w-[1400px] mx-auto relative pt-0 lg:pt-[65px]">
 
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b pb-4">

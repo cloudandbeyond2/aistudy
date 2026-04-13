@@ -228,7 +228,7 @@ if (!isYearly && !isOrg && role !== 'org_admin') {
   const xpProgress = ((profile?.xp || 0) / xpForNextLevel) * 100;
 
   return (
-    <div className="p-2 md:p-6 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-500">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-2 lg:px-4 max-w-[1400px] mx-auto relative pt-0 lg:pt-[65px]">
       {showConfetti && <Confetti width={width} height={height} recycle={false} numberOfPieces={200} />}
       
       {/* Header */}

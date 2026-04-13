@@ -624,8 +624,8 @@ const DepartmentsTab = () => {
         : deptAdmins.filter(admin => admin.department?._id === activeAdminTab);
 
     return (
-        <div className="students-theme min-h-screen">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <div className="min-h-screen">
+            <div className="space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-2 lg:px-4 max-w-[1400px] mx-auto relative pt-0 lg:pt-[65px]">
                 {/* Header Section with New Theme Gradient */}
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#294861] via-[#2d5876] to-[#3b7398] p-6 mb-6 lg:mb-8 text-white shadow-lg">
                     <div className="absolute right-0 top-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-white/6 blur-3xl" />

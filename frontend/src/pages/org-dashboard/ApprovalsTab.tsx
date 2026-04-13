@@ -1679,8 +1679,8 @@ const ApprovalsTab = () => {
     return (
         <>
             {role === 'org_admin' && (
-                <div className="students-theme min-h-screen">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
+                <div className="min-h-screen">
+                    <div className="space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-2 lg:px-4 max-w-[1400px] mx-auto relative pt-0 lg:pt-[65px]">
                         {/* Header Section with Float Animation */}
                         <motion.div 
                             variants={fadeInUp}
