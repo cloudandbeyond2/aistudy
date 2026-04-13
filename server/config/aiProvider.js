@@ -56,7 +56,7 @@ const shouldFallbackToOpenAI = (settings, error) => {
   if (!settings.openaiApiKey) return false;
 
   const message = error?.message?.toLowerCase?.() || '';
-  const status = error?.status;
+  const status = error?.status || error?.response?.status;
 
   return (
     status === 401 ||
@@ -69,6 +69,10 @@ const shouldFallbackToOpenAI = (settings, error) => {
     message.includes('too many requests') ||
     message.includes('api key') ||
     message.includes('model unavailable') ||
+    message.includes('unavailable') ||
+    message.includes('high demand') ||
+    message.includes('temporarily') ||
+    message.includes('service unavailable') ||
     message.includes('not found') ||
     message.includes('unsupported model') ||
     message.includes('missing gemini') ||

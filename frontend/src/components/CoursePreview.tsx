@@ -1367,6 +1367,69 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
       }))
     }));
 
+  const isMissingLessonContent = (value: unknown) => {
+    if (!value) return true;
+    const text = String(value).trim();
+    return text.length < 40;
+  };
+
+  const mergeGeneratedTheory = (orgTopics: any[], generatedTopics: any[]) => {
+    const topicMap = new Map<string, any>();
+    (generatedTopics || []).forEach((topic: any) => {
+      if (!topic?.topicTitle) return;
+      const subMap = new Map<string, string>();
+      (topic.subtopics || []).forEach((sub: any) => {
+        if (sub?.title && sub?.theory) {
+          subMap.set(String(sub.title).trim(), String(sub.theory));
+        }
+      });
+      topicMap.set(String(topic.topicTitle).trim(), subMap);
+    });
+
+    return orgTopics.map((topic) => {
+      const subMap = topicMap.get(String(topic.title || '').trim());
+      if (!subMap) return topic;
+      return {
+        ...topic,
+        subtopics: (topic.subtopics || []).map((sub: any) => {
+          if (!isMissingLessonContent(sub?.content)) return sub;
+          const theory = subMap.get(String(sub?.title || '').trim());
+          return theory ? { ...sub, content: theory } : sub;
+        })
+      };
+    });
+  };
+
+  const ensureOrgTopicsHaveContent = async (orgTopics: any[]) => {
+    const userId = sessionStorage.getItem('uid') || '';
+    const missingTopics = orgTopics
+      .map((topic) => ({
+        topicTitle: topic.title,
+        subtopics: (topic.subtopics || [])
+          .filter((sub: any) => isMissingLessonContent(sub?.content))
+          .map((sub: any) => sub.title)
+      }))
+      .filter((topic) => topic.subtopics.length > 0);
+
+    if (!missingTopics.length) return orgTopics;
+
+    setLoadingMessage('Generating lesson content...');
+
+    const response = await axios.post(`${serverURL}/api/generate-batch`, {
+      mainTopic: courseName,
+      topicsList: missingTopics,
+      lang,
+      userId,
+      contentProfile: presentationMeta.id
+    });
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Failed to generate lesson content');
+    }
+
+    return mergeGeneratedTheory(orgTopics, response.data?.topics || []);
+  };
+
   const extractCourseQuizzes = () => {
     if (Array.isArray(topics?.quizzes)) return topics.quizzes;
     if (Array.isArray(topics?.course_quizzes)) return topics.course_quizzes;
@@ -1483,6 +1546,14 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
       if (isOrgStaff) {
         const department = resolveOrgDepartmentValue();
         setLoadingMessage('Saving organization course and publish controls...');
+        let orgTopics = extractOrgTopics();
+
+        try {
+          orgTopics = await ensureOrgTopicsHaveContent(orgTopics);
+        } catch (generationError: any) {
+          console.error('Failed to generate full lesson content before save:', generationError);
+          throw generationError;
+        }
 
         const res = await axios.post(`${serverURL}/api/org/course/create`, {
           organizationId: orgId,
@@ -1493,7 +1564,7 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
             : 'AI-generated course',
           type,
           department,
-          topics: extractOrgTopics(),
+          topics: orgTopics,
           quizzes: previewJsonData.quizzes,
           quizSettings: effectiveQuizSettings,
           courseMeta: previewJsonData.course_meta,
