@@ -282,7 +282,7 @@ const MaterialsTab = () => {
   }).length;
 
   return (
-    <div className="container space-y-4 md:space-y-5 lg:space-y-6 p-3 md:p-5 lg:p-6  pt-0 lg:pt-[60px]">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-2 lg:px-4 max-w-[1400px] mx-auto relative pt-0 lg:pt-[65px]">
       {/* Hero Section with Gradient */}
       <div className="relative rounded-xl md:rounded-2xl overflow-hidden bg-brand-gradient">
         <div className="absolute inset-0 bg-black/20"></div>

@@ -908,8 +908,8 @@ ${jobDescription}`,
     const selectedCerts = allCerts.filter(c => resume.selectedCertificateIds.includes(c.certificateId));
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-teal-50/40 via-white to-cyan-50/30 dark:from-slate-950 dark:via-teal-950/10 dark:to-cyan-950/10">
-            <div className="container max-w-6xl mx-auto py-8 px-4 relative">
+        <div className="min-h-screen bg-gradient-to-br via-white to-cyan-50/30 dark:from-slate-950 dark:via-teal-950/10 dark:to-cyan-950/10">
+            <div className="container py-8 relative pt-0 lg:pt-[65px] mx-auto">
                 {/* Background Blobs */}
                 <div className="absolute top-0 right-0 -z-10 w-[500px] h-[500px] bg-teal-500/5 blur-[120px] rounded-full"></div>
                 <div className="absolute bottom-0 left-0 -z-10 w-[500px] h-[500px] bg-cyan-400/5 blur-[120px] rounded-full"></div>

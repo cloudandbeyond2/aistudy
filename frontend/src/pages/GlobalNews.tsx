@@ -60,7 +60,7 @@ const GlobalNews = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl">
+      <div className="      space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-2 lg:px-4 max-w-[1400px] mx-auto relative pt-0 lg:pt-[65px]">
         <div className="space-y-4 sm:space-y-6 lg:space-y-8">
 
           {/* HEADER - Improved Tablet Layout */}

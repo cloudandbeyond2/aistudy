@@ -154,8 +154,8 @@ export default function TodoCenter() {
     <>
       <SEO title="Todo Center" description="Track tasks." />
 
-      <div className="min-h-screen container pt-0 md:pt-0 lg:pt-[60px]" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
-        <div className="px-4 py-5 sm:px-6">
+      <div className="space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-2 lg:px-4 max-w-[1400px] mx-auto relative pt-0 lg:pt-[65px]" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
+        <div>
 
           {/* Top bar */}
           <div className="mb-5 flex items-center justify-between">
