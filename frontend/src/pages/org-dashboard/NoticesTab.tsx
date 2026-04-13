@@ -949,139 +949,110 @@ const NoticesTab = () => {
     }
     setDeletingId(null);
   };
-
-  // ─── Stat cards ──────────────────────────────────────────────────────────
+ 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+ 
+  const getTimeOfDay = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Morning';
+    if (hour < 17) return 'Afternoon';
+    return 'Evening';
+  };
+ 
+  useEffect(() => {
+    if (!orgId) {
+      console.warn('No organization ID found');
+      return;
+    }
+    fetchNotices();
+    fetchDepartments();
+  }, [orgId]);
+ 
+  useEffect(() => {
+    if (role === 'dept_admin' && deptId) {
+      fetchNotices();
+    }
+  }, [deptId, role]);
+ 
+  // Stats cards data
   const statCards = [
-    { title: 'Total Notices',  value: stats.totalNotices,      icon: Bell      },
-    { title: 'This Week',      value: stats.recentNotices,     icon: TrendingUp },
-    { title: 'Department',     value: stats.departmentNotices, icon: Users     },
-    { title: 'Important',      value: stats.importantNotices,  icon: Star      },
+    {
+      title: "Total Notices",
+      value: stats.totalNotices,
+      icon: Bell
+    },
+    {
+      title: "This Week",
+      value: stats.recentNotices,
+      icon: TrendingUp
+    },
+    {
+      title: "Department",
+      value: stats.departmentNotices,
+      icon: Users
+    },
+    {
+      title: "Important",
+      value: stats.importantNotices,
+      icon: Star
+    }
   ];
-
-  // ═══════════════════════════════════════════════════════════════════════════
+ 
+  // Different card designs for variety
+  const cardDesigns = [
+    {
+      borderGradient: "bg-brand-gradient",
+      bgGradient: "bg-brand-gradient-soft",
+      iconBg: "bg-primary"
+    },
+    {
+      borderGradient: "bg-brand-gradient",
+      bgGradient: "bg-brand-gradient-soft",
+      iconBg: "bg-secondary"
+    },
+    {
+      borderGradient: "bg-brand-gradient",
+      bgGradient: "bg-brand-gradient-soft",
+      iconBg: "bg-accent"
+    },
+    {
+      borderGradient: "bg-brand-gradient",
+      bgGradient: "bg-brand-gradient-soft",
+      iconBg: "bg-primary"
+    }
+  ];
+ 
   return (
-    <div className="container space-y-8 py-10">
-
-      {/* ── EDIT MODAL ─────────────────────────────────────────────────── */}
-      {editNotice && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60" onClick={handleCloseEdit} />
-
-          <div className="relative z-10 w-full max-w-lg max-h-[92vh] overflow-y-auto bg-white dark:bg-background rounded-2xl shadow-2xl flex flex-col">
-
-            {/* Header */}
-            <div className="flex items-start justify-between px-6 pt-6 pb-2">
-              <div>
-                <h2 className="text-xl font-bold text-primary">Edit Notice</h2>
-                <p className="text-sm text-muted-foreground mt-0.5">Update the details below and save</p>
-              </div>
-              <button onClick={handleCloseEdit} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="px-6 py-4 space-y-4">
-
-              {/* Title */}
-              <div className="space-y-1.5">
-                <Label htmlFor="edit-title" className="font-semibold text-sm">
-                  Notice Title <span className="text-primary">*</span>
-                </Label>
-              <Input
-  id="edit-title"
-  value={editForm.title}
-  onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
-  placeholder="Enter title..."
-  className="w-full h-10 sm:h-11 text-sm px-3 truncate placeholder:text-xs sm:placeholder:text-sm"
-/>
-              </div>
-
-              {/* Department */}
-              <div className="space-y-1.5">
-                <Label className="font-semibold text-sm">Target Department</Label>
-                {isDeptAdmin ? (
-                  <div className="flex h-10 items-center rounded-md border-2 border-input bg-muted/30 px-3 text-sm font-medium">
-                    {getDeptScopedLabel()}
-                  </div>
-                ) : (
-                  <select
-                    className={themeStyles.select}
-                    value={editForm.department}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, department: e.target.value }))}
-                  >
-                    <option value="">All Departments</option>
-                    {departmentsList.map(d => (
-                      <option key={d._id} value={d._id}>{d.name}</option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              {/* ── CHECKBOXES (fixed) ── */}
-       <div className="flex flex-col sm:flex-row gap-3 sm:gap-6">
-                <CheckboxField
-                  id="edit-isImportant"
-                  label="Mark as Important"
-                  checked={editForm.isImportant}
-                  onChange={(val) => setEditForm(prev => ({ ...prev, isImportant: val }))}
-                />
-                <CheckboxField
-                  id="edit-isPinned"
-                  label="Pin to Top"
-                  checked={editForm.isPinned}
-                  onChange={(val) => setEditForm(prev => ({ ...prev, isPinned: val }))}
-                />
-              </div>
-
-              {/* Content — ✅ functional updater prevents stale closure reset */}
-              <div className="space-y-1.5">
-                <Label className="font-semibold text-sm">
-                  Notice Content <span className="text-primary">*</span>
-                </Label>
-                <RichTextEditor
-                  value={editForm.content}
-                  onChange={(content) => setEditForm(prev => ({ ...prev, content }))}
-                  placeholder="Update your message here..."
-                  className="min-h-[180px]"
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3 pt-2 pb-2">
-                <Button variant="outline" onClick={handleCloseEdit} className="flex-1 h-11 font-semibold border-2">
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleUpdateNotice}
-                  disabled={isUpdating}
-                  className="flex-1 h-11 font-semibold bg-brand-gradient text-primary-foreground hover:opacity-90"
-                >
-                  {isUpdating ? 'Saving...' : <><Save className="mr-2 h-4 w-4" />Save Changes</>}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── HEADER ─────────────────────────────────────────────────────── */}
-      <div className={`relative overflow-hidden rounded-2xl p-6 shadow-lg ${themeStyles.hero}`}>
-        <div className="absolute right-0 top-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-background/10 blur-3xl" />
-        <div className="absolute bottom-0 left-0 -mb-16 -ml-16 h-48 w-48 rounded-full bg-background/10 blur-2xl" />
-        <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`rounded-xl p-2 backdrop-blur-sm ${themeStyles.heroGlass}`}>
-              <Bell className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white">Announcement Desk</h1>
-              <p className="text-primary-foreground/80">Good {getTimeOfDay()}! Share updates with your learners</p>
-            </div>
-          </div>
-          <div className="hidden md:block">
-            <div className={`rounded-full px-4 py-2 text-sm backdrop-blur-sm ${themeStyles.heroGlass}`}>
-              <Clock className="inline h-4 w-4 mr-2" />
+<div className="container space-y-8 py-10">
+      {/* Gradient Header with Time Greeting */}
+<div className={`relative overflow-hidden rounded-2xl p-6 shadow-lg ${themeStyles.hero}`}>
+<div className="absolute right-0 top-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-background/10 blur-3xl" />
+<div className="absolute bottom-0 left-0 -mb-16 -ml-16 h-48 w-48 rounded-full bg-background/10 blur-2xl" />
+<div className="relative flex items-center justify-between">
+<div className="flex items-center gap-3">
+<div className={`rounded-xl p-2 backdrop-blur-sm ${themeStyles.heroGlass}`}>
+<Bell className="h-6 w-6" />
+</div>
+<div>
+<h1 className="text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white">Announcement Desk</h1>
+<p className="text-primary-foreground/80">Good {getTimeOfDay()}! Share updates with your learners</p>
+</div>
+</div>
+<div className="hidden md:block">
+<div className={`rounded-full px-4 py-2 text-sm backdrop-blur-sm ${themeStyles.heroGlass}`}>
+<Clock className="inline h-4 w-4 mr-2" />
               {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </div>
           </div>
