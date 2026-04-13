@@ -322,6 +322,21 @@ export const getDailyAptitudes = async (req, res) => {
       return res.status(200).json({ success: true, data: aptitudeCache.data });
     }
 
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const existingToday = await DailyAptitude.findOne({
+      isActive: true,
+      date: { $gte: todayStart, $lte: todayEnd }
+    }).sort({ date: -1 });
+
+    if (existingToday) {
+      aptitudeCache = { date: todayStr, data: [existingToday] };
+      return res.status(200).json({ success: true, data: [existingToday] });
+    }
+
     const concept = getTodaysConcept();
 
     const genAI = await getGenAI();
@@ -378,6 +393,18 @@ export const getDailyAptitudes = async (req, res) => {
       date: new Date(),
       questions: questions
     }];
+
+    await DailyAptitude.findOneAndUpdate(
+      { date: { $gte: todayStart, $lte: todayEnd } },
+      {
+        title: dailyData[0].title,
+        description: dailyData[0].description,
+        questions: dailyData[0].questions,
+        isActive: true,
+        date: new Date()
+      },
+      { upsert: true, new: true }
+    );
 
     // Cache for the day
     aptitudeCache = { date: todayStr, data: dailyData };
