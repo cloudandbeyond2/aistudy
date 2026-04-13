@@ -1,12 +1,14 @@
 /**
  * Retry a function with exponential backoff.
- * 429s keep the full retry budget.
- * 5xx errors get a much smaller retry budget so we do not hammer a
- * struggling provider for long stretches across many lessons.
+ * Keep retries intentionally conservative so one bad Gemini window does not
+ * turn into a burst of repeated API calls across multiple requests.
  */
 const TRANSIENT_WINDOW_MS = 60_000;
-const TRANSIENT_COOLDOWN_MS = 30_000;
-const TRANSIENT_FAILURE_LIMIT = 3;
+const TRANSIENT_COOLDOWN_MS = 45_000;
+const TRANSIENT_FAILURE_LIMIT = 2;
+const MAX_RETRYABLE_ATTEMPTS = 1;
+const MIN_RETRY_DELAY_MS = 1_500;
+const MAX_RETRY_DELAY_MS = 6_000;
 
 const transientState = {
   count: 0,
@@ -45,6 +47,8 @@ const retryWithBackoff = async (fn, maxRetries = 5, baseDelay = 1000) => {
           'AI provider temporarily unavailable. Cooling down before retrying again.'
         );
         cooldownError.status = 503;
+        cooldownError.retryable = false;
+        cooldownError.code = 'AI_PROVIDER_COOLDOWN';
         throw cooldownError;
       }
 
@@ -53,6 +57,10 @@ const retryWithBackoff = async (fn, maxRetries = 5, baseDelay = 1000) => {
       return result;
     } catch (error) {
       lastError = error;
+
+      if (error?.code === 'AI_PROVIDER_COOLDOWN' || error?.retryable === false) {
+        throw error;
+      }
 
       const isQuotaExceeded = error?.errorDetails?.some(
         (detail) => detail['@type'] === 'type.googleapis.com/google.rpc.QuotaFailure'
@@ -72,14 +80,18 @@ const retryWithBackoff = async (fn, maxRetries = 5, baseDelay = 1000) => {
 
       recordTransientFailure();
 
-      const retryLimit = isServerError ? Math.min(maxRetries, 1) : maxRetries;
+      const retryLimit = Math.min(maxRetries, MAX_RETRYABLE_ATTEMPTS);
       if (attempt === retryLimit || transientState.cooldownUntil > Date.now()) {
         throw error;
       }
 
-      const expDelay = baseDelay * Math.pow(2, attempt);
-      const jitter = Math.floor(Math.random() * baseDelay);
-      const delay = expDelay + jitter;
+      const effectiveBaseDelay = Math.max(
+        MIN_RETRY_DELAY_MS,
+        Math.min(baseDelay, MAX_RETRY_DELAY_MS)
+      );
+      const expDelay = effectiveBaseDelay * Math.pow(2, attempt);
+      const jitter = Math.floor(Math.random() * Math.min(effectiveBaseDelay, 1000));
+      const delay = Math.min(expDelay + jitter, MAX_RETRY_DELAY_MS);
 
       console.log(
         `Transient error (status=${status}). Retrying in ${delay}ms... (${attempt + 1}/${retryLimit})`

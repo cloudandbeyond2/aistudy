@@ -128,7 +128,7 @@ Return ONLY a raw JSON array (no markdown, no code blocks) with exactly this for
 ]
 Generate exactly 10 milestones, ordered from beginner to advanced. Each estimatedDays between 5 and 21.`;
 
-    const result = await retryWithBackoff(() => model.generateContent(prompt));
+    const result = await retryWithBackoff(() => model.generateContent(prompt), 1, 1500);
     let text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
 
     let milestones;
@@ -186,7 +186,7 @@ Return ONLY a raw JSON object (no markdown, no code blocks) with exactly this fo
   "category": "${topicLabel}"
 }`;
 
-    const result = await retryWithBackoff(() => model.generateContent(prompt));
+    const result = await retryWithBackoff(() => model.generateContent(prompt), 1, 1500);
     let text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
 
     let tipData;

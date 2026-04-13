@@ -346,7 +346,7 @@ export const getDailyAptitudes = async (req, res) => {
     ]
     IMPORTANT: Generate exactly 15 questions. "answer" must match exactly one of the strings in "options".`;
 
-    const result = await retryWithBackoff(() => model.generateContent(prompt), 2, 600);
+    const result = await retryWithBackoff(() => model.generateContent(prompt), 1, 1500);
     let text = result.response.text()
       .replace(/```json/g, '')
       .replace(/```/g, '')
@@ -442,7 +442,7 @@ export const generateCategoryQuiz = async (req, res) => {
 
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', safetySettings });
 
-    const result = await retryWithBackoff(() => model.generateContent(prompt));
+    const result = await retryWithBackoff(() => model.generateContent(prompt), 1, 1500);
     
     let text = result.response.text();
     // Improved cleanup to remove markdown and whitespace, but KEEP quotes

@@ -346,7 +346,7 @@ export const chatWithAiInterviewer = async (req, res) => {
       prompt = `(First Round) Hello, I am ready for the mock interview for ${targetRole}. Please start.`;
     }
 
-    const result = await retryWithBackoff(() => chat.sendMessage(prompt), 2, 600);
+    const result = await retryWithBackoff(() => chat.sendMessage(prompt), 1, 1500);
     let aiResponse = String(result.response.text() || '').trim();
 
     const wrapUpPhrase = 'Thank you for the session. I will now generate your performance blueprint.';
@@ -434,7 +434,7 @@ export const finalizeMockRound = async (req, res) => {
       "overallAnalysis": "A constructive 3-4 sentence paragraph for the trainee."
     }`;
 
-    const result = await retryWithBackoff(() => model.generateContent(analysisPrompt));
+    const result = await retryWithBackoff(() => model.generateContent(analysisPrompt), 1, 1500);
     let analysisText = (await result.response.text())
       .replace(/```json/g, '')
       .replace(/```/g, '')
@@ -470,7 +470,7 @@ score (1-100 number), strengths (string[]), weaknesses (string[]), technicalGaps
 Response:
 ${analysisText}`;
 
-      const repairResult = await retryWithBackoff(() => model.generateContent(repairPrompt));
+      const repairResult = await retryWithBackoff(() => model.generateContent(repairPrompt), 1, 1500);
       analysis = parseAnalysis(await repairResult.response.text());
     }
 
