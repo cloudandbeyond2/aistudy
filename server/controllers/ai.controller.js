@@ -343,16 +343,15 @@ IMPORTANT: You MUST explicitly translate the 'topicTitle' and subtopic 'title' f
 For each subtopic, provide a detailed explanation (approx 900-1500 words if possible) with rich examples, strong concept-building, and clear definitions.
 Ensure every sentence is complete and the content doesn't cut off abruptly.
 If providing code examples, ensure they are properly formatted with correct line breaks and indentation.
-Use valid HTML formatting for the "theory" field (paragraphs, bold text, lists).
+Use Markdown formatting for the "theory" field (headers, bold text, lists, tables). Do NOT use HTML tags.
 Every lesson should feel substantially complete, not like a short summary.
 Include layered explanation: concept meaning, why it matters, process or workflow, practical examples, mistakes to avoid, and a short closing recap.
 For business, sales, CRM, analytics, HR, marketing, operations, or management topics, include practical product-style examples such as dashboard concepts, KPI cards, pipeline views, report widgets, filters, tables, and workflow scenarios.
 When relevant, explain what a dashboard would show, why each metric matters, and how a team would use it in real work.
-When the lesson includes programming, commands, configuration, queries, or terminal examples, format them as proper multi-line HTML code blocks using <pre><code class="language-...">...</code></pre>.
+When the lesson includes programming, commands, configuration, queries, or terminal examples, format them as proper multi-line Markdown code blocks with language identifiers (e.g., \`\`\`javascript ... \`\`\`).
 Preserve indentation and line breaks inside code blocks.
-Never place full code examples inside <p>, <li>, or inline <code> tags.
 Do not overuse code examples for non-technical business topics unless the code is essential to the explanation.
-Never output an empty <pre><code></code></pre> block.
+Never output an empty code block.
 If you mention an example, provide the full example content immediately after the label.
 For conceptual business validation logic, CRM workflows, or dashboard rules, prefer readable pseudocode or numbered rule logic instead of SQL unless SQL is specifically necessary.
 Do not truncate a section halfway through an example.
@@ -476,8 +475,8 @@ ONLY respond with a valid JSON object matching the requested schema.`;
       .replace(/\s+/g, ' ')
       .trim();
 
-  const getWordCount = (html = '') => {
-    const text = stripHtmlToText(html);
+  const getWordCount = (theory = '') => {
+    const text = stripHtmlToText(theory); // Still useful to strip any accidental tags or markdown symbols if needed
     if (!text) return 0;
     return text.split(/\s+/).filter(Boolean).length;
   };
@@ -507,19 +506,15 @@ ONLY respond with a valid JSON object matching the requested schema.`;
     return trimmed;
   };
 
-  const appendClosingLessonParagraph = ({ html, topicTitle, subtopicTitle }) => {
-    const safeHtml = trimIncompleteTrailingFragment(html);
-    const closingParagraph = `<p>Overall, ${subtopicTitle} is an important part of ${topicTitle} because it helps the learner apply the main ideas with clarity and confidence.</p>`;
+  const appendClosingLessonParagraph = ({ theory, topicTitle, subtopicTitle }) => {
+    const safeTheory = trimIncompleteTrailingFragment(theory);
+    const closingParagraph = `\n\nOverall, ${subtopicTitle} is an important part of ${topicTitle} because it helps the learner apply the main ideas with clarity and confidence.`;
 
-    if (!safeHtml) {
-      return `<div class="prose max-w-none"><h2>${subtopicTitle}</h2>${closingParagraph}</div>`;
+    if (!safeTheory) {
+      return `## ${subtopicTitle}\n\n${closingParagraph}`;
     }
 
-    if (/<\/div>\s*$/i.test(safeHtml)) {
-      return safeHtml.replace(/<\/div>\s*$/i, `${closingParagraph}</div>`);
-    }
-
-    return `${safeHtml}\n${closingParagraph}`;
+    return `${safeTheory}${closingParagraph}`;
   };
 
   const needsLessonRepair = (html = '') => {
@@ -549,14 +544,14 @@ Subtopic: "${subtopicTitle}"
 Language: ${lang || 'English'}
 
 Task:
-Rewrite the following lesson into clean, valid HTML.
+Rewrite the following lesson into clean, valid Markdown.
 Every sentence must be complete and meaningful.
 Remove any truncated phrase, dangling clause, or cut-off ending.
 Preserve the lesson's meaning and structure, but make the final result read naturally from start to finish.
 Expand thin sections so the lesson feels complete and self-contained for student study.
 Target roughly 700 to 1100 words.
 Include a proper introduction, core explanation, practical examples, common mistakes, and a short recap.
-Return HTML only.
+Return Markdown only.
 
 Original lesson:
 ${theory}`;
@@ -564,7 +559,7 @@ ${theory}`;
   const repairIncompleteLesson = async ({ topicTitle, subtopicTitle, theory }) => {
     const repaired = await generateAIText({
       prompt: buildLessonRepairPrompt({ topicTitle, subtopicTitle, theory }),
-      systemInstruction: `Strictly in ${lang || 'English'}, you are a careful educational editor. Return only valid HTML. Every sentence must be complete, natural, and meaningful.`,
+      systemInstruction: `Strictly in ${lang || 'English'}, you are a careful educational editor. Return only clean Markdown. Every sentence must be complete, natural, and meaningful.`,
       maxOutputTokens: 3072,
       safetySettings,
       retryAttempts: 0
@@ -654,19 +649,19 @@ Style Guidance: ${selectedContentProfile.instruction}
 Requirements:
 - Return content only for this one chapter and this one subtopic.
 - Keep the same chapter title and subtopic title, translated into ${lang || 'English'} when needed.
-- The "theory" field must contain complete HTML content and must not be cut off.
+- The "theory" field must contain complete Markdown content and must not be cut off.
 - Write ${isCompact ? 'a concise but complete lesson of about 650 to 900 words' : 'a detailed lesson of about 900 to 1500 words'}.
 - Make the lesson richer than a short summary. Explain the concept, why it matters, how it is used, where learners make mistakes, and how to apply it correctly.
-- Include these sections naturally in HTML:
+- Include these sections naturally in Markdown:
   1. Introduction
   2. Core explanation
   3. Step-by-step explanation, workflow, or method when relevant
   4. Two or more practical examples, scenarios, or use cases
   5. Common mistakes or caution points
   6. Short recap
-- Use short paragraphs and lists where useful, but keep the HTML clean.
+- Use short paragraphs and lists where useful, but keep the Markdown clean.
 - Prefer depth, clarity, and learning value over brevity.
-- The final HTML must read like a complete lesson a student can study independently.
+- The final Markdown must read like a complete lesson a student can study independently.
 
 Response Format (JSON):
 {
@@ -674,7 +669,7 @@ Response Format (JSON):
     {
       "topicTitle": "${topicTitle}",
       "subtopics": [
-        { "title": "${subtopicTitle}", "theory": "Detailed HTML Content" }
+        { "title": "${subtopicTitle}", "theory": "Detailed Markdown Content" }
       ]
     }
   ]
@@ -683,7 +678,7 @@ Response Format (JSON):
 
   const buildFallbackTheoryPrompt = (topicTitle, subtopicTitle) => `Course: "${mainTopic}"
 
-Write a complete HTML lesson for this one chapter and one subtopic.
+Write a complete Markdown lesson for this one chapter and one subtopic.
 
 Chapter: "${topicTitle}"
 Subtopic: "${subtopicTitle}"
@@ -692,13 +687,13 @@ Presentation Style: ${selectedContentProfile.label}
 Style Guidance: ${selectedContentProfile.instruction}
 
 Rules:
-- Return HTML only, not JSON.
+- Return Markdown only, not JSON.
 - Start with a short introductory paragraph.
 - Write a full lesson of roughly 700 to 1100 words.
 - Include meaningful explanation, workflow or method when relevant, at least one solid practical example or use case, common mistakes, and a short recap.
 - Keep the lesson complete, informative, and readable.
-- Use <p>, <strong>, <ul>, <li>, and <pre><code> only when appropriate.
-- Do not include images, links, markdown fences, or notes about being an AI.`;
+- Use headers, bold text, lists, and code blocks only when appropriate.
+- Do not include images, links, or notes about being an AI.`;
 
   const generateStructuredSubtopic = async ({
     topicTitle,
