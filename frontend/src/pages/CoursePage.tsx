@@ -12,14 +12,16 @@ import { Content } from '@tiptap/react'
 import { MinimalTiptapEditor } from '../minimal-tiptap'
 import YouTube from 'react-youtube';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2, Loader2, Sparkles, BookOpen, Brain, Video, FileText, ArrowLeft, ArrowRight, X, Clock, RefreshCw } from 'lucide-react';
+import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2, Loader2, Sparkles, BookOpen, Brain, Video, FileText, ArrowLeft, ArrowRight, X, Clock, RefreshCw, LayoutPanelLeft, ListTree, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getCoursePresentationMeta } from '@/lib/coursePresentation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
@@ -32,6 +34,19 @@ import axios from 'axios';
 import ShareOnSocial from 'react-share-on-social';
 import StyledText from '@/components/styledText';
 import html2pdf from 'html2pdf.js';
+import showdown from 'showdown';
+
+const mdConverter = new showdown.Converter({
+  tables: true,
+  tasklists: true,
+  strikethrough: true,
+  ghCodeBlocks: true,
+  simplifiedAutoLink: true,
+  parseImgDimensions: true,
+  simpleLineBreaks: false,
+  openLinksInNewWindow: true,
+  backslashEscapesHTML: true
+});
 
 // Loading Popup Component - Responsive
 const LoadingPopup = ({ 
@@ -249,6 +264,7 @@ const CoursePage = () => {
 
   // Loading Popup States
   const [showLoadingPopup, setShowLoadingPopup] = useState(false);
+  const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [loadingStage, setLoadingStage] = useState('theory');
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingSubtopic, setLoadingSubtopic] = useState('');
@@ -743,13 +759,28 @@ Requirements:
     }
   };
 
-  const cleanGeneratedHtml = (htmlContent) => {
-    if (!htmlContent) return '';
-    let cleaned = String(htmlContent);
-    cleaned = cleaned.replace(/^\s*```html?\s*/i, '');
-    cleaned = cleaned.replace(/^\s*```\s*/i, '');
-    cleaned = cleaned.replace(/\s*```\s*$/i, '');
-    cleaned = cleaned.replace(/^\s*html\s*(?:\r?\n|\s)+/i, '');
+  const cleanGeneratedHtml = (theoryOrHtml) => {
+    if (!theoryOrHtml) return '';
+    let raw = String(theoryOrHtml);
+
+    // Standard pre-cleaning (remove code fences if AI included them as part of value)
+    raw = raw.replace(/^\s*```markdown\s*/i, '');
+    raw = raw.replace(/^\s*```json\s*/i, '');
+    raw = raw.replace(/^\s*```html?\s*/i, '');
+    raw = raw.replace(/^\s*```\s*/i, '');
+    raw = raw.replace(/\s*```\s*$/i, '');
+    
+    // Check if it's already "large" HTML or if it lacks expected Markdown patterns
+    // If it starts with <p or <div, it might be legacy HTML.
+    // If not, we treat it as Markdown and convert it.
+    let cleaned = raw;
+    const isLikelyHtml = /^\s*<[a-z][\s\S]*>/i.test(raw);
+    
+    if (!isLikelyHtml) {
+      cleaned = mdConverter.makeHtml(raw);
+    }
+
+    // Post-cleaning for boilerplate/body/html tags (legacy support or AI error)
     cleaned = cleaned.replace(/<html[^>]*>[\s\S]*?<\/html>/gi, (match) => {
       const bodyMatch = match.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
       return bodyMatch ? bodyMatch[1] : '';
@@ -764,10 +795,11 @@ Requirements:
     cleaned = cleaned.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
     cleaned = cleaned.replace(/<link[^>]*>/gi, '');
     cleaned = cleaned.replace(/<p>\s*<\/p>/gi, '');
-    cleaned = cleaned.replace(/\n\s*\n/g, '\n');
+    
     cleaned = cleaned.trim();
+    
     if (!cleaned || cleaned.length < 50) {
-      return `<div class="prose dark:prose-invert max-w-none"><h2 class="text-lg sm:text-xl">${htmlContent.substring(0, 100)}</h2><p class="text-sm">Content is being processed. Please refresh the page in a moment.</p></div>`;
+      return `<div class="prose dark:prose-invert max-w-none"><h2 class="text-lg sm:text-xl">${theoryOrHtml.substring(0, 100)}</h2><p class="text-sm">Content is being processed. Please refresh the page in a moment.</p></div>`;
     }
     return cleaned;
   };
@@ -1427,181 +1459,239 @@ Requirements:
     redirectExam();
   };
 
-  const examRulesSection = hasManualQuiz ? (
-    <section className="mb-4 sm:mb-6 rounded-2xl sm:rounded-[28px] border border-primary/15 bg-gradient-to-br from-primary/[0.07] via-background to-background p-3 sm:p-4 md:p-5 shadow-sm">
-      <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.28em] text-primary/75">Exam Rules</p>
-          <h2 className="mt-1 sm:mt-2 text-lg sm:text-xl md:text-2xl font-semibold">{mainTopic} Assessment</h2>
-          <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-muted-foreground">Final quiz unlocks after every lesson is completed. Attempt rules and basic proctoring are controlled by the organization.</p>
-        </div>
-        <div className="rounded-xl sm:rounded-2xl border border-primary/15 bg-background px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm shadow-sm">
-          <div className="font-semibold text-foreground">{quizLockedByCourseProgress ? 'Locked until course completion' : 'Ready when you are'}</div>
-          <div className="mt-1 text-muted-foreground">{completedLessonCount}/{orderedLessons.length} lessons completed</div>
-        </div>
-      </div>
-      
-      {/* Responsive Grid for Exam Rules */}
-      <div className="mt-3 sm:mt-4 grid gap-2 sm:gap-3 
-        grid-cols-1 
-        sm:grid-cols-2 
-        md:grid-cols-2 
-        lg:grid-cols-4">
-        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3">
-          <div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Attempts</div>
-          <div className="mt-1 text-xs sm:text-sm font-semibold">{manualQuizSettings.attemptLimit} total attempts</div>
-          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">{quizAttemptSummary?.attemptCount || 0} used, {quizAttemptSummary?.remainingAttempts ?? manualQuizSettings.attemptLimit} left</div>
-        </div>
-        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3">
-          <div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Passing</div>
-          <div className="mt-1 text-xs sm:text-sm font-semibold">{manualQuizSettings.passPercentage}% required</div>
-          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">{manualQuizSettings.questionCount} questions per attempt</div>
-        </div>
-        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3">
-          <div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Cooldown</div>
-          <div className="mt-1 text-xs sm:text-sm font-semibold">{manualQuizSettings.cooldownMinutes} minutes after a failed attempt</div>
-          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">Difficulty mode: {manualQuizSettings.difficultyMode}</div>
-        </div>
-        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3">
-          <div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Monitoring</div>
-          <div className="mt-1 text-xs sm:text-sm font-semibold">{[manualQuizSettings.proctoring.detectTabSwitch && 'tab switch', manualQuizSettings.proctoring.detectFullscreenExit && 'fullscreen', manualQuizSettings.proctoring.detectCopyPaste && 'clipboard', manualQuizSettings.proctoring.detectNoise && 'noise'].filter(Boolean).join(', ') || 'standard'}</div>
-          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">{manualQuizSettings.proctoring.requireCamera || manualQuizSettings.proctoring.requireMicrophone ? 'Camera/mic permissions may be requested' : 'No device access required'}</div>
-        </div>
-      </div>
-    </section>
-  ) : null;
-
   const openLessonFlow = (chapterTitle?: string) => {
     const targetChapter = chapterTitle || currentTopicTitle || courseTopics[0]?.title || '';
     setLessonFlowChapter(targetChapter); setLessonFlowSearch(''); setIsLessonFlowOpen(true);
   };
 
-  const roadmapSection = courseTopics.length > 0 ? (
-    <section className="mb-4 sm:mb-6 rounded-2xl sm:rounded-[28px] border border-border/60 bg-gradient-to-br from-background via-background to-muted/50 p-3 sm:p-4 md:p-5 shadow-sm">
-      <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">Course Roadmap</p>
-          <h2 className="mt-1 sm:mt-2 text-lg sm:text-xl md:text-2xl font-semibold">All chapters and lesson flow</h2>
-          <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-muted-foreground">Review the full structure here and jump into any unlocked lesson without relying only on the sidebar.</p>
-        </div>
-        <div className="flex flex-wrap gap-1.5 sm:gap-2">
-          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">{courseTopics.length} chapters</span>
-          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">{orderedLessons.length} lessons</span>
-          <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-primary">{completedLessonCount} completed</span>
-        </div>
-      </div>
-      
-      <div className="mt-4 sm:mt-5 rounded-2xl sm:rounded-3xl border border-border/60 bg-background/80 p-3 sm:p-4 md:p-5 shadow-sm">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <p className="text-xs sm:text-sm font-semibold">Lesson flow</p>
-            <p className="text-[10px] sm:text-xs text-muted-foreground">Hidden by default. Open the popup to browse all chapters and lessons.</p>
+  const courseDashboardPopup = (
+    <Dialog open={isDashboardOpen} onOpenChange={setIsDashboardOpen}>
+      <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-2xl md:rounded-[32px] border-none shadow-2xl">
+        <DialogHeader className="p-6 pb-0 bg-gradient-to-br from-primary/10 via-background to-background">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 rounded-xl bg-primary/10 text-primary">
+              <LayoutPanelLeft className="w-5 h-5" />
+            </div>
+            <div>
+              <DialogTitle className="text-2xl font-bold tracking-tight">Course Dashboard</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Review assessment rules and the complete curriculum roadmap.
+              </DialogDescription>
+            </div>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button onClick={() => openLessonFlow()} className="rounded-xl sm:rounded-2xl text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2"><BookOpen className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />Open lesson flow</Button>
-            {currentTopicTitle && (<Button variant="outline" onClick={() => openLessonFlow(currentTopicTitle)} className="rounded-xl sm:rounded-2xl text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2"><ChevronDown className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />Current chapter</Button>)}
-          </div>
-        </div>
-        
-        {/* Responsive Grid for Roadmap Chapters */}
-        <div className="mt-4 sm:mt-5 grid gap-2 sm:gap-3 
-          grid-cols-1 
-          sm:grid-cols-2 
-          lg:grid-cols-2">
-          {courseTopics.slice(0, 4).map((topic, topicIndex) => {
-            const topicSubtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
-            const topicCompletedCount = topicSubtopics.filter(subtopic => completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title)).length;
-            const isTopicActive = topic.title === currentTopicTitle;
-            return (
-              <button type="button" key={topic.title} onClick={() => openLessonFlow(topic.title)}
-                className={cn("group flex w-full items-start justify-between gap-2 sm:gap-3 rounded-2xl sm:rounded-3xl border px-3 sm:px-4 py-3 sm:py-4 text-left transition-all hover:border-primary/30 hover:bg-primary/[0.04]", isTopicActive ? "border-primary/30 bg-primary/[0.05]" : "border-border/60 bg-background")}
-              >
-                <div className="min-w-0">
-                  <span className="inline-flex items-center rounded-full bg-muted px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Chapter {topicIndex + 1}</span>
-                  <h3 className="mt-2 sm:mt-3 line-clamp-2 text-xs sm:text-sm font-semibold leading-5 sm:leading-6 md:text-base">{topic.title}</h3>
-                  <p className="mt-1 sm:mt-2 text-[10px] sm:text-xs text-muted-foreground">Tap to open lessons</p>
+        </DialogHeader>
+
+        <div className="p-6">
+          <Tabs defaultValue="roadmap" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8 p-1 bg-muted/50 rounded-xl">
+              <TabsTrigger value="roadmap" className="rounded-lg gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <ListTree className="w-4 h-4" />
+                Lesson Roadmap
+              </TabsTrigger>
+              <TabsTrigger value="exam" className="rounded-lg gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <ShieldCheck className="w-4 h-4" />
+                Assessment Rules
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="roadmap" className="mt-0 outline-none">
+              <div className="space-y-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-4 rounded-2xl bg-muted/30 border border-border/50">
+                  <div className="flex gap-4">
+                    <div className="text-center">
+                      <div className="text-xl font-bold">{courseTopics.length}</div>
+                      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Chapters</div>
+                    </div>
+                    <div className="w-px h-10 bg-border/50" />
+                    <div className="text-center">
+                      <div className="text-xl font-bold">{orderedLessons.length}</div>
+                      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Lessons</div>
+                    </div>
+                    <div className="w-px h-10 bg-border/50" />
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-primary">{completedLessonCount}</div>
+                      <div className="text-[10px] font-semibold uppercase tracking-wider text-primary/70">Completed</div>
+                    </div>
+                  </div>
+                  <Button onClick={() => { setIsDashboardOpen(false); openLessonFlow(); }} className="rounded-xl gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    Interactive Roadmap
+                  </Button>
                 </div>
-                <div className="rounded-xl sm:rounded-2xl bg-muted px-2 sm:px-3 py-1.5 sm:py-2 text-right"><div className="text-sm sm:text-base font-semibold">{topicCompletedCount}/{topicSubtopics.length}</div><div className="text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">done</div></div>
-              </button>
-            );
-          })}
-        </div>
-        {courseTopics.length > 4 && (<div className="mt-3 sm:mt-4 flex justify-center"><Button variant="ghost" className="rounded-xl sm:rounded-2xl text-xs sm:text-sm" onClick={() => openLessonFlow()}>View all chapters</Button></div>)}
-      </div>
-      
-      <Dialog open={isLessonFlowOpen} onOpenChange={setIsLessonFlowOpen}>
-        <DialogContent className="w-[95vw] max-w-4xl overflow-hidden p-0 rounded-2xl sm:rounded-3xl">
-          <DialogHeader className="border-b border-border/60 bg-gradient-to-r from-primary/10 via-background to-indigo-500/10 p-4 sm:p-5 md:p-6">
-            <DialogTitle className="text-lg sm:text-xl">Lesson flow</DialogTitle>
-            <DialogDescription className="text-xs sm:text-sm">Browse chapters and jump directly to any unlocked lesson.</DialogDescription>
-            <div className="mt-3 sm:mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Input value={lessonFlowSearch} onChange={(e) => setLessonFlowSearch(e.target.value)} placeholder="Search lesson…" className="h-9 sm:h-11 rounded-xl sm:rounded-2xl bg-background/80 text-sm" />
-              <Button variant="outline" className="h-9 sm:h-11 rounded-xl sm:rounded-2xl text-xs sm:text-sm" onClick={() => { setLessonFlowSearch(''); setLessonFlowChapter(currentTopicTitle || courseTopics[0]?.title || ''); }}>Reset</Button>
-            </div>
-          </DialogHeader>
-          <ScrollArea className="max-h-[60vh] sm:max-h-[70vh]">
-            <div className="p-3 sm:p-4 md:p-6">
-              <Accordion type="single" collapsible className="space-y-2 sm:space-y-3" value={lessonFlowChapter} onValueChange={setLessonFlowChapter}>
-                {courseTopics.map((topic, topicIndex) => {
-                  const topicSubtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
-                  const query = lessonFlowSearch.trim().toLowerCase();
-                  const filteredSubtopics = query ? topicSubtopics.filter((sub: any) => String(sub?.title || '').toLowerCase().includes(query)) : topicSubtopics;
-                  if (query && filteredSubtopics.length === 0 && !String(topic?.title || '').toLowerCase().includes(query)) return null;
-                  const topicCompletedCount = topicSubtopics.filter(subtopic => completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title)).length;
-                  const isTopicActive = topic.title === currentTopicTitle;
-                  return (
-                    <AccordionItem key={topic.title} value={topic.title} className={cn("overflow-hidden rounded-2xl sm:rounded-3xl border transition-colors", isTopicActive ? "border-primary/30 bg-primary/[0.05]" : "border-border/60 bg-background")}>
-                      <AccordionTrigger className="px-3 sm:px-4 py-3 sm:py-4 text-left hover:no-underline">
-                        <div className="flex min-w-0 flex-1 items-start justify-between gap-2 sm:gap-3">
-                          <div className="min-w-0">
-                            <span className="inline-flex items-center rounded-full bg-muted px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Chapter {topicIndex + 1}</span>
-                            <h3 className="mt-2 sm:mt-3 text-sm sm:text-base font-semibold leading-5 sm:leading-6 md:text-lg">{topic.title}</h3>
-                            <p className="mt-1 sm:mt-2 text-[10px] sm:text-xs text-muted-foreground">Click to view lessons in this chapter</p>
-                          </div>
-                          <div className="rounded-xl sm:rounded-2xl bg-muted px-2 sm:px-3 py-1.5 sm:py-2 text-right"><div className="text-sm sm:text-base font-semibold">{topicCompletedCount}/{topicSubtopics.length}</div><div className="text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">done</div></div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {courseTopics.slice(0, 4).map((topic, topicIndex) => {
+                    const topicSubtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
+                    const topicCompletedCount = topicSubtopics.filter(subtopic => completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title)).length;
+                    const isTopicActive = topic.title === currentTopicTitle;
+                    return (
+                      <button type="button" key={topic.title} onClick={() => { setIsDashboardOpen(false); openLessonFlow(topic.title); }}
+                        className={cn("group flex items-start justify-between gap-3 rounded-2xl border p-4 text-left transition-all hover:ring-2 hover:ring-primary/20", isTopicActive ? "border-primary/40 bg-primary/[0.03] ring-2 ring-primary/20" : "border-border/60 bg-background")}
+                      >
+                        <div className="min-w-0">
+                          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Module {topicIndex + 1}</span>
+                          <h3 className="mt-2 line-clamp-1 text-sm font-semibold">{topic.title}</h3>
+                          <p className="mt-1 text-[11px] text-muted-foreground italic">Click to view lessons</p>
                         </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0">
-                        {filteredSubtopics.length === 0 ? (
-                          <div className="rounded-xl sm:rounded-2xl border border-dashed bg-muted/20 p-4 sm:p-5 text-center text-xs sm:text-sm text-muted-foreground">No lessons match your search.</div>
-                        ) : (
-                          /* Responsive Grid for Lesson Flow Subtopics */
-                          <div className="grid gap-1.5 sm:gap-2 
-                            grid-cols-1 
-                            sm:grid-cols-2 
-                            lg:grid-cols-2">
-                            {filteredSubtopics.map((subtopic: any, subtopicIndex: number) => {
-                              const isUnlocked = isSubtopicUnlocked(topic.title, subtopic.title);
-                              const isActive = selected === subtopic.title;
-                              const isCompleted = completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title);
-                              return (
-                                <button type="button" key={subtopic.title}
-                                  onClick={() => { if (isUnlocked) { handleSelect(topic.title, subtopic.title); setIsLessonFlowOpen(false); } else toast({ title: "Locked", description: "Complete previous lessons to unlock this one." }); }}
-                                  className={cn("flex w-full items-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-2 sm:py-3 text-left transition-all", isUnlocked ? "hover:border-primary/30 hover:bg-primary/[0.04]" : "cursor-not-allowed opacity-60", isActive ? "border-primary/35 bg-primary/[0.08]" : "border-border/50 bg-background")}
-                                >
-                                  <span className={cn("flex h-6 w-6 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-[10px] sm:text-xs font-semibold", isCompleted ? "bg-emerald-500 text-white" : isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
-                                    {isCompleted ? "✓" : subtopicIndex + 1}
-                                  </span>
-                                  <span className="min-w-0 flex-1">
-                                    <span className="block truncate text-xs sm:text-sm font-medium text-foreground">{subtopic.title}</span>
-                                    <span className="mt-0.5 sm:mt-1 block text-[9px] sm:text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">{isCompleted ? "Completed" : isActive ? "Current lesson" : isUnlocked ? "Available now" : "Locked"}</span>
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </AccordionContent>
-                    </AccordionItem>
-                  );
-                })}
-              </Accordion>
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
-    </section>
-  ) : null;
+                        <div className="flex flex-col items-end">
+                          <div className="text-sm font-bold text-primary">{topicCompletedCount}/{topicSubtopics.length}</div>
+                          <div className="text-[9px] font-bold text-muted-foreground uppercase">Done</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {courseTopics.length > 4 && (
+                  <Button variant="ghost" className="w-full rounded-xl hover:bg-primary/5 text-primary" onClick={() => { setIsDashboardOpen(false); openLessonFlow(); }}>
+                    View Remaining {courseTopics.length - 4} Chapters
+                  </Button>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="exam" className="mt-0 outline-none">
+              {hasManualQuiz ? (
+                <div className="space-y-6">
+                  <div className="p-5 rounded-2xl bg-gradient-to-br from-primary/[0.08] to-background border border-primary/20">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold">Certification Assessment</h3>
+                        <p className="text-sm text-muted-foreground">Requirements to earn your credential</p>
+                      </div>
+                      <Badge variant={quizLockedByCourseProgress ? "outline" : "default"} className={cn("px-3 py-1", quizLockedByCourseProgress ? "bg-muted" : "bg-primary text-primary-foreground")}>
+                        {quizLockedByCourseProgress ? "Locked" : "Unlocked"}
+                      </Badge>
+                    </div>
+                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden mb-2">
+                      <div className="h-full bg-primary transition-all duration-500" style={{ width: `${(completedLessonCount / orderedLessons.length) * 100}%` }} />
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">
+                      {completedLessonCount} of {orderedLessons.length} lessons completed — {Math.round((completedLessonCount / orderedLessons.length) * 100)}% through the curriculum
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="p-4 rounded-xl border border-border/50 bg-background/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <RefreshCw className="w-4 h-4 text-primary" />
+                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Attempt Limit</span>
+                      </div>
+                      <div className="text-base font-bold">{manualQuizSettings.attemptLimit} Total Attempts</div>
+                      <p className="text-xs text-muted-foreground mt-1">{quizAttemptSummary?.remainingAttempts ?? manualQuizSettings.attemptLimit} attempts remaining</p>
+                    </div>
+                    <div className="p-4 rounded-xl border border-border/50 bg-background/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Award className="w-4 h-4 text-primary" />
+                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Passing Score</span>
+                      </div>
+                      <div className="text-base font-bold">{manualQuizSettings.passPercentage}% Required</div>
+                      <p className="text-xs text-muted-foreground mt-1">{manualQuizSettings.questionCount} randomized questions</p>
+                    </div>
+                    <div className="p-4 rounded-xl border border-border/50 bg-background/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="w-4 h-4 text-primary" />
+                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cooldown</span>
+                      </div>
+                      <div className="text-base font-bold">{manualQuizSettings.cooldownMinutes} Minute Break</div>
+                      <p className="text-xs text-muted-foreground mt-1">Required after unsuccessful attempts</p>
+                    </div>
+                    <div className="p-4 rounded-xl border border-border/50 bg-background/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <ShieldCheck className="w-4 h-4 text-primary" />
+                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Security</span>
+                      </div>
+                      <div className="text-base font-bold">Standard Monitoring</div>
+                      <p className="text-xs text-muted-foreground mt-1 truncate">
+                        {[manualQuizSettings.proctoring.detectTabSwitch && 'Tab Detection', manualQuizSettings.proctoring.detectFullscreenExit && 'Strict Screen'].filter(Boolean).join(' • ')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center bg-muted/20 rounded-2xl border border-dashed">
+                  <BookOpen className="w-12 h-12 text-muted-foreground/40 mb-4" />
+                  <h3 className="font-bold">Standard Quiz</h3>
+                  <p className="text-sm text-muted-foreground max-w-xs px-6 mt-2">
+                    This course uses a standard AI-generated assessment. No specific organization rules are applied.
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
+  const lessonFlowPopup = (
+    <Dialog open={isLessonFlowOpen} onOpenChange={setIsLessonFlowOpen}>
+      <DialogContent className="w-[95vw] max-w-4xl overflow-hidden p-0 rounded-2xl sm:rounded-3xl">
+        <DialogHeader className="border-b border-border/60 bg-gradient-to-r from-primary/10 via-background to-indigo-500/10 p-4 sm:p-5 md:p-6">
+          <DialogTitle className="text-lg sm:text-xl">Lesson flow</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">Browse chapters and jump directly to any unlocked lesson.</DialogDescription>
+          <div className="mt-3 sm:mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Input value={lessonFlowSearch} onChange={(e) => setLessonFlowSearch(e.target.value)} placeholder="Search lesson…" className="h-9 sm:h-11 rounded-xl sm:rounded-2xl bg-background/80 text-sm" />
+            <Button variant="outline" className="h-9 sm:h-11 rounded-xl sm:rounded-2xl text-xs sm:text-sm" onClick={() => { setLessonFlowSearch(''); setLessonFlowChapter(currentTopicTitle || courseTopics[0]?.title || ''); }}>Reset</Button>
+          </div>
+        </DialogHeader>
+        <ScrollArea className="max-h-[60vh] sm:max-h-[70vh]">
+          <div className="p-3 sm:p-4 md:p-6">
+            <Accordion type="single" collapsible className="space-y-2 sm:space-y-3" value={lessonFlowChapter} onValueChange={setLessonFlowChapter}>
+              {courseTopics.map((topic, topicIndex) => {
+                const topicSubtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
+                const query = lessonFlowSearch.trim().toLowerCase();
+                const filteredSubtopics = query ? topicSubtopics.filter((sub: any) => String(sub?.title || '').toLowerCase().includes(query)) : topicSubtopics;
+                if (query && filteredSubtopics.length === 0 && !String(topic?.title || '').toLowerCase().includes(query)) return null;
+                const topicCompletedCount = topicSubtopics.filter(subtopic => completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title)).length;
+                const isTopicActive = topic.title === currentTopicTitle;
+                return (
+                  <AccordionItem key={topic.title} value={topic.title} className={cn("overflow-hidden rounded-2xl sm:rounded-3xl border transition-colors", isTopicActive ? "border-primary/30 bg-primary/[0.05]" : "border-border/60 bg-background")}>
+                    <AccordionTrigger className="px-3 sm:px-4 py-3 sm:py-4 text-left hover:no-underline">
+                      <div className="flex min-w-0 flex-1 items-start justify-between gap-2 sm:gap-3">
+                        <div className="min-w-0">
+                          <span className="inline-flex items-center rounded-full bg-muted px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Chapter {topicIndex + 1}</span>
+                          <h3 className="mt-2 sm:mt-3 text-sm sm:text-base font-semibold leading-5 sm:leading-6 md:text-lg">{topic.title}</h3>
+                          <p className="mt-1 sm:mt-2 text-[10px] sm:text-xs text-muted-foreground">Click to view lessons in this chapter</p>
+                        </div>
+                        <div className="rounded-xl sm:rounded-2xl bg-muted px-2 sm:px-3 py-1.5 sm:py-2 text-right"><div className="text-sm sm:text-base font-semibold">{topicCompletedCount}/{topicSubtopics.length}</div><div className="text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">done</div></div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0">
+                      {filteredSubtopics.length === 0 ? (
+                        <div className="rounded-xl sm:rounded-2xl border border-dashed bg-muted/20 p-4 sm:p-5 text-center text-xs sm:text-sm text-muted-foreground">No lessons match your search.</div>
+                      ) : (
+                        <div className="grid gap-1.5 sm:gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
+                          {filteredSubtopics.map((subtopic: any, subtopicIndex: number) => {
+                            const isUnlocked = isSubtopicUnlocked(topic.title, subtopic.title);
+                            const isActive = selected === subtopic.title;
+                            const isCompleted = completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title);
+                            return (
+                              <button type="button" key={subtopic.title}
+                                onClick={() => { if (isUnlocked) { handleSelect(topic.title, subtopic.title); setIsLessonFlowOpen(false); } else toast({ title: "Locked", description: "Complete previous lessons to unlock this one." }); }}
+                                className={cn("flex w-full items-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-2 sm:py-3 text-left transition-all", isUnlocked ? "hover:border-primary/30 hover:bg-primary/[0.04]" : "cursor-not-allowed opacity-60", isActive ? "border-primary/35 bg-primary/[0.08]" : "border-border/50 bg-background")}
+                              >
+                                <span className={cn("flex h-6 w-6 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-[10px] sm:text-xs font-semibold", isCompleted ? "bg-emerald-500 text-white" : isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
+                                  {isCompleted ? "✓" : subtopicIndex + 1}
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate text-xs sm:text-sm font-medium text-foreground">{subtopic.title}</span>
+                                  <span className="mt-0.5 sm:mt-1 block text-[9px] sm:text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">{isCompleted ? "Completed" : isActive ? "Current lesson" : isUnlocked ? "Available now" : "Locked"}</span>
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
 
   const [isButtonDisabled, setIsButtonDisabled] = React.useState(false);
   const [remainingSeconds, setRemainingSeconds] = React.useState(0);
@@ -1763,32 +1853,51 @@ Requirements:
               {isLoading ? <CourseContentSkeleton /> : (
                 <>
                   {/* Hero banner - Responsive */}
-                  <div className="mb-3 sm:mb-4 md:mb-6 overflow-hidden rounded-2xl sm:rounded-[20px] md:rounded-[30px] border border-slate-800/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/80 p-3 sm:p-4 md:p-6 text-white shadow-xl">
-                    <div className="flex flex-col gap-3 sm:gap-4 xl:flex-row xl:items-end xl:justify-between">
+                  <div className="mb-4 sm:mb-6 overflow-hidden rounded-2xl sm:rounded-[24px] md:rounded-[40px] border border-slate-800/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/80 p-5 sm:p-6 md:p-8 lg:p-10 text-white shadow-2xl relative">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[100px] -mr-32 -mt-32 rounded-full" />
+                    <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between relative z-10">
                       <div className="max-w-3xl">
-                        <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.26em] text-white/80 backdrop-blur">
-                          {currentLesson ? `Chapter ${currentLesson.topicIndex + 1}` : "Lesson overview"}
-                        </span>
-                        <h1 className="mt-2 sm:mt-3 break-words text-base sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-semibold leading-tight">{selected}</h1>
-                        <p className="mt-1.5 sm:mt-2 md:mt-3 text-xs sm:text-sm leading-5 sm:leading-6 text-white/75">
-                          {currentTopicTitle && `Inside ${currentTopicTitle}. `}{currentLesson ? `Lesson ${currentLessonIndex + 1} of ${orderedLessons.length}. ` : ""}Continue through the roadmap below or jump directly from the side menu.
-                        </p>
+                        <div className="flex flex-wrap items-center gap-2 mb-4">
+                          <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/90 backdrop-blur-md">
+                            {currentLesson ? `Module ${currentLesson.topicIndex + 1}` : "Course overview"}
+                          </span>
+                          <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary-foreground/90 backdrop-blur-md">
+                            Lesson {currentLessonIndex + 1} of {orderedLessons.length}
+                          </span>
+                        </div>
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight leading-[1.1] mb-4">
+                          {selected}
+                        </h1>
+                        <div className="flex flex-wrap items-center gap-4">
+                          <p className="text-sm md:text-base text-white/70 max-w-xl line-clamp-2 italic">
+                            {currentTopicTitle && `Part of "${currentTopicTitle}". `} Exploring key concepts and practical applications.
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setIsDashboardOpen(true)}
+                            className="bg-white/10 border-white/20 text-white hover:bg-white/20 rounded-xl h-10 px-4 gap-2 backdrop-blur-md transition-all hover:scale-105 active:scale-95"
+                          >
+                            <LayoutPanelLeft className="w-4 h-4" />
+                            <span className="font-bold text-xs uppercase tracking-widest leading-none">Course Insights</span>
+                          </Button>
+                        </div>
                       </div>
                       
-                      {/* Responsive Grid for Hero Banner Stats */}
-                      <div className="grid grid-cols-2 gap-1.5 sm:gap-2 
-                        sm:grid-cols-2 
-                        lg:grid-cols-2 
-                        xl:w-auto xl:min-w-[320px]">
-                        <div className="rounded-lg sm:rounded-xl border border-white/12 bg-white/10 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 backdrop-blur">
-                          <div className="text-[8px] sm:text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">Current Chapter</div>
-                          <div className="mt-1 text-xs sm:text-sm md:text-base lg:text-lg font-semibold leading-tight">{currentTopic ? `${currentLesson?.topicIndex + 1}. ${currentTopic.title}` : "Course lesson"}</div>
-                          <div className="mt-0.5 sm:mt-1 text-[8px] sm:text-[10px] md:text-xs text-white/65">{currentTopicCompletedCount}/{currentTopic?.subtopics?.length || 0} lessons done</div>
+                      <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row shrink-0">
+                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl min-w-[200px] hover:bg-white/10 transition-colors">
+                          <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 mb-2">Curriculum Progress</div>
+                          <div className="flex items-end gap-2">
+                            <div className="text-3xl font-black leading-none">{percentage}%</div>
+                            <div className="text-xs text-white/50 mb-1">Overall</div>
+                          </div>
+                          <div className="mt-3 w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-full bg-primary transition-all duration-700" style={{ width: `${percentage}%` }} />
+                          </div>
                         </div>
-                        <div className="rounded-lg sm:rounded-xl border border-white/12 bg-white/10 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 backdrop-blur">
-                          <div className="text-[8px] sm:text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">Up Next</div>
-                          <div className="mt-1 text-[10px] sm:text-xs md:text-sm font-semibold leading-4 sm:leading-5">{nextLesson ? nextLesson.subtopicTitle : "Final quiz after completion"}</div>
-                          <div className="mt-0.5 sm:mt-1 text-[8px] sm:text-[10px] md:text-xs text-white/65">{nextLesson ? nextLesson.topicTitle : `${mainTopic} quiz`}</div>
+                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl min-w-[200px] hover:bg-white/10 transition-colors">
+                          <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 mb-2">Next Milestone</div>
+                          <div className="text-sm font-bold truncate mb-1">{nextLesson ? nextLesson.subtopicTitle : "Course Assessment"}</div>
+                          <div className="text-[10px] text-white/40 uppercase font-medium">{nextLesson ? `Module ${nextLesson.topicIndex + 1}` : "Final Step"}</div>
                         </div>
                       </div>
                     </div>
@@ -1812,8 +1921,8 @@ Requirements:
                     </div>
                   </div>
 
-                  {!isMobile && examRulesSection}
-                  {!isMobile && roadmapSection}
+                  {courseDashboardPopup}
+                  {lessonFlowPopup}
 
                   <div className="space-y-3 sm:space-y-4">
                     {/* Theory text */}
@@ -1828,9 +1937,6 @@ Requirements:
                       <p className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80">Learning Note</p>
                       <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm leading-5 sm:leading-6">{lessonAlertMessage}</p>
                     </div>
-
-                    {isMobile && examRulesSection}
-                    {isMobile && roadmapSection}
 
                     {/* Lesson actions - Responsive */}
                     {!isOrgAdmin && (
