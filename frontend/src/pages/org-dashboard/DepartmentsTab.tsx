@@ -644,255 +644,251 @@ const DepartmentsTab = () => {
                                 </p>
                             </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                            <Dialog
-                                open={openDeptDialog}
-                                onOpenChange={(open) => {
-                                    setOpenDeptDialog(open);
-                                    if (open) setIsCreatingDepartment(false);
-                                    if (open) setCreateDeptError('');
-                                }}
-                            >
-                                <DialogTrigger asChild>
-                                    <Button className="students-theme-hero-badge shadow-lg transform hover:scale-105 transition-all duration-300 w-full sm:w-auto text-white border">
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Add Department
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="students-theme-dialog w-[95%] sm:max-w-md mx-auto rounded-xl">
-                                    <DialogHeader>
-                                        <DialogTitle className="students-theme-title text-xl sm:text-2xl">
-                                            Create New Department
-                                        </DialogTitle>
-                                    </DialogHeader>
-                                    <div className="grid gap-4 py-4">
-                                        <div className="grid gap-2">
-                                            <Label className="text-sm font-semibold">Department Name</Label>
-                                            <Input
-                                                placeholder="e.g., Computer Science"
-                                                value={newDept.name}
-                                                onChange={(e) => {
-                                                    setNewDept({ ...newDept, name: e.target.value });
-                                                    if (createDeptError) setCreateDeptError('');
-                                                }}
-                                                className="students-theme-input"
-                                            />
-                                            {createDeptError ? (
-                                                <p className="text-sm text-red-600">{createDeptError}</p>
-                                            ) : null}
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label className="text-sm font-semibold">Description</Label>
-                                            <Textarea
-                                                placeholder="Describe the department's focus and objectives..."
-                                                value={newDept.description}
-                                                onChange={(e) => setNewDept({ ...newDept, description: e.target.value })}
-                                                className="students-theme-input min-h-[100px]"
-                                            />
-                                        </div>
-                                        <Button 
-                                            onClick={handleCreateDepartment} 
-                                            disabled={isCreatingDepartment}
-                                            className="mt-2 bg-gradient-to-r from-[#11405f] to-[#11a5e4] hover:opacity-90 transition-all"
-                                        >
-                                            {isCreatingDepartment ? 'Creating...' : 'Create Department'}
-                                        </Button>
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
+                       <div className="flex flex-col sm:flex-row md:flex-row lg:flex-col xl:flex-row gap-3 w-full lg:w-auto">
+    <Dialog
+        open={openDeptDialog}
+        onOpenChange={(open) => {
+            setOpenDeptDialog(open);
+            if (open) setIsCreatingDepartment(false);
+            if (open) setCreateDeptError('');
+        }}
+    >
+        <DialogTrigger asChild>
+            <Button className="students-theme-hero-badge shadow-lg transform hover:scale-105 transition-all duration-300 w-full sm:w-auto lg:w-full xl:w-auto text-white border">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Department
+            </Button>
+        </DialogTrigger>
+        <DialogContent className="students-theme-dialog w-[95%] sm:max-w-md mx-auto rounded-xl">
+            <DialogHeader>
+                <DialogTitle className="students-theme-title text-xl sm:text-2xl">
+                    Create New Department
+                </DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                    <Label className="text-sm font-semibold">Department Name</Label>
+                    <Input
+                        placeholder="e.g., Computer Science"
+                        value={newDept.name}
+                        onChange={(e) => {
+                            setNewDept({ ...newDept, name: e.target.value });
+                            if (createDeptError) setCreateDeptError('');
+                        }}
+                        className="students-theme-input"
+                    />
+                    {createDeptError ? (
+                        <p className="text-sm text-red-600">{createDeptError}</p>
+                    ) : null}
+                </div>
+                <div className="grid gap-2">
+                    <Label className="text-sm font-semibold">Description</Label>
+                    <Textarea
+                        placeholder="Describe the department's focus and objectives..."
+                        value={newDept.description}
+                        onChange={(e) => setNewDept({ ...newDept, description: e.target.value })}
+                        className="students-theme-input min-h-[100px]"
+                    />
+                </div>
+                <Button 
+                    onClick={handleCreateDepartment} 
+                    disabled={isCreatingDepartment}
+                    className="mt-2 bg-gradient-to-r from-[#11405f] to-[#11a5e4] hover:opacity-90 transition-all"
+                >
+                    {isCreatingDepartment ? 'Creating...' : 'Create Department'}
+                </Button>
+            </div>
+        </DialogContent>
+    </Dialog>
 
-                            <Dialog
-                                open={openDeptAdminDialog}
-                                onOpenChange={(open) => {
-                                    setOpenDeptAdminDialog(open);
-                                    if (open) {
-                                        setIsCreatingDeptAdmin(false);
-                                        setNewDeptAdmin({
-                                            name: '',
-                                            email: '',
-                                            password: '',
-                                            phone: '',
-                                            departmentId: '',
-                                            courseLimit: 0
-                                        });
-                                        setCreateDeptAdminErrors({
-                                            name: '',
-                                            email: '',
-                                            password: '',
-                                            phone: '',
-                                            departmentId: '',
-                                            courseLimit: ''
-                                        });
-                                    }
-                                }}
-                            >
-                                <DialogTrigger asChild>
-                                    <Button 
-                                        className="students-theme-hero-badge !bg-white/12 hover:!bg-white/20 shadow-lg transform hover:scale-105 transition-all duration-300 w-full sm:w-auto !text-white !border-white/30"
-                                    >
-                                        <UserPlus className="w-4 h-4 mr-2" />
-                                        Add Dep Staff
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="students-theme-dialog w-[95%] sm:max-w-md mx-auto rounded-xl">
-                                    <DialogHeader>
-                                        <DialogTitle className="students-theme-title text-xl sm:text-2xl">
-                                            Add Department Staff
-                                        </DialogTitle>
-                                    </DialogHeader>
-                                    <ScrollArea className="max-h-[70vh]">
-                                        <div className="grid gap-4 py-4 pr-2">
-                                            <div className="grid gap-2">
-                                                <Label className="text-sm font-semibold">Full Name</Label>
-                                                <Input
-                                                    name="dept-admin-name"
-                                                    autoComplete="off"
-                                                    autoCorrect="off"
-                                                    spellCheck={false}
-                                                    placeholder="John Doe"
-                                                    value={newDeptAdmin.name}
-                                                    onChange={(e) => {
-                                                        setNewDeptAdmin({ ...newDeptAdmin, name: e.target.value });
-                                                        if (createDeptAdminErrors.name) {
-                                                            setCreateDeptAdminErrors({ ...createDeptAdminErrors, name: '' });
-                                                        }
-                                                    }}
-                                                    className="students-theme-input"
-                                                />
-                                                {createDeptAdminErrors.name ? (
-                                                    <p className="text-sm text-red-600">{createDeptAdminErrors.name}</p>
-                                                ) : null}
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label className="text-sm font-semibold">Email</Label>
-                                                <Input
-                                                    name="dept-admin-email"
-                                                    type="email"
-                                                    autoComplete="off"
-                                                    autoCorrect="off"
-                                                    spellCheck={false}
-                                                    placeholder="john@example.com"
-                                                    value={newDeptAdmin.email}
-                                                    onChange={(e) => {
-                                                        setNewDeptAdmin({ ...newDeptAdmin, email: e.target.value });
-                                                        if (createDeptAdminErrors.email) {
-                                                            setCreateDeptAdminErrors({ ...createDeptAdminErrors, email: '' });
-                                                        }
-                                                    }}
-                                                    className="students-theme-input"
-                                                />
-                                                {createDeptAdminErrors.email ? (
-                                                    <p className="text-sm text-red-600">{createDeptAdminErrors.email}</p>
-                                                ) : null}
-                                            </div>
-                                          <div className="grid gap-2">
-  <Label className="text-sm font-semibold">Password</Label>
-
-  <Input
-    type="password"
-    name="dept-admin-password"
-    placeholder="••••••••"
-    value={newDeptAdmin.password}
-    onChange={(e) => {
-      const value = e.target.value;
-      setNewDeptAdmin({ ...newDeptAdmin, password: value });
-    }}
-    className="students-theme-input"
-  />
-
-  {/* Final error */}
-  {passwordRules.length > 0 && (
-    <p className="text-sm text-red-600">Password is not strong enough</p>
-  )}
-  
+    <Dialog
+        open={openDeptAdminDialog}
+        onOpenChange={(open) => {
+            setOpenDeptAdminDialog(open);
+            if (open) {
+                setIsCreatingDeptAdmin(false);
+                setNewDeptAdmin({
+                    name: '',
+                    email: '',
+                    password: '',
+                    phone: '',
+                    departmentId: '',
+                    courseLimit: 0
+                });
+                setCreateDeptAdminErrors({
+                    name: '',
+                    email: '',
+                    password: '',
+                    phone: '',
+                    departmentId: '',
+                    courseLimit: ''
+                });
+            }
+        }}
+    >
+        <DialogTrigger asChild>
+            <Button 
+                className="students-theme-hero-badge !bg-white/12 hover:!bg-white/20 shadow-lg transform hover:scale-105 transition-all duration-300 w-full sm:w-auto lg:w-full xl:w-auto !text-white !border-white/30"
+            >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Add Dep Staff
+            </Button>
+        </DialogTrigger>
+        <DialogContent className="students-theme-dialog w-[95%] sm:max-w-md mx-auto rounded-xl">
+            <DialogHeader>
+                <DialogTitle className="students-theme-title text-xl sm:text-2xl">
+                    Add Department Staff
+                </DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="max-h-[70vh]">
+                <div className="grid gap-4 py-4 pr-2">
+                    <div className="grid gap-2">
+                        <Label className="text-sm font-semibold">Full Name</Label>
+                        <Input
+                            name="dept-admin-name"
+                            autoComplete="off"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            placeholder="John Doe"
+                            value={newDeptAdmin.name}
+                            onChange={(e) => {
+                                setNewDeptAdmin({ ...newDeptAdmin, name: e.target.value });
+                                if (createDeptAdminErrors.name) {
+                                    setCreateDeptAdminErrors({ ...createDeptAdminErrors, name: '' });
+                                }
+                            }}
+                            className="students-theme-input"
+                        />
+                        {createDeptAdminErrors.name ? (
+                            <p className="text-sm text-red-600">{createDeptAdminErrors.name}</p>
+                        ) : null}
+                    </div>
+                    <div className="grid gap-2">
+                        <Label className="text-sm font-semibold">Email</Label>
+                        <Input
+                            name="dept-admin-email"
+                            type="email"
+                            autoComplete="off"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            placeholder="john@example.com"
+                            value={newDeptAdmin.email}
+                            onChange={(e) => {
+                                setNewDeptAdmin({ ...newDeptAdmin, email: e.target.value });
+                                if (createDeptAdminErrors.email) {
+                                    setCreateDeptAdminErrors({ ...createDeptAdminErrors, email: '' });
+                                }
+                            }}
+                            className="students-theme-input"
+                        />
+                        {createDeptAdminErrors.email ? (
+                            <p className="text-sm text-red-600">{createDeptAdminErrors.email}</p>
+                        ) : null}
+                    </div>
+                    <div className="grid gap-2">
+                        <Label className="text-sm font-semibold">Password</Label>
+                        <Input
+                            type="password"
+                            name="dept-admin-password"
+                            placeholder="••••••••"
+                            value={newDeptAdmin.password}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                setNewDeptAdmin({ ...newDeptAdmin, password: value });
+                            }}
+                            className="students-theme-input"
+                        />
+                        {passwordRules.length > 0 && (
+                            <p className="text-sm text-red-600">Password is not strong enough</p>
+                        )}
+                    </div>
+                    <div className="grid gap-2">
+                        <Label className="text-sm font-semibold">Phone (Optional)</Label>
+                        <Input
+                            name="dept-admin-phone"
+                            autoComplete="off"
+                            inputMode="numeric"
+                            maxLength={10}
+                            placeholder="+1 234 567 8900"
+                            value={newDeptAdmin.phone}
+                            onChange={(e) => {
+                                const digits = normalizePhoneNumber(e.target.value).slice(0, 10);
+                                setNewDeptAdmin({ ...newDeptAdmin, phone: digits });
+                                if (createDeptAdminErrors.phone) {
+                                    setCreateDeptAdminErrors({ ...createDeptAdminErrors, phone: '' });
+                                }
+                            }}
+                            className="students-theme-input"
+                        />
+                        {createDeptAdminErrors.phone ? (
+                            <p className="text-sm text-red-600">{createDeptAdminErrors.phone}</p>
+                        ) : null}
+                    </div>
+                    <div className="grid gap-2">
+                        <Label className="text-sm font-semibold">Department</Label>
+                        <select
+                            className="students-theme-select flex h-10 w-full rounded-md px-3 py-2 text-sm"
+                            value={newDeptAdmin.departmentId}
+                            onChange={(e) => {
+                                setNewDeptAdmin({ ...newDeptAdmin, departmentId: e.target.value });
+                                if (createDeptAdminErrors.departmentId) {
+                                    setCreateDeptAdminErrors({ ...createDeptAdminErrors, departmentId: '' });
+                                }
+                            }}
+                        >
+                            <option value="">Select Department</option>
+                            {departmentsList.map((dept) => (
+                                <option key={dept._id} value={dept._id}>
+                                    {dept.name}
+                                </option>
+                            ))}
+                        </select>
+                        {createDeptAdminErrors.departmentId ? (
+                            <p className="text-sm text-red-600">{createDeptAdminErrors.departmentId}</p>
+                        ) : null}
+                    </div>
+                    <div className="grid gap-2">
+                        <Label className="text-sm font-semibold">Course Creation Limit</Label>
+                        <Input
+                            type="number"
+                            min={0}
+                            max={remainingOrgCourseBalance ?? undefined}
+                            value={newDeptAdmin.courseLimit}
+                            onChange={(e) => {
+                                const nextValue = clampCourseLimit(parseInt(e.target.value) || 0);
+                                setNewDeptAdmin({
+                                    ...newDeptAdmin,
+                                    courseLimit: nextValue
+                                });
+                                setCreateDeptAdminErrors({
+                                    ...createDeptAdminErrors,
+                                    courseLimit: getCourseLimitErrorMessage(nextValue)
+                                });
+                            }}
+                            placeholder="Max courses this admin can create"
+                            className="students-theme-input"
+                        />
+                        <p className="text-xs text-slate-600">
+                            {remainingOrgCourseBalance !== null
+                                ? `Remaining organization balance: ${remainingOrgCourseBalance} course${remainingOrgCourseBalance === 1 ? '' : 's'}`
+                                : 'Organization course balance unavailable right now.'}
+                        </p>
+                        {createDeptAdminErrors.courseLimit ? (
+                            <p className="text-sm text-red-600">{createDeptAdminErrors.courseLimit}</p>
+                        ) : null}
+                    </div>
+                    <Button 
+                        onClick={handleAddDeptAdmin} 
+                        disabled={isCreatingDeptAdmin}
+                        className="mt-2 bg-gradient-to-r from-[#11405f] to-[#11a5e4] hover:opacity-90 transition-all"
+                    >
+                        {isCreatingDeptAdmin ? 'Adding...' : 'Add Department Admin'}
+                    </Button>
+                </div>
+            </ScrollArea>
+        </DialogContent>
+    </Dialog>
 </div>
-                                            <div className="grid gap-2">
-                                                <Label className="text-sm font-semibold">Phone (Optional)</Label>
-                                                <Input
-                                                    name="dept-admin-phone"
-                                                    autoComplete="off"
-                                                    inputMode="numeric"
-                                                    maxLength={10}
-                                                    placeholder="+1 234 567 8900"
-                                                    value={newDeptAdmin.phone}
-                                                    onChange={(e) => {
-                                                        const digits = normalizePhoneNumber(e.target.value).slice(0, 10);
-                                                        setNewDeptAdmin({ ...newDeptAdmin, phone: digits });
-                                                        if (createDeptAdminErrors.phone) {
-                                                            setCreateDeptAdminErrors({ ...createDeptAdminErrors, phone: '' });
-                                                        }
-                                                    }}
-                                                    className="students-theme-input"
-                                                />
-                                                {createDeptAdminErrors.phone ? (
-                                                    <p className="text-sm text-red-600">{createDeptAdminErrors.phone}</p>
-                                                ) : null}
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label className="text-sm font-semibold">Department</Label>
-                                                <select
-                                                    className="students-theme-select flex h-10 w-full rounded-md px-3 py-2 text-sm"
-                                                    value={newDeptAdmin.departmentId}
-                                                    onChange={(e) => {
-                                                        setNewDeptAdmin({ ...newDeptAdmin, departmentId: e.target.value });
-                                                        if (createDeptAdminErrors.departmentId) {
-                                                            setCreateDeptAdminErrors({ ...createDeptAdminErrors, departmentId: '' });
-                                                        }
-                                                    }}
-                                                >
-                                                    <option value="">Select Department</option>
-                                                    {departmentsList.map((dept) => (
-                                                        <option key={dept._id} value={dept._id}>
-                                                            {dept.name}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                {createDeptAdminErrors.departmentId ? (
-                                                    <p className="text-sm text-red-600">{createDeptAdminErrors.departmentId}</p>
-                                                ) : null}
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label className="text-sm font-semibold">Course Creation Limit</Label>
-            <Input
-                type="number"
-                min={0}
-                max={remainingOrgCourseBalance ?? undefined}
-                value={newDeptAdmin.courseLimit}
-                onChange={(e) => {
-                    const nextValue = clampCourseLimit(parseInt(e.target.value) || 0);
-                    setNewDeptAdmin({
-                        ...newDeptAdmin,
-                        courseLimit: nextValue
-                    });
-                    setCreateDeptAdminErrors({
-                        ...createDeptAdminErrors,
-                        courseLimit: getCourseLimitErrorMessage(nextValue)
-                    });
-                }}
-                placeholder="Max courses this admin can create"
-                className="students-theme-input"
-            />
-                                                <p className="text-xs text-slate-600">
-                                                    {remainingOrgCourseBalance !== null
-                                                        ? `Remaining organization balance: ${remainingOrgCourseBalance} course${remainingOrgCourseBalance === 1 ? '' : 's'}`
-                                                        : 'Organization course balance unavailable right now.'}
-                                                </p>
-                                                {createDeptAdminErrors.courseLimit ? (
-                                                    <p className="text-sm text-red-600">{createDeptAdminErrors.courseLimit}</p>
-                                                ) : null}
-                                            </div>
-                                            <Button 
-                                                onClick={handleAddDeptAdmin} 
-                                                disabled={isCreatingDeptAdmin}
-                                                className="mt-2 bg-gradient-to-r from-[#11405f] to-[#11a5e4] hover:opacity-90 transition-all"
-                                            >
-                                                {isCreatingDeptAdmin ? 'Adding...' : 'Add Department Admin'}
-                                            </Button>
-                                        </div>
-                                    </ScrollArea>
-                                </DialogContent>
-                            </Dialog>
-                        </div>
                     </div>
                 </div>
 
@@ -1100,7 +1096,7 @@ const DepartmentsTab = () => {
                             ))}
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+<div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 md:gap-6 p-4 sm:p-5 md:p-6">
                             {filteredAdmins.length > 0 ? (
                                 filteredAdmins.map((admin) => {
                                     const coursesUsed = admin.coursesCreatedCount || 0;
@@ -1108,101 +1104,108 @@ const DepartmentsTab = () => {
                                     const usagePercentage = admin.courseLimit > 0 ? (coursesUsed / admin.courseLimit) * 100 : 0;
                                     
                                     return (
-                                        <Card key={admin._id} className="students-theme-student-card group hover:shadow-2xl transition-all duration-300 transform hover:scale-105 shadow-lg">
-                                            <CardHeader className="p-4 sm:p-6">
-                                                <div className="flex items-start justify-between">
-                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                                                        <Avatar className={`w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r ${getAvatarGradient(admin._id)} shadow-md transform group-hover:rotate-6 transition-all duration-300 flex-shrink-0`}>
-                                                            <AvatarFallback className="bg-transparent text-white text-base sm:text-lg font-bold">
-                                                                {getInitials(admin.mName)}
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                        <div className="min-w-0 flex-1">
-                                                            <CardTitle className="students-theme-title text-base sm:text-lg truncate">
-                                                                {admin.mName}
-                                                            </CardTitle>
-                                                            <CardDescription className="students-theme-description flex items-center gap-1 mt-1 text-xs sm:text-sm">
-                                                                <Mail className="w-3 h-3 flex-shrink-0" />
-                                                                <span className="truncate">{admin.email}</span>
-                                                            </CardDescription>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            className="opacity-0 group-hover:opacity-100 transition-all duration-300 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950 h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0"
-                                                            onClick={() => {
-                                                                setEditDeptAdmin({
-                                                                    id: admin._id,
-                                                                    name: admin.mName,
-                                                                    email: admin.email,
-                                                                    password: '',
-                                                                    phone: admin.phone || '',
-                                                                    departmentId: admin.department?._id || '',
-                                                                    courseLimit: admin.courseLimit || 0
-                                                                });
-                                                                setEditDeptAdminPasswordError('');
-                                                                setOpenEditAdminDialog(true);
-                                                            }}
-                                                        >
-                                                            <Edit2 className="w-4 h-4" />
-                                                        </Button>
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            className="opacity-0 group-hover:opacity-100 transition-all duration-300 text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950 h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0"
-                                                            onClick={() => handleDeleteDeptAdmin(admin._id, admin.mName)}
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </CardHeader>
-                                            <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0">
-                                                <div className="flex flex-wrap items-center gap-2 text-sm">
-                                                    <Badge
-  variant="secondary"
-  className="gap-1 bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white border-0"
->
-  <Building2 className="w-3 h-3 text-white" />
-  {admin.department?.name || 'No Department'}
-</Badge>
-                                                    {admin.phone && (
-                                                        <Badge variant="outline" className="gap-1 border-[#11405f]/30">
-                                                            <Phone className="w-3 h-3" />
-                                                            <span className="truncate max-w-[120px]">{admin.phone}</span>
-                                                        </Badge>
-                                                    )}
-                                                </div>
+                                        <Card key={admin._id} className="students-theme-student-card group hover:shadow-2xl transition-all duration-300 transform hover:scale-105 shadow-lg h-full flex flex-col">
+    <CardHeader className="p-4 sm:p-5 md:p-6">
+        <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+                <Avatar className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-gradient-to-r ${getAvatarGradient(admin._id)} shadow-md transform group-hover:rotate-6 transition-all duration-300 flex-shrink-0`}>
+                    <AvatarFallback className="bg-transparent text-white text-sm sm:text-base md:text-lg font-bold">
+                        {getInitials(admin.mName)}
+                    </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                    <CardTitle className="students-theme-title text-sm sm:text-base md:text-lg font-semibold line-clamp-1">
+                        {admin.mName}
+                    </CardTitle>
+              <CardDescription className="students-theme-description mt-1">
+    <div className="flex flex-row items-center gap-1 text-xs sm:text-sm">
+        <Mail className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+        <span className="break-words line-clamp-1">{admin.email}</span>
+    </div>
+</CardDescription>
+                </div>
+            </div>
+            <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    className="opacity-0 group-hover:opacity-100 transition-all duration-300 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950 h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                    onClick={() => {
+                        setEditDeptAdmin({
+                            id: admin._id,
+                            name: admin.mName,
+                            email: admin.email,
+                            password: '',
+                            phone: admin.phone || '',
+                            departmentId: admin.department?._id || '',
+                            courseLimit: admin.courseLimit || 0
+                        });
+                        setEditDeptAdminPasswordError('');
+                        setOpenEditAdminDialog(true);
+                    }}
+                >
+                    <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </Button>
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    className="opacity-0 group-hover:opacity-100 transition-all duration-300 text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950 h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                    onClick={() => handleDeleteDeptAdmin(admin._id, admin.mName)}
+                >
+                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </Button>
+            </div>
+        </div>
+    </CardHeader>
+    <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-5 md:p-6 pt-0 flex-1">
+        {/* Badges Section */}
+        <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2 text-sm">
+            <Badge
+                variant="secondary"
+                className="gap-1 bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white border-0 w-full sm:w-auto justify-center sm:justify-start"
+            >
+                <Building2 className="w-3 h-3 text-white flex-shrink-0" />
+                <span className="truncate">{admin.department?.name || 'No Department'}</span>
+            </Badge>
+            {admin.phone && (
+                <Badge variant="outline" className="gap-1 border-[#11405f]/30 w-full sm:w-auto justify-center sm:justify-start">
+                    <Phone className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate max-w-[150px] sm:max-w-[120px]">{admin.phone}</span>
+                </Badge>
+            )}
+        </div>
 
-                                                <div className="space-y-2">
-                                                    <div className="flex justify-between text-sm">
-                                                        <span className="text-muted-foreground">Course Usage</span>
-                                                        <span className="font-semibold text-[#11a5e4]">{coursesUsed} / {admin.courseLimit || 0}</span>
-                                                    </div>
-                                                    <Progress 
-                                                        value={usagePercentage} 
-                                                        className="h-2"
-                                                        style={{ background: 'rgba(17, 165, 228, 0.1)' }}
-                                                    />
-                                                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                                                        <span>Available: {coursesLeft} courses left</span>
-                                                        <span className="flex items-center gap-1">
-                                                            <Award className="w-3 h-3 text-[#11a5e4]" />
-                                                            Limit: {admin.courseLimit || 0}
-                                                        </span>
-                                                    </div>
-                                                </div>
+        {/* Course Usage Section */}
+        <div className="space-y-2">
+            <div className="flex justify-between items-baseline text-xs sm:text-sm">
+                <span className="text-muted-foreground">Course Usage</span>
+                <span className="font-semibold text-[#11a5e4] whitespace-nowrap ml-2">
+                    {coursesUsed} / {admin.courseLimit || 0}
+                </span>
+            </div>
+            <Progress 
+                value={usagePercentage} 
+                className="h-2"
+                style={{ background: 'rgba(17, 165, 228, 0.1)' }}
+            />
+            <div className="flex flex-col xs:flex-row justify-between gap-1 text-xs text-muted-foreground mt-1">
+                <span className="truncate">Available: {coursesLeft} courses left</span>
+                <span className="flex items-center gap-1 whitespace-nowrap">
+                    <Award className="w-3 h-3 text-[#11a5e4] flex-shrink-0" />
+                    <span>Limit: {admin.courseLimit || 0}</span>
+                </span>
+            </div>
+        </div>
 
-                                                <Separator className="students-theme-card-divider" />
+        <Separator className="students-theme-card-divider" />
 
-                                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                    <Calendar className="w-4 h-4 text-[#11a5e4]" />
-                                                    <span>Joined: {formatDate(admin.createdAt)}</span>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
+        {/* Joined Date */}
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#11a5e4] flex-shrink-0" />
+            <span className="truncate">Joined: {formatDate(admin.createdAt)}</span>
+        </div>
+    </CardContent>
+</Card>
                                     );
                                 })
                             ) : (

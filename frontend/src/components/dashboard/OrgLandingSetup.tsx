@@ -116,31 +116,71 @@ const OrgLandingSetup = ({ organizationId }: { organizationId: string }) => {
     return (
         <div className="space-y-8 pb-20">
             {/* Header Section */}
-            <div className="relative overflow-hidden p-8 rounded-[2rem] bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 shadow-xl">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] rounded-full -mr-32 -mt-32" />
-                <div className="relative flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div className="space-y-2">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest border border-primary/20">
-                            Public Presence Manager
-                        </div>
-                        <h2 className="text-3xl font-black tracking-tight flex items-center gap-3">
-                            <Globe className="text-primary w-8 h-8" />
-                            Portal Customization
-                        </h2>
-                        <p className="text-muted-foreground font-medium max-w-md">
-                            Design the first experience your students and partners see when visiting your institution's portal.
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <Button variant="outline" className="rounded-xl h-12 px-6 border-primary/20 hover:bg-primary/5" onClick={() => window.open(publicUrl, '_blank')}>
-                            <ExternalLink className="w-4 h-4 mr-2" /> View Live Site
-                        </Button>
-                        <Button onClick={handleSave} disabled={saving} className="rounded-xl h-12 px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
-                            {saving ? 'Synchronizing...' : <><Save className="w-4 h-4 mr-2" /> Publish Changes</>}
-                        </Button>
-                    </div>
-                </div>
-            </div>
+          <div className="relative overflow-hidden p-4 sm:p-6 md:p-8 rounded-[1.5rem] sm:rounded-[2rem] bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 shadow-xl">
+  {/* Background Blur Effect */}
+  <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-primary/5 blur-[80px] sm:blur-[100px] rounded-full -mr-24 sm:-mr-32 -mt-24 sm:-mt-32" />
+  
+  {/* Content Container */}
+  <div className="relative flex flex-col lg:flex-row justify-between items-center gap-4 md:gap-6">
+    
+    {/* Left Content */}
+    <div className="space-y-2 sm:space-y-3 text-center lg:text-left w-full lg:w-auto">
+      {/* Badge */}
+      <div className="inline-flex items-center gap-2 px-2 sm:px-3 py-1 rounded-full bg-primary/10 text-primary text-[9px] sm:text-[10px] font-black uppercase tracking-widest border border-primary/20">
+        <span className="hidden sm:inline">✨</span>
+        Public Presence Manager
+      </div>
+      
+      {/* Title */}
+      <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-3xl font-black tracking-tight flex items-center justify-center lg:justify-start gap-2 sm:gap-3 flex-wrap">
+        <Globe className="text-primary w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" />
+        Portal Customization
+      </h2>
+      
+      {/* Description */}
+      <p className="text-sm sm:text-base text-muted-foreground font-medium max-w-md mx-auto lg:mx-0">
+        Design the first experience your students and partners see when visiting your institution's portal.
+      </p>
+    </div>
+    
+    {/* Buttons Container */}
+    <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+      {/* View Live Site Button */}
+      <Button 
+        variant="outline" 
+        className="rounded-xl h-10 sm:h-11 md:h-12 px-4 sm:px-5 md:px-6 border-primary/20 hover:bg-primary/5 w-full sm:w-auto" 
+        onClick={() => window.open(publicUrl, '_blank')}
+      >
+        <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" /> 
+        View Live Site
+      </Button>
+      
+      {/* Publish Changes Button */}
+      <Button 
+        onClick={handleSave} 
+        disabled={saving} 
+        className="rounded-xl h-10 sm:h-11 md:h-12 px-6 sm:px-7 md:px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 w-full sm:w-auto"
+      >
+        {saving ? (
+          <>
+            <svg className="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            Synchronizing...
+          </>
+        ) : (
+          <>
+            <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" /> 
+            Publish Changes
+          </>
+        )}
+      </Button>
+    </div>
+    
+  </div>
+</div>
+
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Main Content Area */}

@@ -6395,47 +6395,47 @@ Login:
                                                                 <div className="rounded-lg border border-border bg-background/70 p-3 text-xs italic text-muted-foreground">
                                                                     "{internship.description || 'No additional details provided.'}"
                                                                 </div>
-                                                                <div className="flex flex-col sm:flex-row gap-2">
-                                                                    <Button 
-                                                                        className="h-8 flex-1 text-xs"
-                                                                        onClick={() => {
-                                                                            setNewInternship({
-                                                                                studentId: internship.studentId?._id || '',
-                                                                                title: internship.title,
-                                                                                description: internship.description,
-                                                                                domain: internship.domain || 'Web Development',
-                                                                                internshipType: 'training',
-                                                                                startDate: new Date().toISOString().split('T')[0],
-                                                                                endDate: '',
-                                                                                tasks: [],
-                                                                                exerciseTopics: [],
-                                                                                resources: [],
-                                                                                studyPlan: []
-                                                                            });
-                                                                            setOpenInternshipDialog(true);
-                                                                        }}
-                                                                    >
-                                                                        Approve & Setup
-                                                                    </Button>
-                                                                    <Button 
-                                                                        variant="outline" 
-                                                                        className="h-8 text-xs text-destructive hover:bg-destructive/10"
-                                                                        onClick={async () => {
-                                                                            const result = await Swal.fire({
-                                                                                title: 'Reject Request?',
-                                                                                text: 'Are you sure you want to reject this internship request?',
-                                                                                icon: 'warning',
-                                                                                showCancelButton: true,
-                                                                                confirmButtonColor: '#dc2626'
-                                                                            });
-                                                                            if (result.isConfirmed) {
-                                                                                handleUpdateInternship(internship._id, { status: 'rejected' });
-                                                                            }
-                                                                        }}
-                                                                    >
-                                                                        Reject
-                                                                    </Button>
-                                                                </div>
+                                                                <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row gap-2">
+    <Button 
+        className="h-8 flex-1 text-xs"
+        onClick={() => {
+            setNewInternship({
+                studentId: internship.studentId?._id || '',
+                title: internship.title,
+                description: internship.description,
+                domain: internship.domain || 'Web Development',
+                internshipType: 'training',
+                startDate: new Date().toISOString().split('T')[0],
+                endDate: '',
+                tasks: [],
+                exerciseTopics: [],
+                resources: [],
+                studyPlan: []
+            });
+            setOpenInternshipDialog(true);
+        }}
+    >
+        Approve & Setup
+    </Button>
+    <Button 
+        variant="outline" 
+        className="h-8 text-xs text-destructive hover:bg-destructive/10"
+        onClick={async () => {
+            const result = await Swal.fire({
+                title: 'Reject Request?',
+                text: 'Are you sure you want to reject this internship request?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626'
+            });
+            if (result.isConfirmed) {
+                handleUpdateInternship(internship._id, { status: 'rejected' });
+            }
+        }}
+    >
+        Reject
+    </Button>
+</div>
                                                             </CardContent>
                                                         </Card>
                                                     ))}

@@ -963,27 +963,36 @@ const isYearlyOnly = userPlan !== 'yearly';
 
         {/* Master Class: Interview Essentials Section */}
         <div className="pt-10 md:pt-16 border-t border-border/40">
-          <div className="flex flex-col md:flex-row items-start justify-between gap-6 mb-8 md:mb-12">
-            <div className="max-w-2xl">
-              <h2 className="text-2xl md:text-3xl font-bold mb-3 flex items-center gap-3">
-                <BookOpenCheck className="h-7 w-7 text-indigo-600" />
-                Interview Essentials
-              </h2>
-              <p className="text-muted-foreground leading-relaxed">
-                Beyond tests and news, successful candidates master these foundational strategies. Review these essentials before every major interview.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-3 w-full md:w-auto">
-              <div className="bg-slate-50 dark:bg-slate-900 border p-3 rounded-xl text-center">
-                <p className="text-lg font-bold text-primary">85%</p>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground">Prep Impact</p>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-900 border p-3 rounded-xl text-center">
-                <p className="text-lg font-bold text-primary">24h</p>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground">Mindset Focus</p>
-              </div>
-            </div>
-          </div>
+        <div className="flex flex-col lg:flex-row items-start justify-between gap-6 mb-8 md:mb-12">
+ 
+  <div className="max-w-2xl w-full lg:w-auto">
+    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 flex items-center gap-3">
+      <svg className="h-6 w-6 sm:h-7 sm:w-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg>
+      Interview Essentials
+    </h2>
+    <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+      Beyond tests and news, successful candidates master these foundational strategies. Review these essentials before every major interview.
+    </p>
+  </div>
+
+  
+  <div className="grid grid-cols-2 gap-3 w-full lg:w-auto lg:min-w-[240px]">
+ 
+    <div className="bg-slate-50 dark:bg-slate-900 border p-3 sm:p-4 rounded-xl text-center">
+      <p className="text-base sm:text-lg md:text-xl font-bold text-primary">85%</p>
+      <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wide text-muted-foreground">Prep Impact</p>
+    </div>
+    
+
+    <div className="bg-slate-50 dark:bg-slate-900 border p-3 sm:p-4 rounded-xl text-center">
+      <p className="text-base sm:text-lg md:text-xl font-bold text-primary">24h</p>
+      <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wide text-muted-foreground">Mindset Focus</p>
+    </div>
+  </div>
+</div>
+
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Strategy Card 1 */}

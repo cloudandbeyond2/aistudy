@@ -1735,54 +1735,62 @@ const ApprovalsTab = () => {
                         </motion.div>
 
                         {/* Stats Cards with Enhanced Animations */}
+                  <motion.div 
+    variants={containerVariants}
+    initial="hidden"
+    animate="visible"
+    className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6"
+>
+    {[
+        { label: "Total Pending", value: totalPending, desc: "Items awaiting review", icon: AlertCircle },
+        { label: "Course Approvals", value: coursePendingCount, desc: "Courses waiting approval", icon: BookOpen },
+        { label: "Limit Requests", value: requestPendingCount, desc: "Course limit increase", icon: TrendingUp },
+        { label: "Avg. Response Time", value: "24h", desc: "Typical approval time", icon: Clock }
+    ].map((stat, idx) => (
+        <motion.div 
+            key={idx} 
+            variants={itemVariants}
+            whileHover={{ scale: 1.02, y: -3 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            className="h-full"
+        >
+            <Card className={`${gradientSurface} shadow-lg hover:shadow-2xl transition-all duration-300 overflow-visible group h-full`}>
+                <CardContent className="p-4 sm:p-5 md:p-6 lg:p-5 xl:p-6 relative h-full">
+                    <motion.div 
+                        className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg"
+                    />
+                    <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-start sm:items-center lg:items-start xl:items-center justify-between gap-3 sm:gap-4 lg:gap-3 xl:gap-5 relative z-10">
+                        {/* Left side - Text content */}
+                        <div className="flex-1 min-w-0 w-full">
+                            <p className="text-sm sm:text-base lg:text-sm xl:text-base font-medium text-muted-foreground whitespace-normal break-words">
+                                {stat.label}
+                            </p>
+                            <motion.p 
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", delay: idx * 0.1 }}
+                                className="text-2xl sm:text-3xl lg:text-2xl xl:text-4xl font-bold mt-1 sm:mt-2 lg:mt-1 xl:mt-2"
+                            >
+                                {stat.value}
+                            </motion.p>
+                            <p className="text-xs sm:text-sm lg:text-xs xl:text-sm text-muted-foreground mt-1 sm:mt-2 lg:mt-1 xl:mt-2 whitespace-normal break-words">
+                                {stat.desc}
+                            </p>
+                        </div>
+
+                        {/* Right side - Icon */}
                         <motion.div 
-                            variants={containerVariants}
-                            initial="hidden"
-                            animate="visible"
-                            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
+                            whileHover={{ rotate: 8, scale: 1.05 }}
+                            className="students-theme-hero h-10 w-10 sm:h-12 sm:w-12 lg:h-10 lg:w-10 xl:h-14 xl:w-14 rounded-xl sm:rounded-2xl lg:rounded-xl xl:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0"
                         >
-                            {[
-                                { label: "Total Pending", value: totalPending, desc: "Items awaiting review", icon: AlertCircle },
-                                { label: "Course Approvals", value: coursePendingCount, desc: "Courses waiting approval", icon: BookOpen },
-                                { label: "Limit Requests", value: requestPendingCount, desc: "Course limit increase", icon: TrendingUp },
-                                { label: "Avg. Response Time", value: "24h", desc: "Typical approval time", icon: Clock }
-                            ].map((stat, idx) => (
-                                <motion.div 
-                                    key={idx} 
-                                    variants={itemVariants}
-                                    whileHover={{ scale: 1.05, y: -5 }}
-                                    transition={{ type: "spring", stiffness: 300 }}
-                                >
-                                    <Card className={`${gradientSurface} shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group`}>
-                                        <CardContent className="p-4 sm:p-6 relative">
-                                            <motion.div 
-                                                    className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                                            />
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">{stat.label}</p>
-                                                    <motion.p 
-                                                        initial={{ scale: 0 }}
-                                                        animate={{ scale: 1 }}
-                                                        transition={{ type: "spring", delay: idx * 0.1 }}
-                                                        className="text-2xl sm:text-3xl font-bold mt-2"
-                                                    >
-                                                        {stat.value}
-                                                    </motion.p>
-                                                    <p className="text-xs text-muted-foreground mt-1">{stat.desc}</p>
-                                                </div>
-                                                <motion.div 
-                                                    whileHover={{ rotate: 12, scale: 1.1 }}
-                                                    className="students-theme-hero h-10 w-10 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center shadow-lg"
-                                                >
-                                                    <stat.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                                                </motion.div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </motion.div>
-                            ))}
+                            <stat.icon className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4 xl:h-6 xl:w-6 text-white" />
                         </motion.div>
+                    </div>
+                </CardContent>
+            </Card>
+        </motion.div>
+    ))}
+</motion.div>
   
                         {/* Pending Courses Section with Enhanced Design */}
                         <motion.div
@@ -1940,496 +1948,485 @@ const ApprovalsTab = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.5, type: "spring", stiffness: 100 }}
                         >
-                            <Card className={`${gradientSurface} shadow-xl overflow-hidden`}>
-                                <CardContent className="p-0">
-                                    <div className="border-b px-4 sm:px-6 pt-4 sm:pt-6">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex gap-2 relative">
-                                                {/* Animated Tab Buttons */}
-                                                <motion.button
-                                                    onClick={() => setActiveApprovalTab('requests')}
-                                                    variants={tabButtonVariants}
-                                                    initial="initial"
-                                                    animate={activeApprovalTab === 'requests' ? "active" : "initial"}
-                                                    whileHover="hover"
-                                                    whileTap="tap"
-                                                    onHoverStart={() => setHoveredTab('requests')}
-                                                    onHoverEnd={() => setHoveredTab(null)}
-                                                    className={`relative px-4 sm:px-6 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 ${
-                                                        activeApprovalTab === 'requests'
-                                                            ? `${gradientPrimary} text-white shadow-lg`
-                                                            : 'text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800'
-                                                    }`}
-                                                >
-                                                    <motion.div
-                                                        variants={iconVariants}
-                                                        initial="initial"
-                                                        animate={hoveredTab === 'requests' ? "hover" : activeApprovalTab === 'requests' ? "active" : "initial"}
-                                                    >
-                                                        <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
-                                                    </motion.div>
-                                                    <span className="font-medium text-sm sm:text-base">
-                                                        Limit Requests
-                                                    </span>
-                                                    {requestPendingCount > 0 && (
-                                                        <motion.div
-                                                            variants={badgeVariants}
-                                                            initial="initial"
-                                                            animate="animate"
-                                                            whileHover="hover"
-                                                        >
-                                                            <Badge 
-                                                                variant="secondary" 
-                                                                className={`ml-1 text-xs ${
-                                                                    activeApprovalTab === 'requests'
-                                                                        ? 'bg-white/20 text-white hover:bg-white/30'
-                                                                        : 'students-theme-badge'
-                                                                }`}
-                                                            >
-                                                                {requestPendingCount}
-                                                            </Badge>
-                                                        </motion.div>
-                                                    )}
-                                                    {activeApprovalTab === 'requests' && (
-                                                        <motion.div
-                                                            layoutId="activeTabBackground"
-                                                            className={`absolute inset-0 rounded-xl ${gradientPrimary} -z-10`}
-                                                            initial={false}
-                                                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                                        />
-                                                    )}
-                                                </motion.button>
+                       <Card className={`${gradientSurface} shadow-xl overflow-hidden border-0`}>
+    <CardContent className="p-0">
+        <div className="px-4 sm:px-6 pt-4 sm:pt-6">
+            <div className="flex items-center justify-between">
+                <div className="flex gap-2 relative">
+                    {/* Animated Tab Buttons */}
+                    <motion.button
+                        onClick={() => setActiveApprovalTab('requests')}
+                        variants={tabButtonVariants}
+                        initial="initial"
+                        animate={activeApprovalTab === 'requests' ? "active" : "initial"}
+                        whileHover="hover"
+                        whileTap="tap"
+                        onHoverStart={() => setHoveredTab('requests')}
+                        onHoverEnd={() => setHoveredTab(null)}
+                        className={`relative px-4 sm:px-6 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 ${
+                            activeApprovalTab === 'requests'
+                                ? `${gradientPrimary} text-white shadow-lg`
+                                : 'text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800'
+                        }`}
+                    >
+                        <motion.div
+                            variants={iconVariants}
+                            initial="initial"
+                            animate={hoveredTab === 'requests' ? "hover" : activeApprovalTab === 'requests' ? "active" : "initial"}
+                        >
+                            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
+                        </motion.div>
+                        <span className="font-medium text-sm sm:text-base">
+                            Limit Requests
+                        </span>
+                        {requestPendingCount > 0 && (
+                            <motion.div
+                                variants={badgeVariants}
+                                initial="initial"
+                                animate="animate"
+                                whileHover="hover"
+                            >
+                                <Badge 
+                                    variant="secondary" 
+                                    className={`ml-1 text-xs ${
+                                        activeApprovalTab === 'requests'
+                                            ? 'bg-white/20 text-white hover:bg-white/30'
+                                            : 'students-theme-badge'
+                                    }`}
+                                >
+                                    {requestPendingCount}
+                                </Badge>
+                            </motion.div>
+                        )}
+                        {activeApprovalTab === 'requests' && (
+                            <motion.div
+                                layoutId="activeTabBackground"
+                                className={`absolute inset-0 rounded-xl ${gradientPrimary} -z-10`}
+                                initial={false}
+                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                            />
+                        )}
+                    </motion.button>
 
-                                                <motion.button
-                                                    onClick={() => setActiveApprovalTab('courses')}
-                                                    variants={tabButtonVariants}
-                                                    initial="initial"
-                                                    animate={activeApprovalTab === 'courses' ? "active" : "initial"}
-                                                    whileHover="hover"
-                                                    whileTap="tap"
-                                                    onHoverStart={() => setHoveredTab('courses')}
-                                                    onHoverEnd={() => setHoveredTab(null)}
-                                                    className={`relative px-4 sm:px-6 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 ${
-                                                        activeApprovalTab === 'courses'
-                                                            ? `${gradientPrimary} text-white shadow-lg`
-                                                            : 'text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800'
-                                                    }`}
-                                                >
-                                                    <motion.div
-                                                        variants={iconVariants}
-                                                        initial="initial"
-                                                        animate={hoveredTab === 'courses' ? "hover" : activeApprovalTab === 'courses' ? "active" : "initial"}
-                                                    >
-                                                        <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
-                                                    </motion.div>
-                                                    <span className="font-medium text-sm sm:text-base">
-                                                        Course Approvals
-                                                    </span>
-                                                    {coursePendingCount > 0 && (
-                                                        <motion.div
-                                                            variants={badgeVariants}
-                                                            initial="initial"
-                                                            animate="animate"
-                                                            whileHover="hover"
-                                                        >
-                                                            <Badge 
-                                                                variant="secondary" 
-                                                                className={`ml-1 text-xs ${
-                                                                    activeApprovalTab === 'courses'
-                                                                        ? 'bg-white/20 text-white hover:bg-white/30'
-                                                                        : 'students-theme-badge'
-                                                                }`}
-                                                            >
-                                                                {coursePendingCount}
-                                                            </Badge>
-                                                        </motion.div>
-                                                    )}
-                                                    {activeApprovalTab === 'courses' && (
-                                                        <motion.div
-                                                            layoutId="activeTabBackground"
-                                                            className={`absolute inset-0 rounded-xl ${gradientPrimary} -z-10`}
-                                                            initial={false}
-                                                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                                        />
-                                                    )}
-                                                </motion.button>
+                    <motion.button
+                        onClick={() => setActiveApprovalTab('courses')}
+                        variants={tabButtonVariants}
+                        initial="initial"
+                        animate={activeApprovalTab === 'courses' ? "active" : "initial"}
+                        whileHover="hover"
+                        whileTap="tap"
+                        onHoverStart={() => setHoveredTab('courses')}
+                        onHoverEnd={() => setHoveredTab(null)}
+                        className={`relative px-4 sm:px-6 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 ${
+                            activeApprovalTab === 'courses'
+                                ? `${gradientPrimary} text-white shadow-lg`
+                                : 'text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800'
+                        }`}
+                    >
+                        <motion.div
+                            variants={iconVariants}
+                            initial="initial"
+                            animate={hoveredTab === 'courses' ? "hover" : activeApprovalTab === 'courses' ? "active" : "initial"}
+                        >
+                            <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
+                        </motion.div>
+                        <span className="font-medium text-sm sm:text-base">
+                            Course Approvals
+                        </span>
+                        {coursePendingCount > 0 && (
+                            <motion.div
+                                variants={badgeVariants}
+                                initial="initial"
+                                animate="animate"
+                                whileHover="hover"
+                            >
+                                <Badge 
+                                    variant="secondary" 
+                                    className={`ml-1 text-xs ${
+                                        activeApprovalTab === 'courses'
+                                            ? 'bg-white/20 text-white hover:bg-white/30'
+                                            : 'students-theme-badge'
+                                    }`}
+                                >
+                                    {coursePendingCount}
+                                </Badge>
+                            </motion.div>
+                        )}
+                        {activeApprovalTab === 'courses' && (
+                            <motion.div
+                                layoutId="activeTabBackground"
+                                className={`absolute inset-0 rounded-xl ${gradientPrimary} -z-10`}
+                                initial={false}
+                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                            />
+                        )}
+                    </motion.button>
+                </div>
+                
+                {/* View Toggle for Desktop */}
+                {activeApprovalTab === 'requests' && filteredLimitRequests.length > 0 && (
+                    <div className="hidden sm:flex gap-2">
+                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                            <Button
+                                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setViewMode('grid')}
+                                className={`gap-2 ${viewMode === 'grid' ? gradientPrimary : ''} text-white`}
+                            >
+                                <LayoutGrid className="h-4 w-4" />
+                            </Button>
+                        </motion.div>
+                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                            <Button
+                                variant={viewMode === 'list' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setViewMode('list')}
+                                className={`gap-2 ${viewMode === 'list' ? gradientPrimary : ''} text-white`}
+                            >
+                                <List className="h-4 w-4" />
+                            </Button>
+                        </motion.div>
+                    </div>
+                )}
+            </div>
+        </div>
 
-                                                {/* Animated Underline Indicator */}
-                                                <motion.div
-                                                    className={`absolute bottom-0 left-0 h-0.5 ${gradientBorder}`}
-                                                    initial={false}
-                                                    animate={{
-                                                        width: activeApprovalTab === 'requests' ? 'calc(50% - 4px)' : 'calc(50% - 4px)',
-                                                        x: activeApprovalTab === 'requests' ? 0 : 'calc(100% + 4px)',
-                                                    }}
-                                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                                />
+        {/* Filters with Animation */}
+        <motion.div 
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="p-4 sm:p-6"
+        >
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                        type="text"
+                        placeholder={`Search ${activeApprovalTab === 'requests' ? 'staff members...' : 'courses...'}`}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="students-theme-input w-full pl-10 pr-4 py-2 rounded-lg text-sm transition-all duration-300"
+                    />
+                </div>
+                <select
+                    value={selectedDepartment}
+                    onChange={(e) => setSelectedDepartment(e.target.value)}
+                    className="students-theme-select px-3 py-2 rounded-lg text-sm transition-all duration-300"
+                >
+                    <option value="all">All Departments</option>
+                    {departmentsList.map((dept) => (
+                        <option key={dept._id} value={dept._id}>{dept.name}</option>
+                    ))}
+                </select>
+            </div>
+        </motion.div>
+
+        {/* Animated Tab Content */}
+        <AnimatePresence mode="wait" custom={getTabDirection()}>
+            {/* Limit Requests Tab */}
+            {activeApprovalTab === 'requests' && (
+                <motion.div
+                    key="requests"
+                    custom={getTabDirection()}
+                    variants={tabContentVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    className="p-4 sm:p-6"
+                >
+                    {filteredLimitRequests.length === 0 ? (
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ type: "spring", stiffness: 200 }}
+                            className="text-center py-12"
+                        >
+                            <motion.div 
+                                animate={{ rotate: [0, 360] }}
+                                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                className="students-theme-checkbox inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
+                            >
+                                <CheckCircle2 className="h-8 w-8 text-primary" />
+                            </motion.div>
+                            <h3 className="text-lg font-semibold mb-2">All Clear!</h3>
+                            <p className="text-muted-foreground">No pending limit increase requests at the moment</p>
+                        </motion.div>
+                    ) : (
+                        <motion.div 
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="visible"
+                            className={`${viewMode === 'grid' ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6' : 'space-y-4'}`}
+                        >
+                            {filteredLimitRequests.map((request, idx) => (
+                                <motion.div
+                                    key={request._id}
+                                    variants={itemVariants}
+                                    whileHover={{ scale: 1.02, y: -5 }}
+                                    transition={{ type: "spring", stiffness: 300 }}
+                                    className="group relative overflow-hidden rounded-xl border bg-card shadow-sm hover:shadow-xl transition-all duration-300"
+                                >
+                                    <motion.div 
+                                        className={`absolute inset-0 ${gradientPrimary} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}
+                                        initial={false}
+                                        animate={false}
+                                    />
+                                    <div className="p-4 sm:p-6 relative">
+                                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+                                            <div className="flex items-center gap-3 sm:gap-4">
+                                                <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
+                                                    <Avatar className="h-12 w-12 sm:h-14 sm:w-14 ring-2 ring-primary/20">
+                                                        <AvatarFallback className={`${gradientPrimary} text-white`}>
+                                                            {getInitials(request.deptAdminId?.name)}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                </motion.div>
+                                                <div>
+                                                    <h3 className="font-semibold text-base sm:text-lg">
+                                                        {request.deptAdminId?.name || 'Department Admin'}
+                                                    </h3>
+                                                    <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                                                        <Mail className="h-3 w-3" />
+                                                        <span className="truncate">{request.deptAdminId?.email || 'No email'}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <Badge variant="outline" className="students-theme-badge self-start sm:self-auto">
+                                                <Clock className="w-3 h-3 mr-1" />
+                                                Pending
+                                            </Badge>
+                                        </div>
+
+                                        <div className="space-y-3 mb-4">
+                                            <div className="students-theme-checkbox flex items-center justify-between p-3 rounded-lg">
+                                                <div className="flex items-center gap-2">
+                                                    <TrendingUp className="students-theme-title h-4 w-4" />
+                                                    <span className="text-xs sm:text-sm font-medium">Requested Limit</span>
+                                                </div>
+                                                <motion.span 
+                                                    initial={{ scale: 0 }}
+                                                    animate={{ scale: 1 }}
+                                                    transition={{ type: "spring", stiffness: 200, delay: idx * 0.1 }}
+                                                    className="students-theme-title text-base sm:text-lg font-bold"
+                                                >
+                                                    {request.requestedCourseLimit} courses
+                                                </motion.span>
                                             </div>
                                             
-                                            {/* View Toggle for Desktop */}
-                                            {activeApprovalTab === 'requests' && filteredLimitRequests.length > 0 && (
-                                                <div className="hidden sm:flex gap-2">
-                                                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                                                        <Button
-                                                            variant={viewMode === 'grid' ? 'default' : 'outline'}
-                                                            size="sm"
-                                                            onClick={() => setViewMode('grid')}
-                                                            className={`gap-2 ${viewMode === 'grid' ? gradientPrimary : ''} text-white`}
+                                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                                                <div className="flex items-center gap-2">
+                                                    <Building2 className="h-4 w-4" />
+                                                    <span>Dept: {request.deptAdminId?.department?.name || 'N/A'}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Calendar className="h-4 w-4" />
+                                                    <span>Submitted: {new Date(request.createdAt).toLocaleDateString()}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex-1">
+                                                <Button
+                                                    className={`w-full ${gradientPrimary} text-white shadow-md text-sm hover:opacity-90`}
+                                                    size="sm"
+                                                    onClick={() => handleProcessDeptCourseLimitRequest(request._id, 'approved')}
+                                                >
+                                                    <Check className="w-4 h-4 mr-2" />
+                                                    Approve
+                                                </Button>
+                                            </motion.div>
+                                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex-1">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="w-full text-destructive hover:bg-destructive/10 text-sm"
+                                                    onClick={async () => {
+                                                        const result = await Swal.fire({
+                                                            title: 'Reject Request?',
+                                                            input: 'textarea',
+                                                            inputLabel: 'Reason (optional)',
+                                                            inputPlaceholder: 'Enter reason for rejection...',
+                                                            showCancelButton: true,
+                                                            confirmButtonText: 'Reject',
+                                                            confirmButtonColor: '#dc2626'
+                                                        });
+                                                        if (result.isConfirmed) {
+                                                            await handleProcessDeptCourseLimitRequest(request._id, 'rejected', result.value || '');
+                                                        }
+                                                    }}
+                                                >
+                                                    <X className="w-4 h-4 mr-2" />
+                                                    Reject
+                                                </Button>
+                                            </motion.div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    )}
+                </motion.div>
+            )}
+
+            {/* Course Approvals Tab */}
+            {activeApprovalTab === 'courses' && (
+                <motion.div
+                    key="courses"
+                    custom={getTabDirection()}
+                    variants={tabContentVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    className="p-4 sm:p-6"
+                >
+                    {filteredCourses.length === 0 ? (
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ type: "spring", stiffness: 200 }}
+                            className="text-center py-12"
+                        >
+                            <motion.div 
+                                animate={{ rotate: [0, 360] }}
+                                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                className="students-theme-checkbox inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
+                            >
+                                <CheckCircle2 className="h-8 w-8 text-primary" />
+                            </motion.div>
+                            <h3 className="text-lg font-semibold mb-2">No Pending Courses</h3>
+                            <p className="text-muted-foreground">All courses have been reviewed and approved</p>
+                        </motion.div>
+                    ) : (
+                        <motion.div 
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="visible"
+                            className="space-y-4"
+                        >
+                            {filteredCourses.map((course, idx) => {
+                                const title = course.title || 'Untitled';
+                                const dept = course.department 
+                                    ? `Dept: ${getDepartmentLabel(course.department) || course.department}` 
+                                    : 'All students';
+                                const createdBy = course.createdBy?.name || 'Staff Member';
+                                const createdAt = course.createdAt ? new Date(course.createdAt).toLocaleDateString() : 'Recently';
+
+                                return (
+                                    <motion.div
+                                        key={course._id}
+                                        variants={itemVariants}
+                                        whileHover={{ y: -5, scale: 1.01 }}
+                                        className="group relative overflow-hidden rounded-xl border bg-card shadow-sm hover:shadow-xl transition-all duration-300"
+                                    >
+                                        <motion.div 
+                                            className={`absolute top-0 left-0 right-0 h-1 ${gradientPrimary}`}
+                                            initial={{ scaleX: 0 }}
+                                            animate={{ scaleX: 1 }}
+                                            transition={{ duration: 0.5, delay: idx * 0.1 }}
+                                        />
+                                        <div className="p-4 sm:p-6">
+                                            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                                                        <motion.h3 
+                                                            whileHover={{ x: 5 }}
+                                                            className="font-semibold text-lg sm:text-xl truncate capitalize"
                                                         >
-                                                            <LayoutGrid className="h-4 w-4" />
+                                                            {title}
+                                                        </motion.h3>
+                                                        <Badge variant="outline" className="students-theme-badge">
+                                                            <Clock8 className="w-3 h-3 mr-1" />
+                                                            Pending
+                                                        </Badge>
+                                                    </div>
+                                                    
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-4">
+                                                        <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                                                            <Building2 className="h-4 w-4 flex-shrink-0" />
+                                                            <span className="truncate">{dept}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                                                            <User className="h-4 w-4 flex-shrink-0" />
+                                                            <span>Created by: {createdBy}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                                                            <Calendar className="h-4 w-4 flex-shrink-0" />
+                                                            <span>Created: {createdAt}</span>
+                                                        </div>
+                                                        {course.topics?.length > 0 && (
+                                                            <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                                                                <BookOpen className="h-4 w-4 flex-shrink-0" />
+                                                                <span>{course.topics.length} topics</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="flex flex-row sm:flex-row lg:flex-col gap-2 lg:min-w-[180px]">
+                                                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                                        <Button 
+                                                            variant="outline" 
+                                                            size="sm" 
+                                                            className="students-theme-outline-btn gap-2 text-sm w-full transition-colors"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setPreviewCourse(course);
+                                                            }}
+                                                        >
+                                                            <EyeIcon className="w-4 h-4" />
+                                                            Preview
                                                         </Button>
                                                     </motion.div>
-                                                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                                                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                                         <Button
-                                                            variant={viewMode === 'list' ? 'default' : 'outline'}
                                                             size="sm"
-                                                            onClick={() => setViewMode('list')}
-                                                            className={`gap-2 ${viewMode === 'list' ? gradientPrimary : ''} text-white`}
+                                                            className={`gap-2 ${gradientPrimary} text-white shadow-lg hover:opacity-90 text-sm w-full`}
+                                                            onClick={() => handleReviewOrgCourse(course._id, 'approved', '')}
                                                         >
-                                                            <List className="h-4 w-4" />
+                                                            <Check className="w-4 h-4" />
+                                                            Approve
+                                                        </Button>
+                                                    </motion.div>
+                                                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="gap-2 text-destructive hover:bg-destructive/10 text-sm w-full"
+                                                            onClick={async () => {
+                                                                const result = await Swal.fire({
+                                                                    title: 'Reject this course?',
+                                                                    input: 'textarea',
+                                                                    inputLabel: 'Reason for rejection',
+                                                                    inputPlaceholder: 'Provide feedback to the staff member...',
+                                                                    showCancelButton: true,
+                                                                    confirmButtonText: 'Reject',
+                                                                    confirmButtonColor: '#dc2626'
+                                                                });
+
+                                                                if (result.isConfirmed) {
+                                                                    await handleReviewOrgCourse(course._id, 'rejected', String(result.value || ''));
+                                                                }
+                                                            }}
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                            Reject
                                                         </Button>
                                                     </motion.div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Filters with Animation */}
-                                    <motion.div 
-                                        initial={{ y: -20, opacity: 0 }}
-                                        animate={{ y: 0, opacity: 1 }}
-                                        transition={{ delay: 0.6 }}
-                                        className="p-4 sm:p-6 border-b"
-                                    >
-                                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                                            <div className="relative flex-1">
-                                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                                <input
-                                                    type="text"
-                                                    placeholder={`Search ${activeApprovalTab === 'requests' ? 'staff members...' : 'courses...'}`}
-                                                    value={searchQuery}
-                                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                                    className="students-theme-input w-full pl-10 pr-4 py-2 rounded-lg text-sm transition-all duration-300"
-                                                />
                                             </div>
-                                            <select
-                                                value={selectedDepartment}
-                                                onChange={(e) => setSelectedDepartment(e.target.value)}
-                                                className="students-theme-select px-3 py-2 rounded-lg text-sm transition-all duration-300"
-                                            >
-                                                <option value="all">All Departments</option>
-                                                {departmentsList.map((dept) => (
-                                                    <option key={dept._id} value={dept._id}>{dept.name}</option>
-                                                ))}
-                                            </select>
                                         </div>
                                     </motion.div>
-
-                                    {/* Animated Tab Content */}
-                                    <AnimatePresence mode="wait" custom={getTabDirection()}>
-                                        {/* Limit Requests Tab */}
-                                        {activeApprovalTab === 'requests' && (
-                                            <motion.div
-                                                key="requests"
-                                                custom={getTabDirection()}
-                                                variants={tabContentVariants}
-                                                initial="enter"
-                                                animate="center"
-                                                exit="exit"
-                                                className="p-4 sm:p-6"
-                                            >
-                                                {filteredLimitRequests.length === 0 ? (
-                                                    <motion.div 
-                                                        initial={{ scale: 0.9, opacity: 0 }}
-                                                        animate={{ scale: 1, opacity: 1 }}
-                                                        transition={{ type: "spring", stiffness: 200 }}
-                                                        className="text-center py-12"
-                                                    >
-                                                        <motion.div 
-                                                            animate={{ rotate: [0, 360] }}
-                                                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                                            className="students-theme-checkbox inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
-                                                        >
-                                                            <CheckCircle2 className="h-8 w-8 text-primary" />
-                                                        </motion.div>
-                                                        <h3 className="text-lg font-semibold mb-2">All Clear!</h3>
-                                                        <p className="text-muted-foreground">No pending limit increase requests at the moment</p>
-                                                    </motion.div>
-                                                ) : (
-                                                    <motion.div 
-                                                        variants={containerVariants}
-                                                        initial="hidden"
-                                                        animate="visible"
-                                                        className={`${viewMode === 'grid' ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6' : 'space-y-4'}`}
-                                                    >
-                                                        {filteredLimitRequests.map((request, idx) => (
-                                                            <motion.div
-                                                                key={request._id}
-                                                                variants={itemVariants}
-                                                                whileHover={{ scale: 1.02, y: -5 }}
-                                                                transition={{ type: "spring", stiffness: 300 }}
-                                                                className="group relative overflow-hidden rounded-xl border bg-card shadow-sm hover:shadow-xl transition-all duration-300"
-                                                            >
-                                                                <motion.div 
-                                                                    className={`absolute inset-0 ${gradientPrimary} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}
-                                                                    initial={false}
-                                                                    animate={false}
-                                                                />
-                                                                <div className="p-4 sm:p-6 relative">
-                                                                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-                                                                        <div className="flex items-center gap-3 sm:gap-4">
-                                                                            <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
-                                                                                <Avatar className="h-12 w-12 sm:h-14 sm:w-14 ring-2 ring-primary/20">
-                                                                                    <AvatarFallback className={`${gradientPrimary} text-white`}>
-                                                                                        {getInitials(request.deptAdminId?.name)}
-                                                                                    </AvatarFallback>
-                                                                                </Avatar>
-                                                                            </motion.div>
-                                                                            <div>
-                                                                                <h3 className="font-semibold text-base sm:text-lg">
-                                                                                    {request.deptAdminId?.name || 'Department Admin'}
-                                                                                </h3>
-                                                                                <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                                                                                    <Mail className="h-3 w-3" />
-                                                                                    <span className="truncate">{request.deptAdminId?.email || 'No email'}</span>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                        <Badge variant="outline" className="students-theme-badge self-start sm:self-auto">
-                                                                            <Clock className="w-3 h-3 mr-1" />
-                                                                            Pending
-                                                                        </Badge>
-                                                                    </div>
-
-                                                                    <div className="space-y-3 mb-4">
-                                                                        <div className="students-theme-checkbox flex items-center justify-between p-3 rounded-lg">
-                                                                            <div className="flex items-center gap-2">
-                                                                                <TrendingUp className="students-theme-title h-4 w-4" />
-                                                                                <span className="text-xs sm:text-sm font-medium">Requested Limit</span>
-                                                                            </div>
-                                                                            <motion.span 
-                                                                                initial={{ scale: 0 }}
-                                                                                animate={{ scale: 1 }}
-                                                                                transition={{ type: "spring", stiffness: 200, delay: idx * 0.1 }}
-                                                                                className="students-theme-title text-base sm:text-lg font-bold"
-                                                                            >
-                                                                                {request.requestedCourseLimit} courses
-                                                                            </motion.span>
-                                                                        </div>
-                                                                        
-                                                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                                                                            <div className="flex items-center gap-2">
-                                                                                <Building2 className="h-4 w-4" />
-                                                                                <span>Dept: {request.deptAdminId?.department?.name || 'N/A'}</span>
-                                                                            </div>
-                                                                            <div className="flex items-center gap-2">
-                                                                                <Calendar className="h-4 w-4" />
-                                                                                <span>Submitted: {new Date(request.createdAt).toLocaleDateString()}</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                                                                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex-1">
-                                                                            <Button
-                                                                                className={`w-full ${gradientPrimary} text-white shadow-md text-sm hover:opacity-90`}
-                                                                                size="sm"
-                                                                                onClick={() => handleProcessDeptCourseLimitRequest(request._id, 'approved')}
-                                                                            >
-                                                                                <Check className="w-4 h-4 mr-2" />
-                                                                                Approve
-                                                                            </Button>
-                                                                        </motion.div>
-                                                                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex-1">
-                                                                            <Button
-                                                                                variant="outline"
-                                                                                size="sm"
-                                                                                className="w-full text-destructive hover:bg-destructive/10 text-sm"
-                                                                                onClick={async () => {
-                                                                                    const result = await Swal.fire({
-                                                                                        title: 'Reject Request?',
-                                                                                        input: 'textarea',
-                                                                                        inputLabel: 'Reason (optional)',
-                                                                                        inputPlaceholder: 'Enter reason for rejection...',
-                                                                                        showCancelButton: true,
-                                                                                        confirmButtonText: 'Reject',
-                                                                                        confirmButtonColor: '#dc2626'
-                                                                                    });
-                                                                                    if (result.isConfirmed) {
-                                                                                        await handleProcessDeptCourseLimitRequest(request._id, 'rejected', result.value || '');
-                                                                                    }
-                                                                                }}
-                                                                            >
-                                                                                <X className="w-4 h-4 mr-2" />
-                                                                                Reject
-                                                                            </Button>
-                                                                        </motion.div>
-                                                                    </div>
-                                                                </div>
-                                                            </motion.div>
-                                                        ))}
-                                                    </motion.div>
-                                                )}
-                                            </motion.div>
-                                        )}
-
-                                        {/* Course Approvals Tab */}
-                                        {activeApprovalTab === 'courses' && (
-                                            <motion.div
-                                                key="courses"
-                                                custom={getTabDirection()}
-                                                variants={tabContentVariants}
-                                                initial="enter"
-                                                animate="center"
-                                                exit="exit"
-                                                className="p-4 sm:p-6"
-                                            >
-                                                {filteredCourses.length === 0 ? (
-                                                    <motion.div 
-                                                        initial={{ scale: 0.9, opacity: 0 }}
-                                                        animate={{ scale: 1, opacity: 1 }}
-                                                        transition={{ type: "spring", stiffness: 200 }}
-                                                        className="text-center py-12"
-                                                    >
-                                                        <motion.div 
-                                                            animate={{ rotate: [0, 360] }}
-                                                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                                            className="students-theme-checkbox inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
-                                                        >
-                                                            <CheckCircle2 className="h-8 w-8 text-primary" />
-                                                        </motion.div>
-                                                        <h3 className="text-lg font-semibold mb-2">No Pending Courses</h3>
-                                                        <p className="text-muted-foreground">All courses have been reviewed and approved</p>
-                                                    </motion.div>
-                                                ) : (
-                                                    <motion.div 
-                                                        variants={containerVariants}
-                                                        initial="hidden"
-                                                        animate="visible"
-                                                        className="space-y-4"
-                                                    >
-                                                        {filteredCourses.map((course, idx) => {
-                                                            const title = course.title || 'Untitled';
-                                                            const dept = course.department 
-                                                                ? `Dept: ${getDepartmentLabel(course.department) || course.department}` 
-                                                                : 'All students';
-                                                            const createdBy = course.createdBy?.name || 'Staff Member';
-                                                            const createdAt = course.createdAt ? new Date(course.createdAt).toLocaleDateString() : 'Recently';
-
-                                                            return (
-                                                                <motion.div
-                                                                    key={course._id}
-                                                                    variants={itemVariants}
-                                                                    whileHover={{ y: -5, scale: 1.01 }}
-                                                                    className="group relative overflow-hidden rounded-xl border bg-card shadow-sm hover:shadow-xl transition-all duration-300"
-                                                                >
-                                                                    <motion.div 
-                                                                        className={`absolute top-0 left-0 right-0 h-1 ${gradientPrimary}`}
-                                                                        initial={{ scaleX: 0 }}
-                                                                        animate={{ scaleX: 1 }}
-                                                                        transition={{ duration: 0.5, delay: idx * 0.1 }}
-                                                                    />
-                                                                    <div className="p-4 sm:p-6">
-                                                                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                                                                            <div className="flex-1 min-w-0">
-                                                                                <div className="flex flex-wrap items-center gap-2 mb-3">
-                                                                                    <motion.h3 
-                                                                                        whileHover={{ x: 5 }}
-                                                                                        className="font-semibold text-lg sm:text-xl truncate capitalize"
-                                                                                    >
-                                                                                        {title}
-                                                                                    </motion.h3>
-                                                                                    <Badge variant="outline" className="students-theme-badge">
-                                                                                        <Clock8 className="w-3 h-3 mr-1" />
-                                                                                        Pending
-                                                                                    </Badge>
-                                                                                </div>
-                                                                                
-                                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-4">
-                                                                                    <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                                                                                        <Building2 className="h-4 w-4 flex-shrink-0" />
-                                                                                        <span className="truncate">{dept}</span>
-                                                                                    </div>
-                                                                                    <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                                                                                        <User className="h-4 w-4 flex-shrink-0" />
-                                                                                        <span>Created by: {createdBy}</span>
-                                                                                    </div>
-                                                                                    <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                                                                                        <Calendar className="h-4 w-4 flex-shrink-0" />
-                                                                                        <span>Created: {createdAt}</span>
-                                                                                    </div>
-                                                                                    {course.topics?.length > 0 && (
-                                                                                        <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                                                                                            <BookOpen className="h-4 w-4 flex-shrink-0" />
-                                                                                            <span>{course.topics.length} topics</span>
-                                                                                        </div>
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
-                                                                            
-                                                                            <div className="flex flex-row sm:flex-row lg:flex-col gap-2 lg:min-w-[180px]">
-                                                                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                                                                    <Button 
-                                                                                        variant="outline" 
-                                                                                        size="sm" 
-                                                                                        className="students-theme-outline-btn gap-2 text-sm w-full transition-colors"
-                                                                                     onClick={(e) => {
-  e.stopPropagation();
-  setPreviewCourse(course);
-}}
-                                                                                    >
-                                                                                        <EyeIcon className="w-4 h-4" />
-                                                                                        Preview
-                                                                                    </Button>
-                                                                                </motion.div>
-                                                                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                                                                    <Button
-                                                                                        size="sm"
-                                                                                        className={`gap-2 ${gradientPrimary} text-white shadow-lg hover:opacity-90 text-sm w-full`}
-                                                                                        onClick={() => handleReviewOrgCourse(course._id, 'approved', '')}
-                                                                                    >
-                                                                                        <Check className="w-4 h-4" />
-                                                                                        Approve
-                                                                                    </Button>
-                                                                                </motion.div>
-                                                                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                                                                    <Button
-                                                                                        variant="outline"
-                                                                                        size="sm"
-                                                                                        className="gap-2 text-destructive hover:bg-destructive/10 text-sm w-full"
-                                                                                        onClick={async () => {
-                                                                                            const result = await Swal.fire({
-                                                                                                title: 'Reject this course?',
-                                                                                                input: 'textarea',
-                                                                                                inputLabel: 'Reason for rejection',
-                                                                                                inputPlaceholder: 'Provide feedback to the staff member...',
-                                                                                                showCancelButton: true,
-                                                                                                confirmButtonText: 'Reject',
-                                                                                                confirmButtonColor: '#dc2626'
-                                                                                            });
-
-                                                                                            if (result.isConfirmed) {
-                                                                                                await handleReviewOrgCourse(course._id, 'rejected', String(result.value || ''));
-                                                                                            }
-                                                                                        }}
-                                                                                    >
-                                                                                        <X className="w-4 h-4" />
-                                                                                        Reject
-                                                                                    </Button>
-                                                                                </motion.div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </motion.div>
-                                                            );
-                                                        })}
-                                                    </motion.div>
-                                                )}
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </CardContent>
-                            </Card>
+                                );
+                            })}
+                        </motion.div>
+                    )}
+                </motion.div>
+            )}
+        </AnimatePresence>
+    </CardContent>
+</Card>
                         </motion.div>
                     </div>
 

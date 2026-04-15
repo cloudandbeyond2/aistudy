@@ -351,134 +351,162 @@ const ActivityTab: React.FC = () => {
             </motion.div>
 
             {/* Stats Cards */}
-            <motion.div 
-                variants={containerVariants}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-            >
-                {statsData.map((stat, idx) => (
-                    <motion.div
-                        key={idx}
-                        custom={idx}
-                        variants={statsCardVariants}
-                        whileHover="hover"
-                        initial="hidden"
-                        animate="visible"
-                    >
-                        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-800/50 overflow-hidden group">
-                            <CardContent className="p-6 relative">
-                                <motion.div 
-                                    className={`absolute inset-0 bg-gradient-to-r ${colorMap[stat.color as keyof typeof colorMap].gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}
-                                />
-                                <div className="flex items-center justify-between">
-                                    <div className="space-y-2">
-                                        <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                                        <motion.p 
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            transition={{ type: "spring" as const, delay: idx * 0.1 }}
-                                            className="text-3xl font-bold"
-                                        >
-                                            {stat.value}
-                                        </motion.p>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs text-green-600 font-medium">{stat.trend}</span>
-                                            <span className="text-xs text-muted-foreground">{stat.period}</span>
-                                        </div>
-                                    </div>
-                                    <motion.div 
-                                        whileHover={{ rotate: 12, scale: 1.1 }}
-                                        className={`${colorMap[stat.color as keyof typeof colorMap].bg} rounded-xl flex items-center justify-center h-12 w-12`}
-                                    >
-                                        <stat.icon className={`h-6 w-6 ${colorMap[stat.color as keyof typeof colorMap].text}`} />
-                                    </motion.div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-                ))}
-            </motion.div>
-
-            {/* Search and Filter Bar */}
-            <motion.div variants={itemVariants}>
-                <Card className="border-0 shadow-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm">
-                    <CardContent className="p-6">
-                        <div className="flex flex-col lg:flex-row gap-4">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <input
-                                    type="text"
-                                    placeholder="Search by name or email..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
-                                />
-                            </div>
-                            <div className="flex gap-3">
-                                <select
-                                    value={selectedRole}
-                                    onChange={(e) => setSelectedRole(e.target.value)}
-                                    className="px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
-                                >
-                                    <option value="all">All Roles</option>
-                                    {uniqueRoles.map(role => (
-                                        <option key={role} value={role}>{role}</option>
-                                    ))}
-                                </select>
-                                <div className="flex gap-1 bg-muted rounded-lg p-1">
-                                    {['today', 'week', 'month', 'all'].map((range) => (
-                                        <button
-                                            key={range}
-                                            onClick={() => setDateRange(range as any)}
-                                            className={`px-3 py-1.5 text-sm rounded-md transition-all duration-300 ${
-                                                dateRange === range 
-                                                    ? 'bg-background text-foreground shadow-sm font-medium' 
-                                                    : 'text-muted-foreground hover:text-foreground'
-                                            }`}
-                                        >
-                                            {range.charAt(0).toUpperCase() + range.slice(1)}
-                                        </button>
-                                    ))}
-                                </div>
-                                <Button 
-                                    variant="outline" 
-                                    onClick={fetchStaffLoginActivity} 
-                                    disabled={staffLoginLoading}
-                                    className="gap-2"
-                                >
-                                    <RefreshCw className={`h-4 w-4 ${staffLoginLoading ? 'animate-spin' : ''}`} />
-                                    <span className="hidden sm:inline">Refresh</span>
-                                </Button>
+        <motion.div 
+    variants={containerVariants}
+    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6"
+>
+    {statsData.map((stat, idx) => (
+        <motion.div
+            key={idx}
+            custom={idx}
+            variants={statsCardVariants}
+            whileHover="hover"
+            initial="hidden"
+            animate="visible"
+            className="h-full"
+        >
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-800/50 overflow-hidden group h-full">
+                <CardContent className="p-4 sm:p-5 md:p-6 relative h-full flex flex-col justify-between">
+                    <motion.div 
+                        className={`absolute inset-0 bg-gradient-to-r ${colorMap[stat.color as keyof typeof colorMap].gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}
+                    />
+                    <div className="flex items-center justify-between relative z-10 w-full">
+                        <div className="space-y-2 flex-1 min-w-0">
+                            <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
+                                {stat.label}
+                            </p>
+                            <motion.p 
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring" as const, delay: idx * 0.1 }}
+                                className="text-xl sm:text-2xl lg:text-3xl font-bold break-words"
+                            >
+                                {stat.value}
+                            </motion.p>
+                            <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                                <span className="text-[10px] sm:text-xs text-green-600 font-medium whitespace-nowrap">
+                                    {stat.trend}
+                                </span>
+                                <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
+                                    {stat.period}
+                                </span>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
-            </motion.div>
+                        <motion.div 
+                            whileHover={{ rotate: 12, scale: 1.1 }}
+                            className={`${colorMap[stat.color as keyof typeof colorMap].bg} rounded-xl flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 flex-shrink-0 ml-3`}
+                        >
+                            <stat.icon className={`h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 ${colorMap[stat.color as keyof typeof colorMap].text}`} />
+                        </motion.div>
+                    </div>
+                </CardContent>
+            </Card>
+        </motion.div>
+    ))}
+</motion.div>
+
+            {/* Search and Filter Bar */}
+       <motion.div variants={itemVariants}>
+  <Card className="border-0 shadow-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm">
+    <CardContent className="p-4 sm:p-6">
+      {/* Responsive: column on mobile/tablet, row on laptop+ */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        
+        {/* Search - full width on mobile/tablet */}
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+          />
+        </div>
+        
+        {/* Filters container - wraps on mobile */}
+        <div className="flex flex-col sm:flex-row gap-3 lg:flex-nowrap">
+          
+          {/* Role select */}
+          <select
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+            className="w-full sm:w-auto px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+          >
+            <option value="all">All Roles</option>
+            {uniqueRoles.map(role => (
+              <option key={role} value={role}>{role}</option>
+            ))}
+          </select>
+          
+          {/* Date range buttons - scrollable on mobile if needed */}
+          <div className="flex gap-1 bg-muted rounded-lg p-1 overflow-x-auto lg:overflow-visible">
+            {['today', 'week', 'month', 'all'].map((range) => (
+              <button
+                key={range}
+                onClick={() => setDateRange(range as any)}
+                className={`whitespace-nowrap px-3 py-1.5 text-sm rounded-md transition-all duration-300 ${
+                  dateRange === range 
+                    ? 'bg-background text-foreground shadow-sm font-medium' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {range.charAt(0).toUpperCase() + range.slice(1)}
+              </button>
+            ))}
+          </div>
+          
+          {/* Refresh button */}
+          <Button 
+            variant="outline" 
+            onClick={fetchStaffLoginActivity} 
+            disabled={staffLoginLoading}
+            className="w-full sm:w-auto gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${staffLoginLoading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Refresh</span>
+            <span className="sm:hidden"></span>
+          </Button>
+          
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+</motion.div>
 
             {/* Main Activity Table */}
             <motion.div variants={itemVariants}>
                 <Card className="border-0 shadow-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm overflow-hidden">
-                    <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle className="text-2xl flex items-center gap-2">
-                                    <UserCheck className="h-6 w-6 text-blue-500" />
-                                    Staff Login History
-                                </CardTitle>
-                                <CardDescription className="mt-1">
-                                    Complete login records with timestamps and IP addresses
-                                </CardDescription>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="gap-1">
-                                    <Eye className="h-3 w-3" />
-                                    {filteredLogs.length} records
-                                </Badge>
-                                <Badge variant="outline" className="gap-1">
-                                    Page {currentPage} of {totalPages || 1}
-                                </Badge>
-                            </div>
-                        </div>
-                    </CardHeader>
+                  <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
+  {/* Responsive: column on mobile, row on tablet+ */}
+  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+    
+    {/* Title section - full width on mobile */}
+    <div className="flex-1">
+      <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
+        <UserCheck className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500 flex-shrink-0" />
+        <span className="text-base sm:text-xl md:text-2xl">Staff Login History</span>
+      </CardTitle>
+      <CardDescription className="mt-1 text-xs sm:text-sm">
+        Complete login records with timestamps and IP addresses
+      </CardDescription>
+    </div>
+    
+    {/* Badges section - wraps on mobile */}
+    <div className="flex flex-wrap items-center gap-2">
+      <Badge variant="outline" className="gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1">
+        <Eye className="h-3 w-3" />
+        <span className="hidden xs:inline">Records: </span>
+        {filteredLogs.length}
+      </Badge>
+      <Badge variant="outline" className="gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1">
+        <span className="hidden xs:inline">Page </span>
+        {currentPage} / {totalPages || 1}
+      </Badge>
+    </div>
+    
+  </div>
+</CardHeader>
 
                     <CardContent className="p-0">
                         <div id="activity-table-top"></div>

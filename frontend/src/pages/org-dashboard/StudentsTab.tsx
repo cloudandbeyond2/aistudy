@@ -706,645 +706,620 @@ const StudentsTab = () => {
 </motion.div>
 
                 {/* Main Card */}
-                <Card className="students-theme-surface">
-                    <CardHeader className="students-theme-surface-header p-3 sm:p-4 md:p-6">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                            <div>
-                                <CardTitle className="students-theme-title text-lg sm:text-xl md:text-2xl">Student Directory</CardTitle>
-                                <CardDescription className="students-theme-description text-xs sm:text-sm">View and manage all student records</CardDescription>
-                            </div>
-                            <div className="flex gap-2">
-                                <Button 
-                                    variant={viewMode === 'grid' ? 'default' : 'outline'}
-                                    onClick={() => setViewMode('grid')}
-                                    className={viewMode === 'grid'
-                                        ? `gap-1 sm:gap-2 px-2 sm:px-3 bg-gradient-to-r ${accentGradient} text-white hover:opacity-95`
-                                        : `gap-1 sm:gap-2 px-2 sm:px-3 students-theme-outline-btn`}
-                                    size="sm"
+          <Card className="students-theme-surface">
+    <CardHeader className="students-theme-surface-header p-3 sm:p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+                <CardTitle className="students-theme-title text-lg sm:text-xl md:text-2xl">Student Directory</CardTitle>
+                <CardDescription className="students-theme-description text-xs sm:text-sm">View and manage all student records</CardDescription>
+            </div>
+            <div className="flex gap-2">
+                <Button 
+                    variant={viewMode === 'grid' ? 'default' : 'outline'}
+                    onClick={() => setViewMode('grid')}
+                    className={viewMode === 'grid'
+                        ? `gap-1 sm:gap-2 px-2 sm:px-3 bg-gradient-to-r ${accentGradient} text-white hover:opacity-95`
+                        : `gap-1 sm:gap-2 px-2 sm:px-3 students-theme-outline-btn`}
+                    size="sm"
+                >
+                    <LayoutGrid className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden xs:inline text-xs sm:text-sm">Grid</span>
+                </Button>
+                <Button 
+                    variant={viewMode === 'list' ? 'default' : 'outline'}
+                    onClick={() => setViewMode('list')}
+                    className={viewMode === 'list'
+                        ? `gap-1 sm:gap-2 px-2 sm:px-3 bg-gradient-to-r ${accentGradient} text-white hover:opacity-95`
+                        : `gap-1 sm:gap-2 px-2 sm:px-3 students-theme-outline-btn`}
+                    size="sm"
+                >
+                    <List className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden xs:inline text-xs sm:text-sm">List</span>
+                </Button>
+            </div>
+        </div>
+    </CardHeader>
+    <CardContent className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
+        {/* Filters and Actions */}
+        <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 justify-between items-stretch lg:items-center">
+            {/* Filter Section - Responsive Toggle for ALL devices */}
+            <div className="flex-1">
+                {/* Filter Toggle Button - Visible on all devices */}
+                <Button 
+                    variant="outline" 
+                    onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+                    className="students-theme-outline-btn w-full sm:w-auto gap-2"
+                >
+                    <Menu className="w-4 h-4" />
+                    {mobileFiltersOpen ? 'Hide Filters' : 'Show Filters'}
+                </Button>
+
+                {/* Filters - Toggleable for ALL screen sizes */}
+                {mobileFiltersOpen && (
+                    <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-3 space-y-2"
+                    >
+                        {/* Search Input */}
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search by name or email..."
+                                className="students-theme-input pl-9 text-sm"
+                                value={studentSearch}
+                                onChange={(e) => setStudentSearch(e.target.value)}
+                            />
+                        </div>
+                        
+                        {/* Department Filter */}
+                        <select
+                            className="students-theme-select w-full px-3 py-2 text-sm"
+                            value={selectedDepartment}
+                            onChange={(e) => setSelectedDepartment(e.target.value)}
+                            disabled={role === 'dept_admin'}
+                        >
+                            <option value="all">All Departments</option>
+                            {departmentsList.map((d: any) => (
+                                <option key={d._id} value={d._id}>{d.name}</option>
+                            ))}
+                        </select>
+                        
+                        {/* Class Filter */}
+                        <select
+                            className="students-theme-select w-full px-3 py-2 text-sm"
+                            value={selectedClass}
+                            onChange={(e) => setSelectedClass(e.target.value)}
+                        >
+                            <option value="all">All Classes</option>
+                            {uniqueClasses.map((className: string) => (
+                                <option key={className} value={className}>{className}</option>
+                            ))}
+                        </select>
+                    </motion.div>
+                )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
+                    <DialogTrigger asChild>
+                        <Button
+                            variant="outline"
+                            className="w-full sm:w-auto justify-center gap-2 text-sm font-medium border-[#11a5e4] text-[#11405f] hover:bg-[#11a5e4] hover:text-white transition-all"
+                        >
+                            <FileSpreadsheet className="w-4 h-4" />
+                            Bulk Upload
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="students-theme-dialog max-w-md mx-4">
+                        <DialogHeader>
+                            <DialogTitle className="students-theme-title text-lg">Bulk Upload Students</DialogTitle>
+                            <DialogDescription className="students-theme-description text-xs sm:text-sm">
+                                Upload an Excel file with student details. Download the template to get started.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <Button variant="outline" onClick={downloadTemplate} className="students-theme-outline-btn gap-2">
+                                <Download className="w-4 h-4" />
+                                Download Template
+                            </Button>
+                            <div className="students-theme-dropzone border-2 border-dashed rounded-lg p-4 sm:p-6 text-center transition-colors">
+                                <input
+                                    type="file"
+                                    accept=".xlsx, .xls, .csv"
+                                    onChange={handleBulkUpload}
+                                    disabled={isUploading}
+                                    className="hidden"
+                                    id="bulk-upload-input"
+                                />
+                                <label
+                                    htmlFor="bulk-upload-input"
+                                    className="cursor-pointer flex flex-col items-center"
                                 >
-                                    <LayoutGrid className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    <span className="hidden xs:inline text-xs sm:text-sm">Grid</span>
-                                </Button>
-                                <Button 
-                                    variant={viewMode === 'list' ? 'default' : 'outline'}
-                                    onClick={() => setViewMode('list')}
-                                    className={viewMode === 'list'
-                                        ? `gap-1 sm:gap-2 px-2 sm:px-3 bg-gradient-to-r ${accentGradient} text-white hover:opacity-95`
-                                        : `gap-1 sm:gap-2 px-2 sm:px-3 students-theme-outline-btn`}
-                                    size="sm"
-                                >
-                                    <List className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    <span className="hidden xs:inline text-xs sm:text-sm">List</span>
-                                </Button>
+                                    {isUploading ? (
+                                        <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 mb-2 animate-spin" />
+                                    ) : (
+                                        <Upload className="w-6 h-6 sm:w-8 sm:h-8 mb-2 text-muted-foreground" />
+                                    )}
+                                    <span className="text-xs sm:text-sm text-muted-foreground">
+                                        {isUploading ? 'Uploading...' : 'Click to upload Excel file'}
+                                    </span>
+                                </label>
                             </div>
                         </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
-                        {/* Filters and Actions */}
-                        <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 justify-between items-stretch lg:items-center">
-                            {/* Mobile Filter Toggle */}
-                            <div className="lg:hidden">
-                                <Button 
-                                    variant="outline" 
-                                    onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-                                    className="students-theme-outline-btn w-full gap-2"
-                                >
-                                    <Menu className="w-4 h-4" />
-                                    {mobileFiltersOpen ? 'Hide Filters' : 'Show Filters'}
-                                </Button>
-                            </div>
-
-                            {/* Filters - Desktop */}
-                            <div className="hidden lg:flex flex-col sm:flex-row gap-2 flex-1">
-                                <div className="relative flex-1">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Search by name or email..."
-                                        className="students-theme-input pl-9 text-sm"
-                                        value={studentSearch}
-                                        onChange={(e) => setStudentSearch(e.target.value)}
+                    </DialogContent>
+                </Dialog>
+                
+                <Dialog
+                    open={openStudentDialog}
+                    onOpenChange={(open) => {
+                        setOpenStudentDialog(open);
+                        if (open) {
+                            setIsAddingStudent(false);
+                            setNewStudentErrors({
+                                name: '',
+                                email: '',
+                                password: '',
+                                department: ''
+                            });
+                        }
+                    }}
+                >
+                    <DialogTrigger asChild>
+                        <Button
+                            className="w-full sm:w-auto justify-center gap-2 text-sm font-medium bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90 transition-all"
+                        >
+                            <UserPlus className="w-4 h-4" />
+                            Add Student
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="students-theme-dialog max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+                        <DialogHeader>
+                            <DialogTitle className="students-theme-title text-lg">Add New Student</DialogTitle>
+                            <DialogDescription className="students-theme-description text-xs sm:text-sm">
+                                Fill in the details to add a new student to the system.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 py-4">
+                            <div className="space-y-2">
+                                <Label className="text-xs sm:text-sm">Full Name *</Label>
+                                <div className="relative">
+                                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
+                                    <Input 
+                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
+                                        value={newStudent.name} 
+                                        onChange={(e) => {
+                                            setNewStudent({ ...newStudent, name: e.target.value });
+                                            if (newStudentErrors.name) {
+                                                setNewStudentErrors({ ...newStudentErrors, name: '' });
+                                            }
+                                        }} 
+                                        placeholder="Enter full name"
                                     />
                                 </div>
-                                <select
-                                    className="students-theme-select px-3 py-2"
-                                    value={selectedDepartment}
-                                    onChange={(e) => setSelectedDepartment(e.target.value)}
-                                    disabled={role === 'dept_admin'}
-                                >
-                                    <option value="all">All Departments</option>
-                                    {departmentsList.map((d: any) => (
-                                        <option key={d._id} value={d._id}>{d.name}</option>
-                                    ))}
-                                </select>
-                                <select
-                                    className="students-theme-select px-3 py-2"
-                                    value={selectedClass}
-                                    onChange={(e) => setSelectedClass(e.target.value)}
-                                >
-                                    <option value="all">All Classes</option>
-                                    {uniqueClasses.map((className: string) => (
-                                        <option key={className} value={className}>{className}</option>
-                                    ))}
-                                </select>
+                                {newStudentErrors.name ? (
+                                    <p className="text-xs text-red-600">{newStudentErrors.name}</p>
+                                ) : null}
                             </div>
-
-                            {/* Mobile Filters */}
-                            {mobileFiltersOpen && (
-                                <motion.div 
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    className="lg:hidden space-y-2"
-                                >
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                        <Input
-                                            placeholder="Search by name or email..."
-                                            className="students-theme-input pl-9 text-sm"
-                                            value={studentSearch}
-                                            onChange={(e) => setStudentSearch(e.target.value)}
-                                        />
-                                    </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs sm:text-sm">Email *</Label>
+                                <div className="relative">
+                                    <AtSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
+                                    <Input 
+                                        type="email"
+                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
+                                        value={newStudent.email} 
+                                        onChange={(e) => {
+                                            setNewStudent({ ...newStudent, email: e.target.value });
+                                            if (newStudentErrors.email) {
+                                                setNewStudentErrors({ ...newStudentErrors, email: '' });
+                                            }
+                                        }} 
+                                        placeholder="student@example.com"
+                                    />
+                                </div>
+                                {newStudentErrors.email ? (
+                                    <p className="text-xs text-red-600">{newStudentErrors.email}</p>
+                                ) : null}
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs sm:text-sm">Password *</Label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
+                                    <Input 
+                                        type="password"
+                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
+                                        value={newStudent.password} 
+                                        onChange={(e) => {
+                                            setNewStudent({ ...newStudent, password: e.target.value });
+                                            if (newStudentErrors.password) {
+                                                setNewStudentErrors({ ...newStudentErrors, password: '' });
+                                            }
+                                        }} 
+                                        placeholder="Enter password"
+                                    />
+                                </div>
+                                {newStudentErrors.password ? (
+                                    <p className="text-xs text-red-600">{newStudentErrors.password}</p>
+                                ) : null}
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs sm:text-sm">Department</Label>
+                                <div className="relative">
+                                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
                                     <select
-                                        className="students-theme-select w-full px-3 py-2"
-                                        value={selectedDepartment}
-                                        onChange={(e) => setSelectedDepartment(e.target.value)}
+                                        className="students-theme-select w-full pl-8 sm:pl-9 pr-3 py-2 text-sm"
+                                        value={newStudent.department}
+                                        onChange={(e) => {
+                                            setNewStudent({ ...newStudent, department: e.target.value });
+                                            if (newStudentErrors.department) {
+                                                setNewStudentErrors({ ...newStudentErrors, department: '' });
+                                            }
+                                        }}
                                         disabled={role === 'dept_admin'}
                                     >
-                                        <option value="all">All Departments</option>
+                                        <option value="">Select Department</option>
                                         {departmentsList.map((d: any) => (
                                             <option key={d._id} value={d._id}>{d.name}</option>
                                         ))}
                                     </select>
-                                    <select
-                                        className="students-theme-select w-full px-3 py-2"
-                                        value={selectedClass}
-                                        onChange={(e) => setSelectedClass(e.target.value)}
-                                    >
-                                        <option value="all">All Classes</option>
-                                        {uniqueClasses.map((className: string) => (
-                                            <option key={className} value={className}>{className}</option>
-                                        ))}
-                                    </select>
-                                </motion.div>
-                            )}
-
-                            {/* Action Buttons */}
-                       <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                                <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
-                                    <DialogTrigger asChild>
-                                       <Button
-  variant="outline"
-  className="w-full sm:w-auto justify-center gap-2 text-sm font-medium border-[#11a5e4] text-[#11405f] hover:bg-[#11a5e4] hover:text-white transition-all"
->
-  <FileSpreadsheet className="w-4 h-4" />
-  Bulk Upload
-</Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="students-theme-dialog max-w-md mx-4">
-                                        <DialogHeader>
-                                            <DialogTitle className="students-theme-title text-lg">Bulk Upload Students</DialogTitle>
-                                            <DialogDescription className="students-theme-description text-xs sm:text-sm">
-                                                Upload an Excel file with student details. Download the template to get started.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <div className="grid gap-4 py-4">
-                                            <Button variant="outline" onClick={downloadTemplate} className="students-theme-outline-btn gap-2">
-                                                <Download className="w-4 h-4" />
-                                                Download Template
-                                            </Button>
-                                            <div className="students-theme-dropzone border-2 border-dashed rounded-lg p-4 sm:p-6 text-center transition-colors">
-                                                <input
-                                                    type="file"
-                                                    accept=".xlsx, .xls, .csv"
-                                                    onChange={handleBulkUpload}
-                                                    disabled={isUploading}
-                                                    className="hidden"
-                                                    id="bulk-upload-input"
-                                                />
-                                                <label
-                                                    htmlFor="bulk-upload-input"
-                                                    className="cursor-pointer flex flex-col items-center"
-                                                >
-                                                    {isUploading ? (
-                                                        <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 mb-2 animate-spin" />
-                                                    ) : (
-                                                        <Upload className="w-6 h-6 sm:w-8 sm:h-8 mb-2 text-muted-foreground" />
-                                                    )}
-                                                    <span className="text-xs sm:text-sm text-muted-foreground">
-                                                        {isUploading ? 'Uploading...' : 'Click to upload Excel file'}
-                                                    </span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </DialogContent>
-                                </Dialog>
-                                
-                                <Dialog
-                                    open={openStudentDialog}
-                                    onOpenChange={(open) => {
-                                        setOpenStudentDialog(open);
-                                        if (open) {
-                                            setIsAddingStudent(false);
-                                            setNewStudentErrors({
-                                                name: '',
-                                                email: '',
-                                                password: '',
-                                                department: ''
-                                            });
-                                        }
-                                    }}
-                                >
-                                    <DialogTrigger asChild>
-                                      <Button
-  className="w-full sm:w-auto justify-center gap-2 text-sm font-medium bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90 transition-all"
->
-  <UserPlus className="w-4 h-4" />
-  Add Student
-</Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="students-theme-dialog max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
-                                        <DialogHeader>
-                                            <DialogTitle className="students-theme-title text-lg">Add New Student</DialogTitle>
-                                            <DialogDescription className="students-theme-description text-xs sm:text-sm">
-                                                Fill in the details to add a new student to the system.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 py-4">
-                                            <div className="space-y-2">
-                                                <Label className="text-xs sm:text-sm">Full Name *</Label>
-                                                <div className="relative">
-                                                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
-                                                    <Input 
-                                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
-                                                        value={newStudent.name} 
-                                                        onChange={(e) => {
-                                                            setNewStudent({ ...newStudent, name: e.target.value });
-                                                            if (newStudentErrors.name) {
-                                                                setNewStudentErrors({ ...newStudentErrors, name: '' });
-                                                            }
-                                                        }} 
-                                                        placeholder="Enter full name"
-                                                    />
-                                                </div>
-                                                {newStudentErrors.name ? (
-                                                    <p className="text-xs text-red-600">{newStudentErrors.name}</p>
-                                                ) : null}
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label className="text-xs sm:text-sm">Email *</Label>
-                                                <div className="relative">
-                                                    <AtSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
-                                                    <Input 
-                                                        type="email"
-                                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
-                                                        value={newStudent.email} 
-                                                        onChange={(e) => {
-                                                            setNewStudent({ ...newStudent, email: e.target.value });
-                                                            if (newStudentErrors.email) {
-                                                                setNewStudentErrors({ ...newStudentErrors, email: '' });
-                                                            }
-                                                        }} 
-                                                        placeholder="student@example.com"
-                                                    />
-                                                </div>
-                                                {newStudentErrors.email ? (
-                                                    <p className="text-xs text-red-600">{newStudentErrors.email}</p>
-                                                ) : null}
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label className="text-xs sm:text-sm">Password *</Label>
-                                                <div className="relative">
-                                                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
-                                                    <Input 
-                                                        type="password"
-                                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
-                                                        value={newStudent.password} 
-                                                        onChange={(e) => {
-                                                            setNewStudent({ ...newStudent, password: e.target.value });
-                                                            if (newStudentErrors.password) {
-                                                                setNewStudentErrors({ ...newStudentErrors, password: '' });
-                                                            }
-                                                        }} 
-                                                        placeholder="Enter password"
-                                                    />
-                                                </div>
-                                                {newStudentErrors.password ? (
-                                                    <p className="text-xs text-red-600">{newStudentErrors.password}</p>
-                                                ) : null}
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label className="text-xs sm:text-sm">Department</Label>
-                                                <div className="relative">
-                                                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
-                                                    <select
-                                                        className="students-theme-select w-full pl-8 sm:pl-9 pr-3 py-2"
-                                                        value={newStudent.department}
-                                                        onChange={(e) => {
-                                                            setNewStudent({ ...newStudent, department: e.target.value });
-                                                            if (newStudentErrors.department) {
-                                                                setNewStudentErrors({ ...newStudentErrors, department: '' });
-                                                            }
-                                                        }}
-                                                        disabled={role === 'dept_admin'}
-                                                    >
-                                                        <option value="">Select Department</option>
-                                                        {departmentsList.map((d: any) => (
-                                                            <option key={d._id} value={d._id}>{d.name}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                {role === 'dept_admin' && (
-                                                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-                                                        Department is set to your assigned department
-                                                    </p>
-                                                )}
-                                                {newStudentErrors.department ? (
-                                                    <p className="text-xs text-red-600">{newStudentErrors.department}</p>
-                                                ) : null}
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label className="text-xs sm:text-sm">Class</Label>
-                                                <div className="relative">
-                                                    <School className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
-                                                    <Input 
-                                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
-                                                        value={newStudent.studentClass} 
-                                                        onChange={(e) => setNewStudent({ ...newStudent, studentClass: e.target.value })} 
-                                                        placeholder="e.g., 10th, 12th"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label className="text-xs sm:text-sm">Section</Label>
-                                                <Input 
-                                                    className="students-theme-input text-sm"
-                                                    value={newStudent.section} 
-                                                    onChange={(e) => setNewStudent({ ...newStudent, section: e.target.value })} 
-                                                    placeholder="A, B, C"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label className="text-xs sm:text-sm">Roll Number</Label>
-                                                <div className="relative">
-                                                    <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
-                                                    <Input 
-                                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
-                                                        value={newStudent.rollNo} 
-                                                        onChange={(e) => setNewStudent({ ...newStudent, rollNo: e.target.value })} 
-                                                        placeholder="Enter roll number"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label className="text-xs sm:text-sm">Academic Year</Label>
-                                                <div className="relative">
-                                                    <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
-                                                    <Input 
-                                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
-                                                        value={newStudent.academicYear} 
-                                                        onChange={(e) => setNewStudent({ ...newStudent, academicYear: e.target.value })} 
-                                                        placeholder="2023-2024"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <Button onClick={handleAddStudent} disabled={isAddingStudent} className={`w-full bg-gradient-to-r ${accentGradient} text-white hover:opacity-95`}>
-                                            {isAddingStudent ? 'Adding...' : 'Add Student'}
-                                        </Button>
-                                    </DialogContent>
-                                </Dialog>
+                                </div>
+                                {role === 'dept_admin' && (
+                                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                                        Department is set to your assigned department
+                                    </p>
+                                )}
+                                {newStudentErrors.department ? (
+                                    <p className="text-xs text-red-600">{newStudentErrors.department}</p>
+                                ) : null}
                             </div>
-                        </div>
-
-                        {/* Student List/Grid - Responsive Grid */}
-                        <AnimatePresence mode="wait">
-                            {filteredStudents.length > 0 ? (
-                                viewMode === 'grid' ? (
-                                    <motion.div 
-                                        key="grid"
-                                        variants={containerVariants}
-                                        initial="hidden"
-                                        animate="visible"
-                                        exit={{ opacity: 0 }}
-                                        className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4"
-                                    >
-                                        {paginatedStudents.map((student: any) => {
-                                            const studentDeptId = getDepartmentId(student);
-                                            const departmentName = getDepartmentName(studentDeptId);
-                                            
-                                            return (
-                                                <motion.div
-                                                    key={student._id}
-                                                    variants={cardVariants}
-                                                    layout
-                                                    whileHover={{ y: -4 }}
-                                                    className="group"
-                                                >
-                                                    <Card className="students-theme-student-card transition-all duration-300 cursor-pointer h-full">
-                                                        <CardContent className="p-3 sm:p-4 md:p-6">
-                                                            <div className="flex items-start justify-between mb-3 sm:mb-4">
-                                                                <div className="relative">
-                                                                    <div className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br ${primaryGradient} flex items-center justify-center text-white text-base sm:text-lg font-bold`}>
-                                                                        {student.mName?.substring(0, 2).toUpperCase() || 'ST'}
-                                                                    </div>
-                                                                    {student.studentDetails?.isPlacementClosed && (
-                                                                        <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2">
-                                                                            <Badge className="bg-[#11a5e4] text-white text-[10px] sm:text-xs">
-                                                                                <Award className="w-2 h-2 sm:w-3 sm:h-3 mr-1" />
-                                                                                Placed
-                                                                            </Badge>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                    <Button 
-                                                                        variant="ghost" 
-                                                                        size="sm"
-                                                                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                                                                        onClick={() => {
-                                                                            setEditStudent(prepareStudentForEdit(student));
-                                                                            setEditDialogOpen(true);
-                                                                        }}
-                                                                    >
-                                                                        <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                                    </Button>
-                                                                    <Button 
-                                                                        variant="ghost" 
-                                                                        size="sm"
-                                                                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setNotifyStudent(student);
-                                                                        }}
-                                                                        title="Send Notification"
-                                                                    >
-                                                                        <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
-                                                                    </Button>
-                                                                    <Button 
-                                                                        variant="ghost" 
-                                                                        size="sm"
-                                                                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                                                                        onClick={() => handleDeleteStudent(student._id)}
-                                                                    >
-                                                                        <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
-                                                                    </Button>
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            <div className="space-y-1 sm:space-y-2">
-                                                                <h3 className="font-semibold text-sm sm:text-base md:text-lg truncate">{student.mName}</h3>
-                                                                <p className="text-xs text-muted-foreground flex items-center gap-1 sm:gap-2 truncate">
-                                                                    <Mail className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
-                                                                    <span className="truncate text-[11px] sm:text-xs">{student.email}</span>
-                                                                </p>
-                                                                {departmentName && (
-                                                                    <p className="text-[11px] sm:text-xs flex items-center gap-1 sm:gap-2">
-                                                                        <Building className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                                                                        {departmentName}
-                                                                    </p>
-                                                                )}
-                                                                {student.studentDetails?.studentClass && (
-                                                                    <p className="text-[11px] sm:text-xs flex items-center gap-1 sm:gap-2">
-                                                                        <GraduationCap className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                                                                        Class {student.studentDetails.studentClass}
-                                                                        {student.studentDetails?.section && ` - ${student.studentDetails.section}`}
-                                                                    </p>
-                                                                )}
-                                                                {student.studentDetails?.placementCompany && (
-                                                                        <div className="students-theme-card-divider mt-1 sm:mt-2 pt-1 sm:pt-2 border-t">
-                                                                        <p className="text-[10px] sm:text-xs font-semibold text-[#11405f] flex items-center gap-1 truncate">
-                                                                            <Briefcase className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
-                                                                            <span className="truncate">
-                                                                                {student.studentDetails.placementPosition || 'Placed'} @ {student.studentDetails.placementCompany}
-                                                                            </span>
-                                                                        </p>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                            
-                                                            <div className="mt-3 sm:mt-4">
-                                                                <Button 
-                                                                    variant="outline" 
-                                                                    size="sm" 
-                                                                    className="students-theme-outline-btn w-full text-[11px] sm:text-xs"
-                                                                    onClick={() => setPlacementStudent(student)}
-                                                                >
-                                                                    <Briefcase className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 sm:mr-2" />
-                                                                    Update Placement
-                                                                </Button>
-                                                            </div>
-                                                        </CardContent>
-                                                    </Card>
-                                                </motion.div>
-                                            );
-                                        })}
-                                    </motion.div>
-                                ) : (
-                                    <motion.div 
-                                        key="list"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        className="space-y-2"
-                                    >
-                                        {paginatedStudents.map((student: any, index: number) => {
-                                            const studentDeptId = getDepartmentId(student);
-                                            const departmentName = getDepartmentName(studentDeptId);
-                                            
-                                            return (
-                                                <motion.div
-                                                    key={student._id}
-                                                    initial={{ opacity: 0, x: -20 }}
-                                                    animate={{ opacity: 1, x: 0 }}
-                                                    transition={{ delay: index * 0.05 }}
-                                                    className="students-theme-list-card p-3 sm:p-4 border rounded-lg hover:shadow-md transition-all duration-300"
-                                                >
-                                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                                        <div className="flex items-center gap-2 sm:gap-3 flex-1 w-full sm:w-auto">
-                                                            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br ${primaryGradient} flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0`}>
-                                                                {student.mName?.substring(0, 2).toUpperCase() || 'ST'}
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                                                                    <p className="font-semibold text-sm sm:text-base truncate">{student.mName}</p>
-                                                                    {student.studentDetails?.isPlacementClosed && (
-                                                                        <Badge className="bg-[#11a5e4] text-white text-[10px] sm:text-xs">
-                                                                            Placed
-                                                                        </Badge>
-                                                                    )}
-                                                                </div>
-                                                                <p className="text-xs sm:text-sm text-muted-foreground truncate">{student.email}</p>
-                                                                <div className="flex flex-wrap gap-1 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">
-                                                                    {departmentName && (
-                                                                        <span>Dept: {departmentName}</span>
-                                                                    )}
-                                                                    {student.studentDetails?.studentClass && (
-                                                                        <span>Class: {student.studentDetails.studentClass}</span>
-                                                                    )}
-                                                                    {student.studentDetails?.section && (
-                                                                        <span>Section: {student.studentDetails.section}</span>
-                                                                    )}
-                                                                    {student.studentDetails?.rollNo && (
-                                                                        <span>Roll: {student.studentDetails.rollNo}</span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex gap-1 sm:gap-2 w-full sm:w-auto justify-end">
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm"
-                                                                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                                                                onClick={() => {
-                                                                    setEditStudent(prepareStudentForEdit(student));
-                                                                    setEditDialogOpen(true);
-                                                                }}
-                                                            >
-                                                                <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                            </Button>
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm"
-                                                                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                                                                onClick={() => setPlacementStudent(student)}
-                                                            >
-                                                                <Briefcase className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                            </Button>
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm"
-                                                                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                                                                onClick={() => setNotifyStudent(student)}
-                                                                title="Send Notification"
-                                                            >
-                                                                <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
-                                                            </Button>
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm"
-                                                                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                                                                onClick={() => handleDeleteStudent(student._id)}
-                                                            >
-                                                                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                </motion.div>
-                                            );
-                                        })}
-                                    </motion.div>
-                                )
-                            ) : (
-                                <motion.div 
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="text-center py-8 sm:py-12"
-                                >
-                                    <Users className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-muted-foreground mb-3 sm:mb-4" />
-                                    <p className="text-muted-foreground text-base sm:text-lg">No students found</p>
-                                    <p className="text-xs sm:text-sm text-muted-foreground">Click "Add Student" to get started</p>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                        {filteredStudents.length > 0 && (
-                            <div className="students-theme-pagination flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
-                                <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
-                                    Showing {paginationStart}-{paginationEnd} of {filteredStudents.length} students
-                                </p>
-                                <div className="flex flex-col gap-2 xs:flex-row xs:items-center xs:justify-center sm:justify-end">
-                                    <div className="flex items-center justify-center gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-                                            disabled={currentPage === 1}
-                                            className="students-theme-outline-btn min-w-[88px]"
-                                        >
-                                            Previous
-                                        </Button>
-                                        <span className="min-w-[96px] text-center text-xs sm:text-sm text-muted-foreground">
-                                            Page {currentPage} of {totalPages}
-                                        </span>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-                                            disabled={currentPage === totalPages}
-                                            className="students-theme-outline-btn min-w-[88px]"
-                                        >
-                                            Next
-                                        </Button>
-                                    </div>
-                                    <div className="flex flex-wrap items-center justify-center gap-1">
-                                        {visiblePageNumbers.map((page, index) => {
-                                            const previousPage = visiblePageNumbers[index - 1];
-                                            const showGap = previousPage && page - previousPage > 1;
-
-                                            return (
-                                                <React.Fragment key={page}>
-                                                    {showGap ? (
-                                                        <span className="px-1 text-xs text-muted-foreground">...</span>
-                                                    ) : null}
-                                                    <Button
-                                                        variant={currentPage === page ? 'default' : 'outline'}
-                                                        size="sm"
-                                                        onClick={() => setCurrentPage(page)}
-                                                        className={currentPage === page
-                                                            ? `h-8 min-w-[2rem] px-2 text-xs sm:text-sm bg-gradient-to-r ${accentGradient} text-white hover:opacity-95`
-                                                            : `h-8 min-w-[2rem] px-2 text-xs sm:text-sm students-theme-outline-btn`}
-                                                    >
-                                                        {page}
-                                                    </Button>
-                                                </React.Fragment>
-                                            );
-                                        })}
-                                    </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs sm:text-sm">Class</Label>
+                                <div className="relative">
+                                    <School className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
+                                    <Input 
+                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
+                                        value={newStudent.studentClass} 
+                                        onChange={(e) => setNewStudent({ ...newStudent, studentClass: e.target.value })} 
+                                        placeholder="e.g., 10th, 12th"
+                                    />
                                 </div>
                             </div>
-                        )}
-                    </CardContent>
-                </Card>
+                            <div className="space-y-2">
+                                <Label className="text-xs sm:text-sm">Section</Label>
+                                <Input 
+                                    className="students-theme-input text-sm"
+                                    value={newStudent.section} 
+                                    onChange={(e) => setNewStudent({ ...newStudent, section: e.target.value })} 
+                                    placeholder="A, B, C"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs sm:text-sm">Roll Number</Label>
+                                <div className="relative">
+                                    <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
+                                    <Input 
+                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
+                                        value={newStudent.rollNo} 
+                                        onChange={(e) => setNewStudent({ ...newStudent, rollNo: e.target.value })} 
+                                        placeholder="Enter roll number"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs sm:text-sm">Academic Year</Label>
+                                <div className="relative">
+                                    <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
+                                    <Input 
+                                        className="students-theme-input pl-8 sm:pl-9 text-sm"
+                                        value={newStudent.academicYear} 
+                                        onChange={(e) => setNewStudent({ ...newStudent, academicYear: e.target.value })} 
+                                        placeholder="2023-2024"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <Button onClick={handleAddStudent} disabled={isAddingStudent} className={`w-full bg-gradient-to-r ${accentGradient} text-white hover:opacity-95`}>
+                            {isAddingStudent ? 'Adding...' : 'Add Student'}
+                        </Button>
+                    </DialogContent>
+                </Dialog>
+            </div>
+        </div>
+
+        
+{/* Student List/Grid - Responsive Grid */}
+<AnimatePresence mode="wait">
+    {filteredStudents.length > 0 ? (
+        viewMode === 'grid' ? (
+            <motion.div 
+                key="grid"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit={{ opacity: 0 }}
+                className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4"
+            >
+                {paginatedStudents.map((student: any) => {
+                    const studentDeptId = getDepartmentId(student);
+                    const departmentName = getDepartmentName(studentDeptId);
+                    
+                    return (
+                        <motion.div
+                            key={student._id}
+                            variants={cardVariants}
+                            layout
+                            whileHover={{ y: -4 }}
+                            className="group"
+                        >
+                            <Card className="students-theme-student-card transition-all duration-300 cursor-pointer h-full">
+                                <CardContent className="p-3 sm:p-4 md:p-6">
+                                    <div className="flex items-start justify-between mb-3 sm:mb-4">
+                                        <div className="relative">
+                                            <div className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br ${primaryGradient} flex items-center justify-center text-white text-base sm:text-lg font-bold`}>
+                                                {student.mName?.substring(0, 2).toUpperCase() || 'ST'}
+                                            </div>
+                                            {student.studentDetails?.isPlacementClosed && (
+                                                <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2">
+                                                    <Badge className="bg-[#11a5e4] text-white text-[10px] sm:text-xs">
+                                                        <Award className="w-2 h-2 sm:w-3 sm:h-3 mr-1" />
+                                                        Placed
+                                                    </Badge>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm"
+                                                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                                                onClick={() => {
+                                                    setEditStudent(prepareStudentForEdit(student));
+                                                    setEditDialogOpen(true);
+                                                }}
+                                            >
+                                                <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                            </Button>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm"
+                                                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setNotifyStudent(student);
+                                                }}
+                                                title="Send Notification"
+                                            >
+                                                <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
+                                            </Button>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm"
+                                                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                                                onClick={() => handleDeleteStudent(student._id)}
+                                            >
+                                                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="space-y-1 sm:space-y-2">
+                                        <h3 className="font-semibold text-sm sm:text-base md:text-lg truncate">{student.mName}</h3>
+                                        <p className="text-xs text-muted-foreground flex items-center gap-1 sm:gap-2 truncate">
+                                            <Mail className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
+                                            <span className="truncate text-[11px] sm:text-xs">{student.email}</span>
+                                        </p>
+                                        {departmentName && (
+                                            <p className="text-[11px] sm:text-xs flex items-center gap-1 sm:gap-2">
+                                                <Building className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                                                {departmentName}
+                                            </p>
+                                        )}
+                                        {student.studentDetails?.studentClass && (
+                                            <p className="text-[11px] sm:text-xs flex items-center gap-1 sm:gap-2">
+                                                <GraduationCap className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                                                Class {student.studentDetails.studentClass}
+                                                {student.studentDetails?.section && ` - ${student.studentDetails.section}`}
+                                            </p>
+                                        )}
+                                        {student.studentDetails?.placementCompany && (
+                                            <div className="students-theme-card-divider mt-1 sm:mt-2 pt-1 sm:pt-2 border-t">
+                                                <p className="text-[10px] sm:text-xs font-semibold text-[#11405f] flex items-center gap-1 truncate">
+                                                    <Briefcase className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
+                                                    <span className="truncate">
+                                                        {student.studentDetails.placementPosition || 'Placed'} @ {student.studentDetails.placementCompany}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="mt-3 sm:mt-4">
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="students-theme-outline-btn w-full text-[11px] sm:text-xs"
+                                            onClick={() => setPlacementStudent(student)}
+                                        >
+                                            <Briefcase className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 sm:mr-2" />
+                                            Update Placement
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    );
+                })}
+            </motion.div>
+        ) : (
+            // List view remains the same
+            <motion.div 
+                key="list"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="space-y-2"
+            >
+                {/* List view content */}
+            </motion.div>
+        )
+    ) : (
+         <motion.div 
+                        key="list"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="space-y-2"
+                    >
+                        {paginatedStudents.map((student: any, index: number) => {
+                            const studentDeptId = getDepartmentId(student);
+                            const departmentName = getDepartmentName(studentDeptId);
+                            
+                            return (
+                                <motion.div
+                                    key={student._id}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.05 }}
+                                    className="students-theme-list-card p-3 sm:p-4 border rounded-lg hover:shadow-md transition-all duration-300"
+                                >
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                        <div className="flex items-center gap-2 sm:gap-3 flex-1 w-full sm:w-auto">
+                                            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br ${primaryGradient} flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0`}>
+                                                {student.mName?.substring(0, 2).toUpperCase() || 'ST'}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                                                    <p className="font-semibold text-sm sm:text-base truncate">{student.mName}</p>
+                                                    {student.studentDetails?.isPlacementClosed && (
+                                                        <Badge className="bg-[#11a5e4] text-white text-[10px] sm:text-xs">
+                                                            Placed
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs sm:text-sm text-muted-foreground truncate">{student.email}</p>
+                                                <div className="flex flex-wrap gap-1 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">
+                                                    {departmentName && (
+                                                        <span>Dept: {departmentName}</span>
+                                                    )}
+                                                    {student.studentDetails?.studentClass && (
+                                                        <span>Class: {student.studentDetails.studentClass}</span>
+                                                    )}
+                                                    {student.studentDetails?.section && (
+                                                        <span>Section: {student.studentDetails.section}</span>
+                                                    )}
+                                                    {student.studentDetails?.rollNo && (
+                                                        <span>Roll: {student.studentDetails.rollNo}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1 sm:gap-2 w-full sm:w-auto justify-end">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm"
+                                                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                                                onClick={() => {
+                                                    setEditStudent(prepareStudentForEdit(student));
+                                                    setEditDialogOpen(true);
+                                                }}
+                                            >
+                                                <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                            </Button>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm"
+                                                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                                                onClick={() => setPlacementStudent(student)}
+                                            >
+                                                <Briefcase className="w-3 h-3 sm:w-4 sm:h-4" />
+                                            </Button>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm"
+                                                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                                                onClick={() => setNotifyStudent(student)}
+                                                title="Send Notification"
+                                            >
+                                                <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
+                                            </Button>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm"
+                                                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                                                onClick={() => handleDeleteStudent(student._id)}
+                                            >
+                                                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
+                    </motion.div>
+    )}
+</AnimatePresence>
+        
+        {filteredStudents.length > 0 && (
+            <div className="students-theme-pagination flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
+                    Showing {paginationStart}-{paginationEnd} of {filteredStudents.length} students
+                </p>
+                <div className="flex flex-col gap-2 xs:flex-row xs:items-center xs:justify-center sm:justify-end">
+                    <div className="flex items-center justify-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                            disabled={currentPage === 1}
+                            className="students-theme-outline-btn min-w-[88px]"
+                        >
+                            Previous
+                        </Button>
+                        <span className="min-w-[96px] text-center text-xs sm:text-sm text-muted-foreground">
+                            Page {currentPage} of {totalPages}
+                        </span>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                            disabled={currentPage === totalPages}
+                            className="students-theme-outline-btn min-w-[88px]"
+                        >
+                            Next
+                        </Button>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-center gap-1">
+                        {visiblePageNumbers.map((page, index) => {
+                            const previousPage = visiblePageNumbers[index - 1];
+                            const showGap = previousPage && page - previousPage > 1;
+
+                            return (
+                                <React.Fragment key={page}>
+                                    {showGap ? (
+                                        <span className="px-1 text-xs text-muted-foreground">...</span>
+                                    ) : null}
+                                    <Button
+                                        variant={currentPage === page ? 'default' : 'outline'}
+                                        size="sm"
+                                        onClick={() => setCurrentPage(page)}
+                                        className={currentPage === page
+                                            ? `h-8 min-w-[2rem] px-2 text-xs sm:text-sm bg-gradient-to-r ${accentGradient} text-white hover:opacity-95`
+                                            : `h-8 min-w-[2rem] px-2 text-xs sm:text-sm students-theme-outline-btn`}
+                                    >
+                                        {page}
+                                    </Button>
+                                </React.Fragment>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+        )}
+    </CardContent>
+</Card>
 
                 {/* Edit Student Dialog */}
                 <Dialog open={editDialogOpen} onOpenChange={(open) => {

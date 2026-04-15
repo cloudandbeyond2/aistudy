@@ -2210,6 +2210,14 @@ import RichTextEditor from '@/components/RichTextEditor';
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Swal from 'sweetalert2';
+import { Menu, EyeOff, Globe, Edit } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const defaultQuizSettings = {
     examMode: true,
@@ -3504,499 +3512,740 @@ const CoursesTab = () => {
                                            <CardTitle>Manage Courses</CardTitle>
                                            <CardDescription>Create and assign courses to your students.</CardDescription>
                                        </CardHeader>
-                                       <CardContent className="space-y-4">
-                                           <Alert className="border-primary/20 bg-primary/5">
-                                               <AlertTitle>Recommended organization flow</AlertTitle>
-                                               <AlertDescription>
-                                                   Draft the course, assign a department, review it internally, then publish it to the student portal.
-                                                   Department admins stay locked to their own department, while organization admins can publish across departments.
-                                               </AlertDescription>
-                                           </Alert>
-                                           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                                               <Input
-                                                   placeholder="Search courses..."
-                                                   className="w-full md:max-w-sm md:flex-1 lg:max-w-sm"
-                                                   value={courseSearch}
-                                                   onChange={(e) => setCourseSearch(e.target.value)}
-                                               />
-                                               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap md:justify-end md:gap-2.5">
-                                                   {role === 'dept_admin' && (
-                                                       <Dialog open={openDeptCourseLimitDialog} onOpenChange={setOpenDeptCourseLimitDialog}>
-                                                           <DialogTrigger asChild>
-                                                               <Button variant="outline" className="w-full sm:w-auto">
-                                                                   <Plus className="w-4 h-4 mr-2" /> Request Limit Increase
-                                                               </Button>
-                                                           </DialogTrigger>
-                                                           <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-lg">
-                                                               <DialogHeader>
-                                                                   <DialogTitle>Request Course Limit Increase</DialogTitle>
-                                                                   <DialogDescription>
-                                                                       Submit a request to your organization's admin to increase your course creation capacity.
-                                                                   </DialogDescription>
-                                                               </DialogHeader>
-                                                               <div className="grid gap-4 py-4">
-                                                                   <div className="grid gap-2">
-                                                                       <Label>Requested Additional Courses</Label>
-                                                                       <Input
-                                                                           type="number"
-                                                                           min="1"
-                                                                           value={deptCourseLimitData.requestedCourseLimit}
-                                                                           onChange={(e) => setDeptCourseLimitData({ ...deptCourseLimitData, requestedCourseLimit: parseInt(e.target.value) || 1 })}
-                                                                       />
-                                                                   </div>
-                                                                   <Button onClick={handleDeptCourseLimitRequest}>Submit Request</Button>
-                                                               </div>
-                                                           </DialogContent>
-                                                       </Dialog>
-                                                   )}
-               
-                                                   {(orgSettings?.allowAICreation !== false) && (
-                                                       <Button variant="outline" className="w-full sm:w-auto" onClick={() => window.location.href = '/dashboard/generate-course'}>
-                                                           <Sparkles className="w-4 h-4 mr-2" /> AI Generate
-                                                       </Button>
-                                                   )}
-                                                   {(orgSettings?.allowManualCreation !== false) && (
-                                                       <Dialog open={openCourseDialog} onOpenChange={setOpenCourseDialog}>
-                                                           <DialogTrigger asChild onClick={() => {
-                                                               setNewCourse(role === 'dept_admin'
-                                                                   ? { ...createEmptyCourse(), department: getDeptScopedDepartment() }
-                                                                   : createEmptyCourse());
-                                                               setOpenCourseDialog(true);
-                                                           }}>
-                                                               <Button className="w-full sm:w-auto">
-                                                                   <Plus className="w-4 h-4 mr-2" /> Create Course
-                                                               </Button>
-                                                           </DialogTrigger>
-               
-                                                           <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto sm:max-w-4xl">
-                                                               <DialogHeader>
-                                                                   <DialogTitle>Create New Course</DialogTitle>
-                                                               </DialogHeader>
-               
-                                                               <CourseForm
-                                                                   course={newCourse}
-                                                                   setCourse={setNewCourse}
-                                                                   onSave={() => handleCreateCourse(newCourse)}
-                                                                   departments={departmentsList}
-                                                                   role={role}
-                                                               />
-                                                           </DialogContent>
-                                                       </Dialog>
-                                                   )}
-                                               </div>
-                                           </div>
-               
-                                           {/* Course List */}
-                                           <div className="space-y-4">
-                                               {visibleCourses.length > 0 ? (
-                                                   visibleCourses.filter((c: any) =>
-                                                       (c.title || c.mainTopic || '').toLowerCase().includes(courseSearch.toLowerCase()) ||
-                                                       (c.description || '').toLowerCase().includes(courseSearch.toLowerCase())
-                                                   ).map((course: any) => {
-                                                       const title = course.title || course.mainTopic;
-                                                       const description = course.description || (course.content ? "AI Generated Course" : "");
-                                                       let topicCount = 0;
-                                                       let quizCount = 0;
-                                                       // Both OrgCourse and AI Course now support approval workflow
-                                                       const approvalStatus = course.approvalStatus || (course.isPublished === false ? 'draft' : 'approved');
-                                                       const published = course.isPublished !== undefined ? Boolean(course.isPublished) : (course.content ? false : true); // AI courses default to unpublished
-               
-                                                       if (course.topics) {
-                                                           topicCount = course.topics.length;
-                                                           quizCount = course.quizzes?.length || 0;
-                                                       } else if (course.content) {
-                                                           try {
-                                                               const content = JSON.parse(course.content);
-                                                               topicCount = content.course_topics?.length || 0;
-                                                               quizCount = content.quizzes?.length || 0;
-                                                           } catch (e) {
-                                                               console.error("Error parsing course content", e);
-                                                           }
-                                                       }
-               
-                                                       const courseCardClassName =
-                                                           approvalStatus === 'rejected'
-                                                               ? 'rounded-lg border border-red-200 bg-red-50 p-4'
-                                                               : published
-                                                               ? 'rounded-lg border border-emerald-200 bg-emerald-50 p-4'
-                                                               : 'rounded-lg border bg-card p-4';
+            
+    <CardContent className="space-y-4">
+      {/* Alert Section */}
+      <Alert className="border-primary/20 bg-primary/5">
+        <AlertTitle>Recommended organization flow</AlertTitle>
+        <AlertDescription>
+          Draft the course, assign a department, review it internally, then publish it to the student portal.
+          Department admins stay locked to their own department, while organization admins can publish across departments.
+        </AlertDescription>
+      </Alert>
 
-                                                       return (
-                                                           <div key={course._id} className={courseCardClassName}>
-                                                               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                                                                   <div className="min-w-0 flex-1">
-                                                                       <h3 className="font-semibold text-lg capitalize">{title}</h3>
-                                                                       <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: description }} />
-                                                                       <div className="mt-2 flex flex-wrap gap-3 text-xs font-medium text-muted-foreground">
-                                                                           <span>{topicCount} Topics</span>
-                                                                           {quizCount > 0 && <span>{quizCount} Quizzes</span>}
-                                                                           <span className="bg-primary/10 text-primary px-2 py-0.5 rounded">
-                                                                               {course.department ? `Dept: ${departmentsList.find(d => d._id === course.department || d.name === course.department)?.name || course.department}` : (course.content ? 'AI Generated' : 'All students')}
-                                                                           </span>
-                                                                       </div>
-                                                                       <div className="mt-2 flex flex-wrap items-center gap-2">
-                                                                           {approvalStatus === 'draft' && (
-                                                                               <Badge variant="secondary" className="gap-1">
-                                                                                   Draft
-                                                                               </Badge>
-                                                                           )}
-                                                                           {approvalStatus === 'pending' && (
-                                                                               <Badge variant="outline" className="gap-1">
-                                                                                   <Clock className="w-3.5 h-3.5" /> Pending approval
-                                                                               </Badge>
-                                                                           )}
-                                                                           {approvalStatus === 'approved' && (
-                                                                               <Badge className="bg-emerald-600 text-white border-0 gap-1">
-                                                                                   <Check className="w-3.5 h-3.5" /> Approved
-                                                                               </Badge>
-                                                                           )}
-                                                                           {approvalStatus === 'rejected' && (
-                                                                               <Badge variant="destructive" className="gap-1">
-                                                                                   <X className="w-3.5 h-3.5" /> Rejected
-                                                                               </Badge>
-                                                                           )}
-                                                                           <Badge variant={published ? "secondary" : "outline"} className={published ? "bg-blue-500/10 text-blue-700 border-blue-200" : ""}>
-                                                                               {published ? 'Published' : 'Unpublished'}
-                                                                           </Badge>
-                                                                       </div>
-                                                                       {quizCount > 0 && quizReportsMap[String(course._id)] && (
-                                                                           <div className="mt-2 flex flex-wrap items-center gap-2">
-                                                                               {quizReportsMap[String(course._id)]?.quizSettings?.examMode && (
-                                                                                   <Badge variant="secondary" className="gap-1">
-                                                                                       <Shield className="w-3.5 h-3.5" /> Secure
-                                                                                   </Badge>
-                                                                               )}
-                                                                               <Badge variant="outline">Attempts: {quizReportsMap[String(course._id)]?.attemptCount || 0}</Badge>
-                                                                               <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
-                                                                                   Passed: {quizReportsMap[String(course._id)]?.passedCount || 0}
-                                                                               </Badge>
-                                                                               {(quizReportsMap[String(course._id)]?.flaggedCount || 0) > 0 && (
-                                                                                   <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700 gap-1">
-                                                                                       <AlertTriangle className="w-3.5 h-3.5" /> Flagged: {quizReportsMap[String(course._id)]?.flaggedCount || 0}
-                                                                                   </Badge>
-                                                                               )}
-                                                                           </div>
-                                                                       )}
-                                                                   </div>
-                                                                   <div className="flex flex-wrap gap-2 md:max-w-[15rem] md:justify-end lg:max-w-none">
-                                                                       <Button variant="ghost" size="sm" onClick={() => setPreviewCourse({ ...course })}>
-                                                                           <Eye className="w-4 h-4" />
-                                                                       </Button>
-                                                                       {role === 'org_admin' && (approvalStatus === 'pending' || approvalStatus === 'rejected') && (
-                                                                           <Button
-                                                                               variant="outline"
-                                                                               size="sm"
-                                                                               onClick={() => handleReviewOrgCourse(course._id, 'approved', '')}
-                                                                           >
-                                                                               <Check className="w-4 h-4 mr-1" /> Approve
-                                                                           </Button>
-                                                                       )}
-                                                                       {role === 'org_admin' && approvalStatus !== 'rejected' && (
-                                                                           <Button
-                                                                               variant="outline"
-                                                                               size="sm"
-                                                                               className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
-                                                                               onClick={async () => {
-                                                                                   const result = await Swal.fire({
-                                                                                       title: 'Reject this course?',
-                                                                                       input: 'textarea',
-                                                                                       inputLabel: 'Reason (optional)',
-                                                                                       inputPlaceholder: 'Write a short note for the staff member...',
-                                                                                       showCancelButton: true,
-                                                                                       confirmButtonText: 'Reject',
-                                                                                       confirmButtonColor: '#dc2626'
-                                                                                   });
-               
-                                                                                   if (result.isConfirmed) {
-                                                                                       await handleReviewOrgCourse(course._id, 'rejected', String(result.value || ''));
-                                                                                   }
-                                                                               }}
-                                                                           >
-                                                                               <X className="w-4 h-4 mr-1" /> Reject
-                                                                           </Button>
-                                                                       )}
-                                                                       {role === 'org_admin' && approvalStatus === 'approved' && (
-                                                                           <Button
-                                                                               variant="outline"
-                                                                               size="sm"
-                                                                               className={published ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"}
-                                                                               onClick={async () => {
-                                                                                   const nextPublished = !published;
-                                                                                   const result = await Swal.fire({
-                                                                                       title: nextPublished ? 'Publish this course?' : 'Unpublish this course?',
-                                                                                       text: nextPublished
-                                                                                           ? 'Students will be able to see and open this course in the student portal.'
-                                                                                           : 'Students will no longer see this course in the student portal.',
-                                                                                       showCancelButton: true,
-                                                                                       confirmButtonText: nextPublished ? 'Publish' : 'Unpublish',
-                                                                                       confirmButtonColor: nextPublished ? '#16a34a' : '#dc2626'
-                                                                                   });
-               
-                                                                                   if (result.isConfirmed) {
-                                                                                       await handlePublishOrgCourse(course._id, nextPublished);
-                                                                                   }
-                                                                               }}
-                                                                           >
-                                                                               {published ? 'Unpublish' : 'Publish'}
-                                                                           </Button>
-                                                                       )}
-                                                                       {quizCount > 0 && (
-                                                                           <Button
-                                                                               variant="ghost"
-                                                                               size="sm"
-                                                                               title="Quiz report"
-                                                                               onClick={() => {
-                                                                                   const report = quizReportsMap[String(course._id)];
-                                                                                   const normalized = normalizeCourseForEdit(course);
-                                                                                   setSelectedQuizReport(report || {
-                                                                                       courseId: String(course._id),
-                                                                                       title,
-                                                                                       questionCount: quizCount,
-                                                                                       quizSettings: normalized.quizSettings,
-                                                                                       attemptCount: 0,
-                                                                                       passedCount: 0,
-                                                                                       flaggedCount: 0,
-                                                                                       attempts: []
-                                                                                   });
-                                                                                   setOpenQuizReportDialog(true);
-                                                                               }}
-                                                                           >
-                                                                               <BarChart className="w-4 h-4" />
-                                                                           </Button>
-                                                                       )}
-                                                                       <Button className="bg-blue-600 text-white hover:bg-blue-700" size="sm" onClick={async () => {
-                                                                           const initialDescription = "Generating assignment description...";
-                                                                           
-                                                                           setNewAssignment({
-                                                                               topic: title,
-                                                                               description: initialDescription,
-                                                                               dueDate: '',
-                                                                               department: course.department || ''
-                                                                           });
-                                                                           setOpenAssignmentDialog(true);
-               
-                                                                           try {
-                                                                               const res = await axios.post(`${serverURL}/api/prompt`, {
-                                                                                   prompt: `Write a professional 1-2 sentence assignment description for a course titled "${title}". The description should encourage the student to complete the assignment to test their understanding. Return strictly the text.`,
-                                                                                   systemInstruction: "You are an educational assistant. Return only the 1-2 sentence assignment description text. No quotes, no conversational filler."
-                                                                               });
-               
-                                                                               if (res.data.success && res.data.generatedText) {
-                                                                                   setNewAssignment(prev => ({
-                                                                                       ...prev,
-                                                                                       description: res.data.generatedText
-                                                                                   }));
-                                                                               } else {
-                                                                                   setNewAssignment(prev => ({
-                                                                                       ...prev,
-                                                                                       description: description
-                                                                                   }));
-                                                                               }
-                                                                           } catch (e) {
-                                                                               console.error("Failed to generate assignment description:", e);
-                                                                               setNewAssignment(prev => ({
-                                                                                   ...prev,
-                                                                                   description: description
-                                                                               }));
-                                                                           }
-                                                                       }}>
-                                                                           Create Assignment
-                                                                       </Button>
-                                                                       {course.topics ? (
-                                                                           <Button variant="ghost" size="sm" onClick={() => setEditCourse(normalizeCourseForEdit(course))}>Edit</Button>
-                                                                       ) : course.content ? (
-                                                                           <Button variant="ghost" size="sm" onClick={() => setEditAICourse({ ...course })}>Edit</Button>
-                                                                       ) : null}
-                                                                       <Button variant="ghost" size="sm" onClick={() => handleDeleteCourse(course._id)}>
-                                                                           <Trash2 className="w-4 h-4 text-destructive" />
-                                                                       </Button>
-                                                                   </div>
-                                                               </div>
-                                                           </div>
-                                                       );
-                                                   })
-                                               ) : (
-                                                   <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
-                                                       <FileText className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                                                       <p>No courses created yet. Create your first course or use AI to generate one.</p>
-                                                   </div>
-                                               )}
-                                           </div>
-               
-                                           <Dialog
-                                               open={openQuizReportDialog}
-                                               onOpenChange={(open) => {
-                                                   setOpenQuizReportDialog(open);
-                                                   if (!open) {
-                                                       setSelectedQuizReport(null);
-                                                       setExpandedQuizAttemptId('');
-                                                   }
-                                               }}
-                                           >
-                                               <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto sm:max-w-4xl">
-                                                   <DialogHeader>
-                                                       <DialogTitle>Quiz Report</DialogTitle>
-                                                       <DialogDescription>
-                                                           Attempts, scores, cooldowns, and malpractice flags for this course.
-                                                       </DialogDescription>
-                                                   </DialogHeader>
-               
-                                                   {quizReportsLoading && (
-                                                       <div className="text-sm text-muted-foreground">Loading reports...</div>
-                                                   )}
-               
-                                                   {!quizReportsLoading && selectedQuizReport && (() => {
-                                                       const settings = {
-                                                           ...defaultQuizSettings,
-                                                           ...(selectedQuizReport.quizSettings || {}),
-                                                           proctoring: {
-                                                               ...defaultQuizSettings.proctoring,
-                                                               ...(selectedQuizReport.quizSettings?.proctoring || {})
-                                                           }
-                                                       };
-                                                       const attempts = Array.isArray(selectedQuizReport.attempts) ? selectedQuizReport.attempts : [];
-               
-                                                       return (
-                                                           <div className="space-y-4">
-                                                               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                                                   <div>
-                                                                       <h3 className="text-lg font-semibold">{selectedQuizReport.title || 'Course'}</h3>
-                                                                       <p className="text-sm text-muted-foreground">
-                                                                           {selectedQuizReport.questionCount || 0} questions in bank, difficulty: {settings.difficultyMode}, pass mark: {settings.passPercentage}%.
-                                                                       </p>
-                                                                   </div>
-                                                                   {settings.examMode ? (
-                                                                       <Badge variant="secondary" className="gap-1">
-                                                                           <Shield className="w-4 h-4" /> Secure exam
-                                                                       </Badge>
-                                                                   ) : (
-                                                                       <Badge variant="outline">Standard quiz</Badge>
-                                                                   )}
-                                                               </div>
-               
-                                                               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                                                   <div className="p-3 rounded-lg border bg-muted/20">
-                                                                       <div className="text-xs text-muted-foreground">Attempt policy</div>
-                                                                       <div className="font-semibold text-sm">{settings.attemptLimit} attempts, cooldown {settings.cooldownMinutes} min</div>
-                                                                   </div>
-                                                                   <div className="p-3 rounded-lg border bg-muted/20">
-                                                                       <div className="text-xs text-muted-foreground">Summary</div>
-                                                                       <div className="font-semibold text-sm">
-                                                                           Attempts {selectedQuizReport.attemptCount || 0}, passed {selectedQuizReport.passedCount || 0}, flagged {selectedQuizReport.flaggedCount || 0}
-                                                                       </div>
-                                                                   </div>
-                                                                   <div className="p-3 rounded-lg border bg-muted/20">
-                                                                       <div className="text-xs text-muted-foreground">Shuffle</div>
-                                                                       <div className="font-semibold text-sm">
-                                                                           Questions {settings.shuffleQuestions ? 'on' : 'off'}, options {settings.shuffleOptions ? 'on' : 'off'}
-                                                                       </div>
-                                                                   </div>
-                                                               </div>
-               
-                                                               <div className="overflow-x-auto rounded-lg border">
-                                                                   <div className="min-w-[720px]">
-                                                                   <div className="grid grid-cols-12 gap-2 bg-muted/40 px-3 py-2 text-xs font-semibold text-muted-foreground">
-                                                                       <div className="col-span-3">Student</div>
-                                                                       <div className="col-span-1">Try</div>
-                                                                       <div className="col-span-2">Score</div>
-                                                                       <div className="col-span-2">Result</div>
-                                                                       <div className="col-span-2">Flags</div>
-                                                                       <div className="col-span-2">Submitted</div>
-                                                                   </div>
-                                                                   {attempts.length === 0 ? (
-                                                                       <div className="p-4 text-sm text-muted-foreground">No attempts yet.</div>
-                                                                   ) : (
-                                                                       <div className="divide-y">
-                                                                           {attempts.map((a: any) => {
-                                                                               const submitted = a.submittedAt ? new Date(a.submittedAt).toLocaleString() : '-';
-                                                                               const eventSummary = a.eventSummary || {};
-                                                                               const eventBadges = Object.entries(eventSummary).slice(0, 3);
-                                                                               const isExpanded = expandedQuizAttemptId === String(a.attemptId);
-                                                                               return (
-                                                                                   <div key={a.attemptId} className="border-t first:border-t-0">
-                                                                                       <div className="grid grid-cols-12 gap-2 px-3 py-2 text-sm items-center">
-                                                                                           <div className="col-span-3">
-                                                                                               <div className="font-medium truncate">{a.studentName || 'Student'}</div>
-                                                                                               <div className="text-xs text-muted-foreground truncate">{a.studentEmail || ''}</div>
-                                                                                           </div>
-                                                                                           <div className="col-span-1 text-muted-foreground">{a.attemptNumber || 1}</div>
-                                                                                           <div className="col-span-2">{a.score || 0}/{a.totalQuestions || 0} ({a.percentage || 0}%)</div>
-                                                                                           <div className="col-span-2">
-                                                                                               {a.passed ? (
-                                                                                                   <Badge className="bg-emerald-600 text-white border-0">Passed</Badge>
-                                                                                               ) : (
-                                                                                                   <Badge variant="outline">Failed</Badge>
-                                                                                               )}
-                                                                                           </div>
-                                                                                           <div className="col-span-2 flex items-center gap-2">
-                                                                                               {a.malpracticeFlag ? (
-                                                                                                   <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700 gap-1">
-                                                                                                       <AlertTriangle className="w-3.5 h-3.5" /> Malpractice
-                                                                                                   </Badge>
-                                                                                               ) : (
-                                                                                                   <span className="text-xs text-muted-foreground">None</span>
-                                                                                               )}
-                                                                                               <span className="text-xs text-muted-foreground">{a.securityEventCount || 0} events</span>
-                                                                                           </div>
-                                                                                           <div className="col-span-2 text-xs text-muted-foreground">
-                                                                                               <div>{submitted}</div>
-                                                                                               {eventBadges.length > 0 && (
-                                                                                                   <div className="mt-1 flex flex-wrap gap-1">
-                                                                                                       {eventBadges.map(([eventType, count]) => (
-                                                                                                           <Badge key={`${a.attemptId}-${eventType}`} variant="outline" className="text-[10px]">
-                                                                                                               {eventType}: {String(count)}
-                                                                                                           </Badge>
-                                                                                                       ))}
-                                                                                                   </div>
-                                                                                               )}
-                                                                                               {(a.securityEvents?.length || 0) > 0 && (
-                                                                                                   <button
-                                                                                                       type="button"
-                                                                                                       className="mt-2 text-[11px] font-semibold text-primary"
-                                                                                                       onClick={() => setExpandedQuizAttemptId(isExpanded ? '' : String(a.attemptId))}
-                                                                                                   >
-                                                                                                       {isExpanded ? 'Hide details' : 'View details'}
-                                                                                                   </button>
-                                                                                               )}
-                                                                                           </div>
-                                                                                       </div>
-                                                                                       {isExpanded && (a.securityEvents?.length || 0) > 0 && (
-                                                                                           <div className="border-t bg-muted/20 px-3 py-3">
-                                                                                               <div className="space-y-2">
-                                                                                                   {a.securityEvents.map((event: any, index: number) => (
-                                                                                                       <div key={`${a.attemptId}-event-${index}`} className="rounded-lg border bg-background px-3 py-2">
-                                                                                                           <div className="flex items-center justify-between gap-2">
-                                                                                                               <div className="flex items-center gap-2">
-                                                                                                                   <Badge variant="outline">{event.type}</Badge>
-                                                                                                                   <Badge variant={event.severity === 'high' ? 'destructive' : 'secondary'}>
-                                                                                                                       {event.severity}
-                                                                                                                   </Badge>
-                                                                                                               </div>
-                                                                                                               <span className="text-[11px] text-muted-foreground">
-                                                                                                                   {event.timestamp ? new Date(event.timestamp).toLocaleString() : '-'}
-                                                                                                               </span>
-                                                                                                           </div>
-                                                                                                           {event.details && (
-                                                                                                               <p className="mt-2 text-xs text-muted-foreground">{event.details}</p>
-                                                                                                           )}
-                                                                                                       </div>
-                                                                                                   ))}
-                                                                                               </div>
-                                                                                           </div>
-                                                                                       )}
-                                                                                   </div>
-                                                                               );
-                                                                           })}
-                                                                       </div>
-                                                                   )}
-                                                                   </div>
-                                                               </div>
-                                                           </div>
-                                                       );
-                                                   })()}
-                                               </DialogContent>
-                                           </Dialog>
-                                       </CardContent>
+      {/* Search and Action Buttons - Fully Responsive */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <Input
+          placeholder="Search courses..."
+          className="w-full lg:max-w-sm"
+          value={courseSearch}
+          onChange={(e) => setCourseSearch(e.target.value)}
+        />
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end lg:gap-2.5">
+          {role === 'dept_admin' && (
+            <Dialog open={openDeptCourseLimitDialog} onOpenChange={setOpenDeptCourseLimitDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                  <Plus className="w-4 h-4 mr-2" /> Request Limit Increase
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Request Course Limit Increase</DialogTitle>
+                  <DialogDescription>
+                    Submit a request to your organization's admin to increase your course creation capacity.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label>Requested Additional Courses</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={deptCourseLimitData.requestedCourseLimit}
+                      onChange={(e) => setDeptCourseLimitData({ ...deptCourseLimitData, requestedCourseLimit: parseInt(e.target.value) || 1 })}
+                    />
+                  </div>
+                  <Button onClick={handleDeptCourseLimitRequest}>Submit Request</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {(orgSettings?.allowAICreation !== false) && (
+            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => window.location.href = '/dashboard/generate-course'}>
+              <Sparkles className="w-4 h-4 mr-2" /> AI Generate
+            </Button>
+          )}
+          
+          {(orgSettings?.allowManualCreation !== false) && (
+            <Dialog open={openCourseDialog} onOpenChange={setOpenCourseDialog}>
+              <DialogTrigger asChild onClick={() => {
+                setNewCourse(role === 'dept_admin'
+                  ? { ...createEmptyCourse(), department: getDeptScopedDepartment() }
+                  : createEmptyCourse());
+                setOpenCourseDialog(true);
+              }}>
+                <Button size="sm" className="w-full sm:w-auto">
+                  <Plus className="w-4 h-4 mr-2" /> Create Course
+                </Button>
+              </DialogTrigger>
+
+              <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto sm:max-w-4xl">
+                <DialogHeader>
+                  <DialogTitle>Create New Course</DialogTitle>
+                </DialogHeader>
+
+                <CourseForm
+                  course={newCourse}
+                  setCourse={setNewCourse}
+                  onSave={() => handleCreateCourse(newCourse)}
+                  departments={departmentsList}
+                  role={role}
+                />
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+      </div>
+
+      {/* Course List */}
+      <div className="space-y-4">
+        {visibleCourses.length > 0 ? (
+          visibleCourses.filter((c: any) =>
+            (c.title || c.mainTopic || '').toLowerCase().includes(courseSearch.toLowerCase()) ||
+            (c.description || '').toLowerCase().includes(courseSearch.toLowerCase())
+          ).map((course: any) => {
+            const title = course.title || course.mainTopic;
+            const description = course.description || (course.content ? "AI Generated Course" : "");
+            let topicCount = 0;
+            let quizCount = 0;
+            const approvalStatus = course.approvalStatus || (course.isPublished === false ? 'draft' : 'approved');
+            const published = course.isPublished !== undefined ? Boolean(course.isPublished) : (course.content ? false : true);
+
+            if (course.topics) {
+              topicCount = course.topics.length;
+              quizCount = course.quizzes?.length || 0;
+            } else if (course.content) {
+              try {
+                const content = JSON.parse(course.content);
+                topicCount = content.course_topics?.length || 0;
+                quizCount = content.quizzes?.length || 0;
+              } catch (e) {
+                console.error("Error parsing course content", e);
+              }
+            }
+
+            const courseCardClassName =
+              approvalStatus === 'rejected'
+                ? 'rounded-lg border border-red-200 bg-red-50 p-3 sm:p-4'
+                : published
+                ? 'rounded-lg border border-emerald-200 bg-emerald-50 p-3 sm:p-4'
+                : 'rounded-lg border bg-card p-3 sm:p-4';
+
+            return (
+              <div key={course._id} className={courseCardClassName}>
+                {/* Mobile Layout (below lg breakpoint) */}
+                <div className="block lg:hidden">
+                  {/* Course Info Section */}
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-base sm:text-lg capitalize mb-2">{title}</h3>
+                    <div 
+                      className="text-sm text-muted-foreground line-clamp-2 mb-2" 
+                      dangerouslySetInnerHTML={{ __html: description }} 
+                    />
+                    
+                    {/* Topics & Quizzes Badges */}
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {topicCount} Topics
+                      </Badge>
+                      {quizCount > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          {quizCount} Quizzes
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className="text-xs">
+                        {course.department ? 
+                          `Dept: ${departmentsList.find(d => d._id === course.department || d.name === course.department)?.name || course.department}` : 
+                          (course.content ? 'AI Generated' : 'All students')}
+                      </Badge>
+                    </div>
+                    
+                    {/* Status Badges */}
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {approvalStatus === 'draft' && (
+                        <Badge variant="secondary">Draft</Badge>
+                      )}
+                      {approvalStatus === 'pending' && (
+                        <Badge variant="outline">
+                          <Clock className="w-3 h-3 mr-1" /> Pending
+                        </Badge>
+                      )}
+                      {approvalStatus === 'approved' && (
+                        <Badge className="bg-emerald-600 text-white">
+                          <Check className="w-3 h-3 mr-1" /> Approved
+                        </Badge>
+                      )}
+                      {approvalStatus === 'rejected' && (
+                        <Badge variant="destructive">
+                          <X className="w-3 h-3 mr-1" /> Rejected
+                        </Badge>
+                      )}
+                      <Badge variant={published ? "secondary" : "outline"}>
+                        {published ? 'Published' : 'Unpublished'}
+                      </Badge>
+                    </div>
+
+                    {/* Quiz Statistics */}
+                    {quizCount > 0 && quizReportsMap[String(course._id)] && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {quizReportsMap[String(course._id)]?.quizSettings?.examMode && (
+                          <Badge variant="secondary">
+                            <Shield className="w-3 h-3 mr-1" /> Secure
+                          </Badge>
+                        )}
+                        <Badge variant="outline">
+                          Attempts: {quizReportsMap[String(course._id)]?.attemptCount || 0}
+                        </Badge>
+                        <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+                          Passed: {quizReportsMap[String(course._id)]?.passedCount || 0}
+                        </Badge>
+                        {(quizReportsMap[String(course._id)]?.flaggedCount || 0) > 0 && (
+                          <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700">
+                            <AlertTriangle className="w-3 h-3 mr-1" /> 
+                            Flagged: {quizReportsMap[String(course._id)]?.flaggedCount || 0}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mobile Action Buttons - 2 Column Grid */}
+                  <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t">
+                    <Button variant="outline" size="sm" onClick={() => setPreviewCourse({ ...course })}>
+                      <Eye className="w-4 h-4 mr-1" /> Preview
+                    </Button>
+                    
+                    {role === 'org_admin' && (approvalStatus === 'pending' || approvalStatus === 'rejected') && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleReviewOrgCourse(course._id, 'approved', '')}
+                      >
+                        <Check className="w-4 h-4 mr-1" /> Approve
+                      </Button>
+                    )}
+                    
+                    {role === 'org_admin' && approvalStatus !== 'rejected' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                        onClick={async () => {
+                          const result = await Swal.fire({
+                            title: 'Reject this course?',
+                            input: 'textarea',
+                            inputLabel: 'Reason (optional)',
+                            inputPlaceholder: 'Write a short note for the staff member...',
+                            showCancelButton: true,
+                            confirmButtonText: 'Reject',
+                            confirmButtonColor: '#dc2626'
+                          });
+                          if (result.isConfirmed) {
+                            await handleReviewOrgCourse(course._id, 'rejected', String(result.value || ''));
+                          }
+                        }}
+                      >
+                        <X className="w-4 h-4 mr-1" /> Reject
+                      </Button>
+                    )}
+                    
+                    {role === 'org_admin' && approvalStatus === 'approved' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={published ? 
+                          "border-red-200 bg-red-50 text-red-700 hover:bg-red-100" : 
+                          "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"}
+                        onClick={async () => {
+                          const nextPublished = !published;
+                          const result = await Swal.fire({
+                            title: nextPublished ? 'Publish this course?' : 'Unpublish this course?',
+                            text: nextPublished
+                              ? 'Students will be able to see and open this course in the student portal.'
+                              : 'Students will no longer see this course in the student portal.',
+                            showCancelButton: true,
+                            confirmButtonText: nextPublished ? 'Publish' : 'Unpublish',
+                            confirmButtonColor: nextPublished ? '#16a34a' : '#dc2626'
+                          });
+                          if (result.isConfirmed) {
+                            await handlePublishOrgCourse(course._id, nextPublished);
+                          }
+                        }}
+                      >
+                        {published ? (
+                          <><EyeOff className="w-4 h-4 mr-1" /> Unpublish</>
+                        ) : (
+                          <><Globe className="w-4 h-4 mr-1" /> Publish</>
+                        )}
+                      </Button>
+                    )}
+                    
+                    {quizCount > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const report = quizReportsMap[String(course._id)];
+                          const normalized = normalizeCourseForEdit(course);
+                          setSelectedQuizReport(report || {
+                            courseId: String(course._id),
+                            title,
+                            questionCount: quizCount,
+                            quizSettings: normalized.quizSettings,
+                            attemptCount: 0,
+                            passedCount: 0,
+                            flaggedCount: 0,
+                            attempts: []
+                          });
+                          setOpenQuizReportDialog(true);
+                        }}
+                      >
+                        <BarChart className="w-4 h-4 mr-1" /> Report
+                      </Button>
+                    )}
+                    
+                    <Button 
+                      size="sm" 
+                      className="bg-blue-600 text-white hover:bg-blue-700"
+                      onClick={async () => {
+                        setNewAssignment({
+                          topic: title,
+                          description: "Generating assignment description...",
+                          dueDate: '',
+                          department: course.department || ''
+                        });
+                        setOpenAssignmentDialog(true);
+                        try {
+                          const res = await axios.post(`${serverURL}/api/prompt`, {
+                            prompt: `Write a professional 1-2 sentence assignment description for a course titled "${title}". The description should encourage the student to complete the assignment to test their understanding. Return strictly the text.`,
+                            systemInstruction: "You are an educational assistant. Return only the 1-2 sentence assignment description text. No quotes, no conversational filler."
+                          });
+                          if (res.data.success && res.data.generatedText) {
+                            setNewAssignment(prev => ({ ...prev, description: res.data.generatedText }));
+                          } else {
+                            setNewAssignment(prev => ({ ...prev, description: description }));
+                          }
+                        } catch (e) {
+                          console.error("Failed to generate assignment description:", e);
+                          setNewAssignment(prev => ({ ...prev, description: description }));
+                        }
+                      }}
+                    >
+                      <FileText className="w-4 h-4 mr-1" /> Assignment
+                    </Button>
+                    
+                    {(course.topics || course.content) && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => course.topics ? setEditCourse(normalizeCourseForEdit(course)) : setEditAICourse({ ...course })}
+                      >
+                        <Edit className="w-4 h-4 mr-1" /> Edit
+                      </Button>
+                    )}
+                    
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => handleDeleteCourse(course._id)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" /> Delete
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Desktop Layout (lg and above) */}
+                <div className="hidden lg:flex lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-lg capitalize">{title}</h3>
+                    <div 
+                      className="text-sm text-muted-foreground line-clamp-2" 
+                      dangerouslySetInnerHTML={{ __html: description }} 
+                    />
+                    <div className="mt-2 flex flex-wrap gap-3 text-xs font-medium text-muted-foreground">
+                      <span>{topicCount} Topics</span>
+                      {quizCount > 0 && <span>{quizCount} Quizzes</span>}
+                      <span className="bg-primary/10 text-primary px-2 py-0.5 rounded">
+                        {course.department ? 
+                          `Dept: ${departmentsList.find(d => d._id === course.department || d.name === course.department)?.name || course.department}` : 
+                          (course.content ? 'AI Generated' : 'All students')}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {approvalStatus === 'draft' && (
+                        <Badge variant="secondary">Draft</Badge>
+                      )}
+                      {approvalStatus === 'pending' && (
+                        <Badge variant="outline">
+                          <Clock className="w-3.5 h-3.5" /> Pending approval
+                        </Badge>
+                      )}
+                      {approvalStatus === 'approved' && (
+                        <Badge className="bg-emerald-600 text-white">
+                          <Check className="w-3.5 h-3.5" /> Approved
+                        </Badge>
+                      )}
+                      {approvalStatus === 'rejected' && (
+                        <Badge variant="destructive">
+                          <X className="w-3.5 h-3.5" /> Rejected
+                        </Badge>
+                      )}
+                      <Badge variant={published ? "secondary" : "outline"}>
+                        {published ? 'Published' : 'Unpublished'}
+                      </Badge>
+                    </div>
+                    {quizCount > 0 && quizReportsMap[String(course._id)] && (
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        {quizReportsMap[String(course._id)]?.quizSettings?.examMode && (
+                          <Badge variant="secondary">
+                            <Shield className="w-3.5 h-3.5" /> Secure
+                          </Badge>
+                        )}
+                        <Badge variant="outline">
+                          Attempts: {quizReportsMap[String(course._id)]?.attemptCount || 0}
+                        </Badge>
+                        <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+                          Passed: {quizReportsMap[String(course._id)]?.passedCount || 0}
+                        </Badge>
+                        {(quizReportsMap[String(course._id)]?.flaggedCount || 0) > 0 && (
+                          <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700">
+                            <AlertTriangle className="w-3.5 h-3.5" /> Flagged: {quizReportsMap[String(course._id)]?.flaggedCount || 0}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Desktop Actions */}
+                  <div className="flex flex-wrap gap-2 ml-4 max-w-[15rem] justify-end">
+                    <Button variant="ghost" size="sm" onClick={() => setPreviewCourse({ ...course })}>
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    
+                    {role === 'org_admin' && (approvalStatus === 'pending' || approvalStatus === 'rejected') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleReviewOrgCourse(course._id, 'approved', '')}
+                      >
+                        <Check className="w-4 h-4 mr-1" /> Approve
+                      </Button>
+                    )}
+                    
+                    {role === 'org_admin' && approvalStatus !== 'rejected' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                        onClick={async () => {
+                          const result = await Swal.fire({
+                            title: 'Reject this course?',
+                            input: 'textarea',
+                            inputLabel: 'Reason (optional)',
+                            inputPlaceholder: 'Write a short note for the staff member...',
+                            showCancelButton: true,
+                            confirmButtonText: 'Reject',
+                            confirmButtonColor: '#dc2626'
+                          });
+                          if (result.isConfirmed) {
+                            await handleReviewOrgCourse(course._id, 'rejected', String(result.value || ''));
+                          }
+                        }}
+                      >
+                        <X className="w-4 h-4 mr-1" /> Reject
+                      </Button>
+                    )}
+                    
+                    {role === 'org_admin' && approvalStatus === 'approved' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={published ? 
+                          "border-red-200 bg-red-50 text-red-700 hover:bg-red-100" : 
+                          "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"}
+                        onClick={async () => {
+                          const nextPublished = !published;
+                          const result = await Swal.fire({
+                            title: nextPublished ? 'Publish this course?' : 'Unpublish this course?',
+                            text: nextPublished
+                              ? 'Students will be able to see and open this course in the student portal.'
+                              : 'Students will no longer see this course in the student portal.',
+                            showCancelButton: true,
+                            confirmButtonText: nextPublished ? 'Publish' : 'Unpublish',
+                            confirmButtonColor: nextPublished ? '#16a34a' : '#dc2626'
+                          });
+                          if (result.isConfirmed) {
+                            await handlePublishOrgCourse(course._id, nextPublished);
+                          }
+                        }}
+                      >
+                        {published ? 'Unpublish' : 'Publish'}
+                      </Button>
+                    )}
+                    
+                    {quizCount > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Quiz report"
+                        onClick={() => {
+                          const report = quizReportsMap[String(course._id)];
+                          const normalized = normalizeCourseForEdit(course);
+                          setSelectedQuizReport(report || {
+                            courseId: String(course._id),
+                            title,
+                            questionCount: quizCount,
+                            quizSettings: normalized.quizSettings,
+                            attemptCount: 0,
+                            passedCount: 0,
+                            flaggedCount: 0,
+                            attempts: []
+                          });
+                          setOpenQuizReportDialog(true);
+                        }}
+                      >
+                        <BarChart className="w-4 h-4" />
+                      </Button>
+                    )}
+                    
+                    <Button 
+                      size="sm" 
+                      className="bg-blue-600 text-white hover:bg-blue-700"
+                      onClick={async () => {
+                        setNewAssignment({
+                          topic: title,
+                          description: "Generating assignment description...",
+                          dueDate: '',
+                          department: course.department || ''
+                        });
+                        setOpenAssignmentDialog(true);
+                        try {
+                          const res = await axios.post(`${serverURL}/api/prompt`, {
+                            prompt: `Write a professional 1-2 sentence assignment description for a course titled "${title}". The description should encourage the student to complete the assignment to test their understanding. Return strictly the text.`,
+                            systemInstruction: "You are an educational assistant. Return only the 1-2 sentence assignment description text. No quotes, no conversational filler."
+                          });
+                          if (res.data.success && res.data.generatedText) {
+                            setNewAssignment(prev => ({ ...prev, description: res.data.generatedText }));
+                          } else {
+                            setNewAssignment(prev => ({ ...prev, description: description }));
+                          }
+                        } catch (e) {
+                          console.error("Failed to generate assignment description:", e);
+                          setNewAssignment(prev => ({ ...prev, description: description }));
+                        }
+                      }}
+                    >
+                      Create Assignment
+                    </Button>
+                    
+                    {(course.topics || course.content) && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => course.topics ? setEditCourse(normalizeCourseForEdit(course)) : setEditAICourse({ ...course })}
+                      >
+                        Edit
+                      </Button>
+                    )}
+                    
+                    <Button variant="ghost" size="sm" onClick={() => handleDeleteCourse(course._id)}>
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
+            <FileText className="w-12 h-12 mx-auto mb-4 opacity-20" />
+            <p>No courses created yet. Create your first course or use AI to generate one.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Quiz Report Dialog */}
+      <Dialog
+        open={openQuizReportDialog}
+        onOpenChange={(open) => {
+          setOpenQuizReportDialog(open);
+          if (!open) {
+            setSelectedQuizReport(null);
+            setExpandedQuizAttemptId('');
+          }
+        }}
+      >
+        <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Quiz Report</DialogTitle>
+            <DialogDescription>
+              Attempts, scores, cooldowns, and malpractice flags for this course.
+            </DialogDescription>
+          </DialogHeader>
+
+          {quizReportsLoading && (
+            <div className="text-sm text-muted-foreground">Loading reports...</div>
+          )}
+
+          {!quizReportsLoading && selectedQuizReport && (() => {
+            const settings = {
+              ...defaultQuizSettings,
+              ...(selectedQuizReport.quizSettings || {}),
+              proctoring: {
+                ...defaultQuizSettings.proctoring,
+                ...(selectedQuizReport.quizSettings?.proctoring || {})
+              }
+            };
+            const attempts = Array.isArray(selectedQuizReport.attempts) ? selectedQuizReport.attempts : [];
+
+            return (
+              <div className="space-y-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">{selectedQuizReport.title || 'Course'}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedQuizReport.questionCount || 0} questions in bank, difficulty: {settings.difficultyMode}, pass mark: {settings.passPercentage}%.
+                    </p>
+                  </div>
+                  {settings.examMode ? (
+                    <Badge variant="secondary" className="gap-1">
+                      <Shield className="w-4 h-4" /> Secure exam
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline">Standard quiz</Badge>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="p-3 rounded-lg border bg-muted/20">
+                    <div className="text-xs text-muted-foreground">Attempt policy</div>
+                    <div className="font-semibold text-sm">{settings.attemptLimit} attempts, cooldown {settings.cooldownMinutes} min</div>
+                  </div>
+                  <div className="p-3 rounded-lg border bg-muted/20">
+                    <div className="text-xs text-muted-foreground">Summary</div>
+                    <div className="font-semibold text-sm">
+                      Attempts {selectedQuizReport.attemptCount || 0}, passed {selectedQuizReport.passedCount || 0}, flagged {selectedQuizReport.flaggedCount || 0}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-lg border bg-muted/20">
+                    <div className="text-xs text-muted-foreground">Shuffle</div>
+                    <div className="font-semibold text-sm">
+                      Questions {settings.shuffleQuestions ? 'on' : 'off'}, options {settings.shuffleOptions ? 'on' : 'off'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto rounded-lg border">
+                  <div className="min-w-[720px]">
+                    <div className="grid grid-cols-12 gap-2 bg-muted/40 px-3 py-2 text-xs font-semibold text-muted-foreground">
+                      <div className="col-span-3">Student</div>
+                      <div className="col-span-1">Try</div>
+                      <div className="col-span-2">Score</div>
+                      <div className="col-span-2">Result</div>
+                      <div className="col-span-2">Flags</div>
+                      <div className="col-span-2">Submitted</div>
+                    </div>
+                    {attempts.length === 0 ? (
+                      <div className="p-4 text-sm text-muted-foreground">No attempts yet.</div>
+                    ) : (
+                      <div className="divide-y">
+                        {attempts.map((a: any) => {
+                          const submitted = a.submittedAt ? new Date(a.submittedAt).toLocaleString() : '-';
+                          const eventSummary = a.eventSummary || {};
+                          const eventBadges = Object.entries(eventSummary).slice(0, 3);
+                          const isExpanded = expandedQuizAttemptId === String(a.attemptId);
+                          return (
+                            <div key={a.attemptId} className="border-t first:border-t-0">
+                              <div className="grid grid-cols-12 gap-2 px-3 py-2 text-sm items-center">
+                                <div className="col-span-3">
+                                  <div className="font-medium truncate">{a.studentName || 'Student'}</div>
+                                  <div className="text-xs text-muted-foreground truncate">{a.studentEmail || ''}</div>
+                                </div>
+                                <div className="col-span-1 text-muted-foreground">{a.attemptNumber || 1}</div>
+                                <div className="col-span-2">{a.score || 0}/{a.totalQuestions || 0} ({a.percentage || 0}%)</div>
+                                <div className="col-span-2">
+                                  {a.passed ? (
+                                    <Badge className="bg-emerald-600 text-white border-0">Passed</Badge>
+                                  ) : (
+                                    <Badge variant="outline">Failed</Badge>
+                                  )}
+                                </div>
+                                <div className="col-span-2 flex items-center gap-2">
+                                  {a.malpracticeFlag ? (
+                                    <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700 gap-1">
+                                      <AlertTriangle className="w-3.5 h-3.5" /> Malpractice
+                                    </Badge>
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground">None</span>
+                                  )}
+                                  <span className="text-xs text-muted-foreground">{a.securityEventCount || 0} events</span>
+                                </div>
+                                <div className="col-span-2 text-xs text-muted-foreground">
+                                  <div>{submitted}</div>
+                                  {eventBadges.length > 0 && (
+                                    <div className="mt-1 flex flex-wrap gap-1">
+                                      {eventBadges.map(([eventType, count]) => (
+                                        <Badge key={`${a.attemptId}-${eventType}`} variant="outline" className="text-[10px]">
+                                          {eventType}: {String(count)}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {(a.securityEvents?.length || 0) > 0 && (
+                                    <button
+                                      type="button"
+                                      className="mt-2 text-[11px] font-semibold text-primary"
+                                      onClick={() => setExpandedQuizAttemptId(isExpanded ? '' : String(a.attemptId))}
+                                    >
+                                      {isExpanded ? 'Hide details' : 'View details'}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                              {isExpanded && (a.securityEvents?.length || 0) > 0 && (
+                                <div className="border-t bg-muted/20 px-3 py-3">
+                                  <div className="space-y-2">
+                                    {a.securityEvents.map((event: any, index: number) => (
+                                      <div key={`${a.attemptId}-event-${index}`} className="rounded-lg border bg-background px-3 py-2">
+                                        <div className="flex items-center justify-between gap-2">
+                                          <div className="flex items-center gap-2">
+                                            <Badge variant="outline">{event.type}</Badge>
+                                            <Badge variant={event.severity === 'high' ? 'destructive' : 'secondary'}>
+                                              {event.severity}
+                                            </Badge>
+                                          </div>
+                                          <span className="text-[11px] text-muted-foreground">
+                                            {event.timestamp ? new Date(event.timestamp).toLocaleString() : '-'}
+                                          </span>
+                                        </div>
+                                        {event.details && (
+                                          <p className="mt-2 text-xs text-muted-foreground">{event.details}</p>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+    </CardContent>
+
+
+
+
                                    </Card>
                                </div>
                
