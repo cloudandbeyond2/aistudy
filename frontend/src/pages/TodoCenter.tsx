@@ -424,7 +424,7 @@ export default function TodoCenter() {
     <>
       <SEO title="Todo Center" description="Track tasks with smart filters" />
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
+      <div className="min-h-screen via-white to-indigo-50/30">
         <div className="space-y-6 sm:space-y-8 px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto relative pt-6 lg:pt-20">
           
           {/* Header Section */}
