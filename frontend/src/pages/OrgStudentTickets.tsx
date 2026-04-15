@@ -137,53 +137,87 @@ const OrgStudentTickets = () => {
       </div>
 
       <Card className="border-none shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle>Student Support Tickets</CardTitle>
-         <div className="flex gap-3">
-
-  {/* SEARCH */}
-  <div className="relative w-72">
-    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-    <Input
-      placeholder="Search by ID or Subject..."
-      className="pl-9 bg-background"
-      value={searchTerm}
-      onChange={(e) => {
-        setSearchTerm(e.target.value);
-        setCurrentPage(1);
-      }}
-    />
+       <CardHeader className="pb-4">
+  <div className="flex flex-col gap-4">
+    
+    {/* Header with optional badge */}
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <CardTitle className="text-xl sm:text-2xl font-bold">
+        Student Support Tickets
+      </CardTitle>
+      <div className="text-xs text-muted-foreground sm:hidden">
+        {searchTerm || statusFilter !== 'All' ? 'Filters active' : 'All tickets'}
+      </div>
+    </div>
+    
+    {/* Filters container */}
+    <div className="flex flex-col md:flex-row gap-3">
+      
+      {/* SEARCH - expands on tablet+ */}
+      <div className="relative flex-1 min-w-0">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by ID or Subject..."
+          className="pl-9 bg-background w-full"
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
+        />
+      </div>
+      
+      {/* STATUS FILTER */}
+      <select
+        className="border rounded-md px-3 py-2 text-sm bg-background w-full md:w-40"
+        value={statusFilter}
+        onChange={(e) => {
+          setStatusFilter(e.target.value);
+          setCurrentPage(1);
+        }}
+      >
+        <option value="All">📋 All Status</option>
+        <option value="Open">🟢 Open</option>
+        <option value="In Progress">🟡 In Progress</option>
+        <option value="Resolved">✅ Resolved</option>
+      </select>
+      
+      {/* CLEAR BUTTON with icon for mobile */}
+      <Button
+        variant="outline"
+        onClick={() => {
+          setSearchTerm("");
+          setStatusFilter("All");
+          setCurrentPage(1);
+        }}
+        className="gap-2 w-full md:w-auto"
+      >
+        <span className="hidden sm:inline">Clear</span>
+        <span className="sm:hidden">✕ Clear</span>
+      </Button>
+      
+    </div>
+    
+    {/* Active filters indicator (mobile) */}
+    {(searchTerm || statusFilter !== 'All') && (
+      <div className="flex flex-wrap gap-2 sm:hidden">
+        {searchTerm && (
+          <Badge variant="secondary" className="text-xs">
+            Search: {searchTerm}
+            <button onClick={() => setSearchTerm('')} className="ml-1">✕</button>
+          </Badge>
+        )}
+        {statusFilter !== 'All' && (
+          <Badge variant="secondary" className="text-xs">
+            Status: {statusFilter}
+            <button onClick={() => setStatusFilter('All')} className="ml-1">✕</button>
+          </Badge>
+        )}
+      </div>
+    )}
+    
   </div>
-
-  {/* STATUS FILTER */}
-  <select
-    className="border rounded-md px-3 py-2 text-sm bg-background"
-    value={statusFilter}
-    onChange={(e) => {
-      setStatusFilter(e.target.value);
-      setCurrentPage(1);
-    }}
-  >
-    <option value="All">All Status</option>
-    <option value="Open">Open</option>
-    <option value="In Progress">In Progress</option>
-    <option value="Resolved">Resolved</option>
-  </select>
-
-   {/* CLEAR BUTTON */}
-  <Button
-    variant="outline"
-    onClick={() => {
-      setSearchTerm("");
-      setStatusFilter("All");
-      setCurrentPage(1);
-    }}
-  >
-    Clear
-  </Button>
-
-</div>
-        </CardHeader>
+</CardHeader>
 
         <CardContent>
           <div className="rounded-md border bg-background overflow-hidden">

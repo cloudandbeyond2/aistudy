@@ -224,85 +224,96 @@ const OrgMockInterview = () => {
             {/* Premium Header */}
             <div className="relative rounded-3xl bg-gradient-to-br from-indigo-600/10 via-purple-500/5 to-transparent border border-white/10 shadow-sm overflow-hidden mb-8 p-5 sm:p-6 lg:p-8">
                 <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] -z-10" />
-                <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between relative z-10">
-                    <div className="flex items-start sm:items-center gap-4">
-                        <div className="bg-primary/10 p-3 rounded-2xl shrink-0">
-                            <Brain className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">Mock Interview Training Hub</h1>
-                            <p className="text-muted-foreground text-sm mt-1 max-w-xl">
-                                Prepare your students for the real world. Manage AI screening modules and track mock readiness.
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="rounded-xl px-6 h-12 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]">
-                                <Plus className="w-5 h-5 mr-2" /> Create Training Drive
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="w-[95vw] max-w-[425px] sm:w-full">
-                            <DialogHeader>
-                                <DialogTitle>New Training Drive</DialogTitle>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="space-y-2">
-                                    <Label>Drive Title</Label>
-                                    <Input placeholder="e.g. Java Placement Mock" 
-                                           value={newDrive.title}
-                                           onChange={e => setNewDrive({...newDrive, title: e.target.value})} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Target Role</Label>
-                                    <Input placeholder="e.g. Frontend Developer" 
-                                           value={newDrive.targetRole}
-                                           onChange={e => setNewDrive({...newDrive, targetRole: e.target.value})} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Skills (Comma separated)</Label>
-                                    <Input placeholder="React, Node.js, SQL" 
-                                           value={newDrive.skills}
-                                           onChange={e => setNewDrive({...newDrive, skills: e.target.value})} />
-                                </div>
-                                    <div className="space-y-2">
-                                        <Label>Experience Level</Label>
-                                        <select className="w-full h-10 px-3 rounded-md border" 
-                                                value={newDrive.experienceLevel}
-                                                onChange={e => setNewDrive({...newDrive, experienceLevel: e.target.value})}>
-                                            <option>Entry</option>
-                                            <option>Mid</option>
-                                            <option>Senior</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Difficulty</Label>
-                                        <select className="w-full h-10 px-3 rounded-md border" 
-                                                value={newDrive.difficulty}
-                                                onChange={e => setNewDrive({...newDrive, difficulty: e.target.value})}>
-                                            <option>Easy</option>
-                                            <option>Medium</option>
-                                            <option>Hard</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>AI Persona</Label>
-                                        <select className="w-full h-10 px-3 rounded-md border" 
-                                                value={newDrive.personaMood}
-                                                onChange={e => setNewDrive({...newDrive, personaMood: e.target.value})}>
-                                            <option>Friendly</option>
-                                            <option>Professional</option>
-                                            <option>Strict</option>
-                                        </select>
-                                    </div>
-                            </div>
-                            <DialogFooter>
-                                <Button onClick={handleCreateDrive} className="w-full">Create Module</Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+               <div className="flex flex-col gap-4 md:gap-5 lg:flex-row lg:items-center lg:justify-between relative z-10">
+    
+    {/* Left section - responsive alignment */}
+    <div className="flex items-start md:items-center gap-3 md:gap-4">
+        <div className="bg-primary/10 p-2 md:p-3 rounded-2xl shrink-0">
+            <Brain className="w-6 h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-primary" />
+        </div>
+        <div>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight leading-tight">
+                Mock Interview Training Hub
+            </h1>
+            <p className="text-muted-foreground text-xs md:text-sm mt-1 max-w-xl">
+                Prepare your students for the real world. Manage AI screening modules and track mock readiness.
+            </p>
+        </div>
+    </div>
+    
+    {/* Button - full width on mobile, auto on tablet+ */}
+    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogTrigger asChild>
+            <Button className="rounded-xl px-5 md:px-6 h-11 md:h-12 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] w-full md:w-auto">
+                <Plus className="w-4 h-4 md:w-5 md:h-5 mr-2" /> 
+                <span>Create Training Drive</span>
+            </Button>
+        </DialogTrigger>
+        <DialogContent className="w-[95vw] max-w-[500px] sm:max-w-[425px]">
+            <DialogHeader>
+                <DialogTitle>New Training Drive</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                    <Label>Drive Title</Label>
+                    <Input placeholder="e.g. Java Placement Mock" 
+                           value={newDrive.title}
+                           onChange={e => setNewDrive({...newDrive, title: e.target.value})} />
                 </div>
+                <div className="space-y-2">
+                    <Label>Target Role</Label>
+                    <Input placeholder="e.g. Frontend Developer" 
+                           value={newDrive.targetRole}
+                           onChange={e => setNewDrive({...newDrive, targetRole: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                    <Label>Skills (Comma separated)</Label>
+                    <Input placeholder="React, Node.js, SQL" 
+                           value={newDrive.skills}
+                           onChange={e => setNewDrive({...newDrive, skills: e.target.value})} />
+                </div>
+                
+                {/* Tablet responsive grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label>Experience Level</Label>
+                        <select className="w-full h-10 px-3 rounded-md border" 
+                                value={newDrive.experienceLevel}
+                                onChange={e => setNewDrive({...newDrive, experienceLevel: e.target.value})}>
+                            <option>Entry</option>
+                            <option>Mid</option>
+                            <option>Senior</option>
+                        </select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Difficulty</Label>
+                        <select className="w-full h-10 px-3 rounded-md border" 
+                                value={newDrive.difficulty}
+                                onChange={e => setNewDrive({...newDrive, difficulty: e.target.value})}>
+                            <option>Easy</option>
+                            <option>Medium</option>
+                            <option>Hard</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div className="space-y-2">
+                    <Label>AI Persona</Label>
+                    <select className="w-full h-10 px-3 rounded-md border" 
+                            value={newDrive.personaMood}
+                            onChange={e => setNewDrive({...newDrive, personaMood: e.target.value})}>
+                        <option>Friendly</option>
+                        <option>Professional</option>
+                        <option>Strict</option>
+                    </select>
+                </div>
+            </div>
+            <DialogFooter>
+                <Button onClick={handleCreateDrive} className="w-full">Create Module</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+</div>
             </div>
 
             {/* Quick Stats Grid */}

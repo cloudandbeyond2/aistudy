@@ -808,71 +808,71 @@ const ProjectTab = () => {
         </div>
 
         {/* Stats Cards - 4 Column Desktop Layout */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 xl:gap-6">
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
-                <CardContent className="p-5 lg:p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm lg:text-base text-muted-foreground mb-1">Total Projects</p>
-                            <p className={`text-2xl lg:text-3xl xl:text-4xl font-bold ${pageGradientTextClass}`}>
-                                {projects.length}
-                            </p>
-                        </div>
-                        <div className="bg-brand-gradient p-3 lg:p-4 rounded-xl text-primary-foreground shadow-lg group-hover:scale-110 transition-transform">
-                            <Briefcase className="w-5 h-5 lg:w-6 lg:h-6" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5 xl:gap-6">
+    <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
+        <CardContent className="p-5 lg:p-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-sm lg:text-base text-muted-foreground mb-1">Total Projects</p>
+                    <p className={`text-2xl lg:text-3xl xl:text-4xl font-bold ${pageGradientTextClass}`}>
+                        {projects.length}
+                    </p>
+                </div>
+                <div className="bg-brand-gradient p-3 lg:p-4 rounded-xl text-primary-foreground shadow-lg group-hover:scale-110 transition-transform">
+                    <Briefcase className="w-5 h-5 lg:w-6 lg:h-6" />
+                </div>
+            </div>
+        </CardContent>
+    </Card>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
-                <CardContent className="p-5 lg:p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm lg:text-base text-muted-foreground mb-1">AI Generated</p>
-                            <p className="text-2xl lg:text-3xl xl:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
-                                {aiProjectCount}
-                            </p>
-                        </div>
-                        <div className="bg-primary/10 p-3 lg:p-4 rounded-xl text-primary shadow-lg group-hover:scale-110 transition-transform">
-                            <Sparkles className="w-5 h-5 lg:w-6 lg:h-6" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+    <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
+        <CardContent className="p-5 lg:p-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-sm lg:text-base text-muted-foreground mb-1">AI Generated</p>
+                    <p className="text-2xl lg:text-3xl xl:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+                        {aiProjectCount}
+                    </p>
+                </div>
+                <div className="bg-primary/10 p-3 lg:p-4 rounded-xl text-primary shadow-lg group-hover:scale-110 transition-transform">
+                    <Sparkles className="w-5 h-5 lg:w-6 lg:h-6" />
+                </div>
+            </div>
+        </CardContent>
+    </Card>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
-                <CardContent className="p-5 lg:p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm lg:text-base text-muted-foreground mb-1">Due This Week</p>
-                            <p className="text-2xl lg:text-3xl xl:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-secondary to-accent">
-                                {dueSoonProjectsCount}
-                            </p>
-                        </div>
-                        <div className="bg-secondary/10 p-3 lg:p-4 rounded-xl text-secondary shadow-lg group-hover:scale-110 transition-transform">
-                            <Clock className="w-5 h-5 lg:w-6 lg:h-6" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+    <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
+        <CardContent className="p-5 lg:p-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-sm lg:text-base text-muted-foreground mb-1">Due This Week</p>
+                    <p className="text-2xl lg:text-3xl xl:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-secondary to-accent">
+                        {dueSoonProjectsCount}
+                    </p>
+                </div>
+                <div className="bg-secondary/10 p-3 lg:p-4 rounded-xl text-secondary shadow-lg group-hover:scale-110 transition-transform">
+                    <Clock className="w-5 h-5 lg:w-6 lg:h-6" />
+                </div>
+            </div>
+        </CardContent>
+    </Card>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
-                <CardContent className="p-5 lg:p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm lg:text-base text-muted-foreground mb-1">Active Projects</p>
-                            <p className="text-2xl lg:text-3xl xl:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-accent to-secondary">
-                                {projects.filter(p => !p.dueDate || new Date(p.dueDate) >= now).length}
-                            </p>
-                        </div>
-                        <div className="bg-accent/10 p-3 lg:p-4 rounded-xl text-accent shadow-lg group-hover:scale-110 transition-transform">
-                            <Zap className="w-5 h-5 lg:w-6 lg:h-6" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
+    <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
+        <CardContent className="p-5 lg:p-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-sm lg:text-base text-muted-foreground mb-1">Active Projects</p>
+                    <p className="text-2xl lg:text-3xl xl:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-accent to-secondary">
+                        {projects.filter(p => !p.dueDate || new Date(p.dueDate) >= now).length}
+                    </p>
+                </div>
+                <div className="bg-accent/10 p-3 lg:p-4 rounded-xl text-accent shadow-lg group-hover:scale-110 transition-transform">
+                    <Zap className="w-5 h-5 lg:w-6 lg:h-6" />
+                </div>
+            </div>
+        </CardContent>
+    </Card>
+</div>
 
         {/* Projects Grid - 4 Column Desktop Layout with Equal Height Cards */}
         <Card className="border-0 shadow-xl overflow-hidden">

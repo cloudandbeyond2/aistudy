@@ -1836,23 +1836,23 @@ const NoticesTab = () => {
       </div>
 
       {/* ── STATS ──────────────────────────────────────────────────────── */}
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-        {statCards.map((stat, i) => (
-          <Card key={i} className={`${themeStyles.statCard} shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}>
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">{stat.title}</p>
-                  <p className="mt-1.5 text-2xl sm:text-3xl font-bold tracking-tight">{stat.value}</p>
-                </div>
-                <div className={`rounded-xl p-2 sm:p-3 shadow-lg ${themeStyles.statIcon}`}>
-                  <stat.icon className="h-4 w-4 sm:h-5 sm:w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+  <div className="grid gap-3 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    {statCards.map((stat, i) => (
+      <Card key={i} className={`${themeStyles.statCard} shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}>
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">{stat.title}</p>
+              <p className="mt-1.5 text-2xl sm:text-3xl font-bold tracking-tight">{stat.value}</p>
+            </div>
+            <div className={`rounded-xl p-2 sm:p-3 shadow-lg ${themeStyles.statIcon}`}>
+              <stat.icon className="h-4 w-4 sm:h-5 sm:w-5" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    ))}
+</div>
 
       {/* ── CREATE FORM ────────────────────────────────────────────────── */}
       <Card className="border-0 shadow-lg overflow-hidden">
