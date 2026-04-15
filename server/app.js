@@ -68,8 +68,7 @@ import internshipRoutes from './routes/internship.routes.js';
 import skillBoosterRoutes from './routes/skillBooster.routes.js';
 import googleCalendarRoutes from './routes/googleCalendar.routes.js';
 import liveSupportRoutes from './routes/liveSupportRoutes.js';
-import logStatusOrigin from './utils/statusOriginLogger.js';
-
+import todoRoutes from './routes/todoRoutes.js';
 
 // -------------------- INIT --------------------
 connectDB();
@@ -97,21 +96,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Centralized 503 logging with origin tags
-app.use((req, res, next) => {
-  res.on('finish', () => {
-    if (res.statusCode === 503) {
-      logStatusOrigin({
-        req,
-        status: 503,
-        origin: res.locals.statusOrigin || 'Unknown',
-        message: res.locals.statusOriginMessage || ''
-      });
-    }
-  });
-  next();
-});
-
 // -------------------- ROUTES --------------------
 // Middleware to ensure DB is connected before any API request
 app.use(async (req, res, next) => {
@@ -119,8 +103,6 @@ app.use(async (req, res, next) => {
     try {
       const connected = await connectDB();
       if (!connected) {
-        res.locals.statusOrigin = 'DB';
-        res.locals.statusOriginMessage = 'Database unavailable. Check MongoDB connection and TLS settings.';
         return res.status(503).json({
           success: false,
           message: 'Database unavailable. Check MongoDB connection and TLS settings.'
@@ -128,8 +110,6 @@ app.use(async (req, res, next) => {
       }
     } catch (err) {
       console.error('DB Connection Middleware Error:', err);
-      res.locals.statusOrigin = 'DB';
-      res.locals.statusOriginMessage = 'Database connection failed';
       return res.status(503).json({
         success: false,
         message: 'Database connection failed'
@@ -189,7 +169,7 @@ app.use("/api", internshipRoutes);
 app.use("/api", skillBoosterRoutes);
 app.use("/api/google-calendar", googleCalendarRoutes);
 app.use("/api/live-support", liveSupportRoutes);
-
+app.use('/api/todos', todoRoutes);
 // -------------------- ERROR HANDLER --------------------
 app.use((err, req, res, next) => {
   console.error('SERVER ERROR:', err);

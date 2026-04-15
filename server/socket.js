@@ -5,7 +5,7 @@ import User from './models/User.js';
 
 export default function setupSocket(io) {
   io.on('connection', (socket) => {
-    console.log(`🔌 Client connected: ${socket.id}`);
+    // console.log(`🔌 Client connected: ${socket.id}`);
 
     // --- SUPPORT CHAT ---
     
@@ -117,7 +117,7 @@ export default function setupSocket(io) {
     });
 
     socket.on('disconnect', () => {
-      console.log(`🔌 Client disconnected: ${socket.id}`);
+      // console.log(`🔌 Client disconnected: ${socket.id}`);
     });
   });
 }

@@ -731,13 +731,13 @@ const DepartmentsTab = () => {
                                         className="students-theme-hero-badge !bg-white/12 hover:!bg-white/20 shadow-lg transform hover:scale-105 transition-all duration-300 w-full sm:w-auto !text-white !border-white/30"
                                     >
                                         <UserPlus className="w-4 h-4 mr-2" />
-                                        Add Admin
+                                        Add Dep Staff
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent className="students-theme-dialog w-[95%] sm:max-w-md mx-auto rounded-xl">
                                     <DialogHeader>
                                         <DialogTitle className="students-theme-title text-xl sm:text-2xl">
-                                            Add Department Admin
+                                            Add Department Staff
                                         </DialogTitle>
                                     </DialogHeader>
                                     <ScrollArea className="max-h-[70vh]">
@@ -919,7 +919,7 @@ const DepartmentsTab = () => {
                         <CardContent className="p-4 sm:p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-muted-foreground text-sm">Department Admins</p>
+                                    <p className="text-muted-foreground text-sm">Department Staff</p>
                                     <p className="text-2xl sm:text-3xl font-bold mt-1 text-[#1a6a9e]">
                                         {deptAdmins.length}
                                     </p>
@@ -989,7 +989,7 @@ const DepartmentsTab = () => {
                             }`}
                         >
                             <Shield className={`w-4 h-4 transition-all duration-300 ${activeTabState === 'admins' ? 'animate-pulse' : ''}`} />
-                            <span className="block max-w-full">Department Admins</span>
+                            <span className="block max-w-full">Department Staff</span>
                         </TabsTrigger>
                     </TabsList>
 
