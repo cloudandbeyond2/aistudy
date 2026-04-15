@@ -6528,7 +6528,7 @@ Login:
                                                     </Badge>
                                                 ))}
                                             </div>
-                                            {/* <Button 
+                                            <Button 
                                                 variant="ghost" 
                                                 size="sm" 
                                                 className="mt-6 w-full text-primary transition-all hover:bg-muted group-hover:bg-primary group-hover:text-primary-foreground"
@@ -6541,7 +6541,7 @@ Login:
                                                 }}
                                             >
                                                 Launch in {category.name.split(' ')[0]} <ChevronRight className="ml-1 w-4 h-4" />
-                                            </Button> */}
+                                            </Button>
                                         </CardContent>
                                     </Card>
                                 ))}
