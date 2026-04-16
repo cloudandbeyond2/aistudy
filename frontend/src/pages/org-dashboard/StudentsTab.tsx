@@ -21,7 +21,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import DigitalIDCard from '@/components/DigitalIDCard';
 import { CreditCard } from 'lucide-react';
-
+  import Swal from "sweetalert2";
 const StudentsTab = () => {
     const [openStudentDialog, setOpenStudentDialog] = useState(false);
     const [searchParams, setSearchParams] = useSearchParams();
@@ -417,24 +417,50 @@ const StudentsTab = () => {
     };
 
     // Delete student
-    const handleDeleteStudent = async (studentId: string) => {
-        const confirmDelete = window.confirm('Are you sure you want to delete this student?');
-        if (!confirmDelete) return;
-        
-        try {
-            const res = await axios.delete(`${serverURL}/api/org/student/${studentId}`);
-            if (res.data.success) {
-                toast({ title: "Success", description: "Student deleted successfully" });
-                fetchStudents();
-                fetchStats();
-            } else {
-                toast({ title: "Error", description: res.data.message, variant: "destructive" });
-            }
-        } catch (e: any) {
-            console.error(e);
-            toast({ title: "Error", description: e.response?.data?.message || "Request failed", variant: "destructive" });
-        }
-    };
+
+
+const handleDeleteStudent = async (studentId: string) => {
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "This student will be permanently deleted!",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#0ea5e9", // blue
+    cancelButtonColor: "#64748b",  // gray
+    confirmButtonText: "Yes, delete",
+    cancelButtonText: "No, cancel",
+    reverseButtons: true
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const res = await axios.delete(`${serverURL}/api/org/student/${studentId}`);
+
+    if (res.data.success) {
+      Swal.fire({
+        title: "Deleted!",
+        text: "Student deleted successfully.",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      fetchStudents();
+      fetchStats();
+    } else {
+      Swal.fire("Error", res.data.message, "error");
+    }
+
+  } catch (e: any) {
+    console.error(e);
+    Swal.fire(
+      "Error",
+      e.response?.data?.message || "Request failed",
+      "error"
+    );
+  }
+};
     
     // Send Individual Notification
     const handleSendNotification = async () => {
