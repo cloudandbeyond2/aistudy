@@ -713,7 +713,7 @@ const StudentsTab = () => {
                 <CardTitle className="students-theme-title text-lg sm:text-xl md:text-2xl">Student Directory</CardTitle>
                 <CardDescription className="students-theme-description text-xs sm:text-sm">View and manage all student records</CardDescription>
             </div>
-            <div className="flex gap-2">
+            {/* <div className="flex gap-2">
                 <Button 
                     variant={viewMode === 'grid' ? 'default' : 'outline'}
                     onClick={() => setViewMode('grid')}
@@ -736,7 +736,7 @@ const StudentsTab = () => {
                     <List className="w-3 h-3 sm:w-4 sm:h-4" />
                     <span className="hidden xs:inline text-xs sm:text-sm">List</span>
                 </Button>
-            </div>
+            </div> */}
         </div>
     </CardHeader>
     <CardContent className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
