@@ -1,5 +1,6 @@
 import { getGenAI } from '../config/gemini.js';
 import { generateAIText } from '../config/aiProvider.js';
+import retryWithBackoff from '../utils/retryWithBackoff.js';
 import { getPlanLimits, isPlanActive } from '../config/planLimits.js';
 import {
   HarmCategory,
@@ -10,78 +11,6 @@ import gis from 'g-i-s';
 import youtubesearchapi from 'youtube-search-api';
 import { YoutubeTranscript } from 'youtube-transcript';
 import { getUnsplashApi } from '../config/unsplash.js';
-
-// Simple in-memory queue: one generation at a time per user/org key.
-const generationQueues = new Map();
-const promptCache = new Map();
-const promptInFlight = new Map();
-const PROMPT_CACHE_TTL_MS = 2 * 60 * 1000;
-const promptRateState = new Map();
-const PROMPT_RATE_WINDOW_MS = 60 * 1000;
-const PROMPT_RATE_MAX = 5;
-
-const runWithGenerationQueue = async (queueKey, task) => {
-  const key = queueKey || 'anonymous';
-  const previous = generationQueues.get(key) || Promise.resolve();
-  let release;
-  const next = new Promise((resolve) => { release = resolve; });
-  generationQueues.set(key, previous.then(() => next));
-
-  try {
-    await previous;
-    return await task();
-  } finally {
-    release();
-    if (generationQueues.get(key) === next) {
-      generationQueues.delete(key);
-    }
-  }
-};
-
-const getPromptRateKey = (req) => {
-  const userId = req.body?.userId;
-  return userId || req.headers['x-user-id'] || req.ip || 'anonymous';
-};
-
-const isPromptRateLimited = (key) => {
-  const now = Date.now();
-  const entry = promptRateState.get(key) || { count: 0, windowStart: now };
-  if (now - entry.windowStart > PROMPT_RATE_WINDOW_MS) {
-    entry.count = 0;
-    entry.windowStart = now;
-  }
-  entry.count += 1;
-  promptRateState.set(key, entry);
-  return entry.count > PROMPT_RATE_MAX;
-};
-
-const buildPromptCacheKey = (req) => {
-  const { prompt, systemInstruction, responseMimeType, responseSchema, userId } = req.body || {};
-  return JSON.stringify({
-    prompt: prompt || '',
-    systemInstruction: systemInstruction || '',
-    responseMimeType: responseMimeType || '',
-    responseSchema: responseSchema || null,
-    userId: userId || ''
-  });
-};
-
-const getCachedPrompt = (key) => {
-  const entry = promptCache.get(key);
-  if (!entry) return null;
-  if (Date.now() > entry.expiresAt) {
-    promptCache.delete(key);
-    return null;
-  }
-  return entry.value;
-};
-
-const setCachedPrompt = (key, value) => {
-  promptCache.set(key, {
-    value,
-    expiresAt: Date.now() + PROMPT_CACHE_TTL_MS
-  });
-};
 
 
 
@@ -132,47 +61,13 @@ export const generatePrompt = async (req, res) => {
   const { prompt, systemInstruction, responseMimeType, responseSchema } = req.body;
 
   try {
-    const rateKey = getPromptRateKey(req);
-    if (isPromptRateLimited(rateKey)) {
-      return res.status(429).json({
-        success: false,
-        message: 'Too many prompt requests. Please wait a moment and try again.'
-      });
-    }
-
-    const cacheKey = buildPromptCacheKey(req);
-    const cached = getCachedPrompt(cacheKey);
-    if (cached) {
-      return res.status(200).json({
-        success: true,
-        generatedText: cached,
-        cached: true
-      });
-    }
-
-    if (promptInFlight.has(cacheKey)) {
-      const inflight = await promptInFlight.get(cacheKey);
-      return res.status(200).json({
-        success: true,
-        generatedText: inflight,
-        cached: true
-      });
-    }
-
-    const requestPromise = runWithGenerationQueue(rateKey, async () =>
-      generateAIText({
-        prompt,
-        systemInstruction,
-        responseMimeType,
-        responseSchema,
-        maxOutputTokens: 8192
-      })
-    );
-
-    promptInFlight.set(cacheKey, requestPromise);
-    const generatedText = await requestPromise;
-    promptInFlight.delete(cacheKey);
-    setCachedPrompt(cacheKey, generatedText);
+    const generatedText = await generateAIText({
+      prompt,
+      systemInstruction,
+      responseMimeType,
+      responseSchema,
+      maxOutputTokens: 8192
+    });
 
     console.log('--- AI RESPONSE SUCCESS ---');
     console.log('Generated Text length:', generatedText?.length || 0);
@@ -182,51 +77,31 @@ export const generatePrompt = async (req, res) => {
       generatedText
     });
   } catch (error) {
-    const cacheKey = buildPromptCacheKey(req);
-    if (promptInFlight.has(cacheKey)) {
-      promptInFlight.delete(cacheKey);
-    }
-    const rawMessage = error?.message || '';
-    const rawStatus = error?.status || error?.response?.status;
     const isRateLimit =
-      rawStatus === 429 ||
-      rawMessage.includes('429') ||
-      rawMessage.includes('quota') ||
-      rawMessage.toLowerCase?.().includes('rate limit') ||
-      rawMessage.toLowerCase?.().includes('too many requests') ||
-      rawMessage.toLowerCase?.().includes('exceeded your current quota');
+      error.status === 429 ||
+      error.message?.includes('429') ||
+      error.message?.includes('quota') ||
+      error.message?.toLowerCase?.().includes('rate limit') ||
+      error.message?.toLowerCase?.().includes('too many requests') ||
+      error.message?.toLowerCase?.().includes('exceeded your current quota');
 
-    const isServiceUnavailable =
-      rawStatus === 503 ||
-      rawMessage.toLowerCase?.().includes('unavailable') ||
-      rawMessage.toLowerCase?.().includes('high demand') ||
-      rawMessage.toLowerCase?.().includes('service unavailable');
+    const isMissingKey = error.status === 401;
+    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
 
-    const isMissingKey = rawStatus === 401;
-    const isInvalidKey = rawMessage.includes('403') || rawMessage.includes('404') || rawMessage.includes('API key not valid') || rawMessage.includes('API key expired');
-
-    let statusCode = 500;
-    let responseMessage = 'Internal server error';
+    let status = 500;
+    let message = 'Internal server error';
 
     if (isMissingKey || isInvalidKey) {
-      statusCode = isMissingKey ? 401 : 403;
-      responseMessage = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
-    } else if (isServiceUnavailable) {
-      statusCode = 503;
-      responseMessage = 'AI provider is temporarily unavailable. Please try again later.';
+      status = isMissingKey ? 401 : 403;
+      message = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
     } else if (isRateLimit) {
-      statusCode = 429;
-      responseMessage = 'API rate limit or quota exceeded.';
+      status = 429;
+      message = 'API rate limit or quota exceeded.';
     }
 
-    if (statusCode === 503) {
-      res.locals.statusOrigin = 'AI';
-      res.locals.statusOriginMessage = responseMessage;
-    }
-
-    res.status(statusCode).json({
+    res.status(status).json({
       success: false,
-      message: responseMessage
+      message
     });
   }
 };
@@ -241,8 +116,7 @@ export const generateBatchSubtopics = async (req, res) => {
     topicsList,
     lang,
     userId,
-    contentProfile = 'learn_format',
-    organizationId
+    contentProfile = 'learn_format'
   } = req.body;
 
   if (!mainTopic || !topicsList || !Array.isArray(topicsList) || !topicsList.length) {
@@ -343,15 +217,16 @@ IMPORTANT: You MUST explicitly translate the 'topicTitle' and subtopic 'title' f
 For each subtopic, provide a detailed explanation (approx 900-1500 words if possible) with rich examples, strong concept-building, and clear definitions.
 Ensure every sentence is complete and the content doesn't cut off abruptly.
 If providing code examples, ensure they are properly formatted with correct line breaks and indentation.
-Use Markdown formatting for the "theory" field (headers, bold text, lists, tables). Do NOT use HTML tags.
+Use valid HTML formatting for the "theory" field (paragraphs, bold text, lists).
 Every lesson should feel substantially complete, not like a short summary.
 Include layered explanation: concept meaning, why it matters, process or workflow, practical examples, mistakes to avoid, and a short closing recap.
 For business, sales, CRM, analytics, HR, marketing, operations, or management topics, include practical product-style examples such as dashboard concepts, KPI cards, pipeline views, report widgets, filters, tables, and workflow scenarios.
 When relevant, explain what a dashboard would show, why each metric matters, and how a team would use it in real work.
-When the lesson includes programming, commands, configuration, queries, or terminal examples, format them as proper multi-line Markdown code blocks with language identifiers (e.g., \`\`\`javascript ... \`\`\`).
+When the lesson includes programming, commands, configuration, queries, or terminal examples, format them as proper multi-line HTML code blocks using <pre><code class="language-...">...</code></pre>.
 Preserve indentation and line breaks inside code blocks.
+Never place full code examples inside <p>, <li>, or inline <code> tags.
 Do not overuse code examples for non-technical business topics unless the code is essential to the explanation.
-Never output an empty code block.
+Never output an empty <pre><code></code></pre> block.
 If you mention an example, provide the full example content immediately after the label.
 For conceptual business validation logic, CRM workflows, or dashboard rules, prefer readable pseudocode or numbered rule logic instead of SQL unless SQL is specifically necessary.
 Do not truncate a section halfway through an example.
@@ -400,66 +275,16 @@ ONLY respond with a valid JSON object matching the requested schema.`;
       .replace(/^```\s*/i, '')
       .replace(/\s*```$/i, '');
 
-    const jsonStart = withoutCodeFence.search(/[\[{]/);
-    if (jsonStart < 0) {
-      throw new Error('No JSON object found in AI provider response.');
-    }
-
-    let jsonEnd = -1;
-    let depth = 0;
-    let inString = false;
-    let escaped = false;
-    for (let i = jsonStart; i < withoutCodeFence.length; i += 1) {
-      const char = withoutCodeFence[i];
-
-      if (inString) {
-        if (escaped) {
-          escaped = false;
-        } else if (char === '\\') {
-          escaped = true;
-        } else if (char === '"') {
-          inString = false;
-        }
-        continue;
-      }
-
-      if (char === '"') {
-        inString = true;
-      } else if (char === '{' || char === '[') {
-        depth += 1;
-      } else if (char === '}' || char === ']') {
-        depth -= 1;
-        if (depth === 0) {
-          jsonEnd = i;
-          break;
-        }
-      }
-    }
-
+    const jsonStart = withoutCodeFence.indexOf('{');
+    const jsonEnd = withoutCodeFence.lastIndexOf('}');
     const jsonCandidate =
-      jsonEnd >= jsonStart
+      jsonStart >= 0 && jsonEnd >= jsonStart
         ? withoutCodeFence.slice(jsonStart, jsonEnd + 1)
-        : withoutCodeFence.slice(jsonStart);
+        : withoutCodeFence;
 
     try {
       return JSON.parse(jsonCandidate);
     } catch (parseError) {
-      const repairedCandidate = jsonCandidate
-        .replace(/,\s*([}\]])/g, '$1')
-        .replace(/\u0000/g, '')
-        .trim();
-
-      if (repairedCandidate !== jsonCandidate) {
-        try {
-          return JSON.parse(repairedCandidate);
-        } catch (repairError) {
-          const preview = repairedCandidate.slice(0, 500);
-          throw new Error(
-            `Invalid JSON returned from AI provider. ${repairError.message}. Preview: ${preview}`
-          );
-        }
-      }
-
       const preview = jsonCandidate.slice(0, 500);
       throw new Error(
         `Invalid JSON returned from AI provider. ${parseError.message}. Preview: ${preview}`
@@ -475,8 +300,8 @@ ONLY respond with a valid JSON object matching the requested schema.`;
       .replace(/\s+/g, ' ')
       .trim();
 
-  const getWordCount = (theory = '') => {
-    const text = stripHtmlToText(theory); // Still useful to strip any accidental tags or markdown symbols if needed
+  const getWordCount = (html = '') => {
+    const text = stripHtmlToText(html);
     if (!text) return 0;
     return text.split(/\s+/).filter(Boolean).length;
   };
@@ -506,15 +331,19 @@ ONLY respond with a valid JSON object matching the requested schema.`;
     return trimmed;
   };
 
-  const appendClosingLessonParagraph = ({ theory, topicTitle, subtopicTitle }) => {
-    const safeTheory = trimIncompleteTrailingFragment(theory);
-    const closingParagraph = `\n\nOverall, ${subtopicTitle} is an important part of ${topicTitle} because it helps the learner apply the main ideas with clarity and confidence.`;
+  const appendClosingLessonParagraph = ({ html, topicTitle, subtopicTitle }) => {
+    const safeHtml = trimIncompleteTrailingFragment(html);
+    const closingParagraph = `<p>Overall, ${subtopicTitle} is an important part of ${topicTitle} because it helps the learner apply the main ideas with clarity and confidence.</p>`;
 
-    if (!safeTheory) {
-      return `## ${subtopicTitle}\n\n${closingParagraph}`;
+    if (!safeHtml) {
+      return `<div class="prose max-w-none"><h2>${subtopicTitle}</h2>${closingParagraph}</div>`;
     }
 
-    return `${safeTheory}${closingParagraph}`;
+    if (/<\/div>\s*$/i.test(safeHtml)) {
+      return safeHtml.replace(/<\/div>\s*$/i, `${closingParagraph}</div>`);
+    }
+
+    return `${safeHtml}\n${closingParagraph}`;
   };
 
   const needsLessonRepair = (html = '') => {
@@ -544,14 +373,14 @@ Subtopic: "${subtopicTitle}"
 Language: ${lang || 'English'}
 
 Task:
-Rewrite the following lesson into clean, valid Markdown.
+Rewrite the following lesson into clean, valid HTML.
 Every sentence must be complete and meaningful.
 Remove any truncated phrase, dangling clause, or cut-off ending.
 Preserve the lesson's meaning and structure, but make the final result read naturally from start to finish.
 Expand thin sections so the lesson feels complete and self-contained for student study.
 Target roughly 700 to 1100 words.
 Include a proper introduction, core explanation, practical examples, common mistakes, and a short recap.
-Return Markdown only.
+Return HTML only.
 
 Original lesson:
 ${theory}`;
@@ -559,10 +388,9 @@ ${theory}`;
   const repairIncompleteLesson = async ({ topicTitle, subtopicTitle, theory }) => {
     const repaired = await generateAIText({
       prompt: buildLessonRepairPrompt({ topicTitle, subtopicTitle, theory }),
-      systemInstruction: `Strictly in ${lang || 'English'}, you are a careful educational editor. Return only clean Markdown. Every sentence must be complete, natural, and meaningful.`,
+      systemInstruction: `Strictly in ${lang || 'English'}, you are a careful educational editor. Return only valid HTML. Every sentence must be complete, natural, and meaningful.`,
       maxOutputTokens: 3072,
-      safetySettings,
-      retryAttempts: 0
+      safetySettings
     });
 
     return repaired?.trim() || '';
@@ -649,19 +477,19 @@ Style Guidance: ${selectedContentProfile.instruction}
 Requirements:
 - Return content only for this one chapter and this one subtopic.
 - Keep the same chapter title and subtopic title, translated into ${lang || 'English'} when needed.
-- The "theory" field must contain complete Markdown content and must not be cut off.
+- The "theory" field must contain complete HTML content and must not be cut off.
 - Write ${isCompact ? 'a concise but complete lesson of about 650 to 900 words' : 'a detailed lesson of about 900 to 1500 words'}.
 - Make the lesson richer than a short summary. Explain the concept, why it matters, how it is used, where learners make mistakes, and how to apply it correctly.
-- Include these sections naturally in Markdown:
+- Include these sections naturally in HTML:
   1. Introduction
   2. Core explanation
   3. Step-by-step explanation, workflow, or method when relevant
   4. Two or more practical examples, scenarios, or use cases
   5. Common mistakes or caution points
   6. Short recap
-- Use short paragraphs and lists where useful, but keep the Markdown clean.
+- Use short paragraphs and lists where useful, but keep the HTML clean.
 - Prefer depth, clarity, and learning value over brevity.
-- The final Markdown must read like a complete lesson a student can study independently.
+- The final HTML must read like a complete lesson a student can study independently.
 
 Response Format (JSON):
 {
@@ -669,7 +497,7 @@ Response Format (JSON):
     {
       "topicTitle": "${topicTitle}",
       "subtopics": [
-        { "title": "${subtopicTitle}", "theory": "Detailed Markdown Content" }
+        { "title": "${subtopicTitle}", "theory": "Detailed HTML Content" }
       ]
     }
   ]
@@ -678,7 +506,7 @@ Response Format (JSON):
 
   const buildFallbackTheoryPrompt = (topicTitle, subtopicTitle) => `Course: "${mainTopic}"
 
-Write a complete Markdown lesson for this one chapter and one subtopic.
+Write a complete HTML lesson for this one chapter and one subtopic.
 
 Chapter: "${topicTitle}"
 Subtopic: "${subtopicTitle}"
@@ -687,13 +515,13 @@ Presentation Style: ${selectedContentProfile.label}
 Style Guidance: ${selectedContentProfile.instruction}
 
 Rules:
-- Return Markdown only, not JSON.
+- Return HTML only, not JSON.
 - Start with a short introductory paragraph.
 - Write a full lesson of roughly 700 to 1100 words.
 - Include meaningful explanation, workflow or method when relevant, at least one solid practical example or use case, common mistakes, and a short recap.
 - Keep the lesson complete, informative, and readable.
-- Use headers, bold text, lists, and code blocks only when appropriate.
-- Do not include images, links, or notes about being an AI.`;
+- Use <p>, <strong>, <ul>, <li>, and <pre><code> only when appropriate.
+- Do not include images, links, markdown fences, or notes about being an AI.`;
 
   const generateStructuredSubtopic = async ({
     topicTitle,
@@ -707,8 +535,7 @@ Rules:
       responseMimeType: 'application/json',
       responseSchema,
       maxOutputTokens,
-      safetySettings,
-      retryAttempts: 0
+      safetySettings
     });
 
     const parsed = parseGeneratedJson(rawText);
@@ -730,8 +557,7 @@ Rules:
       prompt: buildFallbackTheoryPrompt(topicTitle, subtopicTitle),
       systemInstruction: `Strictly in ${lang || 'English'}, you are a specialized educational content writer. Return only valid HTML for one lesson.`,
       maxOutputTokens: 4096,
-      safetySettings,
-      retryAttempts: 0
+      safetySettings
     });
 
     const normalizedTheory = await finalizeLessonTheory({
@@ -749,42 +575,19 @@ Rules:
     };
   };
 
-  const buildDeterministicFallbackTheory = ({ topicTitle, subtopicTitle }) => {
-    const safeTopic = topicTitle || 'This topic';
-    const safeSubtopic = subtopicTitle || 'This lesson';
-
-    return {
-      topicTitle: safeTopic,
-      subtopic: {
-        title: safeSubtopic,
-        theory: `
-          <div class="prose max-w-none">
-            <h2>${safeSubtopic}</h2>
-            <p>This lesson belongs to <strong>${safeTopic}</strong> and focuses on <strong>${safeSubtopic}</strong>.</p>
-            <p>Even when the AI provider is unstable, the course should still show a usable lesson structure for each subtitle. Use this page to review the key idea, then refresh once the generator is healthy again for a richer version.</p>
-            <h3>What to look for</h3>
-            <ul>
-              <li>How ${safeSubtopic} connects to the larger topic.</li>
-              <li>Which concepts matter most for understanding and application.</li>
-              <li>How this lesson supports the next lesson in the chapter.</li>
-            </ul>
-            <h3>Practical angle</h3>
-            <p>For <strong>${safeTopic}</strong>, think about how <strong>${safeSubtopic}</strong> would be used in a real workflow, case study, or problem-solving scenario.</p>
-            <h3>Quick recap</h3>
-            <p>Review the title, connect it to the chapter, and come back once generation is stable for the full AI-written lesson.</p>
-          </div>
-        `
-      }
-    };
-  };
+  const buildEmergencyTheory = ({ topicTitle, subtopicTitle }) => ({
+    topicTitle,
+    subtopic: {
+      title: subtopicTitle,
+      theory: `<div class="prose max-w-none"><h2>${subtopicTitle}</h2><p>We could not fully generate this lesson right now, but this section is reserved for <strong>${subtopicTitle}</strong> under <strong>${topicTitle}</strong>.</p><p>Please reopen this lesson in a moment to retry the full content generation.</p></div>`
+    }
+  });
 
   const generateSubtopicWithFallback = async ({ topicTitle, subtopicTitle }) => {
-    let structuredError = null;
     try {
       return await generateStructuredSubtopic({ topicTitle, subtopicTitle });
     } catch (error) {
-      structuredError = error;
-      console.debug(`Structured lesson generation failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);
+      console.warn(`Structured lesson generation failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);
     }
 
     try {
@@ -795,94 +598,68 @@ Rules:
         maxOutputTokens: 4096
       });
     } catch (error) {
-      structuredError = error;
-      console.debug(`Compact structured retry failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);
+      console.warn(`Compact structured retry failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);
     }
 
     try {
       return await generateFallbackTheory({ topicTitle, subtopicTitle });
     } catch (error) {
-      console.warn(
-        `HTML fallback failed for "${topicTitle}" -> "${subtopicTitle}":`,
-        error.message,
-        structuredError ? `Previous structured error: ${structuredError.message}` : ''
-      );
-      return buildDeterministicFallbackTheory({ topicTitle, subtopicTitle });
+      console.warn(`HTML fallback failed for "${topicTitle}" -> "${subtopicTitle}":`, error.message);
+      return buildEmergencyTheory({ topicTitle, subtopicTitle });
     }
   };
-
-  const queueKey = organizationId || userId;
 
   try {
     const combinedTopics = [];
 
-    const result = await runWithGenerationQueue(queueKey, async () => {
-      for (const topic of topicsList) {
-        const normalizedSubtopics = Array.isArray(topic?.subtopics)
-          ? topic.subtopics.filter(Boolean)
-          : [];
+    for (const topic of topicsList) {
+      const normalizedSubtopics = Array.isArray(topic?.subtopics)
+        ? topic.subtopics.filter(Boolean)
+        : [];
 
-        const generatedTopic = {
-          topicTitle: topic?.topicTitle || 'Untitled Topic',
-          subtopics: []
-        };
+      const generatedTopic = {
+        topicTitle: topic?.topicTitle || 'Untitled Topic',
+        subtopics: []
+      };
 
-        for (const subtopicTitle of normalizedSubtopics) {
-          const generatedSubtopic = await generateSubtopicWithFallback({
-            topicTitle: generatedTopic.topicTitle,
-            subtopicTitle
-          });
+      for (const subtopicTitle of normalizedSubtopics) {
+        const generatedSubtopic = await generateSubtopicWithFallback({
+          topicTitle: generatedTopic.topicTitle,
+          subtopicTitle
+        });
 
-          generatedTopic.topicTitle = generatedSubtopic.topicTitle || generatedTopic.topicTitle;
-          generatedTopic.subtopics.push(generatedSubtopic.subtopic);
-        }
-
-        combinedTopics.push(generatedTopic);
+        generatedTopic.topicTitle = generatedSubtopic.topicTitle || generatedTopic.topicTitle;
+        generatedTopic.subtopics.push(generatedSubtopic.subtopic);
       }
 
-      return combinedTopics;
-    });
+      combinedTopics.push(generatedTopic);
+    }
 
     res.status(200).json({
       success: true,
-      topics: result
+      topics: combinedTopics
     });
 
   } catch (error) {
     console.log('Batch generation error:', error);
-    const rawMessage = error?.message || '';
-    const rawStatus = error?.status || error?.response?.status;
-    const isRateLimitError = rawMessage.includes('429') || rawMessage.includes('quota');
-    const isServiceUnavailable =
-      rawStatus === 503 ||
-      rawMessage.toLowerCase?.().includes('unavailable') ||
-      rawMessage.toLowerCase?.().includes('high demand') ||
-      rawMessage.toLowerCase?.().includes('service unavailable');
-    const isMissingKey = rawStatus === 401;
-    const isInvalidKey = rawMessage.includes('403') || rawMessage.includes('404');
+    const isRateLimitError = error.message?.includes('429') || error.message?.includes('quota');
+    const isMissingKey = error.status === 401;
+    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404');
 
-    let statusCode = 500;
-    let responseMessage = 'Internal server error';
+    let status = 500;
+    let message = 'Internal server error';
 
     if (isMissingKey || isInvalidKey) {
-      statusCode = isMissingKey ? 401 : 403;
-      responseMessage = 'Invalid AI provider configuration.';
-    } else if (isServiceUnavailable) {
-      statusCode = 503;
-      responseMessage = 'AI provider is temporarily unavailable. Please try again later.';
+      status = isMissingKey ? 401 : 403;
+      message = 'Invalid AI provider configuration.';
     } else if (isRateLimitError) {
-      statusCode = 429;
-      responseMessage = 'API rate limit or quota exceeded.';
+      status = 429;
+      message = 'API rate limit or quota exceeded.';
     }
 
-    if (statusCode === 503) {
-      res.locals.statusOrigin = 'AI';
-      res.locals.statusOriginMessage = responseMessage;
-    }
-
-    res.status(statusCode).json({
+    res.status(status).json({
       success: false,
-      message: responseMessage,
+      message,
       error: error.message
     });
   }
@@ -930,7 +707,9 @@ export const generateHtml = async (req, res) => {
       systemInstruction: 'You are a helpful educational assistant. Provide thorough and interesting explanations with examples. Use markdown formatting.'
     });
 
-    const result = await model.generateContent(prompt);
+    const result = await retryWithBackoff(() =>
+      model.generateContent(prompt)
+    );
 
     const markdown = await result.response.text();
 
@@ -944,47 +723,31 @@ export const generateHtml = async (req, res) => {
   } catch (error) {
     console.log('Generate HTML error:', error);
 
-    const rawMessage = error?.message || '';
-    const rawStatus = error?.status || error?.response?.status;
     const isRateLimitError =
-      rawStatus === 429 ||
-      rawMessage.includes('429') ||
-      rawMessage.includes('Too Many Requests') ||
-      rawMessage.includes('quota') ||
-      rawMessage.toLowerCase?.().includes('rate limit') ||
-      rawMessage.toLowerCase?.().includes('exceeded your current quota');
+      error.status === 429 ||
+      error.message?.includes('429') ||
+      error.message?.includes('Too Many Requests') ||
+      error.message?.includes('quota') ||
+      error.message?.toLowerCase?.().includes('rate limit') ||
+      error.message?.toLowerCase?.().includes('exceeded your current quota');
 
-    const isServiceUnavailable =
-      rawStatus === 503 ||
-      rawMessage.toLowerCase?.().includes('unavailable') ||
-      rawMessage.toLowerCase?.().includes('high demand') ||
-      rawMessage.toLowerCase?.().includes('service unavailable');
+    const isMissingKey = error.status === 401;
+    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
 
-    const isMissingKey = rawStatus === 401;
-    const isInvalidKey = rawMessage.includes('403') || rawMessage.includes('404') || rawMessage.includes('API key not valid') || rawMessage.includes('API key expired');
-
-    let statusCode = 500;
-    let responseMessage = 'Internal server error';
+    let status = 500;
+    let message = 'Internal server error';
 
     if (isMissingKey || isInvalidKey) {
-      statusCode = isMissingKey ? 401 : 403;
-      responseMessage = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
-    } else if (isServiceUnavailable) {
-      statusCode = 503;
-      responseMessage = 'AI provider is temporarily unavailable. Please try again later.';
+      status = isMissingKey ? 401 : 403;
+      message = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
     } else if (isRateLimitError) {
-      statusCode = 429;
-      responseMessage = 'API rate limit or quota exceeded. Please try again later.';
+      status = 429;
+      message = 'API rate limit or quota exceeded. Please try again later.';
     }
 
-    if (statusCode === 503) {
-      res.locals.statusOrigin = 'AI';
-      res.locals.statusOriginMessage = responseMessage;
-    }
-
-    res.status(statusCode).json({
+    res.status(status).json({
       success: false,
-      message: responseMessage,
+      message,
       error: error.message
     });
   }
@@ -1305,47 +1068,31 @@ Generate 10 MCQs in JSON format:
   } catch (error) {
     console.log('AI Exam Error:', error);
 
-    const rawMessage = error?.message || '';
-    const rawStatus = error?.status || error?.response?.status;
     const isRateLimitError =
-      rawStatus === 429 ||
-      rawMessage.includes('429') ||
-      rawMessage.includes('Too Many Requests') ||
-      rawMessage.includes('quota') ||
-      rawMessage.toLowerCase?.().includes('rate limit') ||
-      rawMessage.toLowerCase?.().includes('exceeded your current quota');
+      error.status === 429 ||
+      error.message?.includes('429') ||
+      error.message?.includes('Too Many Requests') ||
+      error.message?.includes('quota') ||
+      error.message?.toLowerCase?.().includes('rate limit') ||
+      error.message?.toLowerCase?.().includes('exceeded your current quota');
 
-    const isServiceUnavailable =
-      rawStatus === 503 ||
-      rawMessage.toLowerCase?.().includes('unavailable') ||
-      rawMessage.toLowerCase?.().includes('high demand') ||
-      rawMessage.toLowerCase?.().includes('service unavailable');
+    const isMissingKey = error.status === 401;
+    const isInvalidKey = error.message?.includes('403') || error.message?.includes('404') || error.message?.includes('API key not valid') || error.message?.includes('API key expired');
 
-    const isMissingKey = rawStatus === 401;
-    const isInvalidKey = rawMessage.includes('403') || rawMessage.includes('404') || rawMessage.includes('API key not valid') || rawMessage.includes('API key expired');
-
-    let statusCode = 500;
-    let responseMessage = 'Failed to generate exam';
+    let status = 500;
+    let message = 'Failed to generate exam';
 
     if (isMissingKey || isInvalidKey) {
-      statusCode = isMissingKey ? 401 : 403;
-      responseMessage = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
-    } else if (isServiceUnavailable) {
-      statusCode = 503;
-      responseMessage = 'AI provider is temporarily unavailable. Please try again later.';
+      status = isMissingKey ? 401 : 403;
+      message = error.message || 'Invalid AI provider configuration. Please verify it in settings.';
     } else if (isRateLimitError) {
-      statusCode = 429;
-      responseMessage = 'API rate limit or quota exceeded. Please try again later.';
+      status = 429;
+      message = 'API rate limit or quota exceeded. Please try again later.';
     }
 
-    if (statusCode === 503) {
-      res.locals.statusOrigin = 'AI';
-      res.locals.statusOriginMessage = responseMessage;
-    }
-
-    res.status(statusCode).json({
+    res.status(status).json({
       success: false,
-      message: responseMessage,
+      message,
       error: error.message
     });
   }

@@ -12,16 +12,14 @@ import { Content } from '@tiptap/react'
 import { MinimalTiptapEditor } from '../minimal-tiptap'
 import YouTube from 'react-youtube';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2, Loader2, Sparkles, BookOpen, Brain, Video, FileText, ArrowLeft, ArrowRight, X, Clock, RefreshCw, LayoutPanelLeft, ListTree, ShieldCheck } from 'lucide-react';
+import { ChevronDown, Home, Share, Download, MessageCircle, ClipboardCheck, Menu, Award, Lock, CheckCircle2, Loader2, Sparkles, BookOpen, Image as ImageIcon, Brain, Video, FileText, ArrowLeft, ArrowRight, X, Clock, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getCoursePresentationMeta } from '@/lib/coursePresentation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
@@ -34,19 +32,11 @@ import axios from 'axios';
 import ShareOnSocial from 'react-share-on-social';
 import StyledText from '@/components/styledText';
 import html2pdf from 'html2pdf.js';
-import showdown from 'showdown';
 
-const mdConverter = new showdown.Converter({
-  tables: true,
-  tasklists: true,
-  strikethrough: true,
-  ghCodeBlocks: true,
-  simplifiedAutoLink: true,
-  parseImgDimensions: true,
-  simpleLineBreaks: false,
-  openLinksInNewWindow: true,
-  backslashEscapesHTML: true
-});
+// Fallback image utility
+const getFallbackImage = (topic: string, subtopic: string) => {
+  return `https://placehold.co/800x600/4f46e5/ffffff?text=${encodeURIComponent(subtopic.substring(0, 40))}`;
+};
 
 // Loading Popup Component - Responsive
 const LoadingPopup = ({ 
@@ -56,12 +46,13 @@ const LoadingPopup = ({
   progress = 0, 
   onContinue,
   showContinueButton,
-  remainingSeconds,
-  requestNote = ''
+  remainingSeconds
 }) => {
   const getAdjustedProgress = () => {
     if (stage === 'theory' || stage === 'video' || stage === 'transcript') {
       return Math.min(progress * 0.5, 50);
+    } else if (stage === 'image') {
+      return 50 + (progress * 0.5);
     } else if (stage === 'complete') {
       return 100;
     }
@@ -85,6 +76,8 @@ const LoadingPopup = ({
         return { icon: <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500 animate-bounce" />, title: 'Extracting Knowledge', message: `Processing video transcript for "${subtopic}"`, color: 'orange' };
       case 'theory':
         return { icon: <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 animate-pulse" />, title: 'Generating Content', message: `AI is creating learning material for "${subtopic}"`, color: 'blue' };
+      case 'image':
+        return { icon: <ImageIcon className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 animate-bounce" />, title: 'Fetching Visuals', message: `Finding the perfect image for "${subtopic}"`, color: 'green' };
       case 'complete':
         return { icon: <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 animate-spin" />, title: 'Finalizing', message: 'Polishing the content for best experience', color: 'yellow' };
       default:
@@ -94,8 +87,8 @@ const LoadingPopup = ({
 
   const content = getStageContent();
   if (!isOpen) return null;
-  const isContentPhase = stage === 'theory' || stage === 'video' || stage === 'transcript' || !stage;
-  const phaseProgress = adjustedProgress;
+  const isContentPhase = stage === 'theory' || stage === 'video' || stage === 'transcript' || (!stage && adjustedProgress <= 50);
+  const phaseProgress = isContentPhase ? adjustedProgress : adjustedProgress - 50;
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
@@ -107,17 +100,11 @@ const LoadingPopup = ({
             <div className={`relative z-10 p-3 sm:p-4 rounded-full bg-${content.color}-500/10`}>{content.icon}</div>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            {isComplete ? 'Ready to Continue!' : 'Generating Content'}
+            {isComplete ? 'Ready to Continue!' : (isContentPhase ? 'Generating Content' : 'Fetching Visuals')}
           </h2>
           <p className="text-xs sm:text-sm text-center text-muted-foreground mb-1">
             {isComplete ? 'All content has been prepared for you' : `${content.title} • ${content.message}`}
           </p>
-          {!isComplete && (
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">
-              <RefreshCw className="h-3 w-3 text-primary" />
-              <span>{requestNote || 'Single active request in progress. The page is not auto-retrying.'}</span>
-            </div>
-          )}
           <div className="w-full mt-4 mb-2">
             <div className="w-full h-2 sm:h-3 bg-muted rounded-full overflow-hidden flex">
               <div className="h-full bg-blue-500 transition-all duration-300 rounded-l-full" style={{ width: `${Math.min(adjustedProgress, 50)}%` }} />
@@ -152,7 +139,9 @@ const LoadingPopup = ({
                 <div className="flex items-center gap-3">
                   <Loader2 className="w-4 h-4 animate-spin text-primary flex-shrink-0" />
                   <span className="text-xs sm:text-sm">
-                    {`Creating learning material... (${Math.round(phaseProgress)}% complete)`}
+                    {isContentPhase
+                      ? `Creating learning material... (${Math.round(phaseProgress)}% of content phase)`
+                      : `Finding and optimizing visuals... (${Math.round(phaseProgress)}% of visuals phase)`}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 mt-4">
@@ -162,7 +151,7 @@ const LoadingPopup = ({
                   <Skeleton className="h-10 sm:h-12 rounded-lg" />
                 </div>
                 <p className="text-xs text-muted-foreground/60 mt-6 italic">
-                  ✨ AI is crafting personalized content just for you...
+                  ✨ {isContentPhase ? 'AI is crafting personalized content just for you...' : 'Finding the perfect visuals to enhance your learning...'}
                 </p>
               </>
             )}
@@ -264,7 +253,6 @@ const CoursePage = () => {
 
   // Loading Popup States
   const [showLoadingPopup, setShowLoadingPopup] = useState(false);
-  const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [loadingStage, setLoadingStage] = useState('theory');
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingSubtopic, setLoadingSubtopic] = useState('');
@@ -273,6 +261,11 @@ const CoursePage = () => {
   // Regenerate Chapter States
   const [regeneratingChapter, setRegeneratingChapter] = useState<string | null>(null);
   const [regenerateProgress, setRegenerateProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
+
+  // Image cache
+  const imageCache = useRef(new Set());
+  const [preloadedImages, setPreloadedImages] = useState(new Map());
+  const [imageLoading, setImageLoading] = useState(new Map());
 
   const mainTopic = courseData?.mainTopic;
   const type = courseData?.type;
@@ -301,7 +294,7 @@ const CoursePage = () => {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [saving, setSaving] = useState(false);
-  const defaultMessage = `<p>Hey there! I'm your AI teacher. If you have any questions about your ${mainTopic || 'current'} course, whether it's about videos or theory, just ask me. I'm here to clear your doubts.</p>`;
+  const defaultMessage = `<p>Hey there! I'm your AI teacher. If you have any questions about your ${mainTopic || 'current'} course, whether it's about videos, images, or theory, just ask me. I'm here to clear your doubts.</p>`;
   const defaultPrompt = `I have a doubt about this topic :- ${mainTopic}. Please clarify my doubt in very short :- `;
 
   const [isMenuOpen, setIsMenuOpen] = useState(true);
@@ -314,7 +307,6 @@ const CoursePage = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const mainContentRef = useRef<HTMLDivElement>(null);
-  const loadingRequestRef = useRef(false);
   const [value, setValue] = useState<Content>('')
   const [completedSubtopics, setCompletedSubtopics] = useState([]);
   const [progressLoading, setProgressLoading] = useState(true);
@@ -323,26 +315,17 @@ const CoursePage = () => {
   const isOrgAdmin = userRole === 'org_admin' || userRole === 'dept_admin' || sessionStorage.getItem('isOrganization') === 'true';
 
   const [preloadedNextContent, setPreloadedNextContent] = useState(null);
-  const [loadingRequestNote, setLoadingRequestNote] = useState('');
+  const apiCache = useRef(new Map());
 
-  const beginLoadingRequest = (note: string) => {
-    if (loadingRequestRef.current) {
-      toast({
-        title: 'Generation already running',
-        description: 'The page is already processing a lesson, so it will not keep retrying in the background.'
-      });
-      return false;
-    }
-
-    loadingRequestRef.current = true;
-    setLoadingRequestNote(note);
-    return true;
-  };
-
-  const endLoadingRequest = () => {
-    loadingRequestRef.current = false;
-    setLoadingRequestNote('');
-  };
+  const testImageUrl = useCallback((url: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = url;
+      setTimeout(() => resolve(false), 3000);
+    });
+  }, []);
 
 // Add this new function to regenerate only the current lesson
 const handleRegenerateCurrentLesson = async () => {
@@ -362,10 +345,6 @@ const handleRegenerateCurrentLesson = async () => {
     return;
   }
 
-  if (!beginLoadingRequest(`Regenerating "${subtopicTitle}"`)) {
-    return;
-  }
-
   // Show loading state for this specific lesson
   setShowLoadingPopup(true);
   setLoadingSubtopic(subtopicTitle);
@@ -378,8 +357,8 @@ const handleRegenerateCurrentLesson = async () => {
   // Progress simulation variables
   let currentProgress = 0;
   const isVideoCourse = type === 'video & text course';
-  const totalPhases = 2;
-  let currentPhase = 1; // 1=theory, 2=finalize
+  const totalPhases = isVideoCourse ? 3 : 3; // theory + (video or image) + finalize
+  let currentPhase = 1; // 1=theory, 2=media, 3=finalize
 
   // Progress simulation interval
   window.progressInterval = setInterval(() => {
@@ -390,7 +369,13 @@ const handleRegenerateCurrentLesson = async () => {
         setLoadingProgress(Math.min(currentProgress, 33));
       }
     } else if (currentPhase === 2) {
-      // Finalize phase: 50-100%
+      // Media phase: 33-66%
+      if (currentProgress < 66) {
+        currentProgress += Math.random() * 2.5;
+        setLoadingProgress(Math.min(currentProgress, 66));
+      }
+    } else if (currentPhase === 3) {
+      // Finalize phase: 66-100%
       if (currentProgress < 99) {
         currentProgress += Math.random() * 2;
         setLoadingProgress(Math.min(currentProgress, 99));
@@ -423,12 +408,14 @@ const handleRegenerateCurrentLesson = async () => {
       }
     }
     
-    setLoadingProgress(50);
-    currentProgress = 50;
+    // Phase 1 complete
+    setLoadingProgress(33);
+    currentProgress = 33;
 
+    // PHASE 2: Regenerate media based on course type (33-66%)
     if (isVideoCourse) {
       setLoadingStage('video');
-      setLoadingProgress(60);
+      setLoadingProgress(40);
       
       const query = `${subtopicTitle} ${mainTopic} in english`;
       const ytRes = await axios.post(serverURL + '/api/yt', { prompt: query });
@@ -438,17 +425,36 @@ const handleRegenerateCurrentLesson = async () => {
           setMedia(ytRes.data.url);
         }
       }
+    } else {
+      setLoadingStage('image');
+      setLoadingProgress(40);
+      
+      const imageRes = await axios.post(
+        serverURL + '/api/image',
+        { prompt: `${subtopicTitle} in ${mainTopic}` },
+        { timeout: 12000 }
+      );
+      const imageUrl = imageRes.data?.url || getFallbackImage(topicTitle, subtopicTitle);
+      targetSub.image = imageUrl;
+      if (selected === subtopicTitle) {
+        setMedia(imageUrl);
+        preloadImageWithCache(imageUrl, subtopicTitle, topicTitle);
+      }
     }
+    
+    // Phase 2 complete
+    setLoadingProgress(66);
+    currentProgress = 66;
 
-    // Finalizing and cleanup
+    // PHASE 3: Finalizing and cleanup (66-100%)
     setLoadingStage('complete');
     setLoadingProgress(75);
     
     // Small delay to show finalizing stage
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Keep the regenerated lesson ready to revisit
-    targetSub.done = true;
+    // Keep done status as false so user can mark as complete again
+    targetSub.done = false;
     
     // Update state and storage
     setJsonData({ ...jsonData });
@@ -482,7 +488,6 @@ const handleRegenerateCurrentLesson = async () => {
       clearInterval(window.progressInterval);
       window.progressInterval = null;
     }
-    endLoadingRequest();
   }
 };
   const simulateProgress = useCallback((stage) => {
@@ -499,8 +504,38 @@ const handleRegenerateCurrentLesson = async () => {
     return () => { if (window.progressInterval) clearInterval(window.progressInterval); };
   }, []);
 
-  const preloadImageWithCache = useCallback(() => {}, []);
-  const preloadAllImages = useCallback(() => {}, []);
+  const preloadImageWithCache = useCallback((url, subtopicTitle, topicTitle = '') => {
+    if (!url || imageCache.current.has(url)) return;
+    imageCache.current.add(url);
+    setImageLoading(prev => new Map(prev).set(subtopicTitle, true));
+    const img = new Image();
+    img.onload = () => {
+      setPreloadedImages(prev => new Map(prev).set(subtopicTitle, url));
+      setImageLoading(prev => { const m = new Map(prev); m.delete(subtopicTitle); return m; });
+    };
+    img.onerror = () => {
+      const fallbackUrl = getFallbackImage(topicTitle || '', subtopicTitle);
+      setPreloadedImages(prev => new Map(prev).set(subtopicTitle, fallbackUrl));
+      setImageLoading(prev => { const m = new Map(prev); m.delete(subtopicTitle); return m; });
+    };
+    img.src = url;
+  }, []);
+
+  const preloadAllImages = useCallback(() => {
+    if (!jsonData || !mainTopic || !selected) return;
+    const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+    if (!topicsList) return;
+    const allSubtopics = [];
+    topicsList.forEach(t => t.subtopics.forEach(s => allSubtopics.push({ topicTitle: t.title, subtopicTitle: s.title, image: s.image })));
+    const currentIndex = allSubtopics.findIndex(s => s.subtopicTitle === selected);
+    for (let i = 1; i <= 3; i++) {
+      const nextIndex = currentIndex + i;
+      if (nextIndex < allSubtopics.length) {
+        const next = allSubtopics[nextIndex];
+        if (next.image && !imageCache.current.has(next.image)) preloadImageWithCache(next.image, next.subtopicTitle);
+      }
+    }
+  }, [jsonData, mainTopic, selected, preloadImageWithCache]);
 
   const preloadNextSubtopic = useCallback(async () => {
     if (!jsonData || !selected || !mainTopic || !lang || !userId) return;
@@ -529,9 +564,12 @@ const handleRegenerateCurrentLesson = async () => {
             });
             if (res.data.success && res.data.topics[0]) {
               setPreloadedNextContent({ topicTitle: next.topicTitle, subtopicTitle: next.subtopicTitle, theory: res.data.topics[0].subtopics[0].theory });
+              if (res.data.topics[0].subtopics[0].image) preloadImageWithCache(res.data.topics[0].subtopics[0].image, next.subtopicTitle);
             }
           } catch (error) { console.error("Preload failed:", error); }
         }
+      } else if (next.subtopic.image) {
+        preloadImageWithCache(next.subtopic.image, next.subtopicTitle);
       }
     }
   }, [contentProfileId, jsonData, selected, mainTopic, lang, userId, preloadImageWithCache]);
@@ -553,8 +591,12 @@ Requirements:
   }, [contentProfileMeta.label, contentProfileMeta.promptInstruction, lang, mainTopic]);
 
   useEffect(() => {
-    if (selected && jsonData) { preloadNextSubtopic(); }
-  }, [selected, jsonData, preloadNextSubtopic]);
+    if (selected && jsonData) { preloadNextSubtopic(); preloadAllImages(); }
+  }, [selected, jsonData, preloadNextSubtopic, preloadAllImages]);
+
+  useEffect(() => {
+    if (media && !imageCache.current.has(media) && type !== 'video & text course') preloadImageWithCache(media, selected);
+  }, [media, selected, preloadImageWithCache, type]);
 
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -589,7 +631,7 @@ Requirements:
                 setSelected(firstSubtopic.title);
                 setTheory(firstSubtopic.theory);
                 if (course.type === 'video & text course') { setMedia(firstSubtopic.youtube); }
-                else { setMedia(''); }
+                else { setMedia(firstSubtopic.image); if (firstSubtopic.image) preloadImageWithCache(firstSubtopic.image, firstSubtopic.title); }
               }
             }
           }
@@ -759,28 +801,13 @@ Requirements:
     }
   };
 
-  const cleanGeneratedHtml = (theoryOrHtml) => {
-    if (!theoryOrHtml) return '';
-    let raw = String(theoryOrHtml);
-
-    // Standard pre-cleaning (remove code fences if AI included them as part of value)
-    raw = raw.replace(/^\s*```markdown\s*/i, '');
-    raw = raw.replace(/^\s*```json\s*/i, '');
-    raw = raw.replace(/^\s*```html?\s*/i, '');
-    raw = raw.replace(/^\s*```\s*/i, '');
-    raw = raw.replace(/\s*```\s*$/i, '');
-    
-    // Check if it's already "large" HTML or if it lacks expected Markdown patterns
-    // If it starts with <p or <div, it might be legacy HTML.
-    // If not, we treat it as Markdown and convert it.
-    let cleaned = raw;
-    const isLikelyHtml = /^\s*<[a-z][\s\S]*>/i.test(raw);
-    
-    if (!isLikelyHtml) {
-      cleaned = mdConverter.makeHtml(raw);
-    }
-
-    // Post-cleaning for boilerplate/body/html tags (legacy support or AI error)
+  const cleanGeneratedHtml = (htmlContent) => {
+    if (!htmlContent) return '';
+    let cleaned = String(htmlContent);
+    cleaned = cleaned.replace(/^\s*```html?\s*/i, '');
+    cleaned = cleaned.replace(/^\s*```\s*/i, '');
+    cleaned = cleaned.replace(/\s*```\s*$/i, '');
+    cleaned = cleaned.replace(/^\s*html\s*(?:\r?\n|\s)+/i, '');
     cleaned = cleaned.replace(/<html[^>]*>[\s\S]*?<\/html>/gi, (match) => {
       const bodyMatch = match.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
       return bodyMatch ? bodyMatch[1] : '';
@@ -795,11 +822,10 @@ Requirements:
     cleaned = cleaned.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
     cleaned = cleaned.replace(/<link[^>]*>/gi, '');
     cleaned = cleaned.replace(/<p>\s*<\/p>/gi, '');
-    
+    cleaned = cleaned.replace(/\n\s*\n/g, '\n');
     cleaned = cleaned.trim();
-    
     if (!cleaned || cleaned.length < 50) {
-      return `<div class="prose dark:prose-invert max-w-none"><h2 class="text-lg sm:text-xl">${theoryOrHtml.substring(0, 100)}</h2><p class="text-sm">Content is being processed. Please refresh the page in a moment.</p></div>`;
+      return `<div class="prose dark:prose-invert max-w-none"><h2 class="text-lg sm:text-xl">${htmlContent.substring(0, 100)}</h2><p class="text-sm">Content is being processed. Please refresh the page in a moment.</p></div>`;
     }
     return cleaned;
   };
@@ -810,35 +836,32 @@ Requirements:
     const wordCount = plainText ? plainText.split(/\s+/).filter(Boolean).length : 0;
     if (plainText.length < 1200) return false;
     if (wordCount < 220) return false;
-    return type === 'video & text course' ? !!subtopic.youtube : true;
+    return type === 'video & text course' ? !!subtopic.youtube : !!subtopic.image;
   };
 
   const startSubtopicPreparation = (topicTitle, subtopicTitle, subtopicData) => {
-  if (subtopicData?.theory && subtopicData.theory.length > 500) {
-    setShowLoadingPopup(false);
-    setSelectedTopicTitle(topicTitle);
-    setSelected(subtopicTitle);
-    setTheory(cleanGeneratedHtml(subtopicData.theory));
-    setMedia(type === 'video & text course' ? subtopicData.youtube : '');
-    return;
-  }
-  if (!beginLoadingRequest(`Loading "${subtopicTitle}"`)) {
-    return;
-  }
-  setShowLoadingPopup(true);
-  setLoadingSubtopic(subtopicTitle);
-  setLoadingProgress(0);
+    if (subtopicData?.theory && subtopicData.theory.length > 500) {
+      setShowLoadingPopup(false);
+      setSelectedTopicTitle(topicTitle);
+      setSelected(subtopicTitle);
+      setTheory(cleanGeneratedHtml(subtopicData.theory));
+      setMedia(type === 'video & text course' ? subtopicData.youtube : subtopicData.image);
+      return;
+    }
+    setShowLoadingPopup(true);
+    setLoadingSubtopic(subtopicTitle);
+    setLoadingProgress(0);
     setSelectedTopicTitle(topicTitle);
     setSelected(subtopicTitle);
     if (subtopicData?.theory) {
       setTheory(cleanGeneratedHtml(subtopicData.theory));
-      setMedia(type === 'video & text course' ? subtopicData.youtube || '' : '');
+      setMedia(type === 'video & text course' ? subtopicData.youtube || '' : subtopicData.image || '');
     } else {
       setTheory(`<div class="prose dark:prose-invert max-w-none"><h2 class="text-xl sm:text-2xl">${subtopicTitle}</h2><p class="text-sm sm:text-base">AI is crafting personalized content for you...</p><div class="flex items-center justify-center p-6 sm:p-8"><div class="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div></div></div>`);
       setMedia(null);
     }
     if (type === 'video & text course') sendVideo(`${subtopicTitle} ${mainTopic}`, topicTitle, subtopicTitle, subtopicTitle);
-    else if (subtopicData?.theory) sendTheoryForBatch(topicTitle, subtopicTitle, subtopicData.theory);
+    else if (subtopicData?.theory) sendImageForBatch(`${subtopicTitle} in ${mainTopic}`, topicTitle, subtopicTitle, subtopicData.theory);
     else sendBulkCourseContent(topicTitle, subtopicTitle);
   };
 
@@ -863,59 +886,73 @@ Requirements:
         if (targetSub) { targetSub.theory = cleanedTheory; targetSub.done = true; setJsonData({ ...jsonData }); sessionStorage.setItem('jsonData', JSON.stringify(jsonData)); setTheory(cleanedTheory); }
       }
       if (clearTheoryProgress) clearTheoryProgress();
-      setMedia('');
+      simulateProgress('image');
+      try {
+        const imageRes = await axios.post(serverURL + '/api/image', { prompt: `${clickedSub} in ${mainTopic}` }, { timeout: 10000 });
+        if (imageRes.data?.url) {
+          setMedia(imageRes.data.url);
+          const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
+          const targetTopic = topicsList?.find(t => t.title === clickedTopic);
+          const targetSub = targetTopic?.subtopics.find(s => s.title === clickedSub);
+          if (targetSub) { targetSub.image = imageRes.data.url; setJsonData({ ...jsonData }); sessionStorage.setItem('jsonData', JSON.stringify(jsonData)); }
+        }
+      } catch (imageErr) { console.error("Image fetch failed:", imageErr); }
       await updateCourse();
       simulateProgress('complete');
       setLoadingProgress(100);
-      setTimeout(() => {
-        setShowLoadingPopup(false);
-        if (window.progressInterval) clearInterval(window.progressInterval);
-        endLoadingRequest();
-      }, 1500);
+      setTimeout(() => { setShowLoadingPopup(false); if (window.progressInterval) clearInterval(window.progressInterval); }, 1500);
     } catch (error) {
       console.error("Theory generation failed:", error);
       setTheory(`<div class="prose dark:prose-invert max-w-none"><h2 class="text-xl sm:text-2xl">${clickedSub}</h2><p class="text-sm sm:text-base">Sorry, we encountered an error loading the content. Please try again.</p><p class="text-xs sm:text-sm text-muted-foreground mt-2">Error: ${error.message}</p></div>`);
       setShowLoadingPopup(false);
       if (window.progressInterval) clearInterval(window.progressInterval);
-      endLoadingRequest();
     }
   }
 
-  async function sendTheoryForBatch(topics: string, sub: string, theory: string) {
+  async function sendImageForBatch(promptImage: string, topics: string, sub: string, theory: string) {
     try {
       setShowLoadingPopup(true);
       setLoadingSubtopic(sub);
       setLoadingProgress(0);
-      simulateProgress('theory');
+      simulateProgress('image');
       setSelectedTopicTitle(topics || currentTopicTitle || '');
       setSelected(sub);
       setTheory(cleanGeneratedHtml(theory));
+      setImageLoading(prev => new Map(prev).set(sub, true));
+      const topicContext = topics || mainTopic;
+      let imageUrl = '';
+      try {
+        const res = await axios.post(serverURL + '/api/image', { prompt: `${sub} in ${topicContext}` }, { timeout: 10000 }).catch(error => { console.error("Image API error:", error); return { data: { url: null } }; });
+        imageUrl = res.data?.url || '';
+      } catch (apiError) { console.error("Image generation failed:", apiError); imageUrl = ''; }
+      if (!imageUrl) imageUrl = getFallbackImage(topicContext, sub);
+      if (imageUrl) { preloadImageWithCache(imageUrl, sub, topicContext); setMedia(imageUrl); }
       const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
       if (topicsList) {
         const mTopic = topicsList.find((t: any) => t.title === topics);
         const mSubTopic = mTopic?.subtopics.find((s: any) => s.title === sub);
-        if (mSubTopic) { mSubTopic.done = true; sessionStorage.setItem('jsonData', JSON.stringify(jsonData)); updateCourse(); }
+        if (mSubTopic) { mSubTopic.image = imageUrl; mSubTopic.done = true; sessionStorage.setItem('jsonData', JSON.stringify(jsonData)); updateCourse(); }
       }
+      setImageLoading(prev => { const m = new Map(prev); m.delete(sub); return m; });
       simulateProgress('complete');
       setLoadingProgress(100);
-      setTimeout(() => {
-        setShowLoadingPopup(false);
-        if (window.progressInterval) clearInterval(window.progressInterval);
-        endLoadingRequest();
-      }, 1500);
+      setTimeout(() => { setShowLoadingPopup(false); if (window.progressInterval) clearInterval(window.progressInterval); }, 1500);
       setIsLoading(false);
     } catch (error) {
-      console.error("Theory generation error:", error);
+      console.error("Image generation error:", error);
+      const topicContext = topics || mainTopic;
+      const fallbackUrl = getFallbackImage(topicContext, sub);
+      setMedia(fallbackUrl);
       const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
       if (topicsList) {
         const mTopic = topicsList.find((t: any) => t.title === topics);
         const mSubTopic = mTopic?.subtopics.find((s: any) => s.title === sub);
-        if (mSubTopic) { mSubTopic.done = true; sessionStorage.setItem('jsonData', JSON.stringify(jsonData)); }
+        if (mSubTopic) { mSubTopic.image = fallbackUrl; mSubTopic.done = true; sessionStorage.setItem('jsonData', JSON.stringify(jsonData)); }
       }
+      setImageLoading(prev => { const m = new Map(prev); m.delete(sub); return m; });
       setShowLoadingPopup(false);
       if (window.progressInterval) clearInterval(window.progressInterval);
       setIsLoading(false);
-      endLoadingRequest();
     }
   }
 
@@ -929,9 +966,13 @@ Requirements:
     setSelectedTopicTitle(topicTitle);
     setSelected(subtopicTitle);
     const hasValidTheory = mSubTopic.theory && mSubTopic.theory.length > 500 && !mSubTopic.theory.includes("AI is crafting personalized content");
-    if (hasValidTheory) {
+    const hasValidMedia = type === 'video & text course' ? mSubTopic.youtube : mSubTopic.image;
+    if (hasValidTheory && hasValidMedia) {
       setTheory(cleanGeneratedHtml(mSubTopic.theory));
-      setMedia(type === 'video & text course' ? mSubTopic.youtube : '');
+      setMedia(type === 'video & text course' ? mSubTopic.youtube : mSubTopic.image);
+    } else if (hasValidTheory) {
+      setTheory(cleanGeneratedHtml(mSubTopic.theory));
+      startSubtopicPreparation(topicTitle, subtopicTitle, mSubTopic);
     } else {
       startSubtopicPreparation(topicTitle, subtopicTitle, mSubTopic);
     }
@@ -996,9 +1037,25 @@ Requirements:
             console.error(`Video search failed for ${sub.title}:`, ytErr);
           }
         } else {
-          sub.done = true;
-          if (selected === sub.title) {
-            setMedia('');
+          try {
+            const imageRes = await axios.post(
+              serverURL + '/api/image',
+              { prompt: `${sub.title} in ${mainTopic}` },
+              { timeout: 12000 }
+            );
+            const imageUrl = imageRes.data?.url || getFallbackImage(topicTitle, sub.title);
+            sub.image = imageUrl;
+            sub.done = true;
+            if (selected === sub.title) {
+              setMedia(imageUrl);
+              preloadImageWithCache(imageUrl, sub.title, topicTitle);
+            }
+          } catch (imgErr) {
+            console.error(`Image fetch failed for ${sub.title}:`, imgErr);
+            const fallback = getFallbackImage(topicTitle, sub.title);
+            sub.image = fallback;
+            sub.done = true;
+            if (selected === sub.title) setMedia(fallback);
           }
         }
 
@@ -1025,6 +1082,45 @@ Requirements:
     }
   };
 
+  async function sendPrompt(prompt, promptImage, topics, sub) {
+    try {
+      const postURL = serverURL + '/api/generate';
+      const res = await axios.post(postURL, { prompt });
+      const generatedText = res.data.generatedText;
+      try { sendImage(generatedText, promptImage, topics, sub); }
+      catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
+    } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
+  }
+
+  async function sendImage(parsedJson, promptImage, topics, sub) {
+    try {
+      const postURL = serverURL + '/api/image';
+      const res = await axios.post(postURL, { prompt: promptImage });
+      try { sendData(res.data.url, parsedJson, topics, sub); }
+      catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
+    } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
+  }
+
+  async function sendData(image, theory, topics, sub) {
+    const topicsList = jsonData?.course_topics || jsonData?.[mainTopic?.toLowerCase()];
+    if (!topicsList) { setIsLoading(false); return; }
+    const mTopic = topicsList.find(topic => topic.title === topics);
+    if (!mTopic) { setIsLoading(false); return; }
+    const mSubTopic = mTopic.subtopics?.find(subtopic => subtopic.title === sub);
+    if (!mSubTopic) { setIsLoading(false); return; }
+    const cleanedTheory = cleanGeneratedHtml(theory);
+    mSubTopic.theory = cleanedTheory;
+    mSubTopic.image = image;
+    mSubTopic.done = true;
+    setSelectedTopicTitle(topics);
+    setSelected(mSubTopic.title);
+    setTheory(cleanedTheory);
+    setMedia(image);
+    setIsLoading(false);
+    sessionStorage.setItem('jsonData', JSON.stringify(jsonData));
+    updateCourse();
+  }
+
   async function sendDataVideo(image, theory, topics, sub) {
     const topicsList = jsonData?.course_topics || jsonData?.[mainTopic?.toLowerCase()];
     if (!topicsList) { setIsLoading(false); return; }
@@ -1038,12 +1134,11 @@ Requirements:
     mSubTopic.done = true;
     setSelectedTopicTitle(topics);
     setSelected(mSubTopic.title);
-  setTheory(cleanedTheory);
-  setMedia(image);
-  setIsLoading(false);
-  updateCourse();
-  endLoadingRequest();
-}
+    setTheory(cleanedTheory);
+    setMedia(image);
+    setIsLoading(false);
+    updateCourse();
+  }
 
   async function updateCourse() {
     CountDoneTopics();
@@ -1082,11 +1177,11 @@ Requirements:
 
   async function sendVideo(query, mTopic, mSubTopic, subtop) {
     const stopSim = simulateProgress('video');
-  try {
+    try {
       const res = await axios.post(serverURL + '/api/yt', { prompt: query });
       try { stopSim(); sendTranscript(res.data.url, mTopic, mSubTopic, subtop); }
-      catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); endLoadingRequest(); }
-    } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); endLoadingRequest(); }
+      catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
+    } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
   }
 
   async function sendTranscript(url, mTopic, mSubTopic, subtop) {
@@ -1097,8 +1192,8 @@ Requirements:
         const concatenatedText = res.data.transcript.map(item => item.text).join(' ');
         const prompt = buildStyledTheoryPrompt(subtop, concatenatedText);
         stopSim(); sendSummery(prompt, url, mTopic, mSubTopic);
+      } catch (error) { const prompt = buildStyledTheoryPrompt(subtop); stopSim(); sendSummery(prompt, url, mTopic, mSubTopic); }
     } catch (error) { const prompt = buildStyledTheoryPrompt(subtop); stopSim(); sendSummery(prompt, url, mTopic, mSubTopic); }
-  } catch (error) { const prompt = buildStyledTheoryPrompt(subtop); stopSim(); sendSummery(prompt, url, mTopic, mSubTopic); }
   }
 
   async function sendSummery(prompt, url, mTopic, mSubTopic) {
@@ -1111,8 +1206,8 @@ Requirements:
         setTimeout(() => setShowLoadingPopup(false), 1500);
         const cleanedTheory = cleanGeneratedHtml(generatedText);
         sendDataVideo(url, cleanedTheory, mTopic, mSubTopic);
-    } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); endLoadingRequest(); }
-    } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); endLoadingRequest(); }
+      } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
+    } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
   }
 
   async function htmlDownload() {
@@ -1151,10 +1246,8 @@ Requirements:
     const topicsHtml = topics.map(topic => `<h3 style="font-size: 18pt; font-weight: bold; margin: 0; margin-top: 15px;">${topic.title}</h3>${topic.subtopics.map(subtopic => `<p style="font-size: 16pt; margin-top: 10px;">${subtopic.title}</p>`).join('')}`).join('');
     const theoryPromises = topics.map(async topic => {
       const subtopicPromises = topic.subtopics.map(async (subtopic) => {
-        const videoLink = type === 'video & text course'
-          ? `<a style="color: #0000FF;" href="https://www.youtube.com/watch?v=${subtopic.youtube}" target="_blank" rel="noopener noreferrer">Watch the YouTube video on ${subtopic.title}</a>`
-          : '';
-        return `<div><p style="font-size: 16pt; margin-top: 20px; font-weight: bold;">${subtopic.title}</p><div style="font-size: 12pt; margin-top: 15px;">${subtopic.done ? `${videoLink}<div style="margin-top: 10px;">${subtopic.theory}</div>` : `<div style="margin-top: 10px;">Please visit ${subtopic.title} topic to export as PDF.</div>`}</div></div>`;
+        const imageUrl = type === 'text & image course' ? await toDataUrl(subtopic.image) : ``;
+        return `<div><p style="font-size: 16pt; margin-top: 20px; font-weight: bold;">${subtopic.title}</p><div style="font-size: 12pt; margin-top: 15px;">${subtopic.done ? `${type === 'text & image course' ? (imageUrl ? `<img style="margin-top: 10px;" src="${imageUrl}" alt="${subtopic.title} image">` : `<a style="color: #0000FF;" href="${subtopic.image}" target="_blank">View example image</a>`) : `<a style="color: #0000FF;" href="https://www.youtube.com/watch?v=${subtopic.youtube}" target="_blank" rel="noopener noreferrer">Watch the YouTube video on ${subtopic.title}</a>`}<div style="margin-top: 10px;">${subtopic.theory}</div>` : `<div style="margin-top: 10px;">Please visit ${subtopic.title} topic to export as PDF.</div>`}</div></div>`;
       });
       const subtopicHtml = await Promise.all(subtopicPromises);
       return `<div style="margin-top: 30px;"><h3 style="font-size: 18pt; text-align: center; font-weight: bold; margin: 0;">${topic.title}</h3>${subtopicHtml.join('')}</div>`;
@@ -1407,7 +1500,7 @@ Requirements:
           setSelected(firstSubtopic.title);
           if (isSubtopicReadyForDisplay(firstSubtopic)) {
             setTheory(cleanGeneratedHtml(firstSubtopic.theory));
-            setMedia(type === 'video & text course' ? firstSubtopic.youtube : '');
+            setMedia(type === 'video & text course' ? firstSubtopic.youtube : firstSubtopic.image);
           } else {
             setTimeout(() => startSubtopicPreparation(mainTopicData.title, firstSubtopic.title, firstSubtopic), 100);
           }
@@ -1459,239 +1552,181 @@ Requirements:
     redirectExam();
   };
 
+  const examRulesSection = hasManualQuiz ? (
+    <section className="mb-4 sm:mb-6 rounded-2xl sm:rounded-[28px] border border-primary/15 bg-gradient-to-br from-primary/[0.07] via-background to-background p-3 sm:p-4 md:p-5 shadow-sm">
+      <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.28em] text-primary/75">Exam Rules</p>
+          <h2 className="mt-1 sm:mt-2 text-lg sm:text-xl md:text-2xl font-semibold">{mainTopic} Assessment</h2>
+          <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-muted-foreground">Final quiz unlocks after every lesson is completed. Attempt rules and basic proctoring are controlled by the organization.</p>
+        </div>
+        <div className="rounded-xl sm:rounded-2xl border border-primary/15 bg-background px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm shadow-sm">
+          <div className="font-semibold text-foreground">{quizLockedByCourseProgress ? 'Locked until course completion' : 'Ready when you are'}</div>
+          <div className="mt-1 text-muted-foreground">{completedLessonCount}/{orderedLessons.length} lessons completed</div>
+        </div>
+      </div>
+      
+      {/* Responsive Grid for Exam Rules */}
+      <div className="mt-3 sm:mt-4 grid gap-2 sm:gap-3 
+        grid-cols-1 
+        sm:grid-cols-2 
+        md:grid-cols-2 
+        lg:grid-cols-4">
+        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3">
+          <div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Attempts</div>
+          <div className="mt-1 text-xs sm:text-sm font-semibold">{manualQuizSettings.attemptLimit} total attempts</div>
+          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">{quizAttemptSummary?.attemptCount || 0} used, {quizAttemptSummary?.remainingAttempts ?? manualQuizSettings.attemptLimit} left</div>
+        </div>
+        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3">
+          <div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Passing</div>
+          <div className="mt-1 text-xs sm:text-sm font-semibold">{manualQuizSettings.passPercentage}% required</div>
+          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">{manualQuizSettings.questionCount} questions per attempt</div>
+        </div>
+        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3">
+          <div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Cooldown</div>
+          <div className="mt-1 text-xs sm:text-sm font-semibold">{manualQuizSettings.cooldownMinutes} minutes after a failed attempt</div>
+          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">Difficulty mode: {manualQuizSettings.difficultyMode}</div>
+        </div>
+        <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3">
+          <div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Monitoring</div>
+          <div className="mt-1 text-xs sm:text-sm font-semibold">{[manualQuizSettings.proctoring.detectTabSwitch && 'tab switch', manualQuizSettings.proctoring.detectFullscreenExit && 'fullscreen', manualQuizSettings.proctoring.detectCopyPaste && 'clipboard', manualQuizSettings.proctoring.detectNoise && 'noise'].filter(Boolean).join(', ') || 'standard'}</div>
+          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">{manualQuizSettings.proctoring.requireCamera || manualQuizSettings.proctoring.requireMicrophone ? 'Camera/mic permissions may be requested' : 'No device access required'}</div>
+        </div>
+      </div>
+    </section>
+  ) : null;
+
   const openLessonFlow = (chapterTitle?: string) => {
     const targetChapter = chapterTitle || currentTopicTitle || courseTopics[0]?.title || '';
     setLessonFlowChapter(targetChapter); setLessonFlowSearch(''); setIsLessonFlowOpen(true);
   };
 
-  const courseDashboardPopup = (
-    <Dialog open={isDashboardOpen} onOpenChange={setIsDashboardOpen}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-2xl md:rounded-[32px] border-none shadow-2xl">
-        <DialogHeader className="p-6 pb-0 bg-gradient-to-br from-primary/10 via-background to-background">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary">
-              <LayoutPanelLeft className="w-5 h-5" />
-            </div>
-            <div>
-              <DialogTitle className="text-2xl font-bold tracking-tight">Course Dashboard</DialogTitle>
-              <DialogDescription className="text-muted-foreground">
-                Review assessment rules and the complete curriculum roadmap.
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
-
-        <div className="p-6">
-          <Tabs defaultValue="roadmap" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8 p-1 bg-muted/50 rounded-xl">
-              <TabsTrigger value="roadmap" className="rounded-lg gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                <ListTree className="w-4 h-4" />
-                Lesson Roadmap
-              </TabsTrigger>
-              <TabsTrigger value="exam" className="rounded-lg gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                <ShieldCheck className="w-4 h-4" />
-                Assessment Rules
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="roadmap" className="mt-0 outline-none">
-              <div className="space-y-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-4 rounded-2xl bg-muted/30 border border-border/50">
-                  <div className="flex gap-4">
-                    <div className="text-center">
-                      <div className="text-xl font-bold">{courseTopics.length}</div>
-                      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Chapters</div>
-                    </div>
-                    <div className="w-px h-10 bg-border/50" />
-                    <div className="text-center">
-                      <div className="text-xl font-bold">{orderedLessons.length}</div>
-                      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Lessons</div>
-                    </div>
-                    <div className="w-px h-10 bg-border/50" />
-                    <div className="text-center">
-                      <div className="text-xl font-bold text-primary">{completedLessonCount}</div>
-                      <div className="text-[10px] font-semibold uppercase tracking-wider text-primary/70">Completed</div>
-                    </div>
-                  </div>
-                  <Button onClick={() => { setIsDashboardOpen(false); openLessonFlow(); }} className="rounded-xl gap-2">
-                    <BookOpen className="w-4 h-4" />
-                    Interactive Roadmap
-                  </Button>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {courseTopics.slice(0, 4).map((topic, topicIndex) => {
-                    const topicSubtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
-                    const topicCompletedCount = topicSubtopics.filter(subtopic => completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title)).length;
-                    const isTopicActive = topic.title === currentTopicTitle;
-                    return (
-                      <button type="button" key={topic.title} onClick={() => { setIsDashboardOpen(false); openLessonFlow(topic.title); }}
-                        className={cn("group flex items-start justify-between gap-3 rounded-2xl border p-4 text-left transition-all hover:ring-2 hover:ring-primary/20", isTopicActive ? "border-primary/40 bg-primary/[0.03] ring-2 ring-primary/20" : "border-border/60 bg-background")}
-                      >
-                        <div className="min-w-0">
-                          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Module {topicIndex + 1}</span>
-                          <h3 className="mt-2 line-clamp-1 text-sm font-semibold">{topic.title}</h3>
-                          <p className="mt-1 text-[11px] text-muted-foreground italic">Click to view lessons</p>
-                        </div>
-                        <div className="flex flex-col items-end">
-                          <div className="text-sm font-bold text-primary">{topicCompletedCount}/{topicSubtopics.length}</div>
-                          <div className="text-[9px] font-bold text-muted-foreground uppercase">Done</div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-                {courseTopics.length > 4 && (
-                  <Button variant="ghost" className="w-full rounded-xl hover:bg-primary/5 text-primary" onClick={() => { setIsDashboardOpen(false); openLessonFlow(); }}>
-                    View Remaining {courseTopics.length - 4} Chapters
-                  </Button>
-                )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="exam" className="mt-0 outline-none">
-              {hasManualQuiz ? (
-                <div className="space-y-6">
-                  <div className="p-5 rounded-2xl bg-gradient-to-br from-primary/[0.08] to-background border border-primary/20">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-bold">Certification Assessment</h3>
-                        <p className="text-sm text-muted-foreground">Requirements to earn your credential</p>
-                      </div>
-                      <Badge variant={quizLockedByCourseProgress ? "outline" : "default"} className={cn("px-3 py-1", quizLockedByCourseProgress ? "bg-muted" : "bg-primary text-primary-foreground")}>
-                        {quizLockedByCourseProgress ? "Locked" : "Unlocked"}
-                      </Badge>
-                    </div>
-                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden mb-2">
-                      <div className="h-full bg-primary transition-all duration-500" style={{ width: `${(completedLessonCount / orderedLessons.length) * 100}%` }} />
-                    </div>
-                    <p className="text-xs text-muted-foreground text-center">
-                      {completedLessonCount} of {orderedLessons.length} lessons completed — {Math.round((completedLessonCount / orderedLessons.length) * 100)}% through the curriculum
-                    </p>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="p-4 rounded-xl border border-border/50 bg-background/50">
-                      <div className="flex items-center gap-2 mb-2">
-                        <RefreshCw className="w-4 h-4 text-primary" />
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Attempt Limit</span>
-                      </div>
-                      <div className="text-base font-bold">{manualQuizSettings.attemptLimit} Total Attempts</div>
-                      <p className="text-xs text-muted-foreground mt-1">{quizAttemptSummary?.remainingAttempts ?? manualQuizSettings.attemptLimit} attempts remaining</p>
-                    </div>
-                    <div className="p-4 rounded-xl border border-border/50 bg-background/50">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Award className="w-4 h-4 text-primary" />
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Passing Score</span>
-                      </div>
-                      <div className="text-base font-bold">{manualQuizSettings.passPercentage}% Required</div>
-                      <p className="text-xs text-muted-foreground mt-1">{manualQuizSettings.questionCount} randomized questions</p>
-                    </div>
-                    <div className="p-4 rounded-xl border border-border/50 bg-background/50">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Clock className="w-4 h-4 text-primary" />
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cooldown</span>
-                      </div>
-                      <div className="text-base font-bold">{manualQuizSettings.cooldownMinutes} Minute Break</div>
-                      <p className="text-xs text-muted-foreground mt-1">Required after unsuccessful attempts</p>
-                    </div>
-                    <div className="p-4 rounded-xl border border-border/50 bg-background/50">
-                      <div className="flex items-center gap-2 mb-2">
-                        <ShieldCheck className="w-4 h-4 text-primary" />
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Security</span>
-                      </div>
-                      <div className="text-base font-bold">Standard Monitoring</div>
-                      <p className="text-xs text-muted-foreground mt-1 truncate">
-                        {[manualQuizSettings.proctoring.detectTabSwitch && 'Tab Detection', manualQuizSettings.proctoring.detectFullscreenExit && 'Strict Screen'].filter(Boolean).join(' • ')}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center bg-muted/20 rounded-2xl border border-dashed">
-                  <BookOpen className="w-12 h-12 text-muted-foreground/40 mb-4" />
-                  <h3 className="font-bold">Standard Quiz</h3>
-                  <p className="text-sm text-muted-foreground max-w-xs px-6 mt-2">
-                    This course uses a standard AI-generated assessment. No specific organization rules are applied.
-                  </p>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+  const roadmapSection = courseTopics.length > 0 ? (
+    <section className="mb-4 sm:mb-6 rounded-2xl sm:rounded-[28px] border border-border/60 bg-gradient-to-br from-background via-background to-muted/50 p-3 sm:p-4 md:p-5 shadow-sm">
+      <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">Course Roadmap</p>
+          <h2 className="mt-1 sm:mt-2 text-lg sm:text-xl md:text-2xl font-semibold">All chapters and lesson flow</h2>
+          <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-muted-foreground">Review the full structure here and jump into any unlocked lesson without relying only on the sidebar.</p>
         </div>
-      </DialogContent>
-    </Dialog>
-  );
-
-  const lessonFlowPopup = (
-    <Dialog open={isLessonFlowOpen} onOpenChange={setIsLessonFlowOpen}>
-      <DialogContent className="w-[95vw] max-w-4xl overflow-hidden p-0 rounded-2xl sm:rounded-3xl">
-        <DialogHeader className="border-b border-border/60 bg-gradient-to-r from-primary/10 via-background to-indigo-500/10 p-4 sm:p-5 md:p-6">
-          <DialogTitle className="text-lg sm:text-xl">Lesson flow</DialogTitle>
-          <DialogDescription className="text-xs sm:text-sm">Browse chapters and jump directly to any unlocked lesson.</DialogDescription>
-          <div className="mt-3 sm:mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Input value={lessonFlowSearch} onChange={(e) => setLessonFlowSearch(e.target.value)} placeholder="Search lesson…" className="h-9 sm:h-11 rounded-xl sm:rounded-2xl bg-background/80 text-sm" />
-            <Button variant="outline" className="h-9 sm:h-11 rounded-xl sm:rounded-2xl text-xs sm:text-sm" onClick={() => { setLessonFlowSearch(''); setLessonFlowChapter(currentTopicTitle || courseTopics[0]?.title || ''); }}>Reset</Button>
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">{courseTopics.length} chapters</span>
+          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">{orderedLessons.length} lessons</span>
+          <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-primary">{completedLessonCount} completed</span>
+        </div>
+      </div>
+      
+      <div className="mt-4 sm:mt-5 rounded-2xl sm:rounded-3xl border border-border/60 bg-background/80 p-3 sm:p-4 md:p-5 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <p className="text-xs sm:text-sm font-semibold">Lesson flow</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Hidden by default. Open the popup to browse all chapters and lessons.</p>
           </div>
-        </DialogHeader>
-        <ScrollArea className="max-h-[60vh] sm:max-h-[70vh]">
-          <div className="p-3 sm:p-4 md:p-6">
-            <Accordion type="single" collapsible className="space-y-2 sm:space-y-3" value={lessonFlowChapter} onValueChange={setLessonFlowChapter}>
-              {courseTopics.map((topic, topicIndex) => {
-                const topicSubtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
-                const query = lessonFlowSearch.trim().toLowerCase();
-                const filteredSubtopics = query ? topicSubtopics.filter((sub: any) => String(sub?.title || '').toLowerCase().includes(query)) : topicSubtopics;
-                if (query && filteredSubtopics.length === 0 && !String(topic?.title || '').toLowerCase().includes(query)) return null;
-                const topicCompletedCount = topicSubtopics.filter(subtopic => completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title)).length;
-                const isTopicActive = topic.title === currentTopicTitle;
-                return (
-                  <AccordionItem key={topic.title} value={topic.title} className={cn("overflow-hidden rounded-2xl sm:rounded-3xl border transition-colors", isTopicActive ? "border-primary/30 bg-primary/[0.05]" : "border-border/60 bg-background")}>
-                    <AccordionTrigger className="px-3 sm:px-4 py-3 sm:py-4 text-left hover:no-underline">
-                      <div className="flex min-w-0 flex-1 items-start justify-between gap-2 sm:gap-3">
-                        <div className="min-w-0">
-                          <span className="inline-flex items-center rounded-full bg-muted px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Chapter {topicIndex + 1}</span>
-                          <h3 className="mt-2 sm:mt-3 text-sm sm:text-base font-semibold leading-5 sm:leading-6 md:text-lg">{topic.title}</h3>
-                          <p className="mt-1 sm:mt-2 text-[10px] sm:text-xs text-muted-foreground">Click to view lessons in this chapter</p>
-                        </div>
-                        <div className="rounded-xl sm:rounded-2xl bg-muted px-2 sm:px-3 py-1.5 sm:py-2 text-right"><div className="text-sm sm:text-base font-semibold">{topicCompletedCount}/{topicSubtopics.length}</div><div className="text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">done</div></div>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0">
-                      {filteredSubtopics.length === 0 ? (
-                        <div className="rounded-xl sm:rounded-2xl border border-dashed bg-muted/20 p-4 sm:p-5 text-center text-xs sm:text-sm text-muted-foreground">No lessons match your search.</div>
-                      ) : (
-                        <div className="grid gap-1.5 sm:gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
-                          {filteredSubtopics.map((subtopic: any, subtopicIndex: number) => {
-                            const isUnlocked = isSubtopicUnlocked(topic.title, subtopic.title);
-                            const isActive = selected === subtopic.title;
-                            const isCompleted = completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title);
-                            return (
-                              <button type="button" key={subtopic.title}
-                                onClick={() => { if (isUnlocked) { handleSelect(topic.title, subtopic.title); setIsLessonFlowOpen(false); } else toast({ title: "Locked", description: "Complete previous lessons to unlock this one." }); }}
-                                className={cn("flex w-full items-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-2 sm:py-3 text-left transition-all", isUnlocked ? "hover:border-primary/30 hover:bg-primary/[0.04]" : "cursor-not-allowed opacity-60", isActive ? "border-primary/35 bg-primary/[0.08]" : "border-border/50 bg-background")}
-                              >
-                                <span className={cn("flex h-6 w-6 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-[10px] sm:text-xs font-semibold", isCompleted ? "bg-emerald-500 text-white" : isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
-                                  {isCompleted ? "✓" : subtopicIndex + 1}
-                                </span>
-                                <span className="min-w-0 flex-1">
-                                  <span className="block truncate text-xs sm:text-sm font-medium text-foreground">{subtopic.title}</span>
-                                  <span className="mt-0.5 sm:mt-1 block text-[9px] sm:text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">{isCompleted ? "Completed" : isActive ? "Current lesson" : isUnlocked ? "Available now" : "Locked"}</span>
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </AccordionContent>
-                  </AccordionItem>
-                );
-              })}
-            </Accordion>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button onClick={() => openLessonFlow()} className="rounded-xl sm:rounded-2xl text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2"><BookOpen className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />Open lesson flow</Button>
+            {currentTopicTitle && (<Button variant="outline" onClick={() => openLessonFlow(currentTopicTitle)} className="rounded-xl sm:rounded-2xl text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2"><ChevronDown className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />Current chapter</Button>)}
           </div>
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
-  );
+        </div>
+        
+        {/* Responsive Grid for Roadmap Chapters */}
+        <div className="mt-4 sm:mt-5 grid gap-2 sm:gap-3 
+          grid-cols-1 
+          sm:grid-cols-2 
+          lg:grid-cols-2">
+          {courseTopics.slice(0, 4).map((topic, topicIndex) => {
+            const topicSubtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
+            const topicCompletedCount = topicSubtopics.filter(subtopic => completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title)).length;
+            const isTopicActive = topic.title === currentTopicTitle;
+            return (
+              <button type="button" key={topic.title} onClick={() => openLessonFlow(topic.title)}
+                className={cn("group flex w-full items-start justify-between gap-2 sm:gap-3 rounded-2xl sm:rounded-3xl border px-3 sm:px-4 py-3 sm:py-4 text-left transition-all hover:border-primary/30 hover:bg-primary/[0.04]", isTopicActive ? "border-primary/30 bg-primary/[0.05]" : "border-border/60 bg-background")}
+              >
+                <div className="min-w-0">
+                  <span className="inline-flex items-center rounded-full bg-muted px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Chapter {topicIndex + 1}</span>
+                  <h3 className="mt-2 sm:mt-3 line-clamp-2 text-xs sm:text-sm font-semibold leading-5 sm:leading-6 md:text-base">{topic.title}</h3>
+                  <p className="mt-1 sm:mt-2 text-[10px] sm:text-xs text-muted-foreground">Tap to open lessons</p>
+                </div>
+                <div className="rounded-xl sm:rounded-2xl bg-muted px-2 sm:px-3 py-1.5 sm:py-2 text-right"><div className="text-sm sm:text-base font-semibold">{topicCompletedCount}/{topicSubtopics.length}</div><div className="text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">done</div></div>
+              </button>
+            );
+          })}
+        </div>
+        {courseTopics.length > 4 && (<div className="mt-3 sm:mt-4 flex justify-center"><Button variant="ghost" className="rounded-xl sm:rounded-2xl text-xs sm:text-sm" onClick={() => openLessonFlow()}>View all chapters</Button></div>)}
+      </div>
+      
+      <Dialog open={isLessonFlowOpen} onOpenChange={setIsLessonFlowOpen}>
+        <DialogContent className="w-[95vw] max-w-4xl overflow-hidden p-0 rounded-2xl sm:rounded-3xl">
+          <DialogHeader className="border-b border-border/60 bg-gradient-to-r from-primary/10 via-background to-indigo-500/10 p-4 sm:p-5 md:p-6">
+            <DialogTitle className="text-lg sm:text-xl">Lesson flow</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">Browse chapters and jump directly to any unlocked lesson.</DialogDescription>
+            <div className="mt-3 sm:mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Input value={lessonFlowSearch} onChange={(e) => setLessonFlowSearch(e.target.value)} placeholder="Search lesson…" className="h-9 sm:h-11 rounded-xl sm:rounded-2xl bg-background/80 text-sm" />
+              <Button variant="outline" className="h-9 sm:h-11 rounded-xl sm:rounded-2xl text-xs sm:text-sm" onClick={() => { setLessonFlowSearch(''); setLessonFlowChapter(currentTopicTitle || courseTopics[0]?.title || ''); }}>Reset</Button>
+            </div>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh] sm:max-h-[70vh]">
+            <div className="p-3 sm:p-4 md:p-6">
+              <Accordion type="single" collapsible className="space-y-2 sm:space-y-3" value={lessonFlowChapter} onValueChange={setLessonFlowChapter}>
+                {courseTopics.map((topic, topicIndex) => {
+                  const topicSubtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
+                  const query = lessonFlowSearch.trim().toLowerCase();
+                  const filteredSubtopics = query ? topicSubtopics.filter((sub: any) => String(sub?.title || '').toLowerCase().includes(query)) : topicSubtopics;
+                  if (query && filteredSubtopics.length === 0 && !String(topic?.title || '').toLowerCase().includes(query)) return null;
+                  const topicCompletedCount = topicSubtopics.filter(subtopic => completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title)).length;
+                  const isTopicActive = topic.title === currentTopicTitle;
+                  return (
+                    <AccordionItem key={topic.title} value={topic.title} className={cn("overflow-hidden rounded-2xl sm:rounded-3xl border transition-colors", isTopicActive ? "border-primary/30 bg-primary/[0.05]" : "border-border/60 bg-background")}>
+                      <AccordionTrigger className="px-3 sm:px-4 py-3 sm:py-4 text-left hover:no-underline">
+                        <div className="flex min-w-0 flex-1 items-start justify-between gap-2 sm:gap-3">
+                          <div className="min-w-0">
+                            <span className="inline-flex items-center rounded-full bg-muted px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Chapter {topicIndex + 1}</span>
+                            <h3 className="mt-2 sm:mt-3 text-sm sm:text-base font-semibold leading-5 sm:leading-6 md:text-lg">{topic.title}</h3>
+                            <p className="mt-1 sm:mt-2 text-[10px] sm:text-xs text-muted-foreground">Click to view lessons in this chapter</p>
+                          </div>
+                          <div className="rounded-xl sm:rounded-2xl bg-muted px-2 sm:px-3 py-1.5 sm:py-2 text-right"><div className="text-sm sm:text-base font-semibold">{topicCompletedCount}/{topicSubtopics.length}</div><div className="text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">done</div></div>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0">
+                        {filteredSubtopics.length === 0 ? (
+                          <div className="rounded-xl sm:rounded-2xl border border-dashed bg-muted/20 p-4 sm:p-5 text-center text-xs sm:text-sm text-muted-foreground">No lessons match your search.</div>
+                        ) : (
+                          /* Responsive Grid for Lesson Flow Subtopics */
+                          <div className="grid gap-1.5 sm:gap-2 
+                            grid-cols-1 
+                            sm:grid-cols-2 
+                            lg:grid-cols-2">
+                            {filteredSubtopics.map((subtopic: any, subtopicIndex: number) => {
+                              const isUnlocked = isSubtopicUnlocked(topic.title, subtopic.title);
+                              const isActive = selected === subtopic.title;
+                              const isCompleted = completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title);
+                              return (
+                                <button type="button" key={subtopic.title}
+                                  onClick={() => { if (isUnlocked) { handleSelect(topic.title, subtopic.title); setIsLessonFlowOpen(false); } else toast({ title: "Locked", description: "Complete previous lessons to unlock this one." }); }}
+                                  className={cn("flex w-full items-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-2 sm:py-3 text-left transition-all", isUnlocked ? "hover:border-primary/30 hover:bg-primary/[0.04]" : "cursor-not-allowed opacity-60", isActive ? "border-primary/35 bg-primary/[0.08]" : "border-border/50 bg-background")}
+                                >
+                                  <span className={cn("flex h-6 w-6 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-[10px] sm:text-xs font-semibold", isCompleted ? "bg-emerald-500 text-white" : isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
+                                    {isCompleted ? "✓" : subtopicIndex + 1}
+                                  </span>
+                                  <span className="min-w-0 flex-1">
+                                    <span className="block truncate text-xs sm:text-sm font-medium text-foreground">{subtopic.title}</span>
+                                    <span className="mt-0.5 sm:mt-1 block text-[9px] sm:text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">{isCompleted ? "Completed" : isActive ? "Current lesson" : isUnlocked ? "Available now" : "Locked"}</span>
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+    </section>
+  ) : null;
 
   const [isButtonDisabled, setIsButtonDisabled] = React.useState(false);
   const [remainingSeconds, setRemainingSeconds] = React.useState(0);
@@ -1735,7 +1770,6 @@ Requirements:
         onContinue={() => { setShowContinueButton(false); setIsButtonDisabled(false); setShowLoadingPopup(false); }}
         showContinueButton={showContinueButton}
         remainingSeconds={remainingSeconds}
-        requestNote={loadingRequestNote}
       />
       <QuizLoadingPopup isOpen={isQuizLoading} topic={mainTopic} />
 
@@ -1853,51 +1887,32 @@ Requirements:
               {isLoading ? <CourseContentSkeleton /> : (
                 <>
                   {/* Hero banner - Responsive */}
-                  <div className="mb-4 sm:mb-6 overflow-hidden rounded-2xl sm:rounded-[24px] md:rounded-[40px] border border-slate-800/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/80 p-5 sm:p-6 md:p-8 lg:p-10 text-white shadow-2xl relative">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[100px] -mr-32 -mt-32 rounded-full" />
-                    <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between relative z-10">
+                  <div className="mb-3 sm:mb-4 md:mb-6 overflow-hidden rounded-2xl sm:rounded-[20px] md:rounded-[30px] border border-slate-800/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/80 p-3 sm:p-4 md:p-6 text-white shadow-xl">
+                    <div className="flex flex-col gap-3 sm:gap-4 xl:flex-row xl:items-end xl:justify-between">
                       <div className="max-w-3xl">
-                        <div className="flex flex-wrap items-center gap-2 mb-4">
-                          <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/90 backdrop-blur-md">
-                            {currentLesson ? `Module ${currentLesson.topicIndex + 1}` : "Course overview"}
-                          </span>
-                          <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary-foreground/90 backdrop-blur-md">
-                            Lesson {currentLessonIndex + 1} of {orderedLessons.length}
-                          </span>
-                        </div>
-                        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight leading-[1.1] mb-4">
-                          {selected}
-                        </h1>
-                        <div className="flex flex-wrap items-center gap-4">
-                          <p className="text-sm md:text-base text-white/70 max-w-xl line-clamp-2 italic">
-                            {currentTopicTitle && `Part of "${currentTopicTitle}". `} Exploring key concepts and practical applications.
-                          </p>
-                          <Button 
-                            variant="outline" 
-                            onClick={() => setIsDashboardOpen(true)}
-                            className="bg-white/10 border-white/20 text-white hover:bg-white/20 rounded-xl h-10 px-4 gap-2 backdrop-blur-md transition-all hover:scale-105 active:scale-95"
-                          >
-                            <LayoutPanelLeft className="w-4 h-4" />
-                            <span className="font-bold text-xs uppercase tracking-widest leading-none">Course Insights</span>
-                          </Button>
-                        </div>
+                        <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.26em] text-white/80 backdrop-blur">
+                          {currentLesson ? `Chapter ${currentLesson.topicIndex + 1}` : "Lesson overview"}
+                        </span>
+                        <h1 className="mt-2 sm:mt-3 break-words text-base sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-semibold leading-tight">{selected}</h1>
+                        <p className="mt-1.5 sm:mt-2 md:mt-3 text-xs sm:text-sm leading-5 sm:leading-6 text-white/75">
+                          {currentTopicTitle && `Inside ${currentTopicTitle}. `}{currentLesson ? `Lesson ${currentLessonIndex + 1} of ${orderedLessons.length}. ` : ""}Continue through the roadmap below or jump directly from the side menu.
+                        </p>
                       </div>
                       
-                      <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row shrink-0">
-                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl min-w-[200px] hover:bg-white/10 transition-colors">
-                          <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 mb-2">Curriculum Progress</div>
-                          <div className="flex items-end gap-2">
-                            <div className="text-3xl font-black leading-none">{percentage}%</div>
-                            <div className="text-xs text-white/50 mb-1">Overall</div>
-                          </div>
-                          <div className="mt-3 w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                            <div className="h-full bg-primary transition-all duration-700" style={{ width: `${percentage}%` }} />
-                          </div>
+                      {/* Responsive Grid for Hero Banner Stats */}
+                      <div className="grid grid-cols-2 gap-1.5 sm:gap-2 
+                        sm:grid-cols-2 
+                        lg:grid-cols-2 
+                        xl:w-auto xl:min-w-[320px]">
+                        <div className="rounded-lg sm:rounded-xl border border-white/12 bg-white/10 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 backdrop-blur">
+                          <div className="text-[8px] sm:text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">Current Chapter</div>
+                          <div className="mt-1 text-xs sm:text-sm md:text-base lg:text-lg font-semibold leading-tight">{currentTopic ? `${currentLesson?.topicIndex + 1}. ${currentTopic.title}` : "Course lesson"}</div>
+                          <div className="mt-0.5 sm:mt-1 text-[8px] sm:text-[10px] md:text-xs text-white/65">{currentTopicCompletedCount}/{currentTopic?.subtopics?.length || 0} lessons done</div>
                         </div>
-                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl min-w-[200px] hover:bg-white/10 transition-colors">
-                          <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 mb-2">Next Milestone</div>
-                          <div className="text-sm font-bold truncate mb-1">{nextLesson ? nextLesson.subtopicTitle : "Course Assessment"}</div>
-                          <div className="text-[10px] text-white/40 uppercase font-medium">{nextLesson ? `Module ${nextLesson.topicIndex + 1}` : "Final Step"}</div>
+                        <div className="rounded-lg sm:rounded-xl border border-white/12 bg-white/10 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 backdrop-blur">
+                          <div className="text-[8px] sm:text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">Up Next</div>
+                          <div className="mt-1 text-[10px] sm:text-xs md:text-sm font-semibold leading-4 sm:leading-5">{nextLesson ? nextLesson.subtopicTitle : "Final quiz after completion"}</div>
+                          <div className="mt-0.5 sm:mt-1 text-[8px] sm:text-[10px] md:text-xs text-white/65">{nextLesson ? nextLesson.topicTitle : `${mainTopic} quiz`}</div>
                         </div>
                       </div>
                     </div>
@@ -1913,7 +1928,7 @@ Requirements:
                           <span className={`inline-flex items-center rounded-full px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold ${contentProfileMeta.badgeClass}`}>
                             <ContentProfileIcon className="mr-1 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />{contentProfileMeta.label}
                           </span>
-                          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">{type === "video & text course" ? "Video + Text" : "Text + Theory"}</span>
+                          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">{type === "video & text course" ? "Video + Text" : "Text + Images"}</span>
                           <span className="inline-flex items-center rounded-full border border-border bg-background px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground">{lang}</span>
                         </div>
                         <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 sm:line-clamp-none">{contentProfileMeta.summary}</p>
@@ -1921,8 +1936,8 @@ Requirements:
                     </div>
                   </div>
 
-                  {courseDashboardPopup}
-                  {lessonFlowPopup}
+                  {!isMobile && examRulesSection}
+                  {!isMobile && roadmapSection}
 
                   <div className="space-y-3 sm:space-y-4">
                     {/* Theory text */}
@@ -1937,6 +1952,9 @@ Requirements:
                       <p className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80">Learning Note</p>
                       <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm leading-5 sm:leading-6">{lessonAlertMessage}</p>
                     </div>
+
+                    {isMobile && examRulesSection}
+                    {isMobile && roadmapSection}
 
                     {/* Lesson actions - Responsive */}
                     {!isOrgAdmin && (
