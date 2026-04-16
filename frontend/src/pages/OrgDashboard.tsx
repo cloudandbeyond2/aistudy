@@ -4995,14 +4995,23 @@ const handleUpdateDeptAdmin = async () => {
                                                     {item.description}
                                                 </p>
                                             </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
-                                                    Focused workspace
-                                                </span>
-                                                <Button variant="outline" className="rounded-full" onClick={item.onClick}>
-                                                    Visit now <ExternalLink className="ml-2 h-4 w-4" />
-                                                </Button>
-                                            </div>
+                                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+  {/* Text on top for tablet, side by side for desktop */}
+  <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
+    Focused workspace
+  </span>
+
+  {/* Button at bottom for tablet, right side for desktop */}
+  <div className="flex justify-start lg:justify-end">
+    <Button
+      variant="outline"
+      className="rounded-full w-full sm:w-auto lg:w-auto"
+      onClick={item.onClick}
+    >
+      Visit now <ExternalLink className="ml-2 h-4 w-4" />
+    </Button>
+  </div>
+</div>
                                         </div>
                                     </CardContent>
                                 </Card>
