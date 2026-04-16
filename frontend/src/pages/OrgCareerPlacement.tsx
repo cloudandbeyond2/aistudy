@@ -427,7 +427,12 @@ const OrgCareerPlacement = () => {
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-4"><ScoreBadge score={s.placementScore} /></td>
+                        {/* <td className="px-4 py-4"><ScoreBadge score={s.placementScore} /></td> */}
+                        <td className="px-4 py-4">
+  <div className="min-w-[60px] whitespace-nowrap">
+    <ScoreBadge score={s.placementScore} />
+  </div>
+</td>
                         <td className="px-4 py-4 min-w-[100px]"><Progress value={s.placementScore} className="h-1.5" /></td>
                         <td className="px-4 py-4 text-center">
                           {s.resumeComplete ? (
