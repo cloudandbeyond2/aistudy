@@ -432,12 +432,12 @@ export default function TodoCenter() {
             <div className="absolute inset-0 via-purple-500/10 to-pink-500/10 rounded-3xl blur-3xl"></div>
             <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <button 
+                {/* <button 
                   onClick={() => navigate(-1)} 
                   className="group flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white/80 backdrop-blur-sm text-slate-500 shadow-sm hover:bg-white hover:shadow-md transition-all duration-200"
                 >
                   <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
-                </button>
+                </button> */}
                 <div>
                   <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
                     Task Manager
