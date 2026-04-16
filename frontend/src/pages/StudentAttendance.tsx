@@ -3,6 +3,10 @@ import { Calendar, CheckCircle2, XCircle, Clock, MapPin } from 'lucide-react';
 import SEO from '@/components/SEO';
 import axios from 'axios';
 import { serverURL } from '@/constants';
+import { 
+    PieChart, Pie, Cell, ResponsiveContainer, Tooltip as ReTooltip, Legend 
+} from 'recharts';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function StudentAttendance() {
 
@@ -15,11 +19,11 @@ export default function StudentAttendance() {
   const studentId = sessionStorage.getItem('uid');
 
   const [stats, setStats] = useState({
-    present: 42,
-    absent: 3,
-    late: 2,
-    total: 47,
-    percentage: 94
+    present: 0,
+    absent: 0,
+    late: 0,
+    total: 0,
+    percentage: 0
   });
 
   const [todaysClass, setTodaysClass] = useState<any>({
@@ -35,8 +39,27 @@ export default function StudentAttendance() {
     if (studentId) {
       fetchStudentInfo();
       fetchClasses();
+      fetchAttendanceSummary();
     }
   }, [studentId]);
+
+  const fetchAttendanceSummary = async () => {
+    try {
+      const res = await axios.get(`${serverURL}/api/attendance/summary/${studentId}`);
+      if (res.data.success) {
+        setStats(res.data.summary);
+        setRecentAttendance(res.data.history.map((r: any) => ({
+          id: r.classId?._id || r._id,
+          date: r.date,
+          class: r.classId?.name || "Deleted Class",
+          status: r.status,
+          time: r.time || (r.classId ? `${r.classId.startTime} - ${r.classId.endTime}` : "-")
+        })));
+      }
+    } catch (e) {
+      console.error("Failed to fetch attendance summary", e);
+    }
+  };
 
   // Fetch classes from server
   const fetchClasses = async () => {
@@ -175,6 +198,9 @@ export default function StudentAttendance() {
           )
         );
 
+        // Refresh stats
+        fetchAttendanceSummary();
+        
         // Store in localStorage that attendance is marked
         localStorage.setItem(`attendance-marked-${studentId}-${todaysClass.id}`, 'true');
       }
@@ -240,47 +266,92 @@ export default function StudentAttendance() {
         <p className="text-muted-foreground mt-1">Track your attendance record across all classes.</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-emerald-500/10 text-emerald-600 rounded-lg">
-              <CheckCircle2 size={20} />
+      {/* Stats & Visualization */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-card p-6 rounded-xl border border-border shadow-sm flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="p-2 bg-emerald-500/10 text-emerald-600 rounded-lg">
+                        <CheckCircle2 size={20} />
+                    </div>
+                    <span className="text-xs font-medium text-emerald-600 bg-emerald-500/10 px-2 py-1 rounded-full">
+                        {stats.percentage >= 75 ? 'Good Standing' : 'Below Requirement'}
+                    </span>
+                </div>
+                <div>
+                    <h3 className="text-3xl font-bold">{stats.percentage}%</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Overall Attendance</p>
+                </div>
             </div>
-            <span className="text-xs font-medium text-emerald-600 bg-emerald-500/10 px-2 py-1 rounded-full">On Track</span>
-          </div>
-          <h3 className="text-2xl font-bold">{stats.percentage}%</h3>
-          <p className="text-sm text-muted-foreground">Overall Attendance</p>
+
+            <div className="bg-card p-6 rounded-xl border border-border shadow-sm flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="p-2 bg-blue-500/10 text-blue-600 rounded-lg">
+                        <Calendar size={20} />
+                    </div>
+                </div>
+                <div>
+                    <h3 className="text-3xl font-bold">{stats.present}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Days Present</p>
+                </div>
+            </div>
+
+            <div className="bg-card p-6 rounded-xl border border-border shadow-sm flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="p-2 bg-amber-500/10 text-amber-600 rounded-lg">
+                        <Clock size={20} />
+                    </div>
+                </div>
+                <div>
+                    <h3 className="text-3xl font-bold">{stats.late}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Days Late</p>
+                </div>
+            </div>
+
+            <div className="bg-card p-6 rounded-xl border border-border shadow-sm flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="p-2 bg-red-500/10 text-red-600 rounded-lg">
+                        <XCircle size={20} />
+                    </div>
+                </div>
+                <div>
+                    <h3 className="text-3xl font-bold">{stats.absent}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Days Absent</p>
+                </div>
+            </div>
         </div>
 
-        <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-blue-500/10 text-blue-600 rounded-lg">
-              <Calendar size={20} />
+        {/* Chart Column */}
+        <div className="bg-card p-6 rounded-xl border border-border shadow-sm flex flex-col">
+            <h3 className="text-lg font-bold mb-4">Participation Mix</h3>
+            <div className="flex-1 min-h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Pie
+                            data={[
+                                { name: 'Present', value: stats.present, color: '#10b981' },
+                                { name: 'Late', value: stats.late, color: '#f59e0b' },
+                                { name: 'Absent', value: stats.absent, color: '#ef4444' }
+                            ]}
+                            innerRadius={60}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            dataKey="value"
+                        >
+                            <Cell fill="#10b981" />
+                            <Cell fill="#f59e0b" />
+                            <Cell fill="#ef4444" />
+                        </Pie>
+                        <ReTooltip 
+                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                        />
+                        <Legend verticalAlign="bottom" height={36} />
+                    </PieChart>
+                </ResponsiveContainer>
             </div>
-          </div>
-          <h3 className="text-2xl font-bold">{stats.present}</h3>
-          <p className="text-sm text-muted-foreground">Days Present</p>
-        </div>
-
-        <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-amber-500/10 text-amber-600 rounded-lg">
-              <Clock size={20} />
-            </div>
-          </div>
-          <h3 className="text-2xl font-bold">{stats.late}</h3>
-          <p className="text-sm text-muted-foreground">Days Late</p>
-        </div>
-
-        <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-red-500/10 text-red-600 rounded-lg">
-              <XCircle size={20} />
-            </div>
-          </div>
-          <h3 className="text-2xl font-bold">{stats.absent}</h3>
-          <p className="text-sm text-muted-foreground">Days Absent</p>
+            <p className="text-xs text-center text-muted-foreground mt-2">
+                Out of {stats.total} total sessions
+            </p>
         </div>
       </div>
 

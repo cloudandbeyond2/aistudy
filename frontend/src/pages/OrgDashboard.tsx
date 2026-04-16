@@ -16,6 +16,10 @@ import * as XLSX from 'xlsx';
 import RichTextEditor from '@/components/RichTextEditor';
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import { Badge } from "@/components/ui/badge";
+import { 
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+    BarChart as ReBarChart, Bar, Cell, PieChart, Pie, AreaChart, Area
+} from 'recharts';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Swal from 'sweetalert2';
 import OrgLandingSetup from "@/components/dashboard/OrgLandingSetup";
@@ -848,6 +852,13 @@ const OrgDashboard = () => {
     const [projects, setProjects] = useState<any[]>([]);
     const [materials, setMaterials] = useState<any[]>([]);
     const [internships, setInternships] = useState<any[]>([]);
+    const [analyticsData, setAnalyticsData] = useState<any>(null);
+    const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(false);
+    const [analyticsFilter, setAnalyticsFilter] = useState({
+        department: role === 'dept_admin' ? (deptId || sessionStorage.getItem('deptId') || 'all') : 'all',
+        academicYear: ''
+    });
+    const [performanceSearch, setPerformanceSearch] = useState('');
     const [loadingInternships, setLoadingInternships] = useState(false);
     const [loadingRoadmap, setLoadingRoadmap] = useState(false);
     const [openMeetingDialog, setOpenMeetingDialog] = useState(false);
@@ -2170,6 +2181,72 @@ const handleDeleteMaterial = async (id: string) => {
         }
     };
 
+    const fetchAnalytics = async () => {
+        if (!orgId) return;
+        setIsAnalyticsLoading(true);
+        try {
+            const res = await axios.get(`${serverURL}/api/org/analytics/report`, {
+                params: {
+                    organizationId: orgId,
+                    departmentId: analyticsFilter.department,
+                    academicYear: analyticsFilter.academicYear
+                }
+            });
+            if (res.data?.success) {
+                setAnalyticsData(res.data.analytics);
+            }
+        } catch (e) {
+            console.error('Failed to fetch analytics', e);
+        } finally {
+            setIsAnalyticsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'analytics') {
+            fetchAnalytics();
+        }
+    }, [activeTab, analyticsFilter.department, analyticsFilter.academicYear]);
+
+    const exportAnalyticsToCSV = () => {
+        if (!analyticsData?.studentStats) return;
+        const headers = ['Name', 'Email', 'Roll No', 'Attendance %', 'Avg Progress %', 'At Risk'];
+        const csvRows = [
+            headers.join(','),
+            ...analyticsData.studentStats.map((s: any) => [
+                `"${s.name}"`,
+                `"${s.email}"`,
+                `"${s.rollNo || '-'}"`,
+                s.attendancePercent,
+                s.avgProgress,
+                s.isAtRisk ? 'Yes' : 'No'
+            ].join(','))
+        ];
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `performance_report_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+    };
+
+    const KPIAnalyticsCard = ({ title, value, description, icon: Icon, color, bgColor }: any) => (
+        <Card className="overflow-hidden border-none shadow-sm bg-white">
+            <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-4">
+                    <div className={`p-2.5 rounded-xl ${bgColor}`}>
+                        <Icon className={`w-5 h-5 ${color}`} />
+                    </div>
+                </div>
+                <div>
+                    <h3 className="text-2xl font-bold tracking-tight">{value}</h3>
+                    <p className="text-sm font-medium text-slate-900 mt-1">{title}</p>
+                    <p className="text-xs text-slate-500 mt-1">{description}</p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+
     const fetchNotices = async () => {
         try {
             const res = await axios.get(`${serverURL}/api/org/notices?organizationId=${orgId}`);
@@ -3034,6 +3111,10 @@ const handleUpdateDeptAdmin = async () => {
         portal: {
             title: 'Portal Customization',
             description: 'Shape the public-facing organization portal experience and branding.'
+        },
+        analytics: {
+            title: 'Analytics & Reporting',
+            description: 'Monitor student attendance, course completion, and performance trends.'
         }
     };
 
@@ -3183,6 +3264,17 @@ const handleUpdateDeptAdmin = async () => {
                 accent: 'from-slate-500/15 to-slate-500/5',
                 border: 'border-slate-200/80',
                 onClick: () => setSearchParams({ tab: 'portal' })
+            },
+            {
+                key: 'analytics',
+                title: 'Analytics & Reports',
+                description: 'Gain insights into student participation, progress, and performance trends across departments.',
+                metricLabel: 'Efficiency',
+                metricValue: analyticsData?.summary?.avgAttendance ? `${analyticsData.summary.avgAttendance}%` : 'View',
+                icon: TrendingUp,
+                accent: 'from-amber-600/15 to-amber-600/5',
+                border: 'border-amber-500/20',
+                onClick: () => setSearchParams({ tab: 'analytics' })
             }
         ]
         : [];
@@ -5852,6 +5944,296 @@ Login:
     </Dialog>
                     </TabsContent>
 
+                    <TabsContent value="analytics" className="space-y-6 pt-2">
+                        {/* Analytics Header & Filters */}
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                            <div className="flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                                    <TrendingUp className="w-6 h-6 text-amber-600" />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold">Performance Analytics</h2>
+                                    <p className="text-sm text-muted-foreground font-medium">Academic Year: {analyticsFilter.academicYear || 'Global'}</p>
+                                </div>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                                <select 
+                                    className="h-10 px-4 text-sm font-medium rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-primary/20"
+                                    value={analyticsFilter.department}
+                                    onChange={(e) => setAnalyticsFilter({...analyticsFilter, department: e.target.value})}
+                                >
+                                    <option value="all">All Departments</option>
+                                    {departmentsList.map((d: any) => <option key={d._id} value={d._id}>{d.name}</option>)}
+                                </select>
+                                <Input 
+                                    className="h-10 w-32 rounded-xl bg-slate-50/50" 
+                                    placeholder="Year (2024)" 
+                                    value={analyticsFilter.academicYear}
+                                    onChange={(e) => setAnalyticsFilter({...analyticsFilter, academicYear: e.target.value})}
+                                />
+                                <Button 
+                                    size="icon" 
+                                    variant="outline" 
+                                    className="h-10 w-10 rounded-xl"
+                                    onClick={fetchAnalytics} 
+                                    disabled={isAnalyticsLoading}
+                                >
+                                    {isAnalyticsLoading ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <RotateCcw className="w-4 h-4 text-slate-500" />}
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Summary KPI Cards */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <KPIAnalyticsCard 
+                                title="Avg Attendance" 
+                                value={`${analyticsData?.summary?.avgAttendance || 0}%`} 
+                                description="Institutional participation"
+                                icon={CheckCircle2}
+                                color="text-emerald-600"
+                                bgColor="bg-emerald-500/10"
+                            />
+                            <KPIAnalyticsCard 
+                                title="Avg Completion" 
+                                value={`${analyticsData?.summary?.avgCompletion || 0}%`} 
+                                description="Average course progress"
+                                icon={BookOpen}
+                                color="text-blue-600"
+                                bgColor="bg-blue-500/10"
+                            />
+                            <KPIAnalyticsCard 
+                                title="At-Risk Students" 
+                                value={analyticsData?.summary?.atRiskCount || 0} 
+                                description="Requires immediate attention"
+                                icon={AlertTriangle}
+                                color="text-rose-600"
+                                bgColor="bg-rose-500/10"
+                            />
+                            <KPIAnalyticsCard 
+                                title="Enrollment" 
+                                value={analyticsData?.summary?.totalStudents || 0} 
+                                description="Calculated student base"
+                                icon={Users}
+                                color="text-violet-600"
+                                bgColor="bg-violet-500/10"
+                            />
+                        </div>
+
+                        {/* Charts Section */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <Card className="rounded-2xl shadow-sm border-slate-200">
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle className="text-sm font-bold text-slate-800">Attendance Volume</CardTitle>
+                                            <CardDescription>Daily present vs total entries</CardDescription>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="h-[320px] pb-6">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={analyticsData?.attendanceTrends || []}>
+                                            <defs>
+                                                <linearGradient id="colorPresent" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
+                                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <XAxis 
+                                                dataKey="date" 
+                                                fontSize={10} 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{ fill: '#64748b' }}
+                                                dy={10}
+                                            />
+                                            <YAxis 
+                                                fontSize={10} 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{ fill: '#64748b' }}
+                                            />
+                                            <Tooltip 
+                                                contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} 
+                                            />
+                                            <Area 
+                                                type="monotone" 
+                                                dataKey="Present" 
+                                                stroke="#10b981" 
+                                                strokeWidth={2.5}
+                                                fillOpacity={1} 
+                                                fill="url(#colorPresent)" 
+                                            />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="rounded-2xl shadow-sm border-slate-200">
+                                <CardHeader>
+                                    <CardTitle className="text-sm font-bold text-slate-800">Attendance Quality</CardTitle>
+                                    <CardDescription>Present, Late, and Absent distribution</CardDescription>
+                                </CardHeader>
+                                <CardContent className="h-[320px] pb-6 flex items-center justify-center">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={analyticsData?.attendanceDistribution || []}
+                                                cx="50%" cy="50%" 
+                                                innerRadius={75} 
+                                                outerRadius={100} 
+                                                paddingAngle={8} 
+                                                dataKey="value"
+                                                cornerRadius={6}
+                                            >
+                                                <Cell fill="#10b981" />
+                                                <Cell fill="#f59e0b" />
+                                                <Cell fill="#ef4444" />
+                                            </Pie>
+                                            <Tooltip />
+                                            <Legend 
+                                                verticalAlign="bottom" 
+                                                iconType="circle" 
+                                                wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 600 }}
+                                            />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="lg:col-span-2 rounded-2xl shadow-sm border-slate-200">
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle className="text-sm font-bold text-slate-800">Academic Progress Density</CardTitle>
+                                            <CardDescription>Number of learners grouped by their average completion percentage</CardDescription>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="h-[320px] pb-6">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <ReBarChart data={analyticsData?.progressBuckets || []}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <XAxis 
+                                                dataKey="range" 
+                                                fontSize={10} 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{ fill: '#64748b' }}
+                                                dy={10}
+                                            />
+                                            <YAxis 
+                                                fontSize={10} 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{ fill: '#64748b' }}
+                                            />
+                                            <Tooltip 
+                                                cursor={{ fill: '#f8fafc' }} 
+                                                contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} 
+                                            />
+                                            <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} barSize={50} />
+                                        </ReBarChart>
+                                    </ResponsiveContainer>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        {/* Performance Table */}
+                        <Card className="rounded-2xl shadow-sm border-slate-200">
+                            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100">
+                                <div className="space-y-1">
+                                    <CardTitle className="text-lg font-bold">Comprehensive Learner Report</CardTitle>
+                                    <CardDescription className="font-medium">Direct comparison of engagement and progress metrics.</CardDescription>
+                                </div>
+                                <div className="flex items-center gap-3 w-full sm:w-auto">
+                                    <div className="relative flex-1 sm:w-64">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <Input 
+                                            placeholder="Search by student name or email..." 
+                                            className="pl-9 h-10 rounded-xl border-slate-200"
+                                            value={performanceSearch}
+                                            onChange={(e) => setPerformanceSearch(e.target.value)}
+                                        />
+                                    </div>
+                                    <Button 
+                                        variant="outline" 
+                                        className="rounded-xl border-slate-200 hover:bg-slate-50 font-semibold h-10"
+                                        onClick={() => exportAnalyticsToCSV()}
+                                    >
+                                        <Download className="w-4 h-4 mr-2" /> Export
+                                    </Button>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-slate-50/50 border-b border-slate-100">
+                                            <tr>
+                                                <th className="text-left px-6 py-4 font-bold text-slate-700">Student Profile</th>
+                                                <th className="text-left px-6 py-4 font-bold text-slate-700">Roll No</th>
+                                                <th className="text-center px-6 py-4 font-bold text-slate-700">Engagement %</th>
+                                                <th className="text-center px-6 py-4 font-bold text-slate-700">Progress %</th>
+                                                <th className="text-right px-6 py-4 font-bold text-slate-700">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {analyticsData?.studentStats
+                                                ?.filter((s: any) => 
+                                                    s.name.toLowerCase().includes(performanceSearch.toLowerCase()) || 
+                                                    s.email.toLowerCase().includes(performanceSearch.toLowerCase())
+                                                )
+                                                ?.map((s: any) => (
+                                                <tr key={s.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                    <td className="px-6 py-4">
+                                                        <div className="font-bold text-slate-900">{s.name}</div>
+                                                        <div className="text-[11px] font-medium text-slate-500">{s.email}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-slate-500 font-medium">{s.rollNo || '-'}</td>
+                                                    <td className="px-6 py-4 text-center">
+                                                        <span className={`font-bold px-2 py-1 rounded-lg ${parseFloat(s.attendancePercent) < 75 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                                            {s.attendancePercent}%
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex flex-col items-center gap-1.5">
+                                                            <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
+                                                                <div 
+                                                                    className={`h-full transition-all duration-500 ${parseFloat(s.avgProgress) < 30 ? 'bg-rose-500' : parseFloat(s.avgProgress) < 70 ? 'bg-amber-500' : 'bg-blue-500'}`} 
+                                                                    style={{ width: `${s.avgProgress}%` }} 
+                                                                />
+                                                            </div>
+                                                            <span className="text-[10px] font-bold text-slate-600">{s.avgProgress}%</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        {s.isAtRisk ? (
+                                                            <Badge variant="destructive" className="bg-rose-500 text-white border-none font-bold animate-pulse px-3">
+                                                                At Risk
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-none font-bold px-3">
+                                                                Excellent
+                                                            </Badge>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {(!analyticsData || analyticsData.studentStats?.length === 0) && (
+                                                <tr>
+                                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400 font-medium text-lg">
+                                                        No performance data found for the current selection.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
                 {/* MATERIALS TAB */}
                   <TabsContent value="materials" className="space-y-4">
   <Card>
@@ -6077,7 +6459,6 @@ Login:
           </select>
         </div>
       </div>
-
       <div className="grid gap-2">
         <Label>Message</Label>
         <RichTextEditor

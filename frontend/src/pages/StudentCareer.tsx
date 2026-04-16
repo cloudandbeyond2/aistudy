@@ -31,7 +31,9 @@ import {
     Star,
     Target,
     Trash2,
-    TrendingUp
+    TrendingUp,
+    BookOpen,
+    Briefcase
 } from 'lucide-react';
 import SEO from '@/components/SEO';
 
@@ -910,6 +912,53 @@ const StudentCareer = () => {
     </div>
   </div>
 </section>
+
+            {/* Instruction Section */}
+            <div className="mb-1">
+              <details className="group bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-2xl shadow-md overflow-hidden">
+                <summary className="flex items-center justify-between px-6 py-4 cursor-pointer select-none list-none">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center shadow">
+                      <BookOpen className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-teal-700 dark:text-teal-300 text-sm">📋 How to Build Your Career Profile</p>
+                      <p className="text-xs text-muted-foreground">Click to read step-by-step instructions</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-teal-500 group-open:rotate-90 transition-transform" />
+                </summary>
+                <div className="px-6 pb-6 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    {[
+                      { step: '1', icon: Target, title: 'Set Your Career Path', desc: 'Choose a career track and set your job preferences. This helps the system suggest relevant skills and actions.' },
+                      { step: '2', icon: FolderOpen, title: 'Showcase Projects', desc: 'Add real projects with descriptions, tech stack, GitHub links, and live demos to prove your skills.' },
+                      { step: '3', icon: FileText, title: 'Build Your Resume', desc: 'Use the AI-powered Resume Builder to create a professional resume. This alone boosts your score by 30%.' },
+                      { step: '4', icon: TrendingUp, title: 'Reach 80% Readiness', desc: 'Complete all missions: resume, projects, certificates, and profile links to unlock  Placement Ready status.' },
+                    ].map(item => (
+                      <div key={item.step} className="flex gap-3 p-3 rounded-xl bg-teal-50/60 dark:bg-teal-950/20 border border-teal-100 dark:border-teal-900">
+                        <div className="w-7 h-7 rounded-full bg-teal-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{item.step}</div>
+                        <div>
+                          <p className="text-xs font-bold text-teal-700 dark:text-teal-300">{item.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{item.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {[
+                      '✅ Your progress saves automatically',
+                      '✅ Link GitHub & LinkedIn for credibility',
+                      '✅ Complete weekly missions for streaks',
+                      '✅ Share your portfolio link with recruiters',
+                    ].map(tip => (
+                      <span key={tip} className="text-xs bg-cyan-50 dark:bg-cyan-950/20 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 px-3 py-1 rounded-full">{tip}</span>
+                    ))}
+                  </div>
+                </div>
+              </details>
+            </div>
+
 
             <section className={`rounded-[28px] border p-4 md:p-5 ${selectedCareerTheme.shellClass}`}>
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
