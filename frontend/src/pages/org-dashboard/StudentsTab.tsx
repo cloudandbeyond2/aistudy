@@ -1113,101 +1113,110 @@ const StudentsTab = () => {
                         whileHover={{ y: -4 }}
                         className="group"
                       >
-                        <Card className="students-theme-student-card transition-all duration-300 cursor-pointer h-full">
-                          <CardContent className="p-3 sm:p-4">
-                            <div className="flex items-start justify-between mb-3 sm:mb-4">
-                              <div className="relative">
-                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br ${primaryGradient} flex items-center justify-center text-white text-base sm:text-lg font-bold`}>
-                                  {student.mName?.substring(0, 2).toUpperCase() || 'ST'}
-                                </div>
-                                {student.studentDetails?.isPlacementClosed && (
-                                  <div className="absolute -top-1 -right-1">
-                                    <Badge className="bg-[#11a5e4] text-white text-[10px] sm:text-xs">
-                                      <Award className="w-2 h-2 sm:w-3 sm:h-3 mr-1" />
-                                      Placed
-                                    </Badge>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                                  onClick={() => {
-                                    setEditStudent(prepareStudentForEdit(student));
-                                    setEditDialogOpen(true);
-                                  }}
-                                >
-                                  <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setNotifyStudent(student);
-                                  }}
-                                  title="Send Notification"
-                                >
-                                  <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                                  onClick={() => handleDeleteStudent(student._id)}
-                                >
-                                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
-                                </Button>
-                              </div>
-                            </div>
-                            
-                            <div className="space-y-1 sm:space-y-2">
-                              <h3 className="font-semibold text-sm sm:text-base truncate">{student.mName}</h3>
-                              <p className="text-xs text-muted-foreground flex items-center gap-1 sm:gap-2 truncate">
-                                <Mail className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
-                                <span className="truncate text-[11px] sm:text-xs">{student.email}</span>
-                              </p>
-                              {departmentName && (
-                                <p className="text-[11px] sm:text-xs flex items-center gap-1 sm:gap-2">
-                                  <Building className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                                  {departmentName}
-                                </p>
-                              )}
-                              {student.studentDetails?.studentClass && (
-                                <p className="text-[11px] sm:text-xs flex items-center gap-1 sm:gap-2">
-                                  <GraduationCap className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                                  Class {student.studentDetails.studentClass}
-                                  {student.studentDetails?.section && ` - ${student.studentDetails.section}`}
-                                </p>
-                              )}
-                              {student.studentDetails?.placementCompany && (
-                                <div className="students-theme-card-divider mt-1 sm:mt-2 pt-1 sm:pt-2 border-t">
-                                  <p className="text-[10px] sm:text-xs font-semibold text-[#11405f] flex items-center gap-1 truncate">
-                                    <Briefcase className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
-                                    <span className="truncate">
-                                      {student.studentDetails.placementPosition || 'Placed'} @ {student.studentDetails.placementCompany}
-                                    </span>
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                            
-                            <div className="mt-3 sm:mt-4">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="students-theme-outline-btn w-full text-[11px] sm:text-xs"
-                                onClick={() => setPlacementStudent(student)}
-                              >
-                                <Briefcase className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 sm:mr-2" />
-                                Update Placement
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
+                   <Card className="students-theme-student-card transition-all duration-300 cursor-pointer h-full">
+  <CardContent className="p-3 sm:p-4">
+    <div className="flex items-start justify-between mb-3 sm:mb-4">
+      <div className="flex items-center gap-3 sm:gap-4 flex-1">
+        {/* Avatar - Left Side */}
+        <div className="relative flex-shrink-0">
+          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br ${primaryGradient} flex items-center justify-center text-white text-base sm:text-lg font-bold`}>
+            {student.mName?.substring(0, 2).toUpperCase() || 'ST'}
+          </div>
+          {student.studentDetails?.isPlacementClosed && (
+            <div className="absolute -top-1 -right-1">
+              <Badge className="bg-[#11a5e4] text-white text-[10px] sm:text-xs">
+                <Award className="w-2 h-2 sm:w-3 sm:h-3 mr-1" />
+                Placed
+              </Badge>
+            </div>
+          )}
+        </div>
+        
+        {/* mName - Right Side */}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-sm sm:text-base truncate">{student.mName}</h3>
+        </div>
+      </div>
+      
+      {/* Action Buttons */}
+      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+        <Button 
+          variant="ghost" 
+          size="sm"
+          className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+          onClick={() => {
+            setEditStudent(prepareStudentForEdit(student));
+            setEditDialogOpen(true);
+          }}
+        >
+          <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+          onClick={(e) => {
+            e.stopPropagation();
+            setNotifyStudent(student);
+          }}
+          title="Send Notification"
+        >
+          <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+          onClick={() => handleDeleteStudent(student._id)}
+        >
+          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
+        </Button>
+      </div>
+    </div>
+    
+    <div className="space-y-1 sm:space-y-2">
+      <p className="text-xs text-muted-foreground flex items-center gap-1 sm:gap-2 truncate">
+        <Mail className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
+        <span className="truncate text-[11px] sm:text-xs">{student.email}</span>
+      </p>
+      {departmentName && (
+        <p className="text-[11px] sm:text-xs flex items-center gap-1 sm:gap-2">
+          <Building className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+          {departmentName}
+        </p>
+      )}
+      {student.studentDetails?.studentClass && (
+        <p className="text-[11px] sm:text-xs flex items-center gap-1 sm:gap-2">
+          <GraduationCap className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+          Class {student.studentDetails.studentClass}
+          {student.studentDetails?.section && ` - ${student.studentDetails.section}`}
+        </p>
+      )}
+      {student.studentDetails?.placementCompany && (
+        <div className="students-theme-card-divider mt-1 sm:mt-2 pt-1 sm:pt-2 border-t">
+          <p className="text-[10px] sm:text-xs font-semibold text-[#11405f] flex items-center gap-1 truncate">
+            <Briefcase className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
+            <span className="truncate">
+              {student.studentDetails.placementPosition || 'Placed'} @ {student.studentDetails.placementCompany}
+            </span>
+          </p>
+        </div>
+      )}
+    </div>
+    
+    <div className="mt-3 sm:mt-4">
+      <Button 
+        variant="outline" 
+        size="sm" 
+        className="students-theme-outline-btn w-full text-[11px] sm:text-xs"
+        onClick={() => setPlacementStudent(student)}
+      >
+        <Briefcase className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 sm:mr-2" />
+        Update Placement
+      </Button>
+    </div>
+  </CardContent>
+</Card>
                       </motion.div>
                     );
                   })}
