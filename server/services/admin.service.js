@@ -442,7 +442,14 @@ export const getDashboardStatsWithOrgs = async () => {
         org_admin: true,
         student: true
       },
-      interviewEnabled: admin?.interviewEnabled || { free: false, monthly: true, yearly: true, forever: true, org_admin: true, student: false }, skillBoosterEnabled: admin?.skillBoosterEnabled || { free: false, monthly: true, yearly: true, forever: true, org_admin: true, student: true },
+      interviewEnabled: admin?.interviewEnabled || { 
+        free: false, 
+        monthly: true, 
+        yearly: true, 
+        forever: true, 
+        org_admin: true, 
+        student: false 
+      },
       skillBoosterEnabled: admin?.skillBoosterEnabled || {
         free: false,
         monthly: true,
@@ -450,6 +457,14 @@ export const getDashboardStatsWithOrgs = async () => {
         forever: true,
         org_admin: true,
         student: true
+      },
+      digitalIdEnabled: admin?.digitalIdEnabled || {
+        free: false,
+        monthly: true,
+        yearly: true,
+        forever: true,
+        org_admin: true,
+        student: false
       }
     }
   };
@@ -864,6 +879,14 @@ export const getAdminSettings = async () => {
       forever: true,
       org_admin: true,
       student: false
+    },
+    digitalIdEnabled: admin?.digitalIdEnabled || {
+      free: false,
+      monthly: true,
+      yearly: true,
+      forever: true,
+      org_admin: true,
+      student: false
     }
   };
 };
@@ -898,7 +921,9 @@ export const updateAdminSettings = async (data) => {
     notebookEnabled: data.notebookEnabled,
     resumeEnabled: data.resumeEnabled,
     careerEnabled: data.careerEnabled,
-    interviewEnabled: data.interviewEnabled, skillBoosterEnabled: data.skillBoosterEnabled
+    interviewEnabled: data.interviewEnabled, 
+    skillBoosterEnabled: data.skillBoosterEnabled,
+    digitalIdEnabled: data.digitalIdEnabled
   };
 
   Object.assign(admin, updatePayload);

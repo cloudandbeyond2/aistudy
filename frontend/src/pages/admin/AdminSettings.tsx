@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { appWordmarkDark, serverURL } from '@/constants';
 import axios from 'axios';
-import { Key, Save, AlertCircle, Upload, HandCoins, Sparkles } from 'lucide-react';
+import { Key, Save, AlertCircle, Upload, HandCoins, Sparkles, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const AdminSettings = () => {
@@ -59,6 +59,14 @@ const AdminSettings = () => {
         org_admin: true,
         student: true
     });
+    const [digitalIdEnabled, setDigitalIdEnabled] = useState({
+        free: false,
+        monthly: true,
+        yearly: true,
+        forever: true,
+        org_admin: true,
+        student: false
+    });
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -95,6 +103,9 @@ const AdminSettings = () => {
             }
             if (res.data.skillBoosterEnabled) {
                 setSkillBoosterEnabled(res.data.skillBoosterEnabled);
+            }
+            if (res.data.digitalIdEnabled) {
+                setDigitalIdEnabled(res.data.digitalIdEnabled);
             }
 
         } catch (error) {
@@ -182,7 +193,8 @@ const AdminSettings = () => {
                 resumeEnabled,
                 careerEnabled,
                 interviewEnabled,
-                skillBoosterEnabled
+                skillBoosterEnabled,
+                digitalIdEnabled
             });
 
             if (res.data.success) {
@@ -240,6 +252,12 @@ const AdminSettings = () => {
         }));
     };
 
+    const handleDigitalIdToggle = (role: keyof typeof digitalIdEnabled) => {
+        setDigitalIdEnabled(prev => ({
+            ...prev,
+            [role]: !prev[role]
+        }));
+    };
 
     if (isLoading) {
         return (
@@ -284,12 +302,12 @@ const AdminSettings = () => {
                                     <div className="flex items-start gap-4">
                                         <div className="flex-1 space-y-2">
                                             <div className="flex gap-2">
-                                            <Input
-                                                id="website-logo"
-                                                placeholder="e.g. /logo-colossus-dark.png or https://..."
-                                                value={websiteLogo}
-                                                onChange={(e) => setWebsiteLogo(e.target.value)}
-                                            />
+                                                <Input
+                                                    id="website-logo"
+                                                    placeholder="e.g. /logo-colossus-dark.png or https://..."
+                                                    value={websiteLogo}
+                                                    onChange={(e) => setWebsiteLogo(e.target.value)}
+                                                />
                                                 <div className="relative">
                                                     <input
                                                         type="file"
@@ -308,7 +326,7 @@ const AdminSettings = () => {
                                                     >
                                                         <label htmlFor="logo-upload" className="cursor-pointer">
                                                             {isUploading ? (
-                                                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-r-transparent"></div>
+                                                                <Loader2 className="h-4 w-4 animate-spin" />
                                                             ) : (
                                                                 <Upload className="h-4 w-4" />
                                                             )}
@@ -329,7 +347,7 @@ const AdminSettings = () => {
                                                             ? `${serverURL}${websiteLogo}`
                                                             : websiteLogo.startsWith('http')
                                                                 ? websiteLogo
-                                                                : websiteLogo // Assume it's a public frontend asset if it's any other relative path
+                                                                : websiteLogo
                                                     }
                                                     alt="Logo Preview"
                                                     className="max-h-full max-w-full object-contain p-2"
@@ -377,10 +395,10 @@ const AdminSettings = () => {
                                 <CardHeader>
                                     <div className="flex items-center gap-2">
                                         <Key className="h-5 w-5 text-primary" />
-                                    <CardTitle>AI Configuration</CardTitle>
+                                        <CardTitle>AI Configuration</CardTitle>
                                     </div>
                                     <CardDescription>
-                                        Choose the platform-wide AI provider for course generation, notebook, exams, and other text AI features.
+                                        Choose the platform-wide AI provider for course generation, notebook, exams, and other AI features.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
@@ -395,9 +413,6 @@ const AdminSettings = () => {
                                             <option value="gemini">Google Gemini</option>
                                             <option value="openai">OpenAI GPT</option>
                                         </select>
-                                        <p className="text-xs text-muted-foreground">
-                                            Admin can switch the whole platform between Gemini and OpenAI without changing the frontend course flow.
-                                        </p>
                                     </div>
 
                                     <div className="space-y-2">
@@ -413,9 +428,6 @@ const AdminSettings = () => {
                                             />
                                             <Key className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         </div>
-                                        <p className="text-xs text-muted-foreground">
-                                            Used when the active provider is Gemini.
-                                        </p>
                                     </div>
 
                                     <div className="space-y-2">
@@ -441,9 +453,6 @@ const AdminSettings = () => {
                                             />
                                             <Key className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         </div>
-                                        <p className="text-xs text-muted-foreground">
-                                            Optional backup key. If Gemini is the active provider and Gemini fails, the system can continue on OpenAI.
-                                        </p>
                                     </div>
 
                                     <div className="space-y-2">
@@ -455,22 +464,6 @@ const AdminSettings = () => {
                                             onChange={(e) => setOpenaiModel(e.target.value)}
                                         />
                                     </div>
-
-                                    <Alert className="bg-primary/5 border-primary/20">
-                                        <AlertCircle className="h-4 w-4 text-primary" />
-                                        <AlertTitle className="text-primary">Important</AlertTitle>
-                                        <AlertDescription className="text-xs">
-                                            If a key is left empty, the system will fallback to the matching server environment variable when available.
-                                        </AlertDescription>
-                                    </Alert>
-
-                                    <Alert className="bg-muted/40 border-border/50">
-                                        <AlertCircle className="h-4 w-4 text-primary" />
-                                        <AlertTitle>Implementation Idea</AlertTitle>
-                                        <AlertDescription className="text-xs">
-                                            Recommended setup: keep Gemini as the primary provider and configure OpenAI as backup continuity when Gemini is down or rate-limited.
-                                        </AlertDescription>
-                                    </Alert>
                                 </CardContent>
                             </Card>
 
@@ -481,7 +474,7 @@ const AdminSettings = () => {
                                         <CardTitle>Image Content (Unsplash)</CardTitle>
                                     </div>
                                     <CardDescription>
-                                        Manage your Unsplash API settings for fetching high-quality course cover images.
+                                        Manage your Unsplash API settings for fetching high-quality images.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
@@ -498,9 +491,6 @@ const AdminSettings = () => {
                                             />
                                             <Key className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         </div>
-                                        <p className="text-xs text-muted-foreground">
-                                            This key is used to fetch relevant background images for newly generated courses.
-                                        </p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -518,376 +508,136 @@ const AdminSettings = () => {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
+                            {/* Notebook */}
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between border-b pb-4 border-border/30">
-                                    <div>
-                                        <Label className="text-base font-semibold">AI Notebook Visibility</Label>
-                                        <p className="text-sm text-muted-foreground">Control which users can see the AI Notebook in their sidemenu.</p>
-                                    </div>
-                                </div>
-
+                                <Label className="text-base font-semibold border-b pb-2 block border-border/30">AI Notebook Visibility</Label>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="nb-free" className="cursor-pointer font-medium">Free Users</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="nb-free"
-                                            checked={notebookEnabled.free}
-                                            onChange={() => handleNotebookToggle('free')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="nb-monthly" className="cursor-pointer font-medium">Monthly Paid</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="nb-monthly"
-                                            checked={notebookEnabled.monthly}
-                                            onChange={() => handleNotebookToggle('monthly')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="nb-yearly" className="cursor-pointer font-medium">Yearly Paid</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="nb-yearly"
-                                            checked={notebookEnabled.yearly}
-                                            onChange={() => handleNotebookToggle('yearly')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="nb-forever" className="cursor-pointer font-medium">Lifetime Access</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="nb-forever"
-                                            checked={notebookEnabled.forever}
-                                            onChange={() => handleNotebookToggle('forever')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="nb-org" className="cursor-pointer font-medium">Organization Admins</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="nb-org"
-                                            checked={notebookEnabled.org_admin}
-                                            onChange={() => handleNotebookToggle('org_admin')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="nb-student" className="cursor-pointer font-medium">Organization Students</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="nb-student"
-                                            checked={notebookEnabled.student}
-                                            onChange={() => handleNotebookToggle('student')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
+                                    {Object.keys(notebookEnabled).map((key) => (
+                                        <div key={`nb-${key}`} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                            <Label htmlFor={`nb-${key}`} className="cursor-pointer font-medium capitalize">{key.replace('_', ' ')}</Label>
+                                            <input
+                                                type="checkbox"
+                                                id={`nb-${key}`}
+                                                checked={notebookEnabled[key as keyof typeof notebookEnabled]}
+                                                onChange={() => handleNotebookToggle(key as keyof typeof notebookEnabled)}
+                                                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
+                            </div>
 
-                                <div className="flex items-center justify-between border-b pb-4 border-border/30 pt-4">
-                                    <div>
-                                        <Label className="text-base font-semibold">Resume Builder Visibility</Label>
-                                        <p className="text-sm text-muted-foreground">Control which users can see the Resume Builder in their sidemenu.</p>
-                                    </div>
-                                </div>
-
+                            {/* Resume */}
+                            <div className="space-y-4">
+                                <Label className="text-base font-semibold border-b pb-2 block border-border/30">Resume Builder Visibility</Label>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="rb-free" className="cursor-pointer font-medium">Free Users</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="rb-free"
-                                            checked={resumeEnabled.free}
-                                            onChange={() => handleResumeToggle('free')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="rb-monthly" className="cursor-pointer font-medium">Monthly Paid</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="rb-monthly"
-                                            checked={resumeEnabled.monthly}
-                                            onChange={() => handleResumeToggle('monthly')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="rb-yearly" className="cursor-pointer font-medium">Yearly Paid</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="rb-yearly"
-                                            checked={resumeEnabled.yearly}
-                                            onChange={() => handleResumeToggle('yearly')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="rb-forever" className="cursor-pointer font-medium">Lifetime Access</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="rb-forever"
-                                            checked={resumeEnabled.forever}
-                                            onChange={() => handleResumeToggle('forever')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="rb-org" className="cursor-pointer font-medium">Organization Admins</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="rb-org"
-                                            checked={resumeEnabled.org_admin}
-                                            onChange={() => handleResumeToggle('org_admin')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="rb-student" className="cursor-pointer font-medium">Organization Students</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="rb-student"
-                                            checked={resumeEnabled.student}
-                                            onChange={() => handleResumeToggle('student')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
+                                    {Object.keys(resumeEnabled).map((key) => (
+                                        <div key={`rb-${key}`} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                            <Label htmlFor={`rb-${key}`} className="cursor-pointer font-medium capitalize">{key.replace('_', ' ')}</Label>
+                                            <input
+                                                type="checkbox"
+                                                id={`rb-${key}`}
+                                                checked={resumeEnabled[key as keyof typeof resumeEnabled]}
+                                                onChange={() => handleResumeToggle(key as keyof typeof resumeEnabled)}
+                                                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
+                            </div>
 
-                                <div className="flex items-center justify-between border-b pb-4 border-border/30 pt-4">
-                                    <div>
-                                        <Label className="text-base font-semibold">Career & Placement Visibility</Label>
-                                        <p className="text-sm text-muted-foreground">Control which users can see the Career & Placement section in their sidemenu.</p>
-                                    </div>
-                                </div>
-
+                            {/* Career */}
+                            <div className="space-y-4">
+                                <Label className="text-base font-semibold border-b pb-2 block border-border/30">Career & Placement Visibility</Label>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="cp-free" className="cursor-pointer font-medium">Free Users</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="cp-free"
-                                            checked={careerEnabled.free}
-                                            onChange={() => handleCareerToggle('free')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="cp-monthly" className="cursor-pointer font-medium">Monthly Paid</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="cp-monthly"
-                                            checked={careerEnabled.monthly}
-                                            onChange={() => handleCareerToggle('monthly')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="cp-yearly" className="cursor-pointer font-medium">Yearly Paid</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="cp-yearly"
-                                            checked={careerEnabled.yearly}
-                                            onChange={() => handleCareerToggle('yearly')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="cp-forever" className="cursor-pointer font-medium">Lifetime Access</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="cp-forever"
-                                            checked={careerEnabled.forever}
-                                            onChange={() => handleCareerToggle('forever')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="cp-org" className="cursor-pointer font-medium">Organization Admins</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="cp-org"
-                                            checked={careerEnabled.org_admin}
-                                            onChange={() => handleCareerToggle('org_admin')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="cp-student" className="cursor-pointer font-medium">Organization Students</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="cp-student"
-                                            checked={careerEnabled.student}
-                                            onChange={() => handleCareerToggle('student')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
+                                    {Object.keys(careerEnabled).map((key) => (
+                                        <div key={`cp-${key}`} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                            <Label htmlFor={`cp-${key}`} className="cursor-pointer font-medium capitalize">{key.replace('_', ' ')}</Label>
+                                            <input
+                                                type="checkbox"
+                                                id={`cp-${key}`}
+                                                checked={careerEnabled[key as keyof typeof careerEnabled]}
+                                                onChange={() => handleCareerToggle(key as keyof typeof careerEnabled)}
+                                                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
+                            </div>
 
-                                <div className="flex items-center justify-between border-b pb-4 border-border/30 pt-4">
-                                    <div>
-                                        <Label className="text-base font-semibold">AI Mock Interview Visibility</Label>
-                                        <p className="text-sm text-muted-foreground">Control which users can see the Mock Interview Training section.</p>
-                                    </div>
-                                </div>
-
+                            {/* Interview */}
+                            <div className="space-y-4">
+                                <Label className="text-base font-semibold border-b pb-2 block border-border/30">AI Mock Interview Visibility</Label>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="mi-free" className="cursor-pointer font-medium">Free Users</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="mi-free"
-                                            checked={interviewEnabled.free}
-                                            onChange={() => handleInterviewToggle('free')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="mi-monthly" className="cursor-pointer font-medium">Monthly Paid</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="mi-monthly"
-                                            checked={interviewEnabled.monthly}
-                                            onChange={() => handleInterviewToggle('monthly')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="mi-yearly" className="cursor-pointer font-medium">Yearly Paid</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="mi-yearly"
-                                            checked={interviewEnabled.yearly}
-                                            onChange={() => handleInterviewToggle('yearly')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="mi-forever" className="cursor-pointer font-medium">Lifetime Access</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="mi-forever"
-                                            checked={interviewEnabled.forever}
-                                            onChange={() => handleInterviewToggle('forever')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="mi-org" className="cursor-pointer font-medium">Organization Admins</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="mi-org"
-                                            checked={interviewEnabled.org_admin}
-                                            onChange={() => handleInterviewToggle('org_admin')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="mi-student" className="cursor-pointer font-medium">Organization Students</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="mi-student"
-                                            checked={interviewEnabled.student}
-                                            onChange={() => handleInterviewToggle('student')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
+                                    {Object.keys(interviewEnabled).map((key) => (
+                                        <div key={`mi-${key}`} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                            <Label htmlFor={`mi-${key}`} className="cursor-pointer font-medium capitalize">{key.replace('_', ' ')}</Label>
+                                            <input
+                                                type="checkbox"
+                                                id={`mi-${key}`}
+                                                checked={interviewEnabled[key as keyof typeof interviewEnabled]}
+                                                onChange={() => handleInterviewToggle(key as keyof typeof interviewEnabled)}
+                                                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
+                            </div>
 
-                                <div className="flex items-center justify-between border-b pb-4 border-border/30 pt-4">
-                                    <div>
-                                        <Label className="text-base font-semibold">Skill Booster Visibility</Label>
-                                        <p className="text-sm text-muted-foreground">Control which users can see the Skill Booster section.</p>
-                                    </div>
-                                </div>
-
+                            {/* Skill Booster */}
+                            <div className="space-y-4">
+                                <Label className="text-base font-semibold border-b pb-2 block border-border/30">Skill Booster Visibility</Label>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="sb-free" className="cursor-pointer font-medium">Free Users</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="sb-free"
-                                            checked={skillBoosterEnabled.free}
-                                            onChange={() => handleSkillBoosterToggle('free')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="sb-monthly" className="cursor-pointer font-medium">Monthly Paid</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="sb-monthly"
-                                            checked={skillBoosterEnabled.monthly}
-                                            onChange={() => handleSkillBoosterToggle('monthly')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="sb-yearly" className="cursor-pointer font-medium">Yearly Paid</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="sb-yearly"
-                                            checked={skillBoosterEnabled.yearly}
-                                            onChange={() => handleSkillBoosterToggle('yearly')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="sb-forever" className="cursor-pointer font-medium">Lifetime Access</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="sb-forever"
-                                            checked={skillBoosterEnabled.forever}
-                                            onChange={() => handleSkillBoosterToggle('forever')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="sb-org" className="cursor-pointer font-medium">Organization Admins</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="sb-org"
-                                            checked={skillBoosterEnabled.org_admin}
-                                            onChange={() => handleSkillBoosterToggle('org_admin')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                                        <Label htmlFor="sb-student" className="cursor-pointer font-medium">Organization Students</Label>
-                                        <input
-                                            type="checkbox"
-                                            id="sb-student"
-                                            checked={skillBoosterEnabled.student}
-                                            onChange={() => handleSkillBoosterToggle('student')}
-                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                    </div>
+                                    {Object.keys(skillBoosterEnabled).map((key) => (
+                                        <div key={`sb-${key}`} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                            <Label htmlFor={`sb-${key}`} className="cursor-pointer font-medium capitalize">{key.replace('_', ' ')}</Label>
+                                            <input
+                                                type="checkbox"
+                                                id={`sb-${key}`}
+                                                checked={skillBoosterEnabled[key as keyof typeof skillBoosterEnabled]}
+                                                onChange={() => handleSkillBoosterToggle(key as keyof typeof skillBoosterEnabled)}
+                                                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Digital ID */}
+                            <div className="space-y-4">
+                                <Label className="text-base font-semibold border-b pb-2 block border-border/30">Digital ID Card Visibility</Label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {Object.keys(digitalIdEnabled).map((key) => (
+                                        <div key={`di-${key}`} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                            <Label htmlFor={`di-${key}`} className="cursor-pointer font-medium capitalize">{key.replace('_', ' ')}</Label>
+                                            <input
+                                                type="checkbox"
+                                                id={`di-${key}`}
+                                                checked={digitalIdEnabled[key as keyof typeof digitalIdEnabled]}
+                                                onChange={() => handleDigitalIdToggle(key as keyof typeof digitalIdEnabled)}
+                                                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </CardContent>
-
+                        <CardFooter className="flex justify-end pt-6 border-t border-border/30">
+                            <Button type="submit" disabled={isSaving} className="min-w-[120px]">
+                                {isSaving ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="mr-2 h-4 w-4" />
+                                        Save Changes
+                                    </>
+                                )}
+                            </Button>
+                        </CardFooter>
                     </Card>
-
-                    <div className="flex justify-end">
-                        <Button type="submit" disabled={isSaving} className="px-8 shadow-md">
-                            {isSaving ? (
-                                <span className="flex items-center gap-2">
-                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-r-transparent"></div>
-                                    Saving...
-                                </span>
-                            ) : (
-                                <span className="flex items-center gap-2">
-                                    <Save className="h-4 w-4" />
-                                    Save Settings
-                                </span>
-                            )}
-                        </Button>
-                    </div>
                 </form>
             </div>
         </div>

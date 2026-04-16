@@ -19,6 +19,8 @@ import {
     Filter
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import DigitalIDCard from '@/components/DigitalIDCard';
+import { CreditCard } from 'lucide-react';
 
 const StudentsTab = () => {
     const [openStudentDialog, setOpenStudentDialog] = useState(false);
@@ -64,6 +66,9 @@ const StudentsTab = () => {
     const [notifyStudent, setNotifyStudent] = useState<any>(null);
     const [notificationMessage, setNotificationMessage] = useState('');
     const [isSendingNotification, setIsSendingNotification] = useState(false);
+    const [selectedIdCardStudent, setSelectedIdCardStudent] = useState<any>(null);
+    const [digitalIdModuleEnabled, setDigitalIdModuleEnabled] = useState(false);
+    const [fullOrgData, setFullOrgData] = useState<any>(null);
     const studentsPerPage = 8;
     const primaryGradient = "from-[#11405f] to-[#11a5e4]";
     const secondaryGradient = "from-[#0f4d73] to-[#1597d6]";
@@ -175,6 +180,42 @@ const StudentsTab = () => {
             }
         } catch (e) {
             console.error('Error fetching students:', e);
+        }
+    };
+
+    const fetchModuleSettings = async () => {
+        try {
+            const settingsRes = await axios.get(`${serverURL}/api/settings`);
+            console.log("Module Settings Fetched:", settingsRes.data);
+            if (settingsRes.data) {
+                const di = settingsRes.data.digitalIdEnabled;
+                if (di) {
+                    const userRole = sessionStorage.getItem('role');
+                    const userType = sessionStorage.getItem('type') || 'free';
+                    console.log("User Context:", { userRole, userType });
+                    
+                    if (userRole === 'org_admin' || userRole === 'dept_admin') {
+                      if (di.org_admin) setDigitalIdModuleEnabled(true);
+                    } else if (userRole === 'student') {
+                      if (di.student) setDigitalIdModuleEnabled(true);
+                    } else if (di[userType as keyof typeof di]) {
+                      setDigitalIdModuleEnabled(true);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching module settings", error);
+        }
+    };
+
+    const fetchOrgDetails = async () => {
+        try {
+            const res = await axios.get(`${serverURL}/api/getuser/${orgId}`);
+            if (res.data.success) {
+                setFullOrgData(res.data.user);
+            }
+        } catch (error) {
+            console.error("Error fetching org details", error);
         }
     };
 
@@ -491,6 +532,8 @@ const StudentsTab = () => {
         fetchStats();
         fetchStudents();
         fetchOrgDepartments();
+        fetchModuleSettings();
+        fetchOrgDetails();
     }, [orgId]);
 
     useEffect(() => {
@@ -1163,6 +1206,20 @@ const StudentsTab = () => {
         >
           <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
         </Button>
+        {digitalIdModuleEnabled && (
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedIdCardStudent(student);
+            }}
+            title="View Digital ID"
+          >
+            <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500" />
+          </Button>
+        )}
         <Button 
           variant="ghost" 
           size="sm"
@@ -1301,6 +1358,17 @@ const StudentsTab = () => {
                             >
                               <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
                             </Button>
+                            {digitalIdModuleEnabled && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                                onClick={() => setSelectedIdCardStudent(student)}
+                                title="View Digital ID"
+                              >
+                                <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500" />
+                              </Button>
+                            )}
                             <Button 
                               variant="ghost" 
                               size="sm"
@@ -1653,6 +1721,29 @@ const StudentsTab = () => {
                                     Cancel
                                 </Button>
                             </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+                <Dialog open={!!selectedIdCardStudent} onOpenChange={(open) => !open && setSelectedIdCardStudent(null)}>
+                    <DialogContent className="max-w-md p-0 bg-transparent border-none shadow-none">
+                        <div className="relative">
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="absolute right-2 top-2 z-50 text-white/50 hover:text-white"
+                                onClick={() => setSelectedIdCardStudent(null)}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                            {selectedIdCardStudent && (
+                                <DigitalIDCard 
+                                    student={selectedIdCardStudent} 
+                                    organization={fullOrgData ? {
+                                        name: fullOrgData.organizationDetails?.institutionName || fullOrgData.mName,
+                                        logo: fullOrgData.logo
+                                    } : undefined}
+                                />
+                            )}
                         </div>
                     </DialogContent>
                 </Dialog>
