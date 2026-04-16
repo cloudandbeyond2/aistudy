@@ -44,6 +44,7 @@ const StudentPortal = () => {
     const [existingInternship, setExistingInternship] = useState<any>(null);
     const [openRequestDialog, setOpenRequestDialog] = useState(false);
     const [requestData, setRequestData] = useState({ domain: 'Web Development', workNature: '' });
+    const [attendanceSummary, setAttendanceSummary] = useState<any>(null);
     const canAccessStudentPortal = isOrganizationUser || (role === 'student' && Boolean(orgId));
     const [activeTab, setActiveTab] = useState('overview');
 
@@ -104,7 +105,8 @@ const StudentPortal = () => {
                 fetchStudentInfo(),
                 fetchCourses(),
                 fetchNotifications(),
-                fetchInternshipStatus()
+                fetchInternshipStatus(),
+                fetchAttendanceSummary()
             ]).finally(() => {
                 setLoading(false);
             });
@@ -226,6 +228,17 @@ const StudentPortal = () => {
         }
     };
 
+    const fetchAttendanceSummary = async () => {
+        try {
+            const res = await axios.get(`${serverURL}/api/attendance/summary/${studentId}`);
+            if (res.data.success) {
+                setAttendanceSummary(res.data.summary);
+            }
+        } catch (e) {
+            console.error('Failed to fetch attendance summary:', e);
+        }
+    };
+
     const handleTabChange = (value) => {
     setActiveTab(value);
     
@@ -244,6 +257,8 @@ const StudentPortal = () => {
         } else {
             setOpenRequestDialog(true);
         }
+    } else if (value === 'attendance') {
+        navigate('/dashboard/student/attendance');
     }
 };
 
@@ -299,6 +314,10 @@ const StudentPortal = () => {
                                 <div className="text-lg sm:text-xl md:text-2xl font-bold">{averageProgress}%</div>
                                 <div className="text-[10px] sm:text-xs text-indigo-100">Avg Progress</div>
                             </div>
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-center border border-white/20">
+                                <div className="text-lg sm:text-xl md:text-2xl font-bold">{attendanceSummary?.percentage || 0}%</div>
+                                <div className="text-[10px] sm:text-xs text-indigo-100">Attendance</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -353,6 +372,15 @@ const StudentPortal = () => {
                                 <span className="hidden xs:inline">Internship Portal</span>
                                 <span className="xs:hidden">Internship</span>
                             </TabsTrigger>
+                            
+                            <TabsTrigger 
+                                value="attendance"
+                                className="rounded-full px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0B2B5E] data-[state=active]:via-[#1A6B8A] data-[state=active]:to-[#2BA0B8] data-[state=active]:text-white data-[state=inactive]:text-gray-600"
+                            >
+                                <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> 
+                                <span className="hidden xs:inline">Attendance</span>
+                                <span className="xs:hidden">Attend</span>
+                            </TabsTrigger>
                         </TabsList>
                     </div>
 
@@ -361,6 +389,28 @@ const StudentPortal = () => {
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                             {/* Left Column - Takes full width on mobile, 2 cols on desktop */}
                             <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+                                {/* Attendance Pulse Card */}
+                                <Card className="border-0 shadow-lg bg-white overflow-hidden hover:shadow-xl transition-all duration-300">
+                                    <div className="h-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
+                                    <CardContent className="p-4 sm:p-6 flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                                <Activity className="w-6 h-6" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-800">Attendance Pulse</h3>
+                                                <p className="text-sm text-gray-500">Overall participation across all sessions</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-3xl font-black text-emerald-600">{attendanceSummary?.percentage || 0}%</div>
+                                            <Badge variant="outline" className="mt-1 border-emerald-200 text-emerald-700 bg-emerald-50">
+                                                {attendanceSummary?.percentage >= 75 ? 'Good Standing' : 'Below Req.'}
+                                            </Badge>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
                                 {/* Student Profile Card */}
                             <Card className="border-0 shadow-lg bg-white hover:shadow-xl transition-all duration-300 hover:scale-[1.01]">
                                     <CardHeader className="p-4 sm:p-6">

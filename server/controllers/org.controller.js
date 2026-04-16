@@ -17,6 +17,7 @@ import ProjectModel from '../models/Project.js';
 import MaterialModel from '../models/Material.js';
 import StaffCourseLimitRequest from '../models/StaffCourseLimitRequest.js';
 import DeptCourseLimitRequest from '../models/DeptCourseLimitRequest.js';
+import Attendance from '../models/AttendanceModel.js';
 import { createNotification } from './notification.controller.js';
 import { getChatModel } from '../config/genai.js';
 import { sendMail } from '../services/mail.service.js';
@@ -549,6 +550,107 @@ export const getDashboardStats = async (req, res) => {
     } catch (error) {
         console.error('getDashboardStats error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * GET ORGANIZATION ANALYTICS & REPORTING
+ */
+export const getOrgAnalytics = async (req, res) => {
+    const { organizationId, departmentId, academicYear } = req.query;
+    try {
+        // 1. Get Students
+        let studentQuery = { organization: organizationId, role: 'student' };
+        if (departmentId && departmentId !== 'all') studentQuery.department = departmentId;
+        if (academicYear) studentQuery['studentDetails.academicYear'] = academicYear;
+
+        const students = await User.find(studentQuery).select('mName email department studentDetails createdAt');
+        const studentIds = students.map(s => s._id);
+
+        // 2. Attendance Summary
+        const attendance = await Attendance.find({ studentId: { $in: studentIds } });
+        
+        // Trends: Group by date
+        const attendanceTrendsRaw = {};
+        attendance.forEach(rec => {
+            if (!attendanceTrendsRaw[rec.date]) {
+                attendanceTrendsRaw[rec.date] = { date: rec.date, Present: 0, Late: 0, Absent: 0 };
+            }
+            attendanceTrendsRaw[rec.date][rec.status]++;
+        });
+        const attendanceTrends = Object.values(attendanceTrendsRaw).sort((a,b) => a.date.localeCompare(b.date));
+
+        // Distribution
+        const attendanceDistribution = [
+            { name: 'Present', value: attendance.filter(a => a.status === 'Present').length },
+            { name: 'Late', value: attendance.filter(a => a.status === 'Late').length },
+            { name: 'Absent', value: attendance.filter(a => a.status === 'Absent').length },
+        ];
+
+        // 3. Completion Summary
+        const progress = await StudentProgress.find({ userId: { $in: studentIds } });
+        
+        // Progress Buckets
+        const progressBuckets = [
+            { range: '0-20%', count: 0 },
+            { range: '21-40%', count: 0 },
+            { range: '41-60%', count: 0 },
+            { range: '61-80%', count: 0 },
+            { range: '81-100%', count: 0 },
+        ];
+
+        progress.forEach(p => {
+            if (p.percentage <= 20) progressBuckets[0].count++;
+            else if (p.percentage <= 40) progressBuckets[1].count++;
+            else if (p.percentage <= 60) progressBuckets[2].count++;
+            else if (p.percentage <= 80) progressBuckets[3].count++;
+            else progressBuckets[4].count++;
+        });
+
+        // 4. Individual Performance Detailed
+        const studentStats = students.map(student => {
+            const studentAttendance = attendance.filter(a => String(a.studentId) === String(student._id));
+            const studentProgress = progress.filter(p => String(p.userId) === String(student._id));
+
+            const totalAttendanceRecords = studentAttendance.length;
+            const presentCount = studentAttendance.filter(a => a.status === 'Present').length;
+            const attendPercent = totalAttendanceRecords > 0 ? (presentCount / totalAttendanceRecords) * 100 : 0;
+
+            const avgProgress = studentProgress.length > 0 
+                ? studentProgress.reduce((acc, curr) => acc + curr.percentage, 0) / studentProgress.length 
+                : 0;
+
+            return {
+                id: student._id,
+                name: student.mName,
+                email: student.email,
+                department: student.department,
+                rollNo: student.studentDetails?.rollNo,
+                attendancePercent: attendPercent.toFixed(1),
+                avgProgress: avgProgress.toFixed(1),
+                isAtRisk: (totalAttendanceRecords > 0 && attendPercent < 75) || (studentProgress.length > 0 && avgProgress < 30)
+            };
+        });
+
+        res.json({
+            success: true,
+            analytics: {
+                attendanceTrends,
+                attendanceDistribution,
+                progressBuckets,
+                studentStats,
+                summary: {
+                    totalStudents: students.length,
+                    avgAttendance: studentStats.length > 0 ? (studentStats.reduce((acc, curr) => acc + parseFloat(curr.attendancePercent), 0) / studentStats.length).toFixed(1) : 0,
+                    avgCompletion: studentStats.length > 0 ? (studentStats.reduce((acc, curr) => acc + parseFloat(curr.avgProgress), 0) / studentStats.length).toFixed(1) : 0,
+                    atRiskCount: studentStats.filter(s => s.isAtRisk).length
+                }
+            }
+        });
+
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ success: false, message: 'Reporting error' });
     }
 };
 
