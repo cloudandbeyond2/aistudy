@@ -1766,7 +1766,8 @@ const handleDeleteStudent = async (studentId: string) => {
                                     student={selectedIdCardStudent} 
                                     organization={fullOrgData ? {
                                         name: fullOrgData.organizationDetails?.institutionName || fullOrgData.mName,
-                                        logo: fullOrgData.logo
+                                        logo: fullOrgData.logo,
+                                        address: fullOrgData.address
                                     } : undefined}
                                 />
                             )}

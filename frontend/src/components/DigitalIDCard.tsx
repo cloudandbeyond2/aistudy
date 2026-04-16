@@ -33,6 +33,8 @@ interface DigitalIDCardProps {
     };
     organizationId?: {
       mName?: string;
+      logo?: string;
+      address?: string;
       organizationDetails?: {
         institutionName?: string;
       }
@@ -41,6 +43,7 @@ interface DigitalIDCardProps {
   organization?: {
     name?: string;
     logo?: string;
+    address?: string;
   };
 }
 
@@ -48,7 +51,10 @@ const DigitalIDCard: React.FC<DigitalIDCardProps> = ({ student, organization }) 
   const cardRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const portfolioUrl = `${websiteURL}/portfolio/${student._id}`;
-  const orgName = student.organizationId?.organizationDetails?.institutionName || student.organizationId?.mName || organization?.name || "Colossus IQ Academy";
+  
+  const orgName = organization?.name || student.organizationId?.organizationDetails?.institutionName || student.organizationId?.mName || "Colossus IQ Academy";
+  const orgLogo = organization?.logo || student.organizationId?.logo;
+  const orgAddress = organization?.address || student.organizationId?.address;
 
   const handleDownloadPDF = async () => {
     if (!cardRef.current) return;
@@ -62,18 +68,16 @@ const DigitalIDCard: React.FC<DigitalIDCardProps> = ({ student, organization }) 
       const dataUrl = await toPng(element, {
         pixelRatio: 3,
         skipFonts: false,
-        backgroundColor: '#0f172a', // Match slate-900
+        backgroundColor: '#0f172a',
       });
       
-      // ID-1 standard is 85.6mm x 53.98mm
-      const imgWidth = 85.6;
-      // Calculate height based on 340/540 ratio
-      const imgHeight = (540 * imgWidth) / 340; 
+      const imgWidth = 85.6; // ID-1 width in mm
+      const imgHeight = (620 * imgWidth) / 340; // Maintain aspect ratio for 620px height
       
       const pdf = new jsPDF({
         orientation: 'p',
         unit: 'mm',
-        format: [imgWidth + 4, imgHeight + 4] // Add 2mm bleed on each side
+        format: [imgWidth + 4, imgHeight + 4]
       });
       
       pdf.addImage(dataUrl, 'PNG', 2, 2, imgWidth, imgHeight);
@@ -90,21 +94,42 @@ const DigitalIDCard: React.FC<DigitalIDCardProps> = ({ student, organization }) 
       <div 
         ref={cardRef}
         data-id-card="main"
-        className="relative w-[340px] h-[540px] rounded-[3rem] bg-slate-900 border border-white/10 group select-none flex flex-col p-6 shadow-2xl overflow-hidden"
+        className="relative w-[340px] h-[620px] rounded-[3rem] bg-slate-900 border border-white/10 group select-none flex flex-col p-6 shadow-2xl overflow-hidden"
       >
         {/* Background Decos */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-600/10 rounded-full blur-[100px] -ml-40 -mb-40 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/5 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-600/5 rounded-full blur-[100px] -ml-40 -mb-40 pointer-events-none" />
         
-        {/* Header */}
-        <div className="relative text-center pt-2 mb-4">
-          <div className="flex justify-center mb-3">
-            <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md shadow-inner">
-               <ShieldCheck className="w-6 h-6 text-blue-400" />
-            </div>
+        {/* NEW: Organization Branding Header */}
+        <div className="relative flex flex-col items-center text-center pb-4 mb-4 border-b border-white/5">
+           {orgLogo ? (
+             <img 
+               crossOrigin="anonymous"
+               src={`${serverURL}${orgLogo}`} 
+               alt="logo" 
+               className="h-10 w-auto object-contain mb-2 max-w-[120px]" 
+             />
+           ) : (
+             <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md mb-2">
+                <Building2 className="w-6 h-6 text-blue-400" />
+             </div>
+           )}
+           <div className="space-y-0.5">
+             <h3 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest line-clamp-1">{orgName}</h3>
+             {orgAddress && (
+               <p className="text-[8px] text-white/30 font-medium leading-tight max-w-[200px] mx-auto line-clamp-2">
+                 {orgAddress}
+               </p>
+             )}
+           </div>
+        </div>
+
+        {/* Header - Identification Type */}
+        <div className="relative text-center mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 mb-2">
+             <ShieldCheck className="w-3 h-3 text-blue-400" />
+             <span className="text-[8px] font-bold text-blue-400 uppercase tracking-widest">Student Identity</span>
           </div>
-          <h3 className="text-xs font-bold text-blue-400 uppercase tracking-[0.2em] mb-1">Student Identity</h3>
-          <p className="text-white/40 text-[9px] uppercase tracking-widest font-semibold line-clamp-1 h-3">{orgName}</p>
         </div>
 
         {/* Profile Section */}
@@ -160,9 +185,9 @@ const DigitalIDCard: React.FC<DigitalIDCardProps> = ({ student, organization }) 
            </div>
         </div>
 
-        {/* Footer - Pushed to bottom via mt-auto */}
-        <div className="relative mt-auto flex items-end justify-between gap-4 pb-4">
-           <div className="flex-1 space-y-1.5 overflow-hidden pb-1">
+        {/* Footer - mt-auto */}
+        <div className="relative mt-auto flex items-end justify-between gap-4 pb-2">
+           <div className="flex-1 space-y-1 overflow-hidden pb-1">
               <div className="flex items-center gap-2 text-white/40">
                  <Mail className="w-3 h-3 flex-shrink-0" />
                  <span className="text-[9px] font-medium truncate tracking-tight">{student.email}</span>
@@ -184,6 +209,13 @@ const DigitalIDCard: React.FC<DigitalIDCardProps> = ({ student, organization }) 
                  <div className="w-2.5 h-2.5 bg-white border border-slate-100 rounded-sm" />
               </div>
            </div>
+        </div>
+
+        {/* NEW: Temporary Identification Disclaimer */}
+        <div className="relative pt-4 text-center border-t border-white/5">
+           <p className="text-[7px] text-white/20 uppercase tracking-[0.2em] font-medium">
+             This ID card is for temporary identification purposes only
+           </p>
         </div>
       </div>
 
