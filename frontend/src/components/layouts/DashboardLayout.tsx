@@ -1036,7 +1036,7 @@ const { upcomingCount, loading } = useTodo();
                   <Button
                     onClick={() => { handleGenerateClick(); handleMobileMenuClick(); }}
                     className={cn(
-                      "bg-gradient-to-r from-primary via-primary/90 to-indigo-500 hover:from-indigo-500 hover:via-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 rounded-xl group",
+                      "bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 rounded-xl group",
                       isExpanded ? "w-full" : "w-10 h-10 p-0"
                     )}
                     size={isExpanded ? "default" : "icon"}
