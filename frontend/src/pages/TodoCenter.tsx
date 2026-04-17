@@ -574,11 +574,12 @@ export default function TodoCenter() {
 
                     <button 
                       onClick={handleAdd}
-                      className="relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-200 transition-all hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+                      className=" inline-flex items-center whitespace-nowrap rounded-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary hover:bg-primary/90 h-10 px-4 py-2 w-full sm:w-stretch justify-center gap-2 text-sm font-medium bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90 transition-all"
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                       <Plus className="inline-block h-4 w-4 mr-2" /> Add Task
                     </button>
+                   
                   </div>
                 </div>
               </div>

@@ -654,7 +654,7 @@ const DepartmentsTab = () => {
         }}
     >
         <DialogTrigger asChild>
-            <Button className="students-theme-hero-badge shadow-lg transform hover:scale-105 transition-all duration-300 w-full sm:w-auto lg:w-full xl:w-auto text-white border">
+            <Button className="bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90 transform hover:scale-105 transition-all duration-300 w-full sm:w-auto lg:w-full xl:w-auto text-white border">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Department
             </Button>
@@ -728,7 +728,7 @@ const DepartmentsTab = () => {
     >
         <DialogTrigger asChild>
             <Button 
-                className="students-theme-hero-badge !bg-white/12 hover:!bg-white/20 shadow-lg transform hover:scale-105 transition-all duration-300 w-full sm:w-auto lg:w-full xl:w-auto !text-white !border-white/30"
+                className="bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90 shadow-lg transform hover:scale-105 transition-all duration-300 w-full sm:w-auto lg:w-full xl:w-auto !text-white !border-white/30"
             >
                 <UserPlus className="w-4 h-4 mr-2" />
                 Add Dep Staff

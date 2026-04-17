@@ -295,7 +295,7 @@ if (!isYearly && !isOrg && role !== 'org_admin') {
               <Button 
                 onClick={handleUpdateTopic} 
                 disabled={isLoading}
-                className="w-full rounded-xl bg-gradient-to-r from-primary to-blue-600 hover:opacity-90 shadow-md"
+                className="w-full rounded-xl bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90 shadow-md"
               >
                 Set Focus
               </Button>
@@ -390,7 +390,7 @@ if (!isYearly && !isOrg && role !== 'org_admin') {
                 />
                 <Button 
                   onClick={handleLogPractice}
-                  className="h-12 px-6 rounded-xl shadow-md transition-transform active:scale-95"
+                  className="h-12 px-6 rounded-xl bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90 shadow-md transition-transform active:scale-95"
                 >
                   Log It
                 </Button>
@@ -492,7 +492,7 @@ if (!isYearly && !isOrg && role !== 'org_admin') {
                   </div>
                   <p className="text-muted-foreground font-medium mb-1">No roadmap generated yet</p>
                   <p className="text-xs text-muted-foreground mb-4">Click generate to map out your skill mastery path.</p>
-                  <Button onClick={generateRoadmap} disabled={isGenerating} size="sm" className="rounded-xl shadow-md">
+                  <Button onClick={generateRoadmap} disabled={isGenerating} size="sm" className="bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90 rounded-xl shadow-md">
                     Generate My Roadmap
                   </Button>
                 </div>

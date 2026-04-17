@@ -966,7 +966,7 @@ ${jobDescription}`,
                             <ChevronRight className="h-4 w-4 text-teal-500 group-open:rotate-90 transition-transform" />
                         </summary>
                         <div className="px-6 pb-6 pt-2">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 mb-4">
                                 {[
                                     { step: '1', icon: Briefcase, title: 'Choose Profession', desc: 'Select your industry and specific role. This personalises your AI suggestions throughout.' },
                                     { step: '2', icon: User, title: 'Fill Your Profile', desc: 'Add your contact info, professional summary (use AI Generate!), and skills.' },

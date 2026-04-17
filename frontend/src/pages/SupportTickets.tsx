@@ -229,7 +229,7 @@ const SupportTickets = () => {
         </div>
         <Button
           onClick={() => setOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-sm px-3 sm:px-4 py-2 w-full sm:w-auto"
+          className="bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90  text-sm px-3 sm:px-4 py-2 w-full sm:w-auto"
         >
           <PlusCircle className="w-4 h-4 mr-2" />
           Create Ticket
@@ -585,7 +585,7 @@ const SupportTickets = () => {
             <Button
               onClick={handleSubmit}
               disabled={submitting}
-              className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto min-w-[130px]"
+              className="bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90  w-full sm:w-auto min-w-[130px]"
             >
               {submitting ? (
                 <>
