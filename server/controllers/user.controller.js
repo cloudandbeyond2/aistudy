@@ -296,3 +296,37 @@ export const updatePlacementReady = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
+/**
+ * UPLOAD PROFILE IMAGE
+ */
+export const uploadProfileImage = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    const imagePath = `/uploads/profiles/${req.file.filename}`;
+    
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: { profileImage: imagePath } },
+      { returnDocument: 'after' }
+    );
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Profile image uploaded successfully',
+      profileImage: user.profileImage
+    });
+  } catch (error) {
+    console.error('Upload profile image error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+

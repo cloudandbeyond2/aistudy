@@ -31,6 +31,7 @@ const userSchema = new mongoose.Schema({
   city: { type: String, default: null },
   state: { type: String, default: null },
   pin: { type: String, default: null },
+  profileImage: { type: String, default: null },
   address: { type: String, default: null },
   userType: { type: String, enum: ['individual', 'organization'], default: 'individual' },
   profession: { type: String, default: null },

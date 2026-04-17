@@ -1354,6 +1354,8 @@ import TestimonialSubmission from '@/components/TestimonialSubmission';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { motion, AnimatePresence } from 'framer-motion';
+import DigitalIDCard from '@/components/DigitalIDCard';
+import { X } from 'lucide-react';
 
 const PLAN_ORDER: Record<string, number> = {
   free: 0,
@@ -1432,6 +1434,7 @@ const Profile = () => {
     pin: sessionStorage.getItem('pin') || "",
     address: sessionStorage.getItem('address') || "",
     bio: sessionStorage.getItem('bio') || "",
+    profileImage: sessionStorage.getItem('profileImage') || "",
   });
 
   const [originalData, setOriginalData] = useState(formData);
@@ -1461,6 +1464,9 @@ const Profile = () => {
     website: "",
     github: "",
   });
+  const [digitalIdModuleEnabled, setDigitalIdModuleEnabled] = useState(false);
+  const [showIdCard, setShowIdCard] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
 
   // Animation variants
   const fadeInUp = {
@@ -1497,21 +1503,41 @@ const Profile = () => {
     fetchStats();
   }, []);
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      const uid = sessionStorage.getItem("uid");
-      if (!uid) return;
-      try {
-        const response = await axios.get(`${serverURL}/api/getuser/${uid}`);
-        if (response.data.success && response.data.user.notifications) {
-          setNotifications(response.data.user.notifications);
-        }
-      } catch (error) {
-        console.error("Failed to fetch settings:", error);
-      }
-    };
-    fetchSettings();
-  }, []);
+    useEffect(() => {
+        const fetchSettings = async () => {
+            const uid = sessionStorage.getItem("uid");
+            if (!uid) return;
+            try {
+                const response = await axios.get(`${serverURL}/api/getuser/${uid}`);
+                if (response.data.success && response.data.user.notifications) {
+                    setNotifications(response.data.user.notifications);
+                }
+                
+                // Fetch module settings
+                const settingsRes = await axios.get(`${serverURL}/api/settings`);
+                console.log("Profile Module Settings:", settingsRes.data);
+                if (settingsRes.data) {
+                    const di = settingsRes.data.digitalIdEnabled;
+                    if (di) {
+                        const userType = sessionStorage.getItem('type') || 'free';
+                        const userRole = sessionStorage.getItem('role');
+                        console.log("Profile User Context:", { userRole, userType });
+                        
+                        if (userRole === 'org_admin' || userRole === 'dept_admin') {
+                          if (di.org_admin) setDigitalIdModuleEnabled(true);
+                        } else if (userRole === 'student') {
+                          if (di.student) setDigitalIdModuleEnabled(true);
+                        } else if (di[userType as keyof typeof userType]) {
+                          setDigitalIdModuleEnabled(true);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch settings:", error);
+            }
+        };
+        fetchSettings();
+    }, []);
 
   const updateNotifications = async (updated: typeof notifications) => {
     const uid = sessionStorage.getItem("uid");
@@ -1712,6 +1738,7 @@ if (matched) {
             pin: user.pin || "",
             address: user.address || "",
             bio: user.bio || "",
+            profileImage: user.profileImage || "",
           });
 
           setSocialLinks({
@@ -1735,6 +1762,8 @@ if (matched) {
           sessionStorage.setItem('profession', user.profession || "");
           sessionStorage.setItem('organizationName', user.organizationName || "");
           sessionStorage.setItem('bio', user.bio || "");
+          sessionStorage.setItem('profileImage', user.profileImage || "");
+          setUserData(user);
         }
       } catch (error) {
         console.error("Failed to fetch profile:", error);
@@ -1983,6 +2012,35 @@ const getPasswordStrength = (password) => {
     return "from-purple-500 to-blue-500";
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formDataUpload = new FormData();
+    formDataUpload.append('image', file);
+    formDataUpload.append('userId', sessionStorage.getItem('uid') || "");
+
+    setProcessing(true);
+    try {
+      const response = await axios.post(`${serverURL}/api/upload-profile-image`, formDataUpload, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (response.data.success) {
+        setFormData(prev => ({ ...prev, profileImage: response.data.profileImage }));
+        sessionStorage.setItem('profileImage', response.data.profileImage);
+        toast({ title: "Photo Updated", description: "Your profile photo has been updated successfully." });
+      } else {
+        toast({ title: "Upload Failed", description: response.data.message });
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({ title: "Error", description: "Failed to upload photo." });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const profileTabs = [
     { value: "account", icon: User, label: "Account" },
     { value: "settings", icon: Settings, label: "Settings" },
@@ -2023,6 +2081,12 @@ const getPasswordStrength = (password) => {
                 <ArrowRight className="h-4 w-4" />
                 Back to Dashboard
               </Button>
+              {digitalIdModuleEnabled && (
+                <Button variant="default" onClick={() => setShowIdCard(true)} className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600">
+                  <CreditCard className="h-4 w-4" />
+                  Digital ID Card
+                </Button>
+              )}
             </div>
           </div>
         </motion.div>
@@ -2039,10 +2103,34 @@ const getPasswordStrength = (password) => {
             <div className={`h-48 bg-gradient-to-r ${getPlanColor()}`} />
             <div className="relative px-6 pb-6">
               <div className="absolute left-6 -top-12">
-                <div className="w-28 h-28 rounded-2xl border-4 border-white shadow-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <span className="text-4xl font-bold text-white">
-                    {formData.mName?.charAt(0)?.toUpperCase()}
-                  </span>
+                <div className="group relative w-28 h-28 rounded-2xl border-4 border-white dark:border-gray-800 shadow-xl overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600">
+                  {formData.profileImage ? (
+                    <img 
+                      src={`${serverURL}${formData.profileImage}`} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="text-4xl font-bold text-white">
+                        {formData.mName?.charAt(0)?.toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  {isEditing && (
+                    <label className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="text-white flex flex-col items-center">
+                        <PenLine className="h-6 w-6 mb-1" />
+                        <span className="text-[10px] font-medium uppercase tracking-wider">Change</span>
+                      </div>
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        accept="image/*" 
+                        onChange={handlePhotoUpload} 
+                      />
+                    </label>
+                  )}
                 </div>
               </div>
               <div className="pt-16 pl-36">
@@ -2727,6 +2815,30 @@ const getPasswordStrength = (password) => {
           </Tabs>
         </motion.div>
       </div>
+      
+      <Dialog open={showIdCard} onOpenChange={setShowIdCard}>
+          <DialogContent className="max-w-md p-0 bg-transparent border-none shadow-none">
+              <div className="relative">
+                  <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute right-2 top-2 z-50 text-white/50 hover:text-white"
+                      onClick={() => setShowIdCard(false)}
+                  >
+                      <X className="h-4 w-4" />
+                  </Button>
+                  {userData && (
+                      <DigitalIDCard 
+                          student={{
+                            ...userData,
+                            mName: formData.mName, // use latest state
+                            profileImage: formData.profileImage // use latest state
+                          }} 
+                      />
+                  )}
+              </div>
+          </DialogContent>
+      </Dialog>
     </div>
   );
 };

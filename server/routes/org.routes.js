@@ -64,7 +64,8 @@ import {
     getDeptCourseLimitRequests,
     getOrgApprovalCounts,
     updateDeptAdmin,
-    processDeptCourseLimitRequest
+    processDeptCourseLimitRequest,
+    getOrgAnalytics
 } from '../controllers/org.controller.js';
 import { getOrgCourseCount } from '../controllers/course.controller.js';
 import Organization from '../models/Organization.js';
@@ -174,6 +175,9 @@ router.get('/org/approvals/count', getOrgApprovalCounts);
 
 // Project AI Generation
 router.post('/org/project/generate', generateProjectContent);
+
+// Analytics & Reporting
+router.get('/org/analytics/report', getOrgAnalytics);
 
 // Organization Plans (ADMIN)
 router.post('/admin/org-plan/create', createOrgPlan);

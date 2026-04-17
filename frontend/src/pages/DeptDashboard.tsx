@@ -203,6 +203,12 @@ const DeptDashboard: React.FC = () => {
           onClick={() => navigate("/dashboard/org-meetings")}
         />
         <QuickAction
+          title="Attendance Pulse"
+          description="View department-wide participation trends."
+          icon={TrendingUp}
+          onClick={() => navigate("/dashboard/org?tab=analytics")}
+        />
+        <QuickAction
           title="Resource Library"
           description="Upload or share PDFs and materials."
           icon={Download}

@@ -159,3 +159,50 @@ export const uploadMaterial = multer({
         cb(null, true);
     },
 });
+
+/* =========================================================
+   5️⃣ PROFILE PHOTO UPLOAD
+========================================================= */
+
+const profilePhotoDir = 'uploads/profiles';
+createFolderIfNotExists(profilePhotoDir);
+
+const profilePhotoStorage = process.env.VERCEL
+    ? multer.memoryStorage()
+    : multer.diskStorage({
+          destination: (req, file, cb) => {
+              cb(null, profilePhotoDir);
+          },
+          filename: (req, file, cb) => {
+              const uniqueSuffix =
+                  Date.now() + '-' + Math.round(Math.random() * 1e9);
+              cb(
+                  null,
+                  'profile-' +
+                      uniqueSuffix +
+                      path.extname(file.originalname)
+              );
+          },
+      });
+
+export const uploadProfilePhoto = multer({
+    storage: profilePhotoStorage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: (req, file, cb) => {
+        const allowed = [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/webp',
+        ];
+        if (!allowed.includes(file.mimetype)) {
+            return cb(
+                new Error(
+                    'Only JPEG, JPG, PNG, and WebP allowed!'
+                ),
+                false
+            );
+        }
+        cb(null, true);
+    },
+});

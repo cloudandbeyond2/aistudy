@@ -12,7 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import {
     Briefcase, Award, Search, Github, Linkedin, Globe,
     TrendingUp, Users, CheckCircle, BarChart2, ExternalLink,
-    FileText, Star, ArrowLeft, Trash2, Eye, FolderOpen
+    FileText, Star, ArrowLeft, Trash2, Eye, FolderOpen, BookOpen, ChevronRight
 } from 'lucide-react';
 import SEO from '@/components/SEO';
 import Swal from "sweetalert2";
@@ -250,6 +250,53 @@ const OrgCareerPlacement = () => {
         <p className="text-muted-foreground text-sm">Track student placement readiness, projects, and certificates.</p>
       </div>
     </div>
+    
+    {/* Instruction Section */}
+    <div className="mb-2">
+      <details className="group bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-2xl shadow-md overflow-hidden">
+        <summary className="flex items-center justify-between px-6 py-4 cursor-pointer select-none list-none">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center shadow">
+              <BookOpen className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <p className="font-bold text-teal-700 dark:text-teal-300 text-sm">📋 How to Manage Career & Placements</p>
+              <p className="text-xs text-muted-foreground">Click to read management instructions</p>
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 text-teal-500 group-open:rotate-90 transition-transform" />
+        </summary>
+        <div className="px-6 pb-6 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            {[
+              { step: '1', icon: BarChart2, title: 'Monitor Readiness', desc: 'Track students reaching the 80%+ threshold. Scores are auto-calculated from profiles.' },
+              { step: '2', icon: Eye, title: 'Review Portfolios', desc: 'Click "Portfolio" to see live projects, code quality, and LinkedIn profiles.' },
+              { step: '3', icon: FolderOpen, title: 'Manage Projects', desc: 'Browse all student-submitted projects across departments and manage them.' },
+              { step: '4', icon: CheckCircle, title: 'Verify Credentials', desc: 'Check issued certificates and verify authenticity using unique IDs.' },
+            ].map(item => (
+              <div key={item.step} className="flex gap-3 p-3 rounded-xl bg-teal-50/60 dark:bg-teal-950/20 border border-teal-100 dark:border-teal-900">
+                <div className="w-7 h-7 rounded-full bg-teal-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{item.step}</div>
+                <div>
+                  <p className="text-xs font-bold text-teal-700 dark:text-teal-300">{item.title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {[
+              '✅ Real-time data sync',
+              '✅ Portfolio links open in new tabs',
+              '✅ Department admins see filtered data',
+              '✅ CSV exports available for reporting',
+            ].map(tip => (
+              <span key={tip} className="text-xs bg-cyan-50 dark:bg-cyan-950/20 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 px-3 py-1 rounded-full">{tip}</span>
+            ))}
+          </div>
+        </div>
+      </details>
+    </div>
+
 
     {/* Summary Cards - 1 col (mobile), 2 cols (tablet), 4 cols (laptop) */}
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -380,7 +427,12 @@ const OrgCareerPlacement = () => {
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-4"><ScoreBadge score={s.placementScore} /></td>
+                        {/* <td className="px-4 py-4"><ScoreBadge score={s.placementScore} /></td> */}
+                        <td className="px-4 py-4">
+  <div className="min-w-[60px] whitespace-nowrap">
+    <ScoreBadge score={s.placementScore} />
+  </div>
+</td>
                         <td className="px-4 py-4 min-w-[100px]"><Progress value={s.placementScore} className="h-1.5" /></td>
                         <td className="px-4 py-4 text-center">
                           {s.resumeComplete ? (

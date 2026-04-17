@@ -695,9 +695,9 @@ const Dashboard = () => {
       <Button 
         variant="secondary" 
         size="sm" 
-        className="w-full sm:w-auto text-xs bg-[#1998e5]  border-slate-200 shadow-sm h-9 "
+        className="w-full sm:w-auto text-xs bg-[#1998e5] text-white hover:bg-[#1998e5]/90 border-slate-200 shadow-sm h-9"
+        onClick={() => navigate('/dashboard/analytics')}
       >
-        
         View Insights
       </Button>
     </div>
