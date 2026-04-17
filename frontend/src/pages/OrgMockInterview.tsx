@@ -244,7 +244,7 @@ const OrgMockInterview = () => {
     {/* Button - full width on mobile, auto on tablet+ */}
     <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogTrigger asChild>
-            <Button className="rounded-xl px-5 md:px-6 h-11 md:h-12 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] w-full md:w-auto">
+            <Button className="rounded-xl px-5 md:px-6 h-11 md:h-12 bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90  w-full md:w-auto">
                 <Plus className="w-4 h-4 md:w-5 md:h-5 mr-2" /> 
                 <span>Create Training Drive</span>
             </Button>
@@ -309,7 +309,7 @@ const OrgMockInterview = () => {
                 </div>
             </div>
             <DialogFooter>
-                <Button onClick={handleCreateDrive} className="w-full">Create Module</Button>
+                <Button onClick={handleCreateDrive} className="bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90  w-full">Create Module</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>

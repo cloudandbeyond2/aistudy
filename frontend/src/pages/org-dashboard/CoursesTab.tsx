@@ -3576,7 +3576,7 @@ const CoursesTab = () => {
                   : createEmptyCourse());
                 setOpenCourseDialog(true);
               }}>
-                <Button size="sm" className="w-full sm:w-auto">
+                <Button size="sm" className="w-full sm:w-auto bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90">
                   <Plus className="w-4 h-4 mr-2" /> Create Course
                 </Button>
               </DialogTrigger>
@@ -4013,7 +4013,7 @@ const CoursesTab = () => {
                     
                     <Button 
                       size="sm" 
-                      className="bg-blue-600 text-white hover:bg-blue-700"
+                      className="bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90"
                       onClick={async () => {
                         setNewAssignment({
                           topic: title,

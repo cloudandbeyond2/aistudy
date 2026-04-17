@@ -146,20 +146,20 @@ const OrgLandingSetup = ({ organizationId }: { organizationId: string }) => {
     {/* Buttons Container */}
     <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
       {/* View Live Site Button */}
-      <Button 
-        variant="outline" 
-        className="rounded-xl h-10 sm:h-11 md:h-12 px-4 sm:px-5 md:px-6 border-primary/20 hover:bg-primary/5 w-full sm:w-auto" 
-        onClick={() => window.open(publicUrl, '_blank')}
-      >
-        <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" /> 
-        View Live Site
-      </Button>
+     <Button 
+  variant="outline" 
+  className="rounded-xl h-10 sm:h-11 md:h-12 px-4 sm:px-5 md:px-6 border-primary/20 hover:bg-primary/5 text w-full sm:w-auto hover:text-black"
+  onClick={() => window.open(publicUrl, '_blank')}
+>
+  <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" /> 
+  View Live Site
+</Button>
       
       {/* Publish Changes Button */}
       <Button 
         onClick={handleSave} 
         disabled={saving} 
-        className="rounded-xl h-10 sm:h-11 md:h-12 px-6 sm:px-7 md:px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 w-full sm:w-auto"
+        className="rounded-xl h-10 sm:h-11 md:h-12 px-6 sm:px-7 md:px-8 bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90 shadow-lg shadow-primary/20 w-full sm:w-auto"
       >
         {saving ? (
           <>

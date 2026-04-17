@@ -305,7 +305,7 @@ const OrgStudentTickets = () => {
                           <Button 
                             size="sm" 
                             variant="secondary" 
-                            className="hover:bg-blue-500/10 hover:text-blue-600 transition-colors"
+                            className="bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90   transition-colors"
                             onClick={() => openChat(ticket)}
                           >
                             View

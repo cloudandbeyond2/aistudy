@@ -1709,7 +1709,7 @@ const NoticesTab = () => {
 
   // ═══════════════════════════════════════════════════════════════════════════
   return (
-    <div className="container space-y-8 py-6 px-3 sm:px-4 md:px-6">
+  <div className="container space-y-8 pt-0 lg:pt-[60px] py-6 px-3 sm:px-4 md:px-6">
 
       {/* ── EDIT MODAL ─────────────────────────────────────────────────── */}
       {editNotice && (
@@ -1930,7 +1930,7 @@ const NoticesTab = () => {
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={handleCreateNotice} disabled={isSubmitting} className={themeStyles.primaryButton}>
+            <Button onClick={handleCreateNotice} disabled={isSubmitting} className="bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90">
               {isSubmitting ? 'Posting...' : <><Send className="mr-2 h-4 w-4" />Post Notice</>}
             </Button>
           </div>

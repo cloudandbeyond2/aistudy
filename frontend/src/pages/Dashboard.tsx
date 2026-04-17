@@ -695,7 +695,8 @@ const Dashboard = () => {
       <Button 
         variant="secondary" 
         size="sm" 
-        className="w-full sm:w-auto text-xs bg-[#1998e5] text-white hover:bg-[#1998e5]/90 border-slate-200 shadow-sm h-9"
+        className="
+inline-flex items-center whitespace-nowrap rounded-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary hover:bg-primary/90 h-10 px-4 py-2 w-full sm:w-auto justify-center gap-2 text-sm font-medium bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90 transition-all"
         onClick={() => navigate('/dashboard/analytics')}
       >
         View Insights

@@ -504,7 +504,7 @@ export default function CalendarScheduler() {
                 Today
               </Button>
               <Button
-                className="bg-gradient-to-r from-cyan-500 to-primary text-white hover:from-primary hover:to-cyan-500"
+                className="inline-flex items-center whitespace-nowrap rounded-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary hover:bg-primary/90 h-10 px-4 py-2 w-full sm:w-auto justify-center gap-2 text-sm font-medium bg-gradient-to-r from-[#11405f] to-[#11a5e4] text-white hover:opacity-90 transition-all"
                 onClick={() => setSelectedDate(startOfWeek(selectedDate, { weekStartsOn: 1 }))}
               >
                 <CalendarDays className="mr-2 h-4 w-4" />
@@ -572,7 +572,7 @@ export default function CalendarScheduler() {
             onClick={() => setActiveTab('organization')}
             className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 ${
               activeTab === 'organization'
-                ? 'bg-gradient-to-r from-indigo-600 to-cyan-500 text-white shadow-md'
+                ? 'bg-gradient-to-r from-slate-950 to-cyan-500 text-white shadow-md'
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >

@@ -267,7 +267,7 @@ const OrgCareerPlacement = () => {
           <ChevronRight className="h-4 w-4 text-teal-500 group-open:rotate-90 transition-transform" />
         </summary>
         <div className="px-6 pb-6 pt-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 mb-4">
             {[
               { step: '1', icon: BarChart2, title: 'Monitor Readiness', desc: 'Track students reaching the 80%+ threshold. Scores are auto-calculated from profiles.' },
               { step: '2', icon: Eye, title: 'Review Portfolios', desc: 'Click "Portfolio" to see live projects, code quality, and LinkedIn profiles.' },
