@@ -53,6 +53,7 @@ import {
   ChevronRight,
   PanelLeftClose,
   Star,
+  ClipboardCheck ,
   TrendingUp,
   Clock,
   CheckCircle2,
@@ -712,12 +713,21 @@ const { upcomingCount, loading } = useTodo();
                     />
                     <MenuItem 
                       icon={Users} 
-                      label="Learner Directory" 
+                      label="Student Directory" 
                       to="/dashboard/org-students" 
                       isActive={isOrgTabActive('students')}
                       isExpanded={isExpanded}
                       onMobileClick={handleMobileMenuClick}
                     />
+                  <MenuItem 
+  icon={ClipboardCheck} 
+  label="Attendance Records" 
+  to="/dashboard/org?tab=analytics" 
+  isActive={isOrgTabActive('analytics')}
+  isExpanded={isExpanded}
+  onMobileClick={handleMobileMenuClick}
+/>
+
                     <MenuItem 
                       icon={BookOpen} 
                       label="Courses" 
@@ -889,7 +899,7 @@ const { upcomingCount, loading } = useTodo();
 
                     <MenuItem
                       icon={Bot}
-                      label="Chat Bot AI"
+                      label="Chat Bot"
                       to="/dashboard/ai-chat-bot"
                       isActive={isActive('/dashboard/ai-chat-bot')}
                       badge="AI"
@@ -992,7 +1002,7 @@ const { upcomingCount, loading } = useTodo();
                     
                     <SectionHeader title="Teaching Ops" icon={Settings2} isExpanded={isExpanded} />
                     <MenuItem icon={BookOpen} label="Course Workspace" to="/dashboard/org?tab=courses" isActive={location.search === '?tab=courses'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
-                    <MenuItem icon={Users} label="Learner Directory" to="/dashboard/org?tab=students" isActive={location.search === '?tab=students'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    <MenuItem icon={Users} label="Student Directory" to="/dashboard/org?tab=students" isActive={location.search === '?tab=students'} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={FileText} label="Assessment Desk" to={assessmentDeskPath} isActive={isAssessmentDeskActive} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Video} label="Sessions" to="/dashboard/org-meetings" isActive={isActive('/dashboard/org-meetings')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                     <MenuItem icon={Briefcase} label="Projects & Labs" to={projectsLabsPath} isActive={isProjectsLabsActive} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
@@ -1243,7 +1253,7 @@ const { upcomingCount, loading } = useTodo();
                   <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                     <Bot className="h-4 w-4" />
                   </div>
-                  <span>Chat Bot AI</span>
+                  <span>Chat Bot</span>
                   {location.pathname.includes('/ai-chat-bot') && (
                     <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                   )}
@@ -1292,7 +1302,7 @@ const { upcomingCount, loading } = useTodo();
                     <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                       <Users className="h-4 w-4" />
                     </div>
-                    <span>Learner Directory</span>
+                    <span>Student Directory</span>
                     {location.search.includes('tab=students') && (
                       <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                     )}
@@ -1560,7 +1570,7 @@ const { upcomingCount, loading } = useTodo();
                 <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                   <Bot className="h-4 w-4" />
                 </div>
-                <span>Chat Bot AI</span>
+                <span>Chat Bot</span>
                 {location.pathname.includes('/ai-chat-bot') && (
                   <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                 )}
@@ -1609,7 +1619,7 @@ const { upcomingCount, loading } = useTodo();
                   <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                     <Users className="h-4 w-4" />
                   </div>
-                    <span>Learner Directory</span>
+                    <span>Student Directory</span>
                   {location.search.includes('tab=students') && (
                     <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                   )}
@@ -1697,7 +1707,7 @@ const { upcomingCount, loading } = useTodo();
                   <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                     <Bot className="h-4 w-4" />
                   </div>
-                  <span>Chat Bot AI</span>
+                  <span>Chat Bot</span>
                   {location.pathname.includes('/ai-chat-bot') && (
                     <div className="absolute right-4 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                   )}
