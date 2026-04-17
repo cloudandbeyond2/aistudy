@@ -17,7 +17,7 @@ const normalizeGeminiModel = (model) => {
   if (!normalized) return DEFAULT_GEMINI_MODEL;
 
   const legacyAliases = new Set([
-    'gemini-1.5-flash',
+    'gemini-2.5-flash',
     'gemini-1.5-pro',
     'gemini-pro',
     'gemini-pro-latest'

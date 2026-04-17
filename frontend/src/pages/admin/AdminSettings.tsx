@@ -67,6 +67,14 @@ const AdminSettings = () => {
         org_admin: true,
         student: false
     });
+    const [communicationPracticeEnabled, setCommunicationPracticeEnabled] = useState({
+        free: false,
+        monthly: true,
+        yearly: true,
+        forever: true,
+        org_admin: true,
+        student: true
+    });
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -106,6 +114,9 @@ const AdminSettings = () => {
             }
             if (res.data.digitalIdEnabled) {
                 setDigitalIdEnabled(res.data.digitalIdEnabled);
+            }
+            if (res.data.communicationPracticeEnabled) {
+                setCommunicationPracticeEnabled(res.data.communicationPracticeEnabled);
             }
 
         } catch (error) {
@@ -194,7 +205,8 @@ const AdminSettings = () => {
                 careerEnabled,
                 interviewEnabled,
                 skillBoosterEnabled,
-                digitalIdEnabled
+                digitalIdEnabled,
+                communicationPracticeEnabled
             });
 
             if (res.data.success) {
@@ -254,6 +266,13 @@ const AdminSettings = () => {
 
     const handleDigitalIdToggle = (role: keyof typeof digitalIdEnabled) => {
         setDigitalIdEnabled(prev => ({
+            ...prev,
+            [role]: !prev[role]
+        }));
+    };
+
+    const handleCommunicationPracticeToggle = (role: keyof typeof communicationPracticeEnabled) => {
+        setCommunicationPracticeEnabled(prev => ({
             ...prev,
             [role]: !prev[role]
         }));
@@ -615,6 +634,25 @@ const AdminSettings = () => {
                                                 id={`di-${key}`}
                                                 checked={digitalIdEnabled[key as keyof typeof digitalIdEnabled]}
                                                 onChange={() => handleDigitalIdToggle(key as keyof typeof digitalIdEnabled)}
+                                                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            {/* Communication Practice */}
+                            <div className="space-y-4">
+                                <Label className="text-base font-semibold border-b pb-2 block border-border/30">Language Practice Visibility</Label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {Object.keys(communicationPracticeEnabled).map((key) => (
+                                        <div key={`cpra-${key}`} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                                            <Label htmlFor={`cpra-${key}`} className="cursor-pointer font-medium capitalize">{key.replace('_', ' ')}</Label>
+                                            <input
+                                                type="checkbox"
+                                                id={`cpra-${key}`}
+                                                checked={communicationPracticeEnabled[key as keyof typeof communicationPracticeEnabled]}
+                                                onChange={() => handleCommunicationPracticeToggle(key as keyof typeof communicationPracticeEnabled)}
                                                 className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
                                             />
                                         </div>

@@ -57,7 +57,8 @@ import {
   TrendingUp,
   Clock,
   CheckCircle2,
-  ListTodo,  
+  ListTodo,
+  MessageCircle,
   Zap,
   BookPlus,
   Activity,
@@ -302,6 +303,9 @@ const { upcomingCount, loading } = useTodo();
   const [skillBoosterEnabled, setSkillBoosterEnabled] = useState({
     free: false, monthly: true, yearly: true, forever: true, org_admin: true, student: true
   });
+  const [communicationPracticeEnabled, setCommunicationPracticeEnabled] = useState({
+    free: false, monthly: true, yearly: true, forever: true, org_admin: true, student: true
+  });
 
 
   useEffect(() => {
@@ -320,6 +324,7 @@ const { upcomingCount, loading } = useTodo();
       if (response.data.admin.careerEnabled) setCareerEnabled(response.data.admin.careerEnabled);
       if (response.data.admin.interviewEnabled) setInterviewEnabled(response.data.admin.interviewEnabled);
       if (response.data.admin.skillBoosterEnabled) setSkillBoosterEnabled(response.data.admin.skillBoosterEnabled);
+      if (response.data.admin.communicationPracticeEnabled) setCommunicationPracticeEnabled(response.data.admin.communicationPracticeEnabled);
     }
 
     if (sessionStorage.getItem('adminEmail')) {
@@ -590,6 +595,9 @@ const { upcomingCount, loading } = useTodo();
   onMobileClick={handleMobileMenuClick}
   badge={!loading && upcomingCount > 0 ? upcomingCount : false}
 />
+                    {communicationPracticeEnabled[sidebarPlanKey as keyof typeof communicationPracticeEnabled] && (
+                        <MenuItem icon={MessageCircle} label="Language Practice" to="/dashboard/communication-practice" isActive={isActive('/dashboard/communication-practice')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
+                    )}
                     {!admin && <MenuItem icon={MessageSquare} label="Support" to="/dashboard/support" isActive={isActive('/dashboard/support')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
                     {!admin && <MenuItem icon={Megaphone} label="Global News" to="/dashboard/news" isActive={isActive('/dashboard/news')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
                     {hasOrganizationAccess && !isOrganizationUser && (
@@ -643,6 +651,7 @@ const { upcomingCount, loading } = useTodo();
                     )} */}
                     {notebookEnabled.student && <MenuItem icon={BrainCircuit} label="AI Notebook" to="/dashboard/notebook" isActive={isActive('/dashboard/notebook')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
                     {skillBoosterEnabled.student && <MenuItem icon={Zap} label="Skill Booster" to="/dashboard/skill-booster" isActive={isActive('/dashboard/skill-booster')} badge="PRO" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
+                    {communicationPracticeEnabled.student && <MenuItem icon={MessageCircle} label="Language Practice" to="/dashboard/communication-practice" isActive={isActive('/dashboard/communication-practice')} badge="NEW" isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}
                     <MenuItem icon={Briefcase} label="Interview Prep" to="/dashboard/interview-prep" isActive={isActive('/dashboard/interview-prep')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />
                    
                     {careerEnabled.student && <MenuItem icon={Award} label="Career Hub" to="/dashboard/student/career" isActive={isActive('/dashboard/student/career')} isExpanded={isExpanded} onMobileClick={handleMobileMenuClick} />}

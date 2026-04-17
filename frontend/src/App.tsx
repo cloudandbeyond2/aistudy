@@ -146,6 +146,7 @@ import SkillBooster from "./pages/SkillBooster";
 import LiveSupportWidget from "./components/support/LiveSupportWidget";
 import ChatBotFloatingIcon from "./components/support/ChatBotFloatingIcon";
 import LiveSupportTab from "./pages/org-dashboard/LiveSupportTab";
+import CommunicationPractice from "./pages/CommunicationPractice";
 
 const PublicThemeGuard = () => {
   const location = useLocation();
@@ -249,6 +250,7 @@ const App = () => (
                     <Route path="calendar" element={<CalendarScheduler />} />
                     <Route path="todo" element={<TodoCenter />} />
                     <Route path="skill-booster" element={<SkillBooster />} />
+                    <Route path="communication-practice" element={<CommunicationPractice />} />
                  
 
                     <Route path="support" element={<SupportTickets />} />
