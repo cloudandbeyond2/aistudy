@@ -19,14 +19,22 @@ const StudentMeetings = () => {
         }
     }, [orgId, studentId]);
 
-    const fetchMeetings = async () => {
-        try {
-            const res = await axios.get(`${serverURL}/api/org/meetings?organizationId=${orgId}&studentId=${studentId}`);
-            if (res.data.success) setMeetings(res.data.meetings);
-        } catch (e) {
-            console.error('Error fetching meetings:', e);
+   const fetchMeetings = async () => {
+    try {
+        const res = await axios.get(`${serverURL}/api/org/meetings?organizationId=${orgId}&studentId=${studentId}`);
+        if (res.data.success) {
+            // Sort by creation date descending (newest created first)
+            const sorted = [...res.data.meetings].sort((a: any, b: any) => {
+                const dateA = new Date(a.createdAt || a._id).getTime();
+                const dateB = new Date(b.createdAt || b._id).getTime();
+                return dateB - dateA;
+            });
+            setMeetings(sorted);
         }
-    };
+    } catch (e) {
+        console.error('Error fetching meetings:', e);
+    }
+};
 
     return (
         <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-6 animate-fade-in">

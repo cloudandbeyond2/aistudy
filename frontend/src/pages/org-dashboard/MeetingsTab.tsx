@@ -277,20 +277,26 @@ const MeetingTab = () => {
         }
     };
 
-    const fetchMeetings = async () => {
-        try {
-            const res = await axios.get(`${serverURL}/api/org/meetings?organizationId=${orgId}`);
-            if (res.data.success) {
-                let meetingsData = res.data.meetings;
-                if (role === 'dept_admin') {
-                    meetingsData = meetingsData.filter((m: any) => matchesCurrentDepartment(m.department, m.departmentId));
-                }
-                setMeetings(meetingsData);
+  const fetchMeetings = async () => {
+    try {
+        const res = await axios.get(`${serverURL}/api/org/meetings?organizationId=${orgId}`);
+        if (res.data.success) {
+            let meetingsData = res.data.meetings;
+            if (role === 'dept_admin') {
+                meetingsData = meetingsData.filter((m: any) => matchesCurrentDepartment(m.department, m.departmentId));
             }
-        } catch (e) {
-            console.error("Failed to fetch meetings", e);
+            // Sort by creation date descending (newest created first)
+            meetingsData = [...meetingsData].sort((a: any, b: any) => {
+                const dateA = new Date(a.createdAt || a._id).getTime();
+                const dateB = new Date(b.createdAt || b._id).getTime();
+                return dateB - dateA;
+            });
+            setMeetings(meetingsData);
         }
-    };
+    } catch (e) {
+        console.error("Failed to fetch meetings", e);
+    }
+};
 
     const fetchProjects = async () => {
         try {
