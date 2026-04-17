@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, FileText, Bell, Plus, Upload, Search, Trash2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle, BookOpen, FileQuestion, Calendar, CheckCircle2, ArrowUpCircle, Edit, Globe, BarChart3, Building2, Activity, Loader2, MoreVertical, EyeOff, MessageSquare, Code, Wrench, Zap, Stethoscope, ChevronRight } from 'lucide-react';
+import { Users, FileText, Bell, Plus, Upload, Search, Trash2, Edit2, DollarSign, CheckCircle, RotateCcw, BarChart, Sparkles, ChevronDown, ChevronUp, Check, X, Clock, Video, Briefcase, Download, ExternalLink, Eye, TrendingUp, Award, Shield, Camera, Mic, AlertTriangle, BookOpen, FileQuestion, Calendar, CheckCircle2, ArrowUpCircle, Edit, Globe, BarChart3, Building2, Activity, Loader2, MoreVertical, EyeOff, MessageSquare, Code, Wrench, Zap, Stethoscope, ChevronRight } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -918,6 +918,8 @@ const OrgDashboard = () => {
     const [newTask, setNewTask] = useState({ title: '', description: '', dueDate: '' });
     const [isAddingResource, setIsAddingResource] = useState(false);
     const [newResource, setNewResource] = useState({ title: '', url: '' });
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [editResource, setEditResource] = useState({ title: "", link: "" });
 
     const getInternshipTaskStatusMeta = (status: string) => {
         switch (status) {
@@ -7157,7 +7159,14 @@ Login:
                                                                     toast({ title: 'Required', description: 'Please enter title and URL' });
                                                                     return;
                                                                 }
-                                                                const newResources = [...(selectedInternship.studyPlan?.resources || []), { title: newResource.title, link: newResource.url }];
+                                                           const newResources = [
+                                                    ...(selectedInternship.resources || []),
+                                                    { title: newResource.title, link: newResource.url }
+                                                        ];
+
+                                                    handleUpdateInternship(selectedInternship._id, {
+                                                         resources: newResources
+                                                        });
                                                                 handleUpdateInternship(selectedInternship._id, { studyPlan: { ...selectedInternship.studyPlan, resources: newResources } });
                                                                 setIsAddingResource(false);
                                                                 setNewResource({ title: '', url: '' });
@@ -7167,17 +7176,117 @@ Login:
                                                 </Card>
                                             )}
                                             <div className="grid gap-2">
-                                                {selectedInternship.studyPlan?.resources?.map((res: any, i: number) => (
-                                                    <div key={i} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border bg-muted/40 p-3">
-                                                        <div className="flex items-center gap-2">
-                                                            <BookOpen className="h-4 w-4 text-primary" />
-                                                            <span className="font-medium text-sm break-words">{res.title}</span>
-                                                        </div>
-                                                        <a href={res.link} target="_blank" rel="noopener" className="text-secondary hover:underline text-sm break-all">
-                                                            View Resource <ExternalLink className="h-3 w-3 inline" />
-                                                        </a>
-                                                    </div>
-                                                ))}
+                                              {selectedInternship.resources
+  ?.filter((r: any) => r?.title && r?.link)
+  .map((res: any, i: number) => (
+    <div
+      key={i}
+      className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border bg-muted/40 p-3"
+    >
+      {editingIndex === i ? (
+        // ✏️ EDIT MODE
+        <div className="flex flex-col gap-2 w-full">
+          <Input
+            value={editResource.title}
+            onChange={(e) =>
+              setEditResource({ ...editResource, title: e.target.value })
+            }
+            placeholder="Title"
+          />
+          <Input
+            value={editResource.link}
+            onChange={(e) =>
+              setEditResource({ ...editResource, link: e.target.value })
+            }
+            placeholder="URL"
+          />
+
+          <div className="flex gap-2 justify-end">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setEditingIndex(null)}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              size="sm"
+              onClick={() => {
+                const updated = [...selectedInternship.resources];
+                updated[i] = editResource;
+
+                handleUpdateInternship(selectedInternship._id, {
+                  resources: updated,
+                });
+
+                setEditingIndex(null);
+              }}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+      ) : (
+        // 📄 NORMAL VIEW
+       <>
+       
+  <div className="flex items-center gap-2">
+    <BookOpen className="h-4 w-4 text-primary" />
+    <span className="font-medium text-sm break-words">
+      {res.title}
+    </span>
+  </div>
+
+  <div className="flex items-center gap-2">
+
+    {/* 🔗 VIEW */}
+    <a
+      href={res.link}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-500 text-sm hover:underline"
+    >
+      View
+    </a>
+
+    {/* ✏️ EDIT (SMALL BLUE ICON) */}
+    <button
+      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded p-1 transition"
+      onClick={() => {
+        setEditingIndex(i);
+        setEditResource(res);
+      }}
+    >
+      <Edit2 className="w-3.5 h-3.5" />
+    </button>
+
+    {/* 🗑️ DELETE (SMALL RED ICON) */}
+    <button
+      className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded p-1 transition"
+      onClick={() => {
+        const updated = selectedInternship.resources.filter(
+          (_: any, index: number) => index !== i
+        );
+
+        setSelectedInternship((prev: any) => ({
+          ...prev,
+          resources: updated,
+        }));
+
+        handleUpdateInternship(selectedInternship._id, {
+          resources: updated,
+        });
+      }}
+    >
+      <Trash2 className="w-3.5 h-3.5" />
+    </button>
+
+  </div>
+</>
+      )}
+    </div>
+))}
                                             </div>
                                         </TabsContent>
                                     </Tabs>
