@@ -1335,7 +1335,7 @@ import {
   Bell, AlertTriangle, Sparkles, Crown, Calendar, MapPin, Mail, 
   Phone, Briefcase, Building, Heart, TrendingUp, Star, Gift,
   Moon, Sun, Monitor, Download, LogOut, Trash2, CheckCircle2,
-  ArrowRight, CircleUser, Layers, Zap, Brain, Target, Rocket
+  ArrowRight, CircleUser, Layers, Zap, Brain, Target, Rocket, X
 } from "lucide-react";
 import { Switch } from '@/components/ui/switch';
 import { MonthCost, MonthType, serverURL, YearCost, websiteURL } from '@/constants';
@@ -1355,7 +1355,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { motion, AnimatePresence } from 'framer-motion';
 import DigitalIDCard from '@/components/DigitalIDCard';
-import { X } from 'lucide-react';
 
 const PLAN_ORDER: Record<string, number> = {
   free: 0,
@@ -1466,7 +1465,9 @@ const Profile = () => {
   });
   const [digitalIdModuleEnabled, setDigitalIdModuleEnabled] = useState(false);
   const [showIdCard, setShowIdCard] = useState(false);
+  const [idCardTheme, setIdCardTheme] = useState<'dark' | 'light'>('dark');
   const [userData, setUserData] = useState<any>(null);
+  const [orgData, setOrgData] = useState<any>(null);
 
   // Animation variants
   const fadeInUp = {
@@ -1523,11 +1524,7 @@ const Profile = () => {
                         const userRole = sessionStorage.getItem('role');
                         console.log("Profile User Context:", { userRole, userType });
                         
-                        if (userRole === 'org_admin' || userRole === 'dept_admin') {
-                          if (di.org_admin) setDigitalIdModuleEnabled(true);
-                        } else if (userRole === 'student') {
-                          if (di.student) setDigitalIdModuleEnabled(true);
-                        } else if (di[userType as keyof typeof userType]) {
+                        if (di.org_admin || di.student || di[userType as keyof typeof userType]) {
                           setDigitalIdModuleEnabled(true);
                         }
                     }
@@ -1764,6 +1761,24 @@ if (matched) {
           sessionStorage.setItem('bio', user.bio || "");
           sessionStorage.setItem('profileImage', user.profileImage || "");
           setUserData(user);
+          
+          // Fetch organization branding for students/linked users
+          const orgId = user.organizationId?._id || user.organizationId || sessionStorage.getItem('orgId');
+          if (orgId && typeof orgId === 'string' && orgId !== 'undefined') {
+            try {
+              const orgRes = await axios.get(`${serverURL}/api/getuser/${orgId}`);
+              if (orgRes.data.success) {
+                const orgInfo = orgRes.data.user;
+                setOrgData({
+                  name: orgInfo.organizationDetails?.institutionName || orgInfo.mName,
+                  logo: orgInfo.logo,
+                  address: orgInfo.address
+                });
+              }
+            } catch (err) {
+              console.error("Failed to fetch organization branding:", err);
+            }
+          }
         }
       } catch (error) {
         console.error("Failed to fetch profile:", error);
@@ -2816,25 +2831,62 @@ const getPasswordStrength = (password) => {
         </motion.div>
       </div>
       
-      <Dialog open={showIdCard} onOpenChange={setShowIdCard}>
-          <DialogContent className="max-w-md p-0 bg-transparent border-none shadow-none">
-              <div className="relative">
+      <Dialog open={showIdCard} onOpenChange={(open) => {
+          setShowIdCard(open);
+          if (!open) setIdCardTheme('dark');
+      }}>
+          <DialogContent className="max-w-md p-4 bg-transparent border-none shadow-none max-h-[95vh] overflow-y-auto custom-scrollbar">
+              <div className="relative flex flex-col items-center">
                   <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="absolute right-2 top-2 z-50 text-white/50 hover:text-white"
+                      className="absolute -right-2 -top-2 z-50 bg-white/10 text-white hover:bg-white/20 rounded-full"
                       onClick={() => setShowIdCard(false)}
                   >
-                      <X className="h-4 w-4" />
+                      <X className="h-5 w-5" />
                   </Button>
+                  
+                  <div className="flex justify-center gap-3 mb-6 w-full px-4">
+                      <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setIdCardTheme('dark')}
+                          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                              idCardTheme === 'dark' 
+                              ? 'bg-slate-900 text-white border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.1)]' 
+                              : 'bg-white/5 text-white/50 border-white/5 hover:bg-white/10'
+                          }`}
+                      >
+                          <Moon className="w-4 h-4" />
+                          DARK
+                      </motion.button>
+                      <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setIdCardTheme('light')}
+                          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                              idCardTheme === 'light' 
+                              ? 'bg-white text-slate-900 border-white shadow-lg' 
+                              : 'bg-white/5 text-white/50 border-white/5 hover:bg-white/10'
+                          }`}
+                      >
+                          <Sun className="w-4 h-4" />
+                          LIGHT
+                      </motion.button>
+                  </div>
+
                   {userData && (
-                      <DigitalIDCard 
-                          student={{
-                            ...userData,
-                            mName: formData.mName, // use latest state
-                            profileImage: formData.profileImage // use latest state
-                          }} 
-                      />
+                      <div className="w-full flex justify-center">
+                          <DigitalIDCard 
+                              student={{
+                                ...userData,
+                                mName: formData.mName, // use latest state
+                                profileImage: formData.profileImage // use latest state
+                              }} 
+                              organization={orgData}
+                              theme={idCardTheme}
+                          />
+                      </div>
                   )}
               </div>
           </DialogContent>

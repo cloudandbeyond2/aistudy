@@ -873,8 +873,10 @@ import { toast } from "@/hooks/use-toast";
 import { 
   PenLine, Save, Loader, User, Mail, Phone, MapPin, CircleUser, 
   Calendar, Lock, Globe, Building, Home, Heart, BookOpen, 
-  Award, Target, Shield, ChevronRight, Camera, Sparkles
+  Award, Target, Shield, ChevronRight, Camera, Sparkles,
+  CreditCard, Moon, Sun, X
 } from "lucide-react";
+import DigitalIDCard from "@/components/DigitalIDCard";
 import { serverURL } from '@/constants';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -885,6 +887,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 
 const StudentProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -892,6 +898,11 @@ const StudentProfile = () => {
   const [activeSection, setActiveSection] = useState("personal");
   const [avatarHover, setAvatarHover] = useState(false);
   const [courseCount, setCourseCount] = useState(0);
+  const [showIdCard, setShowIdCard] = useState(false);
+  const [idCardTheme, setIdCardTheme] = useState<'dark' | 'light'>('dark');
+  const [digitalIdModuleEnabled, setDigitalIdModuleEnabled] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
+  const [orgData, setOrgData] = useState<any>(null);
 const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     mName: sessionStorage.getItem('mName') || "",
@@ -972,6 +983,7 @@ useEffect(() => {
         const response = await axios.get(`${serverURL}/api/getuser/${uid}`);
         if (response.data.success) {
           const user = response.data.user;
+          setUserData(user);
 
 const fullPhone = user.phone || "";
 const matched = countries.find(c => fullPhone.startsWith(c.code));
@@ -1006,6 +1018,24 @@ if (matched) {
           sessionStorage.setItem('city', user.city || "");
           sessionStorage.setItem('pin', user.pin || "");
           sessionStorage.setItem('address', user.address || "");
+
+          // Fetch organization branding
+          const orgId = user.organizationId?._id || user.organizationId || sessionStorage.getItem('orgId');
+          if (orgId && typeof orgId === 'string' && orgId !== 'undefined') {
+            try {
+              const orgRes = await axios.get(`${serverURL}/api/getuser/${orgId}`);
+              if (orgRes.data.success) {
+                const orgInfo = orgRes.data.user;
+                setOrgData({
+                  name: orgInfo.organizationDetails?.institutionName || orgInfo.mName,
+                  logo: orgInfo.logo,
+                  address: orgInfo.address
+                });
+              }
+            } catch (err) {
+              console.error("Failed to fetch organization branding:", err);
+            }
+          }
         }
       } catch (error) {
         console.error("Failed to fetch profile:", error);
@@ -1013,6 +1043,24 @@ if (matched) {
       }
     }
     fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+        try {
+            const settingsRes = await axios.get(`${serverURL}/api/settings`);
+            if (settingsRes.data && settingsRes.data.digitalIdEnabled) {
+                const di = settingsRes.data.digitalIdEnabled;
+                const userType = sessionStorage.getItem('type') || 'free';
+                if (di.org_admin || di.student || di[userType as keyof typeof userType]) {
+                    setDigitalIdModuleEnabled(true);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch settings:", error);
+        }
+    };
+    fetchSettings();
   }, []);
 
   // ✅ ADD HERE 👇
@@ -1194,13 +1242,25 @@ if (formData.password && !strongRegex.test(formData.password)) {
               </p>
             </div>
             {!isEditing && (
-              <Button 
-                onClick={() => { setOriginalData(formData); setIsEditing(true); }}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
-              >
-                <PenLine className="mr-2 h-4 w-4" />
-                Edit Profile
-              </Button>
+              <div className="flex gap-2">
+                {digitalIdModuleEnabled && (
+                  <Button 
+                    variant="default" 
+                    onClick={() => setShowIdCard(true)} 
+                    className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    Digital ID Card
+                  </Button>
+                )}
+                <Button 
+                  onClick={() => { setOriginalData(formData); setIsEditing(true); }}
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
+                >
+                  <PenLine className="mr-2 h-4 w-4" />
+                  Edit Profile
+                </Button>
+              </div>
             )}
           </div>
         </motion.div>
@@ -1728,6 +1788,67 @@ if (formData.password && !strongRegex.test(formData.password)) {
           </motion.div>
         </div>
       </div>
+      
+      {/* Digital ID Card Dialog */}
+      <Dialog open={showIdCard} onOpenChange={(open) => {
+          setShowIdCard(open);
+          if (!open) setIdCardTheme('dark');
+      }}>
+          <DialogContent className="max-w-md p-4 bg-transparent border-none shadow-none max-h-[95vh] overflow-y-auto custom-scrollbar">
+              <div className="relative flex flex-col items-center">
+                  <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute -right-2 -top-2 z-50 bg-white/10 text-white hover:bg-white/20 rounded-full"
+                      onClick={() => setShowIdCard(false)}
+                  >
+                      <X className="h-5 w-5" />
+                  </Button>
+                  
+                  <div className="flex justify-center gap-3 mb-6 w-full px-4">
+                      <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setIdCardTheme('dark')}
+                          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                              idCardTheme === 'dark' 
+                              ? 'bg-slate-900 text-white border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.1)]' 
+                              : 'bg-white/5 text-white/50 border-white/5 hover:bg-white/10'
+                          }`}
+                      >
+                          <Moon className="w-4 h-4" />
+                          DARK
+                      </motion.button>
+                      <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setIdCardTheme('light')}
+                          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                              idCardTheme === 'light' 
+                              ? 'bg-white text-slate-900 border-white shadow-lg' 
+                              : 'bg-white/5 text-white/50 border-white/5 hover:bg-white/10'
+                          }`}
+                      >
+                          <Sun className="w-4 h-4" />
+                          LIGHT
+                      </motion.button>
+                  </div>
+
+                  {userData && (
+                      <div className="w-full flex justify-center">
+                          <DigitalIDCard 
+                              student={{
+                                ...userData,
+                                mName: formData.mName,
+                              }} 
+                              organization={orgData}
+                              theme={idCardTheme}
+                          />
+                      </div>
+                  )}
+              </div>
+          </DialogContent>
+      </Dialog>
     </div>
   );
 };
