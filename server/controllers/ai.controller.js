@@ -166,7 +166,11 @@ export const generateBatchSubtopics = async (req, res) => {
   const safetySettings = [
     { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
     { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
-     const contentProfileMap = {
+    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }
+  ];
+
+  const contentProfileMap = {
     textbook_notes: {
       label: 'Textbook Notes',
       instruction:
@@ -200,11 +204,7 @@ export const generateBatchSubtopics = async (req, res) => {
     learn_format: {
       label: 'Learn Format',
       instruction:
-        `Hands-on workshop style. Start with "Build/Learn Outcome", numbered steps (Step 1, etc.), Checkpoints every 3 steps, "Try It Yourself" task, "Common Pitfalls", and a "Challenge". Tone: motivating, action-oriented.`
-    }
-  }; with "Progress Check" — 3 questions the learner should be able to answer.
-Tone: motivating, action-oriented, second-person ("you"). Use imperative verbs ("Build", "Create", "Try", "Verify").
-Focus on doing over reading — every explanation should lead to an action.`
+        `Hands-on workshop style. Start with "Build/Learn Outcome", numbered steps (Step 1, etc.), Checkpoints every 3 steps, "Try It Yourself" task with "Progress Check" — 3 questions the learner should be able to answer. Tone: motivating, action-oriented, second-person ("you"). Use imperative verbs ("Build", "Create", "Try", "Verify"). Focus on doing over reading — every explanation should lead to an action.`
     }
   };
 
@@ -918,6 +918,13 @@ export const generateVideo = async (req, res) => {
 export const generateTranscript = async (req, res) => {
   const { prompt } = req.body;
 
+  if (!prompt) {
+    return res.status(400).json({
+      success: false,
+      message: 'Video ID or URL is required'
+    });
+  }
+
   try {
     const transcript = await YoutubeTranscript.fetchTranscript(prompt);
 
@@ -925,10 +932,11 @@ export const generateTranscript = async (req, res) => {
       success: true,
       transcript
     });
-  } catch {
+  } catch (error) {
+    console.log('Transcript error:', error);
     res.status(500).json({
       success: false,
-      message: 'Transcript unavailable'
+      message: 'Transcript unavailable or failed to fetch'
     });
   }
 };
