@@ -418,7 +418,7 @@ export const generateQuizQuestionSet = async ({
   ];
 
   try {
-    let text = await generateAIText({
+    const { text: rawText, usage } = await generateAIText({
       prompt: buildQuizPrompt({
         mainTopic,
         subtopicsString,
@@ -432,8 +432,12 @@ export const generateQuizQuestionSet = async ({
       safetySettings
     });
 
-    text = stripCodeFences(text);
+    console.log(`--- AI TOKEN USAGE (Quiz - Initial) ---`);
+    console.log(`Provider: ${usage.provider} | Prompt: ${usage.promptTokens} | Completion: ${usage.completionTokens} | Total: ${usage.totalTokens}`);
+
+    let text = stripCodeFences(rawText);
     let examData = normalizeGeneratedExam(parseGeneratedExamResponse(text));
+    let totalUsage = usage;
 
     if (examData.length < questionCount) {
       const missingCount = questionCount - examData.length;
@@ -443,7 +447,7 @@ export const generateQuizQuestionSet = async ({
       ].slice(0, 50);
 
       try {
-        let retryText = await generateAIText({
+        const { text: rawRetryText, usage: retryUsage } = await generateAIText({
           prompt: buildQuizPrompt({
             mainTopic,
             subtopicsString,
@@ -458,7 +462,16 @@ export const generateQuizQuestionSet = async ({
           safetySettings
         });
 
-        retryText = stripCodeFences(retryText);
+        console.log(`--- AI TOKEN USAGE (Quiz - Retry) ---`);
+        console.log(`Provider: ${retryUsage.provider} | Prompt: ${retryUsage.promptTokens} | Completion: ${retryUsage.completionTokens} | Total: ${retryUsage.totalTokens}`);
+
+        totalUsage = {
+          promptTokens: usage.promptTokens + retryUsage.promptTokens,
+          completionTokens: usage.completionTokens + retryUsage.completionTokens,
+          totalTokens: usage.totalTokens + retryUsage.totalTokens
+        };
+
+        let retryText = stripCodeFences(rawRetryText);
         const retryData = normalizeGeneratedExam(parseGeneratedExamResponse(retryText));
         examData = [...examData, ...retryData];
       } catch (retryError) {
@@ -467,7 +480,7 @@ export const generateQuizQuestionSet = async ({
     }
 
     if (examData.length >= questionCount) {
-      return examData.slice(0, questionCount);
+      return { questions: examData.slice(0, questionCount), usage: totalUsage };
     }
 
     const generatedQuestionTexts = examData.map((item) => item.question);
@@ -479,12 +492,12 @@ export const generateQuizQuestionSet = async ({
       questionCount - examData.length
     );
 
-    return [...examData, ...fallbackSupplement].slice(0, questionCount);
+    return { questions: [...examData, ...fallbackSupplement].slice(0, questionCount), usage: totalUsage };
   } catch (e) {
     console.error('generateQuizQuestionSet fallback triggered:', e);
     const fallbackExam = buildFallbackExam(mainTopic, subtopicsString, lang, excludeQuestionTexts, questionCount);
     if (fallbackExam.length > 0) {
-      return fallbackExam;
+      return { questions: fallbackExam, usage: null };
     }
 
     throw new Error('Failed to generate quiz question set');
@@ -495,7 +508,7 @@ export const generateAIExam = async (req, res) => {
   const { mainTopic, subtopicsString, lang, excludeQuestionTexts = [], questionCount = 20 } = req.body;
 
   try {
-    const examData = await generateQuizQuestionSet({
+    const { questions, usage } = await generateQuizQuestionSet({
       mainTopic,
       subtopicsString,
       lang,
@@ -505,7 +518,8 @@ export const generateAIExam = async (req, res) => {
 
     res.json({
       success: true,
-      message: JSON.stringify(examData)
+      questions,
+      usage
     });
   } catch (error) {
     console.error('AI exam error:', error);

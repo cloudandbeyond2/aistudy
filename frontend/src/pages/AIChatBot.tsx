@@ -105,6 +105,8 @@ const AIChatBot = () => {
       const res = await axios.post(`${serverURL}/api/chat`, {
         prompt: buildPrompt(rawMessage)
       });
+      console.log('--- AI TOKEN USAGE (General AI Chat) ---');
+      console.table(res.data.usage);
 
       const aiText = stripHtml(String(res.data?.text || res.data?.message || ''));
 

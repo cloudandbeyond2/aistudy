@@ -178,7 +178,7 @@ export const generateBlogContent = async (req, res) => {
       return res.json({ success: false, message: 'Prompt is required' });
     }
 
-    const text = await generateAIText({
+    const { text, usage } = await generateAIText({
       prompt,
       systemInstruction: `You are a professional blog writer. Given a topic or prompt, generate a high-quality blog post.
       Return the response in JSON format with the following keys:
@@ -191,9 +191,12 @@ export const generateBlogContent = async (req, res) => {
       maxOutputTokens: 4096
     });
 
+    console.log(`--- AI TOKEN USAGE (Blog Generation) ---`);
+    console.log(`Provider: ${usage.provider} | Prompt: ${usage.promptTokens} | Completion: ${usage.completionTokens} | Total: ${usage.totalTokens}`);
+
     try {
       const data = JSON.parse(text);
-      res.json({ success: true, data });
+      res.json({ success: true, data, usage });
     } catch (parseError) {
       console.error('AI Response Parse Error:', text);
       res.status(500).json({ success: false, message: 'AI returned invalid format. Try again.' });
@@ -219,16 +222,19 @@ export const suggestBlogTags = async (req, res) => {
     
     Return the tags in JSON format with a single key "tags" containing a comma-separated string.`;
 
-    const text = await generateAIText({
+    const { text, usage } = await generateAIText({
       prompt,
       systemInstruction: "You are an SEO expert. Based on the following blog details, suggest 5-8 relevant SEO tags.",
       responseMimeType: "application/json",
       maxOutputTokens: 1024
     });
+
+    console.log(`--- AI TOKEN USAGE (Blog Tag Suggestion) ---`);
+    console.log(`Provider: ${usage.provider} | Prompt: ${usage.promptTokens} | Completion: ${usage.completionTokens} | Total: ${usage.totalTokens}`);
     
     try {
       const { tags } = JSON.parse(text);
-      res.json({ success: true, tags });
+      res.json({ success: true, tags, usage });
     } catch (parseError) {
       res.json({ success: true, tags: "" });
     }

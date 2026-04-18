@@ -1369,6 +1369,8 @@ Return only valid JSON that matches the schema.`;
           required: ['suggestions']
         }
       });
+      console.log('--- AI TOKEN USAGE (Topic Suggestions) ---');
+      console.table(res.data.usage);
 
       const parsed = JSON.parse(res.data.generatedText || '{}');
       const suggestions = Array.isArray(parsed.suggestions) ? parsed.suggestions.slice(0, 4) : [];
@@ -1537,6 +1539,8 @@ Return only valid JSON that matches the schema.`;
       
       const postURL = serverURL + '/api/prompt';
       const res = await axios.post(postURL, dataToSend);
+      console.log('--- AI TOKEN USAGE (Course Structure) ---');
+      console.table(res.data.usage);
       
       setGenerationProgress(70);
       setProgressMessage("Processing AI response...");

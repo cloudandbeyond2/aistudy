@@ -46,7 +46,9 @@ const MockReport = () => {
                 // Auto-recover analytics if transcript exists but analysis wasn't generated/stored.
                 if (!hasAnalytics && hasTranscript) {
                     try {
-                        await axios.post(`${serverURL}/api/mock-interview/finalize`, { applicationId });
+                        const res = await axios.post(`${serverURL}/api/mock-interview/finalize`, { applicationId });
+                        console.log('--- AI TOKEN USAGE (Mock Report Finalization) ---');
+                        console.table(res.data.usage);
                         const retry = await axios.get(`${serverURL}/api/mock-interview/application/${applicationId}`);
                         if (retry.data.success) {
                             setReport(retry.data.data);

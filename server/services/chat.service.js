@@ -13,5 +13,13 @@ export const generateChatResponse = async (prompt) => {
   const response = result.response;
   const text = await response.text();
 
-  return converter.makeHtml(text);
+  return {
+    html: converter.makeHtml(text),
+    usage: response.usageMetadata ? {
+      promptTokens: response.usageMetadata.promptTokenCount,
+      completionTokens: response.usageMetadata.candidatesTokenCount,
+      totalTokens: response.usageMetadata.totalTokenCount,
+      provider: 'gemini'
+    } : null
+  };
 };

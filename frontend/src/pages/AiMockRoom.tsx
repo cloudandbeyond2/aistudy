@@ -74,6 +74,8 @@ const AiMockRoom = () => {
             const res = await axios.post(`${serverURL}/api/mock-interview/session`, { driveId }, {
                 headers: { 'user-id': userId }
             });
+            console.log('--- AI TOKEN USAGE (Mock Session Init) ---');
+            console.table(res.data.usage);
             if (res.data.success) {
                 setSession(res.data.data);
                 // Trigger arrival greeting
@@ -199,6 +201,8 @@ const AiMockRoom = () => {
                 message: messageToSend,
                 isArrival
             });
+            console.log('--- AI TOKEN USAGE (Mock Chat) ---');
+            console.table(res.data.usage);
 
             if (!isAliveRef.current) return;
 
@@ -222,6 +226,8 @@ const AiMockRoom = () => {
     const finalizeSession = async (id: string) => {
         try {
             const res = await axios.post(`${serverURL}/api/mock-interview/finalize`, { applicationId: id });
+            console.log('--- AI TOKEN USAGE (Mock Finalize) ---');
+            console.table(res.data.usage);
             if (res.data.success) {
                 navigate(`/dashboard/mock-report/${id}`);
             }

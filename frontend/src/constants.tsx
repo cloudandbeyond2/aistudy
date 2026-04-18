@@ -1,9 +1,10 @@
 //BRAND
 export const appName = 'Colossus IQ';
 export const companyName = 'Infilabs Pvt Ltd';
-export const websiteURL = 'http://colossusiq.ai';
+export const websiteURL = 'https://aistudy-infilabs.vercel.app';
 export const serverURL = import.meta.env.PROD
-  ? 'https://api.colossusiq.ai'
+  // ? 'https://api.colossusiq.ai'
+  ? 'https://aistudy-backend1.vercel.app'
   : 'http://localhost:5001';
 export const appLogo = '/colossus-icon.png';
 export const appWordmarkDark = '/logo-colossus-dark.png';

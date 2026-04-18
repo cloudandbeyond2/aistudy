@@ -715,6 +715,8 @@ const ResumeBuilder = () => {
             const prompt = `Create a professional 2-3 sentence resume summary for ${userName}, a ${professionToUse}. Focus on expertise, impact, and a professional tone. 
             IMPORTANT: Return ONLY the summary as plain text. Do NOT include any JSON, markdown, array format, or extra labels. Just the sentences.`;
             const res = await axios.post(`${serverURL}/api/prompt`, { prompt });
+            console.log('--- AI TOKEN USAGE (Resume Summary) ---');
+            console.table(res.data.usage);
             if (res.data && res.data.generatedText) {
                 setField('summary', res.data.generatedText.trim());
                 toast({ title: '✨ Summary Generated', description: 'AI has generated a summary based on your profession.' });
@@ -777,6 +779,8 @@ ${jobDescription}`,
                     required: ["score", "missingKeywords", "matchLevel", "suggestions"]
                 }
             });
+            console.log('--- AI TOKEN USAGE (ATS Scan) ---');
+            console.table(res.data.usage);
             if (res.data && res.data.generatedText) {
                 const rawText = res.data.generatedText;
                 try {
