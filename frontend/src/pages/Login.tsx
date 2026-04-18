@@ -320,7 +320,7 @@ const Login = () => {
                     </Label>
                     <div className="relative">
                       <Mail className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
-                      <Input
+                      {/* <Input
                         id="email"
                         type="email"
                         placeholder="name@company.com"
@@ -328,7 +328,18 @@ const Login = () => {
                         onChange={(e) => setEmail(e.target.value)}
                         className="h-12 rounded-xl border-transparent bg-slate-50 pl-11 transition focus:border-primary focus:bg-white"
                         disabled={isLoading}
-                      />
+                      /> */}
+                      <Input
+  id="email"
+  name="email"
+  type="email"
+  autoComplete="email"
+  placeholder="name@company.com"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+  className="h-12 rounded-xl border-transparent bg-slate-50 pl-11 transition focus:border-primary focus:bg-white"
+  disabled={isLoading}
+/>
                     </div>
                   </div>
 
@@ -343,15 +354,17 @@ const Login = () => {
                     </div>
                     <div className="relative">
                       <Lock className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="h-12 rounded-xl border-transparent bg-slate-50 pl-11 transition focus:border-primary focus:bg-white"
-                        disabled={isLoading}
-                      />
+                     <Input
+  id="password"
+  name="password"
+  type="password"
+  autoComplete="current-password"
+  placeholder="••••••••"
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+  className="h-12 rounded-xl border-transparent bg-slate-50 pl-11 transition focus:border-primary focus:bg-white"
+  disabled={isLoading}
+/>
                     </div>
                   </div>
 

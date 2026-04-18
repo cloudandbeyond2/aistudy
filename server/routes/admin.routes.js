@@ -38,7 +38,7 @@ router.post('/limit-request/process', adminController.processLimitRequest);
 router.get('/staff-course-limit-requests', adminController.getStaffCourseLimitRequests);
 router.post('/staff-course-limit-request/process', adminController.processStaffCourseLimitRequest);
 
-router.get('/settings', adminController.getAdminSettings);
+// router.get('/settings', adminController.getAdminSettings);
 router.post('/settings', adminController.updateAdminSettings);
 router.post('/settings/upload-logo', uploadLogo.single('logo'), adminController.uploadLogo);
 

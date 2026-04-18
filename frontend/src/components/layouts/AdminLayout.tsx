@@ -497,7 +497,7 @@ const AdminLayout = () => {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-
+{/* 
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Settings" isActive={isActive('/admin/settings')} className={cn(
                     "rounded-xl transition-all duration-200",
@@ -505,10 +505,10 @@ const AdminLayout = () => {
                   )}>
                     <Link to="/admin/settings">
                       <Settings />
-                      <span>Settings</span>
+                      <span>Settingccs</span>
                     </Link>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
+                </SidebarMenuItem> */}
               </SidebarMenu>
             </div>
           </SidebarContent>

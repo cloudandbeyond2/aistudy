@@ -835,62 +835,124 @@ Use the credentials below to get started.
   return newUser;
 };
 
-/* ---------------- SETTINGS ---------------- */
-export const getAdminSettings = async () => {
-  const admin = await Admin.findOne({ type: 'main' });
-  return {
-    aiProvider: admin?.aiProvider || 'gemini',
-    geminiApiKey: admin?.geminiApiKey || '',
-    geminiModel: admin?.geminiModel || 'gemini-1.5-flash',
-    openaiApiKey: admin?.openaiApiKey || '',
-    openaiModel: admin?.openaiModel || 'gpt-4.1-mini',
-    unsplashApiKey: admin?.unsplashApiKey || '',
-    websiteName: admin?.websiteName || 'Colossus IQ',
-    websiteLogo: admin?.websiteLogo || '/logo.png',
-    taxPercentage: admin?.taxPercentage || 0,
-    notebookEnabled: admin?.notebookEnabled || {
-      free: false,
-      monthly: true,
-      yearly: true,
-      forever: true,
-      org_admin: true,
-      student: false
-    },
-    resumeEnabled: admin?.resumeEnabled || {
-      free: false,
-      monthly: true,
-      yearly: true,
-      forever: true,
-      org_admin: true,
-      student: false
-    },
-    careerEnabled: admin?.careerEnabled || {
-      free: false,
-      monthly: true,
-      yearly: true,
-      forever: true,
-      org_admin: true,
-      student: true
-    },
-    interviewEnabled: admin?.interviewEnabled || {
-      free: false,
-      monthly: true,
-      yearly: true,
-      forever: true,
-      org_admin: true,
-      student: false
-    },
-    digitalIdEnabled: admin?.digitalIdEnabled || {
-      free: false,
-      monthly: true,
-      yearly: true,
-      forever: true,
-      org_admin: true,
-      student: false
-    }
-  };
-};
+// export const getAdminSettings = async () => {
+//   return {
+//     aiProvider: process.env.AI_PROVIDER || 'gemini',
 
+//     // ❌ DO NOT SEND THESE TO FRONTEND
+//     // geminiApiKey: process.env.GEMINI_API_KEY,
+//     // openaiApiKey: process.env.OPENAI_API_KEY,
+//     // unsplashApiKey: process.env.UNSPLASH_API_KEY,
+//     geminiApiKey: process.env.GEMINI_API_KEY,
+//     geminiModel: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+//     openaiModel: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
+
+//     websiteName: process.env.WEBSITE_NAME || 'Colossus IQ',
+//     websiteLogo: process.env.WEBSITE_LOGO || '/logo.png',
+//     taxPercentage: Number(process.env.TAX_PERCENTAGE) || 0,
+
+//     notebookEnabled: {
+//       free: false,
+//       monthly: true,
+//       yearly: true,
+//       forever: true,
+//       org_admin: true,
+//       student: false
+//     },
+
+//     resumeEnabled: {
+//       free: false,
+//       monthly: true,
+//       yearly: true,
+//       forever: true,
+//       org_admin: true,
+//       student: false
+//     },
+
+//     careerEnabled: {
+//       free: false,
+//       monthly: true,
+//       yearly: true,
+//       forever: true,
+//       org_admin: true,
+//       student: true
+//     },
+
+//     interviewEnabled: {
+//       free: false,
+//       monthly: true,
+//       yearly: true,
+//       forever: true,
+//       org_admin: true,
+//       student: false
+//     },
+
+//     digitalIdEnabled: {
+//       free: false,
+//       monthly: true,
+//       yearly: true,
+//       forever: true,
+//       org_admin: true,
+//       student: false
+//     }
+//   };
+// };
+
+/* ---------------- SETTINGS ---------------- */
+// export const getAdminSettings = async () => {
+//   const admin = await Admin.findOne({ type: 'main' });
+//   return {
+//     aiProvider: admin?.aiProvider || 'gemini',
+//     geminiApiKey: admin?.geminiApiKey || '',
+//     geminiModel: admin?.geminiModel || 'gemini-1.5-flash',
+//     openaiApiKey: admin?.openaiApiKey || '',
+//     openaiModel: admin?.openaiModel || 'gpt-4.1-mini',
+//     unsplashApiKey: admin?.unsplashApiKey || '',
+//     websiteName: admin?.websiteName || 'Colossus IQ',
+//     websiteLogo: admin?.websiteLogo || '/logo.png',
+//     taxPercentage: admin?.taxPercentage || 0,
+//     notebookEnabled: admin?.notebookEnabled || {
+//       free: false,
+//       monthly: true,
+//       yearly: true,
+//       forever: true,
+//       org_admin: true,
+//       student: false
+//     },
+//     resumeEnabled: admin?.resumeEnabled || {
+//       free: false,
+//       monthly: true,
+//       yearly: true,
+//       forever: true,
+//       org_admin: true,
+//       student: false
+//     },
+//     careerEnabled: admin?.careerEnabled || {
+//       free: false,
+//       monthly: true,
+//       yearly: true,
+//       forever: true,
+//       org_admin: true,
+//       student: true
+//     },
+//     interviewEnabled: admin?.interviewEnabled || {
+//       free: false,
+//       monthly: true,
+//       yearly: true,
+//       forever: true,
+//       org_admin: true,
+//       student: false
+//     },
+//     digitalIdEnabled: admin?.digitalIdEnabled || {
+//       free: false,
+//       monthly: true,
+//       yearly: true,
+//       forever: true,
+//       org_admin: true,
+//       student: false
+//     }
+//   };
+// };
 export const updateAdminSettings = async (data) => {
   let admin = await Admin.findOne({ type: 'main' });
 

@@ -520,6 +520,7 @@ const Signup = () => {
                         <Input
                           name="mName"
                           placeholder="John Doe"
+                          autoComplete="name"
                           value={form.mName}
                           onChange={handleChange}
                           className="h-10 rounded-lg border-transparent bg-slate-50 pl-8 text-sm focus:border-primary focus:bg-white sm:h-11 sm:rounded-xl sm:pl-9 md:h-12 md:pl-11"
@@ -534,6 +535,7 @@ const Signup = () => {
                         <Input
                           name="email"
                           type="email"
+                          autoComplete="email"
                           placeholder="you@example.com"
                           value={form.email}
                           onChange={handleChange}
@@ -559,6 +561,7 @@ const Signup = () => {
                         <input
                           type="tel"
                           value={form.phone}
+                          autoComplete="tel"
                           onChange={handlePhoneChange}
                           placeholder={`${selectedCountry.phoneLength[0]} digits`}
                           className="flex-1 bg-transparent px-3 text-sm outline-none sm:px-4"
@@ -616,7 +619,7 @@ const Signup = () => {
                       <Field label="Password">
                         <div className="relative group">
                           <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                          <Input
+                          {/* <Input
                             name="password"
                             type="password"
                             placeholder="••••••••"
@@ -624,7 +627,17 @@ const Signup = () => {
                             onChange={handleChange}
                             className="h-12 rounded-xl border-slate-200 bg-slate-50/50 pl-11 transition-all focus:bg-white focus:ring-4 focus:ring-primary/5"
                             disabled={isLoading}
-                          />
+                          /> */}
+                          <Input
+  name="password"
+  type="password"
+  autoComplete="new-password"
+  placeholder="••••••••"
+  value={form.password}
+  onChange={handleChange}
+  className="h-12 rounded-xl border-slate-200 bg-slate-50/50 pl-11 transition-all focus:bg-white focus:ring-4 focus:ring-primary/5"
+  disabled={isLoading}
+/>
                         </div>
                       </Field>
                       <AnimatePresence mode="wait">
@@ -671,15 +684,16 @@ const Signup = () => {
                     <Field label="Confirm Password" error={errors.confirmPassword}>
                       <div className="relative group">
                         <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                        <Input
-                          name="confirmPassword"
-                          type="password"
-                          placeholder="••••••••"
-                          value={form.confirmPassword}
-                          onChange={handleChange}
-                          className="h-12 rounded-xl border-slate-200 bg-slate-50/50 pl-11 transition-all focus:bg-white focus:ring-4 focus:ring-primary/5"
-                          disabled={isLoading}
-                        />
+                       <Input
+  name="confirmPassword"
+  type="password"
+  autoComplete="new-password"
+  placeholder="••••••••"
+  value={form.confirmPassword}
+  onChange={handleChange}
+  className="h-12 rounded-xl border-slate-200 bg-slate-50/50 pl-11 transition-all focus:bg-white focus:ring-4 focus:ring-primary/5"
+  disabled={isLoading}
+/>
                       </div>
                     </Field>
                   </div>
