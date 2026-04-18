@@ -66,6 +66,7 @@ import superAdminRoutes from "./routes/superAdmin.routes.js";
 import mockTrainingRoutes from "./routes/mockTraining.routes.js";
 import internshipRoutes from './routes/internship.routes.js';
 import skillBoosterRoutes from './routes/skillBooster.routes.js';
+import communicationPracticeRoutes from './routes/communicationPractice.routes.js';
 import googleCalendarRoutes from './routes/googleCalendar.routes.js';
 import liveSupportRoutes from './routes/liveSupportRoutes.js';
 import todoRoutes from './routes/todoRoutes.js';
@@ -119,6 +120,7 @@ app.use(async (req, res, next) => {
   next();
 });
 
+app.use("/api", communicationPracticeRoutes);
 app.use('/api', authRoutes);
 app.use('/api', courseRoutes);
 app.use('/api', certificateRoutes);
@@ -182,4 +184,5 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: err.message || 'Internal Server Error' });
 });
 
-export default app;
+export default app; 
+

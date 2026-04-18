@@ -200,8 +200,18 @@ html {
 }
 
 ::selection {
-  background: hsl(var(--primary) / 0.25);
-  color: inherit;
+  background: hsl(var(--primary) / 0.8);
+  color: #ffffff;
+}
+
+::-moz-selection {
+  background: hsl(var(--primary) / 0.8);
+  color: #ffffff;
+}
+
+a::selection, a *::selection {
+  background: hsl(var(--primary) / 0.9);
+  color: #ffffff;
 }
 
 @layer components {
