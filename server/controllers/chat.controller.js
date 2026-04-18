@@ -4,9 +4,8 @@ export const chat = async (req, res) => {
   try {
     const { prompt } = req.body;
 
-    const html = await generateChatResponse(prompt);
-
-    res.status(200).json({ success: true, text: html });
+    const { html, usage } = await generateChatResponse(prompt);
+    res.status(200).json({ success: true, text: html, usage });
   } catch (error) {
     console.error('/api/chat error:', error);
 

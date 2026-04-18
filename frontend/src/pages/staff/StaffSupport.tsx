@@ -121,9 +121,11 @@ export default function StaffSupport() {
         setReply("");
       }
 
-      await axios.post(`${serverURL}/api/student-tickets/${selectedTicket._id}/ai-reply`, {
+      const res = await axios.post(`${serverURL}/api/student-tickets/${selectedTicket._id}/ai-reply`, {
         message: messageToAsk || undefined,
       });
+      console.log('--- AI TOKEN USAGE (Support AI Reply) ---');
+      console.table(res.data.usage);
 
       const updatedTickets = await axios.get(`${serverURL}/api/student-tickets/student/${uid}`);
       setTickets(updatedTickets.data.tickets || []);

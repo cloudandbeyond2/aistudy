@@ -2600,6 +2600,8 @@ const AINotebook: React.FC = () => {
             let userId = localStorage.getItem("nbUserId");
             if (!userId) { userId = Date.now().toString(); localStorage.setItem("nbUserId", userId); }
             const res = await axios.post(`${serverURL}/api/notebook/save`, { userId, notebookId, generatedContent, sources, chatHistory: chatMessages });
+            console.log('--- AI TOKEN USAGE (Notebook Save) ---');
+            console.table(res.data.usage);
             if (res.data.success) {
                 if (res.data.notebookId) setNotebookId(res.data.notebookId);
                 if (manual) { setSaveToast('✓ Notes saved!'); setTimeout(()=>setSaveToast(''),2500); }
@@ -2622,6 +2624,8 @@ const AINotebook: React.FC = () => {
         fd.append('file',file);
         try{
             const res=await axios.post(`${serverURL}/api/notebook/upload-source`,fd,{headers:{'Content-Type':'multipart/form-data'}});
+            console.log('--- AI TOKEN USAGE (Notebook Upload Source) ---');
+            console.table(res.data.usage);
             if(res.data.success) setSources([{...res.data.source,selected:true}]);
         }catch(e){ console.error(e); }
         finally{ setIsLoadingSources(false); }
@@ -2660,6 +2664,8 @@ const toggleSrc = (id: string) =>
         const ctx=sources.filter(s=>s.selected).map(s=>s.content).join('\n\n');
         try{
             const res=await axios.post(`${serverURL}/api/notebook/chat`,{messages:msgs.slice(1).map(m=>({role:m.role,content:m.content})),context:ctx});
+            console.log('--- AI TOKEN USAGE (Notebook Chat) ---');
+            console.table(res.data.usage);
             if(res.data.success)setChatMessages(p=>[...p,{role:'system',content:res.data.generatedText}]);
         }catch(err:any){
             setChatMessages(p=>[...p,{role:'system',content:err?.response?.data?.message||'Error. Try again.'}]);
@@ -2675,6 +2681,8 @@ const toggleSrc = (id: string) =>
         const ctx=sources.filter(s=>s.selected).map(s=>s.content).join('\n\n');
         try{
             const res=await axios.post(`${serverURL}/api/notebook/generate-action`,{action,context:ctx});
+            console.log('--- AI TOKEN USAGE (Notebook Action) ---');
+            console.table(res.data.usage);
             if(res.data.success){setGeneratedContent(p=>({...p,[action]:res.data.generatedText}));setIsEditMode(false);}
         }catch(e){console.error(e);}
         finally{setIsGenerating(false);setLoadingAction(null);}

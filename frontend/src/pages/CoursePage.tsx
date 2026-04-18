@@ -423,6 +423,9 @@ const handleRegenerateCurrentLesson = async () => {
       userId,
       contentProfile: contentProfileId,
     });
+    console.log('--- AI TOKEN USAGE (Lesson Regeneration) ---');
+    console.table(theoryRes.data.usage);
+    
 
     if (theoryRes.data?.success && theoryRes.data.topics?.[0]) {
       const newTheory = theoryRes.data.topics[0].subtopics[0].theory;
@@ -770,6 +773,8 @@ Requirements:
     const mainPrompt = defaultPrompt + newMessage;
     try {
       const response = await axios.post(serverURL + '/api/chat', { prompt: mainPrompt });
+      console.log('--- AI TOKEN USAGE (Assistant) ---');
+      console.table(response.data.usage);
       if (response.data.success === false) {
         toast({ title: "Assistant Error", description: response.data.message || "Failed to get a response." });
       } else {

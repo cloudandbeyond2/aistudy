@@ -596,7 +596,8 @@ const Blog = () => {
 
     try {
       const res = await axios.post(`${serverURL}/api/subscribe`, { email });
-
+      console.log('--- AI TOKEN USAGE (Blog Subscription) ---');
+      console.table(res.data.usage);
       if (res.data.success) {
         toast({
           title: "Subscribed!",

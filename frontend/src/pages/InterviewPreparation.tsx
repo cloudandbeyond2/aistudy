@@ -602,6 +602,8 @@ const isYearlyOnly = userPlan !== 'yearly';
       const resp = await axios.get(`${serverURL}/api/interview-prep/current-affairs`, {
         headers: { 'user-id': uid }
       });
+      console.log('--- AI TOKEN USAGE (Current Affairs) ---');
+      console.table(resp.data.usage);
       // console.log("Current affairs response:", resp.data);
       const newsData = Array.isArray(resp.data)
         ? resp.data
@@ -630,6 +632,8 @@ const isYearlyOnly = userPlan !== 'yearly';
       const resp = await axios.get(`${serverURL}/api/interview-prep/daily-aptitude`, {
         headers: { 'user-id': uid }
       });
+      console.log('--- AI TOKEN USAGE (Daily Aptitude) ---');
+      console.table(resp.data.usage);
       // console.log("Daily aptitude response:", resp.data);
       if (resp.data.success) {
         setDailyAptitudes(resp.data.data);
@@ -677,6 +681,8 @@ const isYearlyOnly = userPlan !== 'yearly';
         { userId: uid, category: aiCategory },
         { headers: { 'user-id': uid } }
       );
+      console.log('--- AI TOKEN USAGE (AI Category Quiz) ---');
+      console.table(resp.data.usage);
 
       // console.log("Generate quiz response:", resp.data);
       if (resp.data.success) {

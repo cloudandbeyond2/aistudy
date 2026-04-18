@@ -551,23 +551,26 @@ export const addStudentTicketAiReply = async (req, res) => {
       "Provide practical, step-by-step troubleshooting and ask 1-2 clarifying questions if needed. " +
       "Be concise. Do not claim you performed actions. If code changes are needed, describe what to change.";
 
-    const aiText = await chatWithAI({
+    const { text: aiMessage, usage } = await chatWithAI({
       systemInstruction,
       context: `Ticket subject: ${ticket.subject}\n\nRecent conversation:\n${recentContextLines}`,
       messages: [{ role: "user", content: promptMessage }],
       maxOutputTokens: 600
     });
 
+    console.log(`--- AI TOKEN USAGE (Support Ticket AI Reply) ---`);
+    console.log(`Provider: ${usage.provider} | Prompt: ${usage.promptTokens} | Completion: ${usage.completionTokens} | Total: ${usage.totalTokens}`);
+
     ticket.messages.push({
       sender: "ai",
-      message: aiText,
+      message: aiMessage,
       readByOrg: false,
       readByStudent: true
     });
 
     await ticket.save();
 
-    return res.json({ success: true, aiMessage: aiText, ticket });
+    return res.json({ success: true, aiMessage, ticket, usage });
   } catch (error) {
     console.error("AI REPLY ERROR:", error);
     return res.status(500).json({
