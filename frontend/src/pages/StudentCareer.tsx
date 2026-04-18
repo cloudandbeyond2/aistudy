@@ -22,7 +22,16 @@ import {
     Trash2,
     TrendingUp,
     BookOpen,
-    Briefcase
+    Briefcase,
+    FileText,
+    FolderOpen,
+    Globe,
+    Layers3,
+    ChevronRight,
+    CheckCircle,
+    ExternalLink,
+    Award,
+    Plus
 } from 'lucide-react';
 import { FaGithub } from '@react-icons/all-files/fa/FaGithub';
 import { FaLinkedin } from '@react-icons/all-files/fa/FaLinkedin';

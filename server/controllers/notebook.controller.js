@@ -130,15 +130,19 @@ export const chat = async (req, res) => {
   }
 
   try {
-    const responseText = await chatWithAI({
+    const { text: responseText, usage } = await chatWithAI({
       messages,
       context,
       systemInstruction: 'You are the Colossus IQ Assistant. Answer clearly, accurately, and helpfully based on the uploaded sources.'
     });
 
+    console.log(`--- AI TOKEN USAGE (Notebook Chat) ---`);
+    console.log(`Provider: ${usage.provider} | Prompt: ${usage.promptTokens} | Completion: ${usage.completionTokens} | Total: ${usage.totalTokens}`);
+
     res.status(200).json({
       success: true,
-      generatedText: responseText
+      generatedText: responseText,
+      usage
     });
   } catch (error) {
     console.error('Notebook chat error:', error);
@@ -170,14 +174,18 @@ export const generateAction = async (req, res) => {
       prompt += "Write a script for a 2-person podcast discussing the key themes of these sources in an engaging, conversational way.";
     }
 
-    const responseText = await generateAIText({
+    const { text: responseText, usage } = await generateAIText({
       prompt,
       maxOutputTokens: 4096
     });
 
+    console.log(`--- AI TOKEN USAGE (Notebook Action: ${action}) ---`);
+    console.log(`Provider: ${usage.provider} | Prompt: ${usage.promptTokens} | Completion: ${usage.completionTokens} | Total: ${usage.totalTokens}`);
+
     res.status(200).json({
       success: true,
-      generatedText: responseText
+      generatedText: responseText,
+      usage
     });
   } catch (error) {
     console.error('Generate notebook action error:', error);

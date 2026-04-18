@@ -362,12 +362,24 @@ export const getDailyAptitudes = async (req, res) => {
     IMPORTANT: Generate exactly 15 questions. "answer" must match exactly one of the strings in "options".`;
 
     const result = await retryWithBackoff(() => model.generateContent(prompt), 1, 1500);
-    let text = result.response.text()
+    const response = await result.response;
+    const metadata = response.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 };
+    
+    console.log(`--- AI TOKEN USAGE (Interview: Daily Aptitude) ---`);
+    console.log(`Provider: Gemini | Prompt: ${metadata.promptTokenCount} | Completion: ${metadata.candidatesTokenCount} | Total: ${metadata.totalTokenCount}`);
+
+    let text = (await response.text())
       .replace(/```json/g, '')
       .replace(/```/g, '')
       .trim();
 
     let questions;
+    const usage = {
+      provider: 'Gemini',
+      promptTokens: metadata.promptTokenCount,
+      completionTokens: metadata.candidatesTokenCount,
+      totalTokens: metadata.totalTokenCount
+    };
     try {
       questions = JSON.parse(text);
     } catch (e) {
@@ -409,7 +421,7 @@ export const getDailyAptitudes = async (req, res) => {
     // Cache for the day
     aptitudeCache = { date: todayStr, data: dailyData };
 
-    res.status(200).json({ success: true, data: dailyData });
+    res.status(200).json({ success: true, data: dailyData, usage });
   } catch (error) {
     const status = error?.status || error?.response?.status;
     console.warn(`Daily Aptitude generation fallback engaged (status=${status || 'unknown'})`);
@@ -470,8 +482,13 @@ export const generateCategoryQuiz = async (req, res) => {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', safetySettings });
 
     const result = await retryWithBackoff(() => model.generateContent(prompt), 1, 1500);
+    const response = await result.response;
+    const metadata = response.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 };
     
-    let text = result.response.text();
+    console.log(`--- AI TOKEN USAGE (Interview: Category Quiz) ---`);
+    console.log(`Provider: Gemini | Prompt: ${metadata.promptTokenCount} | Completion: ${metadata.candidatesTokenCount} | Total: ${metadata.totalTokenCount}`);
+
+    let text = await response.text();
     // Improved cleanup to remove markdown and whitespace, but KEEP quotes
     text = text
       .replace(/```json/g, '')
@@ -479,6 +496,12 @@ export const generateCategoryQuiz = async (req, res) => {
       .trim();
 
     let quizData;
+    const usage = {
+      provider: 'Gemini',
+      promptTokens: metadata.promptTokenCount,
+      completionTokens: metadata.candidatesTokenCount,
+      totalTokens: metadata.totalTokenCount
+    };
     try {
       quizData = JSON.parse(text);
     } catch (e) {
@@ -497,7 +520,7 @@ export const generateCategoryQuiz = async (req, res) => {
       };
     });
 
-    res.status(200).json({ success: true, data: quizData });
+    res.status(200).json({ success: true, data: quizData, usage });
 
   } catch (error) {
     console.error('Quiz generation error:', error);

@@ -140,7 +140,14 @@ export const createMockDrive = async (req, res) => {
 
     await drive.save();
     console.log(`[MockDrive:Auth] Success. Created drive ${drive._id} for Org ${targetOrgId}`);
-    res.status(201).json({ success: true, data: drive });
+    const usage = {
+      provider: 'Gemini',
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0
+    };
+
+    res.status(201).json({ success: true, data: drive, usage });
   } catch (error) {
     console.error(`[MockDrive:Error]`, error);
     const msg = error.name === 'ValidationError' ? 
@@ -249,7 +256,14 @@ export const startMockSession = async (req, res) => {
     user.mockAttempts.count += 1;
     await user.save();
 
-    res.status(200).json({ success: true, data: application, drive });
+    const usage = {
+      provider: 'Gemini',
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0
+    };
+
+    res.status(200).json({ success: true, data: application, drive, usage });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -347,7 +361,13 @@ export const chatWithAiInterviewer = async (req, res) => {
     }
 
     const result = await retryWithBackoff(() => chat.sendMessage(prompt), 1, 1500);
-    let aiResponse = String(result.response.text() || '').trim();
+    const response = await result.response;
+    const metadata = response.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 };
+    
+    console.log(`--- AI TOKEN USAGE (Mock Interview Chat) ---`);
+    console.log(`Provider: Gemini | Prompt: ${metadata.promptTokenCount} | Completion: ${metadata.candidatesTokenCount} | Total: ${metadata.totalTokenCount}`);
+
+    let aiResponse = String((await response.text()) || '').trim();
 
     const wrapUpPhrase = 'Thank you for the session. I will now generate your performance blueprint.';
     const lowerWrapUp = wrapUpPhrase.toLowerCase();
@@ -398,7 +418,14 @@ export const chatWithAiInterviewer = async (req, res) => {
 
     await application.save();
 
-    res.status(200).json({ success: true, aiResponse, shouldFinalize });
+    const usage = {
+      provider: 'Gemini',
+      promptTokens: metadata.promptTokenCount,
+      completionTokens: metadata.candidatesTokenCount,
+      totalTokens: metadata.totalTokenCount
+    };
+
+    res.status(200).json({ success: true, aiResponse, shouldFinalize, usage });
   } catch (error) {
     console.error('[MockInterview:chatWithAiInterviewer] Error:', error);
     res.status(500).json({ success: false, message: error.message });
@@ -435,7 +462,13 @@ export const finalizeMockRound = async (req, res) => {
     }`;
 
     const result = await retryWithBackoff(() => model.generateContent(analysisPrompt), 1, 1500);
-    let analysisText = (await result.response.text())
+    const response = await result.response;
+    const metadata = response.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 };
+    
+    console.log(`--- AI TOKEN USAGE (Mock Interview Evaluation) ---`);
+    console.log(`Provider: Gemini | Prompt: ${metadata.promptTokenCount} | Completion: ${metadata.candidatesTokenCount} | Total: ${metadata.totalTokenCount}`);
+
+    let analysisText = (await response.text())
       .replace(/```json/g, '')
       .replace(/```/g, '')
       .trim();
@@ -513,7 +546,14 @@ ${analysisText}`;
 
     await application.save();
 
-    res.status(200).json({ success: true, message: 'Evaluation generated', data: application });
+    const usage = {
+      provider: 'Gemini',
+      promptTokens: metadata.promptTokenCount,
+      completionTokens: metadata.candidatesTokenCount,
+      totalTokens: metadata.totalTokenCount
+    };
+
+    res.status(200).json({ success: true, message: 'Evaluation generated', data: application, usage });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Failed to generate evaluation' });

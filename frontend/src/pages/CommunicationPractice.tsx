@@ -95,6 +95,8 @@ const CommunicationPractice = () => {
     setUserResponse('');
     try {
       const res = await axios.get(`${serverURL}/api/communication-practice/scenario?userId=${userId}&tone=${tone}`);
+      console.log('--- AI TOKEN USAGE (Comm Practice Scenario) ---');
+      console.table(res.data.usage);
       if (res.data.success) {
         setScenarioData(res.data.data);
       }
@@ -117,6 +119,8 @@ const CommunicationPractice = () => {
         scenario: scenarioData.scenario,
         userResponse
       });
+      console.log('--- AI TOKEN USAGE (Comm Practice Evaluation) ---');
+      console.table(res.data.usage);
       if (res.data.success) {
         setEvaluation(res.data.data.evaluation);
         setProfile(prev => ({ ...prev, xp: prev.xp + res.data.data.xpAwarded, level: res.data.data.newLevel, streak: res.data.data.streak }));
@@ -134,6 +138,8 @@ const CommunicationPractice = () => {
     setGenerating(true);
     try {
       const res = await axios.get(`${serverURL}/api/communication-practice/vocabulary?userId=${userId}`);
+      console.log('--- AI TOKEN USAGE (Comm Practice Vocab) ---');
+      console.table(res.data.usage);
       if (res.data.success) {
         setVocabulary(res.data.data);
       }
@@ -200,6 +206,8 @@ const CommunicationPractice = () => {
     setTestAnswers([]);
     try {
       const res = await axios.get(`${serverURL}/api/communication-practice/grammar-test?userId=${userId}`);
+      console.log('--- AI TOKEN USAGE (Comm Practice Grammar Test) ---');
+      console.table(res.data.usage);
       if (res.data.success) {
         setGrammarTest(res.data.data);
         setTestAnswers(new Array(res.data.data.length).fill(-1));

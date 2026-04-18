@@ -227,11 +227,14 @@ export const generateRoadmap = async (req, res) => {
         
         Domain: ${domain}`;
 
-        const generatedText = await generateAIText({
+        const { text: generatedText, usage } = await generateAIText({
             prompt,
             systemInstruction,
             responseMimeType: 'application/json'
         });
+
+        console.log(`--- AI TOKEN USAGE (Internship Roadmap) ---`);
+        console.log(`Provider: ${usage.provider} | Prompt: ${usage.promptTokens} | Completion: ${usage.completionTokens} | Total: ${usage.totalTokens}`);
 
         const data = JSON.parse(generatedText);
 
@@ -241,7 +244,8 @@ export const generateRoadmap = async (req, res) => {
             description: data.description,
             roadmap: data.roadmap,
             exerciseTopics: data.exerciseTopics,
-            resources: data.resources
+            resources: data.resources,
+            usage
         });
     } catch (error) {
         console.error('AI Roadmap Generation Error:', error);

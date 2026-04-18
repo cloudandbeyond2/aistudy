@@ -273,11 +273,24 @@ const generateWithOpenAI = async ({
       }
 
       const content = data?.choices?.[0]?.message?.content;
+      const usage = data?.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+      
+      let text = '';
       if (Array.isArray(content)) {
-        return cleanText(content.map((item) => item.text || '').join(''));
+        text = cleanText(content.map((item) => item.text || '').join(''));
+      } else {
+        text = cleanText(content || '');
       }
 
-      return cleanText(content || '');
+      return {
+        text,
+        usage: {
+          promptTokens: usage.prompt_tokens,
+          completionTokens: usage.completion_tokens,
+          totalTokens: usage.total_tokens,
+          provider: 'openai'
+        }
+      };
       
     } catch (error) {
       lastError = error;
@@ -340,7 +353,18 @@ const generateWithGemini = async ({
           model: modelName
         });
         const result = await retryWithBackoff(() => model.generateContent(prompt));
-        return cleanText(await result.response.text());
+        const response = await result.response;
+        const metadata = response.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 };
+        
+        return {
+          text: cleanText(await response.text()),
+          usage: {
+            promptTokens: metadata.promptTokenCount,
+            completionTokens: metadata.candidatesTokenCount,
+            totalTokens: metadata.totalTokenCount,
+            provider: 'gemini'
+          }
+        };
       };
 
       try {
@@ -480,7 +504,17 @@ export const chatWithAI = async ({
           throw error;
         }
 
-        return cleanText(data?.choices?.[0]?.message?.content || '');
+        const usage = data?.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+
+        return {
+          text: cleanText(data?.choices?.[0]?.message?.content || ''),
+          usage: {
+            promptTokens: usage.prompt_tokens,
+            completionTokens: usage.completion_tokens,
+            totalTokens: usage.total_tokens,
+            provider: 'openai'
+          }
+        };
       } else {
         const genAI = await getGenAI();
         const model = genAI.getGenerativeModel({
@@ -502,7 +536,18 @@ export const chatWithAI = async ({
         const chatSession = model.startChat({ history });
         const latestMessage = messages[messages.length - 1]?.content || '';
         const result = await chatSession.sendMessage(`${promptPrefix}${latestMessage}`);
-        return cleanText(await result.response.text());
+        const response = await result.response;
+        const metadata = response.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 };
+        
+        return {
+          text: cleanText(await response.text()),
+          usage: {
+            promptTokens: metadata.promptTokenCount,
+            completionTokens: metadata.candidatesTokenCount,
+            totalTokens: metadata.totalTokenCount,
+            provider: 'gemini'
+          }
+        };
       }
     } catch (error) {
       if (!attemptedFallback) {
@@ -529,11 +574,14 @@ export const chatWithAI = async ({
 
 export const getChatModel = async (systemInstruction) => ({
   generateContent: async (prompt) => {
-    const text = await generateAIText({
+    const { text, usage } = await generateAIText({
       prompt,
       systemInstruction,
       maxOutputTokens: 4096
     });
+
+    console.log(`--- AI TOKEN USAGE (Chat Fallback) ---`);
+    console.log(`Provider: ${usage.provider} | Prompt: ${usage.promptTokens} | Completion: ${usage.completionTokens} | Total: ${usage.totalTokens}`);
 
     return {
       response: {

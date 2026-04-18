@@ -61,7 +61,7 @@ export const generatePrompt = async (req, res) => {
   const { prompt, systemInstruction, responseMimeType, responseSchema } = req.body;
 
   try {
-    const generatedText = await generateAIText({
+    const { text: generatedText, usage } = await generateAIText({
       prompt,
       systemInstruction,
       responseMimeType,
@@ -69,12 +69,15 @@ export const generatePrompt = async (req, res) => {
       maxOutputTokens: 8192
     });
 
+    console.log(`--- AI TOKEN USAGE (Prompt) ---`);
+    console.log(`Provider: ${usage.provider} | Prompt: ${usage.promptTokens} | Completion: ${usage.completionTokens} | Total: ${usage.totalTokens}`);
     console.log('--- AI RESPONSE SUCCESS ---');
     console.log('Generated Text length:', generatedText?.length || 0);
 
     res.status(200).json({
       success: true,
-      generatedText
+      generatedText,
+      usage
     });
   } catch (error) {
     const isRateLimit =
@@ -373,17 +376,17 @@ Original lesson:
 ${theory}`;
 
   const repairIncompleteLesson = async ({ topicTitle, subtopicTitle, theory }) => {
-    const repaired = await generateAIText({
+    const { text: repaired, usage } = await generateAIText({
       prompt: buildLessonRepairPrompt({ topicTitle, subtopicTitle, theory }),
       systemInstruction: `Strictly in ${lang || 'English'}, you are a careful educational editor. Return only valid HTML. Every sentence must be complete, natural, and meaningful.`,
       maxOutputTokens: 3072,
       safetySettings
     });
 
-    return repaired?.trim() || '';
+    return { text: repaired?.trim() || '', usage };
   };
 
-  const finalizeLessonTheory = async ({ topicTitle, subtopicTitle, theory }) => {
+  const finalizeLessonTheory = async ({ topicTitle, subtopicTitle, theory, onUsage }) => {
     const normalizedTheory = theory?.trim() || '';
     if (!normalizedTheory) {
       throw new Error('Lesson content is empty.');
@@ -394,11 +397,14 @@ ${theory}`;
     }
 
     try {
-      const repairedTheory = await repairIncompleteLesson({
+      const { text: repairedTheory, usage: repairUsage } = await repairIncompleteLesson({
         topicTitle,
         subtopicTitle,
         theory: normalizedTheory
       });
+
+      // Track usage for repair
+      if (repairUsage && typeof onUsage === 'function') onUsage(repairUsage);
 
       if (repairedTheory && !needsLessonRepair(repairedTheory)) {
         return repairedTheory;
@@ -426,14 +432,17 @@ ${theory}`;
     topicTitle,
     subtopicTitle,
     parsedTopic,
-    parsedSubtopic
+    parsedSubtopic,
+    usage,
+    onUsage
   }) => {
     const normalizedTopicTitle = parsedTopic?.topicTitle?.trim() || topicTitle;
     const normalizedSubtopicTitle = parsedSubtopic?.title?.trim() || subtopicTitle;
     const normalizedTheory = await finalizeLessonTheory({
       topicTitle: normalizedTopicTitle,
       subtopicTitle: normalizedSubtopicTitle,
-      theory: parsedSubtopic?.theory?.trim() || ''
+      theory: parsedSubtopic?.theory?.trim() || '',
+      onUsage
     });
 
     return {
@@ -441,7 +450,8 @@ ${theory}`;
       subtopic: {
         title: normalizedSubtopicTitle,
         theory: normalizedTheory
-      }
+      },
+      usage
     };
   };
 
@@ -480,7 +490,7 @@ Include Intro, Explanation, Example, Pitfalls, and Recap. HTML only. No JSON, no
     detailLevel = 'detailed',
     maxOutputTokens = 5120
   }) => {
-    const rawText = await generateAIText({
+    const { text: rawText, usage } = await generateAIText({
       prompt: buildSingleSubtopicPrompt(topicTitle, subtopicTitle, detailLevel),
       systemInstruction,
       responseMimeType: 'application/json',
@@ -499,12 +509,14 @@ Include Intro, Explanation, Example, Pitfalls, and Recap. HTML only. No JSON, no
       topicTitle,
       subtopicTitle,
       parsedTopic,
-      parsedSubtopic
+      parsedSubtopic,
+      usage,
+      onUsage: (u) => { usage.promptTokens += u.promptTokens; usage.completionTokens += u.completionTokens; usage.totalTokens += u.totalTokens; }
     });
   };
 
   const generateFallbackTheory = async ({ topicTitle, subtopicTitle }) => {
-    const theory = await generateAIText({
+    const { text: theory, usage } = await generateAIText({
       prompt: buildFallbackTheoryPrompt(topicTitle, subtopicTitle),
       systemInstruction: `Strictly in ${lang || 'English'}, you are a specialized educational content writer. Return only valid HTML for one lesson.`,
       maxOutputTokens: 4096,
@@ -514,7 +526,8 @@ Include Intro, Explanation, Example, Pitfalls, and Recap. HTML only. No JSON, no
     const normalizedTheory = await finalizeLessonTheory({
       topicTitle,
       subtopicTitle,
-      theory
+      theory,
+      onUsage: (u) => { usage.promptTokens += u.promptTokens; usage.completionTokens += u.completionTokens; usage.totalTokens += u.totalTokens; }
     });
 
     return {
@@ -522,7 +535,8 @@ Include Intro, Explanation, Example, Pitfalls, and Recap. HTML only. No JSON, no
       subtopic: {
         title: subtopicTitle,
         theory: normalizedTheory
-      }
+      },
+      usage
     };
   };
 
@@ -562,6 +576,7 @@ Include Intro, Explanation, Example, Pitfalls, and Recap. HTML only. No JSON, no
 
   try {
     const combinedTopics = [];
+    let totalUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
 
     for (const topic of topicsList) {
       const normalizedSubtopics = Array.isArray(topic?.subtopics)
@@ -579,6 +594,13 @@ Include Intro, Explanation, Example, Pitfalls, and Recap. HTML only. No JSON, no
           subtopicTitle
         });
 
+        // Accumulate tokens
+        if (generatedSubtopic.usage) {
+          totalUsage.promptTokens += generatedSubtopic.usage.promptTokens;
+          totalUsage.completionTokens += generatedSubtopic.usage.completionTokens;
+          totalUsage.totalTokens += generatedSubtopic.usage.totalTokens;
+        }
+
         generatedTopic.topicTitle = generatedSubtopic.topicTitle || generatedTopic.topicTitle;
         generatedTopic.subtopics.push(generatedSubtopic.subtopic);
       }
@@ -586,9 +608,13 @@ Include Intro, Explanation, Example, Pitfalls, and Recap. HTML only. No JSON, no
       combinedTopics.push(generatedTopic);
     }
 
+    console.log(`--- TOTAL AI TOKEN USAGE (Course Creation) ---`);
+    console.log(`Prompt: ${totalUsage.promptTokens} | Completion: ${totalUsage.completionTokens} | Total: ${totalUsage.totalTokens}`);
+
     res.status(200).json({
       success: true,
-      topics: combinedTopics
+      topics: combinedTopics,
+      usage: totalUsage
     });
 
   } catch (error) {
@@ -651,25 +677,24 @@ export const generateHtml = async (req, res) => {
   ];
 
   try {
-    const genAI = await getGenAI();
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      safetySettings,
-      systemInstruction: 'You are a helpful educational assistant. Provide thorough and interesting explanations with examples. Use markdown formatting.'
+
+    const { text: markdown, usage } = await generateAIText({
+      prompt,
+      systemInstruction: 'You are a helpful educational assistant. Provide thorough and interesting explanations with examples. Use markdown formatting.',
+      maxOutputTokens: 8192,
+      safetySettings
     });
 
-    const result = await retryWithBackoff(() =>
-      model.generateContent(prompt)
-    );
-
-    const markdown = await result.response.text();
+    console.log(`--- AI TOKEN USAGE (HTML Generation) ---`);
+    console.log(`Provider: ${usage.provider} | Prompt: ${usage.promptTokens} | Completion: ${usage.completionTokens} | Total: ${usage.totalTokens}`);
 
     const converter = new showdown.Converter();
     const html = converter.makeHtml(markdown);
 
     res.status(200).json({
       success: true,
-      generatedText: html
+      generatedText: html,
+      usage
     });
   } catch (error) {
     console.log('Generate HTML error:', error);
@@ -720,16 +745,20 @@ export const generateImage = async (req, res) => {
   try {
     let searchPrompt = prompt;
     try {
-      const genAI = await getGenAI();
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-      const transResult = await model.generateContent(`Translate the following search query into brief English keywords for an image search engine. Give me only the translated keywords, with no extra text or explanation: "${prompt}"`);
-      const engPrompt = await transResult.response.text();
+      const { text: engPrompt, usage } = await generateAIText({
+        prompt: `Translate the following search query into brief English keywords for an image search engine. Give me only the translated keywords, with no extra text or explanation: "${prompt}"`,
+        maxOutputTokens: 100
+      });
+
+      console.log(`--- AI TOKEN USAGE (Image Prompt Translation) ---`);
+      console.log(`Provider: ${usage.provider} | Prompt: ${usage.promptTokens} | Completion: ${usage.completionTokens} | Total: ${usage.totalTokens}`);
+
       if (engPrompt && engPrompt.trim()) {
         searchPrompt = engPrompt.trim().replace(/^["']|["']$/g, '');
         console.log(`🖼️ Translated image prompt from "${prompt}" to "${searchPrompt}"`);
       }
     } catch (e) {
-      console.log('Image prompt English translation failed, using original prompt');
+      console.log('Image prompt English translation failed, using original prompt:', e.message);
     }
 
     // Clean and optimize the prompt for better search results
@@ -992,7 +1021,7 @@ Generate 10 MCQs in JSON format:
   }
 ]`;
 
-    const text = await generateAIText({
+    const { text: examJson, usage } = await generateAIText({
       prompt,
       systemInstruction,
       responseMimeType: 'application/json',
@@ -1017,11 +1046,15 @@ Generate 10 MCQs in JSON format:
       safetySettings
     });
 
-    const cleanedText = text.trim();
+    console.log(`--- AI TOKEN USAGE (Exam Generation) ---`);
+    console.log(`Provider: ${usage.provider} | Prompt: ${usage.promptTokens} | Completion: ${usage.completionTokens} | Total: ${usage.totalTokens}`);
+
+    const cleanedText = examJson.trim();
 
     res.status(200).json({
       success: true,
-      exam: cleanedText
+      exam: JSON.parse(cleanedText),
+      usage
     });
 
   } catch (error) {

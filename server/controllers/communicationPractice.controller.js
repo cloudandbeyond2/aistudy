@@ -131,15 +131,31 @@ export const generateDailyScenario = async (req, res) => {
       }`;
 
       const result = await retryWithBackoff(() => model.generateContent(prompt), 1, 1500);
-      let text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+      const response = await result.response;
+      const metadata = response.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 };
+      
+      console.log(`--- AI TOKEN USAGE (CommPractice Scenario) ---`);
+      console.log(`Provider: Gemini | Prompt: ${metadata.promptTokenCount} | Completion: ${metadata.candidatesTokenCount} | Total: ${metadata.totalTokenCount}`);
+
+      let text = (await response.text()).replace(/```json/g, '').replace(/```/g, '').trim();
       scenarioData = JSON.parse(text);
+      scenarioData.usage = {
+        provider: 'Gemini',
+        promptTokens: metadata.promptTokenCount,
+        completionTokens: metadata.candidatesTokenCount,
+        totalTokens: metadata.totalTokenCount
+      };
     } catch (aiError) {
       console.warn('AI Scenario Generation failed, using fallback:', aiError.message);
       const bank = FALLBACK_SCENARIOS[tone] || FALLBACK_SCENARIOS.Professional;
       scenarioData = bank[Math.floor(Math.random() * bank.length)];
     }
 
-    res.status(200).json({ success: true, data: scenarioData });
+    res.status(200).json({ 
+      success: true, 
+      data: scenarioData,
+      usage: scenarioData.usage || null
+    });
   } catch (error) {
     console.error('generateDailyScenario error:', error);
     res.status(500).json({ success: false, message: error.message });
@@ -179,11 +195,23 @@ Return ONLY a raw JSON object (no markdown, no code blocks) with exactly this fo
 }`;
 
     const result = await retryWithBackoff(() => model.generateContent(prompt), 1, 1500);
-    let text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+    const response = await result.response;
+    const metadata = response.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 };
+    
+    console.log(`--- AI TOKEN USAGE (CommPractice Submit) ---`);
+    console.log(`Provider: Gemini | Prompt: ${metadata.promptTokenCount} | Completion: ${metadata.candidatesTokenCount} | Total: ${metadata.totalTokenCount}`);
+
+    let text = (await response.text()).replace(/```json/g, '').replace(/```/g, '').trim();
 
     let evaluation;
     try {
       evaluation = JSON.parse(text);
+      evaluation.usage = {
+        provider: 'Gemini',
+        promptTokens: metadata.promptTokenCount,
+        completionTokens: metadata.candidatesTokenCount,
+        totalTokens: metadata.totalTokenCount
+      };
     } catch (e) {
       throw new Error('Invalid JSON from AI');
     }
@@ -208,7 +236,11 @@ Return ONLY a raw JSON object (no markdown, no code blocks) with exactly this fo
 
     await profile.save();
 
-    res.status(200).json({ success: true, data: { evaluation, xpAwarded, newLevel: profile.level, streak: profile.streak } });
+    res.status(200).json({ 
+      success: true, 
+      data: { evaluation, xpAwarded, newLevel: profile.level, streak: profile.streak },
+      usage: evaluation.usage || null
+    });
   } catch (error) {
     console.error('submitScenario error:', error);
     res.status(500).json({ success: false, message: error.message });
@@ -243,8 +275,22 @@ export const generateVocabulary = async (req, res) => {
       ]`;
 
       const result = await retryWithBackoff(() => model.generateContent(prompt), 1, 1500);
-      let text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+      const response = await result.response;
+      const metadata = response.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 };
+      
+      console.log(`--- AI TOKEN USAGE (CommPractice Vocab) ---`);
+      console.log(`Provider: Gemini | Prompt: ${metadata.promptTokenCount} | Completion: ${metadata.candidatesTokenCount} | Total: ${metadata.totalTokenCount}`);
+
+      let text = (await response.text()).replace(/```json/g, '').replace(/```/g, '').trim();
       vocabData = JSON.parse(text);
+      if (Array.isArray(vocabData)) {
+        vocabData.usage = {
+          provider: 'Gemini',
+          promptTokens: metadata.promptTokenCount,
+          completionTokens: metadata.candidatesTokenCount,
+          totalTokens: metadata.totalTokenCount
+        };
+      }
     } catch (aiError) {
       console.warn('AI Vocab Generation failed, using fallback:', aiError.message);
       // Shuffle and take 3
@@ -253,7 +299,11 @@ export const generateVocabulary = async (req, res) => {
         .slice(0, 3);
     }
 
-    res.status(200).json({ success: true, data: vocabData || FALLBACK_VOCABULARY.slice(0, 3) });
+    res.status(200).json({ 
+      success: true, 
+      data: vocabData || FALLBACK_VOCABULARY.slice(0, 3),
+      usage: vocabData?.usage || null
+    });
   } catch (error) {
     console.error('generateVocabulary error:', error);
     // Final fallback to ensure it NEVER returns 500
@@ -368,14 +418,32 @@ export const generateGrammarTest = async (req, res) => {
       ]`;
 
       const result = await retryWithBackoff(() => model.generateContent(prompt), 1, 1500);
-      let text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+      const response = await result.response;
+      const metadata = response.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 };
+      
+      console.log(`--- AI TOKEN USAGE (CommPractice Grammar) ---`);
+      console.log(`Provider: Gemini | Prompt: ${metadata.promptTokenCount} | Completion: ${metadata.candidatesTokenCount} | Total: ${metadata.totalTokenCount}`);
+
+      let text = (await response.text()).replace(/```json/g, '').replace(/```/g, '').trim();
       testData = JSON.parse(text);
+      if (Array.isArray(testData)) {
+        testData.usage = {
+          provider: 'Gemini',
+          promptTokens: metadata.promptTokenCount,
+          completionTokens: metadata.candidatesTokenCount,
+          totalTokens: metadata.totalTokenCount
+        };
+      }
     } catch (aiError) {
       console.warn('AI Grammar Test Generation failed, using fallback:', aiError.message);
       testData = FALLBACK_GRAMMAR_TESTS;
     }
 
-    res.status(200).json({ success: true, data: testData || FALLBACK_GRAMMAR_TESTS });
+    res.status(200).json({ 
+      success: true, 
+      data: testData || FALLBACK_GRAMMAR_TESTS,
+      usage: testData?.usage || null
+    });
   } catch (error) {
     console.error('generateGrammarTest fatal error:', error);
     res.status(200).json({ success: true, data: FALLBACK_GRAMMAR_TESTS });

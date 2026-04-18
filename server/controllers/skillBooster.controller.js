@@ -129,7 +129,13 @@ Return ONLY a raw JSON array (no markdown, no code blocks) with exactly this for
 Generate exactly 10 milestones, ordered from beginner to advanced. Each estimatedDays between 5 and 21.`;
 
     const result = await retryWithBackoff(() => model.generateContent(prompt), 1, 1500);
-    let text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+    const response = await result.response;
+    const metadata = response.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 };
+    
+    console.log(`--- AI TOKEN USAGE (SkillBooster: Roadmap) ---`);
+    console.log(`Provider: Gemini | Prompt: ${metadata.promptTokenCount} | Completion: ${metadata.candidatesTokenCount} | Total: ${metadata.totalTokenCount}`);
+
+    let text = (await response.text()).replace(/```json/g, '').replace(/```/g, '').trim();
 
     let milestones;
     try {
@@ -187,7 +193,13 @@ Return ONLY a raw JSON object (no markdown, no code blocks) with exactly this fo
 }`;
 
     const result = await retryWithBackoff(() => model.generateContent(prompt), 1, 1500);
-    let text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+    const response = await result.response;
+    const metadata = response.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 };
+    
+    console.log(`--- AI TOKEN USAGE (SkillBooster: Daily Tip) ---`);
+    console.log(`Provider: Gemini | Prompt: ${metadata.promptTokenCount} | Completion: ${metadata.candidatesTokenCount} | Total: ${metadata.totalTokenCount}`);
+
+    let text = (await response.text()).replace(/```json/g, '').replace(/```/g, '').trim();
 
     let tipData;
     try {
@@ -208,7 +220,14 @@ Return ONLY a raw JSON object (no markdown, no code blocks) with exactly this fo
     profile.dailyTips = [newTip, ...profile.dailyTips].slice(0, 30);
     await profile.save();
 
-    res.status(200).json({ success: true, data: newTip, cached: false });
+    const usage = {
+      provider: 'Gemini',
+      promptTokens: metadata.promptTokenCount,
+      completionTokens: metadata.candidatesTokenCount,
+      totalTokens: metadata.totalTokenCount
+    };
+
+    res.status(200).json({ success: true, data: newTip, cached: false, usage });
   } catch (error) {
     console.error('getDailyTip error:', error);
     res.status(500).json({ success: false, message: error.message });
