@@ -99,7 +99,8 @@ const AssignmentsTab = () => {
     const [assignments, setAssignments] = useState([]);
     const [assignmentSubmissionStats, setAssignmentSubmissionStats] = useState<Record<string, { total: number; graded: number; pending: number; resubmit: number }>>({});
     const [assignmentStatsLoading, setAssignmentStatsLoading] = useState(false);
-    const [assignmentDeskFilter, setAssignmentDeskFilter] = useState<'all' | 'review' | 'dueSoon' | 'overdue'>('all');
+  const [assignmentDeskFilter, setAssignmentDeskFilter] = useState<'all' | 'review' | 'dueSoon' | 'overdue' | 'orgAdmin'>('all');
+  const [deptFilter, setDeptFilter] = useState<string>('all');
     const [notices, setNotices] = useState([]);
     const [courses, setCourses] = useState([]);
     const [previewProject, setPreviewProject] = useState<any>(null);
@@ -202,12 +203,11 @@ const AssignmentsTab = () => {
             (deptId && normalizedDepartmentId === deptId)
         );
     };
-    
-    const getDepartmentLabel = (value: any) => {
-        const normalizedValue = getDepartmentValue(value);
-        if (!normalizedValue || normalizedValue === 'all') return '';
-        return departmentsList.find((d: any) => d._id === normalizedValue || d.name === normalizedValue)?.name || normalizedValue;
-    };
+  const getDepartmentLabel = (value: any) => {
+    const normalizedValue = getDepartmentValue(value);
+    if (!normalizedValue || normalizedValue === 'all') return 'Org Admin';
+    return departmentsList.find((d: any) => d._id === normalizedValue || d.name === normalizedValue)?.name || normalizedValue;
+};
 
     useEffect(() => {
         if (!orgId) {
@@ -639,15 +639,19 @@ const handleDeleteAssignment = async (id: string) => {
     const overdueAssignments = assignmentInsights.filter((entry) => entry.isOverdue);
     const dueSoonAssignments = assignmentInsights.filter((entry) => entry.isDueSoon);
     const reviewAssignments = assignmentInsights.filter((entry) => entry.needsReview);
-    const filteredAssignmentInsights =
-        assignmentDeskFilter === 'review'
-            ? reviewAssignments
-            : assignmentDeskFilter === 'dueSoon'
-            ? dueSoonAssignments
-            : assignmentDeskFilter === 'overdue'
-            ? overdueAssignments
-            : assignmentInsights;
-
+const filteredAssignmentInsights = assignmentInsights
+    .filter((entry) => {
+        if (assignmentDeskFilter === 'review') return entry.needsReview;
+        if (assignmentDeskFilter === 'dueSoon') return entry.isDueSoon;
+        if (assignmentDeskFilter === 'overdue') return entry.isOverdue;
+        if (assignmentDeskFilter === 'orgAdmin') return !entry.assignment.department || entry.assignment.department === 'all';
+        return true;
+    })
+    .filter((entry) => {
+        if (deptFilter === 'all') return true;
+        if (deptFilter === 'orgAdmin') return !entry.assignment.department || entry.assignment.department === 'all';
+        return getDepartmentValue(entry.assignment.department) === deptFilter;
+    });
     const getStatusColor = (status: string) => {
         switch(status) {
             case 'overdue':
@@ -693,38 +697,36 @@ const handleDeleteAssignment = async (id: string) => {
                                 )}
                             </div>
                             <div className="mt-2 text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-3" dangerouslySetInnerHTML={{ __html: assignment.description }} />
-                            <div className="grid grid-cols-1 xs:grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-4 text-xs font-medium">
-                                <div className="flex items-center gap-1 text-muted-foreground">
-                                    <Calendar className="w-3 h-3 flex-shrink-0" />
-                                    <span className="truncate">Due: {new Date(assignment.dueDate).toLocaleDateString()}</span>
-                                </div>
-                                <div className="flex items-center gap-1 text-muted-foreground">
-                                    <FileQuestion className="w-3 h-3 flex-shrink-0" />
-                                    <span>Questions: {assignment.questions?.length || 0}</span>
-                                </div>
-                                <div className="flex items-center gap-1 text-muted-foreground">
-                                    <Users className="w-3 h-3 flex-shrink-0" />
-                                    <span>Submissions: {statsForAssignment.total}</span>
-                                </div>
-                                {statsForAssignment.pending > 0 && (
-                                    <div className="flex items-center gap-1 text-secondary">
-                                        <Clock className="w-3 h-3 flex-shrink-0" />
-                                        <span>Pending: {statsForAssignment.pending}</span>
-                                    </div>
-                                )}
-                                {statsForAssignment.resubmit > 0 && (
-                                    <div className="flex items-center gap-1 text-accent">
-                                        <RotateCcw className="w-3 h-3 flex-shrink-0" />
-                                        <span>Resubmit: {statsForAssignment.resubmit}</span>
-                                    </div>
-                                )}
-                                {getDepartmentLabel(assignment.department) && (
-                                    <div className="flex items-center gap-1 text-muted-foreground">
-                                        <FolderOpen className="w-3 h-3 flex-shrink-0" />
-                                        <span className="truncate">Dept: {getDepartmentLabel(assignment.department)}</span>
-                                    </div>
-                                )}
-                            </div>
+                          <div className="grid grid-cols-1 xs:grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-4 text-xs font-medium">
+    <div className="flex items-center gap-1 text-muted-foreground">
+        <Calendar className="w-3 h-3 flex-shrink-0" />
+        <span className="truncate">Due: {new Date(assignment.dueDate).toLocaleDateString()}</span>
+    </div>
+    <div className="flex items-center gap-1 text-muted-foreground">
+        <FileQuestion className="w-3 h-3 flex-shrink-0" />
+        <span>Questions: {assignment.questions?.length || 0}</span>
+    </div>
+    <div className="flex items-center gap-1 text-muted-foreground">
+        <Users className="w-3 h-3 flex-shrink-0" />
+        <span>Submissions: {statsForAssignment.total}</span>
+    </div>
+    {statsForAssignment.pending > 0 && (
+        <div className="flex items-center gap-1 text-secondary">
+            <Clock className="w-3 h-3 flex-shrink-0" />
+            <span>Pending: {statsForAssignment.pending}</span>
+        </div>
+    )}
+    {statsForAssignment.resubmit > 0 && (
+        <div className="flex items-center gap-1 text-accent">
+            <RotateCcw className="w-3 h-3 flex-shrink-0" />
+            <span>Resubmit: {statsForAssignment.resubmit}</span>
+        </div>
+    )}
+    <div className="flex items-center gap-1 text-muted-foreground">
+        <FolderOpen className="w-3 h-3 flex-shrink-0" />
+        <span className="truncate">Dept: {getDepartmentLabel(assignment.department)}</span>
+    </div>
+</div>
                         </div>
                         <div className="flex gap-2 shrink-0 w-full lg:w-auto mt-3 lg:mt-0">
                             <Button 
@@ -877,6 +879,22 @@ const handleDeleteAssignment = async (id: string) => {
             >
                 <AlertTriangle className="w-4 h-4 mr-2" /> Overdue
             </Button>
+
+{/* Right: department dropdown */}
+        <div className="flex items-center gap-2 shrink-0">
+        
+           <select
+    className="h-9 w-auto min-w-[140px] rounded-md border border-input bg-background px-3 py-2 text-sm font-medium cursor-pointer focus:outline-none "
+    value={deptFilter}
+    onChange={(e) => setDeptFilter(e.target.value)}
+>
+    <option value="all">All Departments</option>
+    <option value="orgAdmin">Org Admin</option>
+    {departmentsList.map((d: any) => (
+        <option key={d._id} value={d._id}>{d.name}</option>
+    ))}
+</select>
+        </div>
         </div>
     );
 
@@ -1021,15 +1039,17 @@ const handleDeleteAssignment = async (id: string) => {
                             {assignments.length > 0 ? (
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                                        <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                                            {assignmentDeskFilter === 'review'
-                                                ? 'Review Needed Assignments'
-                                                : assignmentDeskFilter === 'dueSoon'
-                                                ? 'Due Soon Assignments'
-                                                : assignmentDeskFilter === 'overdue'
-                                                ? 'Overdue Assignments'
-                                                : 'All Assignments'}
-                                        </h3>
+                                       <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+    {assignmentDeskFilter === 'review'
+        ? 'Review Needed Assignments'
+        : assignmentDeskFilter === 'dueSoon'
+        ? 'Due Soon Assignments'
+        : assignmentDeskFilter === 'overdue'
+        ? 'Overdue Assignments'
+        : assignmentDeskFilter === 'orgAdmin'
+        ? 'Org Admin Assignments'
+        : 'All Assignments'}
+</h3>
                                         <Badge variant="secondary" className={`${themeStyles.primaryBadge} text-xs`}>
                                             {filteredAssignmentInsights.length} {filteredAssignmentInsights.length === 1 ? 'item' : 'items'}
                                         </Badge>
@@ -1136,3 +1156,4 @@ const handleDeleteAssignment = async (id: string) => {
 };
 
 export default AssignmentsTab;
+
