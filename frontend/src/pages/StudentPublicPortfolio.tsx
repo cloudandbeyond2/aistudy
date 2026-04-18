@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { serverURL } from '@/constants';
-import { Award, Github, Linkedin, Globe, MapPin, Mail, FolderOpen, ExternalLink, Briefcase, CheckCircle, FileText } from 'lucide-react';
+import { Award, Globe, MapPin, Mail, FolderOpen, ExternalLink, Briefcase, CheckCircle, FileText } from 'lucide-react';
+import { FaGithub } from '@react-icons/all-files/fa/FaGithub';
+import { FaLinkedin } from '@react-icons/all-files/fa/FaLinkedin';
 import SEO from '@/components/SEO';
 
 const StudentPublicPortfolio = () => {
@@ -88,13 +90,13 @@ const StudentPublicPortfolio = () => {
                             {profile?.githubUrl && (
                                 <a href={profile.githubUrl} target="_blank" rel="noreferrer"
                                     className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors">
-                                    <Github className="w-4 h-4" />
+                                    <FaGithub className="w-4 h-4" />
                                 </a>
                             )}
                             {profile?.linkedinUrl && (
                                 <a href={profile.linkedinUrl} target="_blank" rel="noreferrer"
                                     className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors">
-                                    <Linkedin className="w-4 h-4" />
+                                    <FaLinkedin className="w-4 h-4" />
                                 </a>
                             )}
                             {profile?.portfolioUrl && (
@@ -182,7 +184,7 @@ const StudentPublicPortfolio = () => {
                                             {p.githubUrl && (
                                                 <a href={p.githubUrl} target="_blank" rel="noreferrer"
                                                     className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                                                    <Github className="w-4 h-4" /> Code
+                                                    <FaGithub className="w-4 h-4" /> Code
                                                 </a>
                                             )}
                                             {p.liveUrl && (

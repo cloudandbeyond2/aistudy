@@ -1,7 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useBranding } from '@/contexts/BrandingContext';
-import { Facebook, Instagram, Linkedin, Send, X } from 'lucide-react';
+import { Instagram, Linkedin, Send, X } from 'lucide-react';
+import { FaFacebook } from '@react-icons/all-files/fa/FaFacebook';
+import { FaInstagram } from '@react-icons/all-files/fa/FaInstagram';
+import { FaLinkedin } from '@react-icons/all-files/fa/FaLinkedin';
 import axios from 'axios';
 import { appWordmarkLight, serverURL } from '@/constants';
 import { useToast } from '@/hooks/use-toast';
@@ -14,10 +17,10 @@ const Footer = () => {
   const { toast } = useToast();
 
   const socialLinks = [
-    { icon: Facebook, url: 'https://www.facebook.com' },
+    { icon: FaFacebook, url: 'https://www.facebook.com' },
     { icon: X, url: 'https://twitter.com' },
-    { icon: Instagram, url: 'https://www.instagram.com' },
-    { icon: Linkedin, url: 'https://www.linkedin.com/in' },
+    { icon: FaInstagram, url: 'https://www.instagram.com' },
+    { icon: FaLinkedin, url: 'https://www.linkedin.com/in' },
   ];
 
   const handleSubscribe = async (e: React.FormEvent) => {

@@ -12,17 +12,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import {
-    Award,
-    CheckCircle,
-    ChevronRight,
-    ExternalLink,
-    FileText,
-    FolderOpen,
-    Github,
-    Globe,
-    Layers3,
-    Linkedin,
-    Plus,
     RefreshCw,
     Rocket,
     Share2,
@@ -35,6 +24,8 @@ import {
     BookOpen,
     Briefcase
 } from 'lucide-react';
+import { FaGithub } from '@react-icons/all-files/fa/FaGithub';
+import { FaLinkedin } from '@react-icons/all-files/fa/FaLinkedin';
 import SEO from '@/components/SEO';
 
 interface ScoreGaugeProps {
@@ -1252,7 +1243,7 @@ const StudentCareer = () => {
                         <CardContent className="space-y-5">
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div className="space-y-1.5">
-                                    <Label className="flex items-center gap-1.5 text-xs"><Github className="h-3.5 w-3.5" /> GitHub URL (+10 pts)</Label>
+                                    <Label className="flex items-center gap-1.5 text-xs"><FaGithub className="h-3.5 w-3.5" /> GitHub URL (+10 pts)</Label>
                                     <Input
                                         placeholder="https://github.com/username"
                                         value={profileForm.githubUrl}
@@ -1261,7 +1252,7 @@ const StudentCareer = () => {
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label className="flex items-center gap-1.5 text-xs"><Linkedin className="h-3.5 w-3.5 text-blue-600" /> LinkedIn URL (+10 pts)</Label>
+                                    <Label className="flex items-center gap-1.5 text-xs"><FaLinkedin className="h-3.5 w-3.5 text-blue-600" /> LinkedIn URL (+10 pts)</Label>
                                     <Input
                                         placeholder="https://linkedin.com/in/username"
                                         value={profileForm.linkedinUrl}
@@ -1502,7 +1493,7 @@ const StudentCareer = () => {
                                                 <div className="flex flex-wrap gap-3 text-xs">
                                                     {project.githubUrl && (
                                                         <a href={project.githubUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-muted-foreground hover:text-foreground">
-                                                            <Github className="h-3 w-3" /> Code
+                                                            <FaGithub className="h-3 w-3" /> Code
                                                         </a>
                                                     )}
                                                     {project.liveUrl && (

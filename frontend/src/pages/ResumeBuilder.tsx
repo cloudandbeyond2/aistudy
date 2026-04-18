@@ -11,11 +11,13 @@ import { serverURL, websiteURL } from '@/constants';
 import {
     Plus, Trash2, Download, Share2, ChevronRight, ChevronLeft, Layout,
     FileText, Briefcase, GraduationCap, Award, Eye, CheckCircle, Loader2, User, Link2, Sparkles, Search, Target, AlertCircle,
-    X, Building, Calendar, Mail, Phone, MapPin, Linkedin, Github, Globe, BookOpen, Zap, TrendingUp, Shield, Star, Heart, Code,
+    X, Building, Calendar, Mail, Phone, MapPin, Globe, BookOpen, Zap, TrendingUp, Shield, Star, Heart, Code,
     Brain, Lock, Stethoscope, HeartPulse, Microscope, Users, ChartBar, Palette, FlaskConical, Music, Cog, HardHat, Factory,
     School, Library, Apple, Cpu, Database, Network, ChartPie, Sigma, ChartLine, Tractor, Leaf, Sprout, Scale, Gavel, FileCheck,
     Camera, Video, Newspaper, Mic, Utensils, Plane, Bed, Map, Truck, Package, Box
 } from 'lucide-react';
+import { FaGithub } from '@react-icons/all-files/fa/FaGithub';
+import { FaLinkedin } from '@react-icons/all-files/fa/FaLinkedin';
 import { Checkbox } from '@/components/ui/checkbox';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';

@@ -3,7 +3,10 @@ import { useParams, Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Calendar, Tag, Clock, Share2, Facebook, Twitter, Linkedin, MessageCircle, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Calendar, Tag, Clock, Share2, MessageCircle, ArrowRight } from 'lucide-react';
+import { FaFacebook } from '@react-icons/all-files/fa/FaFacebook';
+import { FaTwitter } from '@react-icons/all-files/fa/FaTwitter';
+import { FaLinkedin } from '@react-icons/all-files/fa/FaLinkedin';
 import SEO from '@/components/SEO';
 import Footer from '@/components/Footer';
 import StyledText from '@/components/styledText';
@@ -48,9 +51,9 @@ const BlogPost = () => {
     const shareTitle = title;
 
     const shareLinks = [
-        { name: 'Twitter', icon: <Twitter className="h-4 w-4" />, url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`, color: 'hover:text-[#1DA1F2]' },
-        { name: 'Facebook', icon: <Facebook className="h-4 w-4" />, url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, color: 'hover:text-[#4267B2]' },
-        { name: 'LinkedIn', icon: <Linkedin className="h-4 w-4" />, url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, color: 'hover:text-[#0077b5]' },
+        { name: 'Twitter', icon: <FaTwitter className="h-4 w-4" />, url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`, color: 'hover:text-[#1DA1F2]' },
+        { name: 'Facebook', icon: <FaFacebook className="h-4 w-4" />, url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, color: 'hover:text-[#4267B2]' },
+        { name: 'LinkedIn', icon: <FaLinkedin className="h-4 w-4" />, url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, color: 'hover:text-[#0077b5]' },
         { name: 'WhatsApp', icon: <MessageCircle className="h-4 w-4" />, url: `https://api.whatsapp.com/send?text=${encodeURIComponent(shareTitle + " " + shareUrl)}`, color: 'hover:text-[#25D366]' },
     ];
 

@@ -1331,12 +1331,14 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { 
   PenLine, Save, ShieldCheck, CreditCard, Loader, User, Settings, 
-  MessageSquare, Linkedin, Twitter, Globe, BookOpen, Award, Ticket, 
+  MessageSquare, Globe, BookOpen, Award, Ticket, 
   Bell, AlertTriangle, Sparkles, Crown, Calendar, MapPin, Mail, 
   Phone, Briefcase, Building, Heart, TrendingUp, Star, Gift,
   Moon, Sun, Monitor, Download, LogOut, Trash2, CheckCircle2,
   ArrowRight, CircleUser, Layers, Zap, Brain, Target, Rocket, X
 } from "lucide-react";
+import { FaLinkedin } from '@react-icons/all-files/fa/FaLinkedin';
+import { FaTwitter } from '@react-icons/all-files/fa/FaTwitter';
 import { Switch } from '@/components/ui/switch';
 import { MonthCost, MonthType, serverURL, YearCost, websiteURL } from '@/constants';
 import axios from 'axios';
@@ -2749,8 +2751,8 @@ const getPasswordStrength = (password) => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {[
-                    { platform: "linkedin", icon: Linkedin, color: "text-blue-600", placeholder: "https://linkedin.com/in/username" },
-                    { platform: "twitter", icon: Twitter, color: "text-blue-400", placeholder: "https://twitter.com/username" },
+                    { platform: "linkedin", icon: FaLinkedin, color: "text-blue-600", placeholder: "https://linkedin.com/in/username" },
+                    { platform: "twitter", icon: FaTwitter, color: "text-blue-400", placeholder: "https://twitter.com/username" },
                     { platform: "github", icon: "Github", color: "text-gray-800 dark:text-gray-200", placeholder: "https://github.com/username" },
                     { platform: "website", icon: Globe, color: "text-green-600", placeholder: "https://yourwebsite.com" },
                   ].map((social) => (

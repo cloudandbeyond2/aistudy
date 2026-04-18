@@ -4,7 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { serverURL } from '@/constants';
-import { Award, Loader2, Briefcase, GraduationCap, Mail, Phone, MapPin, Globe, Github, Linkedin, Download, Share2 } from 'lucide-react';
+import { Award, Loader2, Briefcase, GraduationCap, Mail, Phone, MapPin, Globe, Download, Share2 } from 'lucide-react';
+import { FaGithub } from '@react-icons/all-files/fa/FaGithub';
+import { FaLinkedin } from '@react-icons/all-files/fa/FaLinkedin';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
@@ -126,8 +128,8 @@ const ResumeView = () => {
                         {resume.email && <span className="flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{resume.email}</span>}
                         {resume.phone && <span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5" />{resume.phone}</span>}
                         {resume.location && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{resume.location}</span>}
-                        {resume.linkedIn && <span className="flex items-center gap-1"><Linkedin className="h-3.5 w-3.5" />{resume.linkedIn}</span>}
-                        {resume.github && <span className="flex items-center gap-1"><Github className="h-3.5 w-3.5" />{resume.github}</span>}
+                        {resume.linkedIn && <span className="flex items-center gap-1"><FaLinkedin className="h-3.5 w-3.5" />{resume.linkedIn}</span>}
+                        {resume.github && <span className="flex items-center gap-1"><FaGithub className="h-3.5 w-3.5" />{resume.github}</span>}
                         {resume.website && <span className="flex items-center gap-1"><Globe className="h-3.5 w-3.5" />{resume.website}</span>}
                     </div>
                 </div>

@@ -10,10 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import {
-    Briefcase, Award, Search, Github, Linkedin, Globe,
+    Briefcase, Award, Search, Globe,
     TrendingUp, Users, CheckCircle, BarChart2, ExternalLink,
     FileText, Star, ArrowLeft, Trash2, Eye, FolderOpen, BookOpen, ChevronRight
 } from 'lucide-react';
+import { FaGithub } from '@react-icons/all-files/fa/FaGithub';
+import { FaLinkedin } from '@react-icons/all-files/fa/FaLinkedin';
 import SEO from '@/components/SEO';
 import Swal from "sweetalert2";
 
@@ -449,8 +451,8 @@ const OrgCareerPlacement = () => {
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex gap-2.5">
-                            {s.githubUrl && <a href={s.githubUrl} target="_blank" rel="noreferrer"><Github className="w-4 h-4 text-muted-foreground hover:text-foreground" /></a>}
-                            {s.linkedinUrl && <a href={s.linkedinUrl} target="_blank" rel="noreferrer"><Linkedin className="w-4 h-4 text-blue-600 hover:text-blue-700" /></a>}
+                            {s.githubUrl && <a href={s.githubUrl} target="_blank" rel="noreferrer"><FaGithub className="w-4 h-4 text-muted-foreground hover:text-foreground" /></a>}
+                            {s.linkedinUrl && <a href={s.linkedinUrl} target="_blank" rel="noreferrer"><FaLinkedin className="w-4 h-4 text-blue-600 hover:text-blue-700" /></a>}
                           </div>
                         </td>
                         <td className="px-4 py-4 text-center">
@@ -504,7 +506,7 @@ const OrgCareerPlacement = () => {
                   <div className="flex items-center justify-between mt-auto">
                     <span className="text-[10px] font-medium bg-muted px-2 py-1 rounded">by {p.studentId?.mName || 'Student'}</span>
                     <div className="flex gap-2">
-                       {p.githubUrl && <a href={p.githubUrl} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary"><Github className="w-4 h-4" /></a>}
+                       {p.githubUrl && <a href={p.githubUrl} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary"><FaGithub className="w-4 h-4" /></a>}
                        {p.liveUrl && <a href={p.liveUrl} target="_blank" rel="noreferrer" className="text-primary"><ExternalLink className="w-4 h-4" /></a>}
                     </div>
                   </div>
