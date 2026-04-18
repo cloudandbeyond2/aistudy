@@ -394,18 +394,23 @@ const MeetingTab = () => {
 };
 
 const handleEditMeeting = (meeting) => {
-  setEditMeeting(meeting);
+    setEditMeeting(meeting);
 
-  setNewMeeting({
-    title: meeting.title,
-    link: meeting.link,
-    platform: meeting.platform,
-    date: meeting.date,
-    time: meeting.time,
-    department: meeting.department || ''
-  });
+    // Format date as YYYY-MM-DD for input type="date"
+    const formattedDate = meeting.date
+        ? new Date(meeting.date).toISOString().slice(0, 10)
+        : '';
 
-  setOpenMeetingDialog(true);
+    setNewMeeting({
+        title: meeting.title,
+        link: meeting.link,
+        platform: meeting.platform,
+        date: formattedDate,
+        time: meeting.time,
+        department: meeting.department || ''
+    });
+
+    setOpenMeetingDialog(true);
 };
 
     const handleDeleteMeeting = async (id: string) => {
