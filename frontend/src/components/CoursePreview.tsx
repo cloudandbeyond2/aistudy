@@ -1507,30 +1507,7 @@ const CoursePreview: React.FC<CoursePreviewProps> = ({
 
         savedCourseId = res.data?.course?._id || '';
 
-        if (savedCourseId && role === 'dept_admin') {
-          try {
-            setLoadingMessage('Submitting course for organization approval...');
-            await axios.post(`${serverURL}/api/org/course/${savedCourseId}/review`, {
-              reviewerId: sessionStorage.getItem('uid'),
-              approvalStatus: 'pending',
-              approvalNote: ''
-            });
-            toast({
-              title: 'Submitted for approval',
-              description: 'Your course is now pending organization admin review.'
-            });
-          } catch (submitError: any) {
-            console.error('Failed to submit course for approval:', submitError);
-            toast({
-              title: 'Saved, but not submitted',
-              description:
-                submitError?.response?.data?.message ||
-                submitError?.message ||
-                'Unable to submit for approval.',
-              variant: 'destructive'
-            });
-          }
-        }
+        // Course is saved as draft - approval request is handled separately via quiz attendance
       } else {
         setLoadingMessage('Saving course structure...');
         const res = await axios.post(serverURL + '/api/course', {
