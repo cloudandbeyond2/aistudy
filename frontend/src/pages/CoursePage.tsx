@@ -298,6 +298,7 @@ const CoursePage = () => {
   const defaultPrompt = `I have a doubt about this topic :- ${mainTopic}. Please clarify my doubt in very short :- `;
 
   const [isMenuOpen, setIsMenuOpen] = useState(true);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [isLessonFlowOpen, setIsLessonFlowOpen] = useState(false);
@@ -316,6 +317,32 @@ const CoursePage = () => {
 
   const [preloadedNextContent, setPreloadedNextContent] = useState(null);
   const apiCache = useRef(new Map());
+
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const [showContinueButton, setShowContinueButton] = useState(false);
+  const [isMenuOpenMobile, setIsMenuOpenMobile] = useState(false);
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleNextLessonWithDelay = () => {
+    if (isButtonDisabled) return;
+    setIsButtonDisabled(true);
+    setRemainingSeconds(80);
+    setShowContinueButton(false);
+    handleNextLesson();
+    const interval = setInterval(() => {
+      setRemainingSeconds(prev => {
+        if (prev <= 1) { clearInterval(interval); setIsButtonDisabled(false); setShowContinueButton(true); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
 
   const testImageUrl = useCallback((url: string): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -1519,9 +1546,9 @@ Requirements:
       {/* Responsive Grid for Exam Rules */}
       <div className="mt-3 sm:mt-4 grid gap-2 sm:gap-3 
         grid-cols-1 
+        xs:grid-cols-2 
         sm:grid-cols-2 
-        md:grid-cols-2 
-        lg:grid-cols-4">
+        xl:grid-cols-2">
         <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-background p-2 sm:p-3">
           <div className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Attempts</div>
           <div className="mt-1 text-xs sm:text-sm font-semibold">{manualQuizSettings.attemptLimit} total attempts</div>
@@ -1573,16 +1600,16 @@ Requirements:
             <p className="text-[10px] sm:text-xs text-muted-foreground">Hidden by default. Open the popup to browse all chapters and lessons.</p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button onClick={() => openLessonFlow()} className="rounded-xl sm:rounded-2xl text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2"><BookOpen className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />Open lesson flow</Button>
-            {currentTopicTitle && (<Button variant="outline" onClick={() => openLessonFlow(currentTopicTitle)} className="rounded-xl sm:rounded-2xl text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2"><ChevronDown className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />Current chapter</Button>)}
+            <Button onClick={() => openLessonFlow()} className="rounded-xl sm:rounded-2xl text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2"><BookOpen className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />Browse All</Button>
+            {currentTopicTitle && (<Button variant="outline" onClick={() => openLessonFlow(currentTopicTitle)} className="rounded-xl sm:rounded-2xl text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2">Current Title</Button>)}
           </div>
         </div>
         
         {/* Responsive Grid for Roadmap Chapters */}
         <div className="mt-4 sm:mt-5 grid gap-2 sm:gap-3 
           grid-cols-1 
-          sm:grid-cols-2 
-          lg:grid-cols-2">
+          sm:grid-cols-1 
+          xl:grid-cols-1">
           {courseTopics.slice(0, 4).map((topic, topicIndex) => {
             const topicSubtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
             const topicCompletedCount = topicSubtopics.filter(subtopic => completedSubtopics.some(entry => entry.topicTitle === topic.title && entry.subtopicTitle === subtopic.title)).length;
@@ -1678,30 +1705,6 @@ Requirements:
     </section>
   ) : null;
 
-  const [isButtonDisabled, setIsButtonDisabled] = React.useState(false);
-  const [remainingSeconds, setRemainingSeconds] = React.useState(0);
-  const [showContinueButton, setShowContinueButton] = React.useState(false);
-
-  const handleNextLessonWithDelay = () => {
-    if (isButtonDisabled) return;
-    setIsButtonDisabled(true);
-    setRemainingSeconds(80);
-    setShowContinueButton(false);
-    handleNextLesson();
-    const interval = setInterval(() => {
-      setRemainingSeconds(prev => {
-        if (prev <= 1) { clearInterval(interval); setIsButtonDisabled(false); setShowContinueButton(true); return 0; }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background overflow-x-hidden md:h-screen md:overflow-hidden">
 
@@ -1723,74 +1726,94 @@ Requirements:
       />
       <QuizLoadingPopup isOpen={isQuizLoading} topic={mainTopic} />
 
-      {/* Header - Responsive */}
-      <header className="border-b border-border/40 py-1.5 sm:py-2 px-2 sm:px-3 md:px-4 flex justify-between items-center sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
-        <div className="flex items-center gap-1.5 sm:gap-2 md:gap-4 shrink min-w-0">
-          <Drawer>
+      <header className="sticky top-0 z-50 flex h-14 sm:h-16 items-center justify-between border-b border-white/5 px-2 sm:px-4 md:px-6 bg-background/80 backdrop-blur-xl transition-all duration-300">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <Drawer open={isMenuOpenMobile} onOpenChange={setIsMenuOpenMobile}>
             <DrawerTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden flex-shrink-0 h-8 w-8 sm:h-9 sm:w-9"><Menu className="h-4 w-4 sm:h-5 sm:w-5" /></Button>
+              <Button variant="ghost" size="icon" className="md:hidden h-9 w-9 rounded-full hover:bg-muted/80">
+                <Menu className="h-5 w-5" />
+              </Button>
             </DrawerTrigger>
-            <DrawerContent className="max-h-[85vh]">
-              <div className="p-3 sm:p-4">
-                <div className="rounded-2xl sm:rounded-3xl border border-border/60 bg-gradient-to-br from-background via-background to-muted/60 p-3 sm:p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-2 sm:gap-3">
-                    <div>
-                      <p className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">Course Navigation</p>
-                      <h2 className="mt-1 sm:mt-2 text-base sm:text-lg font-semibold">Course Content</h2>
-                      <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-muted-foreground">{completedLessonCount}/{orderedLessons.length} lessons completed</p>
+            <DrawerContent className="h-[85vh] rounded-t-[32px] p-0 border-none bg-background/95 backdrop-blur-xl">
+              <div className="mx-auto w-full max-w-lg flex flex-col h-full">
+                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-border/40">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-primary/10">
+                      <BookOpen className="h-5 w-5 text-primary" />
                     </div>
-                    <div className="rounded-xl sm:rounded-2xl bg-primary/10 px-2 sm:px-3 py-1.5 sm:py-2 text-right text-primary flex-shrink-0">
-                      <div className="text-base sm:text-lg font-semibold leading-none">{percentage}%</div>
-                      <div className="mt-0.5 sm:mt-1 text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.22em] text-primary/70">Progress</div>
+                    <div>
+                      <h2 className="text-lg font-bold">Course Navigation</h2>
+                      <p className="text-xs text-muted-foreground">Chapters and Lessons</p>
                     </div>
                   </div>
+                  <Button variant="ghost" size="icon" onClick={() => setIsMenuOpenMobile(false)} className="rounded-full"><X className="h-5 w-5" /></Button>
                 </div>
-                <ScrollArea className="h-[55vh] sm:h-[60vh]">
+                <ScrollArea className="flex-1 px-4 sm:px-6">
                   <div className="pr-1 sm:pr-2 pt-3 sm:pt-4">
                     {courseTopics.length > 0 && renderTopicsList(courseTopics)}
                     <button type="button" onClick={redirectExam} disabled={quizLockedByCourseProgress || isQuizLoading}
-                      className={cn("mt-3 sm:mt-4 flex w-full items-center justify-between rounded-xl sm:rounded-2xl border border-border/60 bg-background px-3 sm:px-4 py-2.5 sm:py-3 text-left transition-colors", quizLockedByCourseProgress || isQuizLoading ? "cursor-not-allowed opacity-60" : "hover:bg-muted/60")}
+                      className={cn("mt-4 sm:mt-6 flex w-full items-center justify-between rounded-2xl border border-primary/10 bg-primary/[0.02] px-4 py-4 text-left transition-all hover:bg-primary/[0.04]", quizLockedByCourseProgress || isQuizLoading ? "cursor-not-allowed opacity-60" : "hover:scale-[0.98]")}
                     >
-                      <span>
-                        <span className="block text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Final Assessment</span>
-                        <span className="mt-0.5 sm:mt-1 block text-xs sm:text-sm font-semibold text-foreground">{mainTopic} Quiz</span>
-                        {quizLockedByCourseProgress && <span className="mt-0.5 sm:mt-1 block text-[10px] sm:text-xs text-muted-foreground">Complete every lesson to unlock the quiz</span>}
-                      </span>
-                      {isQuizLoading ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin text-primary flex-shrink-0" /> : quizLockedByCourseProgress ? <Lock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" /> : isQuizPassed === true ? <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-primary flex-shrink-0" /> : <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />}
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-background border border-border shadow-sm">
+                          {isQuizPassed === true ? <CheckCircle2 className="h-5 w-5 text-primary" /> : <ClipboardCheck className="h-5 w-5 text-muted-foreground" />}
+                        </div>
+                        <div>
+                          <span className="block text-[10px] font-bold uppercase tracking-widest text-primary/70">Final Assessment</span>
+                          <span className="text-sm font-bold text-foreground">{mainTopic} Quiz</span>
+                        </div>
+                      </div>
+                      {isQuizLoading ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : quizLockedByCourseProgress && <Lock className="h-4 w-4 text-muted-foreground" />}
                     </button>
                   </div>
                 </ScrollArea>
               </div>
             </DrawerContent>
           </Drawer>
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             {!isOrgAdmin && (
-              <div className="relative w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 flex-shrink-0">
-                <svg className="w-full h-full" viewBox="0 0 36 36">
-                  <circle cx="18" cy="18" r="16" fill="none" className="stroke-muted-foreground/20" strokeWidth="2" />
-                  <circle cx="18" cy="18" r="16" fill="none" className="stroke-primary" strokeWidth="2" strokeDasharray="100" strokeDashoffset={100 - percentage} transform="rotate(-90 18 18)" />
-                  <text x="18" y="18" dominantBaseline="middle" textAnchor="middle" className="fill-foreground text-[8px] sm:text-[9px] md:text-[10px] font-medium">{percentage}%</text>
+              <div className="relative group cursor-help transition-transform hover:scale-110">
+                <svg className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10" viewBox="0 0 36 36">
+                  <circle cx="18" cy="18" r="15" fill="none" className="stroke-muted/30" strokeWidth="2.5" />
+                  <circle cx="18" cy="18" r="15" fill="none" className="stroke-primary transition-all duration-1000" strokeWidth="2.5" strokeDasharray="94.2" strokeDashoffset={94.2 - (94.2 * percentage / 100)} transform="rotate(-90 18 18)" strokeLinecap="round" />
+                  <text x="18" y="18" dominantBaseline="middle" textAnchor="middle" className="fill-foreground text-[8px] sm:text-[9px] font-bold">{percentage}%</text>
                 </svg>
               </div>
             )}
-            <h1 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold truncate max-w-[120px] xs:max-w-[160px] sm:max-w-[220px] md:max-w-[280px] lg:max-w-none">{mainTopic}</h1>
+            <div className="flex flex-col min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 hidden sm:block">Learning Dashboard</span>
+              <h1 className="text-sm sm:text-base md:text-lg font-bold truncate tracking-tight text-foreground transition-all">
+                {mainTopic}
+              </h1>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(!isMenuOpen)} className="hidden md:flex h-8 w-8 lg:h-9 lg:w-9"><Menu className="h-4 w-4 lg:h-5 lg:w-5" /></Button>
-          <div className="hidden sm:flex items-center gap-0.5 sm:gap-1">
-            <Button variant="ghost" size="sm" asChild className="text-xs sm:text-sm px-2 sm:px-3"><Link to="/dashboard"><Home className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" /> Home</Link></Button>
+
+        <div className="flex items-center gap-1 sm:gap-3">
+          <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(!isMenuOpen)} className="hidden md:flex h-9 w-9 rounded-full hover:bg-muted/80 hover:scale-105 transition-all"><Menu className="h-5 w-5" /></Button>
+          <div className="hidden sm:flex items-center gap-1.5 sm:gap-2">
+            <Button variant="ghost" size="sm" asChild className="rounded-full h-8 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm font-semibold transition-all hover:bg-muted/80">
+              <Link to="/dashboard">
+                <Home className="h-4 w-4 mr-2 text-muted-foreground" /> 
+                <span className="hidden lg:inline text-foreground/80">Dashboard</span>
+              </Link>
+            </Button>
+
             {(plan !== "free" || isOrgAdmin || userRole === "student") && isQuizPassed && (
               <Button onClick={certificateCheck} variant="default" size="sm"
-                className={cn("shadow-none text-xs sm:text-sm px-2 sm:px-3", userRole === "student" || !!sessionStorage.getItem("orgId") ? "bg-yellow-600 hover:bg-yellow-700 text-white border-none" : "bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20")}
+                className={cn("rounded-full h-8 sm:h-10 px-4 sm:px-6 shadow-lg transition-all hover:scale-105", userRole === "student" || !!sessionStorage.getItem("orgId") ? "bg-amber-500 hover:bg-amber-600 shadow-amber-500/20" : "bg-primary shadow-primary/20")}
               >
-                <Award className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
-                <span className="hidden lg:inline">Download Certificate</span>
-                <span className="lg:hidden">Certificate</span>
+                <Award className="h-4 w-4 mr-2" />
+                <span className="text-xs sm:text-sm font-bold">Certificate</span>
               </Button>
             )}
-            <ShareOnSocial textToShare={sessionStorage.getItem("mName") + " shared you course on " + mainTopic} link={websiteURL + "/shareable?id=" + courseId} linkTitle={sessionStorage.getItem("mName") + " shared you course on " + mainTopic} linkMetaDesc={sessionStorage.getItem("mName") + " shared you course on " + mainTopic} linkFavicon={appLogo} noReferer>
-              <Button variant="ghost" size="sm" asChild><span className="cursor-pointer text-xs sm:text-sm px-2 sm:px-3"><Share className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" /><span className="hidden lg:inline">Share</span></span></Button>
+
+            <ShareOnSocial textToShare={`${sessionStorage.getItem("mName")} shared you course on ${mainTopic}`} link={`${websiteURL}/shareable?id=${courseId}`} linkTitle={`${sessionStorage.getItem("mName")} shared you course on ${mainTopic}`} linkMetaDesc={`${sessionStorage.getItem("mName")} shared you course on ${mainTopic}`} linkFavicon={appLogo} noReferer>
+              <Button variant="outline" size="sm" className="rounded-full h-8 sm:h-10 px-4 sm:px-6 border-border/60 hover:bg-muted/80 transition-all">
+                <Share className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span className="text-xs sm:text-sm font-bold text-foreground/80">Share</span>
+              </Button>
             </ShareOnSocial>
           </div>
         </div>
@@ -1836,34 +1859,63 @@ Requirements:
             <main className="mx-auto max-w-6xl p-2 sm:p-3 md:p-4 lg:p-6 pb-24 sm:pb-32 md:pb-10">
               {isLoading ? <CourseContentSkeleton /> : (
                 <>
-                  {/* Hero banner - Responsive */}
-                  <div className="mb-3 sm:mb-4 md:mb-6 overflow-hidden rounded-2xl sm:rounded-[20px] md:rounded-[30px] border border-slate-800/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/80 p-3 sm:p-4 md:p-6 text-white shadow-xl">
-                    <div className="flex flex-col gap-3 sm:gap-4 xl:flex-row xl:items-end xl:justify-between">
-                      <div className="max-w-3xl">
-                        <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.26em] text-white/80 backdrop-blur">
-                          {currentLesson ? `Chapter ${currentLesson.topicIndex + 1}` : "Lesson overview"}
-                        </span>
-                        <h1 className="mt-2 sm:mt-3 break-words text-base sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-semibold leading-tight">{selected}</h1>
-                        <p className="mt-1.5 sm:mt-2 md:mt-3 text-xs sm:text-sm leading-5 sm:leading-6 text-white/75">
-                          {currentTopicTitle && `Inside ${currentTopicTitle}. `}{currentLesson ? `Lesson ${currentLessonIndex + 1} of ${orderedLessons.length}. ` : ""}Continue through the roadmap below or jump directly from the side menu.
-                        </p>
+                  <div className="mb-4 sm:mb-6 lg:mb-8 overflow-hidden rounded-3xl sm:rounded-[32px] md:rounded-[40px] border border-white/10 bg-[#0c111d] bg-gradient-to-br from-slate-950 via-[#0c111d] to-primary/30 p-4 sm:p-6 md:p-8 lg:p-10 text-white shadow-2xl relative">
+                    {/* Decorative radial glow */}
+                    <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/20 rounded-full blur-[100px] pointer-events-none"></div>
+                    <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+                    <div className="relative z-10 flex flex-col gap-6 lg:gap-8">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="max-w-4xl space-y-3 sm:space-y-4">
+                          <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 sm:px-4 py-1 text-[10px] sm:text-[12px] font-bold uppercase tracking-[0.2em] text-white/90 backdrop-blur-sm">
+                            {currentLesson ? `Chapter ${currentLesson.topicIndex + 1}` : "Course Overview"}
+                          </span>
+                          <h1 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold leading-[1.15] tracking-tight">{selected}</h1>
+                          <p className="text-xs sm:text-sm md:text-base leading-relaxed text-white/70 font-medium max-w-2xl">
+                            {currentTopicTitle && <span className="text-white/90">Module: {currentTopicTitle}. </span>}
+                            You're currently on lesson {currentLessonIndex + 1} of {orderedLessons.length}. Complete the course to earn your official certification.
+                          </p>
+                        </div>
+                        
+                        {/* Compact Stats Grid */}
+                        <div className="flex flex-row sm:flex-row gap-3 sm:gap-4 lg:flex-col lg:w-72">
+                          <div className="flex-1 rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4 backdrop-blur-md transition-all hover:bg-white/[0.05]">
+                            <div className="text-[9px] sm:text-[11px] font-bold uppercase tracking-widest text-white/50 mb-2">Module Progress</div>
+                            <div className="flex items-end justify-between">
+                              <div className="text-sm sm:text-lg font-bold">{currentTopicCompletedCount}/{currentTopic?.subtopics?.length || 0}</div>
+                              <div className="text-[10px] text-white/40">Lessons Done</div>
+                            </div>
+                            <div className="mt-2 w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                              <div className="h-full bg-primary" style={{ width: `${(currentTopicCompletedCount / (currentTopic?.subtopics?.length || 1)) * 100}%` }}></div>
+                            </div>
+                          </div>
+                          <div className="flex-1 rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4 backdrop-blur-md transition-all hover:bg-white/[0.05]">
+                            <div className="text-[9px] sm:text-[11px] font-bold uppercase tracking-widest text-white/50 mb-2">Next Milestone</div>
+                            <div className="text-[xs] sm:text-sm font-bold truncate mb-1">{nextLesson ? nextLesson.subtopicTitle : "Course Exam"}</div>
+                            <div className="text-[9px] text-white/40 truncate">{nextLesson ? nextLesson.topicTitle : `Available after ${orderedLessons.length} lessons`}</div>
+                          </div>
+                        </div>
                       </div>
-                      
-                      {/* Responsive Grid for Hero Banner Stats */}
-                      <div className="grid grid-cols-2 gap-1.5 sm:gap-2 
-                        sm:grid-cols-2 
-                        lg:grid-cols-2 
-                        xl:w-auto xl:min-w-[320px]">
-                        <div className="rounded-lg sm:rounded-xl border border-white/12 bg-white/10 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 backdrop-blur">
-                          <div className="text-[8px] sm:text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">Current Chapter</div>
-                          <div className="mt-1 text-xs sm:text-sm md:text-base lg:text-lg font-semibold leading-tight">{currentTopic ? `${currentLesson?.topicIndex + 1}. ${currentTopic.title}` : "Course lesson"}</div>
-                          <div className="mt-0.5 sm:mt-1 text-[8px] sm:text-[10px] md:text-xs text-white/65">{currentTopicCompletedCount}/{currentTopic?.subtopics?.length || 0} lessons done</div>
-                        </div>
-                        <div className="rounded-lg sm:rounded-xl border border-white/12 bg-white/10 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 backdrop-blur">
-                          <div className="text-[8px] sm:text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">Up Next</div>
-                          <div className="mt-1 text-[10px] sm:text-xs md:text-sm font-semibold leading-4 sm:leading-5">{nextLesson ? nextLesson.subtopicTitle : "Final quiz after completion"}</div>
-                          <div className="mt-0.5 sm:mt-1 text-[8px] sm:text-[10px] md:text-xs text-white/65">{nextLesson ? nextLesson.topicTitle : `${mainTopic} quiz`}</div>
-                        </div>
+
+                      <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 border-t border-white/5 pt-6 lg:pt-8">
+                        <Button 
+                          onClick={() => setIsGuideOpen(true)}
+                          className="w-full sm:w-auto rounded-xl sm:rounded-2xl bg-white text-black hover:bg-white/90 transition-all font-bold px-6 h-11 sm:h-12 text-sm sm:text-base shadow-xl shadow-white/5 group"
+                        >
+                          <Brain className="h-4 w-4 mr-2 group-hover:rotate-12 transition-transform" />
+                          <span>Roadmap & Exam Rules</span>
+                        </Button>
+
+                        <Button 
+                          variant="ghost"
+                          asChild
+                          className="w-full sm:w-auto rounded-xl sm:rounded-2xl text-white/80 hover:bg-white/10 hover:text-white transition-all font-semibold px-6 h-11 sm:h-12 text-sm sm:text-base"
+                        >
+                          <Link to="/dashboard">
+                            <Home className="h-4 w-4 mr-2" />
+                            <span>My Courses</span>
+                          </Link>
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -1886,8 +1938,7 @@ Requirements:
                     </div>
                   </div>
 
-                  {!isMobile && examRulesSection}
-                  {!isMobile && roadmapSection}
+                  {/* Section blocks removed from inline flow to declutter top portion */}
 
                   <div className="space-y-3 sm:space-y-4">
                     {/* Theory text */}
@@ -1926,8 +1977,7 @@ Requirements:
                       <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm leading-5 sm:leading-6">{lessonAlertMessage}</p>
                     </div>
 
-                    {isMobile && examRulesSection}
-                    {isMobile && roadmapSection}
+                    {/* Mobile inline blocks removed to declutter */}
 
                     {/* Lesson actions - Responsive */}
                     {!isOrgAdmin && (
@@ -1983,6 +2033,54 @@ Requirements:
                       </div>
                     )}
                   </div>
+
+                  {/* Course Explorer Side Panel (Sheet) */}
+                  <Sheet open={isGuideOpen} onOpenChange={setIsGuideOpen}>
+                    <SheetContent side="right" className="w-[90vw] sm:max-w-xl md:max-w-2xl p-0 overflow-hidden border-l border-primary/10 bg-background/95 backdrop-blur-xl transition-all duration-300">
+                      <div className="flex flex-col h-full">
+                        {/* Custom Header for Sheet */}
+                        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-primary/10 bg-primary/[0.02]">
+                          <div>
+                            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">Course Explorer</h2>
+                            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">Explore roadmap, rules, and assessment details.</p>
+                          </div>
+                          <Button variant="ghost" size="icon" onClick={() => setIsGuideOpen(false)} className="rounded-full h-8 w-8 sm:h-9 sm:w-9">
+                            <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                          </Button>
+                        </div>
+
+                        <ScrollArea className="flex-1">
+                          <div className="p-4 sm:p-6 md:p-8 space-y-8 pb-32">
+                            {/* Roadmap and Exam Rules moved here */}
+                            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                              {roadmapSection}
+                            </div>
+                            
+                            <div className="animate-in fade-in slide-in-from-right-8 duration-700">
+                              {examRulesSection}
+                            </div>
+
+                            <div className="rounded-2xl border border-dashed border-primary/20 bg-primary/[0.03] p-5 text-center">
+                              <Sparkles className="h-5 w-5 text-primary/40 mx-auto mb-3" />
+                              <p className="text-xs sm:text-sm text-muted-foreground">
+                                Use the roadmap to track your progress and navigate through chapters effortlessly.
+                              </p>
+                            </div>
+                          </div>
+                        </ScrollArea>
+
+                        {/* Bottom Action Area */}
+                        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-background via-background/90 to-transparent border-t border-primary/5">
+                          <Button 
+                            onClick={() => setIsGuideOpen(false)} 
+                            className="w-full rounded-xl sm:rounded-2xl shadow-lg shadow-primary/20 h-10 sm:h-12 text-sm sm:text-base font-semibold"
+                          >
+                            Return to Current Lesson
+                          </Button>
+                        </div>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
                 </>
               )}
             </main>
