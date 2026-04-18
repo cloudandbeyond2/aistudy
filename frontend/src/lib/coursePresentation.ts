@@ -39,7 +39,7 @@ export const COURSE_PRESENTATIONS: CoursePresentationMeta[] = [
     shortLabel: 'Textbook',
     summary: 'Definition-first lessons with structured explanations, examples, and recap points.',
     promptInstruction:
-      'Write in a textbook-notes style. Start with core concepts, define important terms clearly, build the explanation in a structured sequence, and end with short recap points.',
+      'Structure like a university textbook chapter. Start with a Definition callout for key terms, use numbered sections (1.1, 1.2) with formal headings, include Key Insight callouts, at least one Worked Example, a Chapter Summary with numbered recap, and a Key Terms Glossary. Tone: formal, precise, third-person.',
     icon: BookOpen,
     surfaceClass: 'border-sky-200 bg-sky-50/80 dark:border-sky-900/50 dark:bg-sky-950/30',
     badgeClass: 'bg-sky-100 text-sky-700 dark:bg-sky-950/80 dark:text-sky-200',
@@ -50,7 +50,7 @@ export const COURSE_PRESENTATIONS: CoursePresentationMeta[] = [
     shortLabel: 'Lecturer',
     summary: 'Lecture-ready material with teaching flow, emphasis points, and classroom examples.',
     promptInstruction:
-      'Write like lecturer notes. Keep the lesson teachable, include concept emphasis, spoken-style explanation cues, and examples a trainer or faculty member could present in class.',
+      'Write as lecture notes a teacher can present in class. Start with a Lecture Objective, use Teaching Points as headers, include inline cues like [Pause here for questions] and [Ask class: ...], add Board Notes summaries, a Classroom Activity, and a Lecture Recap. Tone: conversational but authoritative.',
     icon: GraduationCap,
     surfaceClass: 'border-violet-200 bg-violet-50/80 dark:border-violet-900/50 dark:bg-violet-950/30',
     badgeClass: 'bg-violet-100 text-violet-700 dark:bg-violet-950/80 dark:text-violet-200',
@@ -61,7 +61,7 @@ export const COURSE_PRESENTATIONS: CoursePresentationMeta[] = [
     shortLabel: 'Exam',
     summary: 'Revision-focused content with high-yield points, likely questions, and answer framing.',
     promptInstruction:
-      'Write in an exam-oriented style. Highlight key points, likely short-answer and long-answer angles, revision cues, and concise takeaways students can review quickly before assessment.',
+      'Write as an exam preparation study guide. Start with a High-Yield Summary of 5-7 key facts, use Probable Question headings with exam-style answers, include Short Answer Practice questions, Common Exam Mistakes, a Memory Aid (mnemonic or comparison table), and a Quick Revision Checklist. Tone: direct, concise, urgency-focused.',
     icon: ClipboardCheck,
     surfaceClass: 'border-amber-200 bg-amber-50/80 dark:border-amber-900/50 dark:bg-amber-950/30',
     badgeClass: 'bg-amber-100 text-amber-700 dark:bg-amber-950/80 dark:text-amber-200',
@@ -72,7 +72,7 @@ export const COURSE_PRESENTATIONS: CoursePresentationMeta[] = [
     shortLabel: 'Student',
     summary: 'Simple, approachable lessons with plain language and relatable examples.',
     promptInstruction:
-      'Write in a student-friendly format. Use simple language, shorter paragraphs, approachable examples, and explain difficult ideas without sounding overly formal.',
+      'Write as a friendly senior student explaining to a confused junior. Start with Why Should You Care, use everyday analogies, keep sentences under 20 words, break ideas into The Simple Version and The Full Picture, include a Real Life Example, a Still Confused? section, and end with What You Should Remember. Tone: warm, encouraging, first-person plural.',
     icon: User,
     surfaceClass: 'border-emerald-200 bg-emerald-50/80 dark:border-emerald-900/50 dark:bg-emerald-950/30',
     badgeClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-200',
@@ -83,7 +83,7 @@ export const COURSE_PRESENTATIONS: CoursePresentationMeta[] = [
     shortLabel: 'Professional',
     summary: 'Polished, workplace-ready content with frameworks, application, and decision context.',
     promptInstruction:
-      'Write in a professional format. Use a polished tone, include practical workplace framing, real-world application, decision factors, and structured examples suitable for professionals.',
+      'Write as a professional development resource for working adults. Start with an Executive Brief (3-sentence overview), use Framework headings, include a Decision Matrix or Comparison Table, a Workplace Application section, an Implementation Checklist, and Key Takeaways for Practitioners. Tone: polished, neutral, third-person professional.',
     icon: Briefcase,
     surfaceClass: 'border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/40',
     badgeClass: 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-200',
@@ -94,7 +94,7 @@ export const COURSE_PRESENTATIONS: CoursePresentationMeta[] = [
     shortLabel: 'Business',
     summary: 'Scenario-driven lessons with KPI, workflow, stakeholder, and operations examples.',
     promptInstruction:
-      'Write in a business format. Use business scenarios, KPI-driven examples, workflows, stakeholder decisions, operations context, and product or process thinking where relevant.',
+      'Write as a business analyst creating an internal knowledge document. Start with Business Context (impact on revenue/operations), use KPI Impact sections, include a Process Flow in numbered steps, a Stakeholder View for different roles, a Case Scenario with numbers, a Dashboard Concept section, and end with Action Items. Tone: results-driven, data-aware.',
     icon: Layers,
     surfaceClass: 'border-rose-200 bg-rose-50/80 dark:border-rose-900/50 dark:bg-rose-950/30',
     badgeClass: 'bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-200',
@@ -105,7 +105,7 @@ export const COURSE_PRESENTATIONS: CoursePresentationMeta[] = [
     shortLabel: 'Learn',
     summary: 'Step-by-step learning flow with checkpoints, mini tasks, and skill-building momentum.',
     promptInstruction:
-      'Write in a learn-by-doing format. Break ideas into steps, include mini checkpoints, action-oriented examples, and build understanding progressively from basic to applied.',
+      'Write as a hands-on workshop guide for active learning. Start with What You Will Build/Learn, structure as numbered steps (Step 1, Step 2), include Checkpoints every 2-3 steps, a Try It Yourself exercise, Common Pitfalls with fixes, a Challenge for advanced learners, and a Progress Check with 3 questions. Tone: motivating, action-oriented, second-person.',
     icon: Lightbulb,
     surfaceClass: 'border-primary/30 bg-primary/5',
     badgeClass: 'bg-primary/10 text-primary',

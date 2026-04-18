@@ -166,75 +166,62 @@ export const generateBatchSubtopics = async (req, res) => {
   const safetySettings = [
     { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
     { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
-    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
-    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }
-  ];
-
-  const contentProfileMap = {
+     const contentProfileMap = {
     textbook_notes: {
       label: 'Textbook Notes',
       instruction:
-        'Write like textbook notes with concept-first explanation, definitions, organized sections, and recap-friendly flow.'
+        `Academic textbook style. Use <div class="definition"> for terms, numbered sections (1.1, 1.2), <blockquote> for insights, a Worked Example, Chapter Summary list, and a <dl> glossary. Tone: formal, precise.`
     },
     lecturer_notes: {
       label: 'Lecturer Notes',
       instruction:
-        'Write like lecturer notes with teachable explanations, emphasis points, and examples a trainer could present live.'
+        `Lecture notes style. Start with "Lecture Objective", use "Teaching Points" headers, include <em> [teacher cues], "Board Notes" boxes, a Classroom Activity, and a Recap list. Tone: conversational, authoritative.`
     },
     exam_pattern: {
       label: 'Exam Pattern',
       instruction:
-        'Write in an exam-focused style with key points, likely answer angles, revision cues, and concise high-yield explanation.'
+        `Exam prep guide. Start with "High-Yield Summary", use "Probable Question" headers with model answers, Practice Questions, "Common Mistakes", and a Revision Checklist. Tone: direct, concise.`
     },
     student_friendly: {
       label: 'Student Format',
       instruction:
-        'Write in simple, student-friendly language with shorter paragraphs, approachable examples, and clear explanations.'
+        `Senior-to-junior student style. Start with "Why Should You Care?", use analogies, short sentences, "Simple Version" vs "Full Picture", "Real Life Example", and "Still Confused?" section. Tone: warm, encouraging.`
     },
     professional_format: {
       label: 'Professional Format',
       instruction:
-        'Write in a polished professional tone with frameworks, applied decision context, and workplace-ready examples.'
+        `Workplace resource. Start with "Executive Brief" (3-sentence), use "Framework" headers, HTML <table> comparison, "Workplace Application", and "Practitioner Takeaways". Tone: polished, neutral.`
     },
     business_format: {
       label: 'Business Format',
       instruction:
-        'Write in a business format using KPI, workflow, stakeholder, operations, and product or process examples where relevant.'
+        `Business analyst style. Start with "Business Context", "KPI Impact" sections, numbered Process Flow, "Stakeholder View", a Case Scenario with numbers, and "Action Items". Tone: results-driven, outcome-focused.`
     },
     learn_format: {
       label: 'Learn Format',
       instruction:
-        'Write in a learn-by-doing format with step-by-step progression, mini checkpoints, and action-oriented examples.'
+        `Hands-on workshop style. Start with "Build/Learn Outcome", numbered steps (Step 1, etc.), Checkpoints every 3 steps, "Try It Yourself" task, "Common Pitfalls", and a "Challenge". Tone: motivating, action-oriented.`
+    }
+  }; with "Progress Check" — 3 questions the learner should be able to answer.
+Tone: motivating, action-oriented, second-person ("you"). Use imperative verbs ("Build", "Create", "Try", "Verify").
+Focus on doing over reading — every explanation should lead to an action.`
     }
   };
 
   const selectedContentProfile =
     contentProfileMap[contentProfile] || contentProfileMap.learn_format;
 
-  const systemInstruction = `Strictly in ${lang || 'English'}, you are a specialized educational content writer. 
-Your goal is to provide thorough, in-depth, and "large" explanations for course subtopics.
-IMPORTANT: You MUST explicitly translate the 'topicTitle' and subtopic 'title' fields into ${lang || 'English'}, alongside the 'theory' content.
-For each subtopic, provide a detailed explanation (approx 900-1500 words if possible) with rich examples, strong concept-building, and clear definitions.
-Ensure every sentence is complete and the content doesn't cut off abruptly.
-If providing code examples, ensure they are properly formatted with correct line breaks and indentation.
-Use valid HTML formatting for the "theory" field (paragraphs, bold text, lists).
-Every lesson should feel substantially complete, not like a short summary.
-Include layered explanation: concept meaning, why it matters, process or workflow, practical examples, mistakes to avoid, and a short closing recap.
-For business, sales, CRM, analytics, HR, marketing, operations, or management topics, include practical product-style examples such as dashboard concepts, KPI cards, pipeline views, report widgets, filters, tables, and workflow scenarios.
-When relevant, explain what a dashboard would show, why each metric matters, and how a team would use it in real work.
-When the lesson includes programming, commands, configuration, queries, or terminal examples, format them as proper multi-line HTML code blocks using <pre><code class="language-...">...</code></pre>.
-Preserve indentation and line breaks inside code blocks.
-Never place full code examples inside <p>, <li>, or inline <code> tags.
-Do not overuse code examples for non-technical business topics unless the code is essential to the explanation.
-Never output an empty <pre><code></code></pre> block.
-If you mention an example, provide the full example content immediately after the label.
-For conceptual business validation logic, CRM workflows, or dashboard rules, prefer readable pseudocode or numbered rule logic instead of SQL unless SQL is specifically necessary.
-Do not truncate a section halfway through an example.
-Presentation style: ${selectedContentProfile.label}.
-Style guidance: ${selectedContentProfile.instruction}
-Avoid generic AI-sounding filler. The lesson should read like it was intentionally prepared in the selected presentation style.
-Do NOT include images, external links, or additional resource suggestions.
-ONLY respond with a valid JSON object matching the requested schema.`;
+  const systemInstruction = `Strictly in ${lang || 'English'}, you are an expert educational writer. 
+Goal: Provide thorough, in-depth explanations (900-1500 words) for course subtopics.
+Translate 'topicTitle' and subtopic 'title' fields into ${lang || 'English'}.
+Requirements:
+- Use valid HTML (paragraphs, bold, lists).
+- Include definition, why it matters, process/workflow, practical examples, pitfalls, and recap.
+- For business topics, include dashboard concepts (metrics, KPI cards, tables).
+- Multi-line code blocks MUST use <pre><code class="language-...">...</code></pre>. Preserve indentation.
+- Style: ${selectedContentProfile.label}.
+- Guidance: ${selectedContentProfile.instruction}
+- Do NOT include images, external links, or AI filler. Respond ONLY with valid JSON.`;
 
   const responseSchema = {
     type: "object",
@@ -465,31 +452,11 @@ ${theory}`;
   ) => {
     const isCompact = detailLevel === 'compact';
 
-  return `Course: "${mainTopic}"
-
-Generate comprehensive educational content for exactly one chapter and one subtopic.
-
-Chapter: "${topicTitle}"
-Subtopic: "${subtopicTitle}"
-Presentation Style: ${selectedContentProfile.label}
-Style Guidance: ${selectedContentProfile.instruction}
-
-Requirements:
-- Return content only for this one chapter and this one subtopic.
-- Keep the same chapter title and subtopic title, translated into ${lang || 'English'} when needed.
-- The "theory" field must contain complete HTML content and must not be cut off.
-- Write ${isCompact ? 'a concise but complete lesson of about 650 to 900 words' : 'a detailed lesson of about 900 to 1500 words'}.
-- Make the lesson richer than a short summary. Explain the concept, why it matters, how it is used, where learners make mistakes, and how to apply it correctly.
-- Include these sections naturally in HTML:
-  1. Introduction
-  2. Core explanation
-  3. Step-by-step explanation, workflow, or method when relevant
-  4. Two or more practical examples, scenarios, or use cases
-  5. Common mistakes or caution points
-  6. Short recap
-- Use short paragraphs and lists where useful, but keep the HTML clean.
-- Prefer depth, clarity, and learning value over brevity.
-- The final HTML must read like a complete lesson a student can study independently.
+  return `Generate ONE detailed HTML lesson for Chapter: "${topicTitle}", Subtopic: "${subtopicTitle}".
+Word count: ${isCompact ? '650-900' : '900-1500'}.
+Structure: Intro, Core explanation, Workflow, 2+ Practical examples, Common mistakes, Recap.
+Style: ${selectedContentProfile.label}.
+Ensure HTML is valid and the "theory" field is complete.
 
 Response Format (JSON):
 {
@@ -504,24 +471,8 @@ Response Format (JSON):
 }`;
   };
 
-  const buildFallbackTheoryPrompt = (topicTitle, subtopicTitle) => `Course: "${mainTopic}"
-
-Write a complete HTML lesson for this one chapter and one subtopic.
-
-Chapter: "${topicTitle}"
-Subtopic: "${subtopicTitle}"
-Language: ${lang || 'English'}
-Presentation Style: ${selectedContentProfile.label}
-Style Guidance: ${selectedContentProfile.instruction}
-
-Rules:
-- Return HTML only, not JSON.
-- Start with a short introductory paragraph.
-- Write a full lesson of roughly 700 to 1100 words.
-- Include meaningful explanation, workflow or method when relevant, at least one solid practical example or use case, common mistakes, and a short recap.
-- Keep the lesson complete, informative, and readable.
-- Use <p>, <strong>, <ul>, <li>, and <pre><code> only when appropriate.
-- Do not include images, links, markdown fences, or notes about being an AI.`;
+  const buildFallbackTheoryPrompt = (topicTitle, subtopicTitle) => `Generate ONE complete HTML lesson (700-1100 words) for Chapter: "${topicTitle}", Subtopic: "${subtopicTitle}".
+Include Intro, Explanation, Example, Pitfalls, and Recap. HTML only. No JSON, no images. Style: ${selectedContentProfile.label}.`;
 
   const generateStructuredSubtopic = async ({
     topicTitle,

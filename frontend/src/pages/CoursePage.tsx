@@ -409,13 +409,13 @@ const handleRegenerateCurrentLesson = async () => {
     }
     
     // Phase 1 complete
-    setLoadingProgress(33);
-    currentProgress = 33;
+    setLoadingProgress(50);
+    currentProgress = 50;
 
-    // PHASE 2: Regenerate media based on course type (33-66%)
+    // PHASE 2: Regenerate media based on course type (50-75%)
     if (isVideoCourse) {
       setLoadingStage('video');
-      setLoadingProgress(40);
+      setLoadingProgress(60);
       
       const query = `${subtopicTitle} ${mainTopic} in english`;
       const ytRes = await axios.post(serverURL + '/api/yt', { prompt: query });
@@ -426,20 +426,9 @@ const handleRegenerateCurrentLesson = async () => {
         }
       }
     } else {
-      setLoadingStage('image');
-      setLoadingProgress(40);
-      
-      const imageRes = await axios.post(
-        serverURL + '/api/image',
-        { prompt: `${subtopicTitle} in ${mainTopic}` },
-        { timeout: 12000 }
-      );
-      const imageUrl = imageRes.data?.url || getFallbackImage(topicTitle, subtopicTitle);
-      targetSub.image = imageUrl;
-      if (selected === subtopicTitle) {
-        setMedia(imageUrl);
-        preloadImageWithCache(imageUrl, subtopicTitle, topicTitle);
-      }
+      // Subtopic image generation removed per user request to save tokens
+      setLoadingStage('complete');
+      setLoadingProgress(75);
     }
     
     // Phase 2 complete
@@ -883,20 +872,18 @@ Requirements:
         const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
         const targetTopic = topicsList?.find(t => t.title === clickedTopic);
         const targetSub = targetTopic?.subtopics.find(s => s.title === clickedSub);
-        if (targetSub) { targetSub.theory = cleanedTheory; targetSub.done = true; setJsonData({ ...jsonData }); sessionStorage.setItem('jsonData', JSON.stringify(jsonData)); setTheory(cleanedTheory); }
+        if (targetSub) { 
+          targetSub.theory = cleanedTheory; 
+          targetSub.done = true; // Mark as done after theory generation
+          setJsonData({ ...jsonData }); 
+          sessionStorage.setItem('jsonData', JSON.stringify(jsonData)); 
+          setTheory(cleanedTheory); 
+        }
       }
       if (clearTheoryProgress) clearTheoryProgress();
-      simulateProgress('image');
-      try {
-        const imageRes = await axios.post(serverURL + '/api/image', { prompt: `${clickedSub} in ${mainTopic}` }, { timeout: 10000 });
-        if (imageRes.data?.url) {
-          setMedia(imageRes.data.url);
-          const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
-          const targetTopic = topicsList?.find(t => t.title === clickedTopic);
-          const targetSub = targetTopic?.subtopics.find(s => s.title === clickedSub);
-          if (targetSub) { targetSub.image = imageRes.data.url; setJsonData({ ...jsonData }); sessionStorage.setItem('jsonData', JSON.stringify(jsonData)); }
-        }
-      } catch (imageErr) { console.error("Image fetch failed:", imageErr); }
+      
+      // Image generation removed per user request to save tokens
+      
       await updateCourse();
       simulateProgress('complete');
       setLoadingProgress(100);
@@ -920,13 +907,13 @@ Requirements:
       setTheory(cleanGeneratedHtml(theory));
       setImageLoading(prev => new Map(prev).set(sub, true));
       const topicContext = topics || mainTopic;
-      let imageUrl = '';
-      try {
-        const res = await axios.post(serverURL + '/api/image', { prompt: `${sub} in ${topicContext}` }, { timeout: 10000 }).catch(error => { console.error("Image API error:", error); return { data: { url: null } }; });
-        imageUrl = res.data?.url || '';
-      } catch (apiError) { console.error("Image generation failed:", apiError); imageUrl = ''; }
-      if (!imageUrl) imageUrl = getFallbackImage(topicContext, sub);
-      if (imageUrl) { preloadImageWithCache(imageUrl, sub, topicContext); setMedia(imageUrl); }
+      // Subtopic image generation removed per user request to save tokens
+      // We will only use a fallback image directly if needed, or none at all.
+      const imageUrl = getFallbackImage(topicContext, sub);
+      if (imageUrl) { 
+        preloadImageWithCache(imageUrl, sub, topicContext); 
+        setMedia(imageUrl); 
+      }
       const topicsList = jsonData['course_topics'] || jsonData[mainTopic?.toLowerCase()];
       if (topicsList) {
         const mTopic = topicsList.find((t: any) => t.title === topics);
@@ -1016,47 +1003,11 @@ Requirements:
             const newTheory = theoryRes.data.topics[0].subtopics[0].theory;
             const cleanedTheory = cleanGeneratedHtml(newTheory);
             sub.theory = cleanedTheory;
-            sub.done = false;
-
+            sub.done = true; // Mark as done after theory refreshed
             if (selected === sub.title) setTheory(cleanedTheory);
           }
         } catch (theoryErr) {
           console.error(`Theory generation failed for ${sub.title}:`, theoryErr);
-        }
-
-        if (type === 'video & text course') {
-          try {
-            const query = `${sub.title} ${mainTopic} in english`;
-            const ytRes = await axios.post(serverURL + '/api/yt', { prompt: query });
-            if (ytRes.data?.url) {
-              sub.youtube = ytRes.data.url;
-              sub.done = true;
-              if (selected === sub.title) setMedia(ytRes.data.url);
-            }
-          } catch (ytErr) {
-            console.error(`Video search failed for ${sub.title}:`, ytErr);
-          }
-        } else {
-          try {
-            const imageRes = await axios.post(
-              serverURL + '/api/image',
-              { prompt: `${sub.title} in ${mainTopic}` },
-              { timeout: 12000 }
-            );
-            const imageUrl = imageRes.data?.url || getFallbackImage(topicTitle, sub.title);
-            sub.image = imageUrl;
-            sub.done = true;
-            if (selected === sub.title) {
-              setMedia(imageUrl);
-              preloadImageWithCache(imageUrl, sub.title, topicTitle);
-            }
-          } catch (imgErr) {
-            console.error(`Image fetch failed for ${sub.title}:`, imgErr);
-            const fallback = getFallbackImage(topicTitle, sub.title);
-            sub.image = fallback;
-            sub.done = true;
-            if (selected === sub.title) setMedia(fallback);
-          }
         }
 
         setJsonData({ ...jsonData });
@@ -1087,18 +1038,17 @@ Requirements:
       const postURL = serverURL + '/api/generate';
       const res = await axios.post(postURL, { prompt });
       const generatedText = res.data.generatedText;
-      try { sendImage(generatedText, promptImage, topics, sub); }
+      try { 
+        // Bypassing image generation to save tokens
+        sendData('', generatedText, topics, sub); 
+      }
       catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
     } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
   }
 
   async function sendImage(parsedJson, promptImage, topics, sub) {
-    try {
-      const postURL = serverURL + '/api/image';
-      const res = await axios.post(postURL, { prompt: promptImage });
-      try { sendData(res.data.url, parsedJson, topics, sub); }
-      catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
-    } catch (error) { console.error(error); toast({ title: "Error", description: "Internal Server Error" }); setIsLoading(false); }
+    // Disabled per user request to save tokens
+    sendData('', parsedJson, topics, sub);
   }
 
   async function sendData(image, theory, topics, sub) {
@@ -1941,9 +1891,32 @@ Requirements:
 
                   <div className="space-y-3 sm:space-y-4">
                     {/* Theory text */}
-                    {theory && (
+                    {theory && !theory.includes("AI is crafting personalized content") && theory.length > 50 ? (
                       <div className="rounded-2xl sm:rounded-[20px] md:rounded-[28px] border border-border/60 bg-background p-3 sm:p-4 md:p-5 lg:p-7 shadow-sm">
                         <StyledText text={theory} />
+                      </div>
+                    ) : theory && theory.includes("AI is crafting personalized content") ? (
+                      <div className="rounded-2xl sm:rounded-[20px] md:rounded-[28px] border border-border/60 bg-background p-3 sm:p-4 md:p-5 lg:p-7 shadow-sm">
+                        <StyledText text={theory} />
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl sm:rounded-[20px] md:rounded-[28px] border border-border/60 bg-background p-3 sm:p-4 md:p-6 lg:p-10 shadow-sm text-center">
+                        <div className="max-w-md mx-auto space-y-4">
+                          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-2">
+                            <BookOpen className="h-6 w-6" />
+                          </div>
+                          <h3 className="text-lg font-semibold">Content Not Available</h3>
+                          <p className="text-sm text-muted-foreground">
+                            We couldn't generate the content for "{selected}" yet or the generation failed. 
+                            Would you like to try generating it now?
+                          </p>
+                          <Button 
+                            onClick={() => handleRegenerateCurrentLesson()} 
+                            className="w-full sm:w-auto"
+                          >
+                            Generate This Lesson
+                          </Button>
+                        </div>
                       </div>
                     )}
 
